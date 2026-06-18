@@ -26,6 +26,38 @@ def _blastdbcmd(*args: str) -> str:
     return result.stdout.strip()
 
 
+def _try_interval(database: Path, chrom: str, start: int, end: int) -> str:
+    """Try fetching interval with case-tolerant chromosome name matching (chr / Chr prefix)."""
+
+    from app.core.exceptions import ExternalToolFailure
+
+    candidates = [chrom]
+    if chrom.startswith("Chr"):
+        candidates.append("chr" + chrom[3:])
+    elif chrom.startswith("chr"):
+        candidates.append("Chr" + chrom[3:])
+
+    last_error: Exception | None = None
+    for name in candidates:
+        try:
+            return _blastdbcmd(
+                "-db", str(database),
+                "-line_length", "110",
+                "-entry", name,
+                "-range", f"{start}-{end}",
+                "-strand", "plus",
+            )
+        except ExternalToolFailure as e:
+            last_error = e
+            continue
+
+    raise ValidationFailure(
+        f"Chromosome {chrom!r} not found in database. "
+        "Check the naming convention at "
+        "https://wheatomics.sdau.edu.cn/doc/getsequence_search.txt"
+    )
+
+
 @router.get("/sequence/by-gene")
 def sequence_by_gene(
     gene_id: str = Query(...),
@@ -110,18 +142,7 @@ def sequence_by_interval(
     if end <= start or end - start > 5_000_000:
         raise ValidationFailure("Region length must be > 0 and <= 5,000,000 bp")
 
-    fasta = _blastdbcmd(
-        "-db",
-        str(settings.BLAST_DB_PATH / database),
-        "-line_length",
-        "110",
-        "-entry",
-        chrom,
-        "-range",
-        f"{start}-{end}",
-        "-strand",
-        "plus",
-    )
+    fasta = _try_interval(settings.BLAST_DB_PATH / database, chrom, start, end)
     return ok({"region": region, "database": database, "fasta": fasta})
 
 
