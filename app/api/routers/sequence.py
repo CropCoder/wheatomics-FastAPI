@@ -77,37 +77,27 @@ def sequence_by_gene(
 
 @router.get("/sequence/by-interval")
 def sequence_by_interval(
-    region: str = Query(..., description="Legacy format like chr1A:10-100"),
-    database: str = Query(...),
+    region: str = Query(...,
+        description="Genomic interval, e.g. Chr1A_Abo:200-500 or chr1A:100-1000. "
+                    "See https://wheatomics.sdau.edu.cn/doc/getsequence_search.txt for the full list of genome-specific chromosome naming conventions."),
+    database: str = Query(...,
+        description="BLAST database name (e.g. Fielder_chromosomes, Chinese_Spring_v2.1_chromosomes). "
+                    "Use GET /api/blast/databases?program=blastn to list available genome databases."),
 ) -> dict:
-    """根据染色体区间获取基因组 FASTA 序列。
+    """Get genomic FASTA sequence by chromosome interval.
 
-    功能:
-        根据染色体和起止位置，从指定的基因组数据库中提取对应区间的 DNA 序列。
-        区间长度限制在 5,000,000 bp 以内。
+    Chromosome naming follows genome-specific conventions.
+    See the full reference at:
+    https://wheatomics.sdau.edu.cn/doc/getsequence_search.txt
 
-    用法:
-        GET /api/sequence/by-interval?region=<染色体:起-止>&database=<数据库名>
-        - region: 必填，格式如 chr1A:100-1000 或 chr1A:100..1000
-        - database: 必填，基因组数据库名（必须含 "genome"）
-
-    案例:
-        请求:
-          curl -X GET "http://localhost:8000/api/sequence/by-interval?region=chr5A:587123000-587124000&database=Chinese_Spring_genome"
-
-        响应:
-          {
-            "success": true,
-            "data": {
-              "region": "chr5A:587123000-587124000",
-              "database": "Chinese_Spring_genome",
-              "fasta": ">chr5A:587123000-587124000\nATCG..."
-            }
-          }
+    Examples:
+      - Hexaploid wheat (Abbondanza):     Chr1A_Abo:200-500
+      - Hexaploid wheat (Chinese Spring): chr1A:200-500
+      - Barley v3:                         chr1H_Barley3:200-500
+      - Aegilops tauschii TA1675:          chr1D_Aegilops_tauschii_TA1675:200-500
+      - Wild emmer:                        chr1A_Wild_emmer:200-500
     """
 
-    if "genome" not in database:
-        raise ValidationFailure("This endpoint is intended for genome databases")
     ensure_interval_like(region)
 
     chrom = region.split(":")[0]
