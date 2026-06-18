@@ -62,13 +62,6 @@ app = FastAPI(
         "<td>共线性图生成、SNP 引物设计等异步任务提交与结果获取</td></tr>"
         "</table>"
 
-        "<h2>使用方法</h2>"
-        "<ul>"
-        "<li>展开下方各接口分组，点击 <b>«Try it out»</b> 填写参数即可在线调试。</li>"
-        "<li>完整的 Schema 定义与响应模型请访问 <a href='/api/redoc'>ReDoc 文档</a>。</li>"
-        "<li>生产环境请将请求发送至 <code>https://wheatomics.sdau.edu.cn/api</code>。</li>"
-        "</ul>"
-
         "<h2>AI Agent 接入 (MCP)</h2>"
         "本服务内置 MCP (Model Context Protocol) 服务器，"
         "AI Agent 可通过标准化协议直接调用数据接口。"
