@@ -19,6 +19,7 @@ WheatOmics BLAST API 端点
 import os
 import subprocess
 from datetime import datetime
+import re
 from fastapi import APIRouter, Form, HTTPException, Query
 from typing import Optional, List
 
@@ -179,6 +180,11 @@ def _program_db_type(program: str) -> str:
     return "prot" if program in ("blastp", "blastx", "tblastx") else "nuc"
 
 
+def _strip_volume(name: str) -> str:
+    """去掉 BLAST 多卷库的 .00 .01 等后缀，返回基础库名"""
+    return re.sub(r"\.\d{2,}$", "", name)
+
+
 def list_dbs(program: str) -> List[str]:
     """列出可用的 BLAST 数据库"""
     if not os.path.isdir(DB_DIR):
@@ -195,6 +201,7 @@ def list_dbs(program: str) -> List[str]:
         for ext in exts:
             if f.endswith(ext):
                 name = f[:-(len(ext))]
+                name = _strip_volume(name)
                 dbs[name] = dbs.get(name, 0) + 1
     return sorted(name for name, count in dbs.items() if count >= 2)
 
