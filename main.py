@@ -33,7 +33,18 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,   
-    description="https://wheatomics.sdau.edu.cn/V2/MCP-ServerUsage.html",
+    description=(
+        "WheatOmics 小麦多组学数据平台后端 API，提供基因搜索、表达谱查询、"
+        "共表达网络、PPI 互作、序列检索、比较基因组学及文献查询等数据服务。"
+        "<br><br>"
+        "<b>使用方法</b>：通过下方各接口分组浏览可用端点，点击 «Try it out» 在线调试；"
+        "也可在 <a href='/api/redoc'>ReDoc</a> 查看完整文档。"
+        "<br>"
+        "生产环境请将请求发送至 <code>https://wheatomics.sdau.edu.cn/api</code>。"
+        "<br>"
+        "MCP 使用说明详见 "
+        "<a href='https://wheatomics.sdau.edu.cn/V2/MCP-ServerUsage.html'>MCP 服务器文档</a>。"
+    ),
     docs_url="/api/docs",           # 将 Swagger UI 移到 /api/docs
     redoc_url="/api/redoc",         # 将 ReDoc 移到 /api/redoc (可选)
     openapi_url="/api/openapi.json" # 将核心的 schema 文件移到 /api/openapi.json
