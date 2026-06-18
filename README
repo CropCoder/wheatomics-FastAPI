@@ -1,8 +1,0 @@
-# API 开发者说明文档
-
-FastAPI路径：fei@wheatomics:/var/www/FastAPI_backend_Port8000
-
-测试开发启动命令：uvicorn main:app --reload
-正式上线启动命令：nohup gunicorn main:app -b 127.0.0.1:8000 -w 8 -k uvicorn.workers.UvicornWorker --reload > api.log 2>&1 &
-
-MCP服务器系统
