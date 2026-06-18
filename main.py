@@ -167,7 +167,7 @@ app.routes.append(Route("/api/mcp/sse", endpoint=mcp_sse_endpoint, methods=["GET
 app.routes.append(Route("/api/mcp/messages", endpoint=mcp_messages_endpoint, methods=["POST"]))
 
 @app.get("/api/about")
-async def root() -> dict:
+async def root(request: Request) -> dict:
     """获取应用基本信息。
 
     功能:
