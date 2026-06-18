@@ -81,8 +81,12 @@ def sequence_by_interval(
         description="Genomic interval, e.g. Chr1A_Abo:200-500 or chr1A:100-1000. "
                     "See https://wheatomics.sdau.edu.cn/doc/getsequence_search.txt for the full list of genome-specific chromosome naming conventions."),
     database: str = Query(...,
-        description="BLAST database name (e.g. Fielder_chromosomes, Chinese_Spring_v2.1_chromosomes). "
-                    "Use GET /api/blast/databases?program=blastn to list available genome databases."),
+        description="BLAST database name. For genome-wide queries use the aggregated databases:\n"
+                    "  - all_genomes   (genomic sequences, recommended for interval queries)\n"
+                    "  - all_gene      (gene CDS)\n"
+                    "  - all_protein   (protein)\n"
+                    "Or use a genome-specific database like Fielder_chromosomes, Chinese_Spring_v2.1_chromosomes.\n"
+                    "See GET /api/blast/databases?program=blastn for the full list."),
 ) -> dict:
     """Get genomic FASTA sequence by chromosome interval.
 
