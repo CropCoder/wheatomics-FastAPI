@@ -15,50 +15,6 @@ WheatOmics 是全球小麦多组学数据整合分析平台（[wheatomics.sdau.e
 - 自动生成的交互式 API 文档（Swagger / ReDoc）
 - MCP 协议支持，可直接对接大语言模型
 
-## 技术栈
-
-| 层级 | 技术 |
-|------|------|
-| Web 框架 | FastAPI |
-| ASGI 服务器 | Uvicorn / Gunicorn + Uvicorn Workers |
-| 数据库 | MySQL（多库） |
-| 数据校验 | Pydantic v2 |
-| AI 集成 | MCP (Model Context Protocol) |
-| 部署 | Linux + systemd / nohup |
-
-## 项目结构
-
-```
-wheatomics-FastAPI/
-├── main.py                      # 应用入口，中间件，MCP 端点注册
-├── app/
-│   ├── api/routers/             # API 路由层
-│   │   ├── gene.py              # 基因搜索、详情、提交与更新
-│   │   ├── expression.py        # 基因表达数据查询
-│   │   ├── network.py           # 共表达网络 & PPI 互作网络
-│   │   ├── comparative.py       # 比较基因组学 & ID 转换
-│   │   ├── sequence.py          # 序列获取 & BLAST 预计算结果
-│   │   ├── literature.py        # 文献标签与检索
-│   │   └── tasks.py             # 异步任务（SNP 引物设计、共线性图）
-│   ├── core/
-│   │   ├── config.py            # 应用配置（环境变量驱动）
-│   │   ├── security.py          # 参数校验与白名单
-│   │   ├── exceptions.py        # 自定义异常
-│   │   └── response.py          # 统一响应格式
-│   ├── db/
-│   │   └── mysql.py             # MySQL 连接管理（ context manager ）
-│   ├── schemas/                 # Pydantic 数据模型
-│   ├── services/                # 业务逻辑层
-│   │   ├── command_runner.py    # 外部命令行调用封装
-│   │   ├── expression_catalog.py # 表达数据目录管理
-│   │   ├── files.py             # 临时文件与打包
-│   │   └── legacy_parsers.py    # 兼容旧版数据格式解析
-│   └── mcp/
-│       └── sequence_tools.py    # MCP 工具定义（序列查询等）
-├── cgi-py-RawScript/            # 原始 CGI 脚本（遗留参考）
-└── README.md
-```
-
 ## 快速开始
 
 ### 环境要求
@@ -137,24 +93,6 @@ nohup gunicorn main:app \
 - **消息端点**: `POST /api/mcp/messages`
 
 MCP 工具目前提供序列查询等功能，可通过配置 MCP 客户端连接使用。
-
-## 配置说明
-
-所有配置通过环境变量注入，详见 `app/core/config.py`：
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `APP_NAME` | 应用名称 | WheatOmics API for Ai Agent - FastAPI |
-| `APP_VERSION` | 版本号 | 2.0 |
-| `API_PREFIX` | API 路由前缀 | /api |
-| `DEBUG` | 调试模式 | true |
-| `DB_HOST` | 数据库地址 | localhost |
-| `DB_PORT` | 数据库端口 | 3306 |
-| `DB_USER` | 数据库用户 | wheatomics_user |
-| `DB_PASSWORD` | 数据库密码 | - |
-| `DB_*` | 各业务数据库名 | 见 config.py |
-| `BLAST_DB_PATH` | BLAST 数据库路径 | /var/www/html/getfasta/blastdb |
-| `FASTA_DB_PATH` | FASTA 序列文件路径 | /data/fasta |
 
 ## 遗留系统说明
 
