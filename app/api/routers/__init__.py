@@ -7,3 +7,4 @@ from .literature import router as literature
 from .network import router as network
 from .sequence import router as sequence
 from .tasks import router as tasks
+from .blast import router as blast

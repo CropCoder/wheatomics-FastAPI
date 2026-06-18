@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     WEBHOOK_SECRET: str = "Zjw_Super_Secret_Token_2026"
     AUTO_PULL_SCRIPT: Path = Path("/var/www/FastAPI_backend_Port8000/auto_pull.sh")
 
+    BLAST_RESULT_DIR: Path = Path("/var/www/html/blast_results")
+    BLAST_RESULT_BASE_URL: str = "/blast_results"
+    BLAST_RESULT_EXPIRE_DAYS: int = 7
+    BLAST_SITE_BASE_URL: str = "https://wheatomics.sdau.edu.cn"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
