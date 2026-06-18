@@ -11,10 +11,11 @@ from app.db.mysql import mysql_cursor
 from app.schemas.network import CoexpressionPair, NetworkEdge, NetworkNode, PPIInteraction
 from app.services.legacy_parsers import normalize_text
 
-router = APIRouter(tags=["Networks"])
+coexpression_router = APIRouter(tags=["Coexpression"])
+ppi_router = APIRouter(tags=["PPI"])
 
 
-@router.get("/coexpression/databases")
+@coexpression_router.get("/coexpression/databases")
 def list_coexpression_databases() -> dict:
     """获取可用的共表达数据库列表。
 
@@ -43,7 +44,7 @@ def list_coexpression_databases() -> dict:
     return ok([{"id": key, "description": value} for key, value in COEXPRESSION_TABLES.items()])
 
 
-@router.get("/coexpression/query")
+@coexpression_router.get("/coexpression/query")
 def query_coexpression(
     gene_ids: str = Query(...),
     database: str = Query("CO_PRJEB25639"),
@@ -130,7 +131,7 @@ def query_coexpression(
     return ok({"database": database, "pairs": [pair.model_dump() for pair in pairs]})
 
 
-@router.get("/coexpression/network")
+@coexpression_router.get("/coexpression/network")
 def coexpression_network(
     gene_ids: str = Query(...),
     database: str = Query("CO_PRJEB25639"),
@@ -197,7 +198,7 @@ def coexpression_network(
     return ok({"nodes": [node.model_dump() for node in nodes.values()], "edges": [edge.model_dump() for edge in edges.values()]})
 
 
-@router.get("/ppi/query")
+@ppi_router.get("/ppi/query")
 def query_ppi(
     gene_ids: str = Query(...),
     table: str = Query("PPI_result"),

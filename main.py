@@ -12,7 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routers import comparative, expression, gene, literature, network, sequence, tasks, blast
+from app.api.routers import comparative, expression, gene, literature, coexpression, ppi, sequence, tasks, blast
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 
@@ -121,7 +121,8 @@ async def unhandled_exception(_: Request, exc: Exception) -> JSONResponse:
 
 for router in [
     expression,
-    network,
+    coexpression,
+    ppi,
     gene,
     comparative,
     sequence,
