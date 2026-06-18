@@ -206,12 +206,16 @@ def check_db_exists(db_name: str, program: str) -> bool:
     return any(os.path.exists(full + ext) for ext in exts)
 
 
-def _fetch_full_sequences(sids: set, db_names: list) -> dict:
+def _fetch_full_sequences(sids: set, db_names: list, program: str = "") -> dict:
     """通过 blastdbcmd 从 BLAST 数据库提取全长序列。
+
+    优先从聚合库（all_protein / all_gene / all_genomes）查找，
+    若未找到再逐个尝试查询用到的具体数据库。
 
     Args:
         sids: 不重复的 subject ID 集合
         db_names: 查询用到的数据库名列表
+        program: BLAST 程序名，用于确定优先使用哪个聚合库
 
     Returns:
         { subject_id: ">full_fasta_sequence" }
@@ -219,8 +223,19 @@ def _fetch_full_sequences(sids: set, db_names: list) -> dict:
     result = {}
     if not os.path.exists(BLASTDBCMD):
         return result
+
+    # 构建优先级搜索列表：聚合库优先 -> 具体库
+    agg_dbs = []
+    if program:
+        db_type = _program_db_type(program)
+        if db_type == "prot":
+            agg_dbs = ["all_protein"]
+        else:
+            agg_dbs = ["all_gene", "all_genomes"]
+    search_order = agg_dbs + [d for d in db_names if d not in agg_dbs]
+
     for sid in sids:
-        for db in db_names:
+        for db in search_order:
             db_path = os.path.join(DB_DIR, db)
             try:
                 r = subprocess.run(
@@ -485,7 +500,7 @@ async def blast_search(
     # ---- 提取全长序列（按唯一 subject_id 去重） ----
     if hits:
         unique_sids = set(h["subject_id"] for h in hits)
-        seq_map = _fetch_full_sequences(unique_sids, dbs)
+        seq_map = _fetch_full_sequences(unique_sids, dbs, program)
         for h in hits:
             h["subject_full_sequence"] = seq_map.get(h["subject_id"], "")
 
