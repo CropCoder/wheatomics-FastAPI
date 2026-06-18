@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
+import subprocess
 import time
 
-from fastapi import FastAPI, Request
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -194,6 +195,41 @@ async def health() -> dict:
     """
 
     return {"status": "Wheatomics API running, powered by Server.(Connect Email:zhaojiwen@yzwlab.cn)"}
+
+
+def run_git_pull():
+    """在后台执行 auto_pull.sh 脚本，拉取最新代码。"""
+
+    try:
+        result = subprocess.run(
+            ["/bin/bash", str(settings.AUTO_PULL_SCRIPT)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        logger.info("Git Pull 成功: %s", result.stdout)
+    except subprocess.CalledProcessError as e:
+        logger.error("Git Pull 失败: %s", e.stderr)
+
+
+@app.post("/api/webhook/gitee")
+async def gitee_webhook(request: Request, background_tasks: BackgroundTasks):
+    """处理 Gitee Webhook 推送。
+
+    验证 X-Gitee-Token 后，将 git pull 放入后台任务异步执行，
+    立即返回响应以避免 Gitee 端请求超时。
+    """
+
+    token = request.headers.get("X-Gitee-Token")
+    if token != settings.WEBHOOK_SECRET:
+        raise HTTPException(status_code=403, detail="身份验证失败：无效的 Webhook Token")
+
+    payload = await request.json()
+    logger.info("收到 Webhook 推送: ref=%s", payload.get("ref", "unknown"))
+
+    background_tasks.add_task(run_git_pull)
+
+    return {"status": "success", "message": "Webhook 已接收，代码拉取任务已在后台启动"}
 
 
 

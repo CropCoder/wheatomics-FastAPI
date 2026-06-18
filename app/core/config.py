@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     CGI_SUBMISSION_PASSWORD: str = Field(default="wheatomics")
     REQUEST_TIMEOUT_SECONDS: int = 120
 
+    WEBHOOK_SECRET: str = "Zjw_Super_Secret_Token_2026"
+    AUTO_PULL_SCRIPT: Path = Path("/var/www/FastAPI_backend_Port8000/auto_pull.sh")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
