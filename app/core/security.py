@@ -110,7 +110,7 @@ SYNTENY_STYLE_VALUES = {"line", "curve"}
 SYNTENY_SHADE_STYLES = {"curve", "line"}
 
 GENE_ID_PATTERN = re.compile(r"^[A-Za-z0-9_.:-]+$")
-REGION_PATTERN = re.compile(r"^[A-Za-z0-9_]+:\d+(?:-|\.\.)\d+$")
+REGION_PATTERN = re.compile(r"^[A-Za-z0-9_.]+:\d+(?:-|\.\.)\d+$")
 
 
 def ensure_allowed_table(table_name: str, allowlist: Iterable[str], label: str = "table") -> str:
@@ -134,6 +134,6 @@ def ensure_interval_like(value: str) -> str:
 
     if not REGION_PATTERN.match(value):
         raise ValidationFailure(
-            "Invalid region format. Expected values like chr1A:10-100 or chr1A:10..100."
+            "Invalid region format. Expected e.g. Chr1A_Abo:200-500 or chr1A:10-100. See https://wheatomics.sdau.edu.cn/doc/getsequence_search.txt"
         )
     return value
