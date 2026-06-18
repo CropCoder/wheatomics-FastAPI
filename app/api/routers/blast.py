@@ -51,8 +51,15 @@ def _find_blast_prog(name: str) -> str:
     return f"{BLAST_BIN}/{name}"  # 默认
 
 
-BLASTP = _find_blast_prog("blastp")
-BLASTN = _find_blast_prog("blastn")
+BLAST_PROGRAMS = {
+    p: _find_blast_prog(p)
+    for p in ["blastp", "blastn", "blastx", "tblastn", "tblastx"]
+}
+BLASTP = BLAST_PROGRAMS["blastp"]
+BLASTN = BLAST_PROGRAMS["blastn"]
+BLASTX = BLAST_PROGRAMS["blastx"]
+TBLASTN = BLAST_PROGRAMS["tblastn"]
+TBLASTX = BLAST_PROGRAMS["tblastx"]
 BLASTDBCMD = _find_blast_prog("blastdbcmd")
 
 # === BLAST 数据库分类体系 ===
@@ -159,6 +166,11 @@ FIELDS = ["query_id", "subject_id", "pident", "alignment_length",
           "s_start", "s_end", "evalue", "bitscore"]
 
 
+def _program_db_type(program: str) -> str:
+    """返回程序对应的数据库类型: prot（蛋白）或 nuc（核酸）"""
+    return "prot" if program in ("blastp", "blastx", "tblastx") else "nuc"
+
+
 def list_dbs(program: str) -> List[str]:
     """列出可用的 BLAST 数据库"""
     if not os.path.isdir(DB_DIR):
@@ -169,7 +181,7 @@ def list_dbs(program: str) -> List[str]:
     #   .nin/.nhr/.nsq = 核酸核心索引 | .nal = 核酸别名
     prot_exts = (".pin", ".phr", ".psq", ".pal")
     nuc_exts = (".nin", ".nhr", ".nsq", ".nal")
-    exts = prot_exts if program == "blastp" else nuc_exts
+    exts = prot_exts if _program_db_type(program) == "prot" else nuc_exts
     dbs = {}
     for f in os.listdir(DB_DIR):
         for ext in exts:
@@ -181,7 +193,7 @@ def list_dbs(program: str) -> List[str]:
 
 def check_db_exists(db_name: str, program: str) -> bool:
     """检查数据库是否有 BLAST 索引"""
-    exts = (".pin", ".phr", ".psq", ".pal") if program == "blastp" else (".nin", ".nhr", ".nsq", ".nal")
+    exts = (".pin", ".phr", ".psq", ".pal") if _program_db_type(program) == "prot" else (".nin", ".nhr", ".nsq", ".nal")
     full = os.path.join(DB_DIR, db_name)
     return any(os.path.exists(full + ext) for ext in exts)
 
@@ -352,7 +364,7 @@ def _generate_result_html(
 @router.post("/search")
 async def blast_search(
     program: str = Form(default="blastp",
-        description="blastp（蛋白）/ blastn（核酸）"),
+        description="blastp（蛋白→蛋白库）/ blastn（核酸→核酸库）/ blastx（核酸翻译→蛋白库）/ tblastn（蛋白→核酸库翻译）/ tblastx（核酸翻译→蛋白库翻译）"),
     database: str = Form(default=...,
         description="数据库名，多个用逗号分隔，如 Fielder_protein,AK58_protein.fasta"),
     query: str = Form(default=...,
@@ -387,8 +399,9 @@ async def blast_search(
         --data-urlencode "query=>seq\\nMSSSTG..."
     """
     # ---- 校验 ----
-    if program not in ("blastp", "blastn"):
-        raise HTTPException(400, f"不支持的 BLAST 程序: {program}")
+    VALID_PROGRAMS = {"blastp", "blastn", "blastx", "tblastn", "tblastx"}
+    if program not in VALID_PROGRAMS:
+        raise HTTPException(400, f"不支持的 BLAST 程序: {program}，可选: {sorted(VALID_PROGRAMS)}")
     query = query.strip()
     if not query:
         raise HTTPException(400, "查询序列不能为空")
@@ -398,7 +411,8 @@ async def blast_search(
     if not query.startswith(">"):
         query = ">query\n" + query
 
-    blast_path = BLASTP if program == "blastp" else BLASTN
+    BLAST_PROG_MAP = {"blastp": BLASTP, "blastn": BLASTN, "blastx": BLASTX, "tblastn": TBLASTN, "tblastx": TBLASTX}
+    blast_path = BLAST_PROG_MAP.get(program, BLASTP)
     if not os.path.exists(blast_path):
         raise HTTPException(500, f"BLAST 程序不存在: {blast_path}")
 
@@ -413,15 +427,7 @@ async def blast_search(
             f"以下数据库在 {DB_DIR} 中找不到索引: {missing}")
 
     # ---- 构建 blast 命令 ----
-    program_name = os.path.basename(blast_path)
-    cmd = []
-    if program_name == "blastall":
-        cmd += [blast_path, "-p", program]
-    else:
-        if program in ("blastp", "blastn"):
-            cmd += [blast_path, "-task", program]
-        else:
-            cmd += [blast_path]
+    cmd = [blast_path, "-task", program]
 
     cmd += [
         "-db", " ".join(os.path.join(DB_DIR, d) for d in dbs),
@@ -516,11 +522,12 @@ async def blast_search(
 
 @router.get("/databases")
 async def list_databases(
-    program: Optional[str] = Query(None, description="blastp/blastn/留空=全部")
+    program: Optional[str] = Query(None, description="blastp/blastn/blastx/tblastn/tblastx/留空=全部")
 ):
     """列出可用数据库（按蛋白/核酸分组）"""
-    prot_dbs = list_dbs("blastp") if program in (None, "blastp") else []
-    nuc_dbs = list_dbs("blastn") if program in (None, "blastn") else []
+    db_type = _program_db_type(program) if program else None
+    prot_dbs = list_dbs("blastp") if db_type in (None, "prot") else []
+    nuc_dbs = list_dbs("blastn") if db_type in (None, "nuc") else []
     # ---- 按分类组织（供 AI agent 选择数据库时参考） ----
     all_dbs = prot_dbs + nuc_dbs
     cat_map: dict[str, dict] = {}
@@ -563,6 +570,9 @@ async def blast_status():
         "success": True,
         "blastp": check(BLASTP),
         "blastn": check(BLASTN),
+        "blastx": check(BLASTX),
+        "tblastn": check(TBLASTN),
+        "tblastx": check(TBLASTX),
         "blastdbcmd": check(BLASTDBCMD),
         "db_dir": {"path": DB_DIR, "exists": os.path.isdir(DB_DIR)},
         "protein_dbs": list_dbs("blastp"),

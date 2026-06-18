@@ -118,7 +118,7 @@ curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `program` | string | `blastp` | `blastp`（蛋白）或 `blastn`（核酸） |
+| `program` | string | `blastp` | `blastp`（蛋白→蛋白库） / `blastn`（核酸→核酸库） / `blastx`（核酸翻译→蛋白库） / `tblastn`（蛋白→核酸库翻译） / `tblastx`（核酸翻译→蛋白库翻译） |
 | `database` | string | **必填** | 数据库名，多个用逗号分隔 |
 | `query` | string | **必填** | FASTA 格式查询序列（最长 100K 字符） |
 | `evalue` | float | `10.0` | E-value 阈值 |
