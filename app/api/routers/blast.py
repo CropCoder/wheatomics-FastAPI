@@ -64,42 +64,83 @@ DB_CLASSIFICATION = [
         "label": "Hexaploid wheat genome",
         "description": "Common wheat (Triticum aestivum)",
         "keywords": [
-            "fielder", "ak58", "cs_", "chinese spring", "zang1817",
-            "arinagrfor", "jagger", "julius", "lancer", "landmark",
-            "mace", "norin61", "stanley", "mattis", "renan", "kariega",
-            "attraktion", "kenong", "kn9204", "spelta", "cadenza",
-            "claire", "robigus", "weebill", "longreach", "cdc_"
+            # Wheat_IWGSC_RefSeq, Chinese Spring (all versions)
+            "iwgsc", "chinese_spring", "cs-iaas", "cs-cau",
+            # Common wheat cultivars
+            "fielder", "zang1817", "arinagrfor", "jagger", "julius",
+            "longreach_lancer", "cdc_landmark", "mace", "norin61",
+            "cdc_stanley", "sy_mattis", "renan", "kariega",
+            "attraktion", "kn9204", "ak58", "chuanmai",
+            "cwi86942", "triticum_spelta",
+            # Chinese cultivars (two-letter/short codes)
+            "jm22", "jm47", "ym158", "xy6", "xn6028", "s4185",
+            "nc4", "mzm", "kf11", "hd6172", "cm42", "bj8",
+            "amn", "abo", "zm16", "zm22", "zm366",
+            "multiovary", "z8425b", "ym33",
+            "jin50", "jm44", "sumai3", "nc99bgtag11",
+            "triticum_aestivum_alchemy", "other_common_wheat",
         ],
     },
     {
         "id": "tetraploid_wheat",
         "label": "Tetraploid wheat genome",
         "description": "Durum wheat, wild emmer, domesticated emmer (Triticum turgidum, Triticum dicoccoides)",
-        "keywords": ["durum", "emmer", "tetraploid", "zan"],
+        "keywords": [
+            "wild_emmer", "durum", "langdon",
+            "triticum_timopheevii", "triticum_turgidum",
+            "kronos", "chili.", "mahmoudi", "pi192051", "pi94760",
+        ],
     },
     {
         "id": "diploid_wheat",
         "label": "Diploid wheat genome and wild relatives",
-        "description": "Aegilops tauschii, Triticum urartu, Triticum monococcum, and other Aegilops/Sitopsis species",
+        "description": "Aegilops tauschii, Triticum urartu, Triticum monococcum",
         "keywords": [
-            "tauschii", "urartu", "monococcum", "aegilops", "speltoides",
-            "longissima", "sharonensis", "bicornis", "searsii",
+            "urartu", "monococcum", "ta299", "ta10622",
+            "tauschii",  # catches all Aegilops tauschii accessions
+            "other_wheat_progenitor",
+        ],
+    },
+    {
+        "id": "other_triticeae",
+        "label": "Other Triticeae genome",
+        "description": "Rye (Secale cereale), Thinopyrum, Elymus, non-tauschii Aegilops species, Dasypyrum, Leymus, Roegneria",
+        "keywords": [
+            "rye_", "thinopyrum_", "elymus_",
+            "ae.",  # matches ae.speltoides, ae.longissima, etc. (NOT Ae_tauschii which uses underscore)
+            "aegilops_mutica", "aegilops_umbellulata", "aegilops_comosa",
+            "aegilops_geniculata", "aegilops_ventricosa",
+            "aecomosa", "dasypyrum_", "roegneria_", "leymus_",
+            "rm271",
         ],
     },
     {
         "id": "barley",
         "label": "Barley genome",
-        "description": "Barley (Hordeum vulgare) - Morex, Golden Promise, Qingke",
-        "keywords": ["barley", "morex", "hordeum", "qingke", "golden promise"],
-    },
-    {
-        "id": "other_triticeae",
-        "label": "Other Triticeae genome",
-        "description": "Rye (Secale cereale), Thinopyrum elongatum, and other Triticeae species",
-        "keywords": ["rye", "secale", "weining", "thinopyrum", "elongatum", "lo7"],
+        "description": "Barley (Hordeum vulgare) - Morex, Golden Promise, Qingke, and wild accessions",
+        "keywords": [
+            "barley.", "barley_", "hordeum_", "morex", "qingke",
+            "golden_promise", "golden_melon", "barke_v2",
+            # Barley accession patterns (FT, HID, HOR, WBDC, ZDM series)
+            "ft11", "ft67", "ft144", "ft628", "ft262", "ft286", "ft333", "ft880",
+            "hid055", "hid101", "hid249", "hid357", "hid380",
+            "hor_", "wbdc", "zdm",
+            # Named barley cultivars
+            "10tj18", "aizu_6", "akashinriki", "bonus", "bowman",
+            "chikurin", "foma", "hockett", "igri", "maximus",
+            "oun333", "rgt_planet",
+        ],
     },
 ]
 
+
+def _classify_db(db_name: str) -> str:
+    """根据数据库名判断所属分类 ID"""
+    name_lower = db_name.lower()
+    for cat in DB_CLASSIFICATION:
+        if any(kw in name_lower for kw in cat["keywords"]):
+            return cat["id"]
+    return "other"
 
 def _classify_db(db_name: str) -> str:
     """根据数据库名判断所属分类 ID"""
