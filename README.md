@@ -190,23 +190,62 @@ curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \
 curl "https://wheatomics.sdau.edu.cn/api/blast/databases?program=blastp"
 ```
 
-返回按蛋白/核酸分组的数据库列表：
+返回按蛋白/核酸分组的数据库列表，同时提供按**基因组分类**的结构化数据，供 AI agent 参考：
 
 ```json
 {
   "success": true,
   "program": "blastp",
   "protein": {
-    "count": 12,
+    "count": 30,
     "databases": ["Fielder_protein", "AK58_protein.fasta", ...]
   },
   "nucleotide": {
-    "count": 5,
+    "count": 12,
     "databases": ["CS_v2.1_cds", ...]
   },
-  "total": 17
+  "total": 42,
+  "categories": [
+    {
+      "id": "hexaploid_wheat",
+      "label": "Hexaploid wheat genome",
+      "description": "Common wheat (Triticum aestivum)",
+      "count": 18,
+      "databases": ["Fielder_protein", "AK58_protein.fasta", "Jagger_protein", ...]
+    },
+    {
+      "id": "tetraploid_wheat",
+      "label": "Tetraploid wheat genome",
+      "description": "Durum wheat, wild emmer, domesticated emmer",
+      "count": 3,
+      "databases": ["durum_protein", "wild_emmer_protein", ...]
+    },
+    {
+      "id": "diploid_wheat",
+      "label": "Diploid wheat genome and wild relatives",
+      "description": "Aegilops tauschii, Triticum urartu, Triticum monococcum, and other Aegilops species",
+      "count": 15,
+      "databases": ["tauschii_protein", "urartu_protein", ...]
+    },
+    {
+      "id": "barley",
+      "label": "Barley genome",
+      "description": "Barley (Hordeum vulgare) - Morex, Golden Promise, Qingke",
+      "count": 3,
+      "databases": ["barley_morex_protein", ...]
+    },
+    {
+      "id": "other_triticeae",
+      "label": "Other Triticeae genome",
+      "description": "Rye (Secale cereale), Thinopyrum elongatum",
+      "count": 3,
+      "databases": ["rye_protein", ...]
+    }
+  ]
 }
 ```
+
+分类基于数据库名关键词自动匹配，未匹配的数据库归入 `Other / Unclassified`。
 
 ### 检查 BLAST 环境
 

@@ -54,6 +54,61 @@ def _find_blast_prog(name: str) -> str:
 BLASTP = _find_blast_prog("blastp")
 BLASTN = _find_blast_prog("blastn")
 BLASTDBCMD = _find_blast_prog("blastdbcmd")
+
+# === BLAST 数据库分类体系 ===
+# 与 wheatomics.sdau.edu.cn 前端页面一致，按基因组倍性/物种分类
+# 通过数据库名关键词匹配自动归类，未匹配的归入 "Other"
+DB_CLASSIFICATION = [
+    {
+        "id": "hexaploid_wheat",
+        "label": "Hexaploid wheat genome",
+        "description": "Common wheat (Triticum aestivum)",
+        "keywords": [
+            "fielder", "ak58", "cs_", "chinese spring", "zang1817",
+            "arinagrfor", "jagger", "julius", "lancer", "landmark",
+            "mace", "norin61", "stanley", "mattis", "renan", "kariega",
+            "attraktion", "kenong", "kn9204", "spelta", "cadenza",
+            "claire", "robigus", "weebill", "longreach", "cdc_"
+        ],
+    },
+    {
+        "id": "tetraploid_wheat",
+        "label": "Tetraploid wheat genome",
+        "description": "Durum wheat, wild emmer, domesticated emmer (Triticum turgidum, Triticum dicoccoides)",
+        "keywords": ["durum", "emmer", "tetraploid", "zan"],
+    },
+    {
+        "id": "diploid_wheat",
+        "label": "Diploid wheat genome and wild relatives",
+        "description": "Aegilops tauschii, Triticum urartu, Triticum monococcum, and other Aegilops/Sitopsis species",
+        "keywords": [
+            "tauschii", "urartu", "monococcum", "aegilops", "speltoides",
+            "longissima", "sharonensis", "bicornis", "searsii",
+        ],
+    },
+    {
+        "id": "barley",
+        "label": "Barley genome",
+        "description": "Barley (Hordeum vulgare) - Morex, Golden Promise, Qingke",
+        "keywords": ["barley", "morex", "hordeum", "qingke", "golden promise"],
+    },
+    {
+        "id": "other_triticeae",
+        "label": "Other Triticeae genome",
+        "description": "Rye (Secale cereale), Thinopyrum elongatum, and other Triticeae species",
+        "keywords": ["rye", "secale", "weining", "thinopyrum", "elongatum", "lo7"],
+    },
+]
+
+
+def _classify_db(db_name: str) -> str:
+    """根据数据库名判断所属分类 ID"""
+    name_lower = db_name.lower()
+    for cat in DB_CLASSIFICATION:
+        if any(kw in name_lower for kw in cat["keywords"]):
+            return cat["id"]
+    return "other"
+
 DB_DIR = "/var/www/html/getfasta/blastdb/"  # 和 CGI 的 DbPath 一致
 
 # blast 输出格式（outfmt 6 的列）
@@ -425,6 +480,19 @@ async def list_databases(
     """列出可用数据库（按蛋白/核酸分组）"""
     prot_dbs = list_dbs("blastp") if program in (None, "blastp") else []
     nuc_dbs = list_dbs("blastn") if program in (None, "blastn") else []
+    # ---- 按分类组织（供 AI agent 选择数据库时参考） ----
+    all_dbs = prot_dbs + nuc_dbs
+    cat_map: dict[str, dict] = {}
+    for cat in DB_CLASSIFICATION:
+        cat_dbs = [d for d in all_dbs if _classify_db(d) == cat["id"]]
+        cat_map[cat["id"]] = {"label": cat["label"], "description": cat["description"], "count": len(cat_dbs), "databases": cat_dbs}
+    
+    # 未匹配的归入 Other
+    other_dbs = [d for d in all_dbs if _classify_db(d) == "other"]
+    categories = [cat_map[c["id"]] for c in DB_CLASSIFICATION if cat_map[c["id"]]["count"] > 0]
+    if other_dbs:
+        categories.append({"id": "other", "label": "Other / Unclassified", "description": "Databases that could not be automatically classified", "count": len(other_dbs), "databases": other_dbs})
+
     return {
         "success": True,
         "db_dir": DB_DIR,
@@ -432,6 +500,7 @@ async def list_databases(
         "protein": {"count": len(prot_dbs), "databases": prot_dbs},
         "nucleotide": {"count": len(nuc_dbs), "databases": nuc_dbs},
         "total": len(prot_dbs) + len(nuc_dbs),
+        "categories": categories,
     }
 
 
