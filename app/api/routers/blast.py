@@ -24,7 +24,7 @@ from typing import Optional, List
 
 from app.core.config import settings
 
-router = APIRouter(prefix="/api/blast", tags=["BLAST"])
+router = APIRouter(prefix="/blast", tags=["BLAST"])
 
 # === 和 CGI 脚本 get_fasta_bedtools.py 完全一致的路径 ===
 # === 路径检测（和 blast2.pl 逻辑一致） ===
