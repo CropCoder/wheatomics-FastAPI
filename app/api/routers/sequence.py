@@ -78,7 +78,7 @@ def sequence_by_gene(
 @router.get("/sequence/by-interval")
 def sequence_by_interval(
     region: str = Query(...,
-        description="Genomic interval, e.g. Chr1A_Abo:200-500 or chr1A:100-1000. "
+        description="Genomic interval, e.g. Chr1A_Abo:200-500. "
                     "See https://wheatomics.sdau.edu.cn/doc/getsequence_search.txt for the full list of genome-specific chromosome naming conventions."),
     database: str = Query(...,
         description="BLAST database name. For genome-wide queries use the aggregated databases:\n"
