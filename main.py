@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import subprocess
 import time
+from datetime import datetime, timezone
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -191,7 +192,9 @@ async def root() -> dict:
             "name": "WheatOmics",
             "version": "1.0.0",
             "docs": "/api/docs",
-            "api_prefix": "/api"
+            "api_prefix": "/api",
+            "server_time": "2025-06-18T10:30:00+00:00",
+            "client_ip": "192.168.1.1"
           }
     """
 
@@ -199,7 +202,9 @@ async def root() -> dict:
         "name": settings.APP_NAME,
         "version": settings.APP_VERSION,
         "docs": "/api/docs",
-        "api_prefix": settings.API_PREFIX
+        "api_prefix": settings.API_PREFIX,
+        "server_time": datetime.now(timezone.utc).isoformat(),
+        "client_ip": request.client.host if request.client else None,
     }
 
 
