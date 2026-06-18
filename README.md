@@ -4,6 +4,10 @@
 
 # WheatOmics Backend
 
+> **版本**: v2.0 | **更新日期**: 2025-05-22
+>
+> **重要提示**: 本项目为 WheatOmics 后端重构版本，API 接口与原 CGI 版本不完全兼容。如果你正在使用旧版 API，请参考 [遗留系统说明](#遗留系统说明) 并逐步迁移。生产环境部署前请务必检查 `app/core/config.py` 中的数据库连接与路径配置。
+
 WheatOmics 是全球小麦多组学数据整合分析平台（[wheatomics.sdau.edu.cn](https://wheatomics.sdau.edu.cn)）的后端服务，基于 FastAPI 构建，为前端提供 RESTful API，同时内置 MCP（Model Context Protocol）服务器以支持 AI Agent 的智能数据访问。
 
 ## 项目背景
