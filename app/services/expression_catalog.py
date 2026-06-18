@@ -173,14 +173,67 @@ PROJECT_CATEGORIES: dict[str, list[str]] = {
 }
 
 
-def list_projects() -> list[dict[str, object]]:
-    """Return normalized project metadata."""
 
-    return [
+EXPRESSION_GROUPS: list[dict] = [
+    {
+        "name": "wheat population",
+        "projects": [
+            "PRJEB51827_tbl", "tpm327_tbl", "CRA020462_tbl",
+            "PRJCA004969_tbl", "PRJNA348655_tbl", "PRJNA509214_tbl",
+            "PRJNA863398_tbl", "LAMC_tbl",
+        ],
+    },
+    {
+        "name": "wheat developmental tissues",
+        "projects": [
+            "PRJEB25639_tbl", "PRJEB5314_paired_tbl", "PRJEB5314_single_tbl",
+            "PRJEB5135_tbl", "PRJNA485741_tbl", "PRJEB7795_tbl",
+            "PRJEB5029_tbl", "PRJNA297977_tbl", "PRJNA325489_tbl",
+        ],
+    },
+    {
+        "name": "wheat biotic stresses",
+        "projects": [
+            "PRJNA1037698_tbl", "PRJNA613349_tbl", "PRJEB24686_tbl",
+            "PRJNA327013_tbl", "PRJNA263755_tbl", "PRJEB12358_tbl",
+            "PRJNA273659_tbl", "PRJNA297822_tbl", "PRJNA307989_tbl",
+            "PRJEB21835_tbl", "PRJEB21874_tbl", "PRJNA327829_tbl",
+            "PRJEB23056_tbl", "PRJNA243835_powdery_tbl", "PRJEB8798_tbl",
+            "PRJNA243835_stripe_tbl", "PRJEB13569_tbl", "PRJNA307228_tbl",
+            "PRJNA325136_tbl", "PRJNA328385_tbl",
+        ],
+    },
+    {
+        "name": "wheat abiotic stresses",
+        "projects": [
+            "PRJDB2496_tbl", "PRJEB8762_tbl", "PRJNA253535_tbl",
+            "PRJNA257938_tbl", "PRJNA358808_tbl", "PRJNA171754_tbl",
+            "PRJNA427246_tbl", "PRJNA293629_tbl", "PRJNA487923_tbl",
+            "PRJNA306536_tbl", "Wangmeng_NR_tbl",
+        ],
+    },
+    {
+        "name": "Others",
+        "projects": [
+            "PRJNA362497_tbl", "PRJNA322418_tbl", "PRJEB25586_tbl",
+            "PRJNA353130_tbl", "DMSO_GA_JA_tpm_mean_tbl",
+            "ABA_JA_6BA_DMSO3h_mean_tbl", "PRJNA396738_tbl",
+            "PRJNA341486_tbl", "PRJNA471426_tbl", "PRJEB22854_tbl",
+            "PRJNA307237_tbl", "PRJNA477934_tbl",
+        ],
+    },
+]
+
+def list_projects() -> dict:
+    """Return normalized project metadata with grouping."""
+
+    projects = sorted(EXPRESSION_PROJECTS.items())
+    flat = [
         {
-            "id": project_id,
-            "description": metadata["description"],
-            "categories": PROJECT_CATEGORIES.get(project_id, []),
+            "id": pid,
+            "description": meta["description"],
+            "categories": PROJECT_CATEGORIES.get(pid, []),
         }
-        for project_id, metadata in sorted(EXPRESSION_PROJECTS.items())
+        for pid, meta in projects
     ]
+    return {"projects": flat, "groups": EXPRESSION_GROUPS}
