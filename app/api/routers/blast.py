@@ -67,6 +67,14 @@ BLASTDBCMD = _find_blast_prog("blastdbcmd")
 # 通过数据库名关键词匹配自动归类，未匹配的归入 "Other"
 DB_CLASSIFICATION = [
     {
+        "id": "aggregated",
+        "label": "All-in-one databases",
+        "description": "Aggregated databases spanning multiple genomes",
+        "keywords": [
+            "all_gene", "all_protein", "all_genomes", "all_",
+        ],
+    },
+    {
         "id": "hexaploid_wheat",
         "label": "Hexaploid wheat genome",
         "description": "Common wheat (Triticum aestivum)",
