@@ -35,16 +35,44 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,   
     description=(
-        "WheatOmics 小麦多组学数据平台后端 API，提供基因搜索、表达谱查询、"
-        "共表达网络、PPI 互作、序列检索、比较基因组学及文献查询等数据服务。"
+        "<h2>概述</h2>"
+        "WheatOmics 是全球小麦多组学数据整合分析平台，涵盖基因组、转录组、"
+        "蛋白互作组及文献等多维度数据。本 API 为平台后端服务，采用 RESTful 设计，"
+        "为前端应用与第三方工具提供结构化的数据访问能力。"
         "<br><br>"
-        "<b>使用方法</b>：通过下方各接口分组浏览可用端点，点击 «Try it out» 在线调试；"
-        "也可在 <a href='/api/redoc'>ReDoc</a> 查看完整文档。"
-        "<br>"
-        "生产环境请将请求发送至 <code>https://wheatomics.sdau.edu.cn/api</code>。"
-        "<br>"
-        "MCP 使用说明详见 "
-        "<a href='https://wheatomics.sdau.edu.cn/V2/MCP-ServerUsage.html'>MCP 服务器文档</a>。"
+        "所有接口前缀为 <code>/api</code>，统一返回 JSON 格式："
+        "<pre>{\"success\": true, \"data\": { ... }}</pre>"
+
+        "<h2>模块说明</h2>"
+        "<table>"
+        "<tr><td><b>Genes 基因</b></td><td><code>/api/genes</code></td>"
+        "<td>已知基因搜索与详情、功能注释、新基因在线提交与更新</td></tr>"
+        "<tr><td><b>Expression 表达</b></td><td><code>/api/expression</code></td>"
+        "<td>多物种、多项目的基因表达谱数据查询</td></tr>"
+        "<tr><td><b>Networks 网络</b></td><td><code>/api</code></td>"
+        "<td>共表达网络与 PPI 蛋白互作网络数据检索</td></tr>"
+        "<tr><td><b>Comparative 比较</b></td><td><code>/api</code></td>"
+        "<td>小麦-水稻-拟南芥同源基因映射、共线性区间查询、基因 ID 跨库转换</td></tr>"
+        "<tr><td><b>Sequences 序列</b></td><td><code>/api</code></td>"
+        "<td>基因及区间序列提取、预计算 BLAST 结果检索</td></tr>"
+        "<tr><td><b>Literature 文献</b></td><td><code>/api/literature</code></td>"
+        "<td>文献标签统计与全文检索</td></tr>"
+        "<tr><td><b>Tasks 任务</b></td><td><code>/api/tasks</code></td>"
+        "<td>共线性图生成、SNP 引物设计等异步任务提交与结果获取</td></tr>"
+        "</table>"
+
+        "<h2>使用方法</h2>"
+        "<ul>"
+        "<li>展开下方各接口分组，点击 <b>«Try it out»</b> 填写参数即可在线调试。</li>"
+        "<li>完整的 Schema 定义与响应模型请访问 <a href='/api/redoc'>ReDoc 文档</a>。</li>"
+        "<li>生产环境请将请求发送至 <code>https://wheatomics.sdau.edu.cn/api</code>。</li>"
+        "</ul>"
+
+        "<h2>AI Agent 接入 (MCP)</h2>"
+        "本服务内置 MCP (Model Context Protocol) 服务器，"
+        "AI Agent 可通过标准化协议直接调用数据接口。"
+        "SSE 端点: <code>GET /api/mcp/sse</code>，消息端点: <code>POST /api/mcp/messages</code>。"
+        "详细说明见 <a href='https://wheatomics.sdau.edu.cn/V2/MCP-ServerUsage.html'>MCP 服务器文档</a>。"
     ),
     docs_url="/api/docs",           # 将 Swagger UI 移到 /api/docs
     redoc_url="/api/redoc",         # 将 ReDoc 移到 /api/redoc (可选)
