@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from fastapi import APIRouter, Query
 
 from app.core.config import settings
@@ -52,7 +53,7 @@ def get_expression_projects() -> dict:
 
 @router.get("/query", response_model=ExpressionQueryResponse)
 def query_expression(
-    gene_ids: str = Query(..., description="Comma separated gene IDs"),
+    gene_ids: str = Query(..., description="Comma separated gene IDs. 表达数据基于中国春 IWGSC v2.1 (02G)，详见注释。"),
     project: str = Query("PRJEB5314_paired_tbl"),
 ) -> ExpressionQueryResponse:
     """查询基因在指定表达项目中的表达量。
@@ -61,6 +62,12 @@ def query_expression(
         查询一个或多个基因在指定表达谱项目中的表达值及标准差。
         支持多个基因同时查询（逗号分隔），返回每个基因在不同
         实验条件下的表达量点数据（含误差棒）。
+
+    ⚠️  基因 ID 版本说明:
+        表达量数据基于中国春 IWGSC v2.1 注释（基因 ID 含 02G 格式）。
+        如果输入的是 v1（01G）或 v3（03G）格式的基因 ID，API 会自动
+        将其转换为 v2 后再查询。转换结果记录在响应的 genes_converted 字段中。
+        若转换失败则按原始 ID 查询，此时大概率会返回基因未找到。
 
     用法:
         GET /api/expression/query?gene_ids=<基因1,基因2>&project=<项目表名>
@@ -97,9 +104,28 @@ def query_expression(
     labels = PROJECT_CATEGORIES.get(project, [])
     results: list[ExpressionGeneResult] = []
     missing: list[str] = []
+    genes_converted: dict[str, str] = {}
+
+    # --- Auto-convert non-v2 (non-02G) gene IDs to IWGSC v2.1 ---
+    with mysql_cursor(settings.DB_CONVERT_GENE_ID) as convert_cursor:
+        for g in requested_genes:
+            m = re.search(r"(\d{2})G", g)
+            ver = m.group(1) if m else ""
+            if ver == "02":
+                continue
+            table = {"01": "IWGSCv1_to_v2", "03": "IWGSCv3_to_v2"}.get(ver)
+            if not table:
+                continue
+            convert_cursor.execute(f"SELECT * FROM `{table}` WHERE MIPS = %s", (g,))
+            row = convert_cursor.fetchone()
+            if row:
+                v2_id = str(row.get("ReferenceGene") or row.get("reference_gene") or "")
+                if v2_id:
+                    genes_converted[g] = v2_id
 
     with mysql_cursor(settings.DB_GENE_EXPRESSION) as cursor:
-        for gene_id in requested_genes:
+        for orig_id in requested_genes:
+            gene_id = genes_converted.get(orig_id, orig_id)
             cursor.execute(f"SELECT * FROM `{project}` WHERE GeneID = %s", (gene_id,))
             row = cursor.fetchone()
             if not row:
@@ -139,5 +165,6 @@ def query_expression(
         project=project,
         genes_found=len(results),
         genes_not_found=missing,
+        genes_converted=genes_converted,
         results=results,
     )

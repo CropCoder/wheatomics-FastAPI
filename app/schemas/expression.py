@@ -28,4 +28,5 @@ class ExpressionQueryResponse(BaseModel):
     project: str
     genes_found: int
     genes_not_found: list[str] = Field(default_factory=list)
+    genes_converted: dict[str, str] = Field(default_factory=dict)
     results: list[ExpressionGeneResult]
