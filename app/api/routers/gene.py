@@ -13,6 +13,7 @@ from app.schemas.gene import DOIReference, GeneDetailResponse, GeneFunctionRecor
 from app.services.legacy_parsers import normalize_text, split_legacy_multi_value
 
 router = APIRouter(prefix="/genes", tags=["Known Genes"])
+genehub_router = APIRouter(prefix="/genes", tags=["GeneHub"])
 
 @router.get("/known/search")
 def search_known_genes(search: str = Query(..., alias="searchid")) -> dict:
@@ -147,7 +148,7 @@ def get_known_gene(gene_id: str) -> dict:
     )
     return ok(detail.model_dump())
 
-@router.get("/detail/{gene_id}")
+@genehub_router.get("/detail/{gene_id}")
 def get_gene_detail(gene_id: str) -> dict:
     """获取基因的标准化详细信息。
 
