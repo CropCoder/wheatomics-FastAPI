@@ -12,7 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routers import comparative, expression, gene, genehub, functiontools, literature, coexpression, ppi, sequence, tasks, blast
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, literature, coexpression, ppi, sequence, tasks, blast
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 
@@ -48,7 +48,7 @@ app = FastAPI(
         "<table>"
         "<tr><td><b>Known Genes</b></td><td><code>/api/genes</code></td>"
         "<td>已知基因搜索与详情</td></tr>"
-        "<tr><td><b>PfamSearch & IntervalTool</b></td><td><code>/api/genes/functions</code></td><td>基因结构域搜索 [gene family] 与染色体区间基因查询</td></tr><tr><td><b>Coexpression</b></td><td><code>/api/coexpression</code></td>"
+        "<tr><td><b>PfamSearch</b></td><td><code>/api/genes/functions/pfam</code></td><td>基因结构域搜索 [gene family]</td></tr><tr><td><b>IntervalTool</b></td><td><code>/api/genes/functions/interval</code></td><td>染色体区间基因查询</td></tr><tr><td><b>Coexpression</b></td><td><code>/api/coexpression</code></td>"
         "<td>共表达网络关系对查询与网络图数据检索</td></tr>"
         "<tr><td><b>Search Wheat Protein-Protein Interactions</b></td><td><code>/api/ppi</code></td>"
         "<td>小麦蛋白质互作关系查询（wheatPPI，CF-MS 数据）</td></tr>"
@@ -131,7 +131,8 @@ for router in [
     ppi,
     gene,
     genehub,
-    functiontools,
+    pfam,
+    interval,
     comparative,
     sequence,
     literature,
