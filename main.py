@@ -46,7 +46,7 @@ app = FastAPI(
 
         "<h2>模块说明</h2>"
         "<table>"
-        "<tr><td><b>Genes 基因</b></td><td><code>/api/genes</code></td>"
+        "<tr><td><b>GeneHub</b></td><td><code>/api/genes</code></td>"
         "<td>已知基因搜索与详情、功能注释、新基因在线提交与更新</td></tr>"
         "<tr><td><b>Expression 表达</b></td><td><code>/api/expression</code></td>"
         "<td>多物种、多项目的基因表达谱数据查询</td></tr>"
