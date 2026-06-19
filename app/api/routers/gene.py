@@ -11,11 +11,10 @@ from app.core.exceptions import ResourceNotFound, ValidationFailure
 from app.core.response import ok
 from app.core.security import GENE_FUNCTION_TABLES, ensure_allowed_table, ensure_gene_like, ensure_interval_like
 from app.db.mysql import mysql_cursor
-from app.schemas.gene import DOIReference, GeneDetailResponse, GeneFunctionRecord, GeneSubmissionRequest, GeneUpdateRequest, KnownGeneDetail, KnownGeneSummary
+from app.schemas.gene import DOIReference, GeneDetailResponse, GeneFunctionRecord, GeneSubmissionRequest, KnownGeneDetail, KnownGeneSummary
 from app.services.legacy_parsers import normalize_text, split_legacy_multi_value
 
 router = APIRouter(prefix="/genes", tags=["GeneHub"])
-
 
 @router.get("/known/search")
 def search_known_genes(search: str = Query(..., alias="searchid")) -> dict:
@@ -87,7 +86,6 @@ def search_known_genes(search: str = Query(..., alias="searchid")) -> dict:
     ]
     return ok({"query": term, "total": len(records), "records": [record.model_dump() for record in records]})
 
-
 @router.get("/known/{gene_id}")
 def get_known_gene(gene_id: str) -> dict:
     """获取指定克隆基因的详细信息。
@@ -150,7 +148,6 @@ def get_known_gene(gene_id: str) -> dict:
         submission_date=row.get("submission_date"),
     )
     return ok(detail.model_dump())
-
 
 @router.post("/known")
 def submit_known_gene(payload: GeneSubmissionRequest) -> dict:
@@ -228,81 +225,6 @@ def submit_known_gene(payload: GeneSubmissionRequest) -> dict:
         )
 
     return ok({"gene_id": payload.gene_id}, message="submit successfully")
-
-
-@router.put("/known/{clone_id}")
-def update_known_gene(clone_id: int, payload: GeneUpdateRequest) -> dict:
-    """更新已有的克隆基因记录。
-
-    功能:
-        通过 clone_id 更新克隆基因数据库中的一条记录。
-        需要提交密码验证，且路径中的 clone_id 必须与请求体中的 clone_id 一致。
-
-    用法:
-        PUT /api/genes/known/{clone_id}
-        - clone_id: 路径参数，记录的内部 ID
-        Body (JSON): 字段同 POST /api/genes/known
-
-    案例:
-        请求:
-          curl -X PUT "http://localhost:8000/api/genes/known/1" \\
-            -H "Content-Type: application/json" \\
-            -d '{
-              "clone_id": 1,
-              "gene_id": "TraesCS7A02G123456",
-              "gene_name": "UpdatedGene",
-              "chrom_pos": "7A",
-              "phenotype": "updated phenotype",
-              "gene_species": "Triticum aestivum",
-              "paper_title": "Updated title",
-              "paper_doi": "10.1234/updated",
-              "key_result": "Updated result",
-              "author": "Li Si",
-              "author_mail": "lisi@example.com",
-              "password": "***"
-            }'
-
-        响应:
-          { "success": true, "message": "The gene TraesCS7A02G123456 has been updated.", "data": { ... } }
-    """
-
-    if payload.password != settings.CGI_SUBMISSION_PASSWORD:
-        raise ValidationFailure("Invalid submission password")
-    if clone_id != payload.clone_id:
-        raise ValidationFailure("Path clone_id and payload clone_id must match")
-
-    with mysql_cursor(settings.DB_CLONED_GENE) as cursor:
-        cursor.execute("SELECT clone_id FROM cloned_gene_tbl WHERE clone_id = %s", (clone_id,))
-        existing = cursor.fetchone()
-        if not existing:
-            raise ResourceNotFound(f"clone_id not found: {clone_id}")
-
-        cursor.execute(
-            """
-            UPDATE cloned_gene_tbl
-            SET gene_id=%s, gene_name=%s, chrom_pos=%s, gene_phenotype=%s,
-                gene_species=%s, paper_title=%s, paper_doi=%s, key_result=%s,
-                author=%s, author_mail=%s, submission_date=%s
-            WHERE clone_id=%s
-            """,
-            (
-                payload.gene_id,
-                payload.gene_name,
-                payload.chrom_pos,
-                payload.phenotype,
-                payload.gene_species,
-                payload.paper_title,
-                payload.paper_doi,
-                payload.key_result,
-                payload.author,
-                str(payload.author_mail),
-                date.today(),
-                clone_id,
-            ),
-        )
-
-    return ok({"clone_id": clone_id, "gene_id": payload.gene_id}, message=f"The gene {payload.gene_id} has been updated.")
-
 
 @router.get("/detail/{gene_id}")
 def get_gene_detail(gene_id: str) -> dict:
@@ -395,7 +317,6 @@ def get_gene_detail(gene_id: str) -> dict:
         },
     )
     return ok(detail.model_dump())
-
 
 @router.get("/functions/search")
 def search_gene_functions(
