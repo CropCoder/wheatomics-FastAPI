@@ -14,7 +14,7 @@ from app.db.mysql import mysql_cursor
 from app.schemas.gene import DOIReference, GeneDetailResponse, GeneFunctionRecord, GeneSubmissionRequest, GeneUpdateRequest, KnownGeneDetail, KnownGeneSummary
 from app.services.legacy_parsers import normalize_text, split_legacy_multi_value
 
-router = APIRouter(prefix="/genes", tags=["Genes"])
+router = APIRouter(prefix="/genes", tags=["GeneHub"])
 
 
 @router.get("/known/search")
