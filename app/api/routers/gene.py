@@ -12,7 +12,7 @@ from app.db.mysql import mysql_cursor
 from app.schemas.gene import DOIReference, GeneDetailResponse, GeneFunctionRecord, KnownGeneDetail, KnownGeneSummary
 from app.services.legacy_parsers import normalize_text, split_legacy_multi_value
 
-router = APIRouter(prefix="/genes", tags=["GeneHub"])
+router = APIRouter(prefix="/genes", tags=["Known Genes"])
 
 @router.get("/known/search")
 def search_known_genes(search: str = Query(..., alias="searchid")) -> dict:
