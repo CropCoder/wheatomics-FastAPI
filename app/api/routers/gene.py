@@ -14,6 +14,7 @@ from app.services.legacy_parsers import normalize_text, split_legacy_multi_value
 
 router = APIRouter(prefix="/genes", tags=["Known Genes"])
 genehub_router = APIRouter(prefix="/genes", tags=["GeneHub"])
+functiontools_router = APIRouter(prefix="/genes/functions", tags=["PfamSearch & IntervalTool"])
 
 @router.get("/known/search")
 def search_known_genes(search: str = Query(..., alias="searchid")) -> dict:
@@ -240,12 +241,12 @@ def get_gene_detail(gene_id: str) -> dict:
     )
     return ok(detail.model_dump())
 
-@router.get("/functions/pfam")
+@functiontools_router.get("/pfam")
 def search_pfam(
     domain: str = Query(..., alias="ID"),
     table: str = Query("Genefunc_table"),
 ) -> dict:
-    """按 PFAM 结构域搜索基因。
+    """PfamSearch: 按 PFAM 结构域搜索基因 [gene family]
 
     功能:
         输入 PFAM 结构域 ID（以 PF 开头），返回包含该结构域的
@@ -323,7 +324,7 @@ def search_pfam(
     return ok({"table": table, "domain": domain, "count": len(records), "records": [record.model_dump() for record in records]})
 
 
-@router.get("/functions/interval")
+@functiontools_router.get("/interval")
 def search_gene_interval(
     region: str = Query(..., alias="ID"),
     table: str = Query("Genefunc_table"),
