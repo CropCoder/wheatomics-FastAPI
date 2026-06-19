@@ -12,7 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routers import comparative, expression, gene, literature, coexpression, ppi, sequence, tasks, blast
+from app.api.routers import comparative, expression, gene, genehub, literature, coexpression, ppi, sequence, tasks, blast
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 
@@ -54,7 +54,7 @@ app = FastAPI(
         "<td>共表达网络与 PPI 蛋白互作网络数据检索</td></tr>"
         "<tr><td><b>Comparative 比较</b></td><td><code>/api</code></td>"
         "<td>小麦-水稻-拟南芥同源基因映射、共线性区间查询、基因 ID 跨库转换</td></tr>"
-        "<tr><td><b>Sequences 序列</b></td><td><code>/api</code></td>"
+        "<tr><td><b>GeneHub</b></td><td><code>/api/genes</code></td><td>基因标准细节与基因组浏览器链接</td></tr><tr><td><b>Sequences 序列</b></td><td><code>/api</code></td>"
         "<td>基因及区间序列提取、预计算 BLAST 结果检索</td></tr>"
         "<tr><td><b>Literature 文献</b></td><td><code>/api/literature</code></td>"
         "<td>文献标签统计与全文检索</td></tr>"
@@ -124,6 +124,7 @@ for router in [
     coexpression,
     ppi,
     gene,
+    genehub,
     comparative,
     sequence,
     literature,
