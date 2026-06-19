@@ -240,40 +240,35 @@ def get_gene_detail(gene_id: str) -> dict:
     )
     return ok(detail.model_dump())
 
-@router.get("/functions/search")
-def search_gene_functions(
-    query: str = Query(..., alias="ID"),
+@router.get("/functions/pfam")
+def search_pfam(
+    domain: str = Query(..., alias="ID"),
     table: str = Query("Genefunc_table"),
 ) -> dict:
-    """搜索基因功能注释。
+    """按 PFAM 结构域搜索基因。
 
     功能:
-        支持三种查询模式:
-        1. 基因组区间查询 - 格式 chr5A:100000-200000，查看指定染色体区段内的基因
-        2. 基因 ID 查询 - 如 TraesCS5A02G391700，精确查找单个基因
-        3. PFAM 结构域查询 - 以 PF 开头的 Token，按蛋白结构域搜索
-        可指定查询的功能注释表（Genefunc_table 或 Genefunc_IWGSC03G_table）。
+        输入 PFAM 结构域 ID（以 PF 开头），返回包含该结构域的
+        所有基因列表。可指定查询表（Genefunc_table 或 Genefunc_IWGSC03G_table）。
+
+    关联网站:
+        对应 PfamSearch 工具: https://wheatomics.sdau.edu.cn/tools/proteinfamily.html
 
     用法:
-        GET /api/genes/functions/search?ID=<查询内容>&table=<表名>
-        - ID: 必填，支持基因ID / 区间 / PFAM域名
-        - table: 可选，默认 Genefunc_table，也可选 Genefunc_IWGSC03G_table
+        GET /api/genes/functions/pfam?ID=<PFAM域名>&table=<表名>
+        - ID: 必填，PFAM 结构域 ID，如 PF00319
+        - table: 可选，默认 Genefunc_table
 
     案例:
-        请求 (基因ID):
-          curl -X GET "http://localhost:8000/api/genes/functions/search?ID=TraesCS5A02G391700"
-
-        请求 (区间):
-          curl -X GET "http://localhost:8000/api/genes/functions/search?ID=chr5A:587000000..587200000"
-
-        请求 (PFAM):
-          curl -X GET "http://localhost:8000/api/genes/functions/search?ID=PF00319"
+        请求:
+          curl -X GET "http://localhost:8000/api/genes/functions/pfam?ID=PF00319"
 
         响应:
           {
             "success": true,
             "data": {
               "table": "Genefunc_table",
+              "domain": "PF00319",
               "count": 5,
               "records": [
                 {
@@ -290,58 +285,132 @@ def search_gene_functions(
           }
     """
 
+    if not domain.startswith("PF"):
+        raise ValidationFailure("PFAM domain ID must start with PF (e.g. PF00319)")
+
     table = ensure_allowed_table(table, {"Genefunc_table", "Genefunc_IWGSC03G_table"}, "gene function table")
-    tokens = [item.strip() for item in query.split() if item.strip()]
     records: list[GeneFunctionRecord] = []
 
     with mysql_cursor(settings.DB_GENEFUNC) as cursor:
-        for token in tokens:
-            if ":" in token:
-                ensure_interval_like(token)
-                chrom = token.split(":")[0]
-                interval = token.split(":")[1].replace("..", "-")
-                start_text, end_text = interval.split("-")
-                start, end = int(start_text), int(end_text)
-                if end <= start or end - start > 30_000_000:
-                    raise ValidationFailure("End number should be more than start number and region should not be more than 30Mb")
-                cursor.execute(
-                    f"SELECT * FROM `{table}` WHERE Chrom=%s AND Start1 >= %s AND End1 <= %s",
-                    (chrom, start, end),
+        cursor.execute(f"SELECT * FROM `{table}` WHERE Domain REGEXP %s", (domain,))
+        for row in cursor.fetchall():
+            if table == "Genefunc_IWGSC03G_table":
+                records.append(
+                    GeneFunctionRecord(
+                        chromosome=str(row["Chrom"]),
+                        start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
+                        end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
+                        gene_primary=str(row["Gene03G"]),
+                        gene_secondary=str(row["Gene02G"]),
+                        strand=normalize_text(row["Strand"]) or None,
+                        description=normalize_text(row["Description"]) or None,
+                        domain=normalize_text(row["Domain"]) or None,
+                    )
                 )
-            elif token.startswith("PF"):
-                cursor.execute(f"SELECT * FROM `{table}` WHERE Domain REGEXP %s", (token,))
             else:
-                ensure_gene_like(token)
-                if table == "Genefunc_IWGSC03G_table":
-                    cursor.execute(f"SELECT * FROM `{table}` WHERE Gene03G=%s OR Gene02G=%s", (token, token))
-                else:
-                    cursor.execute(f"SELECT * FROM `{table}` WHERE Gene=%s", (token,))
-
-            for row in cursor.fetchall():
-                if table == "Genefunc_IWGSC03G_table":
-                    records.append(
-                        GeneFunctionRecord(
-                            chromosome=str(row["Chrom"]),
-                            start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
-                            end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
-                            gene_primary=str(row["Gene03G"]),
-                            gene_secondary=str(row["Gene02G"]),
-                            strand=normalize_text(row["Strand"]) or None,
-                            description=normalize_text(row["Description"]) or None,
-                            domain=normalize_text(row["Domain"]) or None,
-                        )
+                records.append(
+                    GeneFunctionRecord(
+                        chromosome=str(row["Chrom"]),
+                        start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
+                        end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
+                        gene_primary=str(row["Gene"]),
+                        strand=normalize_text(row["Strand"]) or None,
+                        description=normalize_text(row["Description"]) or None,
+                        domain=normalize_text(row["Domain"]) or None,
                     )
-                else:
-                    records.append(
-                        GeneFunctionRecord(
-                            chromosome=str(row["Chrom"]),
-                            start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
-                            end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
-                            gene_primary=str(row["Gene"]),
-                            strand=normalize_text(row["Strand"]) or None,
-                            description=normalize_text(row["Description"]) or None,
-                            domain=normalize_text(row["Domain"]) or None,
-                        )
-                    )
+                )
 
-    return ok({"table": table, "count": len(records), "records": [record.model_dump() for record in records]})
+    return ok({"table": table, "domain": domain, "count": len(records), "records": [record.model_dump() for record in records]})
+
+
+@router.get("/functions/interval")
+def search_gene_interval(
+    region: str = Query(..., alias="ID"),
+    table: str = Query("Genefunc_table"),
+) -> dict:
+    """按染色体区间搜索基因。
+
+    功能:
+        输入染色体区间（如 chr5A:587000000..587200000），返回该区间内
+        的所有基因列表。可指定查询表（Genefunc_table 或 Genefunc_IWGSC03G_table）。
+
+    关联网站:
+        对应 IntervalTool: https://wheatomics.sdau.edu.cn/tools/intervalTools.html
+
+    用法:
+        GET /api/genes/functions/interval?ID=<区间>&table=<表名>
+        - ID: 必填，染色体区间，格式 chr5A:587000000..587200000
+        - table: 可选，默认 Genefunc_table
+
+    案例:
+        请求:
+          curl -X GET "http://localhost:8000/api/genes/functions/interval?ID=chr5A:587000000..587200000"
+
+        响应:
+          {
+            "success": true,
+            "data": {
+              "table": "Genefunc_table",
+              "region": "chr5A:587000000..587200000",
+              "count": 5,
+              "records": [
+                {
+                  "chromosome": "chr5A",
+                  "start_mb": 587.123456,
+                  "end_mb": 587.125000,
+                  "gene_primary": "TraesCS5A02G391700",
+                  "strand": "+",
+                  "description": "MADS-box transcription factor",
+                  "domain": null
+                }
+              ]
+            }
+          }
+    """
+
+    table = ensure_allowed_table(table, {"Genefunc_table", "Genefunc_IWGSC03G_table"}, "gene function table")
+    ensure_interval_like(region)
+
+    chrom = region.split(":")[0]
+    interval = region.split(":")[1].replace("..", "-")
+    start_text, end_text = interval.split("-")
+    start, end = int(start_text), int(end_text)
+
+    if end <= start or end - start > 30_000_000:
+        raise ValidationFailure("End number should be more than start number and region should not be more than 30Mb")
+
+    records: list[GeneFunctionRecord] = []
+
+    with mysql_cursor(settings.DB_GENEFUNC) as cursor:
+        cursor.execute(
+            f"SELECT * FROM `{table}` WHERE Chrom=%s AND Start1 >= %s AND End1 <= %s",
+            (chrom, start, end),
+        )
+        for row in cursor.fetchall():
+            if table == "Genefunc_IWGSC03G_table":
+                records.append(
+                    GeneFunctionRecord(
+                        chromosome=str(row["Chrom"]),
+                        start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
+                        end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
+                        gene_primary=str(row["Gene03G"]),
+                        gene_secondary=str(row["Gene02G"]),
+                        strand=normalize_text(row["Strand"]) or None,
+                        description=normalize_text(row["Description"]) or None,
+                        domain=normalize_text(row["Domain"]) or None,
+                    )
+                )
+            else:
+                records.append(
+                    GeneFunctionRecord(
+                        chromosome=str(row["Chrom"]),
+                        start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
+                        end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
+                        gene_primary=str(row["Gene"]),
+                        strand=normalize_text(row["Strand"]) or None,
+                        description=normalize_text(row["Description"]) or None,
+                        domain=normalize_text(row["Domain"]) or None,
+                    )
+                )
+
+    return ok({"table": table, "region": region, "count": len(records), "records": [record.model_dump() for record in records]})
