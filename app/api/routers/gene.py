@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
-
 from fastapi import APIRouter, Query
 
 from app.core.config import settings
@@ -11,7 +9,7 @@ from app.core.exceptions import ResourceNotFound, ValidationFailure
 from app.core.response import ok
 from app.core.security import GENE_FUNCTION_TABLES, ensure_allowed_table, ensure_gene_like, ensure_interval_like
 from app.db.mysql import mysql_cursor
-from app.schemas.gene import DOIReference, GeneDetailResponse, GeneFunctionRecord, GeneSubmissionRequest, KnownGeneDetail, KnownGeneSummary
+from app.schemas.gene import DOIReference, GeneDetailResponse, GeneFunctionRecord, KnownGeneDetail, KnownGeneSummary
 from app.services.legacy_parsers import normalize_text, split_legacy_multi_value
 
 router = APIRouter(prefix="/genes", tags=["GeneHub"])
@@ -148,83 +146,6 @@ def get_known_gene(gene_id: str) -> dict:
         submission_date=row.get("submission_date"),
     )
     return ok(detail.model_dump())
-
-@router.post("/known")
-def submit_known_gene(payload: GeneSubmissionRequest) -> dict:
-    """提交新的克隆基因记录。
-
-    功能:
-        向克隆基因数据库提交一条新的基因记录。需要提供提交密码进行身份验证，
-        如果基因 ID 已存在则拒绝提交。
-
-    用法:
-        POST /api/genes/known
-        Body (JSON):
-          - gene_id: 基因 ID（必填）
-          - gene_name: 基因名称
-          - chrom_pos: 染色体位置
-          - phenotype: 表型描述
-          - gene_species: 物种
-          - paper_title: 论文标题
-          - paper_doi: 论文 DOI
-          - key_result: 关键结果
-          - author: 作者
-          - author_mail: 作者邮箱
-          - password: 提交密码（必填）
-
-    案例:
-        请求:
-          curl -X POST "http://localhost:8000/api/genes/known" \\
-            -H "Content-Type: application/json" \\
-            -d '{
-              "gene_id": "TraesCS7A02G123456",
-              "gene_name": "TestGene",
-              "chrom_pos": "7A",
-              "phenotype": "drought tolerance",
-              "gene_species": "Triticum aestivum",
-              "paper_title": "A novel gene for drought tolerance",
-              "paper_doi": "10.1234/example",
-              "key_result": "Improved drought tolerance",
-              "author": "Zhang San",
-              "author_mail": "zhangsan@example.com",
-              "password": "***"
-            }'
-
-        响应:
-          { "success": true, "message": "submit successfully", "data": { "gene_id": "TraesCS7A02G123456" } }
-    """
-
-    if payload.password != settings.CGI_SUBMISSION_PASSWORD:
-        raise ValidationFailure("Invalid submission password")
-
-    with mysql_cursor(settings.DB_CLONED_GENE) as cursor:
-        cursor.execute("SELECT gene_id FROM cloned_gene_tbl WHERE gene_id = %s", (payload.gene_id,))
-        existing = cursor.fetchone()
-        if existing:
-            raise ValidationFailure("The gene is already in the database")
-
-        cursor.execute(
-            """
-            INSERT INTO cloned_gene_tbl
-            (gene_id, gene_name, chrom_pos, gene_phenotype, gene_species, paper_title, paper_doi, key_result, author, author_mail, submission_date)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """,
-            (
-                payload.gene_id,
-                payload.gene_name,
-                payload.chrom_pos,
-                payload.phenotype,
-                payload.gene_species,
-                payload.paper_title,
-                payload.paper_doi,
-                payload.key_result,
-                payload.author,
-                str(payload.author_mail),
-                date.today(),
-            ),
-        )
-
-    return ok({"gene_id": payload.gene_id}, message="submit successfully")
 
 @router.get("/detail/{gene_id}")
 def get_gene_detail(gene_id: str) -> dict:
