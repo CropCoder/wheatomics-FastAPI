@@ -197,16 +197,30 @@ def query_ppi(
                 """,
                 (gene, gene, min_score),
             )
+            # Discover actual column names from cursor.description (positional, like CGI)
+            col_map = {}
+            if cursor.description:
+                cnames = [d[0] for d in cursor.description]
+                # Map by position to match CGI select * order
+                col_map = {
+                    "WheatID1":     cnames[1] if len(cnames) > 1 else "WheatID1",
+                    "WheatID2":     cnames[2] if len(cnames) > 2 else "WheatID2",
+                    "eggNOGID1":    cnames[3] if len(cnames) > 3 else "eggNOGID1",
+                    "eggNOGID2":    cnames[4] if len(cnames) > 4 else "eggNOGID2",
+                    "Score":        cnames[5] if len(cnames) > 5 else "Score",
+                    "Annotation1":  cnames[6] if len(cnames) > 6 else "Annotation1",
+                    "Annotation2":  cnames[7] if len(cnames) > 7 else "Annotation2",
+                }
             for row in cursor.fetchall():
                 interactions.append(
                     PPIInteraction(
-                        wheat_id1=[item.strip() for item in str(row["WheatID1"]).split("#") if item.strip()],
-                        wheat_id2=[item.strip() for item in str(row["WheatID2"]).split("#") if item.strip()],
-                        eggnog_id1=str(row["eggNOGID1"]),
-                        eggnog_id2=str(row["eggNOGID2"]),
-                        score=float(row["Score"]),
-                        annotation1=normalize_text(row["Annotation1"]),
-                        annotation2=normalize_text(row["Annotation2"]),
+                        wheat_id1=[item.strip() for item in str(row[col_map["WheatID1"]]).split("#") if item.strip()],
+                        wheat_id2=[item.strip() for item in str(row[col_map["WheatID2"]]).split("#") if item.strip()],
+                        eggnog_id1=str(row[col_map["eggNOGID1"]]),
+                        eggnog_id2=str(row[col_map["eggNOGID2"]]),
+                        score=float(row[col_map["Score"]]),
+                        annotation1=normalize_text(str(row[col_map["Annotation1"]])),
+                        annotation2=normalize_text(str(row[col_map["Annotation2"]])),
                     )
                 )
 
