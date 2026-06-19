@@ -8,7 +8,7 @@ from app.core.config import settings
 from app.core.response import ok
 from app.core.security import COEXPRESSION_TABLES, PPI_TABLES, ensure_allowed_table, ensure_gene_like
 from app.db.mysql import mysql_cursor
-from app.schemas.network import CoexpressionPair, NetworkEdge, NetworkNode, PPIInteraction
+from app.schemas.network import CoexpressionPair, PPIInteraction
 from app.services.legacy_parsers import normalize_text
 
 coexpression_router = APIRouter(tags=["Coexpression"])
@@ -129,73 +129,6 @@ def query_coexpression(
                 )
 
     return ok({"database": database, "pairs": [pair.model_dump() for pair in pairs]})
-
-
-@coexpression_router.get("/coexpression/network")
-def coexpression_network(
-    gene_ids: str = Query(...),
-    database: str = Query("CO_PRJEB25639"),
-    pcc_threshold: float = Query(0.8),
-) -> dict:
-    """生成共表达网络图数据（节点和边）。
-
-    功能:
-        根据输入的基因 ID 列表，在指定共表达数据库中查询并构建
-        网络图数据。返回 nodes（节点列表，标注哪些是查询基因）
-        和 edges（边列表，含 PCC 绝对值作为边的权重），
-        可直接用于前端网络可视化（如 Cytoscape.js / ECharts）。
-
-    用法:
-        GET /api/coexpression/network?gene_ids=<基因1,基因2>&database=<数据库>&pcc_threshold=<阈值>
-        - gene_ids: 必填，逗号分隔的基因 ID 列表
-        - database: 可选，共表达数据库 ID，默认 CO_PRJEB25639
-        - pcc_threshold: 可选，PCC 阈值（绝对值），默认 0.8
-
-    案例:
-        请求:
-          curl -X GET "http://localhost:8000/api/coexpression/network?gene_ids=TraesCS5A02G391700,TraesCS5A02G123456&pcc_threshold=0.9"
-
-        响应:
-          {
-            "success": true,
-            "data": {
-              "nodes": [
-                { "id": "TraesCS5A02G391700", "label": "TraesCS5A02G391700", "is_query": true },
-                { "id": "TraesCS5B02G654321", "label": "TraesCS5B02G654321", "is_query": false }
-              ],
-              "edges": [
-                { "source": "TraesCS5A02G391700", "target": "TraesCS5B02G654321", "value": 0.95 }
-              ]
-            }
-          }
-    """
-
-    database = ensure_allowed_table(database, COEXPRESSION_TABLES, "coexpression table")
-    genes = [ensure_gene_like(gene.strip()) for gene in gene_ids.split(",") if gene.strip()]
-    query_genes = set(genes)
-    nodes: dict[str, NetworkNode] = {}
-    edges: dict[tuple[str, str], NetworkEdge] = {}
-
-    with mysql_cursor(settings.DB_COEXPRESSION) as cursor:
-        for gene in genes:
-            cursor.execute(
-                f"""
-                SELECT Gene1, Gene2, PCC FROM `{database}`
-                WHERE (Gene1 = %s OR Gene2 = %s)
-                AND (CAST(PCC AS DECIMAL(10,4)) >= %s OR CAST(PCC AS DECIMAL(10,4)) <= %s)
-                ORDER BY CAST(PCC AS DECIMAL(10,4)) DESC
-                """,
-                (gene, gene, pcc_threshold, -pcc_threshold),
-            )
-            for row in cursor.fetchall():
-                gene1 = str(row["Gene1"]).strip()
-                gene2 = str(row["Gene2"]).strip()
-                nodes.setdefault(gene1, NetworkNode(id=gene1, label=gene1, is_query=gene1 in query_genes))
-                nodes.setdefault(gene2, NetworkNode(id=gene2, label=gene2, is_query=gene2 in query_genes))
-                key = tuple(sorted((gene1, gene2)))
-                edges.setdefault(key, NetworkEdge(source=gene1, target=gene2, value=abs(float(row["PCC"]))))
-
-    return ok({"nodes": [node.model_dump() for node in nodes.values()], "edges": [edge.model_dump() for edge in edges.values()]})
 
 
 @ppi_router.get("/ppi/query")

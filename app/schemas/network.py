@@ -24,19 +24,3 @@ class PPIInteraction(BaseModel):
     score: float
     annotation1: str
     annotation2: str
-
-
-class NetworkNode(BaseModel):
-    """Generic node."""
-
-    id: str
-    label: str
-    is_query: bool
-
-
-class NetworkEdge(BaseModel):
-    """Generic edge."""
-
-    source: str
-    target: str
-    value: float
