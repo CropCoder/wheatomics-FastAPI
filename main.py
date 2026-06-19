@@ -47,7 +47,7 @@ app = FastAPI(
         "<h2>模块说明</h2>"
         "<table>"
         "<tr><td><b>Known Genes</b></td><td><code>/api/genes</code></td>"
-        "<td>已知基因搜索与详情、功能注释</td></tr>"
+        "<td>已知基因搜索与详情、PFAM 搜索、染色体区间工具</td></tr>"
         "<tr><td><b>Coexpression</b></td><td><code>/api/coexpression</code></td>"
         "<td>共表达网络关系对查询与网络图数据检索</td></tr>"
         "<tr><td><b>Search Wheat Protein-Protein Interactions</b></td><td><code>/api/ppi</code></td>"
