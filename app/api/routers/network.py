@@ -12,7 +12,7 @@ from app.schemas.network import CoexpressionPair, PPIInteraction
 from app.services.legacy_parsers import normalize_text
 
 coexpression_router = APIRouter(tags=["Coexpression"])
-ppi_router = APIRouter(tags=["PPI"])
+ppi_router = APIRouter(tags=["Search Wheat Protein-Protein Interactions"])
 
 
 @coexpression_router.get("/coexpression/databases")
