@@ -14,7 +14,8 @@ from app.services.legacy_parsers import normalize_text, split_legacy_multi_value
 
 router = APIRouter(prefix="/genes", tags=["Known Genes"])
 genehub_router = APIRouter(prefix="/genes", tags=["GeneHub"])
-functiontools_router = APIRouter(prefix="/genes/functions", tags=["PfamSearch & IntervalTool"])
+pfam_router = APIRouter(prefix="/genes/functions", tags=["PfamSearch"])
+interval_router = APIRouter(prefix="/genes/functions", tags=["IntervalTool"])
 
 @router.get("/known/search")
 def search_known_genes(search: str = Query(..., alias="searchid")) -> dict:
@@ -241,7 +242,7 @@ def get_gene_detail(gene_id: str) -> dict:
     )
     return ok(detail.model_dump())
 
-@functiontools_router.get("/pfam")
+@pfam_router.get("/pfam")
 def search_pfam(
     domain: str = Query(..., alias="ID"),
     table: str = Query("Genefunc_table"),
@@ -324,7 +325,7 @@ def search_pfam(
     return ok({"table": table, "domain": domain, "count": len(records), "records": [record.model_dump() for record in records]})
 
 
-@functiontools_router.get("/interval")
+@interval_router.get("/interval")
 def search_gene_interval(
     region: str = Query(..., alias="ID"),
     table: str = Query("Genefunc_table"),
