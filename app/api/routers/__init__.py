@@ -11,4 +11,5 @@ from .network import coexpression_router as coexpression
 from .network import ppi_router as ppi
 from .sequence import router as sequence
 from .tasks import router as tasks
+from .primer_server import router as primer_server
 from .blast import router as blast
