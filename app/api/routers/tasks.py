@@ -11,7 +11,7 @@ from app.schemas.tasks import PrimerDesignRequest
 from app.services.command_runner import run_command
 from app.services.files import make_job_dir, pack_directory, write_lines
 
-router = APIRouter(prefix="/tasks", tags=["Tasks"])
+router = APIRouter(prefix="/tasks", tags=["SNP Marker Design"])
 
 @router.post("/primer-design")
 def design_primers(payload: PrimerDesignRequest) -> dict:
