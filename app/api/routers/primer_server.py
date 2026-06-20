@@ -22,7 +22,7 @@ router = APIRouter(prefix="/tasks", tags=["PrimerServer"])
 
 @router.get("/primer-databases")
 def get_primer_databases(
-    category: str = Query("all", regex="^(all|genome|gene)$"),
+    category: str = Query("all", pattern="^(all|genome|gene)$"),
 ) -> dict:
     """获取可用的引物设计参考基因组/基因数据库列表。
 
