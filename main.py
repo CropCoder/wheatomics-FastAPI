@@ -64,7 +64,7 @@ app = FastAPI(
         "<td>序列比对搜索（blastn/blastp/blastx/tblastn/tblastx）</td></tr>"
         "<tr><td><b>Literature 文献</b></td><td><code>/api/literature</code></td>"
         "<td>文献标签统计与全文检索</td></tr>"
-        "<tr><td><b>Tasks 任务</b></td><td><code>/api/tasks</code></td>"
+        "<tr><td><b>SNP Marker Design</b></td><td><code>/api/tasks</code></td>"
         "<td>SNP 引物设计等异步任务提交与结果获取</td></tr>"
         "</table>"
 
