@@ -65,7 +65,7 @@ app = FastAPI(
         "<tr><td><b>Literature 文献</b></td><td><code>/api/literature</code></td>"
         "<td>文献标签统计与全文检索</td></tr>"
         "<tr><td><b>SNP Marker Design</b></td><td><code>/api/tasks</code></td>"
-        "<td>SNP 引物设计等异步任务提交与结果获取</td></tr>"
+        "<td>SNP 引物设计（PrimerServer 复刻）：完整引物设计 + 特异性检查 + 数据库列表 + 结果查询</td></tr>"
         "</table>"
 
         "<h2>AI Agent 接入 (MCP)</h2>"
