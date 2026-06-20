@@ -2,135 +2,16 @@
 
 from __future__ import annotations
 
-import sys
-
 from fastapi import APIRouter
 
 from app.core.config import settings
 from app.core.exceptions import ResourceNotFound, ValidationFailure
 from app.core.response import ok
-from app.core.security import FIGURE_FORMATS, SYNTENY_SHADE_STYLES, SYNTENY_STYLE_VALUES
-from app.schemas.tasks import PrimerDesignRequest, SyntenyFigureRequest, TaskArtifact
+from app.schemas.tasks import PrimerDesignRequest
 from app.services.command_runner import run_command
 from app.services.files import make_job_dir, pack_directory, write_lines
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
-
-
-@router.post("/synteny-figure")
-def render_synteny_figure(payload: SyntenyFigureRequest) -> dict:
-    """渲染共线性（Synteny）图。
-
-    功能:
-        提交共线性数据（block 文件和 layout 文件），调用 jcvi.graphics.synteny
-        工具渲染高质量的共线性图。支持自定义 DPI、输出格式（PNG/PDF/SVG）、
-        字体、颜色样式、阴影样式、图像尺寸等参数。可选用默认 BED 文件
-        或自定义 BED 内容。
-
-    用法:
-        POST /api/tasks/synteny-figure
-        Body (JSON):
-          - block: 共线性区块数据（行列表，必填）
-          - layout: 布局配置数据（行列表，必填）
-          - bed: 自定义 BED 内容（use_default_bed=false 时必填）
-          - use_default_bed: 是否使用默认 BED 文件（默认 false）
-          - format: 输出格式，如 "png" / "pdf" / "svg"
-          - dpi: 图像 DPI，默认 300
-          - font: 字体名称，默认 "Arial"
-          - diverge: 颜色发散值
-          - shadestyle: 阴影样式
-          - style: 颜色样式
-          - figsize: 图像尺寸，如 "10x8"
-          - scalebar: 是否添加比例尺
-
-    案例:
-        请求:
-          curl -X POST "http://localhost:8000/api/tasks/synteny-figure" \\
-            -H "Content-Type: application/json" \\
-            -d '{
-              "block": ["chr1A chr1B 90.5", "chr2A chr2B 85.3"],
-              "layout": ["chr1A,chr1B", "chr2A,chr2B"],
-              "use_default_bed": true,
-              "format": "png",
-              "dpi": 300,
-              "font": "Arial",
-              "diverge": "0.5",
-              "shadestyle": "light",
-              "style": "dark",
-              "figsize": "12x8"
-            }'
-
-        响应:
-          {
-            "success": true,
-            "data": {
-              "job_dir": "/tmp/synteny/abc123",
-              "artifacts": [
-                { "file_name": "input.block", "path": "/tmp/synteny/abc123/input.block" },
-                { "file_name": "input.layout", "path": "/tmp/synteny/abc123/input.layout" },
-                { "file_name": "output.png", "path": "/tmp/synteny/abc123/output.png" }
-              ]
-            }
-          }
-    """
-
-    if payload.format not in FIGURE_FORMATS:
-        raise ValidationFailure(f"Unsupported figure format: {payload.format}")
-    if payload.style not in SYNTENY_STYLE_VALUES:
-        raise ValidationFailure(f"Unsupported style: {payload.style}")
-    if payload.shadestyle not in SYNTENY_SHADE_STYLES:
-        raise ValidationFailure(f"Unsupported shade style: {payload.shadestyle}")
-    if payload.use_default_bed and not settings.SYMAP_DEFAULT_BED.exists():
-        raise ResourceNotFound(f"Default BED file not found: {settings.SYMAP_DEFAULT_BED}")
-    if not payload.use_default_bed and not payload.bed:
-        raise ValidationFailure("bed content is required when use_default_bed is false")
-
-    job_dir = make_job_dir(settings.SYMAP_RESULT_DIR, "synteny")
-    block_file = job_dir / "input.block"
-    layout_file = job_dir / "input.layout"
-    write_lines(block_file, payload.block)
-    write_lines(layout_file, payload.layout)
-
-    bed_file = settings.SYMAP_DEFAULT_BED
-    if not payload.use_default_bed:
-        bed_path = job_dir / "input.bed"
-        write_lines(bed_path, payload.bed or [])
-        bed_file = bed_path
-
-    command = [
-        sys.executable,
-        "-m",
-        "jcvi.graphics.synteny",
-        str(block_file),
-        str(bed_file),
-        str(layout_file),
-        f"--dpi={payload.dpi}",
-        f"--format={payload.format}",
-        f"--font={payload.font}",
-        f"--diverge={payload.diverge}",
-        f"--shadestyle={payload.shadestyle}",
-        f"--style={payload.style}",
-        f"--figsize={payload.figsize}",
-    ]
-    if payload.scalebar:
-        command.append("--scalebar")
-
-    run_command(command, cwd=job_dir)
-
-    figure = next(job_dir.glob(f"*.{payload.format}"), None)
-    if figure is None:
-        raise ResourceNotFound("Synteny figure was not generated")
-
-    artifacts = [
-        TaskArtifact(file_name=block_file.name, path=str(block_file)),
-        TaskArtifact(file_name=layout_file.name, path=str(layout_file)),
-        TaskArtifact(file_name=figure.name, path=str(figure)),
-    ]
-    if not payload.use_default_bed:
-        artifacts.append(TaskArtifact(file_name="input.bed", path=str(job_dir / "input.bed")))
-
-    return ok({"job_dir": str(job_dir), "artifacts": [artifact.model_dump() for artifact in artifacts]})
-
 
 @router.post("/primer-design")
 def design_primers(payload: PrimerDesignRequest) -> dict:
