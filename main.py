@@ -12,7 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routers import comparative, expression, gene, genehub, pfam, interval, literature, coexpression, ppi, sequence, primer_server, triticeae, blast
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, primer_server, triticeae, blast
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 
@@ -64,8 +64,6 @@ app = FastAPI(
         "<td>序列比对搜索（blastn/blastp/blastx/tblastn/tblastx）</td></tr>"
         "<tr><td><b>PrimerServer</b></td><td><code>/api/tasks</code></td>"
         "<td>SNP 引物设计、特异性检查（PrimerServer 复刻）</td></tr>"
-        "<tr><td><b>Literature 文献</b></td><td><code>/api/literature</code></td>"
-        "<td>文献标签统计与全文检索</td></tr>"
         "</table>"
 
         "<h2>AI Agent 接入 (MCP)</h2>"
@@ -136,7 +134,6 @@ for router in [
     comparative,
     primer_server,
     sequence,
-    literature,
     blast,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)
