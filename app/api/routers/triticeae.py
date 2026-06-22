@@ -75,12 +75,6 @@ _FILTER_MAP: dict[str, str] = {
 }
 
 
-def _apply_q_filter(conditions: list, params: list, q: str, field_expr: str):
-    """Add a LIKE filter on multiple text fields."""
-    conditions.append(f"({field_expr} LIKE %s)")
-    params.append(f"%{q}%")
-
-
 def _parse_gene_name(raw) -> list[str]:
     """Parse gene_name from JSON string or comma-separated list."""
     if not raw or not isinstance(raw, str):
@@ -163,12 +157,6 @@ def _build_search(
     params: list = []
 
     if q:
-        _apply_q_filter(conditions, params, q,
-            "p.title LIKE %s OR p.abstract LIKE %s OR p.authors LIKE %s")
-        params.extend([f"%{q}%", f"%{q}%", f"%{q}%"])
-        # Reset — _apply_q_filter added one placeholder, replace the logic
-        conditions.pop()
-        params.pop()
         conditions.append(
             "(p.title LIKE %s OR p.abstract LIKE %s OR p.authors LIKE %s)")
         like = f"%{q}%"
