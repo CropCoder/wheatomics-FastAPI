@@ -330,12 +330,22 @@ def convert_gene_ids(
             if not row:
                 not_found.append(gene)
                 continue
+            # Discover actual column names from cursor.description (positional, matching CGI)
+            col_map = {}
+            if cursor.description:
+                cnames = [d[0] for d in cursor.description]
+                col_map = {
+                    "query_gene":    cnames[1] if len(cnames) > 1 else "MIPS",
+                    "reference_gene": cnames[2] if len(cnames) > 2 else "ReferenceGene",
+                    "code":          cnames[3] if len(cnames) > 3 else "Code",
+                    "length":        cnames[4] if len(cnames) > 4 else "Length",
+                }
             mappings.append(
                 IDMapping(
-                    query_gene=str(pick_first(row, "MIPS", "Query Gene", "query_gene") or gene),
-                    reference_gene=str(pick_first(row, "ReferenceGene", "Reference Gene", "reference_gene") or ""),
-                    code=str(pick_first(row, "Code", "code") or ""),
-                    length=str(pick_first(row, "Length", "length") or ""),
+                    query_gene=str(row.get(col_map.get("query_gene", "MIPS"), gene)),
+                    reference_gene=str(row.get(col_map.get("reference_gene", "ReferenceGene"), "")),
+                    code=str(row.get(col_map.get("code", "Code"), "")),
+                    length=str(row.get(col_map.get("length", "Length"), "")),
                 )
             )
 
