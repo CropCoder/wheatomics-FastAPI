@@ -43,9 +43,45 @@ def get_runner(
 def create_job(
     background_tasks: BackgroundTasks,
     request: DesignJobRequest,
+    config: PrimerServerConfig = Depends(get_primer_config),
     job_manager: JobManager = Depends(get_job_manager),
     runner: PipelineRunner = Depends(get_runner),
 ):
+    # ---- 校验模板数据库 ----
+    tmpl = request.selectTemplate
+    if tmpl == "custom":
+        if not request.customTemplateSequences:
+            raise HTTPException(
+                status_code=422,
+                detail="selectTemplate='custom' 但未提供 customTemplateSequences (FASTA 格式)",
+            )
+    elif not config.database_exists(tmpl):
+        avail = config.all_database_files()
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"模板数据库 '{tmpl}' 不存在。可用数据库: {avail[:10]}... "
+                f"注意: templateRegions 格式为每行一个 'TargetID TargetPos TargetLength [ProductSizeMin] [ProductSizeMax]'，"
+                f"例如 'Chr3B 569382161 5017 150 800'，而不是 'geneID:start-end' 格式。"
+            ),
+        )
+
+    # ---- 校验特异性检测数据库 ----
+    for db_name in request.selectedDatabases:
+        if db_name == "custom":
+            if not request.customDbSequences:
+                raise HTTPException(
+                    status_code=422,
+                    detail="已选择 'custom' 数据库但未提供 customDbSequences (FASTA 格式)",
+                )
+        elif not config.database_exists(db_name):
+            avail = config.all_database_files()
+            raise HTTPException(
+                status_code=422,
+                detail=f"特异性检测数据库 '{db_name}' 不存在。可用数据库: {avail}",
+            )
+
+    # ---- 创建任务 ----
     job_id = job_manager.create_job()
 
     if request.appType.value == "design":
