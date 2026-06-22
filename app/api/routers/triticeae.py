@@ -50,7 +50,7 @@ _SQL_COLUMNS = """f.id AS fga_id,
         p.function_gene_flag,
         p.function_gene_tags"""
 
-_SQL_FROM = """FROM functional_gene_annotations f LEFT JOIN papers p ON f.pubmedid COLLATE utf8mb4_general_ci = p.pmid"""
+_SQL_FROM = """FROM papers p LEFT JOIN functional_gene_annotations f ON p.pmid = f.pubmedid"""
 
 _SQL_COUNT = f"""SELECT COUNT(*) AS cnt {_SQL_FROM}"""
 _SQL_SELECT = f"""SELECT {_SQL_COLUMNS} {_SQL_FROM}"""
@@ -215,7 +215,7 @@ def get_paper(pubmedid: str) -> dict:
     """按 PubMed ID 获取单篇论文详情。
     """
     with mysql_cursor(settings.DB_TRITICEAE) as cursor:
-        cursor.execute(f"{_SQL_SELECT} WHERE f.pubmedid = %s", (pubmedid,))
+        cursor.execute(f"{_SQL_SELECT} WHERE p.pmid = %s", (pubmedid,))
         row = cursor.fetchone()
 
     if not row:
