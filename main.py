@@ -146,6 +146,7 @@ for router in [
     interval,
     comparative,
     primer_server,
+    triticeae,
     sequence,
     blast,
 ]:
