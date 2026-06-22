@@ -79,14 +79,24 @@ def search_papers(
         返回分页结果。
 
     用法:
-        GET /api/triticeae/papers?gene_name=TaCPK-1&evidence_type=seed_title_match&min_confidence=0.9&limit=10
+        GET /api/triticeae/papers?gene_name=TaCPK-1&limit=5
+        GET /api/triticeae/papers?ai_tags=stripe_rust&min_confidence=0.9&limit=10
+        GET /api/triticeae/papers?q=CRISPR&pub_date_start=2024&limit=10
+        GET /api/triticeae/papers?pub_date_start=2026&functional_gene_tags=functional+gene&limit=20
 
     案例:
-        curl -X GET "http://localhost:8000/api/triticeae/papers?gene_name=TaCPK-1&limit=5"
+        按基因名搜索:
+          curl -X GET "http://localhost:8000/api/triticeae/papers?gene_name=TaCPK-1&limit=5"
 
-        响应:
-        {
-          "success": true,
+        筛选条锈+高置信度:
+          curl -X GET "http://localhost:8000/api/triticeae/papers?ai_tags=stripe_rust&min_confidence=0.9&limit=10"
+
+        CRISPR+年份范围:
+          curl -X GET "http://localhost:8000/api/triticeae/papers?q=CRISPR&pub_date_start=2024&limit=10"
+
+        2026 年功能基因论文:
+          curl -X GET "http://localhost:8000/api/triticeae/papers?pub_date_start=2026&functional_gene_tags=functional+gene&limit=20"
+
           "data": {
             "total": 1,
             "limit": 5,
