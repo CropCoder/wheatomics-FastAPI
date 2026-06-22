@@ -405,21 +405,22 @@ async def blast_search(
         description="最多返回的匹配数"),
     word_size: Optional[int] = Form(default=None),
     matrix: Optional[str] = Form(default=None),
-    outfmt: str = Form(default="json",
-        description="json（结构化）或 tabular（表格）"),
-    save_html: bool = Form(default=False,
+    outfmt: str = Form(default="tabular",
+        description="BLAST 内部结果格式（固定为 outfmt 6/tabular）"),
+    save_html: bool = Form(default=True,
         description="是否生成可访问的静态结果页面")
 ):
     """
     执行 BLAST 搜索。
 
     outfmt 说明:
-      json      - JSON 结构化（默认）
-      tabular   - 纯文本表格
+      tabular   - BLAST 内部 outfmt 6（固定，参数保留供兼容）
 
     save_html 说明:
-      设为 true 会在服务器生成一份 HTML 结果页面，
+      默认 true，始终在服务器生成一份 HTML 结果页面，
       通过返回的 html_url 字段的地址可直接访问。
+
+      建议使用 html_url 查看完整结果，避免 JSON 响应过长被截断。
 
     调用示例:
       curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \\
@@ -528,14 +529,6 @@ async def blast_search(
         _cleanup_old_results()
 
     # ---- 返回 ----
-    if outfmt == "tabular":
-        text = "\t".join(FIELDS) + "\n" + "\n".join(
-            "\t".join(str(h[f]) for f in FIELDS) for h in hits
-        )
-        if html_url:
-            text += f"\n\nHTML result page: {html_url}"
-        return text
-
     resp = {
         "success": True,
         "program": program,
