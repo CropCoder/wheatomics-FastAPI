@@ -6,7 +6,6 @@ from .gene import router as gene
 from .gene import genehub_router as genehub
 from .gene import pfam_router as pfam
 from .gene import interval_router as interval
-from .literature import router as literature
 from .coexpression import coexpression_router as coexpression
 from .ppi import ppi_router as ppi
 from .sequence import router as sequence
