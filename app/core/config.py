@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     BLAST_RESULT_BASE_URL: str = "/blast_results"
     BLAST_RESULT_EXPIRE_DAYS: int = 7
     BLAST_SITE_BASE_URL: str = "https://wheatomics.sdau.edu.cn"
+    PRIMERSERVER2_CONFIG_PATH: Path = Path("/var/www/html/PrimerServer2/config.ini")
 
     model_config = SettingsConfigDict(
         env_file=".env",
