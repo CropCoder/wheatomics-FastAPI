@@ -132,6 +132,7 @@ def _row_to_paper(row: dict) -> dict:
 def _build_search(
     q: str | None = None,
     authors: str | None = None,
+    pmid: str | None = None,
     gene_name: str | None = None,
     trait_label: str | None = None,
     evidence_type: str | None = None,
@@ -167,6 +168,11 @@ def _build_search(
         # FIND_IN_SET for exact author match within comma-separated list
         conditions.append("FIND_IN_SET(%s, p.authors) > 0")
         params.append(authors)
+
+    if pmid:
+        # TRIM for exact PMID match (handles whitespace)
+        conditions.append("TRIM(p.pmid) = %s")
+        params.append(pmid.strip())
 
     # Named filters
     for param_name, sql_col in _FILTER_MAP.items():
@@ -228,6 +234,7 @@ def get_paper(pubmedid: str) -> dict:
 def search_papers(
     q: str | None = Query(None, description="全文关键词搜索（paper_title / abstract）"),
     authors: str | None = Query(None, description="作者精确匹配（逗号分隔列表中精确查找）"),
+    pmid: str | None = Query(None, description="PubMed ID 精确匹配（自动去除空白字符）"),
     gene_name: str | None = Query(None, description="基因名称关键词"),
     trait_label: str | None = Query(None, description="性状标签"),
     evidence_type: str | None = Query(None, description="证据类型"),
