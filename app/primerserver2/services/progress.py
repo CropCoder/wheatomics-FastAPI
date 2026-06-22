@@ -23,5 +23,10 @@ def log_progress(percent: int, stage: str, fh: Optional[TextIO] = None) -> None:
         __PRIMERSERVER_PROGRESS__ {percent} {stage}
     """
     target = fh or _progress_fh or sys.stderr
-    target.write(f"{PROGRESS_MARKER} {percent} {stage}\n")
-    target.flush()
+    try:
+        target.write(f"{PROGRESS_MARKER} {percent} {stage}\n")
+        target.flush()
+    except ValueError:
+        # File handle closed (timeout/restart), fall back to stderr
+        sys.stderr.write(f"{PROGRESS_MARKER} {percent} {stage}\n")
+        sys.stderr.flush()
