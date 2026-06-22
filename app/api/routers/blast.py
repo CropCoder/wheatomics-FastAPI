@@ -241,26 +241,13 @@ async def blast_search(
     outfmt: str = Form(default="tabular",
         description="结果格式: tabular (outfmt 6) / traditional (outfmt 0, 带比对) / both (同时生成两种)")
 ):
-    """
-    执行 BLAST 搜索。
+    """执行 BLAST 搜索，结果保存为文件返回下载链接。
 
-    outfmt 说明:
-      tabular   - BLAST 内部 outfmt 6（固定，参数保留供兼容）
-
-    save_html 说明:
-      默认 true，始终在服务器生成一份 HTML 结果页面，
-      通过返回的 html_url 字段的地址可直接访问。
-
-      hits 结果不直接返回 JSON（避免过长截断），
-      通过 html_url 查看完整的 BLAST 比对页面。
-      如果 agent 需要读取比对数据，直接浏览器访问 html_url 即可。
+    tabular (outfmt 6, 制表符分隔) 和 traditional (outfmt 0, 含比对信息)
+    两种格式同时生成，通过 download_url 字段获取下载地址。
 
     调用示例:
-      curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \\
-        -d "program=blastp" \\
-        -d "database=Fielder_protein" \\
-        -d "save_html=true" \\
-        --data-urlencode "query=>seq\\nMSSSTG..."
+      curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \n        -d "program=blastp" \n        -d "database=Fielder_protein" \n        --data-urlencode "query=>test\nMSSSTG..."
     """
     # ---- 校验 ----
     VALID_PROGRAMS = {"blastp", "blastn", "blastx", "tblastn", "tblastx"}
@@ -290,61 +277,20 @@ async def blast_search(
         raise HTTPException(404,
             f"以下数据库在 {DB_DIR} 中找不到索引: {missing}")
 
-    # ---- 确定 outfmt 类型 ----
-    valid_outfmts = {"tabular", "traditional", "both"}
-    if outfmt not in valid_outfmts:
-        raise HTTPException(400, f"不支持的格式: {outfmt}，可选: {valid_outfmts}")
-
-    result_dir = settings.BLAST_RESULT_DIR
-    result_dir.mkdir(parents=True, exist_ok=True)
-    job_id = datetime.now().strftime("blast_%Y%m%d_%H%M%S_%f")
-
-    def _run_blast(oflag: str) -> str:
-        """执行 BLAST，返回 stdout 文本"""
-        cmd = [
-            blast_path, "-task", program,
-            "-db", " ".join(os.path.join(DB_DIR, d) for d in dbs),
-            "-outfmt", oflag,
-            "-evalue", str(evalue),
-            "-max_target_seqs", str(max_targets),
-            "-num_threads", "4",
-        ]
-        if word_size is not None:
-            cmd += ["-word_size", str(word_size)]
-        if matrix is not None:
-            cmd += ["-matrix", matrix]
-
-        try:
-            r = subprocess.run(cmd, input=query, capture_output=True, text=True, timeout=600)
-        except subprocess.TimeoutExpired:
-            raise HTTPException(504, "BLAST 超时（>10分钟）")
-        except FileNotFoundError:
-            raise HTTPException(500, f"BLAST 可执行文件未找到: {blast_path}")
-
-        if r.returncode != 0:
-            raise HTTPException(500, f"BLAST 执行错误: {r.stderr.strip()}")
-        return r.stdout
-
-    def _save_file(text: str, filename: str) -> str:
-        """保存结果文件，返回下载 URL"""
-        filepath = result_dir / filename
-        filepath.write_text(text, encoding="utf-8")
-        return f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{filename}"
-
-    # 结果格式定义: fmt -> (outfmt_flag, extension)
+    # ---- 构造结果格式映射 ----
     fmt_defs = {
         "tabular": ("6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle", ".tsv"),
         "traditional": ("0", ".txt"),
     }
 
-    if outfmt == "both" and os.path.exists(BLAST_FORMATTER):
-        # ---- both: 用 ASN.1 archive + blast_formatter，BLAST 只跑一次 ----
-        archive_name = job_id + ".asn1"
-        archive_path = result_dir / archive_name
-        tsv_name = job_id + ".tsv"
-        txt_name = job_id + ".txt"
+    result_dir = settings.BLAST_RESULT_DIR
+    result_dir.mkdir(parents=True, exist_ok=True)
+    job_id = datetime.now().strftime("blast_%Y%m%d_%H%M%S_%f")
 
-        # BLAST 输出到 archive 文件（二进制）
+    # ---- 优先 blast_formatter（ASN.1 archive + 转换，BLAST 只跑一次）----
+    download_urls = {}
+    if os.path.exists(BLAST_FORMATTER):
+        archive_path = result_dir / f"{job_id}.asn1"
         cmd = [
             blast_path, "-task", program,
             "-db", " ".join(os.path.join(DB_DIR, d) for d in dbs),
@@ -370,59 +316,56 @@ async def blast_search(
             archive_path.unlink(missing_ok=True)
             raise HTTPException(500, f"BLAST 执行错误: {r.stderr.strip()}")
 
-        # blast_formatter 生成两种格式
-        for outfmt_name, (oflag, ext) in fmt_defs.items():
+        for name, (oflag, ext) in fmt_defs.items():
             out_path = result_dir / (job_id + ext)
             subprocess.run(
                 [BLAST_FORMATTER, "-archive", str(archive_path),
                  "-outfmt", oflag, "-out", str(out_path)],
                 timeout=120
             )
+            download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}{ext}"
 
         archive_path.unlink(missing_ok=True)
-        _cleanup_old_results()
+    else:
+        # ---- 降级：BLAST 跑两次 ----
+        for name, (oflag, ext) in fmt_defs.items():
+            cmd = [
+                blast_path, "-task", program,
+                "-db", " ".join(os.path.join(DB_DIR, d) for d in dbs),
+                "-outfmt", oflag,
+                "-evalue", str(evalue),
+                "-max_target_seqs", str(max_targets),
+                "-num_threads", "4",
+            ]
+            if word_size is not None:
+                cmd += ["-word_size", str(word_size)]
+            if matrix is not None:
+                cmd += ["-matrix", matrix]
 
-        tsv_url = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{tsv_name}"
-        txt_url = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{txt_name}"
-        return {
-            "success": True,
-            "program": program,
-            "database": dbs,
-            "parameters": {"evalue": evalue, "max_target_seqs": max_targets},
-            "query_header": query.strip().split("\n")[0],
-            "outfmt": ["tabular", "traditional"],
-            "download_url": {"tabular": tsv_url, "traditional": txt_url},
-        }
+            try:
+                r = subprocess.run(cmd, input=query, capture_output=True, text=True, timeout=600)
+            except subprocess.TimeoutExpired:
+                raise HTTPException(504, "BLAST 超时（>10分钟）")
+            except FileNotFoundError:
+                raise HTTPException(500, f"BLAST 可执行文件未找到: {blast_path}")
 
-    # ---- tabular / traditional / both 降级 ----
-    targets = ["tabular", "traditional"] if outfmt == "both" else [outfmt]
-    download_urls = {}
+            if r.returncode != 0:
+                raise HTTPException(500, f"BLAST 执行错误: {r.stderr.strip()}")
 
-    for fmt in targets:
-        oflag, ext = fmt_defs[fmt]
-        text = _run_blast(oflag)
-        download_urls[fmt] = _save_file(text, f"{job_id}_{fmt}{ext}")
+            fname = f"{job_id}_{name}{ext}"
+            filepath = result_dir / fname
+            filepath.write_text(r.stdout, encoding="utf-8")
+            download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{fname}"
 
     _cleanup_old_results()
-
-    if outfmt == "both":
-        return {
-            "success": True,
-            "program": program,
-            "database": dbs,
-            "parameters": {"evalue": evalue, "max_target_seqs": max_targets},
-            "query_header": query.strip().split("\n")[0],
-            "outfmt": ["tabular", "traditional"],
-            "download_url": download_urls,
-        }
     return {
         "success": True,
         "program": program,
         "database": dbs,
         "parameters": {"evalue": evalue, "max_target_seqs": max_targets},
         "query_header": query.strip().split("\n")[0],
-        "outfmt": outfmt,
-        "download_url": download_urls[outfmt],
+        "outfmt": ["tabular", "traditional"],
+        "download_url": download_urls,
     }@router.get("/databases")
 async def list_databases(
     program: Optional[str] = Query(None, description="blastp/blastn/blastx/tblastn/tblastx/留空=全部")
