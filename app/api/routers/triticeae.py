@@ -131,6 +131,7 @@ def _row_to_paper(row: dict) -> dict:
 
 def _build_search(
     q: str | None = None,
+    authors: str | None = None,
     gene_name: str | None = None,
     trait_label: str | None = None,
     evidence_type: str | None = None,
@@ -158,9 +159,14 @@ def _build_search(
 
     if q:
         conditions.append(
-            "(p.title LIKE %s OR p.abstract LIKE %s OR p.authors LIKE %s)")
+            "(p.title LIKE %s OR p.abstract LIKE %s)")
         like = f"%{q}%"
-        params.extend([like, like, like])
+        params.extend([like, like])
+
+    if authors:
+        # FIND_IN_SET for exact author match within comma-separated list
+        conditions.append("FIND_IN_SET(%s, p.authors) > 0")
+        params.append(authors)
 
     # Named filters
     for param_name, sql_col in _FILTER_MAP.items():
@@ -220,7 +226,8 @@ def get_paper(pubmedid: str) -> dict:
 
 @router.get("/papers")
 def search_papers(
-    q: str | None = Query(None, description="全文关键词搜索（paper_title / abstract / authors）"),
+    q: str | None = Query(None, description="全文关键词搜索（paper_title / abstract）"),
+    authors: str | None = Query(None, description="作者精确匹配（逗号分隔列表中精确查找）"),
     gene_name: str | None = Query(None, description="基因名称关键词"),
     trait_label: str | None = Query(None, description="性状标签"),
     evidence_type: str | None = Query(None, description="证据类型"),
