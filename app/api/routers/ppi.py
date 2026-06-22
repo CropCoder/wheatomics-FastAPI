@@ -11,6 +11,9 @@ from app.db.mysql import mysql_cursor
 from app.schemas.network import PPIInteraction
 from app.services.legacy_parsers import normalize_text
 
+ppi_router = APIRouter(tags=["Search Wheat Protein-Protein Interactions"])
+
+
 @ppi_router.get("/ppi/query")
 def query_ppi(
     gene_ids: str = Query(...),

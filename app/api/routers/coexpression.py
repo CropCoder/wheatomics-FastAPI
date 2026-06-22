@@ -10,22 +10,7 @@ from app.core.security import COEXPRESSION_TABLES, ensure_allowed_table, ensure_
 from app.db.mysql import mysql_cursor
 from app.schemas.network import CoexpressionPair
 
-"""Co-expression and PPI network routes."""
-
-from __future__ import annotations
-
-from fastapi import APIRouter, Query
-
-from app.core.config import settings
-from app.core.response import ok
-from app.core.security import COEXPRESSION_TABLES, PPI_TABLES, ensure_allowed_table, ensure_gene_like
-from app.db.mysql import mysql_cursor
-from app.schemas.network import CoexpressionPair, PPIInteraction
-from app.services.legacy_parsers import normalize_text
-
 coexpression_router = APIRouter(tags=["Coexpression"])
-ppi_router = APIRouter(tags=["Search Wheat Protein-Protein Interactions"])
-
 
 @coexpression_router.get("/coexpression/databases")
 def list_coexpression_databases() -> dict:
@@ -141,3 +126,4 @@ def query_coexpression(
                 )
 
     return ok({"database": database, "pairs": [pair.model_dump() for pair in pairs]})
+
