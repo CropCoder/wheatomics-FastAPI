@@ -9,7 +9,7 @@ from app.core.response import ok
 from app.db.mysql import mysql_cursor
 from app.schemas.triticeae import TriticeaePaper, TriticeaeSearchResult
 
-router = APIRouter(prefix="/triticeae", tags=["Triticeae Research Filter"])
+router = APIRouter(prefix="/triticeae", tags=["Triticeae Papers"])
 
 
 @router.get("/papers/{pubmedid}")
