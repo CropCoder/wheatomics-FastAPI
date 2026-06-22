@@ -141,11 +141,11 @@ def search_papers(
         params.append(f"%{new_tags}%")
 
     if pub_date_start:
-        conditions.append("pub_date >= %s")
-        params.append(pub_date_start)
+        conditions.append("SUBSTRING(pub_date, 1, 4) >= %s")
+        params.append(pub_date_start[:4])
     if pub_date_end:
-        conditions.append("pub_date <= %s")
-        params.append(pub_date_end)
+        conditions.append("SUBSTRING(pub_date, 1, 4) <= %s")
+        params.append(pub_date_end[:4])
 
     where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
 
