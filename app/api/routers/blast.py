@@ -62,6 +62,7 @@ BLASTX = BLAST_PROGRAMS["blastx"]
 TBLASTN = BLAST_PROGRAMS["tblastn"]
 TBLASTX = BLAST_PROGRAMS["tblastx"]
 BLASTDBCMD = _find_blast_prog("blastdbcmd")
+BLAST_FORMATTER = _find_blast_prog("blast_formatter")
 
 # === BLAST 数据库分类体系 ===
 # 与 wheatomics.sdau.edu.cn 前端页面一致，按基因组倍性/物种分类
@@ -169,12 +170,6 @@ def _classify_db(db_name: str) -> str:
 DB_DIR = "/var/www/html/getfasta/blastdb/"  # 和 CGI 的 DbPath 一致
 
 # blast 输出格式（outfmt 6 的列）
-OUTFMT = "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore"
-FIELDS = ["query_id", "subject_id", "pident", "alignment_length",
-          "mismatches", "gap_opens", "q_start", "q_end",
-          "s_start", "s_end", "evalue", "bitscore"]
-
-
 def _program_db_type(program: str) -> str:
     """返回程序对应的数据库类型: prot（蛋白）或 nuc（核酸）"""
     return "prot" if program in ("blastp", "blastx", "tblastx") else "nuc"
@@ -229,116 +224,6 @@ def _cleanup_old_results():
                 pass
 
 
-def _generate_result_html(
-    job_id: str,
-    program: str,
-    database: str,
-    query_header: str,
-    hits: list,
-    parameters: dict,
-) -> str:
-    """生成 BLAST 结果静态 HTML 页面，返回文件路径"""
-    result_dir = settings.BLAST_RESULT_DIR
-    result_dir.mkdir(parents=True, exist_ok=True)
-
-    rows_html = ""
-    if hits:
-        for i, h in enumerate(hits, 1):
-            subject = h["subject_id"]
-            ncbi_url = f"https://www.ncbi.nlm.nih.gov/nuccore/{subject}" if subject.isdigit() else f"https://www.ncbi.nlm.nih.gov/search/all/{subject}"
-
-            rows_html += f"""<tr>
-                <td>{i}</td>
-                <td><a href="{ncbi_url}" target="_blank">{subject}</a></td>
-                <td>{h["pident"]:.2f}</td>
-                <td>{h["alignment_length"]}</td>
-                <td>{h["mismatches"]}</td>
-                <td>{h["gap_opens"]}</td>
-                <td>{h["q_start"]}</td>
-                <td>{h["q_end"]}</td>
-                <td>{h["s_start"]}</td>
-                <td>{h["s_end"]}</td>
-                <td>{h["evalue"]:.2e}</td>
-                <td>{h["bitscore"]:.1f}</td>
-            </tr>"""
-    else:
-        rows_html = "<tr><td colspan='12' style='text-align:center'>No hits found</td></tr>"
-
-    html = f"""<!DOCTYPE html>
-<html>
-<head>
-    <title>BLAST results - {job_id}</title>
-    <meta charset="utf-8">
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-    <link rel="stylesheet" href="/css/style.css" type="text/css" />
-    <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css" type="text/css" />
-    <script src="/js/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
-    <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js" type="text/javascript"></script>
-    <script>
-    $(function(){{ $("#header").load("/header.html"); }});
-    $(function(){{ $("#footer").load("/footer.html"); }});
-    </script>
-    <style>
-        .result-container {{ padding: 20px 5%; }}
-        .param-summary {{ background: #f8f9fa; border-radius: 6px; padding: 15px; margin-bottom: 20px; }}
-        .param-summary dt {{ font-weight: 600; color: #2c3e50; }}
-        .result-table {{ font-size: 13px; }}
-        .result-table th {{ background: #2c3e50; color: #fff; white-space: nowrap; }}
-        .result-table td {{ vertical-align: middle; }}
-        .result-table tr:hover {{ background: #f1f4f7; }}
-        h4 {{ color: #2c3e50; border-bottom: 2px solid #e74c3c; padding-bottom: 8px; }}
-    </style>
-</head>
-<body>
-<div id="header"></div>
-<div class="result-container">
-    <h4>BLAST Results</h4>
-
-    <div class="param-summary">
-        <dl class="row">
-            <dt class="col-sm-2">Job ID</dt>
-            <dd class="col-sm-4">{job_id}</dd>
-            <dt class="col-sm-2">Program</dt>
-            <dd class="col-sm-4">{program}</dd>
-            <dt class="col-sm-2">Database</dt>
-            <dd class="col-sm-4">{database}</dd>
-            <dt class="col-sm-2">Query</dt>
-            <dd class="col-sm-10"><code style="word-break:break-all">{query_header}</code></dd>
-            <dt class="col-sm-2">E-value cutoff</dt>
-            <dd class="col-sm-4">{parameters.get("evalue", "-")}</dd>
-            <dt class="col-sm-2">Max targets</dt>
-            <dd class="col-sm-4">{parameters.get("max_target_seqs", "-")}</dd>
-            <dt class="col-sm-2">Total hits</dt>
-            <dd class="col-sm-4"><span class="badge badge-primary" style="font-size:14px">{len(hits)}</span></dd>
-        </dl>
-    </div>
-
-    <table class="table table-bordered table-hover result-table">
-        <thead>
-            <tr>
-                <th>#</th><th>Subject ID</th><th>Identity (%)</th><th>Length</th>
-                <th>Mismatches</th><th>Gaps</th><th>Q Start</th><th>Q End</th>
-                <th>S Start</th><th>S End</th><th>E-value</th><th>Bit Score</th>
-
-            </tr>
-        </thead>
-        <tbody>
-            {rows_html}
-        </tbody>
-    </table>
-</div>
-<div id="footer"></div>
-</body>
-</html>"""
-
-    filepath = os.path.join(str(result_dir), f"{job_id}.html")
-    with open(filepath, "w", encoding="utf-8") as f:
-        f.write(html)
-    return filepath
-
-
-# ======================== 端点 ========================
-
 @router.post("/search")
 async def blast_search(
     program: str = Form(default="blastp",
@@ -354,9 +239,7 @@ async def blast_search(
     word_size: Optional[int] = Form(default=None),
     matrix: Optional[str] = Form(default=None),
     outfmt: str = Form(default="tabular",
-        description="BLAST 内部结果格式（固定为 outfmt 6/tabular）"),
-    save_html: bool = Form(default=True,
-        description="是否生成可访问的静态结果页面")
+        description="结果格式: tabular (outfmt 6) / traditional (outfmt 0, 带比对) / both (同时生成两种)")
 ):
     """
     执行 BLAST 搜索。
@@ -407,85 +290,140 @@ async def blast_search(
         raise HTTPException(404,
             f"以下数据库在 {DB_DIR} 中找不到索引: {missing}")
 
-    # ---- 构建 blast 命令 ----
-    cmd = [blast_path, "-task", program]
+    # ---- 确定 outfmt 类型 ----
+    valid_outfmts = {"tabular", "traditional", "both"}
+    if outfmt not in valid_outfmts:
+        raise HTTPException(400, f"不支持的格式: {outfmt}，可选: {valid_outfmts}")
 
-    cmd += [
-        "-db", " ".join(os.path.join(DB_DIR, d) for d in dbs),
-        "-outfmt", OUTFMT,
-        "-evalue", str(evalue),
-        "-max_target_seqs", str(max_targets),
-        "-num_threads", "4",
-    ]
-    if word_size is not None:
-        cmd += ["-word_size", str(word_size)]
-    if matrix is not None:
-        cmd += ["-matrix", matrix]
+    result_dir = settings.BLAST_RESULT_DIR
+    result_dir.mkdir(parents=True, exist_ok=True)
+    job_id = datetime.now().strftime("blast_%Y%m%d_%H%M%S_%f")
 
-    # ---- 执行 ----
-    try:
-        result = subprocess.run(
-            cmd, input=query, capture_output=True, text=True, timeout=600
-        )
-    except subprocess.TimeoutExpired:
-        raise HTTPException(504, "BLAST 超时（>10分钟）")
-    except FileNotFoundError:
-        raise HTTPException(500, f"BLAST 可执行文件未找到: {blast_path}")
+    def _run_blast(oflag: str) -> str:
+        """执行 BLAST，返回 stdout 文本"""
+        cmd = [
+            blast_path, "-task", program,
+            "-db", " ".join(os.path.join(DB_DIR, d) for d in dbs),
+            "-outfmt", oflag,
+            "-evalue", str(evalue),
+            "-max_target_seqs", str(max_targets),
+            "-num_threads", "4",
+        ]
+        if word_size is not None:
+            cmd += ["-word_size", str(word_size)]
+        if matrix is not None:
+            cmd += ["-matrix", matrix]
 
-    if result.returncode != 0:
-        raise HTTPException(500, f"BLAST 执行错误: {result.stderr.strip()}")
+        try:
+            r = subprocess.run(cmd, input=query, capture_output=True, text=True, timeout=600)
+        except subprocess.TimeoutExpired:
+            raise HTTPException(504, "BLAST 超时（>10分钟）")
+        except FileNotFoundError:
+            raise HTTPException(500, f"BLAST 可执行文件未找到: {blast_path}")
 
-    # ---- 解析结果 ----
-    hits = []
-    for line in result.stdout.strip().split("\n"):
-        if not line.strip():
-            continue
-        parts = line.split("\t")
-        if len(parts) >= len(FIELDS):
-            h = dict(zip(FIELDS, parts))
-            h["pident"] = float(h["pident"])
-            h["alignment_length"] = int(h["alignment_length"])
-            h["mismatches"] = int(h["mismatches"])
-            h["gap_opens"] = int(h["gap_opens"])
-            h["q_start"] = int(h["q_start"])
-            h["q_end"] = int(h["q_end"])
-            h["s_start"] = int(h["s_start"])
-            h["s_end"] = int(h["s_end"])
-            h["evalue"] = float(h["evalue"])
-            h["bitscore"] = float(h["bitscore"])
-            hits.append(h)
+        if r.returncode != 0:
+            raise HTTPException(500, f"BLAST 执行错误: {r.stderr.strip()}")
+        return r.stdout
 
-    # ---- 提取全长序列（按唯一 subject_id 去重） ----
-    # ---- 生成静态 HTML ----
-    html_url = None
-    if save_html:
-        job_id = datetime.now().strftime("blast_%Y%m%d_%H%M%S_%f")
-        params = {"evalue": evalue, "max_target_seqs": max_targets}
-        _generate_result_html(
-            job_id=job_id,
-            program=program,
-            database=", ".join(dbs),
-            query_header=query.strip().split("\n")[0],
-            hits=hits,
-            parameters=params,
-        )
-        html_url = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}.html"
+    def _save_file(text: str, filename: str) -> str:
+        """保存结果文件，返回下载 URL"""
+        filepath = result_dir / filename
+        filepath.write_text(text, encoding="utf-8")
+        return f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{filename}"
+
+    # 结果格式定义: fmt -> (outfmt_flag, extension)
+    fmt_defs = {
+        "tabular": ("6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle", ".tsv"),
+        "traditional": ("0", ".txt"),
+    }
+
+    if outfmt == "both" and os.path.exists(BLAST_FORMATTER):
+        # ---- both: 用 ASN.1 archive + blast_formatter，BLAST 只跑一次 ----
+        archive_name = job_id + ".asn1"
+        archive_path = result_dir / archive_name
+        tsv_name = job_id + ".tsv"
+        txt_name = job_id + ".txt"
+
+        # BLAST 输出到 archive 文件（二进制）
+        cmd = [
+            blast_path, "-task", program,
+            "-db", " ".join(os.path.join(DB_DIR, d) for d in dbs),
+            "-outfmt", "11",
+            "-out", str(archive_path),
+            "-evalue", str(evalue),
+            "-max_target_seqs", str(max_targets),
+            "-num_threads", "4",
+        ]
+        if word_size is not None:
+            cmd += ["-word_size", str(word_size)]
+        if matrix is not None:
+            cmd += ["-matrix", matrix]
+
+        try:
+            r = subprocess.run(cmd, input=query, capture_output=True, text=True, timeout=600)
+        except subprocess.TimeoutExpired:
+            raise HTTPException(504, "BLAST 超时（>10分钟）")
+        except FileNotFoundError:
+            raise HTTPException(500, f"BLAST 可执行文件未找到: {blast_path}")
+
+        if r.returncode != 0:
+            archive_path.unlink(missing_ok=True)
+            raise HTTPException(500, f"BLAST 执行错误: {r.stderr.strip()}")
+
+        # blast_formatter 生成两种格式
+        for outfmt_name, (oflag, ext) in fmt_defs.items():
+            out_path = result_dir / (job_id + ext)
+            subprocess.run(
+                [BLAST_FORMATTER, "-archive", str(archive_path),
+                 "-outfmt", oflag, "-out", str(out_path)],
+                timeout=120
+            )
+
+        archive_path.unlink(missing_ok=True)
         _cleanup_old_results()
 
-    # ---- 返回 ----
-    resp = {
+        tsv_url = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{tsv_name}"
+        txt_url = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{txt_name}"
+        return {
+            "success": True,
+            "program": program,
+            "database": dbs,
+            "parameters": {"evalue": evalue, "max_target_seqs": max_targets},
+            "query_header": query.strip().split("\n")[0],
+            "outfmt": ["tabular", "traditional"],
+            "download_url": {"tabular": tsv_url, "traditional": txt_url},
+        }
+
+    # ---- tabular / traditional / both 降级 ----
+    targets = ["tabular", "traditional"] if outfmt == "both" else [outfmt]
+    download_urls = {}
+
+    for fmt in targets:
+        oflag, ext = fmt_defs[fmt]
+        text = _run_blast(oflag)
+        download_urls[fmt] = _save_file(text, f"{job_id}_{fmt}{ext}")
+
+    _cleanup_old_results()
+
+    if outfmt == "both":
+        return {
+            "success": True,
+            "program": program,
+            "database": dbs,
+            "parameters": {"evalue": evalue, "max_target_seqs": max_targets},
+            "query_header": query.strip().split("\n")[0],
+            "outfmt": ["tabular", "traditional"],
+            "download_url": download_urls,
+        }
+    return {
         "success": True,
         "program": program,
         "database": dbs,
         "parameters": {"evalue": evalue, "max_target_seqs": max_targets},
         "query_header": query.strip().split("\n")[0],
-        "total_hits": len(hits),
-        "html_url": html_url,
-    }
-    return resp
-
-
-@router.get("/databases")
+        "outfmt": outfmt,
+        "download_url": download_urls[outfmt],
+    }@router.get("/databases")
 async def list_databases(
     program: Optional[str] = Query(None, description="blastp/blastn/blastx/tblastn/tblastx/留空=全部")
 ):
