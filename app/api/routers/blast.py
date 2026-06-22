@@ -237,9 +237,7 @@ async def blast_search(
     max_targets: int = Form(default=20, alias="max_target_seqs",
         description="最多返回的匹配数"),
     word_size: Optional[int] = Form(default=None),
-    matrix: Optional[str] = Form(default=None),
-    outfmt: str = Form(default="tabular",
-        description="结果格式: tabular (outfmt 6) / traditional (outfmt 0, 带比对) / both (同时生成两种)")
+    matrix: Optional[str] = Form(default=None)
 ):
     """执行 BLAST 搜索，结果保存为文件返回下载链接。
 
@@ -364,8 +362,8 @@ async def blast_search(
         "database": dbs,
         "parameters": {"evalue": evalue, "max_target_seqs": max_targets},
         "query_header": query.strip().split("\n")[0],
-        "outfmt": ["tabular", "traditional"],
         "download_url": download_urls,
+        "outfmt": ["tabular", "traditional"],
     }@router.get("/databases")
 async def list_databases(
     program: Optional[str] = Query(None, description="blastp/blastn/blastx/tblastn/tblastx/留空=全部")
