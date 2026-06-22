@@ -366,7 +366,10 @@ async def blast_search(
         "query_header": query.strip().split("\n")[0],
         "outfmt": ["tabular", "traditional"],
         "download_url": download_urls,
-    }@router.get("/databases")
+    }
+
+
+@router.get("/databases")
 async def list_databases(
     program: Optional[str] = Query(None, description="blastp/blastn/blastx/tblastn/tblastx/留空=全部")
 ):
