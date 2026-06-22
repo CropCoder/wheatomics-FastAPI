@@ -335,10 +335,10 @@ def convert_gene_ids(
             if cursor.description:
                 cnames = [d[0] for d in cursor.description]
                 col_map = {
-                    "query_gene":    cnames[1] if len(cnames) > 1 else "MIPS",
-                    "reference_gene": cnames[2] if len(cnames) > 2 else "ReferenceGene",
-                    "code":          cnames[3] if len(cnames) > 3 else "Code",
-                    "length":        cnames[4] if len(cnames) > 4 else "Length",
+                    "query_gene":    cnames[0] if len(cnames) > 0 else "MIPS",
+                    "reference_gene": cnames[1] if len(cnames) > 1 else "ReferenceGene",
+                    "code":          cnames[2] if len(cnames) > 2 else "Code",
+                    "length":        cnames[3] if len(cnames) > 3 else "Length",
                 }
             mappings.append(
                 IDMapping(
