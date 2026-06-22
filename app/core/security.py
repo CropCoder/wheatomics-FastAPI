@@ -107,7 +107,7 @@ SYNTENY_STYLE_VALUES = {"line", "curve"}
 SYNTENY_SHADE_STYLES = {"curve", "line"}
 
 GENE_ID_PATTERN = re.compile(r"^[A-Za-z0-9_.:-]+$")
-REGION_PATTERN = re.compile(r"^[A-Za-z0-9_.]+:\d+(?:-|\.\.)\d+$")
+REGION_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+:\d+(?:-|\.\.)\d+$")
 
 
 def ensure_allowed_table(table_name: str, allowlist: Iterable[str], label: str = "table") -> str:
