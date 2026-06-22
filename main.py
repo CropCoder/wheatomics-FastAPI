@@ -15,6 +15,11 @@ from fastapi.responses import JSONResponse
 from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, primer_server, triticeae, blast
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
+from app.primerserver2.dependencies import verify_api_key
+from app.primerserver2.routers import config as ps2_config
+from app.primerserver2.routers import jobs as ps2_jobs
+from app.primerserver2.routers import results as ps2_results
+from app.primerserver2.routers import server as ps2_server
 
 # 导入 MCP 核心组件
 from mcp.server import Server
@@ -34,7 +39,13 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title=settings.APP_NAME,
-    version=settings.APP_VERSION,   
+    version=settings.APP_VERSION,
+    openapi_tags=[
+        {
+            "name": "PrimerServer2",
+            "description": "Primer desgin version 2",
+        },
+    ],
     description=(
         "<h2>概述</h2>"
         "WheatOmics 是全球小麦多组学数据整合分析平台，涵盖基因组、转录组、"
@@ -62,8 +73,10 @@ app = FastAPI(
         "<td>基因及区间序列提取、预计算 BLAST 结果检索</td></tr>"
         "<tr><td><b>Triticeae Papers</b></td><td><code>/api/triticeae/papers</code></td><td>小麦族研究文献筛选：基因/性状/置信度/AI标签多维过滤</td></tr><tr><td><b>Blast</b></td><td><code>/api/blast</code></td>"
         "<td>序列比对搜索（blastn/blastp/blastx/tblastn/tblastx）</td></tr>"
-        "<tr><td><b>PrimerServer</b></td><td><code>/api/tasks</code></td>"
+        "<tr><td><b>PrimerServer (SNP)</b></td><td><code>/api/tasks</code></td>"
         "<td>SNP 引物设计、特异性检查（PrimerServer 复刻）</td></tr>"
+        "<tr><td><b>PrimerServer2</b></td><td><code>/api/PrimerServer2</code></td>"
+        "<td>PCR 引物批量设计与特异性检查（Primer desgin version 2）</td></tr>"
         "</table>"
 
         "<h2>AI Agent 接入 (MCP)</h2>"
@@ -139,6 +152,12 @@ for router in [
     app.include_router(router, prefix=settings.API_PREFIX)
 
 
+# PrimerServer2 (original PCR primer design) - mounted under /api/PrimerServer2
+PS2_PREFIX = f"{settings.API_PREFIX}/PrimerServer2"
+app.include_router(ps2_config.router, prefix=PS2_PREFIX)
+app.include_router(ps2_server.router, prefix=PS2_PREFIX)
+app.include_router(ps2_jobs.router, prefix=PS2_PREFIX)
+app.include_router(ps2_results.router, prefix=PS2_PREFIX, dependencies=[Depends(verify_api_key)])
 
 
 # # ==========================================
