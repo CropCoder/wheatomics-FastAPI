@@ -144,10 +144,11 @@ class SpecificityParams(BaseModel):
 
     # Databases
     selectedDatabases: List[str] = Field(
-        default_factory=list,
+        default=["primer_Chinese_Spring2.1.genome"],
         alias="selected-databases",
         description="List of database file names to check specificity against. "
-                    "Use 'custom' together with customDbSequences for a custom FASTA database.",
+                    "Use 'custom' together with customDbSequences for a custom FASTA database. "
+                    "Default: ['primer_Chinese_Spring2.1.genome'] (Chinese Spring v2.1 reference genome).",
     )
     customDbSequences: Optional[str] = Field(
         default=None,
@@ -198,7 +199,10 @@ class DesignJobRequest(SpecificityParams):
     appType: JobType = Field(..., alias="app-type", description="Must be 'design'.")
     selectTemplate: str = Field(
         ...,
-        description="Template database name (e.g. 'chinese_spring_v2.1.fa') or 'custom'.",
+        description="Template database name (e.g. 'primer_Chinese_Spring2.1.genome') or 'custom'. "
+                    "Backend validates the database exists; returns 422 + available list if not. "
+                    "For custom templates, keep FASTA IDs simple (letters, digits, underscore only, "
+                    "avoid ':', '-', spaces).",
     )
     templateRegions: Optional[str] = Field(
         default=None,
@@ -266,7 +270,7 @@ class DesignJobRequest(SpecificityParams):
                 "blast_e_value": 30000,
                 "blast_word_size": 7,
                 "blast_identity": 60,
-                "selected-databases": ["primer_Chinese_Spring2.1.genome"],
+                "selected-databases": ["primer_Chinese_Spring2.1.genome"]  # default,
             }
         },
     )
@@ -373,7 +377,7 @@ class CheckJobRequest(SpecificityParams):
                 "blast_e_value": 30000,
                 "blast_word_size": 7,
                 "blast_identity": 60,
-                "selected-databases": ["primer_Chinese_Spring2.1.genome"],
+                "selected-databases": ["primer_Chinese_Spring2.1.genome"]  # default,
             }
         },
     )
