@@ -213,50 +213,6 @@ def check_db_exists(db_name: str, program: str) -> bool:
     return any(os.path.exists(full + ext) for ext in exts)
 
 
-def _fetch_full_sequences(sids: set, db_names: list, program: str = "") -> dict:
-    """通过 blastdbcmd 从 BLAST 数据库提取全长序列。
-
-    优先从聚合库（all_protein / all_gene / all_genomes）查找，
-    若未找到再逐个尝试查询用到的具体数据库。
-
-    Args:
-        sids: 不重复的 subject ID 集合
-        db_names: 查询用到的数据库名列表
-        program: BLAST 程序名，用于确定优先使用哪个聚合库
-
-    Returns:
-        { subject_id: ">full_fasta_sequence" }
-    """
-    result = {}
-    if not os.path.exists(BLASTDBCMD):
-        return result
-
-    # 构建优先级搜索列表：聚合库优先 -> 具体库
-    agg_dbs = []
-    if program:
-        db_type = _program_db_type(program)
-        if db_type == "prot":
-            agg_dbs = ["all_protein"]
-        else:
-            agg_dbs = ["all_gene", "all_genomes"]
-    search_order = agg_dbs + [d for d in db_names if d not in agg_dbs]
-
-    for sid in sids:
-        for db in search_order:
-            db_path = os.path.join(DB_DIR, db)
-            try:
-                r = subprocess.run(
-                    [BLASTDBCMD, "-db", db_path, "-entry", sid, "-outfmt", "%f"],
-                    capture_output=True, text=True, timeout=30,
-                )
-                if r.returncode == 0 and r.stdout.strip():
-                    result[sid] = r.stdout.strip()
-                    break
-            except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
-                continue
-    return result
-
-
 def _cleanup_old_results():
     """清理过期的 BLAST 结果文件"""
     expire_days = settings.BLAST_RESULT_EXPIRE_DAYS
@@ -289,14 +245,7 @@ def _generate_result_html(
         for i, h in enumerate(hits, 1):
             subject = h["subject_id"]
             ncbi_url = f"https://www.ncbi.nlm.nih.gov/nuccore/{subject}" if subject.isdigit() else f"https://www.ncbi.nlm.nih.gov/search/all/{subject}"
-            seq = h.get("subject_full_sequence", "")
-            seq_preview = ""
-            if seq:
-                seq_preview = (
-                    f'<div class="seq-box" id="seq-{i}" style="display:none">'
-                    f'<pre style="font-size:11px;max-height:150px;overflow:auto;word-break:break-all">{seq}</pre>'
-                    f'</div>'
-                )
+
             rows_html += f"""<tr>
                 <td>{i}</td>
                 <td><a href="{ncbi_url}" target="_blank">{subject}</a></td>
@@ -310,10 +259,9 @@ def _generate_result_html(
                 <td>{h["s_end"]}</td>
                 <td>{h["evalue"]:.2e}</td>
                 <td>{h["bitscore"]:.1f}</td>
-                <td>{seq_preview}<button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('seq-{i}').style.display=document.getElementById('seq-{i}').style.display=='none'?'block':'none'">{'Show Seq' if seq else '—'}</button></td>
             </tr>"""
     else:
-        rows_html = "<tr><td colspan='13' style='text-align:center'>No hits found</td></tr>"
+        rows_html = "<tr><td colspan='12' style='text-align:center'>No hits found</td></tr>"
 
     html = f"""<!DOCTYPE html>
 <html>
@@ -337,7 +285,6 @@ def _generate_result_html(
         .result-table th {{ background: #2c3e50; color: #fff; white-space: nowrap; }}
         .result-table td {{ vertical-align: middle; }}
         .result-table tr:hover {{ background: #f1f4f7; }}
-        .seq-box {{ background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 8px; margin-top: 4px; }}
         h4 {{ color: #2c3e50; border-bottom: 2px solid #e74c3c; padding-bottom: 8px; }}
     </style>
 </head>
@@ -371,7 +318,7 @@ def _generate_result_html(
                 <th>#</th><th>Subject ID</th><th>Identity (%)</th><th>Length</th>
                 <th>Mismatches</th><th>Gaps</th><th>Q Start</th><th>Q End</th>
                 <th>S Start</th><th>S End</th><th>E-value</th><th>Bit Score</th>
-                <th>Full Seq</th>
+
             </tr>
         </thead>
         <tbody>
