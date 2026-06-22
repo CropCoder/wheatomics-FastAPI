@@ -54,6 +54,14 @@ class Settings(BaseSettings):
     BLAST_RESULT_EXPIRE_DAYS: int = 7
     BLAST_SITE_BASE_URL: str = "https://wheatomics.sdau.edu.cn"
     PRIMERSERVER2_CONFIG_PATH: Path = Path("/var/www/html/PrimerServer2/config.ini")
+    PRIMERSERVER2_WORKDIR_BASE: Path = Path("/var/www/html/PrimerServer2/jobs")
+    PRIMERSERVER2_API_KEY: str = ""
+    PRIMERSERVER2_CORS_ORIGINS: str = ""
+    PRIMERSERVER2_JOB_TIMEOUT: int = 300
+    PRIMERSERVER2_MAX_JOB_AGE_DAYS: int = 7
+    PRIMERSERVER2_MAX_JOBS_ON_DISK: int = 1000
+    PRIMERSERVER2_MAX_CONCURRENT_JOBS: int = 4
+
 
     model_config = SettingsConfigDict(
         env_file=".env",
