@@ -420,7 +420,9 @@ async def blast_search(
       默认 true，始终在服务器生成一份 HTML 结果页面，
       通过返回的 html_url 字段的地址可直接访问。
 
-      建议使用 html_url 查看完整结果，避免 JSON 响应过长被截断。
+      hits 结果不直接返回 JSON（避免过长截断），
+      通过 html_url 查看完整的 BLAST 比对页面。
+      如果 agent 需要读取比对数据，直接浏览器访问 html_url 即可。
 
     调用示例:
       curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \\
@@ -536,10 +538,8 @@ async def blast_search(
         "parameters": {"evalue": evalue, "max_target_seqs": max_targets},
         "query_header": query.strip().split("\n")[0],
         "total_hits": len(hits),
-        "hits": hits,
+        "html_url": html_url,
     }
-    if html_url:
-        resp["html_url"] = html_url
     return resp
 
 
