@@ -314,9 +314,12 @@ def convert_gene_ids(
     """
 
     version = ensure_allowed_table(version, ID_CONVERSION_TABLES, "id conversion table")
-    # Support both %0D%0A (newline) and + as multi-gene separators
-    raw_genes = gene_ids.replace("+", " ").split()
-    genes = [ensure_gene_like(g.strip()) for g in raw_genes if g.strip()]
+    # Decode URL-encoded separators (handles double-encoding from agent HTTP libs)
+    for sep in ("%0D%0A", "%0A", "%2B"):
+        gene_ids = gene_ids.replace(sep, " ")
+    # + in query string is treated as space by web frameworks, but handle literally too
+    gene_ids = gene_ids.replace("+", " ")
+    genes = [ensure_gene_like(g.strip()) for g in gene_ids.split() if g.strip()]
     mappings: list[IDMapping] = []
     not_found: list[str] = []
 
