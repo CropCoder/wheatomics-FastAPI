@@ -49,12 +49,6 @@ class TriticeaePaper(BaseModel):
     function_gene_flag: str | None = None
     function_gene_tags: str | None = None
 
-    # -- backward compatibility aliases (deprecated) --
-    old_fga_disease_gene_tags: str | None = None
-    old_paper_disease_gene_tags: str | None = None
-    new_disease_gene_tags: str | None = None
-    match_detail: str | None = None
-
 
 class TriticeaeSearchResult(BaseModel):
     """Paginated search results."""
