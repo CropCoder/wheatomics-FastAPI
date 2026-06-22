@@ -278,13 +278,13 @@ def convert_gene_ids(
         请输入转录本 ID（带 ".1" 后缀），输出的 reference_gene 为 02G 格式（如 "TraesCS6B02G084800"）。
 
     功能:
-        输入多个源基因 ID（空格或加号分隔），在指定版本表中查询并
+        输入多个源基因 ID（%0D%0A 分隔），在指定版本表中查询并
         转换到 IWGSC v1.1 (02G)。返回每个基因的映射结果（reference_gene、
         code、length）。未找到的基因列在 not_found 中。
 
     用法:
         GET /api/id-conversion?ID=<基因1 基因2>&gene_version=<源版本表>
-        - ID: 必填，空格或加号分隔的基因 ID 列表（需带 ".1" 后缀的转录本 ID）
+        - ID: 必填，基因 ID 列表，多基因用 %0D%0A（URL编码换行符）分隔（需带 ".1" 后缀的转录本 ID）
         - gene_version: 必填，源版本对应的数据库表名：
           "MIPS_result" / "TGACv1_result" / "IWGSCv1_result"
 
@@ -293,7 +293,7 @@ def convert_gene_ids(
           curl -X GET "http://localhost:8000/api/id-conversion?ID=Traes_1AS_E6058767A.1&gene_version=MIPS_result"
 
         请求 (IWGSC v1.0 → IWGSC v1.1):
-          curl -X GET "http://localhost:8000/api/id-conversion?ID=TraesCS6B01G342500.1+TraesCS6B01G123400.1&gene_version=IWGSCv1_result"
+          curl -X GET "http://localhost:8000/api/id-conversion?ID=TraesCS6B01G342500.1%0D%0ATraesCS6B01G123400.1&gene_version=IWGSCv1_result"
 
         响应:
           {
