@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     DB_PREBLAST: str = "pre_blast"
     DB_SYMAP: str = "symapdb"
     DB_LITERATURE: str = "wheatomics_db"
+    DB_TRITICEAE: str = "Triticeae_Research_filter"
 
     BLAST_DB_PATH: Path = Path("/var/www/html/getfasta/blastdb")
     FASTA_DB_PATH: Path = Path("/data/fasta")

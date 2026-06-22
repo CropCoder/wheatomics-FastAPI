@@ -12,3 +12,4 @@ from .ppi import ppi_router as ppi
 from .sequence import router as sequence
 from .blast import router as blast
 from .primer_server import router as primer_server
+from .triticeae import router as triticeae

@@ -12,7 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routers import comparative, expression, gene, genehub, pfam, interval, literature, coexpression, ppi, sequence, primer_server, blast
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, literature, coexpression, ppi, sequence, primer_server, triticeae, blast
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 
@@ -60,7 +60,7 @@ app = FastAPI(
         "<td>基因标准细节与基因组浏览器链接</td></tr>"
         "<tr><td><b>Sequences 序列</b></td><td><code>/api/sequence</code></td>"
         "<td>基因及区间序列提取、预计算 BLAST 结果检索</td></tr>"
-        "<tr><td><b>Blast</b></td><td><code>/api/blast</code></td>"
+        "<tr><td><b>Triticeae Research Filter</b></td><td><code>/api/triticeae/papers</code></td><td>小麦族研究文献筛选：基因/性状/置信度/AI标签多维过滤</td></tr><tr><td><b>Blast</b></td><td><code>/api/blast</code></td>"
         "<td>序列比对搜索（blastn/blastp/blastx/tblastn/tblastx）</td></tr>"
         "<tr><td><b>PrimerServer</b></td><td><code>/api/tasks</code></td>"
         "<td>SNP 引物设计、特异性检查（PrimerServer 复刻）</td></tr>"
