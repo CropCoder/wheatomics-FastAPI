@@ -213,6 +213,7 @@ def check_db_exists(db_name: str, program: str) -> bool:
     return any(os.path.exists(full + ext) for ext in exts)
 
 
+
 def _cleanup_old_results():
     """清理过期的 BLAST 结果文件"""
     expire_days = settings.BLAST_RESULT_EXPIRE_DAYS
@@ -455,13 +456,7 @@ async def blast_search(
             hits.append(h)
 
     # ---- 提取全长序列（按唯一 subject_id 去重） ----
-    if hits:
-        unique_sids = set(h["subject_id"] for h in hits)
-        seq_map = _fetch_full_sequences(unique_sids, dbs, program)
-        for h in hits:
-            h["subject_full_sequence"] = seq_map.get(h["subject_id"], "")
-
-    # ---- 生成静态 HTML（可选） ----
+    # ---- 生成静态 HTML ----
     html_url = None
     if save_html:
         job_id = datetime.now().strftime("blast_%Y%m%d_%H%M%S_%f")
