@@ -314,7 +314,9 @@ def convert_gene_ids(
     """
 
     version = ensure_allowed_table(version, ID_CONVERSION_TABLES, "id conversion table")
-    genes = [ensure_gene_like(gene.strip()) for gene in gene_ids.split() if gene.strip()]
+    # Support both %0D%0A (newline) and + as multi-gene separators
+    raw_genes = gene_ids.replace("+", " ").split()
+    genes = [ensure_gene_like(g.strip()) for g in raw_genes if g.strip()]
     mappings: list[IDMapping] = []
     not_found: list[str] = []
 
