@@ -87,12 +87,9 @@ GENE_FUNCTION_TABLES = {
 }
 
 ID_CONVERSION_TABLES = {
-    "IWGSCv1_to_v2",
-    "IWGSCv1_to_v3",
-    "IWGSCv2_to_v1",
-    "IWGSCv2_to_v3",
-    "IWGSCv3_to_v1",
-    "IWGSCv3_to_v2",
+    "MIPS_result",
+    "TGACv1_result",
+    "IWGSCv1_result",
 }
 
 PPI_TABLES = {"PPI_result"}
