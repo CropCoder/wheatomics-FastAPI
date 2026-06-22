@@ -268,33 +268,44 @@ def convert_gene_ids(
     gene_ids: str = Query(..., alias="ID"),
     version: str = Query(..., alias="gene_version"),
 ) -> dict:
-    """在不同 IWGSC 注释版本之间转换基因 ID。
+    """在不同基因注释版本间转换基因 ID（统一转换为 IWGSC v1.1 / 02G）。
+
+    ⚠️  版本说明:
+        以下三个源版本的基因 ID 可转换为 IWGSC v1.1 (02G):
+        - MIPS_result:  MIPS v2.2 格式，例如 "Traes_1AS_E6058767A.1"
+        - TGACv1_result: TGACv1 格式，例如 "TRIAE_CS42_6BL_TGACv1_501926_AA1621570.1"
+        - IWGSCv1_result: IWGSC v1.0 格式，例如 "TraesCS6B01G342500.1"
+        请输入转录本 ID（带 ".1" 后缀），输出的 reference_gene 为 02G 格式（如 "TraesCS6B02G084800"）。
 
     功能:
-        将 IWGSC 各版本（v1/v2/v3）的基因 ID 相互转换。
-        支持批量转换（空格分隔多个基因 ID），返回每个基因在
-        各版本中的对应 ID。
+        输入多个源基因 ID（空格或加号分隔），在指定版本表中查询并
+        转换到 IWGSC v1.1 (02G)。返回每个基因的映射结果（reference_gene、
+        code、length）。未找到的基因列在 not_found 中。
 
     用法:
-        GET /api/id-conversion?ID=<基因1 基因2>&gene_version=<转换版本>
-        - ID: 必填，空格分隔的基因 ID 列表
-        - gene_version: 必填，目标转换版本
+        GET /api/id-conversion?ID=<基因1 基因2>&gene_version=<源版本表>
+        - ID: 必填，空格或加号分隔的基因 ID 列表（需带 ".1" 后缀的转录本 ID）
+        - gene_version: 必填，源版本对应的数据库表名：
+          "MIPS_result" / "TGACv1_result" / "IWGSCv1_result"
 
     案例:
-        请求:
-          curl -X GET "http://localhost:8000/api/id-conversion?ID=TraesCS5A02G391700+TraesCS5A02G123456&gene_version=v3"
+        请求 (MIPS v2.2 → IWGSC v1.1):
+          curl -X GET "http://localhost:8000/api/id-conversion?ID=Traes_1AS_E6058767A.1&gene_version=MIPS_result"
+
+        请求 (IWGSC v1.0 → IWGSC v1.1):
+          curl -X GET "http://localhost:8000/api/id-conversion?ID=TraesCS6B01G342500.1+TraesCS6B01G123400.1&gene_version=IWGSCv1_result"
 
         响应:
           {
             "success": true,
             "data": {
-              "version": "v3",
+              "version": "IWGSCv1_result",
               "mappings": [
                 {
-                  "query_gene": "TraesCS5A02G391700",
-                  "reference_gene": "TraesCS5A03G123456",
-                  "code": "1-to-1",
-                  "length": "1234"
+                  "query_gene": "TraesCS6B01G342500.1",
+                  "reference_gene": "TraesCS6B02G342500",
+                  "code": "-",
+                  "length": "1500"
                 }
               ],
               "not_found": []
