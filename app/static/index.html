@@ -146,6 +146,8 @@ $(function(){
   loadProjects();
 });
 
+var projectCitations = {};
+
 function loadProjects() {
   $('#project-select').html('<option value="">Loading projects...</option>');
   $.getJSON('/api/expression/projects')
@@ -153,6 +155,11 @@ function loadProjects() {
       if (!resp.success) { showError('Failed to load projects'); return; }
       var data = resp.data;
       var select = $('#project-select').empty();
+
+      // 保存 citation 信息
+      data.projects.forEach(function(p) {
+        projectCitations[p.id] = p.citation || '';
+      });
 
       if (data.groups) {
         data.groups.forEach(function(group) {
@@ -301,6 +308,11 @@ function renderResults(resp, projectName, projectDesc, originalGenes) {
     exporting: { buttons: { contextButton: { text: 'Export data' } } }
   });
   chartData.forEach(function(s) { chart.addSeries(s); });
+
+  // === 引用信息 ===
+  if (projectCitations[projectName] && projectCitations[projectName] !== '') {
+    tableDiv.append('<div class="alert alert-info" style="font-size:13px;margin-top:10px;"><strong>Citation:</strong> ' + projectCitations[projectName] + '</div>');
+  }
 
   // === 数据表格 ===
   var hasStd = resp.results[0].points.some(function(p) { return p.std !== null; });
