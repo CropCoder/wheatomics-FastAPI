@@ -386,7 +386,7 @@ def search_pfam(
                         gene_primary=str(row["Gene03G"]),
                         gene_secondary=str(row["Gene02G"]),
                         strand=normalize_text(row["Strand"]) or None,
-                        description=normalize_text(row["Description"]) or None,
+                        description=normalize_text(row.get("Description") or row.get("description") or "") or None,
                         domain=normalize_text(row["Domain"]) or None,
                     )
                 )
@@ -398,7 +398,7 @@ def search_pfam(
                         end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
                         gene_primary=str(row["Gene"]),
                         strand=normalize_text(row["Strand"]) or None,
-                        description=normalize_text(row["Description"]) or None,
+                        description=normalize_text(row.get("Description") or row.get("description") or "") or None,
                         domain=normalize_text(row["Domain"]) or None,
                     )
                 )
@@ -479,7 +479,7 @@ def search_gene_interval(
                         gene_primary=str(row["Gene03G"]),
                         gene_secondary=str(row["Gene02G"]),
                         strand=normalize_text(row["Strand"]) or None,
-                        description=normalize_text(row["Description"]) or None,
+                        description=normalize_text(row.get("Description") or row.get("description") or "") or None,
                         domain=normalize_text(row["Domain"]) or None,
                     )
                 )
@@ -491,7 +491,7 @@ def search_gene_interval(
                         end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
                         gene_primary=str(row["Gene"]),
                         strand=normalize_text(row["Strand"]) or None,
-                        description=normalize_text(row["Description"]) or None,
+                        description=normalize_text(row.get("Description") or row.get("description") or "") or None,
                         domain=normalize_text(row["Domain"]) or None,
                     )
                 )
