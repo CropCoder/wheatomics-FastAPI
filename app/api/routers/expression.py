@@ -129,36 +129,29 @@ def query_expression(
                     genes_converted[g] = v2_id
 
     with mysql_cursor(settings.DB_GENE_EXPRESSION) as cursor:
-        # 探测基因 ID 列名（有些表用 GeneID, 有些用 Name, 有些用 gene_id）
+        # 探测表结构：找基因 ID 列名和数据列
         cursor.execute(f"DESCRIBE `{project}`")
+        columns = cursor.fetchall()
         gene_id_column = "GeneID"
-        for col in cursor.fetchall():
-            cname = col.get("Field") or col[0]
-            if cname.lower() in ("geneid", "name", "gene_id", "id", "sample"):
-                continue
-            # 优先取第一个 varchar/char/text 类型的非 id 列
+        data_columns = []
+        for col in columns:
+            cname = (col.get("Field") or col[0]).strip()
             ctype = (col.get("Type") or col[1]).lower()
+            # 找第一个 varchar/char/text 列作为基因 ID 列
             if any(t in ctype for t in ("varchar", "char", "text")):
-                gene_id_column = cname
-                break
-        # 兜底：取第一个非数值列
-        if gene_id_column == "GeneID":
-            for col in cursor.fetchall():
-                cname = col.get("Field") or col[0]
-                ctype = (col.get("Type") or col[1]).lower()
-                if cname.lower() not in ("id",) and any(t in ctype for t in ("varchar", "char", "text")):
+                if cname.lower() not in ("id",):
                     gene_id_column = cname
-                    break
+            else:
+                # 数值列作为数据列
+                data_columns.append(cname)
 
-        # labels 也从列名推断（如果 project_meta 中没定义）
+        # labels 优先用 project_meta 定义，否则用数据列名
         labels = get_project_labels(project)
-        if not labels:
-            cursor.execute(f"DESCRIBE `{project}`")
-            labels = [
-                col.get("Field") or col[0]
-                for col in cursor.fetchall()
-                if (col.get("Field") or col[0]).lower() not in ("id", gene_id_column.lower())
-            ]
+        if not labels and data_columns:
+            labels = data_columns
+        elif not labels:
+            labels = [c for c in columns if (c.get("Field") or c[0]).strip().lower() not in ("id", gene_id_column.lower())]
+            labels = [(c.get("Field") or c[0]) for c in labels]
 
         for orig_id in requested_genes:
             gene_id = genes_converted.get(orig_id, orig_id)
