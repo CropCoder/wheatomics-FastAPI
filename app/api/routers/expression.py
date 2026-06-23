@@ -107,7 +107,6 @@ def query_expression(
     if not requested_genes:
         raise ResourceNotFound("No valid gene IDs provided")
 
-    labels = get_project_labels(project)
     results: list[ExpressionGeneResult] = []
     missing: list[str] = []
     genes_converted: dict[str, str] = {}
@@ -130,9 +129,40 @@ def query_expression(
                     genes_converted[g] = v2_id
 
     with mysql_cursor(settings.DB_GENE_EXPRESSION) as cursor:
+        # 探测基因 ID 列名（有些表用 GeneID, 有些用 Name, 有些用 gene_id）
+        cursor.execute(f"DESCRIBE `{project}`")
+        gene_id_column = "GeneID"
+        for col in cursor.fetchall():
+            cname = col.get("Field") or col[0]
+            if cname.lower() in ("geneid", "name", "gene_id", "id", "sample"):
+                continue
+            # 优先取第一个 varchar/char/text 类型的非 id 列
+            ctype = (col.get("Type") or col[1]).lower()
+            if any(t in ctype for t in ("varchar", "char", "text")):
+                gene_id_column = cname
+                break
+        # 兜底：取第一个非数值列
+        if gene_id_column == "GeneID":
+            for col in cursor.fetchall():
+                cname = col.get("Field") or col[0]
+                ctype = (col.get("Type") or col[1]).lower()
+                if cname.lower() not in ("id",) and any(t in ctype for t in ("varchar", "char", "text")):
+                    gene_id_column = cname
+                    break
+
+        # labels 也从列名推断（如果 project_meta 中没定义）
+        labels = get_project_labels(project)
+        if not labels:
+            cursor.execute(f"DESCRIBE `{project}`")
+            labels = [
+                col.get("Field") or col[0]
+                for col in cursor.fetchall()
+                if (col.get("Field") or col[0]).lower() not in ("id", gene_id_column.lower())
+            ]
+
         for orig_id in requested_genes:
             gene_id = genes_converted.get(orig_id, orig_id)
-            cursor.execute(f"SELECT * FROM `{project}` WHERE GeneID = %s", (gene_id,))
+            cursor.execute(f"SELECT * FROM `{project}` WHERE `{gene_id_column}` = %s", (gene_id,))
             row = cursor.fetchone()
             if not row:
                 missing.append(gene_id)
