@@ -150,6 +150,87 @@ def get_known_gene(gene_id: str) -> dict:
     )
     return ok(detail.model_dump())
 
+
+
+@router.get("/known/all")
+def list_known_genes() -> dict:
+    """获取所有已知功能克隆基因的列表。
+
+    从 cloned_gene_tbl 中查询所有已知功能基因，返回基因 ID、
+    基因名、染色体位置、表型、物种等核心信息。
+
+    用法:
+        GET /api/genes/known/all
+
+    案例:
+        curl "http://localhost:8000/api/genes/known/all"
+
+        响应:
+        {
+          "total": 850,
+          "records": [
+            {
+              "gene_id": "TraesCS5A02G391700",
+              "gene_name": "VRN-A1",
+              "chrom_pos": "5A",
+              "phenotype": "vernalization response",
+              "species": "Triticum aestivum"
+            }
+          ]
+        }
+    """
+
+    with mysql_cursor(settings.DB_CLONED_GENE) as cursor:
+        cursor.execute("SELECT gene_id, gene_name, chrom_pos, gene_phenotype, gene_species FROM cloned_gene_tbl")
+        rows = cursor.fetchall()
+
+    records = [
+        {
+            "gene_id": str(row["gene_id"]),
+            "gene_name": normalize_text(row["gene_name"]),
+            "chrom_pos": normalize_text(row["chrom_pos"]),
+            "phenotype": normalize_text(row["gene_phenotype"]),
+            "species": normalize_text(row["gene_species"]),
+        }
+        for row in rows
+    ]
+    return ok({"total": len(records), "records": records})
+
+
+@router.get("/known/by-chromosome/{chromosome}")
+def list_known_genes_on_chromosome(
+    chromosome: str,
+) -> dict:
+    """获取指定染色体上的所有已知功能克隆基因。
+
+    染色体名支持常见格式，如 5A、chr5A、Chr5A 等。
+    通过 cloned_gene_tbl 的 chrom_pos 字段匹配染色体。
+
+    用法:
+        GET /api/genes/known/by-chromosome/{chromosome}
+
+    案例:
+        curl "http://localhost:8000/api/genes/known/by-chromosome/5A"
+    """
+
+    with mysql_cursor(settings.DB_CLONED_GENE) as cursor:
+        cursor.execute(
+            "SELECT gene_id, gene_name, chrom_pos, gene_phenotype, gene_species FROM cloned_gene_tbl WHERE chrom_pos LIKE %s",
+            (f"{chromosome}%",),
+        )
+        rows = cursor.fetchall()
+
+    records = [
+        {
+            "gene_id": str(row["gene_id"]),
+            "gene_name": normalize_text(row["gene_name"]),
+            "chrom_pos": normalize_text(row["chrom_pos"]),
+            "phenotype": normalize_text(row["gene_phenotype"]),
+            "species": normalize_text(row["gene_species"]),
+        }
+        for row in rows
+    ]
+    return ok({"total": len(records), "chromosome": chromosome, "records": records})
 @genehub_router.get("/detail/{gene_id}")
 def get_gene_detail(gene_id: str) -> dict:
     """获取基因的标准化详细信息。
