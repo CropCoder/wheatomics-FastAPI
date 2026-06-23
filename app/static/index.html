@@ -226,9 +226,7 @@ function queryExpression() {
     });
 }
 
-function renderResults(resp, projectName, projectDesc, originalGenes) {
-  var chartDiv = $('#chart-container').empty();
-  var tableDiv = $('#table-container').empty();
+function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, tableDiv) {
 
   // 基因版本转换信息
   if (resp.genes_converted && Object.keys(resp.genes_converted).length > 0) {
