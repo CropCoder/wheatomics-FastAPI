@@ -14,7 +14,20 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.8/modules/export-data.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.8/modules/accessibility.js"></script>
 <style>
-  body { background: #f8f9fa; }
+  body { background: #f8f9fa; margin:0; padding:0; }
+  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#f8f9fa; text-align:center; }
+  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+  #home_header span { font-size:28px; font-weight:bold; color:#333; }
+  /* menu tabs */
+  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+  #header-tabs ul { margin:0; padding:0; list-style:none; }
+  #header-tabs li { display:inline-block; width:190px; }
+  #header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF; display:block; padding:8px; font-weight:bold; text-decoration:none; border-radius:5px 5px 0 0; }
+  #header-tabs a:hover { background:#98c1d9; color:#000000; }
+  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+  #header-tabs ul li ul { display:none; position:absolute; }
+  #header-tabs ul li:hover ul { display:block; }
+  #header-tabs ul li ul a { border-radius:0; }
   #home_content { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
   .chart-container { background: #fff; border-radius: 6px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
   .data-table-container { background: #fff; border-radius: 6px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -28,7 +41,50 @@
 </style>
 </head>
 <body>
-<div id="header"></div>
+<!-- header -->
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
+</div>
+
+<!-- nav menu -->
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/index.html">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/snprimer">CAPS/KASP(Beta)</a></li>
+        <li><a href="/tools/proteinfamily.html">PfamSearch</a></li>
+        <li><a href="/idConvert/">IDConvert</a></li>
+        <li><a href="/homologtools/index.html">HomologFinder</a></li>
+        <li><a href="/tools/intervalTools.html">IntervalTool</a></li>
+        <li><a href="/expression/index.html">GeneExpression</a></li>
+        <li><a href="/coexpression/index.html">Co-expression</a></li>
+        <li><a href="/wheatPPI/index.html">WheatPPI</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/genes">KnownGene</a></li>
+        <li><a href="/symap/index.html">SyntenySearch</a></li>
+        <li><a href="/preblast/get_preblast.html">preBLAST</a></li>
+        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+        <li><a href="DWGVa.html">DWGVa</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/scRNA">scRNA</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/eqtl">eQTL Atlas</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/literature_auto/literature.html">Literature</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href=#><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
 <div id="home_content">
   <br><h5 class="card-title">Gene Expression</h5><br>
 
@@ -62,19 +118,10 @@
     <div class="data-table-container" id="table-container"></div>
   </div>
 </div>
-<div id="footer"></div>
+
 
 <script>
 $(function(){
-  $.get('/header.html', function(html) {
-    // 只提取关键元素
-    var headerContent = $(html).find('#home_header, #header-tabs');
-    $('#header').append(headerContent);
-  });
-  $.get('/footer.html', function(html) {
-    var footerContent = $(html).find('body').contents();
-    $('#footer').append(footerContent);
-  });
   loadProjects();
 });
 
