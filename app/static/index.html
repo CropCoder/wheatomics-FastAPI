@@ -10,6 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/error-bar.js"></script>
 <script src="https://code.highcharts.com/modules/export-data.js"></script>
 <style>
   body { background: #f8f9fa; }
@@ -188,7 +189,9 @@ function renderResults(resp, projectName, projectDesc, originalGenes) {
 
   var errorSeries = [];
   resp.results.forEach(function(gene) {
-    var hasErr = gene.points.some(function(p) { return p.error_bar !== null; });
+    var hasErr = gene.points.some(function(p) {
+      return p.error_bar !== null && p.std !== null && Math.abs(p.std - p.value) > 0.001;
+    });
     if (!hasErr) return;
     var data = gene.points.map(function(p) {
       return p.error_bar ? { low: Math.round(p.error_bar[0] * 100) / 100, high: Math.round(p.error_bar[1] * 100) / 100 }
@@ -207,6 +210,7 @@ function renderResults(resp, projectName, projectDesc, originalGenes) {
 
   Highcharts.chart(chartId, {
     chart: { zoomType: 'xy', height: 420 },
+    accessibility: { enabled: false },
     title: { text: projectDesc },
     xAxis: { categories: labels, labels: { rotation: -45, style: { fontSize: '11px' } } },
     yAxis: { title: { text: 'Expression (TPM)' }, lineWidth: 2 },
