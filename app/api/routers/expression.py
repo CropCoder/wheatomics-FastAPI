@@ -142,8 +142,9 @@ def query_expression(
                 if cname.lower() not in ("id",):
                     gene_id_column = cname
             else:
-                # 数值列作为数据列
-                data_columns.append(cname)
+                # 数值列作为数据列（排除元数据列）
+                if cname.lower() not in ("id", "geneid", "iWGSCV1_1_id", "name"):
+                    data_columns.append(cname)
 
         # labels 优先用 project_meta 定义，否则用数据列名
         labels = get_project_labels(project)
