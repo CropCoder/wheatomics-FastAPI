@@ -8,10 +8,10 @@ from fastapi import APIRouter, Query
 from app.core.config import settings
 from app.core.exceptions import ResourceNotFound
 from app.core.response import ok
-from app.core.security import EXPRESSION_PROJECTS, ensure_allowed_table, ensure_gene_like
+from app.core.security import ensure_gene_like
 from app.db.mysql import mysql_cursor
 from app.schemas.expression import ExpressionGeneResult, ExpressionPoint, ExpressionQueryResponse
-from app.services.expression_catalog import PROJECT_CATEGORIES, list_projects
+from app.services.expression_catalog import list_projects, get_project_labels
 
 router = APIRouter(prefix="/expression", tags=["Expression"])
 
@@ -107,7 +107,7 @@ def query_expression(
     if not requested_genes:
         raise ResourceNotFound("No valid gene IDs provided")
 
-    labels = PROJECT_CATEGORIES.get(project, [])
+    labels = get_project_labels(project)
     results: list[ExpressionGeneResult] = []
     missing: list[str] = []
     genes_converted: dict[str, str] = {}
