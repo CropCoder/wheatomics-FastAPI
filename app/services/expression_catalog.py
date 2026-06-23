@@ -1,8 +1,11 @@
 """Expression project metadata extracted from legacy CGI scripts."""
 
 from __future__ import annotations
+from typing import Any
 
-from app.core.security import EXPRESSION_PROJECTS
+from app.core.config import settings
+from app.core.security import EXPRESSION_PROJECTS, ensure_allowed_table
+from app.db.mysql import mysql_cursor
 
 PROJECT_CATEGORIES: dict[str, list[str]] = {
     "PRJEB25639_tbl": [
@@ -225,15 +228,58 @@ EXPRESSION_GROUPS: list[dict] = [
 ]
 
 def list_projects() -> dict:
-    """Return normalized project metadata with grouping."""
+    """Return normalized project metadata with grouping, querying from project_meta table."""
 
-    projects = sorted(EXPRESSION_PROJECTS.items())
-    flat = [
-        {
-            "id": pid,
-            "description": meta["description"],
-            "categories": PROJECT_CATEGORIES.get(pid, []),
-        }
-        for pid, meta in projects
-    ]
-    return {"projects": flat, "groups": EXPRESSION_GROUPS}
+    groups = EXPRESSION_GROUPS
+
+    # 从数据库获取完整元数据（含 citation）
+    db_projects: dict[str, dict[str, Any]] = {}
+    try:
+        with mysql_cursor(settings.DB_GENE_EXPRESSION) as cursor:
+            cursor.execute(
+                "SELECT table_name, display_name, labels, citation FROM project_meta"
+            )
+            for row in cursor.fetchall():
+                pid = row["table_name"]
+                labels_raw = row.get("labels")
+                if isinstance(labels_raw, str):
+                    import json
+                    try:
+                        labels_raw = json.loads(labels_raw)
+                    except json.JSONDecodeError:
+                        labels_raw = []
+                db_projects[pid] = {
+                    "id": pid,
+                    "description": row["display_name"],
+                    "categories": labels_raw or [],
+                    "citation": row.get("citation") or "",
+                }
+    except Exception:
+        # 兜底：从硬编码取
+        pass
+
+    # 合并硬编码数据，确保所有项目都有数据
+    all_pids = set(EXPRESSION_PROJECTS.keys())
+    for g in groups:
+        all_pids.update(g["projects"])
+
+    flat = []
+    for pid in sorted(all_pids):
+        if pid in db_projects:
+            flat.append(db_projects[pid])
+        else:
+            flat.append({
+                "id": pid,
+                "description": EXPRESSION_PROJECTS.get(pid, {}).get("description", pid),
+                "categories": PROJECT_CATEGORIES.get(pid, []),
+                "citation": "",
+            })
+
+    # 过滤掉列表中不存在的项目
+    all_in_groups = set()
+    for g in groups:
+        all_in_groups.update(g["projects"])
+    # 保留在 groups 中有定义 + 在数据库中有数据的
+    flat = [p for p in flat if p["id"] in all_in_groups or p["id"] in EXPRESSION_PROJECTS]
+
+    return {"projects": flat, "groups": groups}
