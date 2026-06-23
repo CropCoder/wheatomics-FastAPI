@@ -66,8 +66,15 @@
 
 <script>
 $(function(){
-  $('#header').load('/header.html');
-  $('#footer').load('/footer.html');
+  $.get('/header.html', function(html) {
+    // 只提取关键元素
+    var headerContent = $(html).find('#home_header, #header-tabs');
+    $('#header').append(headerContent);
+  });
+  $.get('/footer.html', function(html) {
+    var footerContent = $(html).find('body').contents();
+    $('#footer').append(footerContent);
+  });
   loadProjects();
 });
 
