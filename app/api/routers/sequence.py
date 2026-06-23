@@ -182,7 +182,9 @@ def batch_sequence(
     identifiers = [ensure_gene_like(token.strip()) for token in ids.split() if token.strip()]
     records: list[SequenceRecord] = []
     for identifier in identifiers:
-        fasta = _blastdbcmd("-db", str(settings.BLAST_DB_PATH / database), "-entry", identifier)
+        # 自动补充转录本版本号（如 TraesCS5A02G391700 → TraesCS5A02G391700.1）
+        entry = identifier if identifier.endswith(".1") else f"{identifier}.1"
+        fasta = _blastdbcmd("-db", str(settings.BLAST_DB_PATH / database), "-entry", entry)
         records.append(SequenceRecord(sequence_id=identifier, fasta=fasta))
     return ok({"database": database, "records": [record.model_dump() for record in records]})
 
