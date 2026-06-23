@@ -10,7 +10,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
-<script src="https://code.highcharts.com/modules/error-bar.js"></script>
 <script src="https://code.highcharts.com/modules/export-data.js"></script>
 <style>
   body { background: #f8f9fa; }
@@ -187,24 +186,6 @@ function renderResults(resp, projectName, projectDesc, originalGenes) {
     return { name: gene.gene_id, type: 'column', data: data };
   });
 
-  var errorSeries = [];
-  resp.results.forEach(function(gene) {
-    var hasErr = gene.points.some(function(p) {
-      return p.error_bar !== null && p.std !== null && Math.abs(p.std - p.value) > 0.001;
-    });
-    if (!hasErr) return;
-    var data = gene.points.map(function(p) {
-      return p.error_bar ? { low: Math.round(p.error_bar[0] * 100) / 100, high: Math.round(p.error_bar[1] * 100) / 100 }
-                         : { low: null, high: null };
-    });
-    errorSeries.push({
-      name: gene.gene_id + ' (SD)',
-      type: 'errorbar',
-      data: data,
-      visible: false
-    });
-  });
-
   var chartId = 'expr-chart';
   chartDiv.append($('<div>').attr('id', chartId));
 
@@ -216,7 +197,7 @@ function renderResults(resp, projectName, projectDesc, originalGenes) {
     yAxis: { title: { text: 'Expression (TPM)' }, lineWidth: 2 },
     tooltip: { shared: true, valueDecimals: 1 },
     plotOptions: { column: { grouping: false, pointPadding: 0.05, groupPadding: 0 } },
-    series: series.concat(errorSeries),
+    series: series,
     exporting: { buttons: { contextButton: { text: 'Export data' } } }
   });
 
