@@ -99,7 +99,7 @@
     </div>
     <div class="col-md-6">
       <div class="form-group">
-        <select id="project-select" class="form-control" size="12"></select>
+        <select id="project-select" class="form-control" size="12" multiple></select>
       </div>
     </div>
   </div>
@@ -293,7 +293,7 @@ function renderResults(resp, projectName, projectDesc, originalGenes) {
     }
   });
 
-  var chartId = 'expr-chart';
+  var chartId = 'expr-chart-' + Math.random().toString(36).substr(2, 6);
   chartDiv.append($('<div>').attr('id', chartId));
 
   var chart = new Highcharts.Chart({
