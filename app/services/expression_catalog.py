@@ -1,285 +1,93 @@
-"""Expression project metadata extracted from legacy CGI scripts."""
+"""Expression project metadata — now reads entirely from project_meta table."""
 
 from __future__ import annotations
+import json
 from typing import Any
 
 from app.core.config import settings
-from app.core.security import EXPRESSION_PROJECTS, ensure_allowed_table
 from app.db.mysql import mysql_cursor
 
-PROJECT_CATEGORIES: dict[str, list[str]] = {
-    "PRJEB25639_tbl": [
-        "radicle at Seedling stage",
-        "coleoptile at Seedling stage",
-        "roots at Seedling stage",
-        "stem axis at Seedling stage",
-        "shoot apical meristem at Seedling stage",
-        "first leaf sheath at Seedling stage",
-        "first leaf blade at Seedling stage",
-        "roots at three leaf stage",
-        "axillary roots at three leaf stage",
-        "root apical meristem at three leaf stage",
-        "third leaf sheath at three leaf stage",
-        "third leaf blade at three leaf stage",
-        "fifth leaf sheath at fifth leaf stage",
-        "fifth leaf blade at fifth leaf stage",
-        "roots at Tillering stage",
-        "root apical meristem at Tillering stage",
-        "shoot apical meristem at Tillering stage",
-        "shoot axis at Tillering stage",
-        "first leaf sheath at Tillering stage",
-        "first leaf blade at Tillering stage",
-        "roots at Flag leaf stage",
-        "shoot axis at Flag leaf stage",
-        "fifth leaf sheath at Flag leaf stage",
-        "fifth leaf blade at Flag leaf stage",
-        "flag leaf blade night (-0.25h) 06:45 at Flag leaf stage",
-        "flag leaf blade night (+0.25h) 07:15 at Flag leaf stage",
-        "fifth leaf blade night (-0.25h) 21:45 at Flag leaf stage",
-        "fifth leaf blade night (+0.25h) 22:15 at Flag leaf stage",
-        "flag leaf blade at Flag leaf stage",
-        "flag leaf sheath at Full boot",
-        "flag leaf blade at Full boot",
-        "leaf ligule at Full boot",
-        "shoot axis at Full boot",
-        "spike at Full boot",
-        "fifth leaf blade at Ear emergence",
-        "flag leaf sheath at Ear emergence",
-        "flag leaf blade at Ear emergence",
-        "Internode sec at Ear emergence",
-        "glumes at Ear emergence",
-        "lemma at Ear emergence",
-        "peduncle at Ear emergence",
-        "awns at Ear emergence",
-        "roots at 30% spike",
-        "Internode sec at 30% spike",
-        "flag leaf sheath at 30% spike",
-        "flag leaf blade at 30% spike",
-        "peduncle at 30% spike",
-        "spike at 30% spike",
-        "spikelets at 30% spike",
-        "flag leaf blade night (-0.25h) 06:45 at anthesis",
-        "fifth leaf blade night (-0.25h) 21:45 at anthesis",
-        "stigma & ovary at anthesis",
-        "anther at anthesis",
-        "fifth leaf blade (senescence) at milk grain stage",
-        "flag leaf sheath at milk grain stage",
-        "flag leaf blade at milk grain stage",
-        "Internode sec at milk grain stage",
-        "shoot axis at milk grain stage",
-        "glumes at milk grain stage",
-        "peduncle at milk grain stage",
-        "lemma at milk grain stage",
-        "awns at milk grain stage",
-        "grain at milk grain stage",
-        "flag leaf blade (senescence) at Dough",
-        "embryo proper at Dough",
-        "endosperm at Dough",
-        "grain at Soft dough",
-        "grain at Hard dough",
-        "flag leaf blade (senescence) at Ripening",
-        "grain at Ripening",
-    ],
-    "PRJEB13569_tbl": ["LIB21745", "LIB21746", "LIB21747", "LIB21748", "LIB21749", "LIB21750", "LIB21751", "LIB21752"],
-    "PRJEB5135_tbl": [
-        "Room1_10DPA",
-        "Room1_AL_20DPA",
-        "Room1_AL_20DPA_Extra",
-        "Room1_TC_20DPA",
-        "Room1_SE_20DPA",
-        "Room1_REF_20DPA",
-        "Room1_AL.SE_30DPA",
-        "Room1_SE_30DPA",
-        "Room2_10DPA",
-        "Room2_AL_20DPA",
-        "Room2_TC_20DPA",
-        "Room2_SE_20DPA",
-        "Room2_REF_20DPA",
-        "Room2_AL.SE_30DPA",
-        "Room2_SE_30DPA",
-    ],
-    "PRJEB5314_paired_tbl": [
-        "root_Z10",
-        "root_Z13",
-        "root_Z39",
-        "stem_Z30",
-        "stem_Z32",
-        "stem_Z65",
-        "leaf_Z10",
-        "leaf_Z23",
-        "leaf_Z71",
-        "spike_Z32",
-        "spike_Z39",
-        "spike_Z65",
-        "grain_Z71",
-        "grain_Z75",
-        "grain_Z85",
-    ],
-    "PRJEB5314_single_tbl": ["root", "stem", "leaf", "spike", "grain"],
-    "PRJDB2496_tbl": ["root_0day", "root_10day_-P", "shoot_0day", "shoot_10day_-P"],
-    "PRJEB5029_tbl": ["latent_lepto", "diplo_dia", "zygo_pachy", "metaphaseI"],
-    "PRJEB24686_tbl": ["2618H2ORACH", "2618_FG_RACH", "2618_H2O_SP", "2618_FG_SP", "2890_H2O_SP", "2890_FG_SP", "2890_H2O_RACH", "2890_FG_RACH"],
-    "PRJNA325489_tbl": ["KNI", "KNII", "KNIII", "KNIV", "KNV", "KNVI"],
-    "PRJEB12358_tbl": [
-        "NIL38_M3", "NIL38_F3", "NIL38_M6", "NIL38_F6", "NIL38_M12", "NIL38_F12",
-        "NIL38_M24", "NIL38_F24", "NIL38_M36", "NIL38_F36", "NIL38_M48", "NIL38_F48",
-        "NIL51_M3", "NIL51_F3", "NIL51_M6", "NIL51_F6", "NIL51_M12", "NIL51_F12",
-        "NIL51_M24", "NIL51_F24", "NIL51_M36", "NIL51_F36", "NIL51_M48", "NIL51_F48",
-    ],
-    "PRJEB21835_tbl": ["Control_Root", "Xt_Root", "Control_Leaf", "Xt_Leaf"],
-    "PRJEB21874_tbl": ["MycorhizalFungiLeaf", "MycorhizalFungiXanthomonasLeaf", "MycorhizalFungiRoot", "MycorhizalFungiXanthomonasRoot"],
-    "PRJEB22854_tbl": ["Grain_15dpa", "Grain_15dpa_dark", "Grain_20dpa", "Grain_20dpa_dark"],
-    "PRJEB23056_tbl": ["H2O", "H2O_30min", "H2O_180min", "Flag22_30min", "Flag22_180min", "Chitin_30min", "Chitin_180min"],
-    "PRJEB25586_tbl": ["CS_Ph1_minus", "CS_Ph1_plus"],
-    "PRJEB7795_tbl": ["endosperm_12DPA", "inner_pericarp_12DPA", "outer_pericarp_12DPA"],
-    "PRJEB8762_tbl": ["12℃", "24℃"],
-    "PRJEB8798_tbl": ["Mock_1dpi", "Mock_4dpi", "Mock_9dpi", "Mock_14dpi", "Mock_21dpi", "Inoculation_1dpi", "Inoculation_4dpi", "Inoculation_9dpi", "Inoculation_14dpi", "Inoculation_21dpi"],
-    "PRJNA243835_powdery_tbl": ["non-innoculation", "Powdery24h", "Powdery48h", "Powdery72h"],
-    "PRJNA243835_stripe_tbl": ["non-innoculation", "Stripe24h", "Stripe48h", "Stripe72h"],
-    "PRJNA253535_tbl": ["wheat23℃", "wheat4℃"],
-    "PRJNA257938_tbl": ["control", "drought_1h", "drought_6h", "heat_1h", "heat_6h", "drough&theat_1h", "drought&heat_6h"],
-    "PRJNA273659_tbl": ["Fhb1-Water_12hai", "Fhb1+Water12hai", "Fhb1-DON12hai", "Fhb1+DON12hai", "Fhb1-F.graminearum96haiRep1", "Fhb1-F.graminearumrep2", "Fhb1+F.graminearum96haiRep1", "Fhb1+F.graminearum96haiRep2"],
-    "PRJNA297822_tbl": ["Chara_Mock", "Chara_Fp"],
-    "PRJNA297977_tbl": ["microspore embryogenesis S1", "microspore embryogenesis S2", "microspore embryogenesis S3"],
-    "PRJNA306536_tbl": ["PEG6000_0h_Giza168", "PEG600_02h_Giza168", "PEG6000_12h_Giza168", "PEG6000_0h_Gemmiza10", "PEG6000_2h_Gemmiza10", "PEG6000_12h_Gemmiza10"],
-    "PRJNA307237_tbl": ["DBF-L1", "DAF-L2", "DAF-L3", "DAF-L4", "DAF-L5"],
-    "PRJNA307989_tbl": ["FHB", "GA", "ABA"],
-    "PRJNA325136_tbl": ["Columbus_0dpi", "ColumbusNS765_0dpi", "ColumbusNS766_0dpi", "Columbus_2dpi", "ColumbusNS765_2dpi", "ColumbusNS766_2dpi", "Columbus_5dpi", "ColumbusNS765_5dpi", "ColumbusNS766_5dpi"],
-    "PRJNA327829_tbl": ["Glenlea_Control_Zero", "Glenlea_Control_48pi", "Glenlea_Toxin_48pi", "Glenlea_Fungus_48pi", "Salamouni_Control_Zero", "Salamouni_Control_48pi", "Salamouni_Toxin_48pi", "Salamouni_Fungus_48pi"],
-    "PRJNA328385_tbl": ["TaWL711_0hpi", "TaWL711_12hpi", "TaWL711_24hpi", "TaWL711_48hpi", "TaWL711_72hpi", "TaWL711Lr57_0hpi", "TaWL711Lr57_12hpi", "TaWL711Lr57_24hpi", "TaWL711Lr57_48hpi", "TaWL711Lr57_72hpi"],
-    "PRJNA341486_tbl": ["7279_non-glaucous", "7282_non-glaucous", "7284_non-glaucous", "7285_non-glaucous", "7287_non-glaucous", "7289_glaucous", "7290_glaucous", "7293_glaucous", "7294_glaucous"],
-    "PRJNA322418_tbl": ["doumai_15_20_25", "doumai X keyi 15DPA", "doumai X keyi 20DPA", "doumai X keyi 25DPA", "keyi_15_20_25", "keyi X doumai 15DPA", "keyi X doumai 20DPA", "keyi X doumai 25DPA"],
-    "PRJNA358808_tbl": [
-        "Atay85_Control_Root", "Atay85_Drought_Root", "Atay85_Heat_Root", "Atay85_DroughtHeat_Root",
-        "Atay85_Control_Leaf", "Atay85_Drought_Leaf", "Atay85_Heat_Leaf", "Atay85_DroughtHeat_Leaf",
-        "Atay85_Control_Grain", "Atay85_Drought_Grain", "Atay85_Heat_Grain", "Atay85_DroughtHeat_Grain",
-        "Zubkov_Control_Root", "Zubkov_Drought_Root", "Zubkov_Heat_Root", "Zubkov_DroughtHeat_Root",
-        "Zubkov_Control_Leaf", "Zubkov_Drought_Leaf", "Zubkov_Heat_Leaf", "Zubkov_DroughtHeat_Leaf",
-        "Zubkov_Control_Grain", "Zubkov_Drought_Grain", "Zubkov_Heat_Grain", "Zubkov_DroughtHeat_Grain",
-    ],
-    "PRJNA353130_tbl": ["WT_1HAI", "WT_6HAI", "WT_12HAI", "OE_1HAI", "OE_6HAI", "OE12_HAI"],
-    "PRJNA396738_tbl": ["5A-_NIL_4dpa", "5A+_NIL_4dpa", "5A-_NIL_8dpa", "5A+NIL_8dpa"],
-    "PRJNA427246_tbl": ["grain_heat_at_0m", "grain_heat_at_5m", "grain_heat_at_10m", "grain_heat_at_30m", "grain_heat_at_1h", "grain_heat_at_4h", "Leaf_heat_at_0m", "Leaf_heat_at_5m", "Leaf_heat_at_10m", "Leaf_heat_at_30m", "Leaf_heat_at_1h", "Leaf_heat_at_4h"],
-    "PRJNA471426_tbl": ["WT9DPA", "M9DPA", "WT15DPA", "M15DPA", "WT20DPA", "M20DPA", "WT25DPA", "M25DPA"],
-    "PRJNA477934_tbl": ["CB037_endosperm_15dpa", "TAA10_endosperm_15dpa", "XX329_endosperm_15dpa", "CB037_TAA10_endosperm_15dpa", "TAA10_CB037_endosperm_15dpa", "CB037_XX329_endosperm_15dpa", "XX329_CB037_endosperm_15dpa"],
-    "PRJNA485741_tbl": ["embryo14dpa", "endosperm14dpa", "embryo25dpa", "endosperm25dpa"],
-    "PRJNA362497_tbl": ["wild type", "mutant"],
-    "DMSO_GA_JA_tpm_mean_tbl": ["DMSO1h", "GA1h", "JA1h"],
-    "ABA_JA_6BA_DMSO3h_mean_tbl": ["DMSO3h", "6BA3h", "ABA3h", "SA3h"],
-    "PRJNA293629_tbl": ["CS_CK_6h", "CS_Na_6h", "QM_CK_6h", "QM_Na_6h", "CS_CK_12h", "CS_Na_12h", "QM_CK_12h", "QM_Na_12h", "CS_CK_24h", "CS_Na_24h", "QM_CK_24h", "QM_Na_24h", "CS_CK_6h", "CS_Na_48h", "QM_CK_48h", "QM_Na_48h"],
-    "PRJNA487923_tbl": ["Root CK", "Root Salt"],
-    "PRJNA171754_tbl": ["HD2985_control", "HD2985_stress", "HD2329_control", "HD2329_stress"],
-    "PRJNA307228_tbl": ["SKM0", "AKM0", "AKM24", "AKM48", "AKM120", "AKI24", "AKI48", "AkI120"],
-    "Wangmeng_NR_tbl": ["CS_CT", "CS_NS1h", "NR1h", "NR24h"],
-    "PRJNA1037698_tbl": ["DR3_24", "DR3_72h", "DR3_CK", "DR7_24h", "DR3_72h", "DR7_CK"],
-    "PRJNA613349_tbl": ["PBW343C12", "PBW343C48", "FLW29C12", "FLW29C48", "FLW29C72", "FLW29T12", "FLW29T48", "FLW29T72", "PBW343C72", "PBW343T12", "PBW343T48", "PBW343T72"],
-}
 
-
-
-EXPRESSION_GROUPS: list[dict] = [
-    {
-        "name": "wheat population",
-        "projects": [
-            "PRJEB51827_tbl", "tpm327_tbl", "CRA020462_tbl",
-            "PRJCA004969_tbl", "PRJNA348655_tbl", "PRJNA509214_tbl",
-            "PRJNA863398_tbl", "LAMC_tbl",
-        ],
-    },
-    {
-        "name": "wheat developmental tissues",
-        "projects": [
-            "PRJEB25639_tbl", "PRJEB5314_paired_tbl", "PRJEB5314_single_tbl",
-            "PRJEB5135_tbl", "PRJNA485741_tbl", "PRJEB7795_tbl",
-            "PRJEB5029_tbl", "PRJNA297977_tbl", "PRJNA325489_tbl",
-        ],
-    },
-    {
-        "name": "wheat biotic stresses",
-        "projects": [
-            "PRJNA1037698_tbl", "PRJNA613349_tbl", "PRJEB24686_tbl",
-            "PRJNA327013_tbl", "PRJNA263755_tbl", "PRJEB12358_tbl",
-            "PRJNA273659_tbl", "PRJNA297822_tbl", "PRJNA307989_tbl",
-            "PRJEB21835_tbl", "PRJEB21874_tbl", "PRJNA327829_tbl",
-            "PRJEB23056_tbl", "PRJNA243835_powdery_tbl", "PRJEB8798_tbl",
-            "PRJNA243835_stripe_tbl", "PRJEB13569_tbl", "PRJNA307228_tbl",
-            "PRJNA325136_tbl", "PRJNA328385_tbl",
-        ],
-    },
-    {
-        "name": "wheat abiotic stresses",
-        "projects": [
-            "PRJDB2496_tbl", "PRJEB8762_tbl", "PRJNA253535_tbl",
-            "PRJNA257938_tbl", "PRJNA358808_tbl", "PRJNA171754_tbl",
-            "PRJNA427246_tbl", "PRJNA293629_tbl", "PRJNA487923_tbl",
-            "PRJNA306536_tbl", "Wangmeng_NR_tbl",
-        ],
-    },
-    {
-        "name": "Others",
-        "projects": [
-            "PRJNA362497_tbl", "PRJNA322418_tbl", "PRJEB25586_tbl",
-            "PRJNA353130_tbl", "DMSO_GA_JA_tpm_mean_tbl",
-            "ABA_JA_6BA_DMSO3h_mean_tbl", "PRJNA396738_tbl",
-            "PRJNA341486_tbl", "PRJNA471426_tbl", "PRJEB22854_tbl",
-            "PRJNA307237_tbl", "PRJNA477934_tbl",
-        ],
-    },
-]
-
-def list_projects() -> dict:
-    """Return normalized project metadata with grouping, querying from project_meta table."""
-
-    groups = EXPRESSION_GROUPS
-
-    # 从数据库获取完整元数据（含 citation）
-    db_projects: dict[str, dict[str, Any]] = {}
+def _fetch_all_projects() -> list[dict[str, Any]]:
+    """Fetch all project metadata from project_meta table."""
+    projects: list[dict[str, Any]] = []
     try:
         with mysql_cursor(settings.DB_GENE_EXPRESSION) as cursor:
             cursor.execute(
-                "SELECT table_name, display_name, labels, citation FROM project_meta"
+                "SELECT table_name, display_name, labels, citation, group_name FROM project_meta"
             )
             for row in cursor.fetchall():
-                pid = row["table_name"]
                 labels_raw = row.get("labels")
                 if isinstance(labels_raw, str):
-                    import json
                     try:
                         labels_raw = json.loads(labels_raw)
                     except json.JSONDecodeError:
                         labels_raw = []
-                db_projects[pid] = {
-                    "id": pid,
+                projects.append({
+                    "id": row["table_name"],
                     "description": row["display_name"],
                     "categories": labels_raw or [],
                     "citation": row.get("citation") or "",
-                }
+                    "group": row.get("group_name") or "Others",
+                })
     except Exception:
-        # 兜底：从硬编码取
         pass
+    return projects
 
-    # 合并硬编码数据，确保所有项目都有数据
-    all_pids = set(EXPRESSION_PROJECTS.keys())
-    for g in groups:
-        all_pids.update(g["projects"])
 
-    flat = []
-    for pid in sorted(all_pids):
-        if pid in db_projects:
-            flat.append(db_projects[pid])
-        else:
-            flat.append({
-                "id": pid,
-                "description": EXPRESSION_PROJECTS.get(pid, {}).get("description", pid),
-                "categories": PROJECT_CATEGORIES.get(pid, []),
-                "citation": "",
-            })
+def list_projects() -> dict:
+    """Build project list and groups from project_meta table."""
 
-    # 过滤掉列表中不存在的项目
-    all_in_groups = set()
-    for g in groups:
-        all_in_groups.update(g["projects"])
-    # 保留在 groups 中有定义 + 在数据库中有数据的
-    flat = [p for p in flat if p["id"] in all_in_groups or p["id"] in EXPRESSION_PROJECTS]
+    all_projects = _fetch_all_projects()
+
+    # 构建分组结构
+    group_order = [
+        "wheat population",
+        "wheat developmental tissues",
+        "wheat biotic stresses",
+        "wheat abiotic stresses",
+        "Others",
+    ]
+    groups: list[dict] = []
+    seen_groups: dict[str, list[str]] = {}
+    for p in all_projects:
+        gname = p["group"]
+        if gname not in seen_groups:
+            seen_groups[gname] = []
+        seen_groups[gname].append(p["id"])
+
+    # 按固定顺序输出
+    for gname in group_order:
+        if gname in seen_groups:
+            groups.append({"name": gname, "projects": seen_groups[gname]})
+
+    # 不在固定顺序中的归到最后
+    for gname, pids in seen_groups.items():
+        if gname not in group_order:
+            groups.append({"name": gname, "projects": pids})
+
+    flat = [
+        {"id": p["id"], "description": p["description"],
+         "categories": p["categories"], "citation": p["citation"]}
+        for p in all_projects
+    ]
 
     return {"projects": flat, "groups": groups}
+
+
+def get_project_labels(project_name: str) -> list[str]:
+    """Get labels for a given project from the database."""
+    try:
+        with mysql_cursor(settings.DB_GENE_EXPRESSION) as cursor:
+            cursor.execute(
+                "SELECT labels FROM project_meta WHERE table_name = %s", (project_name,)
+            )
+            row = cursor.fetchone()
+            if row:
+                labels_raw = row["labels"]
+                if isinstance(labels_raw, str):
+                    return json.loads(labels_raw) or []
+                return labels_raw or []
+    except Exception:
+        pass
+    return []
