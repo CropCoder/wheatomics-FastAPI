@@ -249,12 +249,6 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
     return;
   }
 
-  // 确保 #result-area 可见后才初始化图表
-  $('#result-area').show();
-  // 小延迟确保 DOM 渲染完成
-  var delay = 100;
-  setTimeout(function() {
-
   // === 图表 ===
   var labels = resp.results[0].points.map(function(p) { return p.label; });
 
@@ -340,8 +334,6 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
   });
   html += '</tbody></table></div>';
   tableDiv.append(html);
-
-  }, delay);
   $('html, body').animate({ scrollTop: $('#result-area').offset().top - 20 }, 300);
 }
 </script>
