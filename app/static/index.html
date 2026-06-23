@@ -138,7 +138,7 @@ function queryExpression() {
       $('#loading-indicator').hide();
       renderResults(resp, project, projectNames[project] || project, genes);
     })
-    .fail(function(jqXHR) {
+    .fail(function(jqXHR, status, err) {
       $('#loading-indicator').hide();
       showError('查询失败: ' + (jqXHR.responseJSON ? jqXHR.responseJSON.detail : jqXHR.statusText));
     });
@@ -168,6 +168,12 @@ function renderResults(resp, projectName, projectDesc, originalGenes) {
     $('#result-area').show();
     return;
   }
+
+  // 确保 #result-area 可见后才初始化图表
+  $('#result-area').show();
+  // 小延迟确保 DOM 渲染完成
+  var delay = 100;
+  setTimeout(function() {
 
   // === 图表 ===
   var labels = resp.results[0].points.map(function(p) { return p.label; });
@@ -241,7 +247,7 @@ function renderResults(resp, projectName, projectDesc, originalGenes) {
   html += '</tbody></table></div>';
   tableDiv.append(html);
 
-  $('#result-area').show();
+  }, delay);
   $('html, body').animate({ scrollTop: $('#result-area').offset().top - 20 }, 300);
 }
 </script>
