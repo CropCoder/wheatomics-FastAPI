@@ -111,10 +111,7 @@
     <p class="mt-2 text-muted">Loading...</p>
   </div>
 
-  <div id="result-area" style="display:none;">
-    <div class="chart-container" id="chart-container"></div>
-    <div class="data-table-container" id="table-container"></div>
-  </div>
+  <div id="result-area" style="display:none;"></div>
 </div>
 
 <!-- footer -->
@@ -190,42 +187,56 @@ function showError(msg) {
 }
 
 function queryExpression() {
-  var project = $('#project-select').val();
+  var projects = $('#project-select').val();
   var genesRaw = $('#gene-input').val().trim();
-  if (!project) { showError('请选择一个表达项目'); return; }
-  if (!genesRaw) { showError('请输入基因 ID'); return; }
+  if (!projects || projects.length === 0) { showError('Please select at least one expression project'); return; }
+  if (!genesRaw) { showError('Please input gene ID(s)'); return; }
 
-  // 按逗号 / 空格 / 换行分割，去重，去空白
   var genes = [];
   var seen = {};
   genesRaw.split(/[,\s\n]+/).forEach(function(g) {
     g = g.trim();
     if (g && !seen[g]) { seen[g] = true; genes.push(g); }
   });
-  if (genes.length === 0) { showError('没有有效的基因 ID'); return; }
+  if (genes.length === 0) { showError('No valid gene IDs'); return; }
 
   $('#error-msg').hide();
-  $('#result-area').hide();
+  $('#result-area').hide().empty();
   $('#loading-indicator').show();
 
   var projectNames = {};
-  // 反向查找项目描述
-  var allOpts = $('#project-select').find('option');
-  allOpts.each(function() {
+  $('#project-select').find('option').each(function() {
     projectNames[$(this).val()] = $(this).text();
   });
 
-  $.getJSON('/api/expression/query', { gene_ids: genes.join(','), project: project })
-    .done(function(resp) {
-      $('#loading-indicator').hide();
-      renderResults(resp, project, projectNames[project] || project, genes);
-    })
-    .fail(function(jqXHR, status, err) {
-      $('#loading-indicator').hide();
-      showError('查询失败: ' + (jqXHR.responseJSON ? jqXHR.responseJSON.detail : jqXHR.statusText));
-    });
-}
+  var geneIds = genes.join(',');
+  var doneCount = 0;
+  var total = projects.length;
 
+  projects.forEach(function(proj) {
+    $.getJSON('/api/expression/query', { gene_ids: geneIds, project: proj })
+      .done(function(resp) {
+        doneCount++;
+        if (doneCount === total) { $('#loading-indicator').hide(); }
+        var projDiv = $('<div>').addClass('project-result').css('margin-top', '30px');
+        $('#result-area').append(projDiv);
+        projDiv.append('<h5>' + (projectNames[proj] || proj) + '</h5>');
+        var chartDiv = $('<div>').addClass('chart-container');
+        var tableDiv = $('<div>').addClass('data-table-container');
+        projDiv.append(chartDiv);
+        projDiv.append(tableDiv);
+        renderResults(resp, proj, projectNames[proj] || proj, genes, chartDiv, tableDiv);
+      })
+      .fail(function(jqXHR) {
+        doneCount++;
+        if (doneCount === total) { $('#loading-indicator').hide(); }
+        $('#result-area').append(
+          '<div class="alert alert-danger">' + (projectNames[proj] || proj) + ': ' +
+          (jqXHR.responseJSON ? jqXHR.responseJSON.detail : jqXHR.statusText) + '</div>'
+        );
+      });
+  });
+}
 function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, tableDiv) {
 
   // 基因版本转换信息
