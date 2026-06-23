@@ -298,6 +298,9 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
 
   var chartId = 'expr-chart-' + Math.random().toString(36).substr(2, 6);
   chartDiv.append($('<div>').attr('id', chartId));
+  // 确保父元素可见，否则 Highcharts 无法正确渲染
+  $('#result-area').show();
+  chartDiv.show();
 
   var chart = new Highcharts.Chart({
     chart: { renderTo: chartId, zoomType: 'xy', height: 420 },
