@@ -92,16 +92,14 @@
     <div class="col-md-6">
       <div class="form-group">
         <label for="gene-input"><strong>Gene ID(s)</strong></label>
-        <textarea id="gene-input" class="form-control" rows="12" placeholder="例如: TraesCS5A02G391700&#10;支持逗号、空格、换行分隔多个基因&#10;自动识别 v1(01G)/v2(02G)/v3(03G)"></textarea>
-        <small class="help-text">支持 IWGSC v1 / v2 / v3 格式，系统自动转换</small>
+        <textarea id="gene-input" class="form-control" rows="12" placeholder="e.g. TraesCS5A02G391700&#10;Separate multiple IDs by comma, space or newline"></textarea>
+        <small class="help-text">Supports IWGSC v1 / v2 / v3, auto-conversion</small>
       </div>
       <button id="query-btn" class="btn btn-primary" onclick="queryExpression()">Query Expression</button>
     </div>
     <div class="col-md-6">
       <div class="form-group">
-        <label for="project-select"><strong>Expression Project</strong></label>
         <select id="project-select" class="form-control" size="12"></select>
-        <small class="help-text">选择表达谱项目</small>
       </div>
     </div>
   </div>
@@ -110,7 +108,7 @@
 
   <div class="loading" id="loading-indicator">
     <div class="spinner-border text-primary" role="status"></div>
-    <p class="mt-2 text-muted">Loading expression data...</p>
+    <p class="mt-2 text-muted">Loading...</p>
   </div>
 
   <div id="result-area" style="display:none;">
