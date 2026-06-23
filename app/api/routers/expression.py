@@ -96,7 +96,13 @@ def query_expression(
           }
     """
 
-    project = ensure_allowed_table(project, EXPRESSION_PROJECTS, "expression project")
+    # 动态校验：从数据库 project_meta 验证项目是否存在
+    from app.db.mysql import mysql_cursor
+    with mysql_cursor(settings.DB_GENE_EXPRESSION) as cursor:
+        cursor.execute("SELECT 1 FROM project_meta WHERE table_name = %s", (project,))
+        if not cursor.fetchone():
+            from app.core.exceptions import ValidationFailure
+            raise ValidationFailure(f"Unsupported expression project: {project}")
     requested_genes = [ensure_gene_like(gene.strip()) for gene in gene_ids.split(",") if gene.strip()]
     if not requested_genes:
         raise ResourceNotFound("No valid gene IDs provided")
