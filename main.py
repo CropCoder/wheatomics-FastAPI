@@ -11,6 +11,8 @@ from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
 
 from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, primer_server, triticeae, blast
 from app.core.config import settings
@@ -98,6 +100,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+app.mount("/expression", StaticFiles(directory=Path(__file__).parent / "app" / "static", html=True), name="expression")
 
 
 @app.middleware("http")
