@@ -89,20 +89,20 @@
   <br><h5 class="card-title">Gene Expression</h5><br>
 
   <div class="row">
-    <div class="col-md-5">
+    <div class="col-md-6">
+      <div class="form-group">
+        <label for="gene-input"><strong>Gene ID(s)</strong></label>
+        <textarea id="gene-input" class="form-control" rows="12" placeholder="例如: TraesCS5A02G391700&#10;支持逗号、空格、换行分隔多个基因&#10;自动识别 v1(01G)/v2(02G)/v3(03G)"></textarea>
+        <small class="help-text">支持 IWGSC v1 / v2 / v3 格式，系统自动转换</small>
+      </div>
+      <button id="query-btn" class="btn btn-primary" onclick="queryExpression()">Query Expression</button>
+    </div>
+    <div class="col-md-6">
       <div class="form-group">
         <label for="project-select"><strong>Expression Project</strong></label>
         <select id="project-select" class="form-control" size="12"></select>
         <small class="help-text">选择表达谱项目</small>
       </div>
-    </div>
-    <div class="col-md-7">
-      <div class="form-group">
-        <label for="gene-input"><strong>Gene ID(s)</strong></label>
-        <textarea id="gene-input" class="form-control" rows="3" placeholder="例如: TraesCS5A02G391700&#10;支持逗号、空格、换行分隔多个基因&#10;自动识别 v1(01G)/v2(02G)/v3(03G)"></textarea>
-        <small class="help-text">支持 IWGSC v1 / v2 / v3 格式，系统自动转换</small>
-      </div>
-      <button id="query-btn" class="btn btn-primary" onclick="queryExpression()">Query Expression</button>
     </div>
   </div>
 
