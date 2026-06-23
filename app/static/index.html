@@ -309,9 +309,9 @@ function renderResults(resp, projectName, projectDesc, originalGenes) {
   });
   chartData.forEach(function(s) { chart.addSeries(s); });
 
-  // === 引用信息 ===
+  // === 引用信息（在图表上方） ===
   if (projectCitations[projectName] && projectCitations[projectName] !== '') {
-    tableDiv.append('<div class="alert alert-info" style="font-size:13px;margin-top:10px;"><strong>Citation:</strong> ' + projectCitations[projectName] + '</div>');
+    chartDiv.append('<div class="alert alert-info" style="font-size:13px;margin-bottom:10px;"><strong>Citation:</strong> ' + projectCitations[projectName] + '</div>');
   }
 
   // === 数据表格 ===
