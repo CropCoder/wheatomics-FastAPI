@@ -123,10 +123,25 @@ def query_expression(
             if v2_id != g:
                 genes_converted[g] = v2_id
         elif ver == "03":
-            # 03G → 02G: 也直接字符串替换（数据库 IWGSCv3_to_v2 表不存在）
-            v2_id = g.replace("03G", "02G", 1)
-            if v2_id != g:
-                genes_converted[g] = v2_id
+            # 03G → 02G: 通过 GeneHub detail API 查询
+            import urllib.request, json as _json
+            try:
+                req = urllib.request.Request(
+                    f"http://localhost:8000/api/genes/detail/{g}",
+                    headers={"Accept": "application/json"}
+                )
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    gh_data = _json.loads(resp.read().decode())
+                if gh_data.get("success") and gh_data.get("data", {}).get("gene_ids"):
+                    # gene_ids[0] = v2, gene_ids[1] = v1, 取前两个
+                    v2_id = gh_data["data"]["gene_ids"][0]
+                    if v2_id != g:
+                        genes_converted[g] = v2_id
+            except Exception:
+                # 兜底：字符串替换
+                v2_id = g.replace("03G", "02G", 1)
+                if v2_id != g:
+                    genes_converted[g] = v2_id
 
     with mysql_cursor(settings.DB_GENE_EXPRESSION) as cursor:
         # 探测表结构：找基因 ID 列名和数据列
