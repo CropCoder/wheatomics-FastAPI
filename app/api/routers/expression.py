@@ -112,21 +112,21 @@ def query_expression(
     genes_converted: dict[str, str] = {}
 
     # --- Auto-convert non-v2 (non-02G) gene IDs to IWGSC v2.1 ---
-    with mysql_cursor(settings.DB_CONVERT_GENE_ID) as convert_cursor:
-        for g in requested_genes:
-            m = re.search(r"(\d{2})G", g)
-            ver = m.group(1) if m else ""
-            if ver == "02":
-                continue
-            table = {"01": "IWGSCv1_to_v2", "03": "IWGSCv3_to_v2"}.get(ver)
-            if not table:
-                continue
-            convert_cursor.execute(f"SELECT * FROM `{table}` WHERE MIPS = %s", (g,))
-            row = convert_cursor.fetchone()
-            if row:
-                v2_id = str(row.get("ReferenceGene") or row.get("reference_gene") or "")
-                if v2_id:
-                    genes_converted[g] = v2_id
+    for g in requested_genes:
+        m = re.search(r"(\d{2})G", g)
+        ver = m.group(1) if m else ""
+        if ver == "02":
+            continue
+        if ver == "01":
+            # 01G → 02G: 字符串替换，IWGSC v1 到 v2 基因 ID 前缀规则一致
+            v2_id = g.replace("01G", "02G", 1)
+            if v2_id != g:
+                genes_converted[g] = v2_id
+        elif ver == "03":
+            # 03G → 02G: 也直接字符串替换（数据库 IWGSCv3_to_v2 表不存在）
+            v2_id = g.replace("03G", "02G", 1)
+            if v2_id != g:
+                genes_converted[g] = v2_id
 
     with mysql_cursor(settings.DB_GENE_EXPRESSION) as cursor:
         # 探测表结构：找基因 ID 列名和数据列
