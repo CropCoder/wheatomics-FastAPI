@@ -468,9 +468,15 @@ def search_gene_interval(
     # 如果不是区间格式（不含:），按基因 ID 搜索
     if ":" not in region:
         with mysql_cursor(settings.DB_GENEFUNC) as cursor:
+            # 根据表类型动态选择基因列
+            if table == "Genefunc_IWGSC03G_table":
+                gene_cols = ["Gene03G", "Gene02G"]
+            else:
+                gene_cols = ["Gene"]
+            where_clause = " OR ".join(f"`{col}`=%s" for col in gene_cols)
             cursor.execute(
-                f"SELECT * FROM `{table}` WHERE Gene=%s OR Gene02G=%s OR Gene03G=%s",
-                (region, region, region),
+                f"SELECT * FROM `{table}` WHERE {where_clause}",
+                tuple(region for _ in gene_cols),
             )
             for row in cursor.fetchall():
                 records.append(_make_function_record(row, table))
