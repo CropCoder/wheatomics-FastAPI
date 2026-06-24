@@ -8,6 +8,17 @@ from app.core.config import settings
 from app.core.exceptions import ResourceNotFound, ValidationFailure
 from app.core.response import ok
 from app.core.security import GENE_FUNCTION_TABLES, ensure_allowed_table, ensure_gene_like, ensure_interval_like
+
+def _validate_genefunc_table(table: str) -> str:
+    """Validate that a table exists in Genefuncdb. Replaces static allowlist."""
+    from app.db.mysql import mysql_cursor
+    with mysql_cursor(settings.DB_GENEFUNC) as cursor:
+        cursor.execute("SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s",
+                       (settings.DB_GENEFUNC, table))
+        if not cursor.fetchone():
+            from app.core.exceptions import ValidationFailure
+            raise ValidationFailure(f"Unknown gene function table: {table}")
+    return table
 from app.db.mysql import mysql_cursor
 from app.schemas.gene import DOIReference, GeneDetailResponse, GeneFunctionRecord, KnownGeneDetail, KnownGeneSummary
 from app.services.genome_examples import GENOME_EXAMPLES
@@ -372,7 +383,7 @@ def search_pfam(
     if not domain.startswith("PF"):
         raise ValidationFailure("PFAM domain ID must start with PF (e.g. PF00319)")
 
-    table = ensure_allowed_table(table, {"Genefunc_table", "Genefunc_IWGSC03G_table"}, "gene function table")
+    table = _validate_genefunc_table(table)
     records: list[GeneFunctionRecord] = []
 
     with mysql_cursor(settings.DB_GENEFUNC) as cursor:
@@ -452,7 +463,7 @@ def search_gene_interval(
           }
     """
 
-    table = ensure_allowed_table(table, {"Genefunc_table", "Genefunc_IWGSC03G_table"}, "gene function table")
+    table = _validate_genefunc_table(table)
     ensure_interval_like(region)
 
     chrom = region.split(":")[0]
