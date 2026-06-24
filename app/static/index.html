@@ -38,6 +38,15 @@
   .card-title { color: #333; border-left: 4px solid #007bff; padding-left: 12px; }
   .help-text { font-size: 0.85rem; color: #6c757d; margin-top: 4px; }
   #error-msg { display: none; margin-top: 10px; }
+  .checkbox-list { max-height: 320px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px; padding: 6px 10px; background: #fff; }
+  .checkbox-group { margin-bottom: 4px; }
+  .checkbox-group-label { font-weight: bold; font-size: 13px; color: #495057; padding: 4px 0 2px; cursor: pointer; }
+  .checkbox-group-label:hover { color: #007bff; }
+  .checkbox-item { padding: 2px 0 2px 14px; font-size: 13px; cursor: pointer; display: flex; align-items: center; }
+  .checkbox-item input { margin-right: 6px; cursor: pointer; }
+  .checkbox-item:hover { background: #f0f4ff; border-radius: 3px; }
+  .checkbox-controls { margin-bottom: 6px; }
+  .checkbox-controls .btn-sm { font-size: 12px; padding: 2px 10px; }
 </style>
 </head>
 <body>
@@ -99,7 +108,12 @@
     </div>
     <div class="col-md-6">
       <div class="form-group">
-        <select id="project-select" class="form-control" size="12" multiple></select>
+        <div class="checkbox-controls">
+          <button class="btn btn-outline-primary btn-sm" onclick="checkAllProjects(true)">Select All</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="checkAllProjects(false)">Clear</button>
+        </div>
+        <div id="project-list" class="checkbox-list"></div>
+        <small class="help-text" id="selected-count">No project selected</small>
       </div>
     </div>
   </div>
@@ -187,7 +201,8 @@ function showError(msg) {
 }
 
 function queryExpression() {
-  var projects = $('#project-select').val();
+  var projects = [];
+  $('.checkbox-item input:checked').each(function() { projects.push($(this).val()); });
   var genesRaw = $('#gene-input').val().trim();
   if (!projects || projects.length === 0) { showError('Please select at least one expression project'); return; }
   if (!genesRaw) { showError('Please input gene ID(s)'); return; }
@@ -205,8 +220,9 @@ function queryExpression() {
   $('#loading-indicator').show();
 
   var projectNames = {};
-  $('#project-select').find('option').each(function() {
-    projectNames[$(this).val()] = $(this).text();
+  $('.checkbox-item').each(function() {
+    var cb = $(this).find('input');
+    projectNames[cb.val()] = $.trim($(this).text());
   });
 
   var geneIds = genes.join(',');
