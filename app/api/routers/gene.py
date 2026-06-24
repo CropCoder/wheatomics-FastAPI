@@ -533,18 +533,18 @@ def list_gene_function_tables() -> dict:
     tables: list[dict] = []
     with mysql_cursor(settings.DB_GENEFUNC) as cursor:
         cursor.execute("SHOW TABLES")
-        all_tables = [row[0] for row in cursor.fetchall()]
+        all_tables = [list(row.values())[0] for row in cursor.fetchall()]
 
         for tbl_name in sorted(all_tables):
             info: dict = {"name": tbl_name}
             try:
                 cursor.execute(f"SELECT COUNT(*) FROM `{tbl_name}`")
-                info["rows"] = cursor.fetchone()[0]
+                info["rows"] = list(cursor.fetchone().values())[0]
             except Exception:
                 info["rows"] = None
             try:
                 cursor.execute(f"DESCRIBE `{tbl_name}`")
-                info["columns"] = [row[0] for row in cursor.fetchall()]
+                info["columns"] = [list(row.values())[0] for row in cursor.fetchall()]
             except Exception:
                 info["columns"] = []
             tables.append(info)
