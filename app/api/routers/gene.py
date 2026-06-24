@@ -497,3 +497,41 @@ def search_gene_interval(
                 )
 
     return ok({"table": table, "region": region, "count": len(records), "records": [record.model_dump() for record in records]})
+
+
+@interval_router.get("/tables")
+def list_gene_function_tables() -> dict:
+    """列出 Genefuncdb 中所有可用的功能注释表。
+
+    功能:
+        返回 Genefuncdb 数据库中所有功能注释表的名称和描述。
+        用于让前端或 AI agent 了解可查询的数据表范围。
+
+    用法:
+        GET /api/genes/functions/tables
+        无需参数。
+
+    案例:
+        请求:
+          curl -X GET "http://localhost:8000/api/genes/functions/tables"
+
+        响应:
+          {
+            "success": true,
+            "data": {
+              "tables": [
+                { "id": "Genefunc_table", "description": "Functional annotation against IWGSC v1/v2" },
+                { "id": "Genefunc_IWGSC03G_table", "description": "Functional annotation with IWGSC v3 mapping" },
+                { "id": "GenePageIWGSCv1_table", "description": "Gene detail page table" },
+                { "id": "WheatRiceArabidopsis_tbl", "description": "Wheat, rice and Arabidopsis homologs" },
+                { "id": "Triticeae_table", "description": "Triticeae homologs" }
+              ]
+            }
+          }
+    """
+
+    tables = [
+        {"id": name, "description": desc}
+        for name, desc in sorted(GENE_FUNCTION_TABLES.items())
+    ]
+    return ok({"tables": tables})
