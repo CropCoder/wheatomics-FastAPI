@@ -189,22 +189,6 @@ function loadProjects() {
       showError('Failed to load projects');
     });
 }
-          });
-          select.append($optgroup);
-        });
-      } else {
-        // 无分组时的 fallback
-        data.projects.forEach(function(p) {
-          select.append($('<option>').val(p.id).text(p.description));
-        });
-      }
-      // 选中第一个 option
-      select.val(select.find('option:first').val());
-    })
-    .fail(function(jqXHR) {
-      showError('无法加载项目列表: ' + (jqXHR.responseJSON ? jqXHR.responseJSON.detail : jqXHR.statusText));
-    });
-}
 
 function showError(msg) {
   $('#error-msg').text(msg).show();
@@ -213,7 +197,7 @@ function showError(msg) {
 
 function queryExpression() {
   var projects = [];
-  $('.checkbox-item input:checked').each(function() { projects.push($(this).val()); });
+  $('#project-list input:checked').each(function() { projects.push($(this).val()); });
   var genesRaw = $('#gene-input').val().trim();
   if (!projects || projects.length === 0) { showError('Please select at least one expression project'); return; }
   if (!genesRaw) { showError('Please input gene ID(s)'); return; }
@@ -231,9 +215,8 @@ function queryExpression() {
   $('#loading-indicator').show();
 
   var projectNames = {};
-  $('.checkbox-item').each(function() {
-    var cb = $(this).find('input');
-    projectNames[cb.val()] = $.trim($(this).text());
+  $('#project-list label').each(function() {
+    projectNames[$(this).find('input').val()] = $.trim($(this).text());
   });
 
   var geneIds = genes.join(',');
