@@ -500,12 +500,13 @@ def search_gene_interval(
 
 
 @interval_router.get("/tables")
+@interval_router.get("/tables")
 def list_gene_function_tables() -> dict:
-    """列出 Genefuncdb 中所有可用的功能注释表。
+    """查询 Genefuncdb 中所有表的信息。
 
     功能:
-        返回 Genefuncdb 数据库中所有功能注释表的名称和描述。
-        用于让前端或 AI agent 了解可查询的数据表范围。
+        直接连接 Genefuncdb 数据库，执行 SHOW TABLES 获取所有表名，
+        同时查询每个表的行数和字段列表，返回结构化信息。
 
     用法:
         GET /api/genes/functions/tables
@@ -519,19 +520,33 @@ def list_gene_function_tables() -> dict:
           {
             "success": true,
             "data": {
+              "database": "Genefuncdb",
+              "total_tables": 5,
               "tables": [
-                { "id": "Genefunc_table", "description": "Functional annotation against IWGSC v1/v2" },
-                { "id": "Genefunc_IWGSC03G_table", "description": "Functional annotation with IWGSC v3 mapping" },
-                { "id": "GenePageIWGSCv1_table", "description": "Gene detail page table" },
-                { "id": "WheatRiceArabidopsis_tbl", "description": "Wheat, rice and Arabidopsis homologs" },
-                { "id": "Triticeae_table", "description": "Triticeae homologs" }
+                { "name": "Genefunc_table", "rows": 168900, "columns": ["Chrom", "Start1", ...] },
+                ...
               ]
             }
           }
     """
 
-    tables = [
-        {"id": name, "description": desc}
-        for name, desc in sorted(GENE_FUNCTION_TABLES.items())
-    ]
-    return ok({"tables": tables})
+    tables: list[dict] = []
+    with mysql_cursor(settings.DB_GENEFUNC) as cursor:
+        cursor.execute("SHOW TABLES")
+        all_tables = [row[0] for row in cursor.fetchall()]
+
+        for tbl_name in sorted(all_tables):
+            info: dict = {"name": tbl_name}
+            try:
+                cursor.execute(f"SELECT COUNT(*) FROM `{tbl_name}`")
+                info["rows"] = cursor.fetchone()[0]
+            except Exception:
+                info["rows"] = None
+            try:
+                cursor.execute(f"DESCRIBE `{tbl_name}`")
+                info["columns"] = [row[0] for row in cursor.fetchall()]
+            except Exception:
+                info["columns"] = []
+            tables.append(info)
+
+    return ok({"database": "Genefuncdb", "total_tables": len(tables), "tables": tables})
