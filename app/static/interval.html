@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interval Tool - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+<script src="/expression/highcharts.js"></script>
+<style>
+  body { background: #f8f9fa; margin:0; padding:0; }
+  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+  #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
+  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+  #header-tabs li { display:inline-block !important; width:190px !important; }
+  #header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+  #header-tabs a:hover { background:#98c1d9; color:#000000; }
+  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+  #header-tabs ul li ul { display:none !important; position:absolute; }
+  #header-tabs ul li:hover ul { display:block !important; }
+  #header-tabs ul li ul a { border-radius:0; }
+  #home_content { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+  .result-table { background: #fff; border-radius: 6px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .result-table table { font-size: 13px; }
+  .result-table th { position: sticky; top: 0; background: #f8f9fa; }
+  .loading { display: none; text-align: center; padding: 60px; }
+  .loading .spinner-border { width: 3rem; height: 3rem; }
+  #error-msg { display: none; margin-top: 10px; }
+  .example-links a { margin-right: 12px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
+</div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/index.html">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/tools/intervalTools.html">IntervalTool</a></li>
+        <li><a href="/expression/index.html">GeneExpression</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href=#><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div id="home_content">
+  <br><h5 class="card-title">Interval Tool</h5><br>
+
+  <div class="row">
+    <div class="col-md-4">
+      <div class="form-group">
+        <label><strong>Genome / Table</strong></label>
+        <select id="table-select" class="form-control" size="12"></select>
+      </div>
+    </div>
+    <div class="col-md-8">
+      <div class="form-group">
+        <label><strong>Query Type</strong></label>
+        <div>
+          <label class="radio-inline" style="margin-right:20px;"><input type="radio" name="queryType" value="region" checked> Region</label>
+          <label class="radio-inline" style="margin-right:20px;"><input type="radio" name="queryType" value="gene"> Gene ID</label>
+          <label class="radio-inline"><input type="radio" name="queryType" value="pfam"> Pfam ID</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="query-input"><strong>Query</strong></label>
+        <textarea id="query-input" class="form-control" rows="4" placeholder="e.g. chr1A:1-141522"></textarea>
+        <small class="help-text" id="example-hint">Region format: chr1A:start-end or chr1A:start..end</small>
+      </div>
+      <div class="example-links" id="example-links">
+        <strong>Examples:</strong>
+        <a href="javascript:void(0)" onclick="useExample('region')">Region</a>
+        <a href="javascript:void(0)" onclick="useExample('gene')">Gene</a>
+        <a href="javascript:void(0)" onclick="useExample('pfam')">Pfam</a>
+      </div>
+      <button id="query-btn" class="btn btn-primary" onclick="queryInterval()" style="margin-top:10px;">Submit</button>
+    </div>
+  </div>
+
+  <div id="error-msg" class="alert alert-danger"></div>
+
+  <div class="loading" id="loading-indicator">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted">Searching...</p>
+  </div>
+
+  <div id="result-area" style="display:none;">
+    <div class="result-table" id="table-container">
+      <h6 id="result-title"></h6>
+      <div style="max-height:600px;overflow-y:auto;" id="result-table-body"></div>
+    </div>
+  </div>
+</div>
+
+<div class="line" style="height:10px;background-color:white"></div>
+<div id="home_footer">
+  <center style="margin-top:5px">
+    <table>
+      <tr>
+        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><div class="line" style="height:50px;width:15px;"></div></td>
+        <td><span><a href="https://clustrmaps.com/site/1c2ry" title="Visit tracker"><img src="//www.clustrmaps.com/map_v2.png?d=fVblT8MfQ65ClPkORSIs7Sz0A0Ttlm1wOwVQiR8f_ME&cl=ffffff" height="50"></a></span></td>
+      </tr>
+    </table>
+    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+  </center>
+</div>
+
+<script>
+var genomeExamples = {};
+
+$(function(){
+  loadTables();
+  $('input[name="queryType"]').change(function() {
+    var t = $(this).val();
+    var hints = {
+      region: 'Region format: chr1A:start-end or chr1A:start..end',
+      gene: 'Gene / Transcript ID, e.g. TraesCS1A01G000100LC',
+      pfam: 'Pfam ID, e.g. PF00830'
+    };
+    $('#example-hint').text(hints[t] || '');
+  });
+});
+
+function loadTables() {
+  $('#table-select').html('<option value="">Loading...</option>');
+  $.getJSON('/api/genes/functions/tables')
+    .done(function(resp) {
+      if (!resp.success) { showError('Failed to load tables'); return; }
+      var sel = $('#table-select').empty();
+      // 先找到 Genefunc_table（CS v1.0）设为默认
+      resp.data.tables.forEach(function(t) {
+        var opt = $('<option>').val(t.name).text(t.name + ' (' + (t.rows || '?') + ' rows)');
+        sel.append(opt);
+        genomeExamples[t.name] = { table_name: t.name, columns: t.columns || [] };
+      });
+      // 默认选中 Genefunc_table
+      sel.val('Genefunc_table');
+    })
+    .fail(function() { showError('Failed to load tables'); });
+}
+
+function useExample(type) {
+  // 尝试调一下现有的 genome_examples API 获取示例
+  var table = $('#table-select').val() || 'Genefunc_table';
+  var examples = {
+    'Genefunc_table': { region: 'chr1A:1-141522', gene: 'TraesCS1A01G000100LC', pfam: 'PF00319' },
+    'Genefunc_IWGSC03G_table': { region: 'chr1A:1-142819', gene: 'TraesCS1A03G0000100LC', pfam: 'PF00319' },
+  };
+  var ex = examples[table] || examples['Genefunc_table'];
+  if (type === 'region') { $('#query-input').val(ex.region); $('input[value="region"]').prop('checked',true); }
+  else if (type === 'gene') { $('#query-input').val(ex.gene); $('input[value="gene"]').prop('checked',true); }
+  else if (type === 'pfam') { $('#query-input').val(ex.pfam); $('input[value="pfam"]').prop('checked',true); }
+  $('input[name="queryType"]').trigger('change');
+}
+
+function showError(msg) {
+  $('#error-msg').text(msg).show();
+  $('#loading-indicator').hide();
+}
+
+function queryInterval() {
+  var table = $('#table-select').val();
+  var query = $('#query-input').val().trim();
+  var qtype = $('input[name="queryType"]:checked').val();
+  if (!table) { showError('Please select a genome/table'); return; }
+  if (!query) { showError('Please enter a query'); return; }
+
+  $('#error-msg').hide();
+  $('#result-area').hide();
+  $('#loading-indicator').show();
+
+  var apiUrl = '';
+  var params = {};
+
+  if (qtype === 'region') {
+    apiUrl = '/api/genes/functions/interval';
+    params = { ID: query, table: table };
+  } else if (qtype === 'pfam') {
+    if (!query.toUpperCase().startsWith('PF')) {
+      showError('Pfam ID must start with PF (e.g. PF00319)');
+      return;
+    }
+    apiUrl = '/api/genes/functions/pfam';
+    params = { ID: query, table: table };
+  } else {
+    // gene - use detail endpoint first, fallback to interval with 0 region
+    apiUrl = '/api/genes/detail/' + encodeURIComponent(query);
+    params = {};
+  }
+
+  if (qtype === 'gene') {
+    $.getJSON(apiUrl)
+      .done(function(resp) {
+        $('#loading-indicator').hide();
+        if (!resp.success || !resp.data) {
+          showError('Gene not found: ' + query);
+          return;
+        }
+        var d = resp.data;
+        // 用位置做 interval 查询
+        var region = d.chromosome + ':' + d.start + '-' + d.end;
+        $.getJSON('/api/genes/functions/interval', { ID: region, table: table })
+          .done(function(resp2) { renderResults(resp2, 'Gene: ' + query); })
+          .fail(function() { showError('Interval query failed'); });
+      })
+      .fail(function() {
+        $('#loading-indicator').hide();
+        showError('Gene not found: ' + query);
+      });
+    return;
+  }
+
+  $.getJSON(apiUrl, params)
+    .done(function(resp) {
+      $('#loading-indicator').hide();
+      if (!resp.success) { showError('Query failed'); return; }
+      var title = qtype === 'region' ? 'Region: ' + query : 'Pfam: ' + query;
+      renderResults(resp, title);
+    })
+    .fail(function(jqXHR) {
+      $('#loading-indicator').hide();
+      showError(jqXHR.responseJSON ? jqXHR.responseJSON.detail : 'Query failed');
+    });
+}
+
+function renderResults(resp, title) {
+  var records = [];
+  if (resp.data && resp.data.records) {
+    records = resp.data.records;
+  } else if (resp.data && resp.data.results) {
+    records = resp.data.results;
+  } else {
+    $('#table-container').html('<div class="alert alert-warning">No results found.</div>');
+    $('#result-area').show();
+    return;
+  }
+
+  if (records.length === 0) {
+    $('#table-container').html('<div class="alert alert-warning">No results found.</div>');
+    $('#result-area').show();
+    return;
+  }
+
+  var html = '<h6>' + title + ' (' + records.length + ' records)</h6>';
+  html += '<table class="table table-bordered table-hover table-sm">';
+  html += '<thead><tr><th>Chrom</th><th>Start (Mb)</th><th>End (Mb)</th><th>Gene</th><th>Strand</th><th>Description</th><th>Domain</th></tr></thead><tbody>';
+
+  records.forEach(function(r) {
+    html += '<tr>';
+    html += '<td>' + (r.chromosome || r.chrom || '-') + '</td>';
+    html += '<td>' + (r.start_mb != null ? r.start_mb.toFixed(6) : '-') + '</td>';
+    html += '<td>' + (r.end_mb != null ? r.end_mb.toFixed(6) : '-') + '</td>';
+    html += '<td><strong>' + (r.gene_primary || '-') + '</strong></td>';
+    html += '<td>' + (r.strand || '-') + '</td>';
+    html += '<td>' + (r.description || '-') + '</td>';
+    html += '<td>' + (r.domain || '-') + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  $('#table-container').html(html);
+  $('#result-area').show();
+}
+</script>
+</body>
+</html>
