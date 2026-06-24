@@ -335,6 +335,29 @@ def get_gene_detail(gene_id: str) -> dict:
     )
     return ok(detail.model_dump())
 
+def _make_function_record(row, table):
+    """Build a GeneFunctionRecord from a DB row, handling different table schemas."""
+    if table == "Genefunc_IWGSC03G_table":
+        return GeneFunctionRecord(
+            chromosome=str(row["Chrom"]),
+            start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
+            end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
+            gene_primary=str(row["Gene03G"]),
+            gene_secondary=str(row["Gene02G"]),
+            strand=normalize_text(row["Strand"]) or None,
+            description=normalize_text(row.get("Description") or row.get("description") or "") or None,
+            domain=normalize_text(row["Domain"]) or None,
+        )
+    return GeneFunctionRecord(
+        chromosome=str(row["Chrom"]),
+        start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
+        end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
+        gene_primary=str(row["Gene"]),
+        strand=normalize_text(row["Strand"]) or None,
+        description=normalize_text(row.get("Description") or row.get("description") or "") or None,
+        domain=normalize_text(row["Domain"]) or None,
+    )
+
 @pfam_router.get("/pfam")
 def search_pfam(
     domain: str = Query(..., alias="ID"),
@@ -389,31 +412,7 @@ def search_pfam(
     with mysql_cursor(settings.DB_GENEFUNC) as cursor:
         cursor.execute(f"SELECT * FROM `{table}` WHERE Domain REGEXP %s", (domain,))
         for row in cursor.fetchall():
-            if table == "Genefunc_IWGSC03G_table":
-                records.append(
-                    GeneFunctionRecord(
-                        chromosome=str(row["Chrom"]),
-                        start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
-                        end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
-                        gene_primary=str(row["Gene03G"]),
-                        gene_secondary=str(row["Gene02G"]),
-                        strand=normalize_text(row["Strand"]) or None,
-                        description=normalize_text(row.get("Description") or row.get("description") or "") or None,
-                        domain=normalize_text(row["Domain"]) or None,
-                    )
-                )
-            else:
-                records.append(
-                    GeneFunctionRecord(
-                        chromosome=str(row["Chrom"]),
-                        start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
-                        end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
-                        gene_primary=str(row["Gene"]),
-                        strand=normalize_text(row["Strand"]) or None,
-                        description=normalize_text(row.get("Description") or row.get("description") or "") or None,
-                        domain=normalize_text(row["Domain"]) or None,
-                    )
-                )
+            records.append(_make_function_record(row, table))
 
     return ok({"table": table, "domain": domain, "count": len(records), "records": [record.model_dump() for record in records]})
 
@@ -464,8 +463,20 @@ def search_gene_interval(
     """
 
     table = _validate_genefunc_table(table)
-    ensure_interval_like(region)
+    records: list[GeneFunctionRecord] = []
 
+    # 如果不是区间格式（不含:），按基因 ID 搜索
+    if ":" not in region:
+        with mysql_cursor(settings.DB_GENEFUNC) as cursor:
+            cursor.execute(
+                f"SELECT * FROM `{table}` WHERE Gene=%s OR Gene02G=%s OR Gene03G=%s",
+                (region, region, region),
+            )
+            for row in cursor.fetchall():
+                records.append(_make_function_record(row, table))
+        return ok({"table": table, "region": region, "count": len(records), "records": [record.model_dump() for record in records]})
+
+    ensure_interval_like(region)
     chrom = region.split(":")[0]
     interval = region.split(":")[1].replace("..", "-")
     start_text, end_text = interval.split("-")
@@ -474,39 +485,13 @@ def search_gene_interval(
     if end <= start or end - start > 30_000_000:
         raise ValidationFailure("End number should be more than start number and region should not be more than 30Mb")
 
-    records: list[GeneFunctionRecord] = []
-
     with mysql_cursor(settings.DB_GENEFUNC) as cursor:
         cursor.execute(
             f"SELECT * FROM `{table}` WHERE Chrom=%s AND Start1 >= %s AND End1 <= %s",
             (chrom, start, end),
         )
         for row in cursor.fetchall():
-            if table == "Genefunc_IWGSC03G_table":
-                records.append(
-                    GeneFunctionRecord(
-                        chromosome=str(row["Chrom"]),
-                        start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
-                        end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
-                        gene_primary=str(row["Gene03G"]),
-                        gene_secondary=str(row["Gene02G"]),
-                        strand=normalize_text(row["Strand"]) or None,
-                        description=normalize_text(row.get("Description") or row.get("description") or "") or None,
-                        domain=normalize_text(row["Domain"]) or None,
-                    )
-                )
-            else:
-                records.append(
-                    GeneFunctionRecord(
-                        chromosome=str(row["Chrom"]),
-                        start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
-                        end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
-                        gene_primary=str(row["Gene"]),
-                        strand=normalize_text(row["Strand"]) or None,
-                        description=normalize_text(row.get("Description") or row.get("description") or "") or None,
-                        domain=normalize_text(row["Domain"]) or None,
-                    )
-                )
+            records.append(_make_function_record(row, table))
 
     return ok({"table": table, "region": region, "count": len(records), "records": [record.model_dump() for record in records]})
 

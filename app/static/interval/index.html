@@ -240,25 +240,8 @@ function queryInterval() {
   }
 
   if (qtype === 'gene') {
-    $.getJSON(apiUrl)
-      .done(function(resp) {
-        $('#loading-indicator').hide();
-        if (!resp.success || !resp.data) {
-          showError('Gene not found: ' + query);
-          return;
-        }
-        var d = resp.data;
-        // 用位置做 interval 查询
-        var region = d.chromosome + ':' + d.start + '-' + d.end;
-        $.getJSON('/api/genes/functions/interval', { ID: region, table: table })
-          .done(function(resp2) { renderResults(resp2, 'Gene: ' + query); })
-          .fail(function() { showError('Interval query failed'); });
-      })
-      .fail(function() {
-        $('#loading-indicator').hide();
-        showError('Gene not found: ' + query);
-      });
-    return;
+    apiUrl = '/api/genes/functions/interval';
+    params = { ID: query, table: table };
   }
 
   $.getJSON(apiUrl, params)
