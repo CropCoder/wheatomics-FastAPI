@@ -10,6 +10,7 @@ from app.core.response import ok
 from app.core.security import GENE_FUNCTION_TABLES, ensure_allowed_table, ensure_gene_like, ensure_interval_like
 from app.db.mysql import mysql_cursor
 from app.schemas.gene import DOIReference, GeneDetailResponse, GeneFunctionRecord, KnownGeneDetail, KnownGeneSummary
+from app.services.genome_examples import GENOME_EXAMPLES
 from app.services.legacy_parsers import normalize_text, split_legacy_multi_value
 
 router = APIRouter(prefix="/genes", tags=["Known Genes"])
@@ -550,3 +551,35 @@ def list_gene_function_tables() -> dict:
             tables.append(info)
 
     return ok({"database": "Genefuncdb", "total_tables": len(tables), "tables": tables})
+
+
+@interval_router.get("/examples")
+def list_genome_examples() -> dict:
+    """获取所有基因组的示例查询数据。
+
+    功能:
+        返回每个基因组对应的示例 Region、Gene ID、Pfam ID，
+        用于 Interval Tool 前端的示例链接展示。
+
+    用法:
+        GET /api/genes/functions/examples
+        无需参数。
+
+    案例:
+        请求:
+          curl -X GET "http://localhost:8000/api/genes/functions/examples"
+
+        响应:
+          {
+            "success": true,
+            "data": {
+              "examples": [
+                { "table_name": "Genefunc_table", "display_name": "Chinese Spring genome v1.0",
+                  "region": "chr1A:1-141522", "gene": "TraesCS1A01G000100LC", "pfam": "" },
+                ...
+              ]
+            }
+          }
+    """
+
+    return ok({"examples": GENOME_EXAMPLES})

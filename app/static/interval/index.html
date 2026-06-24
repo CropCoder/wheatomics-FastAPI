@@ -85,12 +85,16 @@
         <textarea id="query-input" class="form-control" rows="4" placeholder="e.g. chr1A:1-141522"></textarea>
         <small class="help-text" id="example-hint">Region format: chr1A:start-end or chr1A:start..end</small>
       </div>
-      <div class="example-links" id="example-links">
-        <strong>Examples:</strong>
-        <a href="javascript:void(0)" onclick="useExample('region')">Region</a>
-        <a href="javascript:void(0)" onclick="useExample('gene')">Gene</a>
-        <a href="javascript:void(0)" onclick="useExample('pfam')">Pfam</a>
-      </div>
+      <p><b>Examples:</b></p>
+      <p>
+        Region: <a href="javascript:void(0)" onclick="useExample('region')"><span id="example_region"></span></a>
+      </p>
+      <p>
+        Gene / Transcript ID: <a href="javascript:void(0)" onclick="useExample('gene')"><span id="example_gene"></span></a>
+      </p>
+      <p>
+        Pfam ID: <a href="javascript:void(0)" onclick="useExample('pfam')"><span id="example_pfam"></span></a>
+      </p>
       <button id="query-btn" class="btn btn-primary" onclick="queryInterval()" style="margin-top:10px;">Submit</button>
     </div>
   </div>
@@ -133,6 +137,7 @@
 
 <script>
 var genomeExamples = {};
+var exampleTexts = {};
 
 $(function(){
   loadTables();
@@ -149,33 +154,53 @@ $(function(){
 
 function loadTables() {
   $('#table-select').html('<option value="">Loading...</option>');
-  $.getJSON('/api/genes/functions/tables')
+  $.getJSON('/api/genes/functions/examples')
     .done(function(resp) {
-      if (!resp.success) { showError('Failed to load tables'); return; }
+      if (!resp.success) { showError('Failed to load genome data'); return; }
       var sel = $('#table-select').empty();
-      // 先找到 Genefunc_table（CS v1.0）设为默认
-      resp.data.tables.forEach(function(t) {
-        var opt = $('<option>').val(t.name).text(t.name + ' (' + (t.rows || '?') + ' rows)');
+      resp.data.examples.forEach(function(item) {
+        genomeExamples[item.table_name] = item;
+        var opt = $('<option>').val(item.table_name).text(item.display_name);
         sel.append(opt);
-        genomeExamples[t.name] = { table_name: t.name, columns: t.columns || [] };
       });
       // 默认选中 Genefunc_table
       sel.val('Genefunc_table');
+      updateExample();
+      // 基因组切换时更新示例
+      sel.change(updateExample);
     })
-    .fail(function() { showError('Failed to load tables'); });
+    .fail(function() { showError('Failed to load genome data'); });
+}
+
+function updateExample() {
+  var genome = $('#table-select').val();
+  var info = genomeExamples[genome];
+  if (!info) {
+    $('#example_region').text('');
+    $('#example_gene').text('');
+    $('#example_pfam').text('');
+    return;
+  }
+  $('#example_region').text(info.region);
+  $('#example_gene').text(info.gene);
+  $('#example_pfam').text(info.pfam);
+  $('#query-input').val(info.region);
 }
 
 function useExample(type) {
-  // 尝试调一下现有的 genome_examples API 获取示例
-  var table = $('#table-select').val() || 'Genefunc_table';
-  var examples = {
-    'Genefunc_table': { region: 'chr1A:1-141522', gene: 'TraesCS1A01G000100LC', pfam: 'PF00319' },
-    'Genefunc_IWGSC03G_table': { region: 'chr1A:1-142819', gene: 'TraesCS1A03G0000100LC', pfam: 'PF00319' },
-  };
-  var ex = examples[table] || examples['Genefunc_table'];
-  if (type === 'region') { $('#query-input').val(ex.region); $('input[value="region"]').prop('checked',true); }
-  else if (type === 'gene') { $('#query-input').val(ex.gene); $('input[value="gene"]').prop('checked',true); }
-  else if (type === 'pfam') { $('#query-input').val(ex.pfam); $('input[value="pfam"]').prop('checked',true); }
+  var genome = $('#table-select').val();
+  var info = genomeExamples[genome];
+  if (!info) return;
+  if (type === 'region') {
+    $('#query-input').val(info.region);
+    $('input[value="region"]').prop('checked', true);
+  } else if (type === 'gene') {
+    $('#query-input').val(info.gene);
+    $('input[value="gene"]').prop('checked', true);
+  } else if (type === 'pfam') {
+    $('#query-input').val(info.pfam);
+    $('input[value="pfam"]').prop('checked', true);
+  }
   $('input[name="queryType"]').trigger('change');
 }
 
