@@ -38,13 +38,6 @@
   .card-title { color: #333; border-left: 4px solid #007bff; padding-left: 12px; }
   .help-text { font-size: 0.85rem; color: #6c757d; margin-top: 4px; }
   #error-msg { display: none; margin-top: 10px; }
-  .project-tags { max-height: 320px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px; padding: 8px; background: #fff; }
-  .project-tag { display: inline-block; padding: 4px 10px; margin: 3px; border-radius: 14px; font-size: 12px; cursor: pointer; border: 1px solid #007bff; color: #007bff; background: #fff; user-select: none; transition: all 0.15s; }
-  .project-tag:hover { background: #e7f1ff; }
-  .project-tag.selected { background: #007bff; color: #fff; }
-  .project-tag.optgroup-label { display: block; padding: 6px 4px 2px; margin: 6px 0 2px; font-size: 13px; font-weight: bold; color: #495057; border: none; cursor: default; background: none; }
-  .tag-controls { margin-bottom: 6px; }
-  .tag-controls .btn-sm { font-size: 12px; padding: 2px 10px; }
 </style>
 </head>
 <body>
@@ -106,12 +99,7 @@
     </div>
     <div class="col-md-6">
       <div class="form-group">
-        <div class="tag-controls">
-          <button class="btn btn-outline-primary btn-sm" onclick="selectAllProjects(true)">Select All</button>
-          <button class="btn btn-outline-secondary btn-sm" onclick="selectAllProjects(false)">Clear</button>
-        </div>
-        <div id="project-tags" class="project-tags"></div>
-        <small class="help-text">Click tags to select multiple projects</small>
+        <select id="project-select" class="form-control" size="12" multiple></select>
       </div>
     </div>
   </div>
@@ -155,66 +143,41 @@ $(function(){
 
 var projectCitations = {};
 
-var selectedProjects = {};
-
-function selectAllProjects(select) {
-  $('.project-tag').each(function() {
-    var pid = $(this).data('project');
-    if (select) {
-      $(this).addClass('selected');
-      selectedProjects[pid] = true;
-    } else {
-      $(this).removeClass('selected');
-      delete selectedProjects[pid];
-    }
-  });
-}
-
-function toggleProject(el) {
-  var pid = $(el).data('project');
-  if ($(el).hasClass('selected')) {
-    $(el).removeClass('selected');
-    delete selectedProjects[pid];
-  } else {
-    $(el).addClass('selected');
-    selectedProjects[pid] = true;
-  }
-}
-
 function loadProjects() {
-  $('#project-tags').html('<span style="color:#999;">Loading...</span>');
+  $('#project-select').html('<option value="">Loading projects...</option>');
   $.getJSON('/api/expression/projects')
     .done(function(resp) {
       if (!resp.success) { showError('Failed to load projects'); return; }
       var data = resp.data;
-      var container = $('#project-tags').empty();
+      var select = $('#project-select').empty();
 
+      // 保存 citation 信息
       data.projects.forEach(function(p) {
         projectCitations[p.id] = p.citation || '';
       });
 
       if (data.groups) {
         data.groups.forEach(function(group) {
-          container.append('<span class="optgroup-label">' + group.name + '</span>');
+          var $optgroup = $('<optgroup>').attr('label', group.name);
           group.projects.forEach(function(tableName) {
             var proj = data.projects.find(function(p) { return String(p.id) === String(tableName); });
             if (proj) {
-              var tag = $('<span>').addClass('project-tag').data('project', proj.id)
-                .attr('onclick', 'toggleProject(this)').text(proj.description);
-              container.append(tag);
+              $optgroup.append($('<option>').val(proj.id).text(proj.description));
             }
           });
+          select.append($optgroup);
         });
       } else {
+        // 无分组时的 fallback
         data.projects.forEach(function(p) {
-          var tag = $('<span>').addClass('project-tag').data('project', p.id)
-            .attr('onclick', 'toggleProject(this)').text(p.description);
-          container.append(tag);
+          select.append($('<option>').val(p.id).text(p.description));
         });
       }
+      // 选中第一个 option
+      select.val(select.find('option:first').val());
     })
     .fail(function(jqXHR) {
-      showError('Failed to load projects: ' + (jqXHR.responseJSON ? jqXHR.responseJSON.detail : jqXHR.statusText));
+      showError('无法加载项目列表: ' + (jqXHR.responseJSON ? jqXHR.responseJSON.detail : jqXHR.statusText));
     });
 }
 
@@ -224,7 +187,7 @@ function showError(msg) {
 }
 
 function queryExpression() {
-  var projects = Object.keys(selectedProjects);
+  var projects = $('#project-select').val();
   var genesRaw = $('#gene-input').val().trim();
   if (!projects || projects.length === 0) { showError('Please select at least one expression project'); return; }
   if (!genesRaw) { showError('Please input gene ID(s)'); return; }
@@ -242,8 +205,8 @@ function queryExpression() {
   $('#loading-indicator').show();
 
   var projectNames = {};
-  $('.project-tag').each(function() {
-    projectNames[$(this).data('project')] = $(this).text();
+  $('#project-select').find('option').each(function() {
+    projectNames[$(this).val()] = $(this).text();
   });
 
   var geneIds = genes.join(',');
