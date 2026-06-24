@@ -171,9 +171,10 @@ function loadProjects() {
           group.projects.forEach(function(tableName) {
             var proj = data.projects.find(function(p) { return String(p.id) === String(tableName); });
             if (proj) {
+              var checked = (proj.id === 'PRJEB5314_paired_tbl') ? ' checked' : '';
               container.append(
                 '<label style="display:flex;align-items:center;padding:3px 0 3px 12px;font-size:13px;cursor:pointer;font-weight:normal;">' +
-                '<input type="checkbox" value="' + proj.id + '" style="margin-right:6px;cursor:pointer;"> ' + proj.description +
+                '<input type="checkbox" value="' + proj.id + '" style="margin-right:6px;cursor:pointer;"' + checked + '> ' + proj.description +
                 '</label>'
               );
             }
