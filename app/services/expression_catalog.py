@@ -42,10 +42,10 @@ def list_projects() -> dict:
 
     # 构建分组结构
     group_order = [
-        "wheat population",
         "wheat developmental tissues",
         "wheat biotic stresses",
         "wheat abiotic stresses",
+        "wheat population",
         "Others",
     ]
     groups: list[dict] = []
