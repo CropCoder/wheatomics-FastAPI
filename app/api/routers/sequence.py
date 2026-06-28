@@ -190,7 +190,7 @@ def batch_sequence(
     return ok({"database": database, "records": [record.model_dump() for record in records]})
 
 
-@router.get("/preblast")
+@router.get("/preblast", tags=["BLAST"])
 def get_preblast_result(
     gene_id: str = Query(..., alias="ID"),
     species_table: str = Query(..., alias="blastp_species"),
@@ -282,7 +282,7 @@ def novabrowse_run(
     return ok({"run_id": run_id, "url": f"{settings.NOVABROWSE_RESULT_BASE_URL}/{run_id}/output.html"})
 
 
-@router.get("/blastp")
+@router.get("/blastp", tags=["BLAST"])
 def search_blastp(
     gene_id: str = Query(..., alias="gene"),
     limit: int = Query(5000, ge=1, le=50000),
