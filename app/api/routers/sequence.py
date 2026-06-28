@@ -156,17 +156,17 @@ def batch_sequence(
     """批量获取多个基因的 FASTA 序列。
 
     功能:
-        一次性查询多个基因的序列，使用空格分隔基因 ID 列表，
-        通过 blastdbcmd 批量提取。
+        一次性查询多个基因的 CDS 或蛋白序列。基因 ID 用空格分隔
+        （URL 中可用 %20 或 + 编码空格）。自动补充转录本版本号 .1。
 
     用法:
-        GET /api/sequence/batch?ID=<基因1 基因2 ...>&database=<数据库名>
-        - ID: 必填，空格分隔的基因 ID 列表
+        GET /api/sequence/batch?ID=<基因1 基因2>&database=<数据库名>
+        - ID: 必填，空格分隔的基因 ID 列表（URL 中用 %20 编码），会自动加 .1 后缀
         - database: 必填，BLAST 数据库名
 
     案例:
         请求:
-          curl -X GET "http://localhost:8000/api/sequence/batch?ID=TraesCS5A02G391700+TraesCS5A02G123456&database=all_gene"
+          curl -X GET "http://localhost:8000/api/sequence/batch?ID=TraesCS5A02G391700%20TraesCS5A02G123456&database=all_gene"
 
         响应:
           {
