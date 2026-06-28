@@ -283,7 +283,7 @@ def get_gene_detail(gene_id: str) -> dict:
     """
 
     gene_id = ensure_gene_like(gene_id)
-    with mysql_cursor(settings.DB_GENEFUNC) as cursor:
+    with mysql_cursor(settings.DB_GENEHUB) as cursor:
         cursor.execute(
             """
             SELECT * FROM GenePageIWGSCv1_table
