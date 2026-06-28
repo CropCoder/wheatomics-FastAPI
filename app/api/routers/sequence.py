@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import importlib.util
 import sys
 from pathlib import Path
@@ -279,3 +280,139 @@ def novabrowse_run(
     spec.loader.exec_module(module)
     run_id = module.run(chrom, start, end)
     return ok({"run_id": run_id, "url": f"{settings.NOVABROWSE_RESULT_BASE_URL}/{run_id}/output.html"})
+
+
+@router.get("/blastp")
+def search_blastp(
+    gene_id: str = Query(..., alias="gene"),
+    limit: int = Query(5000, ge=1, le=50000),
+    offset: int = Query(0, ge=0),
+) -> dict:
+    """查询预计算的 BLASTP 结果。
+
+    功能:
+        根据基因 ID 在 all_protein_blastp 表中搜索，同时匹配 query_id 和 subject_id。
+        自动处理多种基因 ID 格式（带 .1、transcript: 前缀、.cds 后缀等）。
+        结果按 bit_score 降序、evalue 升序排列。
+
+    用法:
+        GET /api/sequence/blastp?gene=<基因ID>&limit=5000&offset=0
+        - gene: 必填，基因 ID
+        - limit: 可选，最多返回条数，默认 5000
+        - offset: 可选，偏移量，默认 0
+
+    案例:
+        请求:
+          curl -X GET "http://localhost:8000/api/sequence/blastp?gene=TraesCS5A02G391700"
+
+        响应:
+          {
+            "success": true,
+            "data": {
+              "gene": "TraesCS5A02G391700",
+              "total": 42,
+              "limit": 5000,
+              "offset": 0,
+              "results": [
+                {
+                  "query_id": "TraesCS5A02G391700.1",
+                  "subject_id": "TraesCS5B02G391700.1",
+                  "identity_val": 85.32,
+                  "align_length": 245,
+                  "mismatch": 12,
+                  "gap_open": 0,
+                  "q_start": 1,
+                  "q_end": 245,
+                  "s_start": 1,
+                  "s_end": 245,
+                  "evalue": 0.0,
+                  "bit_score": 456.7,
+                  "query_length": 300,
+                  "subject_length": 290
+                }
+              ]
+            }
+          }
+    """
+
+    if not gene_id or len(gene_id) > 150:
+        raise ValidationFailure("Invalid gene ID")
+    if not re.match(r'^[A-Za-z0-9_.:\-]+$', gene_id):
+        raise ValidationFailure("Gene ID contains invalid characters")
+
+    # 生成搜索变体（同 PHP search_variants）
+    def _search_variants(gene: str) -> list[str]:
+        # 去掉 transcript: 前缀和 .cds 后缀
+        base = re.sub(r'^transcript:', '', gene, flags=re.IGNORECASE)
+        base = re.sub(r'\.cds$', '', base, flags=re.IGNORECASE)
+
+        bases = {gene, base}
+        if base and not re.search(r'\.\d+$', base):
+            bases.add(base + '.1')
+
+        vars_set: set[str] = set()
+        for b in bases:
+            if not b:
+                continue
+            clean = re.sub(r'^transcript:', '', b, flags=re.IGNORECASE)
+            clean = re.sub(r'\.cds$', '', clean, flags=re.IGNORECASE)
+            vars_set.add(b)
+            vars_set.add(clean)
+            vars_set.add('transcript:' + clean)
+            vars_set.add(clean + '.cds')
+            vars_set.add('transcript:' + clean + '.cds')
+
+        return sorted(vars_set - {''})
+
+    variants = _search_variants(gene_id)
+    placeholders = ','.join(['%s'] * len(variants))
+
+    # 两次查询：先查 count，再查结果
+    with mysql_cursor(settings.DB_BLASTP) as cursor:
+        # COUNT
+        count_sql = (
+            f"SELECT COUNT(*) FROM `all_protein_blastp` "
+            f"WHERE `query_id` IN ({placeholders}) OR `subject_id` IN ({placeholders})"
+        )
+        cursor.execute(count_sql, variants + variants)
+        total = cursor.fetchone()['COUNT(*)']
+
+        # 结果查询
+        select_sql = (
+            f"SELECT `query_id`, `subject_id`, `identity_val`, `align_length`, "
+            f"`mismatch`, `gap_open`, `q_start`, `q_end`, `s_start`, `s_end`, "
+            f"`evalue`, `bit_score`, `query_length`, `subject_length` "
+            f"FROM `all_protein_blastp` "
+            f"WHERE `query_id` IN ({placeholders}) OR `subject_id` IN ({placeholders}) "
+            f"ORDER BY `bit_score` DESC, `evalue` ASC "
+            f"LIMIT %s OFFSET %s"
+        )
+        cursor.execute(select_sql, variants + variants + [limit, offset])
+        rows = cursor.fetchall()
+
+    results = []
+    for row in rows:
+        results.append({
+            "query_id": row["query_id"],
+            "subject_id": row["subject_id"],
+            "identity_val": row["identity_val"],
+            "align_length": row["align_length"],
+            "mismatch": row["mismatch"],
+            "gap_open": row["gap_open"],
+            "q_start": row["q_start"],
+            "q_end": row["q_end"],
+            "s_start": row["s_start"],
+            "s_end": row["s_end"],
+            "evalue": row["evalue"],
+            "bit_score": row["bit_score"],
+            "query_length": row["query_length"],
+            "subject_length": row["subject_length"],
+        })
+
+    return ok({
+        "gene": gene_id,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "results": results,
+    })
