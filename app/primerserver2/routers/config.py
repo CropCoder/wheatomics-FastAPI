@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from ..config import PrimerServerConfig, get_primer_config
+from pathlib import Path
 from ..models import ConfigResponse, DatabaseGroup, DatabasesResponse
 
 router = APIRouter(prefix="", tags=["PrimerServer2"])
@@ -25,6 +26,23 @@ def get_config_endpoint(config: PrimerServerConfig = Depends(get_primer_config))
 )
 def get_databases(config: PrimerServerConfig = Depends(get_primer_config)):
     groups = []
+    db_dir = Path(config.database_dir)
     for name, databases in config.databases().items():
-        groups.append(DatabaseGroup(name=name, databases=databases))
+        examples: dict[str, list[str]] = {}
+        for db_file in databases:
+            fai_path = db_dir / f"{db_file}.fai"
+            try:
+                seq_ids = []
+                with open(fai_path) as f:
+                    for _ in range(3):
+                        line = f.readline()
+                        if not line:
+                            break
+                        seq_id = line.split("\t")[0].strip()
+                        if seq_id:
+                            seq_ids.append(seq_id)
+                examples[db_file] = seq_ids
+            except (FileNotFoundError, OSError):
+                examples[db_file] = []
+        groups.append(DatabaseGroup(name=name, databases=databases, examples=examples))
     return DatabasesResponse(groups=groups)
