@@ -46,7 +46,7 @@ def query_ppi(
 
     案例:
         请求:
-          curl -X GET "http://localhost:8000/api/ppi/query?gene_ids=TraesCS6D02G084800.1&min_score=0.5"
+          curl -X GET "http://localhost:8000/api/ppi/query?gene_ids=TraesCS6D02G084800.1&table=PPI_result&min_score=0.5"
 
         响应:
           {
