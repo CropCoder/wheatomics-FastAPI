@@ -29,6 +29,11 @@ ID_CONVERSION_TABLES = {
 
 PPI_TABLES = {"PPI_result"}
 SYNTENY_TABLES = {"CSsymaptbl"}
+BLASTP_TABLES: dict[str, str] = {
+    "all_protein_blastp": "All protein BLASTP results",
+}
+
+
 PREBLAST_TABLES = {
     "rice_blastp",
     "arabidopsis_blastp",

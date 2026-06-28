@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     DB_CONVERT_GENE_ID: str = "Convert_gene_id"
     DB_GENEFUNC: str = "Genefuncdb"
     DB_PREBLAST: str = "pre_blast"
+    DB_BLASTP: str = "wheatomics_blastp2"
     DB_SYMAP: str = "symapdb"
     DB_LITERATURE: str = "wheatomics_db"
     DB_TRITICEAE: str = "Triticeae_Research_filter"
