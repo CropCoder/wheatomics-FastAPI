@@ -27,7 +27,10 @@ ID_CONVERSION_TABLES = {
     "IWGSCv1_result",
 }
 
-PPI_TABLES = {"PPI_result"}
+PPI_TABLES: dict[str, str] = {
+    "PPI_result": "Wheat PPI CF-MS data",
+    "wheatPPI": "Wheat PPI table",
+}
 SYNTENY_TABLES = {"CSsymaptbl"}
 BLASTP_TABLES: dict[str, str] = {
     "all_protein_blastp": "All protein BLASTP results",
