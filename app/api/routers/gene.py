@@ -505,7 +505,8 @@ def list_gene_function_registry() -> dict:
 
     功能:
         返回 genefunc_registry 表中所有注册的基因功能表元数据。
-        包含数据库名、表名、版本、描述、引用等信息。
+        包含 table_name, NameGroup, Polyploidy, chromosome_level, DOI,
+        title, Abstract, example_chr_ID, example_gene_id 等字段。
 
     用法:
         GET /api/genes/functions/registry
@@ -520,18 +521,50 @@ def list_gene_function_registry() -> dict:
             "success": true,
             "data": {
               "database": "genefunc_registry",
-              "count": 5,
+              "count": 2,
               "records": [
-                { "table_name": "Genefunc_table", "display_name": "CS v1.0", ... }
+                {
+                  "table_name": "Genefunc_Abo_table",
+                  "name_group": "Abbondanza (Abo)",
+                  "polyploidy": "Allohexaploid",
+                  "chromosome_level": "AABBDD",
+                  "doi": "10.1038/s41586-024-08277-0",
+                  "title": "Unraveling Allelic Impacts...",
+                  "abstract": "The TaVP1-B gene...",
+                  "example_chr_id": "chr1A",
+                  "example_gene_id": "Abo1A000100.1"
+                }
               ]
             }
           }
     """
     records: list[dict] = []
     with mysql_cursor(settings.DB_GENEFUNC) as cursor:
-        cursor.execute("SELECT * FROM genefunc_registry")
+        cursor.execute("""
+            SELECT
+                table_name,
+                NameGroup,
+                Polyploidy,
+                chromosome_level,
+                DOI,
+                title,
+                Abstract,
+                example_chr_ID,
+                example_gene_id
+            FROM genefunc_registry
+        """)
         for row in cursor.fetchall():
-            records.append({k: str(v) if v is not None else None for k, v in row.items()})
+            records.append({
+                "table_name": row.get("table_name"),
+                "name_group": row.get("NameGroup"),
+                "polyploidy": row.get("Polyploidy"),
+                "chromosome_level": row.get("chromosome_level"),
+                "doi": row.get("DOI"),
+                "title": row.get("title"),
+                "abstract": row.get("Abstract"),
+                "example_chr_id": row.get("example_chr_ID"),
+                "example_gene_id": row.get("example_gene_id"),
+            })
     return ok({"database": "genefunc_registry", "count": len(records), "records": records})
 
 @interval_router.get("/interval")
