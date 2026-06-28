@@ -7,7 +7,6 @@ from app.api.routers.sequence import (
     sequence_by_gene,
     sequence_by_interval,
     batch_sequence,
-    get_preblast_result,
     novabrowse_run
 )
 
@@ -56,10 +55,6 @@ async def handle_list_tools() -> list[types.Tool]:
             }
         ),
         types.Tool(
-            name="get_preblast_result",
-            description="Fetch precomputed BLAST results URL from the database for a specific species.",
-            inputSchema={
-                "type": "object",
                 "properties": {
                     "gene_id": {"type": "string", "description": "Target gene ID"},
                     "species_table": {"type": "string", "description": "Target species preblast table name"}
@@ -116,12 +111,6 @@ async def handle_call_tool(name: str, arguments: dict) -> list[types.TextContent
 
         # 工具 4: PreBLAST 查询
         elif name == "get_preblast_result":
-            result = get_preblast_result(
-                gene_id=arguments["gene_id"],
-                species_table=arguments["species_table"]
-            )
-            return [types.TextContent(type="text", text=json.dumps(result))]
-
         # 工具 5: 运行 NovaBrowse
         elif name == "run_novabrowse":
             result = novabrowse_run(
