@@ -54,7 +54,7 @@ def get_expression_projects() -> dict:
 @router.get("/query", response_model=ExpressionQueryResponse)
 def query_expression(
     gene_ids: str = Query(..., description="Comma separated gene IDs. 表达数据基于中国春 IWGSC v2.1 (02G)，详见注释。"),
-    project: str = Query("PRJEB5314_paired_tbl"),
+    project: str = Query("PRJEB5314_paired_tbl", examples=["PRJEB5314_paired_tbl", "PRJEB25639_tbl", "ABA_JA_6BA_DMSO3h_mean_tbl"]),
 ) -> ExpressionQueryResponse:
     """查询基因在指定表达项目中的表达量。
 
@@ -76,7 +76,7 @@ def query_expression(
 
     案例:
         请求:
-          curl -X GET "http://localhost:8000/api/expression/query?gene_ids=TraesCS5A02G391700,TraesCS5A02G123456&project=PRJEB5314_paired_tbl"
+          curl -X GET "http://localhost:8000/api/expression/query?gene_ids=TraesCS5A02G391700&project=PRJEB5314_paired_tbl"
 
         响应:
           {
