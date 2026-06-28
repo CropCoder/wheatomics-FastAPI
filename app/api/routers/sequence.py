@@ -166,7 +166,7 @@ def batch_sequence(
 
     案例:
         请求:
-          curl -X GET "http://localhost:8000/api/sequence/batch?ID=TraesCS5A02G391700%20TraesCS5A02G123456&database=all_gene"
+          curl -X GET "http://localhost:8000/api/sequence/batch?ID=TraesCS5A02G391700%20TraesCS5A02G391700.1&database=all_gene"
 
         响应:
           {
@@ -175,7 +175,7 @@ def batch_sequence(
               "database": "all_gene",
               "records": [
                 { "sequence_id": "TraesCS5A02G391700", "fasta": ">TraesCS5A02G391700.1\n..." },
-                { "sequence_id": "TraesCS5A02G123456", "fasta": ">TraesCS5A02G123456.1\n..." }
+                { "sequence_id": "TraesCS5A02G391700.1", "fasta": ">TraesCS5A02G123456.1\n..." }
               ]
             }
           }
