@@ -109,9 +109,6 @@ async def handle_call_tool(name: str, arguments: dict) -> list[types.TextContent
             )
             return [types.TextContent(type="text", text=json.dumps(result))]
 
-        # 工具 4: PreBLAST 查询
-        elif name == "get_preblast_result":
-        # 工具 5: 运行 NovaBrowse
         elif name == "run_novabrowse":
             result = novabrowse_run(
                 chrom=arguments["chrom"],
