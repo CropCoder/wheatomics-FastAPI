@@ -63,7 +63,7 @@ app = FastAPI(
 
         "<h2>模块说明</h2>"
         "<table>"
-        "<tr><td><b>Known Genes</b></td><td><code>/api/genes</code></td>"
+        "<tr><td><b>Known Genes</b></td><td><code>/api/genes/known</code></td>"
         "<td>已知基因搜索与详情</td></tr>"
         "<tr><td><b>PfamSearch</b></td><td><code>/api/genes/functions/pfam</code></td><td>基因结构域搜索 [gene family]</td></tr><tr><td><b>IntervalTool</b></td><td><code>/api/genes/functions/interval</code></td><td>染色体区间基因查询</td></tr><tr><td><b>Coexpression</b></td><td><code>/api/coexpression</code></td>"
         "<td>共表达网络关系对查询与网络图数据检索</td></tr>"
