@@ -18,6 +18,7 @@ from app.schemas.sequence import SequenceBundle, SequenceRecord
 from app.services.command_runner import run_command
 
 router = APIRouter(tags=["Sequences"])
+blast_extra_router = APIRouter(tags=["BLAST"])
 
 
 def _blastdbcmd(*args: str) -> str:
@@ -190,7 +191,7 @@ def batch_sequence(
     return ok({"database": database, "records": [record.model_dump() for record in records]})
 
 
-@router.get("/preblast", tags=["BLAST"])
+@blast_extra_router.get("/preblast")
 def get_preblast_result(
     gene_id: str = Query(..., alias="ID"),
     species_table: str = Query(..., alias="blastp_species"),
@@ -282,7 +283,7 @@ def novabrowse_run(
     return ok({"run_id": run_id, "url": f"{settings.NOVABROWSE_RESULT_BASE_URL}/{run_id}/output.html"})
 
 
-@router.get("/blastp", tags=["BLAST"])
+@blast_extra_router.get("/blastp")
 def search_blastp(
     gene_id: str = Query(..., alias="gene"),
     limit: int = Query(5000, ge=1, le=50000),
