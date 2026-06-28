@@ -191,49 +191,6 @@ def batch_sequence(
     return ok({"database": database, "records": [record.model_dump() for record in records]})
 
 
-@blast_extra_router.get("/preblast")
-def get_preblast_result(
-    gene_id: str = Query(..., alias="ID"),
-    species_table: str = Query(..., alias="blastp_species"),
-) -> dict:
-    """获取预计算的 BLAST 结果 URL。
-
-    功能:
-        根据基因 ID 和物种表，返回预计算好的 BLAST 比对结果链接。
-        数据来源于预计算的物种 BLAST 结果表。
-
-    用法:
-        GET /api/preblast?ID=<基因ID>&blastp_species=<物种表名>
-        - ID: 必填，基因 ID
-        - blastp_species: 必填，预 BLAST 物种表名
-
-    案例:
-        请求:
-          curl -X GET "http://localhost:8000/api/preblast?ID=TraesCS5A02G391700&blastp_species=rice"
-
-        响应:
-          {
-            "success": true,
-            "data": {
-              "gene_id": "TraesCS5A02G391700",
-              "species_table": "rice",
-              "url": "http://example.com/blast_result/abc123.html"
-            }
-          }
-    """
-
-    gene_id = ensure_gene_like(gene_id)
-    species_table = ensure_allowed_table(species_table, PREBLAST_TABLES, "preblast table")
-    with mysql_cursor(settings.DB_PREBLAST) as cursor:
-        cursor.execute(f"SELECT * FROM `{species_table}` WHERE Geneid = %s", (gene_id,))
-        row = cursor.fetchone()
-
-    if not row:
-        raise ResourceNotFound(f"{gene_id} not found")
-
-    return ok({"gene_id": gene_id, "species_table": species_table, "url": row.get("Url") or row.get("url") or row.get("ResultUrl")})
-
-
 @router.get("/novabrowse")
 def novabrowse_run(
     chrom: str = Query(...),
