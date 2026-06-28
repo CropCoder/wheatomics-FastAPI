@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from ..config import PrimerServerConfig, get_primer_config
+from app.core.config import settings
 from pathlib import Path
 from ..models import ConfigResponse, DatabaseGroup, DatabasesResponse
 
