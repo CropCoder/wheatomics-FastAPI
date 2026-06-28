@@ -55,7 +55,7 @@ def query_ppi(
               "interactions": [
                 {
                   "wheat_id1": ["TraesCS6D02G084800"],
-                  "wheat_id2": ["TraesCS5B02G123456"],
+                  "wheat_id2": ["TraesCS6D02G084800.1"],
                   "eggnog_id1": "ENOG410XNNN",
                   "eggnog_id2": "ENOG410XMMM",
                   "score": 0.95,
