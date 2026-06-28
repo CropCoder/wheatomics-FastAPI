@@ -55,14 +55,6 @@ async def handle_list_tools() -> list[types.Tool]:
             }
         ),
         types.Tool(
-                "properties": {
-                    "gene_id": {"type": "string", "description": "Target gene ID"},
-                    "species_table": {"type": "string", "description": "Target species preblast table name"}
-                },
-                "required": ["gene_id", "species_table"]
-            }
-        ),
-        types.Tool(
             name="run_novabrowse",
             description="Start the NovaBrowse workflow for a genomic region and return the generated result URL.",
             inputSchema={
