@@ -74,7 +74,7 @@ app = FastAPI(
         "<tr><td><b>Expression 表达</b></td><td><code>/api/expression</code></td>"
         "<td>多物种、多项目的基因表达谱数据查询</td></tr>"
         "<tr><td><b>GeneHub</b></td><td><code>/api/genes</code></td>"
-        "<td>基因标准细节与基因组浏览器链接</td></tr>"
+        "<td>基因标准化详情查询：v1/v2/v3 ID映射、蛋白参数、功能注释、JBrowse/Ensembl链接</td></tr>"
         "<tr><td><b>Sequences 序列</b></td><td><code>/api/sequence</code></td>"
         "<td>基因及区间序列提取、预计算 BLAST 结果检索</td></tr>"
         "<tr><td><b>Triticeae Papers</b></td><td><code>/api/triticeae/papers</code></td><td>小麦族研究文献筛选：基因/性状/置信度/AI标签多维过滤</td></tr><tr><td><b>Blast</b></td><td><code>/api/blast</code></td>"
