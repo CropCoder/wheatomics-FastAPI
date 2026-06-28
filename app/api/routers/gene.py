@@ -254,7 +254,7 @@ def get_gene_detail(gene_id: str) -> dict:
 
     用法:
         GET /api/genes/detail/{gene_id}
-        - gene_id: 路径参数，支持 v1 (TraesCS5A02G391700)、v2 (TraesCS5A02G391700.1)、v3 (TraesCS5A03G123456) 任一格式
+        - gene_id: 路径参数，支持 v1 (TraesCS5A02G391700)、v2 (TraesCS5A02G391700.1)、v3 (TraesCS5A03G1158600) 任一格式
 
     案例:
         请求:
@@ -265,7 +265,7 @@ def get_gene_detail(gene_id: str) -> dict:
             "success": true,
             "data": {
               "query_gene": "TraesCS5A02G391700",
-              "gene_ids": ["TraesCS5A02G391700", "TraesCS5A01G391700", "TraesCS5A03G123456"],
+              "gene_ids": ["TraesCS5A02G391700", "TraesCS5A01G391700", "TraesCS5A03G1158600"],
               "description": "MADS-box transcription factor",
               "genome": "A",
               "chromosome": "chr5A",

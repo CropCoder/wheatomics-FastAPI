@@ -76,7 +76,7 @@ def query_coexpression(
             "data": {
               "database": "CO_PRJEB25639",
               "pairs": [
-                { "gene1": "TraesCS5A02G391700", "gene2": "TraesCS5B02G123456", "pcc": 0.95, "mr": 3 }
+                { "gene1": "TraesCS5A02G391700", "gene2": "TraesCS5B02G391700", "pcc": 0.95, "mr": 3 }
               ]
             }
           }
