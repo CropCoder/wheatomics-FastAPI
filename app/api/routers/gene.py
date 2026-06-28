@@ -417,6 +417,88 @@ def search_pfam(
     return ok({"table": table, "domain": domain, "count": len(records), "records": [record.model_dump() for record in records]})
 
 
+@interval_router.get("/tables")
+def list_gene_function_tables() -> dict:
+    """查询 Genefuncdb 中所有表的信息。
+
+    功能:
+        直接连接 Genefuncdb 数据库，执行 SHOW TABLES 获取所有表名，
+        同时查询每个表的行数和字段列表，返回结构化信息。
+
+    用法:
+        GET /api/genes/functions/tables
+        无需参数。
+
+    案例:
+        请求:
+          curl -X GET "http://localhost:8000/api/genes/functions/tables"
+
+        响应:
+          {
+            "success": true,
+            "data": {
+              "database": "Genefuncdb",
+              "total_tables": 5,
+              "tables": [
+                { "name": "Genefunc_table", "rows": 168900, "columns": ["Chrom", "Start1", ...] },
+                ...
+              ]
+            }
+          }
+    """
+
+    tables: list[dict] = []
+    with mysql_cursor(settings.DB_GENEFUNC) as cursor:
+        cursor.execute("SHOW TABLES")
+        all_tables = [list(row.values())[0] for row in cursor.fetchall()]
+
+        for tbl_name in sorted(all_tables):
+            info: dict = {"name": tbl_name}
+            try:
+                cursor.execute(f"SELECT COUNT(*) FROM `{tbl_name}`")
+                info["rows"] = list(cursor.fetchone().values())[0]
+            except Exception:
+                info["rows"] = None
+            try:
+                cursor.execute(f"DESCRIBE `{tbl_name}`")
+                info["columns"] = [list(row.values())[0] for row in cursor.fetchall()]
+            except Exception:
+                info["columns"] = []
+            tables.append(info)
+
+    return ok({"database": "Genefuncdb", "total_tables": len(tables), "tables": tables})
+
+
+@interval_router.get("/examples")
+def list_genome_examples() -> dict:
+    """获取所有基因组的示例查询数据。
+
+    功能:
+        返回每个基因组对应的示例 Region、Gene ID、Pfam ID，
+        用于 Interval Tool 前端的示例链接展示。
+
+    用法:
+        GET /api/genes/functions/examples
+        无需参数。
+
+    案例:
+        请求:
+          curl -X GET "http://localhost:8000/api/genes/functions/examples"
+
+        响应:
+          {
+            "success": true,
+            "data": {
+              "examples": [
+                { "table_name": "Genefunc_table", "display_name": "Chinese Spring genome v1.0",
+                  "region": "chr1A:1-141522", "gene": "TraesCS1A01G000100LC", "pfam": "" },
+                ...
+              ]
+            }
+          }
+    """
+
+    return ok({"examples": GENOME_EXAMPLES})
 @interval_router.get("/interval")
 def search_gene_interval(
     region: str = Query(..., alias="ID"),
@@ -502,86 +584,3 @@ def search_gene_interval(
     return ok({"table": table, "region": region, "count": len(records), "records": [record.model_dump() for record in records]})
 
 
-@interval_router.get("/tables")
-@interval_router.get("/tables")
-def list_gene_function_tables() -> dict:
-    """查询 Genefuncdb 中所有表的信息。
-
-    功能:
-        直接连接 Genefuncdb 数据库，执行 SHOW TABLES 获取所有表名，
-        同时查询每个表的行数和字段列表，返回结构化信息。
-
-    用法:
-        GET /api/genes/functions/tables
-        无需参数。
-
-    案例:
-        请求:
-          curl -X GET "http://localhost:8000/api/genes/functions/tables"
-
-        响应:
-          {
-            "success": true,
-            "data": {
-              "database": "Genefuncdb",
-              "total_tables": 5,
-              "tables": [
-                { "name": "Genefunc_table", "rows": 168900, "columns": ["Chrom", "Start1", ...] },
-                ...
-              ]
-            }
-          }
-    """
-
-    tables: list[dict] = []
-    with mysql_cursor(settings.DB_GENEFUNC) as cursor:
-        cursor.execute("SHOW TABLES")
-        all_tables = [list(row.values())[0] for row in cursor.fetchall()]
-
-        for tbl_name in sorted(all_tables):
-            info: dict = {"name": tbl_name}
-            try:
-                cursor.execute(f"SELECT COUNT(*) FROM `{tbl_name}`")
-                info["rows"] = list(cursor.fetchone().values())[0]
-            except Exception:
-                info["rows"] = None
-            try:
-                cursor.execute(f"DESCRIBE `{tbl_name}`")
-                info["columns"] = [list(row.values())[0] for row in cursor.fetchall()]
-            except Exception:
-                info["columns"] = []
-            tables.append(info)
-
-    return ok({"database": "Genefuncdb", "total_tables": len(tables), "tables": tables})
-
-
-@interval_router.get("/examples")
-def list_genome_examples() -> dict:
-    """获取所有基因组的示例查询数据。
-
-    功能:
-        返回每个基因组对应的示例 Region、Gene ID、Pfam ID，
-        用于 Interval Tool 前端的示例链接展示。
-
-    用法:
-        GET /api/genes/functions/examples
-        无需参数。
-
-    案例:
-        请求:
-          curl -X GET "http://localhost:8000/api/genes/functions/examples"
-
-        响应:
-          {
-            "success": true,
-            "data": {
-              "examples": [
-                { "table_name": "Genefunc_table", "display_name": "Chinese Spring genome v1.0",
-                  "region": "chr1A:1-141522", "gene": "TraesCS1A01G000100LC", "pfam": "" },
-                ...
-              ]
-            }
-          }
-    """
-
-    return ok({"examples": GENOME_EXAMPLES})
