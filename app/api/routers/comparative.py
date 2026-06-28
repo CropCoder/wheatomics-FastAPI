@@ -63,7 +63,7 @@ def wheat_rice_arabidopsis_homologs(
     hits: list[HomologHit] = []
     table = "WheatRiceArabidopsis_tbl"
 
-    with mysql_cursor(settings.DB_GENEFUNC) as cursor:
+    with mysql_cursor(settings.DB_COMPARATIVE) as cursor:
         if gene_id.startswith("Traes"):
             cursor.execute(f"SELECT * FROM `{table}` WHERE `Query` = %s", (gene_id,))
             rows = cursor.fetchall()
@@ -147,7 +147,7 @@ def triticeae_homologs(
         "Hordeum vulgare": max_targets,
     }
 
-    with mysql_cursor(settings.DB_GENEFUNC) as cursor:
+    with mysql_cursor(settings.DB_COMPARATIVE) as cursor:
         cursor.execute("SELECT * FROM Triticeae_table WHERE `Query` = %s", (gene_id,))
         rows = cursor.fetchall()
 

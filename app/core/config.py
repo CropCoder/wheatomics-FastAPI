@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     DB_PPI: str = "wheatPPIdb"
     DB_CLONED_GENE: str = "cloned_gene_db"
     DB_CONVERT_GENE_ID: str = "Convert_gene_id"
+    DB_COMPARATIVE: str = "Comparative_Genomics_db"
     DB_GENEHUB: str = "Genehub_DB"
     DB_GENEFUNC: str = "Genefuncdb"
     DB_PREBLAST: str = "pre_blast"
