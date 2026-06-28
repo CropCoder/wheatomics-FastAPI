@@ -1,5 +1,6 @@
 """Router registrations."""
 
+from .orthofinder import router as orthofinder
 from .comparative import router as comparative
 from .expression import router as expression
 from .gene import router as gene

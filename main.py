@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 from app.primerserver2.dependencies import verify_api_key
@@ -47,6 +47,10 @@ app = FastAPI(
             "name": "PrimerServer2",
             "description": "Primer desgin version 2",
         },
+        {
+            "name": "OrthoFinder",
+            "description": "OrthoFinder orthogroup browser and search",
+        },
     ],
     description=(
         "<h2>概述</h2>"
@@ -75,7 +79,8 @@ app = FastAPI(
         "<td>基因及区间序列提取、预计算 BLAST 结果检索</td></tr>"
         "<tr><td><b>Triticeae Papers</b></td><td><code>/api/triticeae/papers</code></td><td>小麦族研究文献筛选：基因/性状/置信度/AI标签多维过滤</td></tr><tr><td><b>Blast</b></td><td><code>/api/blast</code></td>"
         "<td>序列比对搜索（blastn/blastp/blastx/tblastn/tblastx）</td></tr>"
-        "<tr><td><b>PrimerServer (SNP)</b></td><td><code>/api/tasks</code></td>"
+        "<tr><td><b>OrthoFinder</b></td><td><code>/api/orthofinder</code></td><td>OrthoFinder orthogroup search: gene tree, MSA, homologous gene families</td></tr>"
+"<tr><td><b>PrimerServer (SNP)</b></td><td><code>/api/tasks</code></td>"
         "<td>SNP 引物设计、特异性检查（PrimerServer 复刻）</td></tr>"
         "<tr><td><b>PrimerServer2</b></td><td><code>/api/PrimerServer2</code></td>"
         "<td>PCR 引物批量设计与特异性检查（Primer desgin version 2）</td></tr>"
@@ -105,6 +110,7 @@ app.add_middleware(
 app.mount("/expression", StaticFiles(directory=Path(__file__).parent / "app" / "static", html=True), name="expression")
 app.mount("/interval", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "interval", html=True), name="interval")
 app.mount("/preblast", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "preblast", html=True), name="preblast")
+app.mount("/orthofinder", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "orthofinder", html=True), name="orthofinder")
 
 
 @app.middleware("http")
@@ -154,7 +160,9 @@ for router in [
     comparative,
     triticeae,
     sequence,
-    blast_extra,    blast,
+    blast_extra,
+    blast,
+    orthofinder,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)
 

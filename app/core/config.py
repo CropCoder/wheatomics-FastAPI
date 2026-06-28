@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     DB_COEXPRESSION: str = "coexpressiondb"
     DB_PPI: str = "wheatPPIdb"
     DB_CLONED_GENE: str = "cloned_gene_db"
+    DB_ORTHOFINDER: str = "orthofinder_n"
     DB_CONVERT_GENE_ID: str = "Convert_gene_id"
     DB_COMPARATIVE: str = "Comparative_Genomics_db"
     DB_GENEHUB: str = "Genehub_DB"
@@ -38,6 +39,7 @@ class Settings(BaseSettings):
 
     BLAST_DB_PATH: Path = Path("/var/www/html/getfasta/blastdb")
     FASTA_DB_PATH: Path = Path("/data/fasta")
+    ORTHOFINDER_BASE_DIR: Path = Path("/var/www/html/orthefind/Results_Jun24")
     SNPRIMER_TMP_DIR: Path = Path("/var/www/html/snprimer/tmp")
     SNPRIMER_RESULT_DIR: Path = Path("/var/www/html/snprimer/result")
     SNPRIMER_PIPELINE: Path = Path("/var/www/html/snprimer/SNP_Primer_Pipeline/run_getkasp.py")

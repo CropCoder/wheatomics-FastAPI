@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OrthoFinder Orthogroup Browser | WheatOmics</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div id="siteHeader"></div>
+
+<main class="page-wrap">
+  <section class="tool-card">
+    <h1>OrthoFinder Orthogroup Browser</h1>
+    <p class="subtitle">
+      Search a protein ID to view its orthogroup, gene tree, multiple sequence alignment and downloadable files.
+    </p>
+
+    <form id="searchForm" class="search-box">
+      <input id="proteinInput" name="q" placeholder="e.g. TraesCS1A03G0053300.1">
+      <button type="submit">Search</button>
+    </form>
+
+    <div id="message"></div>
+
+    <div id="result" style="display:none;">
+      <div class="summary-card">
+        <div>
+          <div class="label">Orthogroup</div>
+          <div id="ogTitle" class="og-title"></div>
+        </div>
+        <div class="download-links">
+          <a id="downloadTree" target="_blank" rel="noopener">Download tree</a>
+          <a id="downloadAlignment" target="_blank" rel="noopener">Download alignment</a>
+        </div>
+      </div>
+
+      <h2>Orthogroup Members</h2>
+      <input id="geneFilter" class="filter-input" placeholder="Filter genes in this orthogroup...">
+      <div id="geneList" class="gene-grid"></div>
+
+      <h2>Gene Tree</h2>
+      <div class="tree-toolbar">
+        <button type="button" onclick="zoomTree(1.2)" class="toolbar-btn">Zoom in</button>
+        <button type="button" onclick="zoomTree(0.8)" class="toolbar-btn">Zoom out</button>
+        <button type="button" onclick="resetTreeZoom()" class="toolbar-btn">Reset</button>
+      </div>
+      <div id="treeBox">
+        <svg id="treeSvg"></svg>
+      </div>
+
+      <h2>Multiple Sequence Alignment</h2>
+      <div id="alignmentBox"></div>
+    </div>
+  </section>
+</main>
+
+<div id="siteFooter"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
