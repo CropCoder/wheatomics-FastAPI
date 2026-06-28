@@ -3,7 +3,6 @@ let currentQuery = "";
 let treeZoom = 1;
 
 document.addEventListener("DOMContentLoaded", function () {
-  loadSiteFrame();
   document.getElementById("searchForm").addEventListener("submit", function (e) {
     e.preventDefault();
     var q = document.getElementById("proteinInput").value.trim();
@@ -22,15 +21,6 @@ document.addEventListener("DOMContentLoaded", function () {
     searchProtein(q);
   }
 });
-
-function loadSiteFrame() {
-  fetch("/header.html").then(function (r) { return r.text(); }).then(function (h) {
-    document.getElementById("siteHeader").innerHTML = h;
-  }).catch(function () {});
-  fetch("/footer.html").then(function (r) { return r.text(); }).then(function (f) {
-    document.getElementById("siteFooter").innerHTML = f;
-  }).catch(function () {});
-}
 
 async function searchProtein(q) {
   currentQuery = q;
