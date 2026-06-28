@@ -175,7 +175,7 @@ def batch_sequence(
               "database": "all_gene",
               "records": [
                 { "sequence_id": "TraesCS5A02G391700", "fasta": ">TraesCS5A02G391700.1\n..." },
-                { "sequence_id": "TraesCS5A02G391700.1", "fasta": ">TraesCS5A02G123456.1\n..." }
+                { "sequence_id": "TraesCS5A02G391700.1", "fasta": ">TraesCS5A02G391700.1\n..." }
               ]
             }
           }
@@ -246,7 +246,7 @@ def search_blastp(
     limit: int = Query(5000, ge=1, le=50000),
     offset: int = Query(0, ge=0),
 ) -> dict:
-    """查询预计算的 BLASTP 结果。
+    """Search Blastp or find Homologs in Triticeae
 
     功能:
         可以用来搜索 query 基因在小麦族里的目标基因，
