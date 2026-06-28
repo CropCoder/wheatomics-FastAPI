@@ -9,6 +9,7 @@ from .gene import interval_router as interval
 from .coexpression import coexpression_router as coexpression
 from .ppi import ppi_router as ppi
 from .sequence import router as sequence
+from .sequence import blast_extra_router as blast_extra
 from .blast import router as blast
 from .primer_server import router as primer_server
 from .triticeae import router as triticeae

@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, primer_server, triticeae, blast
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, primer_server, triticeae, blast
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 from app.primerserver2.dependencies import verify_api_key
@@ -155,7 +155,7 @@ for router in [
     primer_server,
     triticeae,
     sequence,
-    blast,
+    blast_extra,    blast,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)
 
