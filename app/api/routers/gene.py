@@ -99,71 +99,6 @@ def search_known_genes(search: str = Query(..., alias="searchid")) -> dict:
     ]
     return ok({"query": term, "total": len(records), "records": [record.model_dump() for record in records]})
 
-@router.get("/known/{gene_id}")
-def get_known_gene(gene_id: str) -> dict:
-    """获取指定克隆基因的详细信息。
-
-    功能:
-        根据基因 ID 查询克隆基因的完整信息，包括基因名称、染色体位置、
-        表型、物种、参考文献（DOI + 标题）、关键结果、作者和提交日期。
-
-    用法:
-        GET /api/genes/known/{gene_id}
-        - gene_id: 路径参数，如 TraesCS5A02G391700
-
-    案例:
-        请求:
-          curl -X GET "http://localhost:8000/api/genes/known/TraesCS5A02G391700"
-
-        响应:
-          {
-            "success": true,
-            "data": {
-              "clone_id": 1,
-              "gene_id": "TraesCS5A02G391700",
-              "gene_name": "VRN-A1",
-              "chrom_pos": "5A",
-              "phenotype": "vernalization response",
-              "species": "Triticum aestivum",
-              "paper_title": ["..."],
-              "references": [{"doi": "10.1007/...", "title": "..."}],
-              "key_result": ["..."],
-              "author": "...",
-              "submission_date": "2024-01-01"
-            }
-          }
-    """
-
-    gene_id = ensure_gene_like(gene_id)
-    with mysql_cursor(settings.DB_CLONED_GENE) as cursor:
-        cursor.execute("SELECT * FROM cloned_gene_tbl WHERE gene_id = %s", (gene_id,))
-        row = cursor.fetchone()
-
-    if not row:
-        raise ResourceNotFound(f"Known gene not found: {gene_id}")
-
-    titles = split_legacy_multi_value(row.get("paper_title"))
-    dois = split_legacy_multi_value(row.get("paper_doi"))
-    references = [DOIReference(doi=doi, title=titles[idx] if idx < len(titles) else None) for idx, doi in enumerate(dois)]
-
-    detail = KnownGeneDetail(
-        clone_id=row.get("clone_id", row.get("id", gene_id)),
-        gene_id=str(row.get("gene_id", "")),
-        gene_name=normalize_text(row.get("gene_name")),
-        chrom_pos=normalize_text(row.get("chrom_pos")),
-        phenotype=normalize_text(row.get("gene_phenotype")),
-        species=normalize_text(row.get("gene_species")),
-        paper_title=titles,
-        references=references,
-        key_result=split_legacy_multi_value(row.get("key_result")),
-        author=normalize_text(row.get("author")) or None,
-        author_mail=normalize_text(row.get("author_mail")) or None,
-        submission_date=row.get("submission_date"),
-    )
-    return ok(detail.model_dump())
-
-
-
 @router.get("/known/all")
 def list_known_genes() -> dict:
     """获取所有已知功能克隆基因的列表。
@@ -243,6 +178,136 @@ def list_known_genes_on_chromosome(
         for row in rows
     ]
     return ok({"total": len(records), "chromosome": chromosome, "records": records})
+@router.get("/known/{gene_id}")
+def get_known_gene(gene_id: str) -> dict:
+    """获取指定克隆基因的详细信息。
+
+    功能:
+        根据基因 ID 查询克隆基因的完整信息，包括基因名称、染色体位置、
+        表型、物种、参考文献（DOI + 标题）、关键结果、作者和提交日期。
+
+    用法:
+        GET /api/genes/known/{gene_id}
+        - gene_id: 路径参数，如 TraesCS5A02G391700
+
+    案例:
+        请求:
+          curl -X GET "http://localhost:8000/api/genes/known/TraesCS5A02G391700"
+
+        响应:
+          {
+            "success": true,
+            "data": {
+              "clone_id": 1,
+              "gene_id": "TraesCS5A02G391700",
+              "gene_name": "VRN-A1",
+              "chrom_pos": "5A",
+              "phenotype": "vernalization response",
+              "species": "Triticum aestivum",
+              "paper_title": ["..."],
+              "references": [{"doi": "10.1007/...", "title": "..."}],
+              "key_result": ["..."],
+              "author": "...",
+              "submission_date": "2024-01-01"
+            }
+          }
+    """
+
+    gene_id = ensure_gene_like(gene_id)
+    with mysql_cursor(settings.DB_CLONED_GENE) as cursor:
+        cursor.execute("SELECT * FROM cloned_gene_tbl WHERE gene_id = %s", (gene_id,))
+        row = cursor.fetchone()
+
+    if not row:
+        raise ResourceNotFound(f"Known gene not found: {gene_id}")
+
+    titles = split_legacy_multi_value(row.get("paper_title"))
+    dois = split_legacy_multi_value(row.get("paper_doi"))
+    references = [DOIReference(doi=doi, title=titles[idx] if idx < len(titles) else None) for idx, doi in enumerate(dois)]
+
+    detail = KnownGeneDetail(
+        clone_id=row.get("clone_id", row.get("id", gene_id)),
+        gene_id=str(row.get("gene_id", "")),
+        gene_name=normalize_text(row.get("gene_name")),
+        chrom_pos=normalize_text(row.get("chrom_pos")),
+        phenotype=normalize_text(row.get("gene_phenotype")),
+        species=normalize_text(row.get("gene_species")),
+        paper_title=titles,
+        references=references,
+        key_result=split_legacy_multi_value(row.get("key_result")),
+        author=normalize_text(row.get("author")) or None,
+        author_mail=normalize_text(row.get("author_mail")) or None,
+        submission_date=row.get("submission_date"),
+    )
+    return ok(detail.model_dump())
+
+
+
+@router.get("/known/{gene_id}")
+def get_known_gene(gene_id: str) -> dict:
+    """获取指定克隆基因的详细信息。
+
+    功能:
+        根据基因 ID 查询克隆基因的完整信息，包括基因名称、染色体位置、
+        表型、物种、参考文献（DOI + 标题）、关键结果、作者和提交日期。
+
+    用法:
+        GET /api/genes/known/{gene_id}
+        - gene_id: 路径参数，如 TraesCS5A02G391700
+
+    案例:
+        请求:
+          curl -X GET "http://localhost:8000/api/genes/known/TraesCS5A02G391700"
+
+        响应:
+          {
+            "success": true,
+            "data": {
+              "clone_id": 1,
+              "gene_id": "TraesCS5A02G391700",
+              "gene_name": "VRN-A1",
+              "chrom_pos": "5A",
+              "phenotype": "vernalization response",
+              "species": "Triticum aestivum",
+              "paper_title": ["..."],
+              "references": [{"doi": "10.1007/...", "title": "..."}],
+              "key_result": ["..."],
+              "author": "...",
+              "submission_date": "2024-01-01"
+            }
+          }
+    """
+
+    gene_id = ensure_gene_like(gene_id)
+    with mysql_cursor(settings.DB_CLONED_GENE) as cursor:
+        cursor.execute("SELECT * FROM cloned_gene_tbl WHERE gene_id = %s", (gene_id,))
+        row = cursor.fetchone()
+
+    if not row:
+        raise ResourceNotFound(f"Known gene not found: {gene_id}")
+
+    titles = split_legacy_multi_value(row.get("paper_title"))
+    dois = split_legacy_multi_value(row.get("paper_doi"))
+    references = [DOIReference(doi=doi, title=titles[idx] if idx < len(titles) else None) for idx, doi in enumerate(dois)]
+
+    detail = KnownGeneDetail(
+        clone_id=row.get("clone_id", row.get("id", gene_id)),
+        gene_id=str(row.get("gene_id", "")),
+        gene_name=normalize_text(row.get("gene_name")),
+        chrom_pos=normalize_text(row.get("chrom_pos")),
+        phenotype=normalize_text(row.get("gene_phenotype")),
+        species=normalize_text(row.get("gene_species")),
+        paper_title=titles,
+        references=references,
+        key_result=split_legacy_multi_value(row.get("key_result")),
+        author=normalize_text(row.get("author")) or None,
+        author_mail=normalize_text(row.get("author_mail")) or None,
+        submission_date=row.get("submission_date"),
+    )
+    return ok(detail.model_dump())
+
+
+
 @genehub_router.get("/detail/{gene_id}")
 def get_gene_detail(gene_id: str) -> dict:
     """获取基因的标准化详细信息。
