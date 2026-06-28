@@ -32,8 +32,8 @@ def list_coexpression_databases() -> dict:
           {
             "success": true,
             "data": [
-              { "id": "CO_PRJEB25639", "description": "干旱胁迫共表达网络" },
-              { "id": "CO_PRJEB5314", "description": "组织表达共表达网络" }
+              { "id": "CO_result2", "description": "Wheat grain coexpression" },
+              { "id": "CO_PRJEB25639", "description": "Wheat multiple tissues coexpression" }
             ]
           }
     """
@@ -60,7 +60,7 @@ def query_coexpression(
     用法:
         GET /api/coexpression/query?gene_ids=<基因1,基因2>&database=<数据库>&filter_value=<阈值>
         - gene_ids: 必填，逗号分隔的基因 ID 列表
-        - database: 可选，共表达数据库 ID，默认 CO_PRJEB25639
+        - database: 可选，共表达数据库 ID（CO_result2 或 CO_PRJEB25639），默认 CO_PRJEB25639
         - filter_value: 可选，筛选阈值，默认 0.8（PCC 模式）
 
     案例:
