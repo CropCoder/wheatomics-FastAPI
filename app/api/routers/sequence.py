@@ -292,6 +292,8 @@ def search_blastp(
     """查询预计算的 BLASTP 结果。
 
     功能:
+        可以用来搜索 query 基因在小麦族里的目标基因，
+        可以用来做同源基因搜索或不同基因组版本/不同材料之间的基因 ID 转换。
         根据基因 ID 在 all_protein_blastp 表中搜索，同时匹配 query_id 和 subject_id。
         自动处理多种基因 ID 格式（带 .1、transcript: 前缀、.cds 后缀等）。
         结果按 bit_score 降序、evalue 升序排列。
