@@ -499,6 +499,41 @@ def list_genome_examples() -> dict:
     """
 
     return ok({"examples": GENOME_EXAMPLES})
+@interval_router.get("/registry")
+def list_gene_function_registry() -> dict:
+    """查询 Genefuncdb.genefunc_registry 表。
+
+    功能:
+        返回 genefunc_registry 表中所有注册的基因功能表元数据。
+        包含数据库名、表名、版本、描述、引用等信息。
+
+    用法:
+        GET /api/genes/functions/registry
+        无需参数。
+
+    案例:
+        请求:
+          curl -X GET "http://localhost:8000/api/genes/functions/registry"
+
+        响应:
+          {
+            "success": true,
+            "data": {
+              "database": "genefunc_registry",
+              "count": 5,
+              "records": [
+                { "table_name": "Genefunc_table", "display_name": "CS v1.0", ... }
+              ]
+            }
+          }
+    """
+    records: list[dict] = []
+    with mysql_cursor(settings.DB_GENEFUNC) as cursor:
+        cursor.execute("SELECT * FROM genefunc_registry")
+        for row in cursor.fetchall():
+            records.append({k: str(v) if v is not None else None for k, v in row.items()})
+    return ok({"database": "genefunc_registry", "count": len(records), "records": records})
+
 @interval_router.get("/interval")
 def search_gene_interval(
     region: str = Query(..., alias="ID"),
