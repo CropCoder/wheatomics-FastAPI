@@ -41,7 +41,7 @@ def query_ppi(
     用法:
         GET /api/ppi/query?gene_ids=<基因1,基因2>&table=<表名>&min_score=<最小得分>
         - gene_ids: 必填，逗号分隔的基因 ID 列表（需带 ".1" 后缀的转录本 ID）
-        - table: 可选，PPI 数据表名，默认 PPI_result
+        - table: 可选，PPI 数据表名（PPI_result 或 wheatPPI），默认 PPI_result
         - min_score: 可选，CF-MS 互作得分阈值，默认 0.5。常用值 0.5（中）、0.2（低）、0（全部）
 
     案例:
