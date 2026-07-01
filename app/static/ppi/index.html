@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wheat PPI - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+<style>
+  body { background: #f8f9fa; margin:0; padding:0; }
+  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+  #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
+  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+  #header-tabs li { display:inline-block !important; width:190px !important; }
+  #header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+  #header-tabs a:hover { background:#98c1d9; color:#000000; }
+  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+  #header-tabs ul li ul { display:none !important; position:absolute; }
+  #header-tabs ul li:hover ul { display:block !important; }
+  #header-tabs ul li ul a { border-radius:0; }
+  #home_content { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+  .result-table { background: #fff; border-radius: 6px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .result-table table { font-size: 13px; }
+  .result-table th { position: sticky; top: 0; background: #f8f9fa; white-space: nowrap; }
+  .loading { display: none; text-align: center; padding: 60px; }
+  .loading .spinner-border { width: 3rem; height: 3rem; }
+  #error-msg { display: none; margin-top: 10px; }
+  .info-box { background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 12px 16px; border-radius: 4px; margin-top: 16px; font-size: 14px; color: #495057; }
+  .info-box a { color: #007bff; }
+</style>
+</head>
+<body>
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
+</div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/index.html">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/interval/">IntervalTool</a></li>
+        <li><a href="/expression/">GeneExpression</a></li>
+        <li><a href="/orthofinder/">OrthoFinder</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href="#"><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div id="home_content">
+  <br><h5 class="card-title">Search wheat protein-protein interactions</h5><br>
+
+  <div class="row">
+    <div class="col-md-4">
+      <div class="form-group">
+        <label><strong>PPI Database</strong></label>
+        <select id="table-select" class="form-control">
+          <option value="PPI_result">WheatPPI</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label><strong>Filter by CF-MS score</strong></label>
+        <select id="score-select" class="form-control">
+          <option value="0.5">&gt; 0.5 (high confidence)</option>
+          <option value="0.2">&gt; 0.2 (medium confidence)</option>
+          <option value="0">all</option>
+        </select>
+      </div>
+    </div>
+    <div class="col-md-8">
+      <div class="form-group">
+        <label><strong>Gene IDs (one per line)</strong></label>
+        <textarea id="gene-input" class="form-control" rows="6" placeholder="TraesCS6D02G084800.1"></textarea>
+      </div>
+      <button id="query-btn" class="btn btn-primary" onclick="queryPPI()">Search protein interactions</button>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>About this data:</strong> The protein interaction data was downloaded from
+    <a href="http://plants.proteincomplexes.org" target="_blank">plant.MAP</a>.
+    We mapped wheat UniProt IDs to IWGSC RefSeq v1.1 annotation.
+    According to McWhite et.al, CF-MS scores &gt; 0.5 correspond to ~90% true positive rate;
+    scores &gt; 0.2 correspond to ~50% true positive rate.
+  </div>
+
+  <div class="info-box">
+    <strong>Citation:</strong><br>
+    McWhite, C. D., Papoulas, O., Drew, K., Cox, R. M., June, V., Dong, O. X., Kwon, T., Wan, C., Salmi, M. L., Roux, S. J., Browning, K. S., Chen, Z. J., Ronald, P. C., &amp; Marcotte, E. M. (2020). A Pan-plant Protein Complex Map Reveals Deep Conservation and Novel Assemblies. Cell, S0092-8674(20)30226-9.<br>
+    <a href="https://doi.org/10.1016/j.cell.2020.02.049" target="_blank">https://doi.org/10.1016/j.cell.2020.02.049</a>
+  </div>
+
+  <div id="error-msg" class="alert alert-danger"></div>
+
+  <div class="loading" id="loading-indicator">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted">Searching...</p>
+  </div>
+
+  <div id="result-area" style="display:none;">
+    <div class="result-table" id="table-container"></div>
+  </div>
+</div>
+
+<div class="line" style="height:10px;background-color:white"></div>
+<div id="home_footer">
+  <center style="margin-top:5px">
+    <table>
+      <tr>
+        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><div class="line" style="height:50px;width:15px;"></div></td>
+        <td><span><a href="https://clustrmaps.com/site/1c2ry" title="Visit tracker"><img src="//www.clustrmaps.com/map_v2.png?d=fVblT8MfQ65ClPkORSIs7Sz0A0Ttlm1wOwVQiR8f_ME&cl=ffffff" height="50"></a></span></td>
+      </tr>
+    </table>
+    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+  </center>
+</div>
+
+<script>
+function queryPPI() {
+  var geneInput = $('#gene-input').val().trim();
+  if (!geneInput) { showError('Please enter at least one gene ID'); return; }
+
+  var genes = geneInput.split('\n').map(function(g) { return g.trim(); }).filter(function(g) { return g; });
+
+  $('#error-msg').hide();
+  $('#result-area').hide();
+  $('#loading-indicator').show();
+
+  var table = $('#table-select').val();
+  var minScore = parseFloat($('#score-select').val());
+
+  $.getJSON('/api/ppi/query', {
+    gene_ids: genes.join(','),
+    table: table,
+    min_score: minScore
+  })
+  .done(function(resp) {
+    $('#loading-indicator').hide();
+    if (!resp.success) { showError('Query failed'); return; }
+    renderResults(resp.data.interactions || []);
+  })
+  .fail(function(jqXHR) {
+    $('#loading-indicator').hide();
+    showError(jqXHR.responseJSON ? jqXHR.responseJSON.detail || jqXHR.responseJSON.error : 'Query failed');
+  });
+}
+
+function renderResults(interactions) {
+  if (interactions.length === 0) {
+    $('#table-container').html('<div class="alert alert-warning">No interactions found matching your query.</div>');
+    $('#result-area').show();
+    return;
+  }
+
+  var html = '<h6>' + interactions.length + ' interaction(s) found</h6>';
+  html += '<div style="max-height:600px;overflow-y:auto;">';
+  html += '<table class="table table-bordered table-hover table-sm">';
+  html += '<thead><tr><th>WheatID1</th><th>WheatID2</th><th>eggNOGID1</th><th>eggNOGID2</th><th>Score</th><th>Annotation1</th><th>Annotation2</th></tr></thead><tbody>';
+
+  interactions.forEach(function(r) {
+    var w1 = (r.wheat_id1 || []).join(', ');
+    var w2 = (r.wheat_id2 || []).join(', ');
+    html += '<tr>';
+    html += '<td style="max-width:200px;word-break:break-all;">' + escapeHtml(w1) + '</td>';
+    html += '<td style="max-width:200px;word-break:break-all;">' + escapeHtml(w2) + '</td>';
+    html += '<td>' + escapeHtml(r.eggnog_id1 || '') + '</td>';
+    html += '<td>' + escapeHtml(r.eggnog_id2 || '') + '</td>';
+    html += '<td>' + (r.score != null ? r.score.toFixed(4) : '') + '</td>';
+    html += '<td style="max-width:300px;word-break:break-word;font-size:12px;">' + escapeHtml(r.annotation1 || '') + '</td>';
+    html += '<td style="max-width:300px;word-break:break-word;font-size:12px;">' + escapeHtml(r.annotation2 || '') + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  $('#table-container').html(html);
+  $('#result-area').show();
+}
+
+function showError(msg) {
+  $('#error-msg').text(msg).show();
+  $('#loading-indicator').hide();
+}
+
+function escapeHtml(s) {
+  return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+}
+</script>
+</body>
+</html>
