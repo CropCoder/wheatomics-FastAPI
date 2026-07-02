@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HomologFinder - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+<style>
+  body { background: #f8f9fa; margin:0; padding:0; }
+  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+  #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
+  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+  #header-tabs li { display:inline-block !important; width:190px !important; }
+  #header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+  #header-tabs a:hover { background:#98c1d9; color:#000000; }
+  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+  #header-tabs ul li ul { display:none !important; position:absolute; }
+  #header-tabs ul li:hover ul { display:block !important; }
+  #header-tabs ul li ul a { border-radius:0; }
+  #home_content { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+  .result-table { background: #fff; border-radius: 6px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .result-table table { font-size: 13px; }
+  .result-table th { position: sticky; top: 0; background: #f8f9fa; white-space: nowrap; }
+  .loading { display: none; text-align: center; padding: 60px; }
+  .loading .spinner-border { width: 3rem; height: 3rem; }
+  #error-msg { display: none; margin-top: 10px; }
+  .info-box { background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 12px 16px; border-radius: 4px; margin-top: 16px; font-size: 14px; color: #495057; }
+  .info-box a { color: #007bff; }
+  .species-rice { color: #28a745; font-weight: 600; }
+  .species-arabidopsis { color: #6f42c1; font-weight: 600; }
+  .score-high { background-color: #d4edda; }
+  .score-mid { background-color: #fff3cd; }
+</style>
+</head>
+<body>
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
+</div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/index.html">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/interval/">IntervalTool</a></li>
+        <li><a href="/expression/">GeneExpression</a></li>
+        <li><a href="/orthofinder/">OrthoFinder</a></li>
+        <li><a href="/wheatPPI/">WheatPPI</a></li>
+        <li><a href="/HomologFinder/">HomologFinder</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href="#"><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div id="home_content">
+  <br><h5 class="card-title">HomologFinder — Wheat / Rice / Arabidopsis</h5><br>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="form-group">
+        <label><strong>Gene ID(s)</strong></label>
+        <textarea id="gene-input" class="form-control" rows="8" placeholder="TraesCS5A02G391700&#10;TraesCS1A02G001000&#10;One gene ID per line"></textarea>
+        <small class="form-text text-muted">Enter wheat gene ID(s) (e.g. TraesCS5A02G391700). Also supports querying by rice or Arabidopsis gene ID.</small>
+      </div>
+      <button id="query-btn" class="btn btn-primary" onclick="queryHomologs()">Search Homologs</button>
+      <button class="btn btn-outline-secondary ml-2" onclick="clearAll()">Clear</button>
+    </div>
+    <div class="col-md-6">
+      <div class="form-group">
+        <label><strong>Max targets per species</strong></label>
+        <select id="max-targets" class="form-control">
+          <option value="1">1</option>
+          <option value="3" selected>3 (default)</option>
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="20">20</option>
+        </select>
+        <small class="form-text text-muted">Maximum number of homologs returned per species (Rice and Arabidopsis).</small>
+      </div>
+      <div class="info-box">
+        <strong>About this tool:</strong> Query wheat genes to find their homologs in rice (<em>Oryza sativa</em>) and Arabidopsis (<em>Arabidopsis thaliana</em>) based on BLASTP reciprocal best hits. Results include coverage, identity, E-value and alignment score.
+      </div>
+    </div>
+  </div>
+
+  <div id="error-msg" class="alert alert-danger"></div>
+
+  <div class="loading" id="loading-indicator">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted">Searching homologs...</p>
+  </div>
+
+  <div id="result-area" style="display:none;">
+    <div id="summary-bar" class="alert alert-info" style="display:none;"></div>
+    <div class="result-table" id="table-container"></div>
+  </div>
+</div>
+
+<div class="line" style="height:10px;background-color:white"></div>
+<div id="home_footer">
+  <center style="margin-top:5px">
+    <table>
+      <tr>
+        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><div class="line" style="height:50px;width:15px;"></div></td>
+        <td><span><a href="https://clustrmaps.com/site/1c2ry" title="Visit tracker"><img src="//www.clustrmaps.com/map_v2.png?d=fVblT8MfQ65ClPkORSIs7Sz0A0Ttlm1wOwVQiR8f_ME&cl=ffffff" height="50"></a></span></td>
+      </tr>
+    </table>
+    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+  </center>
+</div>
+
+<script>
+var allResults = []; // store results for export
+
+function clearAll() {
+  $('#gene-input').val('');
+  $('#error-msg').hide();
+  $('#result-area').hide();
+  $('#summary-bar').hide();
+  $('#table-container').empty();
+  allResults = [];
+}
+
+function showError(msg) {
+  $('#error-msg').text(msg).show();
+  $('#loading-indicator').hide();
+}
+
+function queryHomologs() {
+  var genesRaw = $('#gene-input').val().trim();
+  if (!genesRaw) { showError('Please enter at least one gene ID.'); return; }
+
+  var genes = [];
+  var seen = {};
+  genesRaw.split(/[\n,;\s]+/).forEach(function(g) {
+    g = g.trim();
+    if (g && !seen[g]) { seen[g] = true; genes.push(g); }
+  });
+  if (genes.length === 0) { showError('No valid gene IDs found.'); return; }
+
+  var maxTargets = parseInt($('#max-targets').val()) || 3;
+
+  $('#error-msg').hide();
+  $('#result-area').hide();
+  $('#summary-bar').hide();
+  $('#table-container').empty();
+  allResults = [];
+  $('#loading-indicator').show();
+  $('#query-btn').prop('disabled', true);
+
+  var doneCount = 0;
+  var total = genes.length;
+
+  genes.forEach(function(geneId) {
+    $.getJSON('/api/homologs/wheat-rice-arabidopsis', {
+      gene_id: geneId,
+      max_targets: maxTargets
+    })
+    .done(function(resp) {
+      doneCount++;
+      if (doneCount === total) {
+        $('#loading-indicator').hide();
+        $('#query-btn').prop('disabled', false);
+        renderAllResults();
+      }
+      if (!resp.success) {
+        $('#table-container').append('<div class="alert alert-warning">' + escapeHtml(geneId) + ': Query failed</div>');
+        return;
+      }
+      var data = resp.data;
+      if (data.hits && data.hits.length > 0) {
+        allResults.push(data);
+      } else {
+        allResults.push({ query_gene: geneId, count: 0, hits: [] });
+      }
+    })
+    .fail(function(jqXHR) {
+      doneCount++;
+      if (doneCount === total) {
+        $('#loading-indicator').hide();
+        $('#query-btn').prop('disabled', false);
+        renderAllResults();
+      }
+      var errMsg = jqXHR.responseJSON ? (jqXHR.responseJSON.detail || jqXHR.responseJSON.error) : jqXHR.statusText;
+      $('#table-container').append('<div class="alert alert-danger">' + escapeHtml(geneId) + ': ' + escapeHtml(errMsg) + '</div>');
+      $('#result-area').show();
+    });
+  });
+}
+
+function renderAllResults() {
+  if (allResults.length === 0) {
+    $('#table-container').html('<div class="alert alert-warning">No results found.</div>');
+    $('#result-area').show();
+    return;
+  }
+
+  // summary
+  var totalHits = 0;
+  var riceCount = 0;
+  var arabCount = 0;
+  allResults.forEach(function(d) {
+    totalHits += d.hits ? d.hits.length : 0;
+    if (d.hits) {
+      d.hits.forEach(function(h) {
+        if (h.species === 'Rice') riceCount++;
+        else if (h.species === 'Arabidopsis') arabCount++;
+      });
+    }
+  });
+  $('#summary-bar').html(
+    '<strong>' + allResults.length + '</strong> gene(s) queried &nbsp;|&nbsp; ' +
+    '<strong>' + totalHits + '</strong> homolog(s) found &nbsp;|&nbsp; ' +
+    '<span class="species-rice">Rice: ' + riceCount + '</span> &nbsp;|&nbsp; ' +
+    '<span class="species-arabidopsis">Arabidopsis: ' + arabCount + '</span>'
+  ).show();
+
+  // table
+  var html = '<div style="max-height:700px;overflow-y:auto;">';
+  html += '<table class="table table-bordered table-hover table-sm" id="homolog-table">';
+  html += '<thead><tr>';
+  html += '<th style="position:sticky;top:0;background:#f8f9fa;">Query Gene</th>';
+  html += '<th style="position:sticky;top:0;background:#f8f9fa;">Target Gene</th>';
+  html += '<th style="position:sticky;top:0;background:#f8f9fa;">Species</th>';
+  html += '<th style="position:sticky;top:0;background:#f8f9fa;">Gene Name</th>';
+  html += '<th style="position:sticky;top:0;background:#f8f9fa;">Description</th>';
+  html += '<th style="position:sticky;top:0;background:#f8f9fa;">Qcovs</th>';
+  html += '<th style="position:sticky;top:0;background:#f8f9fa;">Identity</th>';
+  html += '<th style="position:sticky;top:0;background:#f8f9fa;">Positive</th>';
+  html += '<th style="position:sticky;top:0;background:#f8f9fa;">Length</th>';
+  html += '<th style="position:sticky;top:0;background:#f8f9fa;">E-value</th>';
+  html += '<th style="position:sticky;top:0;background:#f8f9fa;">Score</th>';
+  html += '</tr></thead><tbody>';
+
+  allResults.forEach(function(data) {
+    if (!data.hits || data.hits.length === 0) {
+      html += '<tr><td colspan="11"><em>' + escapeHtml(data.query_gene) + ' — no homologs found</em></td></tr>';
+      return;
+    }
+    data.hits.forEach(function(h) {
+      var speciesClass = h.species === 'Rice' ? 'species-rice' : 'species-arabidopsis';
+      var scoreClass = h.score >= 200 ? 'score-high' : (h.score >= 100 ? 'score-mid' : '');
+      html += '<tr class="' + scoreClass + '">';
+      html += '<td><strong>' + escapeHtml(h.query_gene) + '</strong></td>';
+      html += '<td>' + escapeHtml(h.target_gene) + '</td>';
+      html += '<td class="' + speciesClass + '">' + escapeHtml(h.species) + '</td>';
+      html += '<td>' + escapeHtml(h.gene_name || '-') + '</td>';
+      html += '<td style="max-width:300px;word-break:break-word;font-size:12px;">' + escapeHtml(h.description || '-') + '</td>';
+      html += '<td>' + (h.qcovs != null ? h.qcovs.toFixed(1) : '-') + '</td>';
+      html += '<td>' + (h.identity != null ? h.identity.toFixed(1) : '-') + '</td>';
+      html += '<td>' + (h.positive != null ? h.positive.toFixed(1) : '-') + '</td>';
+      html += '<td>' + (h.length || '-') + '</td>';
+      html += '<td>' + formatEvalue(h.evalue) + '</td>';
+      html += '<td>' + (h.score != null ? h.score.toFixed(1) : '-') + '</td>';
+      html += '</tr>';
+    });
+  });
+
+  html += '</tbody></table></div>';
+
+  // export button
+  html += '<div class="mt-2">';
+  html += '<button class="btn btn-sm btn-outline-success" onclick="exportTSV()">Export TSV</button> ';
+  html += '<button class="btn btn-sm btn-outline-info" onclick="exportCSV()">Export CSV</button>';
+  html += '</div>';
+
+  $('#table-container').html(html);
+  $('#result-area').show();
+  $('html, body').animate({ scrollTop: $('#result-area').offset().top - 20 }, 300);
+}
+
+function formatEvalue(val) {
+  if (val == null || val === 0) return '-';
+  if (val < 1e-100) return val.toExponential(1);
+  if (val < 0.001) return val.toExponential(2);
+  return val.toFixed(4);
+}
+
+function getTableData() {
+  var rows = [];
+  rows.push(['Query Gene', 'Target Gene', 'Species', 'Gene Name', 'Description', 'Qcovs', 'Identity', 'Positive', 'Length', 'E-value', 'Score']);
+  allResults.forEach(function(data) {
+    if (!data.hits) return;
+    data.hits.forEach(function(h) {
+      rows.push([
+        h.query_gene || '',
+        h.target_gene || '',
+        h.species || '',
+        h.gene_name || '',
+        h.description || '',
+        h.qcovs != null ? h.qcovs.toFixed(1) : '',
+        h.identity != null ? h.identity.toFixed(1) : '',
+        h.positive != null ? h.positive.toFixed(1) : '',
+        h.length != null ? h.length : '',
+        h.evalue != null ? h.evalue : '',
+        h.score != null ? h.score.toFixed(1) : ''
+      ]);
+    });
+  });
+  return rows;
+}
+
+function exportTSV() {
+  var rows = getTableData();
+  var tsv = rows.map(function(r) { return r.join('\t'); }).join('\n');
+  downloadFile('homologfinder_results.tsv', tsv, 'text/tab-separated-values');
+}
+
+function exportCSV() {
+  var rows = getTableData();
+  var csv = rows.map(function(r) {
+    return r.map(function(c) {
+      var s = String(c);
+      return s.indexOf(',') >= 0 || s.indexOf('"') >= 0 ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(',');
+  }).join('\n');
+  downloadFile('homologfinder_results.csv', csv, 'text/csv');
+}
+
+function downloadFile(filename, content, mimeType) {
+  var blob = new Blob([content], { type: mimeType + ';charset=utf-8;' });
+  var link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function escapeHtml(s) {
+  return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+}
+</script>
+</body>
+</html>
