@@ -100,6 +100,11 @@
         <select id="db-select" class="form-control"></select>
         <small class="form-text text-muted" id="db-hint">Defaults to all_gene (CDS). Use all_protein for protein, or a genome-specific database for interval queries.</small>
       </div>
+      <div class="form-group" id="protein-db-group" style="display:none;">
+        <label><strong>Protein Database</strong> <small class="text-muted">(for fetching protein sequence)</small></label>
+        <select id="protein-db-select" class="form-control"></select>
+        <small class="form-text text-muted">Defaults to all_protein. Must use a protein BLAST database, not a gene/genome one.</small>
+      </div>
       <div class="form-group" id="type-group" style="display:none;">
         <label><strong>Sequence Type</strong> (single-gene mode only)</label>
         <div>
@@ -175,11 +180,13 @@ function updateHints() {
     interval: 'Genomic interval, e.g. chr1A:1-141522 or Chr1A_Abo:200-500'
   };
   $('#query-hint').text(hints[mode] || '');
-  // Show sequence-type radios only in single-gene mode
-  $('#type-group').toggle(mode === 'gene');
+  // Show sequence-type radios and protein-db selector only in single-gene mode
+  var isGene = mode === 'gene';
+  $('#type-group').toggle(isGene);
+  $('#protein-db-group').toggle(isGene);
   // Adjust DB-hint
   var dbHints = {
-    gene: 'Defaults to all_gene (CDS). Use all_protein for protein, or a specific genome database.',
+    gene: 'CDS / gene database. Defaults to all_gene.',
     batch: 'Select a database that contains your gene IDs (e.g. all_gene, all_protein, or genome-specific).',
     interval: 'Use a genome database. all_genomes aggregates all available genomes; otherwise select a specific one.'
   };
@@ -188,7 +195,11 @@ function updateHints() {
   if (mode === 'interval') {
     var allGenomes = databaseOptions.find(function(o) { return o.value === 'all_genomes'; });
     if (allGenomes) $('#db-select').val('all_genomes');
-  } else if (mode === 'gene' || mode === 'batch') {
+  } else if (mode === 'gene') {
+    if (databaseOptions.find(function(o) { return o.value === 'all_gene'; })) {
+      $('#db-select').val('all_gene');
+    }
+  } else if (mode === 'batch') {
     if (databaseOptions.find(function(o) { return o.value === 'all_gene'; })) {
       $('#db-select').val('all_gene');
     }
@@ -197,10 +208,12 @@ function updateHints() {
 
 function loadDatabases() {
   $('#db-select').html('<option>Loading...</option>');
+  $('#protein-db-select').html('<option>Loading...</option>');
   $.getJSON('/api/blast/databases?program=blastn')
     .done(function(resp) {
       if (!resp.success) { showError('Failed to load databases'); return; }
       var sel = $('#db-select').empty();
+      var protSel = $('#protein-db-select').empty();
       databaseOptions = [];
 
       // Preferred presets
@@ -232,8 +245,35 @@ function loadDatabases() {
       }
 
       $('#db-select').val('all_gene');
+
+      // Protein database: pull from blastp databases (same endpoint, different program)
+      loadProteinDatabases();
     })
     .fail(function() { showError('Failed to load databases'); });
+}
+
+function loadProteinDatabases() {
+  $.getJSON('/api/blast/databases?program=blastp')
+    .done(function(resp) {
+      var protSel = $('#protein-db-select').empty();
+      if (resp.success) {
+        var allProtein = { value: 'all_protein', label: 'all_protein (protein, aggregated)' };
+        protSel.append($('<option>').val(allProtein.value).text(allProtein.label));
+        if (resp.data.protein && resp.data.protein.databases) {
+          protSel.append('<optgroup label="────────── Protein databases ──────────"></optgroup>');
+          resp.data.protein.databases.forEach(function(db) {
+            protSel.append($('<option>').val(db).text(db));
+          });
+        }
+        protSel.val('all_protein');
+      } else {
+        protSel.append($('<option>').val('all_protein').text('all_protein'));
+        protSel.val('all_protein');
+      }
+    })
+    .fail(function() {
+      $('#protein-db-select').html('<option value="all_protein">all_protein</option>');
+    });
 }
 
 function useExample(mode, value, db) {
@@ -277,10 +317,12 @@ function querySequence() {
   if (mode === 'gene') {
     var gene = input.split(/\s+/)[0];
     var seqType = $('input[name="seqType"]:checked').val();
-    $.getJSON('/api/sequence/by-gene', { gene_id: gene, gene_db: db, protein_db: db })
+    var geneDb = $('#db-select').val();
+    var protDb = $('#protein-db-select').val() || geneDb;
+    $.getJSON('/api/sequence/by-gene', { gene_id: gene, gene_db: geneDb, protein_db: protDb })
       .done(function(resp) {
         $('#loading-indicator').hide();
-        renderGene(resp, seqType, gene, db);
+        renderGene(resp, seqType, gene, geneDb, protDb);
       })
       .fail(function(jqXHR) {
         $('#loading-indicator').hide();
@@ -316,7 +358,7 @@ function querySequence() {
   }
 }
 
-function renderGene(resp, seqType, gene, db) {
+function renderGene(resp, seqType, gene, geneDb, protDb) {
   var html = '';
   var cds = resp.gene_sequence || '';
   var prot = resp.protein_sequence || '';
@@ -326,10 +368,11 @@ function renderGene(resp, seqType, gene, db) {
   else fasta = (cds ? cds + '\n' : '') + (prot ? prot : '');
 
   if (!cds && !prot) {
-    html = '<div class="alert alert-warning">No sequence found for ' + escapeHtml(gene) + ' in ' + escapeHtml(db) + '.</div>';
+    html = '<div class="alert alert-warning">No sequence found for ' + escapeHtml(gene) + ' (gene_db: ' + escapeHtml(geneDb) + ', protein_db: ' + escapeHtml(protDb) + ').</div>';
   } else {
     $('#summary-bar')
-      .html('<strong>Gene:</strong> ' + escapeHtml(gene) + ' &nbsp;|&nbsp; <strong>Database:</strong> ' + escapeHtml(db) +
+      .html('<strong>Gene:</strong> ' + escapeHtml(gene) + ' &nbsp;|&nbsp; <strong>Gene DB:</strong> ' + escapeHtml(geneDb) +
+            ' &nbsp;|&nbsp; <strong>Protein DB:</strong> ' + escapeHtml(protDb) +
             ' &nbsp;|&nbsp; <strong>CDS:</strong> ' + (cds ? '✓' : '—') +
             ' &nbsp;|&nbsp; <strong>Protein:</strong> ' + (prot ? '✓' : '—'))
       .show();
