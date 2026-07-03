@@ -19,21 +19,41 @@
       body: JSON.stringify({ page: page })
     }).catch(function(){});
   } catch (e) {}
-  // GET public stats
+
+  function fmt(n) {
+    n = Number(n) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (n >= 10000)   return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    return String(n);
+  }
+
+  function setHtml(html) {
+    var el = document.getElementById('visit-stats');
+    if (el) el.innerHTML = html;
+  }
+
   fetch('/api/track/stats')
     .then(function(r) { return r.json(); })
     .then(function(resp) {
-      var el = document.getElementById('visit-stats');
-      if (!el || !resp || !resp.success) return;
+      if (!resp || !resp.success) {
+        setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
+        return;
+      }
       var d = resp.data;
-      el.innerHTML =
-        'Today: <b>' + d.today.pv + '</b> PV / <b>' + d.today.uv + '</b> UV ' +
-        '&nbsp;|&nbsp; Total: <b>' + d.total.pv + '</b> PV / <b>' + d.total.uv + '</b> UV ' +
-        '&nbsp;|&nbsp; Online: <b>' + d.online + '</b>';
+      var html =
+        '<span class="vs-pill vs-today" title="Today pageviews">' +
+          '<span class="vs-dot vs-dot-today"></span>' +
+          'Today <b>' + fmt(d.today.pv) + '</b></span>' +
+        '<span class="vs-pill vs-total" title="Total pageviews (since 2019-08-01)">' +
+          '<span class="vs-dot vs-dot-total"></span>' +
+          'Total <b>' + fmt(d.total.pv) + '</b></span>' +
+        '<span class="vs-pill vs-online" title="Visitors active in the last 15 minutes">' +
+          '<span class="vs-dot vs-dot-online"></span>' +
+          'Online <b>' + fmt(d.online) + '</b></span>';
+      setHtml(html);
     })
     .catch(function() {
-      var el = document.getElementById('visit-stats');
-      if (el) el.innerHTML = '<span style="color:#999;">stats unavailable</span>';
+      setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
     });
 })();</script>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
@@ -75,6 +95,33 @@
   .loading .spinner-border { width:3rem; height:3rem; }
   #error-msg { display:none; margin-top:10px; }
   .help-box { margin-top:18px; padding:14px; background:#f5f9ff; border-left:4px solid #1f5f9f; color:#333; font-size:13px; }
+
+  /* ----- visit stats footer ----- */
+  .visit-stats { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .visit-stats .vs-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px; border-radius: 12px;
+    font-size: 11px; line-height: 1.4;
+    background: #f1f5f9; color: #334155;
+    border: 1px solid #e2e8f0;
+    transition: background 0.15s;
+  }
+  .visit-stats .vs-pill b { color: #0f172a; font-weight: 600; }
+  .visit-stats .vs-dot {
+    display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; background: #94a3b8;
+  }
+  .visit-stats .vs-dot-today  { background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.18); }
+  .visit-stats .vs-dot-total  { background: #3b82f6; }
+  .visit-stats .vs-dot-online { background: #f59e0b; animation: vs-pulse 1.6s ease-in-out infinite; }
+  .visit-stats .vs-loading { color: #64748b; }
+  .visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
+  .visit-stats .vs-error   { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+  @keyframes vs-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+  }
+
 </style>
 
 <!-- Baidu Tongji (async) -->
@@ -185,9 +232,9 @@ var _hmt = _hmt || [];
         <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
         <td><div class="line" style="height:50px;width:15px;"></div></td>
         <td>
-          <span id="visit-stats" style="font-size:11px;color:#555;">
-            <a href="/api/track/stats" target="_blank" title="Visit stats API">loading...</a>
-          </span>
+          <div id="visit-stats" class="visit-stats">
+            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
+          </div>
         </td>
       </tr>
     </table>
