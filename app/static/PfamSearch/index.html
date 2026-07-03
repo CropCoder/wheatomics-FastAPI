@@ -75,12 +75,9 @@
         <small class="form-text text-muted">Must start with "PF". Exact match only — PF0031 will also match PF00319 etc. (regex search).</small>
       </div>
       <div class="form-group">
-        <label><strong>Genome Annotation Version</strong></label>
-        <select id="table-select" class="form-control">
-          <option value="Genefunc_table">Chinese Spring genome v1.0 (IWGSC RefSeq v1.1)</option>
-          <option value="Genefunc_IWGSC03G_table">Chinese Spring genome v2.1 (IWGSC RefSeq v3)</option>
-        </select>
-        <small class="form-text text-muted">Select which wheat genome annotation to search. Also available: Interval Tool for other genomes.</small>
+        <label><strong>Genome / Annotation Table</strong></label>
+        <select id="table-select" class="form-control" size="8"></select>
+        <small class="form-text text-muted">All tables from <code>Genefuncdb</code>. Only tables with a <code>Domain</code> column support PFAM search.</small>
       </div>
       <button id="query-btn" class="btn btn-primary" onclick="queryPfam()">Search</button>
       <button class="btn btn-outline-secondary ml-2" onclick="clearAll()">Clear</button>
@@ -146,6 +143,40 @@
 </div>
 
 <script>
+var tableInfo = {};
+
+$(function() { loadTables(); });
+
+function loadTables() {
+  $('#table-select').html('<option>Loading...</option>');
+  $.getJSON('/api/genes/functions/tables')
+    .done(function(resp) {
+      if (!resp.success) { showError('Failed to load tables'); return; }
+      var sel = $('#table-select').empty();
+      var supported = 0;
+      resp.data.tables.forEach(function(t) {
+        var cols = (t.columns || []).map(function(c) { return c.toLowerCase(); });
+        var hasDomain = cols.indexOf('domain') >= 0;
+        var hasChrom = cols.indexOf('chrom') >= 0;
+        if (!hasDomain || !hasChrom) return;
+        tableInfo[t.name] = t;
+        var label = t.name + (t.rows ? ' (' + t.rows.toLocaleString() + ' rows)' : '');
+        sel.append($('<option>').val(t.name).text(label));
+        supported++;
+      });
+      if (supported === 0) {
+        sel.html('<option value="">(no PFAM-supported tables found)</option>');
+        showError('No Genefuncdb tables have both Chrom and Domain columns.');
+      } else {
+        // 默认选中 Genefunc_table
+        if (sel.find('option[value="Genefunc_table"]').length) {
+          sel.val('Genefunc_table');
+        }
+      }
+    })
+    .fail(function() { showError('Failed to load tables'); });
+}
+
 function useExample(pfam) {
   $('#pfam-input').val(pfam);
 }
@@ -156,6 +187,7 @@ function clearAll() {
   $('#result-area').hide();
   $('#summary-bar').hide();
   $('#table-container').empty();
+  // 不重置 select，保留用户上次的表选择
 }
 
 function showError(msg) {
@@ -169,7 +201,7 @@ function queryPfam() {
 
   if (!pfam) { showError('Please enter a PFAM domain ID.'); return; }
   if (!pfam.toUpperCase().startsWith('PF')) { showError('PFAM domain ID must start with PF (e.g. PF00319).'); return; }
-  if (!table) { showError('Please select a genome annotation version.'); return; }
+  if (!table) { showError('Please select a genome annotation table.'); return; }
 
   $('#error-msg').hide();
   $('#result-area').hide();
