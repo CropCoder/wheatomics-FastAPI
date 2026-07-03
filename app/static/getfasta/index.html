@@ -23,8 +23,8 @@
 
   function fmt(n) {
     n = Number(n) || 0;
-    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-    if (n >= 10000)   return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
+    if (n >= 10000)   return (n / 1000).toFixed(3) + 'k';
     return String(n);
   }
 
