@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GetSequence - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+<style>
+  body { background: #f8f9fa; margin:0; padding:0; }
+  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+  #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
+  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+  #header-tabs li { display:inline-block !important; width:190px !important; }
+  #header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+  #header-tabs a:hover { background:#98c1d9; color:#000000; }
+  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+  #header-tabs ul li ul { display:none !important; position:absolute; }
+  #header-tabs ul li:hover ul { display:block !important; }
+  #header-tabs ul li ul a { border-radius:0; }
+  #home_content { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+  .result-area { background: #fff; border-radius: 6px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .fasta-box { font-family: 'Courier New', monospace; font-size: 12px; background: #f8f9fa; padding: 12px; border: 1px solid #dee2e6; border-radius: 4px; max-height: 500px; overflow: auto; white-space: pre-wrap; word-break: break-all; }
+  .loading { display: none; text-align: center; padding: 60px; }
+  .loading .spinner-border { width: 3rem; height: 3rem; }
+  #error-msg { display: none; margin-top: 10px; }
+  .info-box { background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 12px 16px; border-radius: 4px; margin-top: 16px; font-size: 14px; color: #495057; }
+  .info-box a { color: #007bff; }
+  .summary-bar { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
+</div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/snprimer">CAPS/KASP(Beta)</a></li>
+        <li><a href="/PfamSearch/">PfamSearch</a></li>
+        <li><a href="/idConvert/">IDConvert</a></li>
+        <li><a href="/HomologFinder/">HomologFinder</a></li>
+        <li><a href="/interval/">IntervalTool</a></li>
+        <li><a href="/expression/">GeneExpression</a></li>
+        <li><a href="/coexpression/index.html">Co-expression</a></li>
+        <li><a href="/wheatPPI/">WheatPPI</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/genes">KnownGene</a></li>
+        <li><a href="/symap/index.html">SyntenySearch</a></li>
+        <li><a href="/preblast/">preBLAST</a></li>
+        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+        <li><a href="DWGVa.html">DWGVa</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/scRNA">scRNA</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/eqtl">eQTL Atlas</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/literature_auto/literature.html">Literature</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href="#"><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div id="home_content">
+  <br><h5 class="card-title">GetSequence — Retrieve FASTA by Gene ID, Batch IDs, or Interval</h5><br>
+
+  <div class="row">
+    <div class="col-md-5">
+      <div class="form-group">
+        <label><strong>Query Type</strong></label>
+        <select id="mode-select" class="form-control">
+          <option value="gene">By Gene ID (single gene, CDS + protein)</option>
+          <option value="batch">By Gene IDs (multiple, batch mode)</option>
+          <option value="interval">By Chromosomal Interval (e.g. chr1A:1-141522)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label><strong>Query</strong></label>
+        <textarea id="query-input" class="form-control" rows="5" placeholder="e.g. TraesCS5A02G391700"></textarea>
+        <small class="form-text text-muted" id="query-hint">Single gene ID, e.g. TraesCS5A02G391700</small>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="form-group">
+        <label><strong>Sequence Database</strong></label>
+        <select id="db-select" class="form-control"></select>
+        <small class="form-text text-muted" id="db-hint">Defaults to all_gene (CDS). Use all_protein for protein, or a genome-specific database for interval queries.</small>
+      </div>
+      <div class="form-group" id="type-group" style="display:none;">
+        <label><strong>Sequence Type</strong> (single-gene mode only)</label>
+        <div>
+          <label class="radio-inline" style="margin-right:20px;"><input type="radio" name="seqType" value="both" checked> CDS + Protein</label>
+          <label class="radio-inline" style="margin-right:20px;"><input type="radio" name="seqType" value="cds"> CDS only</label>
+          <label class="radio-inline"><input type="radio" name="seqType" value="protein"> Protein only</label>
+        </div>
+      </div>
+      <button id="query-btn" class="btn btn-primary" onclick="querySequence()">Get FASTA</button>
+      <button class="btn btn-outline-secondary ml-2" onclick="clearAll()">Clear</button>
+
+      <div class="info-box" style="margin-top:20px;">
+        <strong>Examples:</strong>
+        <ul style="margin-bottom:0; padding-left:20px;">
+          <li><a href="javascript:void(0)" onclick="useExample('gene', 'TraesCS5A02G391700', 'all_gene')">TraesCS5A02G391700</a> — VRN-A1, single gene (CDS+protein)</li>
+          <li><a href="javascript:void(0)" onclick="useExample('batch', 'TraesCS5A02G391700\nTraesCS1A02G001000\nTraesCS2B02G123400', 'all_gene')">3 wheat genes, batch mode</a></li>
+          <li><a href="javascript:void(0)" onclick="useExample('interval', 'chr1A:1-141522', 'all_genomes')">chr1A:1-141522</a> — Chinese Spring v1.0 interval</li>
+          <li><a href="javascript:void(0)" onclick="useExample('interval', 'Chr1A_Abo:200-500', 'all_genomes')">Chr1A_Abo:200-500</a> — Abbondanza interval</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="error-msg" class="alert alert-danger"></div>
+
+  <div class="loading" id="loading-indicator">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted">Fetching sequence...</p>
+  </div>
+
+  <div id="result-area" style="display:none;">
+    <div id="summary-bar" class="summary-bar" style="display:none;"></div>
+    <div class="result-area" id="result-container"></div>
+  </div>
+</div>
+
+<div class="line" style="height:10px;background-color:white"></div>
+<div id="home_footer">
+  <center style="margin-top:5px">
+    <table>
+      <tr>
+        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><div class="line" style="height:50px;width:15px;"></div></td>
+        <td><span><a href="https://clustrmaps.com/site/1c2ry" title="Visit tracker"><img src="//www.clustrmaps.com/map_v2.png?d=fVblT8MfQ65ClPkORSIs7Sz0A0Ttlm1wOwVQiR8f_ME&cl=ffffff" height="50"></a></span></td>
+      </tr>
+    </table>
+    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+  </center>
+</div>
+
+<script>
+var databaseOptions = []; // [{value, label, type}]
+var lastResults = []; // for download
+
+$(function() {
+  loadDatabases();
+  $('#mode-select').change(updateHints);
+  updateHints();
+});
+
+function updateHints() {
+  var mode = $('#mode-select').val();
+  var hints = {
+    gene: 'Single gene ID, e.g. TraesCS5A02G391700',
+    batch: 'Multiple gene IDs, separated by space, comma or newline',
+    interval: 'Genomic interval, e.g. chr1A:1-141522 or Chr1A_Abo:200-500'
+  };
+  $('#query-hint').text(hints[mode] || '');
+  // Show sequence-type radios only in single-gene mode
+  $('#type-group').toggle(mode === 'gene');
+  // Adjust DB-hint
+  var dbHints = {
+    gene: 'Defaults to all_gene (CDS). Use all_protein for protein, or a specific genome database.',
+    batch: 'Select a database that contains your gene IDs (e.g. all_gene, all_protein, or genome-specific).',
+    interval: 'Use a genome database. all_genomes aggregates all available genomes; otherwise select a specific one.'
+  };
+  $('#db-hint').text(dbHints[mode] || '');
+  // Auto-switch default DB based on mode
+  if (mode === 'interval') {
+    var allGenomes = databaseOptions.find(function(o) { return o.value === 'all_genomes'; });
+    if (allGenomes) $('#db-select').val('all_genomes');
+  } else if (mode === 'gene' || mode === 'batch') {
+    if (databaseOptions.find(function(o) { return o.value === 'all_gene'; })) {
+      $('#db-select').val('all_gene');
+    }
+  }
+}
+
+function loadDatabases() {
+  $('#db-select').html('<option>Loading...</option>');
+  $.getJSON('/api/blast/databases?program=blastn')
+    .done(function(resp) {
+      if (!resp.success) { showError('Failed to load databases'); return; }
+      var sel = $('#db-select').empty();
+      databaseOptions = [];
+
+      // Preferred presets
+      var presets = [
+        { value: 'all_genomes', label: 'all_genomes (aggregated, recommended for intervals)' },
+        { value: 'all_gene', label: 'all_gene (CDS, aggregated)' },
+        { value: 'all_protein', label: 'all_protein (protein, aggregated)' }
+      ];
+      presets.forEach(function(p) {
+        sel.append($('<option>').val(p.value).text(p.label));
+        databaseOptions.push(p);
+      });
+
+      // Group by category if available
+      if (resp.data.categories) {
+        sel.append('<optgroup label="────────── Genome-specific ──────────"></optgroup>');
+        resp.data.categories.forEach(function(cat) {
+          cat.databases.forEach(function(db) {
+            sel.append($('<option>').val(db).text(db + ' [' + cat.label + ']'));
+            databaseOptions.push({ value: db, label: db + ' [' + cat.label + ']' });
+          });
+        });
+      } else if (resp.data.nucleotide && resp.data.nucleotide.databases) {
+        sel.append('<optgroup label="────────── Nucleotide databases ──────────"></optgroup>');
+        resp.data.nucleotide.databases.forEach(function(db) {
+          sel.append($('<option>').val(db).text(db));
+          databaseOptions.push({ value: db, label: db });
+        });
+      }
+
+      $('#db-select').val('all_gene');
+    })
+    .fail(function() { showError('Failed to load databases'); });
+}
+
+function useExample(mode, value, db) {
+  $('#mode-select').val(mode);
+  updateHints();
+  $('#query-input').val(value);
+  if (db && databaseOptions.find(function(o) { return o.value === db; })) {
+    $('#db-select').val(db);
+  }
+}
+
+function clearAll() {
+  $('#query-input').val('');
+  $('#error-msg').hide();
+  $('#result-area').hide();
+  $('#summary-bar').hide();
+  $('#result-container').empty();
+  lastResults = [];
+}
+
+function showError(msg) {
+  $('#error-msg').text(msg).show();
+  $('#loading-indicator').hide();
+}
+
+function querySequence() {
+  var mode = $('#mode-select').val();
+  var input = $('#query-input').val().trim();
+  var db = $('#db-select').val();
+
+  if (!input) { showError('Please enter a query.'); return; }
+  if (!db) { showError('Please select a database.'); return; }
+
+  $('#error-msg').hide();
+  $('#result-area').hide();
+  $('#summary-bar').hide();
+  $('#result-container').empty();
+  lastResults = [];
+  $('#loading-indicator').show();
+
+  if (mode === 'gene') {
+    var gene = input.split(/\s+/)[0];
+    var seqType = $('input[name="seqType"]:checked').val();
+    $.getJSON('/api/sequence/by-gene', { gene_id: gene, gene_db: db, protein_db: db })
+      .done(function(resp) {
+        $('#loading-indicator').hide();
+        renderGene(resp, seqType, gene, db);
+      })
+      .fail(function(jqXHR) {
+        $('#loading-indicator').hide();
+        showError(jqXHR.responseJSON ? (jqXHR.responseJSON.detail || jqXHR.responseJSON.error) : jqXHR.statusText);
+      });
+  } else if (mode === 'batch') {
+    var ids = input.split(/[\s,;\n]+/).map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+    if (ids.length === 0) { showError('No valid gene IDs found.'); $('#loading-indicator').hide(); return; }
+    $.getJSON('/api/sequence/batch', { database: db, ID: ids.join(' ') })
+      .done(function(resp) {
+        $('#loading-indicator').hide();
+        renderBatch(resp, db);
+      })
+      .fail(function(jqXHR) {
+        $('#loading-indicator').hide();
+        showError(jqXHR.responseJSON ? (jqXHR.responseJSON.detail || jqXHR.responseJSON.error) : jqXHR.statusText);
+      });
+  } else if (mode === 'interval') {
+    if (!input.includes(':')) {
+      showError('Interval must be in format chr:start-end, e.g. chr1A:1-141522');
+      $('#loading-indicator').hide();
+      return;
+    }
+    $.getJSON('/api/sequence/by-interval', { region: input, database: db })
+      .done(function(resp) {
+        $('#loading-indicator').hide();
+        renderInterval(resp, input, db);
+      })
+      .fail(function(jqXHR) {
+        $('#loading-indicator').hide();
+        showError(jqXHR.responseJSON ? (jqXHR.responseJSON.detail || jqXHR.responseJSON.error) : jqXHR.statusText);
+      });
+  }
+}
+
+function renderGene(resp, seqType, gene, db) {
+  var html = '';
+  var cds = resp.gene_sequence || '';
+  var prot = resp.protein_sequence || '';
+  var fasta = '';
+  if (seqType === 'cds') fasta = cds;
+  else if (seqType === 'protein') fasta = prot;
+  else fasta = (cds ? cds + '\n' : '') + (prot ? prot : '');
+
+  if (!cds && !prot) {
+    html = '<div class="alert alert-warning">No sequence found for ' + escapeHtml(gene) + ' in ' + escapeHtml(db) + '.</div>';
+  } else {
+    $('#summary-bar')
+      .html('<strong>Gene:</strong> ' + escapeHtml(gene) + ' &nbsp;|&nbsp; <strong>Database:</strong> ' + escapeHtml(db) +
+            ' &nbsp;|&nbsp; <strong>CDS:</strong> ' + (cds ? '✓' : '—') +
+            ' &nbsp;|&nbsp; <strong>Protein:</strong> ' + (prot ? '✓' : '—'))
+      .show();
+    html = '<div class="d-flex justify-content-between align-items-center mb-2">';
+    html += '<h6 class="mb-0">FASTA Output</h6>';
+    html += '<div>';
+    html += '<button class="btn btn-sm btn-outline-primary" onclick="copyFasta()">Copy</button> ';
+    html += '<button class="btn btn-sm btn-outline-success" onclick="downloadFasta(\'' + escapeHtml(gene) + '.fasta\')">Download FASTA</button>';
+    html += '</div></div>';
+    html += '<div class="fasta-box" id="fasta-output">' + escapeHtml(fasta.trim()) + '</div>';
+    lastResults = [{ name: gene, fasta: fasta.trim() }];
+  }
+  $('#result-container').html(html);
+  $('#result-area').show();
+  $('html, body').animate({ scrollTop: $('#result-area').offset().top - 20 }, 300);
+}
+
+function renderBatch(resp, db) {
+  var records = resp.data.records || [];
+  if (records.length === 0) {
+    $('#result-container').html('<div class="alert alert-warning">No sequences found in ' + escapeHtml(db) + '.</div>');
+    $('#result-area').show();
+    return;
+  }
+  var found = records.filter(function(r) { return r.fasta; });
+  $('#summary-bar')
+    .html('<strong>Database:</strong> ' + escapeHtml(db) + ' &nbsp;|&nbsp; <strong>Queried:</strong> ' + records.length +
+          ' &nbsp;|&nbsp; <strong>Found:</strong> ' + found.length)
+    .show();
+
+  var allFasta = found.map(function(r) { return r.fasta; }).join('\n');
+  var html = '<div class="d-flex justify-content-between align-items-center mb-2">';
+  html += '<h6 class="mb-0">FASTA Output (' + found.length + ' sequences)</h6>';
+  html += '<div>';
+  html += '<button class="btn btn-sm btn-outline-primary" onclick="copyFasta()">Copy</button> ';
+  html += '<button class="btn btn-sm btn-outline-success" onclick="downloadFasta(\'batch_sequences.fasta\')">Download FASTA</button>';
+  html += '</div></div>';
+  html += '<div class="fasta-box" id="fasta-output">' + escapeHtml(allFasta) + '</div>';
+  lastResults = found.map(function(r) { return { name: r.sequence_id, fasta: r.fasta }; });
+  $('#result-container').html(html);
+  $('#result-area').show();
+  $('html, body').animate({ scrollTop: $('#result-area').offset().top - 20 }, 300);
+}
+
+function renderInterval(resp, region, db) {
+  var fasta = resp.data.fasta || '';
+  if (!fasta) {
+    $('#result-container').html('<div class="alert alert-warning">No sequence found for ' + escapeHtml(region) + ' in ' + escapeHtml(db) + '.</div>');
+    $('#result-area').show();
+    return;
+  }
+  $('#summary-bar')
+    .html('<strong>Region:</strong> ' + escapeHtml(region) + ' &nbsp;|&nbsp; <strong>Database:</strong> ' + escapeHtml(db))
+    .show();
+  var html = '<div class="d-flex justify-content-between align-items-center mb-2">';
+  html += '<h6 class="mb-0">FASTA Output</h6>';
+  html += '<div>';
+  html += '<button class="btn btn-sm btn-outline-primary" onclick="copyFasta()">Copy</button> ';
+  html += '<button class="btn btn-sm btn-outline-success" onclick="downloadFasta(\'' + region.replace(/[^A-Za-z0-9]/g, '_') + '.fasta\')">Download FASTA</button>';
+  html += '</div></div>';
+  html += '<div class="fasta-box" id="fasta-output">' + escapeHtml(fasta) + '</div>';
+  lastResults = [{ name: region, fasta: fasta }];
+  $('#result-container').html(html);
+  $('#result-area').show();
+  $('html, body').animate({ scrollTop: $('#result-area').offset().top - 20 }, 300);
+}
+
+function copyFasta() {
+  var text = $('#fasta-output').text();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      flashButton(event.target, 'Copied!');
+    }, function() { fallbackCopy(text); });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+}
+
+function flashButton(btn, msg) {
+  var orig = btn.textContent;
+  btn.textContent = msg;
+  btn.disabled = true;
+  setTimeout(function() { btn.textContent = orig; btn.disabled = false; }, 1500);
+}
+
+function downloadFasta(filename) {
+  var content = lastResults.map(function(r) { return r.fasta; }).join('\n') + '\n';
+  var blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+  var link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function escapeHtml(s) {
+  return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+}
+</script>
+</body>
+</html>
