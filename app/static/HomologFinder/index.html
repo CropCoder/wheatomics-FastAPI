@@ -75,8 +75,11 @@
     <div class="col-md-6">
       <div class="form-group">
         <label><strong>Gene ID(s)</strong></label>
-        <textarea id="gene-input" class="form-control" rows="8" placeholder="TraesCS5A02G391700&#10;TraesCS1A02G001000&#10;One gene ID per line"></textarea>
-        <small class="form-text text-muted">Enter wheat gene ID(s) (e.g. TraesCS5A02G391700). Also supports querying by rice or Arabidopsis gene ID.</small>
+        <textarea id="gene-input" class="form-control" rows="8" placeholder="TraesCS5A02G391700&#10;LOC_Os02g04100&#10;AT5G66140&#10;One gene ID per line"></textarea>
+        <small class="form-text text-muted">Enter wheat gene ID(s) (e.g. TraesCS1A02G001600LC), rice ID (LOC_Os02g04100), or Arabidopsis ID (AT5G66140).</small>
+      </div>
+      <div class="form-group">
+        <button type="button" class="btn btn-sm btn-outline-info" onclick="loadExample()">Load example</button>
       </div>
       <button id="query-btn" class="btn btn-primary" onclick="queryHomologs()">Search Homologs</button>
       <button class="btn btn-outline-secondary ml-2" onclick="clearAll()">Clear</button>
@@ -352,6 +355,11 @@ function downloadFile(filename, content, mimeType) {
 
 function escapeHtml(s) {
   return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+}
+
+function loadExample() {
+  $('#gene-input').val('TraesCS1A02G001600LC\nLOC_Os02g04100\nAT5G66140');
+  $('#max-targets').val('3');
 }
 </script>
 </body>
