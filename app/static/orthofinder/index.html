@@ -6,7 +6,36 @@
   <title>OrthoFinder Orthogroup Browser | WheatOmics</title>
   <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
-  <script src="/js/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/js/jquery/1.9.1/jquery.min.js">
+// ===== Visit tracking =====
+(function() {
+  var page = location.pathname || 'unknown';
+  // POST a pageview (best-effort, ignore failures)
+  try {
+    fetch('/api/track/visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page: page })
+    }).catch(function(){});
+  } catch (e) {}
+  // GET public stats
+  fetch('/api/track/stats')
+    .then(function(r) { return r.json(); })
+    .then(function(resp) {
+      var el = document.getElementById('visit-stats');
+      if (!el || !resp || !resp.success) return;
+      var d = resp.data;
+      el.innerHTML =
+        'Today: <b>' + d.today.pv + '</b> PV / <b>' + d.today.uv + '</b> UV ' +
+        '&nbsp;|&nbsp; Total: <b>' + d.total.pv + '</b> PV / <b>' + d.total.uv + '</b> UV ' +
+        '&nbsp;|&nbsp; Online: <b>' + d.online + '</b>';
+    })
+    .catch(function() {
+      var el = document.getElementById('visit-stats');
+      if (el) el.innerHTML = '<span style="color:#999;">stats unavailable</span>';
+    });
+})();
+</script>
   <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
   <style>
     body { background: #f8f9fa; margin:0; padding:0; overflow-x:hidden; }
@@ -183,6 +212,11 @@ var _hmt = _hmt || [];
         <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
         <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
         <td><span><a href="https://tongji.baidu.com" target="_blank" title="Baidu Tongji">Baidu Tongji</a></span></td>
+        <td>
+          <span id="visit-stats" style="font-size:11px;color:#555;">
+            <a href="/api/track/stats" target="_blank" title="Visit stats API">loading...</a>
+          </span>
+        </td>
       </tr>
     </table>
     For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
