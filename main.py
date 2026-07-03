@@ -113,6 +113,7 @@ app.mount("/preblast", StaticFiles(directory=Path(__file__).parent / "app" / "st
 app.mount("/wheatPPI", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "wheatPPI", html=True), name="wheatPPI")
 app.mount("/orthofinder", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "orthofinder", html=True), name="orthofinder")
 app.mount("/HomologFinder", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "HomologFinder", html=True), name="HomologFinder")
+app.mount("/PfamSearch", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "PfamSearch", html=True), name="PfamSearch")
 
 
 @app.middleware("http")
