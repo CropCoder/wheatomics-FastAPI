@@ -107,7 +107,7 @@ app.add_middleware(
 )
 
 
-app.mount("/expression", StaticFiles(directory=Path(__file__).parent / "app" / "static", html=True), name="expression")
+app.mount("/expression", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "expression", html=True), name="expression")
 app.mount("/interval", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "interval", html=True), name="interval")
 app.mount("/preblast", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "preblast", html=True), name="preblast")
 app.mount("/wheatPPI", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "wheatPPI", html=True), name="wheatPPI")
