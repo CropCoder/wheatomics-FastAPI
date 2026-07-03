@@ -3,6 +3,9 @@
 Aggregates per-day PV/UV and tracks currently-online visitors
 (15-minute sliding window). Data lives in `wheatomics_db.visit_stats`
 and `wheatomics_db.visit_log`. No external tracking dependency.
+
+Schema lives in `init_visit_stats.sql` and must be applied by an
+admin user — `wheatomics_user` only has DML privileges, not DDL.
 """
 
 from __future__ import annotations
@@ -22,32 +25,27 @@ from app.db.mysql import mysql_cursor
 router = APIRouter(prefix="/track", tags=["Track"])
 
 
-# ---- schema bootstrap -----------------------------------------------------
+# ---- schema check ---------------------------------------------------------
 
-SCHEMA_STATEMENTS = (
-    """
-    CREATE TABLE IF NOT EXISTS visit_stats (
-        visit_date DATE NOT NULL PRIMARY KEY,
-        pv INT NOT NULL DEFAULT 0,
-        uv INT NOT NULL DEFAULT 0
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    """,
-    """
-    CREATE TABLE IF NOT EXISTS visit_log (
-        visitor_hash CHAR(32) NOT NULL,
-        visit_date DATE NOT NULL,
-        last_seen DATETIME NOT NULL,
-        PRIMARY KEY (visitor_hash, visit_date),
-        INDEX idx_last_seen (last_seen)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    """,
-)
+REQUIRED_TABLES = ("visit_stats", "visit_log")
 
 
-def _ensure_schema() -> None:
+def _check_schema() -> None:
+    """Verify required tables exist. Caller surfaces the error to clients."""
     with mysql_cursor(settings.DB_LITERATURE) as cursor:
-        for stmt in SCHEMA_STATEMENTS:
-            cursor.execute(stmt)
+        placeholders = ",".join(["%s"] * len(REQUIRED_TABLES))
+        cursor.execute(
+            f"SELECT TABLE_NAME FROM information_schema.TABLES "
+            f"WHERE TABLE_SCHEMA = %s AND TABLE_NAME IN ({placeholders})",
+            (settings.DB_LITERATURE, *REQUIRED_TABLES),
+        )
+        found = {row["TABLE_NAME"] for row in cursor.fetchall()}
+    missing = [t for t in REQUIRED_TABLES if t not in found]
+    if missing:
+        raise RuntimeError(
+            f"visit-counter tables missing: {missing}. "
+            f"Run init_visit_stats.sql as a privileged user."
+        )
 
 
 # ---- helpers --------------------------------------------------------------
@@ -82,7 +80,7 @@ def record_visit(
 
     Idempotent within the same day per (ip, user-agent) pair.
     """
-    _ensure_schema()
+    _check_schema()
     ip = (x_forwarded_for.split(",")[0].strip() if x_forwarded_for else "unknown")
     visitor = _hash_visitor(ip, user_agent or "unknown")
     today = _utc_now().date()
@@ -117,7 +115,7 @@ def record_visit(
 @router.get("/stats")
 def get_stats() -> dict:
     """Public stats: today's PV/UV, total PV/UV, and currently-online count."""
-    _ensure_schema()
+    _check_schema()
     today = _utc_now().date()
     cutoff = _utc_now() - timedelta(minutes=15)
 
