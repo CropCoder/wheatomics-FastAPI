@@ -83,10 +83,11 @@
   .summary-bar { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; font-size: 13px; }
 
   /* ----- supported-genomes panel ----- */
-  #genomes-groups { margin-top: 8px; }
-  #genomes-groups .gg-group { margin-top: 8px; }
+  #genomes-groups { margin-top: 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 12px; }
+  #genomes-groups .gg-group { margin-top: 0; }
   #genomes-groups .gg-group-label { font-weight: 600; font-size: 12px; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
   #genomes-groups .gg-group-label .gg-count { color: #94a3b8; font-weight: 400; margin-left: 4px; }
+  #genomes-groups .gg-body { padding: 4px 0; }
   #genomes-groups .gg-list { display: flex; flex-wrap: wrap; gap: 4px 6px; }
   #genomes-groups .gg-chip {
     display: inline-flex; align-items: baseline; gap: 4px;
@@ -214,11 +215,9 @@ var _hmt = _hmt || [];
       <button class="btn btn-outline-secondary ml-2" onclick="clearAll()">Clear</button>
 
       <div id="genomes-box" class="info-box" style="margin-top:12px; display:none;">
-        <strong id="genomes-toggle" style="cursor:pointer; user-select:none;">
-          Supported genomes <span id="genomes-arrow" style="color:#64748b;">▸</span>
-        </strong>
+        <strong>Supported genomes</strong>
         <small class="text-muted d-block" id="genomes-summary"></small>
-        <div id="genomes-groups" style="display:none;"></div>
+        <div id="genomes-groups"></div>
       </div>
     </div>
   </div>
@@ -460,24 +459,12 @@ function renderGenomes(records) {
     container.append(groupEl);
   });
 
-  // Show a short summary line under the heading (e.g. "86 genomes · 8
-  // karyotype groups") and wire the heading itself as a click-to-toggle
-  // so the whole chip grid stays collapsed by default.
+  // Show a short summary line under the heading (e.g. "86 genomes · 14
+// karyotype groups") so users can see what's inside at a glance.
   var total = records.length;
   $('#genomes-summary').text(
-    total + ' genomes · ' + groups.length + ' karyotype group' + (groups.length === 1 ? '' : 's') +
-    ' · click to expand'
+    total + ' genomes · ' + groups.length + ' karyotype group' + (groups.length === 1 ? '' : 's')
   );
-  $('#genomes-toggle').off('click').on('click', function() {
-    var expanded = $('#genomes-groups').is(':visible');
-    if (expanded) {
-      $('#genomes-groups').hide();
-      $('#genomes-arrow').text('▸');
-    } else {
-      $('#genomes-groups').show();
-      $('#genomes-arrow').text('▾');
-    }
-  });
 }
 
 function loadGenomes() {
