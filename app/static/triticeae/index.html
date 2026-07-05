@@ -240,6 +240,18 @@ html, body { margin:0; padding:0; }
       </div>
       <div class="helper-text mb-2">Use commas to separate multiple terms (OR within a field, AND across fields).</div>
 
+      <div class="form-group mb-2">
+        <label for="f-recent-days" class="small-label">Recent Updates</label>
+        <select id="f-recent-days" class="form-control form-control-sm">
+          <option value="">All time</option>
+          <option value="7" selected>Last 7 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last 365 days</option>
+        </select>
+        <div class="helper-text mt-1">By annotation import time (fga_created_at).</div>
+      </div>
+
       <!-- Year chart + slider -->
       <div class="chart-box">
         <div class="chart-title">Results by Year</div>
@@ -340,15 +352,16 @@ html, body { margin:0; padding:0; }
 /* ============================================================
    Triticeae Papers SPA — search logic
    ============================================================ */
-var allResults = [];
-var filteredResults = [];
 var currentPage = 1;
 var pageSize = 25;
-var currentJournals = null;   // null = no filter, array = allowed journals
-var currentTag = null;        // null = no filter, string = tag to filter by
-var stats = null;             // cached /api/triticeae/stats
-var yearHist = [];            // [{year, count}], sorted asc
+var totalPapers = 0;             // backend-reported total (truth)
+var currentResults = [];         // current page's rows (from backend)
+var currentJournals = null;      // null = no filter, array = allowed journals
+var currentTag = null;           // null = no filter, string = tag to filter by
+var stats = null;                // cached /api/triticeae/stats
+var yearHist = [];               // [{year, count}], sorted asc
 var yearMin = 1900, yearMax = 2030;
+var searchInFlight = null;       // AbortController for the latest request
 
 function escapeHtml(s) {
   if (s == null) return '';
@@ -519,12 +532,12 @@ function renderTagClouds() {
 function buildQuery() {
   var field = document.getElementById('searchField').value;
   var inp = document.getElementById('searchInp').value.trim();
-  var params = { limit: 200, offset: 0 };  // fetch a big chunk; we filter/paginate client-side for UX
+  var params = { limit: pageSize, offset: (currentPage - 1) * pageSize };
   if (inp) {
     var parts = inp.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
     if (field === 'all') {
-      // AND across comma-separated terms, each term matches any field
-      // We'll fetch all and filter client-side below
+      // server has no multi-field OR; pass q as full-text and let server match title/abstract.
+      params.q = parts.join(' ');
     } else if (field === 'gene_name') {
       params.gene_name = parts[0];
     } else if (field === 'trait') {
@@ -537,109 +550,86 @@ function buildQuery() {
       params.q = parts[0];
     }
   }
-  return { params: params, rawInput: inp, field: field };
+  return params;
 }
 
-function clientFilter(papers, q) {
-  if (!q || !q.rawInput) return papers;
-  var terms = q.rawInput.split(',').map(function(s){ return s.trim().toLowerCase(); }).filter(Boolean);
-  if (!terms.length) return papers;
-  if (q.field === 'all') {
-    return papers.filter(function(p){
-      var hay = ((p.paper_title||'') + ' ' + (p.journal||'') + ' ' + (p.authors||'') + ' ' + (p.abstract||'')).toLowerCase();
-      return terms.every(function(t){ return hay.indexOf(t) >= 0; });
-    });
-  }
-  // Specific field: server already filtered, but also do client text-match on the chosen field for precision
-  var f = q.field;
-  return papers.filter(function(p){
-    var v = '';
-    if (f === 'title') v = p.paper_title || '';
-    else if (f === 'authors') v = p.authors || '';
-    else if (f === 'journal') v = p.journal || '';
-    else if (f === 'abstract') v = p.abstract || '';
-    else return true;
-    return terms.every(function(t){ return v.toLowerCase().indexOf(t) >= 0; });
-  });
-}
+function runSearch() {
+  var params = buildQuery();
 
-function runSearch(/* unused offset, kept for compat */) {
-  var q = buildQuery();
+  // Year range from slider
   var yStart = parseInt(document.getElementById('yearStart').value, 10);
   var yEnd   = parseInt(document.getElementById('yearEnd').value, 10);
-  if (yStart !== yearMin) paramsSet(params, 'pub_date_start', String(yStart));
-  if (yEnd   !== yearMax) paramsSet(params, 'pub_date_end',   String(yEnd));
+  if (yStart !== yearMin) params.pub_date_start = String(yStart);
+  if (yEnd   !== yearMax) params.pub_date_end   = String(yEnd);
 
+  // Recent filter: only filter by fga_created_at when user picks a value
+  var recent = parseInt(document.getElementById('f-recent-days').value, 10) || 0;
+  if (recent > 0) params.since_days = recent;
+
+  // Journal filter: when user has unchecked some, pass the kept list as a
+  // comma-separated `journal` parameter. When all are checked (or none), no filter.
   var j = getCheckedJournals();
-  if (j.checked.length > 0 && j.checked.length < j.all.length) currentJournals = j.checked;
-  else currentJournals = null;  // all checked OR none checked = no filter
+  if (j.checked.length > 0 && j.checked.length < j.all.length) {
+    currentJournals = j.checked;
+    params.journal = j.checked.join(',');
+  } else {
+    currentJournals = null;
+  }
 
   setStatus('loading', 'Searching…');
   document.getElementById('res-info').textContent = 'Searching…';
-  document.getElementById('list-content').innerHTML = '<div class="text-muted text-center" style="padding:60px;">Loading…</div>';
+  document.getElementById('list-content').innerHTML =
+    '<div class="text-muted text-center" style="padding:60px;">Loading…</div>';
 
-  $.getJSON('/api/triticeae/papers', q.params)
+  // Cancel any in-flight request so stale responses don't overwrite newer ones
+  if (searchInFlight && searchInFlight.abort) searchInFlight.abort();
+  searchInFlight = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var ajaxOpts = { dataType: 'json' };
+  if (searchInFlight) ajaxOpts.signal = searchInFlight.signal;
+
+  $.ajax(Object.assign({ url: '/api/triticeae/papers', data: params, method: 'GET' }, ajaxOpts))
     .done(function(resp){
-      if (!resp.success) { setStatus('error', 'API error: ' + (resp.error||'unknown')); return; }
-      var papers = (resp.data && resp.data.papers) || [];
-      // Apply client-side text filter
-      papers = clientFilter(papers, q);
-      // Apply year filter (server is year-only, so fine-tune by month/day when needed)
-      if (yStart !== yearMin || yEnd !== yearMax) {
-        papers = papers.filter(function(p){
-          var y = extractYear(p);
-          return y != null && y >= yStart && y <= yEnd;
-        });
-      }
-      // Apply journal filter
-      if (currentJournals) {
-        var set = {}; currentJournals.forEach(function(j){ set[j.toLowerCase()] = true; });
-        papers = papers.filter(function(p){ return set[(p.journal||'').toLowerCase()]; });
-      }
-      // Apply tag filter (if user clicked a tag chip)
-      if (currentTag) {
-        var tlow = currentTag.toLowerCase();
-        papers = papers.filter(function(p){
-          var tags = parseTagList(p.new_tags).concat((p.trait_label||'').split(/[,;]\s*/)).concat((p.ai_tags||'').split(/[,;]\s*/));
-          return tags.some(function(x){ return (x||'').trim().toLowerCase() === tlow; });
-        });
-      }
-      allResults = papers;
-      currentPage = 1;
+      if (!resp || !resp.success) { setStatus('error', 'API error: ' + ((resp && resp.error) || 'unknown')); return; }
+      var data = resp.data || {};
+      totalPapers  = data.total || 0;
+      currentResults = data.papers || [];
       renderPage();
-      setStatus('ready', 'Found ' + papers.length.toLocaleString() + ' papers');
+      var label = 'Found ' + totalPapers.toLocaleString() + (totalPapers === 1 ? ' paper' : ' papers');
+      if (recent > 0) label += ' · curated in last ' + recent + ' days';
+      setStatus('ready', label);
     })
-    .fail(function(xhr){
+    .fail(function(xhr, status){
+      if (status === 'abort') return;  // a newer request superseded us
       setStatus('error', 'Search failed: HTTP ' + xhr.status);
-      document.getElementById('list-content').innerHTML = '<div class="alert alert-danger">Search failed.</div>';
+      document.getElementById('list-content').innerHTML =
+        '<div class="alert alert-danger">Search failed.</div>';
     });
 }
 
-function paramsSet(params, key, val) { params[key] = val; }
-
 function renderPage() {
-  var total = allResults.length;
-  var pages = Math.max(1, Math.ceil(total / pageSize));
+  var pages = Math.max(1, Math.ceil(totalPapers / pageSize));
   if (currentPage > pages) currentPage = pages;
-  var start = (currentPage - 1) * pageSize;
-  var pageItems = allResults.slice(start, start + pageSize);
+  var from = (currentPage - 1) * pageSize + 1;
+  var to   = Math.min(currentPage * pageSize, totalPapers);
 
   document.getElementById('res-info').textContent =
-    'Found ' + total.toLocaleString() + (total === 1 ? ' paper' : ' papers') +
-    (currentJournals ? ' · ' + currentJournals.length + ' journals' : '') +
-    (currentTag ? ' · tag "' + currentTag + '"' : '');
+    totalPapers === 0
+      ? 'No papers matched. Try widening the filters.'
+      : 'Showing ' + from.toLocaleString() + '–' + to.toLocaleString() +
+        ' of ' + totalPapers.toLocaleString() + (totalPapers === 1 ? ' paper' : ' papers') +
+        (currentJournals ? ' · ' + currentJournals.length + ' journals' : '') +
+        (currentTag ? ' · tag "' + currentTag + '"' : '');
   document.getElementById('page-num').textContent = 'Page ' + currentPage + ' / ' + pages;
   document.getElementById('prev-btn').disabled = currentPage <= 1;
   document.getElementById('next-btn').disabled = currentPage >= pages;
-  document.getElementById('export-btn').disabled = total === 0;
+  document.getElementById('export-btn').disabled = totalPapers === 0;
 
-  if (pageItems.length === 0) {
-    document.getElementById('list-content').innerHTML =
-      '<div class="text-muted text-center" style="padding:60px;">No papers matched. Try widening the filters.</div>';
+  if (currentResults.length === 0) {
+    document.getElementById('list-content').innerHTML = '';
     return;
   }
   var html = '';
-  for (var i = 0; i < pageItems.length; i++) html += renderPaper(pageItems[i]);
+  for (var i = 0; i < currentResults.length; i++) html += renderPaper(currentResults[i]);
   document.getElementById('list-content').innerHTML = html;
 }
 
@@ -678,18 +668,50 @@ function renderPaper(p) {
 
 /* ============ CSV export ============ */
 function exportCSV() {
-  if (!allResults.length) return;
+  if (totalPapers === 0) return;
+  // Re-fetch ALL rows matching the current filters (without paging), max 200 per
+  // request per backend cap; walk offset 0..total in 200-step chunks.
+  var params = buildQuery();
+  delete params.limit;
+  delete params.offset;
+  params.limit = 200;
+  params.offset = 0;
+  setStatus('loading', 'Exporting ' + totalPapers.toLocaleString() + ' rows…');
+
+  var collected = [];
+  function fetchChunk() {
+    $.getJSON('/api/triticeae/papers', params)
+      .done(function(resp){
+        if (!resp.success) { setStatus('error', 'Export failed: ' + (resp.error||'unknown')); return; }
+        var rows = (resp.data && resp.data.papers) || [];
+        collected = collected.concat(rows);
+        if (rows.length === 200 && collected.length < totalPapers) {
+          params.offset += 200;
+          fetchChunk();
+          return;
+        }
+        writeTSV(collected);
+        setStatus('ready', 'Exported ' + collected.length.toLocaleString() + ' rows');
+      })
+      .fail(function(xhr){
+        setStatus('error', 'Export failed: HTTP ' + xhr.status);
+      });
+  }
+  fetchChunk();
+}
+
+function writeTSV(rows) {
   var cols = ['pmid','paper_title','journal','pub_date','authors','abstract','gene_name','trait_label','is_functional_gene','confidence','review_status','ai_tags','link'];
   var header = cols.join('\t');
-  var rows = allResults.map(function(p){
+  var body = rows.map(function(p){
     return cols.map(function(c){
       var v = p[c];
       if (v == null) v = '';
       if (Array.isArray(v)) v = v.join(';');
       return String(v).replace(/\t/g, ' ').replace(/\r?\n/g, ' ');
     }).join('\t');
-  });
-  var tsv = header + '\n' + rows.join('\n');
+  }).join('\n');
+  var tsv = header + '\n' + body;
   var blob = new Blob([tsv], { type: 'text/tab-separated-values;charset=utf-8' });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
@@ -707,9 +729,11 @@ function resetAll() {
   document.getElementById('searchField').value = 'all';
   document.getElementById('yearStart').value = yearMin;
   document.getElementById('yearEnd').value   = yearMax;
+  document.getElementById('f-recent-days').value = '7';
   updateYearSlider();
   document.querySelectorAll('#journal-filter-list input[type=checkbox]').forEach(function(cb){ cb.checked = true; });
   currentTag = null;
+  currentPage = 1;
   runSearch();
 }
 
@@ -719,19 +743,26 @@ $(function(){
 
   $('#yearStart, #yearEnd').on('input', function(){
     updateYearSlider();
+    currentPage = 1;
     runSearch();
   });
   $('#clear-year').on('click', function(){
-    $('#yearStart').val(yearMin); $('#yearEnd').val(yearMax); updateYearSlider(); runSearch();
+    $('#yearStart').val(yearMin); $('#yearEnd').val(yearMax); updateYearSlider(); currentPage = 1; runSearch();
   });
-  $('#search-btn').on('click', runSearch);
+  $('#search-btn').on('click', function(){ currentPage = 1; runSearch(); });
   $('#reset-btn').on('click', resetAll);
   $('#export-btn').on('click', exportCSV);
-  $('#prev-btn').on('click', function(){ if (currentPage > 1) { currentPage--; renderPage(); window.scrollTo(0,0); } });
-  $('#next-btn').on('click', function(){ currentPage++; renderPage(); window.scrollTo(0,0); });
-  $('#journal-all').on('click',  function(){ $('#journal-filter-list input').prop('checked', true);  runSearch(); });
-  $('#journal-none').on('click', function(){ $('#journal-filter-list input').prop('checked', false); runSearch(); });
-  $('#journal-filter-list').on('change', 'input', runSearch);
+  $('#prev-btn').on('click', function(){
+    if (currentPage > 1) { currentPage--; runSearch(); window.scrollTo(0, 0); }
+  });
+  $('#next-btn').on('click', function(){
+    currentPage++;
+    runSearch();
+    window.scrollTo(0, 0);
+  });
+  $('#journal-all').on('click',  function(){ $('#journal-filter-list input').prop('checked', true);  currentPage = 1; runSearch(); });
+  $('#journal-none').on('click', function(){ $('#journal-filter-list input').prop('checked', false); currentPage = 1; runSearch(); });
+  $('#journal-filter-list').on('change', 'input', function(){ currentPage = 1; runSearch(); });
 
   // Delegated click handlers inside main area
   $('#list-content').on('click', '.toggle-abs', function(){
@@ -743,6 +774,7 @@ $(function(){
   $('#list-content').on('click', '.badge-tag', function(){
     var t = $(this).data('tag');
     currentTag = (currentTag === t) ? null : t;
+    currentPage = 1;
     runSearch();
   });
 
@@ -750,8 +782,12 @@ $(function(){
   $('#trait-tag-cloud, #tag-cloud').on('click', '.tag-item', function(){
     var t = $(this).data('tag');
     currentTag = (currentTag === t) ? null : t;
+    currentPage = 1;
     runSearch();
   });
+
+  // Recent dropdown changes
+  $('#f-recent-days').on('change', function(){ currentPage = 1; runSearch(); });
 
   // Search input Enter
   $('#searchInp').on('keydown', function(e){
