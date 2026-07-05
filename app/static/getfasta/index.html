@@ -73,7 +73,7 @@
   #header-tabs ul li:hover ul { display:block !important; }
   #header-tabs ul li ul a { border-radius:0; }
   #home_content { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
-  .result-area { background: #fff; border-radius: 6px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .result-area { background: #fff; border-radius: 6px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-height: 70vh; overflow-y: auto; }
   .fasta-box { font-family: 'Courier New', monospace; font-size: 12px; background: #f8f9fa; padding: 12px; border: 1px solid #dee2e6; border-radius: 4px; max-height: 500px; overflow: auto; white-space: pre-wrap; word-break: break-all; }
   .loading { display: none; text-align: center; padding: 60px; }
   .loading .spinner-border { width: 3rem; height: 3rem; }
@@ -193,6 +193,11 @@ var _hmt = _hmt || [];
         <textarea id="query-input" class="form-control" rows="5" placeholder="Gene ID: TraesCS5A02G391700&#10;Interval: Chr1A_Chinese_Spring1.0:200-500&#10;Batch: multiple IDs separated by space, comma or newline"></textarea>
         <small class="form-text text-muted" id="query-hint">Enter gene ID(s) or a chromosomal interval (chr:start-end). Auto-detected.</small>
       </div>
+
+      <div id="genomes-box" class="info-box" style="margin-top:12px; display:none;">
+        <strong>Supported genomes</strong>
+        <div id="genomes-groups"></div>
+      </div>
     </div>
     <div class="col-md-7">
       <div class="form-group">
@@ -213,23 +218,18 @@ var _hmt = _hmt || [];
         </ul>
       </div>
 
-      <div id="genomes-box" class="info-box" style="margin-top:12px; display:none;">
-        <strong>Supported genomes</strong>
-        <div id="genomes-groups"></div>
+      <div id="error-msg" class="alert alert-danger" style="margin-top:12px;"></div>
+
+      <div class="loading" id="loading-indicator">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Fetching sequence...</p>
+      </div>
+
+      <div id="result-area" style="display:none; margin-top:16px;">
+        <div id="summary-bar" class="summary-bar" style="display:none;"></div>
+        <div class="result-area" id="result-container"></div>
       </div>
     </div>
-  </div>
-
-  <div id="error-msg" class="alert alert-danger"></div>
-
-  <div class="loading" id="loading-indicator">
-    <div class="spinner-border text-primary" role="status"></div>
-    <p class="mt-2 text-muted">Fetching sequence...</p>
-  </div>
-
-  <div id="result-area" style="display:none;">
-    <div id="summary-bar" class="summary-bar" style="display:none;"></div>
-    <div class="result-area" id="result-container"></div>
   </div>
 </div>
 
@@ -587,7 +587,6 @@ function renderGene(resp, gene, geneDb, protDb) {
   }
   $('#result-container').html(html);
   $('#result-area').show();
-  $('html, body').animate({ scrollTop: $('#result-area').offset().top - 20 }, 300);
 }
 
 function renderBatch(resp, db) {
@@ -614,7 +613,6 @@ function renderBatch(resp, db) {
   lastResults = found.map(function(r) { return { name: r.sequence_id, fasta: r.fasta }; });
   $('#result-container').html(html);
   $('#result-area').show();
-  $('html, body').animate({ scrollTop: $('#result-area').offset().top - 20 }, 300);
 }
 
 function renderInterval(resp, region, db) {
@@ -637,7 +635,6 @@ function renderInterval(resp, region, db) {
   lastResults = [{ name: region, fasta: fasta }];
   $('#result-container').html(html);
   $('#result-area').show();
-  $('html, body').animate({ scrollTop: $('#result-area').offset().top - 20 }, 300);
 }
 
 function copyFasta() {
