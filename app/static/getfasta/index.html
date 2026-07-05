@@ -169,17 +169,9 @@ var _hmt = _hmt || [];
   <div class="row">
     <div class="col-md-5">
       <div class="form-group">
-        <label><strong>Query Type</strong></label>
-        <select id="mode-select" class="form-control">
-          <option value="gene">By Gene ID (single gene, CDS + protein)</option>
-          <option value="batch">By Gene IDs (multiple, batch mode)</option>
-          <option value="interval">By Chromosomal Interval (e.g. chr1A:1-141522)</option>
-        </select>
-      </div>
-      <div class="form-group">
         <label><strong>Query</strong></label>
-        <textarea id="query-input" class="form-control" rows="5" placeholder="e.g. TraesCS5A02G391700"></textarea>
-        <small class="form-text text-muted" id="query-hint">Single gene ID, e.g. TraesCS5A02G391700</small>
+        <textarea id="query-input" class="form-control" rows="5" placeholder="Gene ID: TraesCS5A02G391700&#10;Interval: chr1A:1-141522&#10;Batch: multiple IDs separated by space, comma or newline"></textarea>
+        <small class="form-text text-muted" id="query-hint">Enter gene ID(s) or a chromosomal interval (chr:start-end). Auto-detected.</small>
       </div>
     </div>
     <div class="col-md-7">
@@ -188,13 +180,13 @@ var _hmt = _hmt || [];
         <select id="db-select" class="form-control"></select>
         <small class="form-text text-muted" id="db-hint">Defaults to all_gene (CDS). Use all_protein for protein, or a genome-specific database for interval queries.</small>
       </div>
-      <div class="form-group" id="protein-db-group" style="display:none;">
-        <label><strong>Protein Database</strong> <small class="text-muted">(for fetching protein sequence)</small></label>
+      <div class="form-group" id="protein-db-group">
+        <label><strong>Protein Database</strong> <small class="text-muted">(for gene queries)</small></label>
         <select id="protein-db-select" class="form-control"></select>
         <small class="form-text text-muted">Defaults to all_protein. Must use a protein BLAST database, not a gene/genome one.</small>
       </div>
-      <div class="form-group" id="type-group" style="display:none;">
-        <label><strong>Sequence Type</strong> (single-gene mode only)</label>
+      <div class="form-group" id="type-group">
+        <label><strong>Sequence Type</strong> <small class="text-muted">(gene queries)</small></label>
         <div>
           <label class="radio-inline" style="margin-right:20px;"><input type="radio" name="seqType" value="both" checked> CDS + Protein</label>
           <label class="radio-inline" style="margin-right:20px;"><input type="radio" name="seqType" value="cds"> CDS only</label>
@@ -207,10 +199,10 @@ var _hmt = _hmt || [];
       <div class="info-box" style="margin-top:20px;">
         <strong>Examples:</strong>
         <ul style="margin-bottom:0; padding-left:20px;">
-          <li><a href="javascript:void(0)" onclick="useExample('gene', 'TraesCS5A02G391700', 'all_gene')">TraesCS5A02G391700</a> — VRN-A1, single gene (CDS+protein)</li>
-          <li><a href="javascript:void(0)" onclick="useExample('batch', 'TraesCS5A02G391700\nTraesCS1A02G001000\nTraesCS2B02G123400', 'all_gene')">3 wheat genes, batch mode</a></li>
-          <li><a href="javascript:void(0)" onclick="useExample('interval', 'chr1A:1-141522', 'all_genomes')">chr1A:1-141522</a> — Chinese Spring v1.0 interval</li>
-          <li><a href="javascript:void(0)" onclick="useExample('interval', 'Chr1A_Abo:200-500', 'all_genomes')">Chr1A_Abo:200-500</a> — Abbondanza interval</li>
+          <li><a href="javascript:void(0)" onclick="useExample('TraesCS5A02G391700', 'all_gene')">TraesCS5A02G391700</a> — VRN-A1, single gene (CDS+protein)</li>
+          <li><a href="javascript:void(0)" onclick="useExample('TraesCS5A02G391700\nTraesCS1A02G001000\nTraesCS2B02G123400', 'all_gene')">3 wheat genes, batch mode</a></li>
+          <li><a href="javascript:void(0)" onclick="useExample('chr1A:1-141522', 'all_genomes')">chr1A:1-141522</a> — Chinese Spring v1.0 interval</li>
+          <li><a href="javascript:void(0)" onclick="useExample('Chr1A_Abo:200-500', 'all_genomes')">Chr1A_Abo:200-500</a> — Abbondanza interval</li>
         </ul>
       </div>
     </div>
@@ -260,38 +252,44 @@ var lastResults = []; // for download
 
 $(function() {
   loadDatabases();
-  $('#mode-select').change(updateHints);
-  updateHints();
+  // Auto-detect query type on input change
+  $('#query-input').on('input', function() {
+    autoDetectMode();
+  });
 });
 
-function updateHints() {
-  var mode = $('#mode-select').val();
-  var hints = {
-    gene: 'Single gene ID, e.g. TraesCS5A02G391700',
-    batch: 'Multiple gene IDs, separated by space, comma or newline',
-    interval: 'Genomic interval, e.g. chr1A:1-141522 or Chr1A_Abo:200-500'
-  };
-  $('#query-hint').text(hints[mode] || '');
-  // Show sequence-type radios and protein-db selector only in single-gene mode
-  var isGene = mode === 'gene';
-  $('#type-group').toggle(isGene);
-  $('#protein-db-group').toggle(isGene);
-  // Adjust DB-hint
-  var dbHints = {
-    gene: 'CDS / gene database. Defaults to all_gene.',
-    batch: 'Select a database that contains your gene IDs (e.g. all_gene, all_protein, or genome-specific).',
-    interval: 'Use a genome database. all_genomes aggregates all available genomes; otherwise select a specific one.'
-  };
-  $('#db-hint').text(dbHints[mode] || '');
-  // Auto-switch default DB based on mode
-  if (mode === 'interval') {
+// ----- mode detection -----
+
+function autoDetectMode() {
+  var input = $('#query-input').val().trim();
+  if (!input) {
+    $('#protein-db-group, #type-group').show();
+    $('#db-hint').text('CDS / gene database. Defaults to all_gene.');
+    return;
+  }
+  // Check if input looks like a region: contains ":" with start-end
+  var regionPattern = /^[A-Za-z0-9_.-]+:\d+(?:-|\.\.)\d+$/;
+  var lines = input.split(/[\n,;]+/).filter(function(s) { return s.trim(); });
+  var isRegion = lines.length === 1 && regionPattern.test(lines[0]);
+  var isBatch = lines.length > 1;
+
+  if (isRegion) {
+    // Interval mode
+    $('#protein-db-group, #type-group').hide();
+    $('#db-hint').text('Use a genome database. all_genomes aggregates all available genomes; otherwise select a specific one.');
     var allGenomes = databaseOptions.find(function(o) { return o.value === 'all_genomes'; });
     if (allGenomes) $('#db-select').val('all_genomes');
-  } else if (mode === 'gene') {
+  } else if (isBatch) {
+    // Batch mode
+    $('#protein-db-group, #type-group').hide();
+    $('#db-hint').text('Select a database that contains your gene IDs (e.g. all_gene, all_protein, or genome-specific).');
     if (databaseOptions.find(function(o) { return o.value === 'all_gene'; })) {
       $('#db-select').val('all_gene');
     }
-  } else if (mode === 'batch') {
+  } else {
+    // Single gene mode
+    $('#protein-db-group, #type-group').show();
+    $('#db-hint').text('CDS / gene database. Defaults to all_gene.');
     if (databaseOptions.find(function(o) { return o.value === 'all_gene'; })) {
       $('#db-select').val('all_gene');
     }
@@ -368,13 +366,12 @@ function loadProteinDatabases() {
     });
 }
 
-function useExample(mode, value, db) {
-  $('#mode-select').val(mode);
-  updateHints();
+function useExample(value, db) {
   $('#query-input').val(value);
   if (db && databaseOptions.find(function(o) { return o.value === db; })) {
     $('#db-select').val(db);
   }
+  autoDetectMode();
 }
 
 function clearAll() {
@@ -392,12 +389,17 @@ function showError(msg) {
 }
 
 function querySequence() {
-  var mode = $('#mode-select').val();
   var input = $('#query-input').val().trim();
   var db = $('#db-select').val();
 
   if (!input) { showError('Please enter a query.'); return; }
   if (!db) { showError('Please select a database.'); return; }
+
+  // Auto-detect query type
+  var regionPattern = /^[A-Za-z0-9_.-]+:\d+(?:-|\.\.)\d+$/;
+  var lines = input.split(/[\n,;]+/).filter(function(s) { return s.trim(); });
+  var isRegion = lines.length === 1 && regionPattern.test(lines[0]);
+  var isBatch = lines.length > 1;
 
   $('#error-msg').hide();
   $('#result-area').hide();
@@ -406,23 +408,26 @@ function querySequence() {
   lastResults = [];
   $('#loading-indicator').show();
 
-  if (mode === 'gene') {
-    var gene = input.split(/\s+/)[0];
-    var seqType = $('input[name="seqType"]:checked').val();
-    var geneDb = $('#db-select').val();
-    var protDb = $('#protein-db-select').val() || geneDb;
-    $.getJSON('/api/sequence/by-gene', { gene_id: gene, gene_db: geneDb, protein_db: protDb })
+  if (isRegion) {
+    // ---------- Interval ----------
+    var region = lines[0];
+    if (!region.includes(':')) {
+      showError('Interval must be in format chr:start-end, e.g. chr1A:1-141522');
+      $('#loading-indicator').hide();
+      return;
+    }
+    $.getJSON('/api/sequence/by-interval', { region: region, database: db })
       .done(function(resp) {
         $('#loading-indicator').hide();
-        renderGene(resp, seqType, gene, geneDb, protDb);
+        renderInterval(resp, region, db);
       })
       .fail(function(jqXHR) {
         $('#loading-indicator').hide();
         showError(jqXHR.responseJSON ? (jqXHR.responseJSON.detail || jqXHR.responseJSON.error) : jqXHR.statusText);
       });
-  } else if (mode === 'batch') {
-    var ids = input.split(/[\s,;\n]+/).map(function(s) { return s.trim(); }).filter(function(s) { return s; });
-    if (ids.length === 0) { showError('No valid gene IDs found.'); $('#loading-indicator').hide(); return; }
+  } else if (isBatch) {
+    // ---------- Batch ----------
+    var ids = lines.map(function(s) { return s.trim(); });
     $.getJSON('/api/sequence/batch', { database: db, ID: ids.join(' ') })
       .done(function(resp) {
         $('#loading-indicator').hide();
@@ -432,16 +437,16 @@ function querySequence() {
         $('#loading-indicator').hide();
         showError(jqXHR.responseJSON ? (jqXHR.responseJSON.detail || jqXHR.responseJSON.error) : jqXHR.statusText);
       });
-  } else if (mode === 'interval') {
-    if (!input.includes(':')) {
-      showError('Interval must be in format chr:start-end, e.g. chr1A:1-141522');
-      $('#loading-indicator').hide();
-      return;
-    }
-    $.getJSON('/api/sequence/by-interval', { region: input, database: db })
+  } else {
+    // ---------- Single Gene ----------
+    var gene = lines[0];
+    var seqType = $('input[name="seqType"]:checked').val();
+    var geneDb = $('#db-select').val();
+    var protDb = $('#protein-db-select').val() || geneDb;
+    $.getJSON('/api/sequence/by-gene', { gene_id: gene, gene_db: geneDb, protein_db: protDb })
       .done(function(resp) {
         $('#loading-indicator').hide();
-        renderInterval(resp, input, db);
+        renderGene(resp, seqType, gene, geneDb, protDb);
       })
       .fail(function(jqXHR) {
         $('#loading-indicator').hide();
