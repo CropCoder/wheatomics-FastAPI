@@ -314,6 +314,13 @@ function shouldHideDb(name) {
   return lower.includes('chr');
 }
 
+// CDS libraries (names containing 'cds') are collected into their own group
+// instead of being scattered under Genome-specific.
+function isCdsDb(name) {
+  if (!name) return false;
+  return name.toLowerCase().includes('cds');
+}
+
 function loadDatabases() {
   $('#db-select').html('<option>Loading...</option>');
   $.getJSON('/api/blast/databases?program=blastn')
@@ -337,17 +344,35 @@ function loadDatabases() {
       // Note: /api/blast/databases returns a FLAT shape (categories /
       // nucleotide / protein at the top level), not the wrapped { data: {...} }
       // shape used by other endpoints.
+      var cdsDbs = [];
       if (resp.categories) {
-        sel.append('<optgroup label="────────── Genome-specific ──────────"></optgroup>');
+        var genomeDbs = [];
         resp.categories.forEach(function(cat) {
           cat.databases.forEach(function(db) {
             if (shouldHideDb(db)) return;
-            sel.append($('<option>').val(db).text(db + ' [' + cat.label + ']'));
-            databaseOptions.push({ value: db, label: db + ' [' + cat.label + ']' });
+            if (isCdsDb(db)) {
+              cdsDbs.push({ name: db, catLabel: cat.label });
+            } else {
+              genomeDbs.push({ name: db, catLabel: cat.label });
+            }
           });
         });
+        if (genomeDbs.length) {
+          sel.append('<optgroup label="────────── Genome-specific ──────────"></optgroup>');
+          genomeDbs.forEach(function(item) {
+            var label = item.name + ' [' + item.catLabel + ']';
+            sel.append($('<option>').val(item.name).text(label));
+            databaseOptions.push({ value: item.name, label: label });
+          });
+        }
+        if (cdsDbs.length) {
+          sel.append('<optgroup label="────────── Coding sequences ──────────"></optgroup>');
+          cdsDbs.forEach(function(item) {
+            sel.append($('<option>').val(item.name).text(item.name));
+            databaseOptions.push({ value: item.name, label: item.name });
+          });
+        }
       } else if (resp.nucleotide && resp.nucleotide.databases) {
-        sel.append('<optgroup label="────────── Nucleotide databases ──────────"></optgroup>');
         resp.nucleotide.databases.forEach(function(db) {
           if (shouldHideDb(db)) return;
           sel.append($('<option>').val(db).text(db));
