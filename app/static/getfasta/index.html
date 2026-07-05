@@ -82,6 +82,26 @@
   .info-box a { color: #007bff; }
   .summary-bar { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; font-size: 13px; }
 
+  /* ----- supported-genomes panel ----- */
+  #genomes-groups { margin-top: 8px; }
+  #genomes-groups .gg-group { margin-top: 8px; }
+  #genomes-groups .gg-group-label { font-weight: 600; font-size: 12px; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  #genomes-groups .gg-group-label .gg-count { color: #94a3b8; font-weight: 400; margin-left: 4px; }
+  #genomes-groups .gg-list { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+  #genomes-groups .gg-chip {
+    display: inline-flex; align-items: baseline; gap: 4px;
+    padding: 3px 8px; border-radius: 12px;
+    background: #e0f2fe; color: #075985; border: 1px solid #bae6fd;
+    font-size: 12px; line-height: 1.3; cursor: pointer;
+    transition: background 0.12s;
+  }
+  #genomes-groups .gg-chip:hover { background: #bae6fd; }
+  #genomes-groups .gg-chip .gg-karyotype { color: #0369a1; font-weight: 600; }
+  #genomes-groups .gg-chip .gg-hint { display: none; }
+  #genomes-groups .gg-chip:hover .gg-hint { display: inline; color: #0c4a6e; font-size: 11px; }
+  #genomes-groups .gg-toggle { margin-top: 6px; font-size: 12px; color: #007bff; cursor: pointer; background: none; border: none; padding: 0; }
+  #genomes-groups .gg-toggle:hover { text-decoration: underline; }
+
   /* ----- visit stats footer ----- */
   .visit-stats { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
   .visit-stats .vs-pill {
@@ -192,6 +212,12 @@ var _hmt = _hmt || [];
           <li><a href="javascript:void(0)" onclick="useExample('Chr1A_Abo:200-500', 'all_genomes')">Chr1A_Abo:200-500</a> — Abbondanza interval</li>
         </ul>
       </div>
+
+      <div id="genomes-box" class="info-box" style="margin-top:12px; display:none;">
+        <strong>Supported genomes</strong>
+        <small class="text-muted d-block" id="genomes-loading">Loading…</small>
+        <div id="genomes-groups"></div>
+      </div>
     </div>
   </div>
 
@@ -239,6 +265,7 @@ var lastResults = []; // for download
 
 $(function() {
   loadDatabases();
+  loadGenomes();
   // Auto-detect query type on input change
   $('#query-input').on('input', function() {
     autoDetectMode();
@@ -325,6 +352,92 @@ function useExample(value, db) {
     $('#db-select').val(db);
   }
   autoDetectMode();
+}
+
+// ----- supported genomes (loaded from /api/genes/functions/registry) -----
+// Each chip click fills the query box with the genome's example chromosome
+// and example gene ID, so users can immediately query a known-good entry.
+var GENOMES_BY_KARYOTYPE = null;
+
+function groupByKaryotype(records) {
+  var groups = {};
+  records.forEach(function(r) {
+    var k = r.polyploidy || '?';
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(r);
+  });
+  // Sort groups: known polyploidy first by descending genome count,
+  // unknown last.
+  return Object.keys(groups)
+    .sort(function(a, b) { return groups[b].length - groups[a].length; })
+    .map(function(k) { return { karyotype: k, items: groups[k] }; });
+}
+
+function renderGenomes(records) {
+  var box = $('#genomes-box');
+  var groups = groupByKaryotype(records);
+  if (!groups.length) { box.hide(); return; }
+  box.show();
+  $('#genomes-loading').hide();
+  var container = $('#genomes-groups').empty();
+  var PER_GROUP_DEFAULT = 5;
+  groups.forEach(function(g) {
+    var groupEl = $('<div class="gg-group"></div>');
+    groupEl.append(
+      '<div class="gg-group-label">' + escapeHtml(g.karyotype) +
+      ' <span class="gg-count">(' + g.items.length + ')</span></div>'
+    );
+    var list = $('<div class="gg-list"></div>');
+    g.items.forEach(function(r, idx) {
+      var chip = $('<span class="gg-chip"></span>');
+      chip.append('<span class="gg-name">' + escapeHtml(r.display_name || r.table_name) + '</span>');
+      if (idx >= PER_GROUP_DEFAULT) chip.hide();
+      // Click → fill query with example chr + example gene id (one per line).
+      chip.attr('title', 'Click to load example: ' + (r.example_chr || '?') + ' / ' + (r.example_id || '?'));
+      chip.on('click', function() {
+        var val = '';
+        if (r.example_chr) val += r.example_chr + ':1-1000';
+        if (r.example_id) val += (val ? '\n' : '') + r.example_id;
+        if (val) useExample(val, 'all_genomes');
+      });
+      list.append(chip);
+    });
+    groupEl.append(list);
+    if (g.items.length > PER_GROUP_DEFAULT) {
+      var more = g.items.length - PER_GROUP_DEFAULT;
+      var btn = $('<button type="button" class="gg-toggle">Show all ' + g.items.length + ' ▾</button>');
+      var expanded = false;
+      btn.on('click', function() {
+        expanded = !expanded;
+        list.children('.gg-chip').show();
+        if (expanded) {
+          btn.text('Show fewer ▴');
+        } else {
+          list.children('.gg-chip').slice(PER_GROUP_DEFAULT).hide();
+          btn.text('Show all ' + g.items.length + ' ▾');
+        }
+      });
+      groupEl.append(btn);
+    }
+    container.append(groupEl);
+  });
+}
+
+function loadGenomes() {
+  var box = $('#genomes-box');
+  $.getJSON('/api/genes/functions/registry')
+    .done(function(resp) {
+      if (!resp || !resp.success || !resp.data || !resp.data.records) {
+        box.hide();
+        return;
+      }
+      GENOMES_BY_KARYOTYPE = resp.data.records;
+      renderGenomes(resp.data.records);
+    })
+    .fail(function() {
+      // Silently hide — Examples box above is enough for the user to get started.
+      box.hide();
+    });
 }
 
 function clearAll() {
