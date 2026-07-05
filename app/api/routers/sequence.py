@@ -12,7 +12,7 @@ from fastapi import APIRouter, Query
 from app.core.config import settings
 from app.core.exceptions import ResourceNotFound, ValidationFailure
 from app.core.response import ok
-from app.core.security import PREBLAST_TABLES, ensure_allowed_table, ensure_gene_like, ensure_interval_like
+from app.core.security import PREBLAST_TABLES, REGION_PATTERN, ensure_allowed_table, ensure_gene_like, ensure_interval_like
 from app.db.mysql import mysql_cursor
 from app.schemas.sequence import SequenceBundle, SequenceRecord
 from app.services.command_runner import run_command
@@ -92,6 +92,13 @@ def sequence_by_gene(
     """
 
     gene_id = ensure_gene_like(gene_id)
+    # Detect interval-shaped input (chr:start-end) in gene_id and reject with
+    # a friendly 400 pointing to /api/sequence/by-interval.
+    if REGION_PATTERN.match(gene_id):
+        raise ValidationFailure(
+            f"'{gene_id[:60]}...' looks like a chromosomal interval, not a gene ID. "
+            f"Use /api/sequence/by-interval?region=<chr:start-end> instead."
+        )
     gene_entry = gene_id if gene_id.endswith(".1") else f"{gene_id}.1"
 
     bundle = SequenceBundle(gene_id=gene_id)
