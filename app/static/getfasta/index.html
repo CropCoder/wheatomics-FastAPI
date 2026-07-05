@@ -193,6 +193,16 @@ var _hmt = _hmt || [];
         <textarea id="query-input" class="form-control" rows="5" placeholder="Gene ID: TraesCS5A02G391700&#10;Interval: Chr1A_Chinese_Spring1.0:200-500&#10;Batch: multiple IDs separated by space, comma or newline"></textarea>
         <small class="form-text text-muted" id="query-hint">Enter gene ID(s) or a chromosomal interval (chr:start-end). Auto-detected.</small>
       </div>
+
+      <div class="info-box" style="margin-top:12px;">
+        <strong>Examples:</strong>
+        <ul style="margin-bottom:0; padding-left:20px;">
+          <li><a href="javascript:void(0)" onclick="useExample('TraesCS5A02G391700', 'all_gene')">TraesCS5A02G391700</a> — VRN-A1, single gene</li>
+          <li><a href="javascript:void(0)" onclick="useExample('TraesCS5A02G391700\nTraesCS1A02G001000\nTraesCS2B02G123400', 'all_gene')">3 wheat genes, batch mode</li>
+          <li><a href="javascript:void(0)" onclick="useExample('Chr1A_Chinese_Spring1.0:200-500', 'all_genomes')">Chr1A_Chinese_Spring1.0:200-500</a> — Chinese Spring v1.0 interval</li>
+          <li><a href="javascript:void(0)" onclick="useExample('Chr1A_Abo:200-500', 'all_genomes')">Chr1A_Abo:200-500</a> — Abbondanza interval</li>
+        </ul>
+      </div>
     </div>
     <div class="col-md-7">
       <div class="form-group">
@@ -202,16 +212,6 @@ var _hmt = _hmt || [];
       </div>
       <button id="query-btn" class="btn btn-primary" onclick="querySequence()">Get FASTA</button>
       <button class="btn btn-outline-secondary ml-2" onclick="clearAll()">Clear</button>
-
-      <div class="info-box" style="margin-top:20px;">
-        <strong>Examples:</strong>
-        <ul style="margin-bottom:0; padding-left:20px;">
-          <li><a href="javascript:void(0)" onclick="useExample('TraesCS5A02G391700', 'all_gene')">TraesCS5A02G391700</a> — VRN-A1, single gene</li>
-          <li><a href="javascript:void(0)" onclick="useExample('TraesCS5A02G391700\nTraesCS1A02G001000\nTraesCS2B02G123400', 'all_gene')">3 wheat genes, batch mode</a></li>
-          <li><a href="javascript:void(0)" onclick="useExample('Chr1A_Chinese_Spring1.0:200-500', 'all_genomes')">Chr1A_Chinese_Spring1.0:200-500</a> — Chinese Spring v1.0 interval</li>
-          <li><a href="javascript:void(0)" onclick="useExample('Chr1A_Abo:200-500', 'all_genomes')">Chr1A_Abo:200-500</a> — Abbondanza interval</li>
-        </ul>
-      </div>
 
       <div id="genomes-box" class="info-box" style="margin-top:12px; display:none;">
         <strong id="genomes-toggle" style="cursor:pointer; user-select:none;">
