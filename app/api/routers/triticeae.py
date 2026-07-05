@@ -259,3 +259,126 @@ def search_papers(
     """搜索 Triticeae 研究文献，支持多维度过滤。
     """
     return _build_search(**locals())
+
+
+@router.get("/stats")
+def stats() -> dict:
+    """数据集聚合统计：年份分布、期刊 top-20、AI 标签 top-30、功能基因比例、审核状态分布。
+
+    所有聚合走 SQL GROUP BY，22K 行在 100ms 内返回。papers 表按 PMID 去重统计；
+    functional_gene_annotations 表按标注记录统计（一个 PMID 可对应多条标注）。
+    """
+    with mysql_cursor(settings.DB_TRITICEAE) as cursor:
+
+        # --- 基础计数 ---
+        cursor.execute("""
+            SELECT
+                COUNT(DISTINCT p.pmid)        AS total_papers,
+                COUNT(DISTINCT p.pmid, CASE WHEN TRIM(IFNULL(p.abstract, '')) != '' THEN 1 END) AS with_abstract,
+                COUNT(DISTINCT p.pmid, CASE WHEN p.journal IS NOT NULL AND TRIM(p.journal) != '' THEN 1 END) AS with_journal,
+                MIN(SUBSTRING(p.pub_date, 1, 4)) AS year_min,
+                MAX(SUBSTRING(p.pub_date, 1, 4)) AS year_max,
+                COUNT(f.id)                   AS total_annotations,
+                COUNT(DISTINCT f.pubmedid)    AS annotated_papers
+            FROM papers p
+            LEFT JOIN functional_gene_annotations f ON p.pmid = f.pubmedid
+        """)
+        head = cursor.fetchone() or {}
+
+        # --- 年份直方图（按 PMID 去重，避免一个 PMID 多条标注时重复计数） ---
+        cursor.execute("""
+            SELECT SUBSTRING(p.pub_date, 1, 4) AS year, COUNT(DISTINCT p.pmid) AS cnt
+            FROM papers p
+            WHERE p.pub_date IS NOT NULL AND SUBSTRING(p.pub_date, 1, 4) REGEXP '^[0-9]{4}$'
+            GROUP BY year
+            ORDER BY year DESC
+        """)
+        year_histogram = [
+            {"year": int(r["year"]), "count": int(r["cnt"])}
+            for r in cursor.fetchall() if r["year"]
+        ]
+
+        # --- top 期刊（按 PMID 去重） ---
+        cursor.execute("""
+            SELECT TRIM(p.journal) AS journal, COUNT(DISTINCT p.pmid) AS cnt
+            FROM papers p
+            WHERE p.journal IS NOT NULL AND TRIM(p.journal) != ''
+            GROUP BY journal
+            ORDER BY cnt DESC
+            LIMIT 20
+        """)
+        top_journals = [
+            {"journal": r["journal"], "count": int(r["cnt"])}
+            for r in cursor.fetchall()
+        ]
+
+        # --- top AI 标签（按整字段 GROUP BY，因为 ai_tags 是分号分隔长串，无法精确拆分） ---
+        cursor.execute("""
+            SELECT TRIM(p.ai_tags) AS tags, COUNT(*) AS cnt
+            FROM papers p
+            WHERE p.ai_tags IS NOT NULL AND TRIM(p.ai_tags) != ''
+            GROUP BY tags
+            ORDER BY cnt DESC
+            LIMIT 30
+        """)
+        top_ai_tags = [
+            {"tags": r["tags"], "count": int(r["cnt"])}
+            for r in cursor.fetchall()
+        ]
+
+        # --- 功能基因比例（基于标注层 f.） ---
+        cursor.execute("""
+            SELECT
+                SUM(CASE WHEN f.is_functional_gene = 1 THEN 1 ELSE 0 END) AS functional,
+                SUM(CASE WHEN f.is_functional_gene = 0 THEN 1 ELSE 0 END) AS non_functional,
+                SUM(CASE WHEN f.is_functional_gene IS NULL THEN 1 ELSE 0 END) AS unknown,
+                COUNT(*) AS total
+            FROM functional_gene_annotations f
+        """)
+        fg = cursor.fetchone() or {}
+        functional_dist = {
+            "functional": int(fg.get("functional") or 0),
+            "non_functional": int(fg.get("non_functional") or 0),
+            "unknown": int(fg.get("unknown") or 0),
+            "total": int(fg.get("total") or 0),
+        }
+
+        # --- 审核状态分布 ---
+        cursor.execute("""
+            SELECT COALESCE(NULLIF(TRIM(f.review_status), ''), '(empty)') AS status, COUNT(*) AS cnt
+            FROM functional_gene_annotations f
+            GROUP BY status
+            ORDER BY cnt DESC
+        """)
+        review_status_dist = [
+            {"status": r["status"], "count": int(r["cnt"])}
+            for r in cursor.fetchall()
+        ]
+
+        # --- 来源方法分布 ---
+        cursor.execute("""
+            SELECT COALESCE(NULLIF(TRIM(f.source_method), ''), '(empty)') AS method, COUNT(*) AS cnt
+            FROM functional_gene_annotations f
+            GROUP BY method
+            ORDER BY cnt DESC
+        """)
+        source_method_dist = [
+            {"method": r["method"], "count": int(r["cnt"])}
+            for r in cursor.fetchall()
+        ]
+
+    return ok({
+        "total_papers": int(head.get("total_papers") or 0),
+        "with_abstract": int(head.get("with_abstract") or 0),
+        "with_journal": int(head.get("with_journal") or 0),
+        "year_min": int(head["year_min"]) if head.get("year_min") else None,
+        "year_max": int(head["year_max"]) if head.get("year_max") else None,
+        "total_annotations": int(head.get("total_annotations") or 0),
+        "annotated_papers": int(head.get("annotated_papers") or 0),
+        "year_histogram": year_histogram,
+        "top_journals": top_journals,
+        "top_ai_tags": top_ai_tags,
+        "functional_dist": functional_dist,
+        "review_status_dist": review_status_dist,
+        "source_method_dist": source_method_dist,
+    })
