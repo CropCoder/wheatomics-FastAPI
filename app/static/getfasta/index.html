@@ -191,7 +191,7 @@ var _hmt = _hmt || [];
       <div class="form-group">
         <label><strong>Query</strong></label>
         <textarea id="query-input" class="form-control" rows="5" placeholder="Gene ID: TraesCS5A02G391700&#10;Interval: Chr1A_Chinese_Spring1.0:200-500&#10;Batch: multiple IDs separated by space, comma or newline"></textarea>
-        <small class="form-text text-muted" id="query-hint">Enter gene ID(s) or a chromosomal interval (chr:start-end). Auto-detected.</small>
+        <small class="form-text text-muted" id="query-hint">Enter gene ID(s) or a chromosomal interval (chr_name:start-end). Auto-detected.</small>
       </div>
 
       <div class="info-box" style="margin-top:12px;">
@@ -426,15 +426,15 @@ function renderGenomes(records) {
   var PER_GROUP_DEFAULT = 5;
   groups.forEach(function(g) {
     var groupEl = $('<div class="gg-group"></div>');
-    groupEl.append(
-      '<div class="gg-group-label">' + escapeHtml(g.karyotype) +
-      ' <span class="gg-count">(' + g.items.length + ')</span></div>'
-    );
+    var label = $('<div class="gg-group-label" style="cursor:pointer; user-select:none;">' +
+      '<span class="gg-arrow">▸</span> ' + escapeHtml(g.karyotype) +
+      ' <span class="gg-count">(' + g.items.length + ')</span></div>');
+    groupEl.append(label);
+    var body = $('<div class="gg-body" style="display:none;"></div>');
     var list = $('<div class="gg-list"></div>');
-    g.items.forEach(function(r, idx) {
+    g.items.forEach(function(r) {
       var chip = $('<span class="gg-chip"></span>');
       chip.append('<span class="gg-name">' + escapeHtml(r.display_name || r.table_name) + '</span>');
-      if (idx >= PER_GROUP_DEFAULT) chip.hide();
       // Click → fill query with example chr + example gene id (one per line).
       chip.attr('title', 'Click to load example: ' + (r.example_chr || '?') + ' / ' + (r.example_id || '?'));
       chip.on('click', function() {
@@ -445,23 +445,18 @@ function renderGenomes(records) {
       });
       list.append(chip);
     });
-    groupEl.append(list);
-    if (g.items.length > PER_GROUP_DEFAULT) {
-      var more = g.items.length - PER_GROUP_DEFAULT;
-      var btn = $('<button type="button" class="gg-toggle">Show all ' + g.items.length + ' ▾</button>');
-      var expanded = false;
-      btn.on('click', function() {
-        expanded = !expanded;
-        list.children('.gg-chip').show();
-        if (expanded) {
-          btn.text('Show fewer ▴');
-        } else {
-          list.children('.gg-chip').slice(PER_GROUP_DEFAULT).hide();
-          btn.text('Show all ' + g.items.length + ' ▾');
-        }
-      });
-      groupEl.append(btn);
-    }
+    body.append(list);
+    groupEl.append(body);
+    label.on('click', function() {
+      var expanded = body.is(':visible');
+      if (expanded) {
+        body.hide();
+        label.find('.gg-arrow').text('▸');
+      } else {
+        body.show();
+        label.find('.gg-arrow').text('▾');
+      }
+    });
     container.append(groupEl);
   });
 
