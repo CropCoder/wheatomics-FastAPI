@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Triticeae Papers - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+
+<script>
+// ===== Visit tracking =====
+(function() {
+  var page = location.pathname || 'unknown';
+  // POST a pageview (best-effort, ignore failures)
+  try {
+    fetch('/api/track/visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page: page })
+    }).catch(function(){});
+  } catch (e) {}
+
+  function fmt(n) {
+    n = Number(n) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+    return String(n);
+  }
+
+  function renderVisitStats(data) {
+    var el = document.getElementById('visit-stats');
+    if (!el || !data) return;
+    var today = data.today != null ? fmt(data.today) : '—';
+    var total = data.total != null ? fmt(data.total) : '—';
+    var online = data.online != null ? data.online : '—';
+    el.innerHTML =
+      '<span class="vs-pill"><span class="vs-dot vs-dot-today"></span>today <b>' + today + '</b></span>' +
+      '<span class="vs-pill"><span class="vs-dot vs-dot-total"></span>total <b>' + total + '</b></span>' +
+      '<span class="vs-pill"><span class="vs-dot vs-dot-online"></span>online <b>' + online + '</b></span>';
+  }
+
+  // GET cumulative stats (best-effort)
+  fetch('/api/track/stats').then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(resp){
+      if (resp && resp.success && resp.data) renderVisitStats(resp.data);
+    })
+    .catch(function(){});
+})();
+</script>
+
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+<style>
+  body { background: #f8f9fa; margin:0; padding:0; }
+  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+  #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
+  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+  #header-tabs li { display:inline-block !important; width:190px !important; }
+  #header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+  #header-tabs a:hover { background:#98c1d9; color:#000000; }
+  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+  #header-tabs ul li ul { display:none !important; position:absolute; }
+  #header-tabs ul li:hover ul { display:block !important; }
+  #header-tabs ul li ul a { border-radius:0; }
+  #home_content { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+
+  /* ----- paper cards ----- */
+  .paper-card { background: #fff; border-radius: 6px; padding: 18px 22px; margin-top: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 4px solid #6c757d; }
+  .paper-card.is-functional { border-left-color: #28a745; }
+  .paper-card.is-negative   { border-left-color: #dc3545; }
+  .paper-card .pc-title { font-size: 17px; font-weight: 600; color: #003366; margin-bottom: 6px; line-height: 1.4; }
+  .paper-card .pc-title a { color: inherit; text-decoration: none; }
+  .paper-card .pc-title a:hover { text-decoration: underline; }
+  .paper-card .pc-meta { font-size: 12px; color: #6c757d; margin-bottom: 8px; }
+  .paper-card .pc-authors { font-size: 13px; color: #495057; margin-bottom: 8px; line-height: 1.5; }
+  .paper-card .pc-abstract { font-size: 13px; color: #495057; line-height: 1.55; margin-bottom: 8px; }
+  .paper-card .pc-abstract.collapsed { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .paper-card .pc-abstract .toggle { color: #007bff; cursor: pointer; font-size: 12px; }
+  .paper-card .pc-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .paper-card .pc-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #e9ecef; color: #495057; }
+  .paper-card .pc-tag.trait { background: #cfe2ff; color: #084298; }
+  .paper-card .pc-tag.gene  { background: #d1e7dd; color: #0f5132; font-weight: 600; }
+  .paper-card .pc-confidence { font-size: 11px; color: #6c757d; margin-top: 6px; }
+
+  /* badges */
+  .badge-functional { background: #28a745; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-negative   { background: #dc3545; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-review     { background: #6c757d; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; }
+
+  /* filters */
+  .filter-panel { background: #fff; border-radius: 6px; padding: 16px 20px; margin-top: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .filter-panel label { font-size: 12px; color: #495057; font-weight: 600; margin-bottom: 4px; }
+  .filter-panel .form-control { font-size: 13px; }
+
+  /* summary bar */
+  .summary-bar { background: #e7f1ff; border-left: 4px solid #0d6efd; padding: 10px 16px; border-radius: 4px; margin-top: 16px; font-size: 13px; }
+
+  /* loading + errors */
+  .loading { display: none; text-align: center; padding: 50px; }
+  .loading .spinner-border { width: 3rem; height: 3rem; }
+  #error-msg { display: none; margin-top: 10px; }
+
+  .info-box { background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 12px 16px; border-radius: 4px; margin-top: 12px; font-size: 14px; color: #495057; }
+
+  /* pagination */
+  .pagination-wrap { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+
+  /* ----- visit stats footer ----- */
+  .visit-stats { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .visit-stats .vs-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px; border-radius: 12px;
+    font-size: 11px; line-height: 1.4;
+    background: #f1f5f9; color: #334155;
+    border: 1px solid #e2e8f0;
+  }
+  .visit-stats .vs-pill b { color: #0f172a; font-weight: 600; }
+  .visit-stats .vs-dot {
+    display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; background: #94a3b8;
+  }
+  .visit-stats .vs-dot-today  { background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.18); }
+  .visit-stats .vs-dot-total  { background: #3b82f6; }
+  .visit-stats .vs-dot-online { background: #f59e0b; animation: vs-pulse 1.6s ease-in-out infinite; }
+  .visit-stats .vs-loading { color: #64748b; }
+  .visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
+  @keyframes vs-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+  }
+</style>
+</head>
+<body>
+
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
+</div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/index.html">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/snprimer">CAPS/KASP(Beta)</a></li>
+        <li><a href="/PfamSearch/">PfamSearch</a></li>
+        <li><a href="/idConvert/">IDConvert</a></li>
+        <li><a href="/HomologFinder/">HomologFinder</a></li>
+        <li><a href="/interval/">IntervalTool</a></li>
+        <li><a href="/expression/">GeneExpression</a></li>
+        <li><a href="/coexpression/index.html">Co-expression</a></li>
+        <li><a href="/wheatPPI/">WheatPPI</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/genes">KnownGene</a></li>
+        <li><a href="/symap/index.html">SyntenySearch</a></li>
+        <li><a href="/preblast/">preBLAST</a></li>
+        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+        <li><a href="DWGVa.html">DWGVa</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/scRNA">scRNA</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/eqtl">eQTL Atlas</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/literature_auto/literature.html">Literature</a></li>
+        <li><a href="/triticeae/">Triticeae Papers</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href="#"><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div id="home_content">
+  <br><h5 class="card-title">Triticeae Papers — Functional Gene Curation</h5><br>
+
+  <div class="filter-panel">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="form-group">
+          <label>Full-text keyword</label>
+          <input type="text" id="f-q" class="form-control" placeholder="e.g. powdery mildew, TaCPK, stripe rust">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="form-group">
+          <label>Gene name</label>
+          <input type="text" id="f-gene" class="form-control" placeholder="e.g. TaCPK-1">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="form-group">
+          <label>Trait label</label>
+          <input type="text" id="f-trait" class="form-control" placeholder="e.g. stripe_rust, heat_tolerance">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="form-group">
+          <label>PMID (exact)</label>
+          <input type="text" id="f-pmid" class="form-control" placeholder="42105133">
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-2">
+        <div class="form-group">
+          <label>Year start</label>
+          <input type="number" id="f-year-start" class="form-control" placeholder="2020" min="1900" max="2100">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="form-group">
+          <label>Year end</label>
+          <input type="number" id="f-year-end" class="form-control" placeholder="2026" min="1900" max="2100">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="form-group">
+          <label>Min confidence</label>
+          <input type="number" id="f-min-conf" class="form-control" placeholder="0.0 - 1.0" step="0.05" min="0" max="1">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="form-group">
+          <label>Functional gene</label>
+          <select id="f-functional" class="form-control">
+            <option value="">Any</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="form-group">
+          <label>Page size</label>
+          <select id="f-page-size" class="form-control">
+            <option>10</option>
+            <option selected>20</option>
+            <option>50</option>
+            <option>100</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="form-group">
+          <label>&nbsp;</label>
+          <button id="query-btn" class="btn btn-primary btn-block" onclick="runSearch(0)">Search</button>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">Clear filters</button>
+        <button class="btn btn-outline-success btn-sm ml-2" onclick="exportTSV()" id="export-btn" disabled>Export current page (TSV)</button>
+        <span class="ml-3 text-muted" style="font-size:12px;">API: <code>GET /api/triticeae/papers</code></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="error-msg" class="alert alert-danger"></div>
+
+  <div class="loading" id="loading-indicator">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted">Searching papers...</p>
+  </div>
+
+  <div id="results-card" class="result-table" style="display:none;">
+    <h6 class="card-title">Results</h6>
+    <div id="summary-bar" class="summary-bar" style="display:none;"></div>
+    <div id="papers-list"></div>
+    <div class="pagination-wrap">
+      <div>
+        <button id="prev-btn" class="btn btn-sm btn-outline-primary" onclick="runSearch(currentOffset - currentLimit)">&laquo; Prev</button>
+        <button id="next-btn" class="btn btn-sm btn-outline-primary ml-2" onclick="runSearch(currentOffset + currentLimit)">Next &raquo;</button>
+      </div>
+      <div class="text-muted" id="page-info" style="font-size:12px;"></div>
+    </div>
+  </div>
+
+  <div class="references-card" id="references-card">
+    <div class="card mt-4 mb-4">
+      <div class="card-body">
+        <h6>References &amp; data sources</h6>
+        <ol>
+          <li>International Wheat Genome Sequencing Consortium (IWGSC). <em>Shifting the limits in wheat research and breeding using a fully annotated reference genome</em>. Science 2018;361:eaar7191. <a href="https://doi.org/10.1126/science.aar7191" target="_blank">doi:10.1126/science.aar7191</a></li>
+          <li>Appels R, Eversole K, Feuillet C, Keller B, et al. (IWGSC investigators). <em>Shifting the limits in wheat research and breeding using a fully annotated reference genome</em>. Science 2018;361:eaar7191. <a href="https://doi.org/10.1126/science.aar7191" target="_blank">doi:10.1126/science.aar7191</a></li>
+          <li>Paper metadata and PubMed records: <a href="https://pubmed.ncbi.nlm.nih.gov/" target="_blank">NCBI PubMed</a></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="line" style="height:10px;background-color:white"></div>
+<div id="home_footer">
+  <center style="margin-top:5px">
+    <table>
+      <tr>
+        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><div class="line" style="height:50px;width:15px;"></div></td>
+        <td>
+          <div id="visit-stats" class="visit-stats">
+            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+  </center>
+</div>
+
+<script>
+var currentOffset = 0;
+var currentLimit = 20;
+var currentTotal = 0;
+var currentResults = [];
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, function(c) {
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  });
+}
+
+function showError(msg) {
+  $('#error-msg').text(msg).show();
+  $('#loading-indicator').hide();
+  $('#query-btn').prop('disabled', false);
+}
+
+function clearFilters() {
+  $('#f-q, #f-gene, #f-trait, #f-pmid, #f-year-start, #f-year-end, #f-min-conf').val('');
+  $('#f-functional').val('');
+  $('#f-page-size').val(20);
+}
+
+function parseTags(raw) {
+  if (!raw) return [];
+  var s = String(raw).trim();
+  if (s.startsWith('[')) {
+    try { return JSON.parse(s); } catch (e) { return []; }
+  }
+  return s.split(/[,;]\s*/).filter(Boolean);
+}
+
+function renderPaper(p) {
+  var title = escapeHtml(p.paper_title || p.fga_title || '(untitled)');
+  var pmid = escapeHtml(p.pmid || p.pubmedid || '');
+  var link = p.link || (pmid ? 'https://pubmed.ncbi.nlm.nih.gov/' + pmid + '/' : '#');
+  var journal = escapeHtml(p.journal || '');
+  var date = escapeHtml(p.pub_date || '');
+  var authors = escapeHtml(p.authors || '');
+  var abs = p.abstract || '';
+  var absShort = abs.length > 400;
+
+  var isFunctional = p.is_functional_gene === true;
+  var isNegative = p.review_status === 'negative';
+  var cardClass = 'paper-card';
+  if (isFunctional) cardClass += ' is-functional';
+  else if (isNegative) cardClass += ' is-negative';
+
+  var badgeHtml = '';
+  if (isFunctional) {
+    badgeHtml = '<span class="badge-functional mr-1">FUNCTIONAL GENE</span>';
+  } else if (isNegative) {
+    badgeHtml = '<span class="badge-negative mr-1">NEGATIVE</span>';
+  }
+  if (p.review_status && p.review_status !== 'negative') {
+    badgeHtml += '<span class="badge-review mr-1">' + escapeHtml(p.review_status) + '</span>';
+  }
+
+  var confidenceHtml = '';
+  if (typeof p.confidence === 'number') {
+    var pct = Math.round(p.confidence * 100);
+    confidenceHtml = '<div class="pc-confidence">AI confidence: <b>' + pct + '%</b></div>';
+  }
+
+  var tagsHtml = '';
+  var tags = parseTags(p.new_tags);
+  if (p.trait_label) tags.push(p.trait_label);
+  if (tags.length) {
+    tagsHtml = '<div class="pc-tags">' +
+      tags.map(function(t){ return '<span class="pc-tag">' + escapeHtml(t) + '</span>'; }).join('') +
+      '</div>';
+  }
+
+  var geneHtml = '';
+  if (p.gene_name && p.gene_name.length) {
+    geneHtml = '<div class="pc-tags">' +
+      p.gene_name.map(function(g){ return '<span class="pc-tag gene">' + escapeHtml(g) + '</span>'; }).join('') +
+      '</div>';
+  }
+
+  var absId = 'abs-' + pmid;
+  var absHtml = '<div id="' + absId + '" class="pc-abstract collapsed">' + escapeHtml(abs) + '</div>';
+  if (absShort) {
+    absHtml += '<span class="toggle" onclick="var e=document.getElementById(\'' + absId + '\'); e.classList.toggle(\'collapsed\'); this.textContent = this.textContent === \'Show more\' ? \'Show less\' : \'Show more\';">Show more</span>';
+  }
+
+  return '<div class="' + cardClass + '">' +
+    badgeHtml +
+    '<div class="pc-title"><a href="' + escapeHtml(link) + '" target="_blank">' + title + '</a></div>' +
+    '<div class="pc-meta">' + journal + (journal && date ? ' | ' : '') + date + ' <a href="' + escapeHtml(link) + '" target="_blank" class="float-right">PMID: ' + pmid + '</a></div>' +
+    '<div class="pc-authors">' + authors + '</div>' +
+    absHtml +
+    tagsHtml + geneHtml +
+    confidenceHtml +
+  '</div>';
+}
+
+function runSearch(offset) {
+  if (offset == null) offset = 0;
+  if (offset < 0) offset = 0;
+  currentLimit = parseInt($('#f-page-size').val()) || 20;
+  currentOffset = offset;
+
+  var params = {
+    limit: currentLimit,
+    offset: currentOffset
+  };
+  var q = $('#f-q').val().trim();          if (q) params.q = q;
+  var gene = $('#f-gene').val().trim();    if (gene) params.gene_name = gene;
+  var trait = $('#f-trait').val().trim();  if (trait) params.trait_label = trait;
+  var pmid = $('#f-pmid').val().trim();    if (pmid) params.pmid = pmid;
+  var ys = $('#f-year-start').val();       if (ys) params.pub_date_start = ys;
+  var ye = $('#f-year-end').val();         if (ye) params.pub_date_end = ye;
+  var mc = $('#f-min-conf').val();         if (mc !== '' && mc != null) params.min_confidence = parseFloat(mc);
+  var fn = $('#f-functional').val();
+  if (fn === 'true')  params.is_functional_gene = true;
+  if (fn === 'false') params.is_functional_gene = false;
+
+  $('#error-msg').hide();
+  $('#results-card').hide();
+  $('#summary-bar').hide();
+  $('#papers-list').empty();
+  currentResults = [];
+  $('#export-btn').prop('disabled', true);
+  $('#loading-indicator').show();
+  $('#query-btn').prop('disabled', true);
+
+  $.getJSON('/api/triticeae/papers', params)
+    .done(function(resp){
+      $('#loading-indicator').hide();
+      $('#query-btn').prop('disabled', false);
+      if (!resp.success) { showError('API error: ' + (resp.error || 'unknown')); return; }
+      var d = resp.data || {};
+      currentTotal = d.total || 0;
+      var papers = d.papers || [];
+      currentResults = papers;
+
+      if (papers.length === 0) {
+        $('#results-card').show();
+        $('#summary-bar').show().html('<b>No papers matched.</b> Try widening the filters.');
+        $('#page-info').text('');
+        $('#prev-btn, #next-btn').prop('disabled', true);
+        return;
+      }
+
+      var from = currentOffset + 1;
+      var to = Math.min(currentOffset + papers.length, currentTotal);
+      $('#summary-bar').html(
+        'Showing <b>' + from + '–' + to + '</b> of <b>' + currentTotal.toLocaleString() + '</b> papers ' +
+        '(page size ' + currentLimit + ', offset ' + currentOffset + ')'
+      ).show();
+
+      var html = '';
+      for (var i = 0; i < papers.length; i++) html += renderPaper(papers[i]);
+      $('#papers-list').html(html);
+
+      $('#page-info').text('Page ' + (Math.floor(currentOffset / currentLimit) + 1) + ' / ' + Math.max(1, Math.ceil(currentTotal / currentLimit)));
+      $('#prev-btn').prop('disabled', currentOffset === 0);
+      $('#next-btn').prop('disabled', currentOffset + currentLimit >= currentTotal);
+
+      $('#results-card').show();
+      $('#export-btn').prop('disabled', false);
+    })
+    .fail(function(xhr){
+      $('#loading-indicator').hide();
+      $('#query-btn').prop('disabled', false);
+      var msg = 'HTTP ' + xhr.status + ' ' + xhr.statusText;
+      try { var j = JSON.parse(xhr.responseText); if (j.error) msg = j.error; } catch(e){}
+      showError('Request failed: ' + msg);
+    });
+}
+
+function exportTSV() {
+  if (!currentResults.length) return;
+  var cols = ['pmid','paper_title','journal','pub_date','authors','abstract','gene_name','trait_label','is_functional_gene','confidence','review_status','ai_tags','pubmed_keywords','link'];
+  var header = cols.join('\t');
+  var rows = currentResults.map(function(p){
+    return cols.map(function(c){
+      var v = p[c];
+      if (v == null) v = '';
+      if (Array.isArray(v)) v = v.join(';');
+      return String(v).replace(/\t/g, ' ').replace(/\r?\n/g, ' ');
+    }).join('\t');
+  });
+  var tsv = header + '\n' + rows.join('\n');
+  var blob = new Blob([tsv], { type: 'text/tab-separated-values;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'triticeae_papers_' + new Date().toISOString().slice(0,10) + '.tsv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
