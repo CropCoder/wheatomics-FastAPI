@@ -151,10 +151,16 @@ def _build_search(
     function_gene_tags: str | None = None,
     pub_date_start: str | None = None,
     pub_date_end: str | None = None,
+    since_days: int | None = None,
     limit: int = 20,
     offset: int = 0,
 ) -> dict:
-    """Shared search logic for single-paper and multi-paper endpoints."""
+    """Shared search logic for single-paper and multi-paper endpoints.
+
+    `since_days` filters by fga_created_at (annotation import time), distinct
+    from pub_date_start/end (paper publication year). Useful for showing
+    "what was newly curated this week".
+    """
     conditions: list[str] = []
     params: list = []
 
@@ -200,14 +206,24 @@ def _build_search(
         conditions.append("SUBSTRING(p.pub_date, 1, 4) <= %s")
         params.append(pub_date_end[:4])
 
+    # Filter by annotation import time (functional_gene_annotations.created_at).
+    # LEFT JOIN means annotations may be absent; only restrict when rows have one.
+    if since_days is not None and since_days > 0:
+        conditions.append("f.id IS NOT NULL AND f.created_at >= (NOW() - INTERVAL %s DAY)")
+        params.append(int(since_days))
+
     where = " WHERE " + " AND ".join(conditions) if conditions else ""
 
     with mysql_cursor(settings.DB_TRITICEAE) as cursor:
         cursor.execute(f"{_SQL_COUNT}{where}", params)
         total = cursor.fetchone()["cnt"]
 
+        # ORDER BY: prefer fga_created_at DESC (recent annotations first).
+        # Fall back to pub_date DESC for rows without an annotation.
         cursor.execute(
-            f"{_SQL_SELECT}{where} ORDER BY p.pub_date DESC LIMIT %s OFFSET %s",
+            f"{_SQL_SELECT}{where} "
+            "ORDER BY f.created_at DESC, p.pub_date DESC "
+            "LIMIT %s OFFSET %s",
             [*params, limit, offset],
         )
         rows = cursor.fetchall()
@@ -253,10 +269,14 @@ def search_papers(
     function_gene_tags: str | None = Query(None, description="新增功能基因标签"),
     pub_date_start: str | None = Query(None, description="发布年份起始"),
     pub_date_end: str | None = Query(None, description="发布年份结束"),
+    since_days: int | None = Query(None, ge=1, le=3650,
+        description="按标注入库时间 fga_created_at 过滤最近 N 天内的标注（与 pub_date_start/end 独立）"),
     limit: int = Query(20, ge=1, le=200, description="返回条数上限"),
     offset: int = Query(0, ge=0, description="分页偏移量"),
 ) -> dict:
     """搜索 Triticeae 研究文献，支持多维度过滤。
+
+    默认排序：fga_created_at DESC（最近标注入库的优先），null 时按 pub_date DESC 兜底。
     """
     return _build_search(**locals())
 
