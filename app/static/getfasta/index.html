@@ -215,7 +215,6 @@ var _hmt = _hmt || [];
 
       <div id="genomes-box" class="info-box" style="margin-top:12px; display:none;">
         <strong>Supported genomes</strong>
-        <small class="text-muted d-block" id="genomes-loading">Loading…</small>
         <div id="genomes-groups"></div>
       </div>
     </div>
@@ -381,7 +380,6 @@ function renderGenomes(records) {
   var groups = groupByKaryotype(records);
   if (!groups.length) { box.hide(); return; }
   box.show();
-  $('#genomes-loading').hide();
   var container = $('#genomes-groups').empty();
   var PER_GROUP_DEFAULT = 5;
   groups.forEach(function(g) {
