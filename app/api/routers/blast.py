@@ -159,14 +159,6 @@ def _classify_db(db_name: str) -> str:
             return cat["id"]
     return "other"
 
-def _classify_db(db_name: str) -> str:
-    """根据数据库名判断所属分类 ID"""
-    name_lower = db_name.lower()
-    for cat in DB_CLASSIFICATION:
-        if any(kw in name_lower for kw in cat["keywords"]):
-            return cat["id"]
-    return "other"
-
 DB_DIR = "/var/www/html/getfasta/blastdb/"  # 和 CGI 的 DbPath 一致
 
 # blast 输出格式（outfmt 6 的列）
