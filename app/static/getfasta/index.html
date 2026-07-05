@@ -178,20 +178,7 @@ var _hmt = _hmt || [];
       <div class="form-group">
         <label><strong>Sequence Database</strong></label>
         <select id="db-select" class="form-control"></select>
-        <small class="form-text text-muted" id="db-hint">Defaults to all_gene (CDS). Use all_protein for protein, or a genome-specific database for interval queries.</small>
-      </div>
-      <div class="form-group" id="protein-db-group">
-        <label><strong>Protein Database</strong> <small class="text-muted">(for gene queries)</small></label>
-        <select id="protein-db-select" class="form-control"></select>
-        <small class="form-text text-muted">Defaults to all_protein. Must use a protein BLAST database, not a gene/genome one.</small>
-      </div>
-      <div class="form-group" id="type-group">
-        <label><strong>Sequence Type</strong> <small class="text-muted">(gene queries)</small></label>
-        <div>
-          <label class="radio-inline" style="margin-right:20px;"><input type="radio" name="seqType" value="both" checked> CDS + Protein</label>
-          <label class="radio-inline" style="margin-right:20px;"><input type="radio" name="seqType" value="cds"> CDS only</label>
-          <label class="radio-inline"><input type="radio" name="seqType" value="protein"> Protein only</label>
-        </div>
+        <small class="form-text text-muted" id="db-hint">Defaults to all_gene (CDS), or pick a genome-specific database for interval queries.</small>
       </div>
       <button id="query-btn" class="btn btn-primary" onclick="querySequence()">Get FASTA</button>
       <button class="btn btn-outline-secondary ml-2" onclick="clearAll()">Clear</button>
@@ -199,7 +186,7 @@ var _hmt = _hmt || [];
       <div class="info-box" style="margin-top:20px;">
         <strong>Examples:</strong>
         <ul style="margin-bottom:0; padding-left:20px;">
-          <li><a href="javascript:void(0)" onclick="useExample('TraesCS5A02G391700', 'all_gene')">TraesCS5A02G391700</a> — VRN-A1, single gene (CDS+protein)</li>
+          <li><a href="javascript:void(0)" onclick="useExample('TraesCS5A02G391700', 'all_gene')">TraesCS5A02G391700</a> — VRN-A1, single gene</li>
           <li><a href="javascript:void(0)" onclick="useExample('TraesCS5A02G391700\nTraesCS1A02G001000\nTraesCS2B02G123400', 'all_gene')">3 wheat genes, batch mode</a></li>
           <li><a href="javascript:void(0)" onclick="useExample('Chr1A_Chinese_Spring1.0:200-500', 'all_genomes')">Chr1A_Chinese_Spring1.0:200-500</a> — Chinese Spring v1.0 interval</li>
           <li><a href="javascript:void(0)" onclick="useExample('Chr1A_Abo:200-500', 'all_genomes')">Chr1A_Abo:200-500</a> — Abbondanza interval</li>
@@ -263,7 +250,6 @@ $(function() {
 function autoDetectMode() {
   var input = $('#query-input').val().trim();
   if (!input) {
-    $('#protein-db-group, #type-group').show();
     $('#db-hint').text('CDS / gene database. Defaults to all_gene.');
     return;
   }
@@ -275,20 +261,17 @@ function autoDetectMode() {
 
   if (isRegion) {
     // Interval mode
-    $('#protein-db-group, #type-group').hide();
     $('#db-hint').text('Use a genome database. all_genomes aggregates all available genomes; otherwise select a specific one.');
     var allGenomes = databaseOptions.find(function(o) { return o.value === 'all_genomes'; });
     if (allGenomes) $('#db-select').val('all_genomes');
   } else if (isBatch) {
     // Batch mode
-    $('#protein-db-group, #type-group').hide();
-    $('#db-hint').text('Select a database that contains your gene IDs (e.g. all_gene, all_protein, or genome-specific).');
+    $('#db-hint').text('Select a database that contains your gene IDs (e.g. all_gene, or a genome-specific one).');
     if (databaseOptions.find(function(o) { return o.value === 'all_gene'; })) {
       $('#db-select').val('all_gene');
     }
   } else {
     // Single gene mode
-    $('#protein-db-group, #type-group').show();
     $('#db-hint').text('CDS / gene database. Defaults to all_gene.');
     if (databaseOptions.find(function(o) { return o.value === 'all_gene'; })) {
       $('#db-select').val('all_gene');
@@ -298,19 +281,16 @@ function autoDetectMode() {
 
 function loadDatabases() {
   $('#db-select').html('<option>Loading...</option>');
-  $('#protein-db-select').html('<option>Loading...</option>');
   $.getJSON('/api/blast/databases?program=blastn')
     .done(function(resp) {
       if (!resp.success) { showError('Failed to load databases'); return; }
       var sel = $('#db-select').empty();
-      var protSel = $('#protein-db-select').empty();
       databaseOptions = [];
 
       // Preferred presets
       var presets = [
         { value: 'all_genomes', label: 'all_genomes (aggregated, recommended for intervals)' },
-        { value: 'all_gene', label: 'all_gene (CDS, aggregated)' },
-        { value: 'all_protein', label: 'all_protein (protein, aggregated)' }
+        { value: 'all_gene', label: 'all_gene (CDS, aggregated)' }
       ];
       presets.forEach(function(p) {
         sel.append($('<option>').val(p.value).text(p.label));
@@ -335,35 +315,8 @@ function loadDatabases() {
       }
 
       $('#db-select').val('all_gene');
-
-      // Protein database: pull from blastp databases (same endpoint, different program)
-      loadProteinDatabases();
     })
     .fail(function() { showError('Failed to load databases'); });
-}
-
-function loadProteinDatabases() {
-  $.getJSON('/api/blast/databases?program=blastp')
-    .done(function(resp) {
-      var protSel = $('#protein-db-select').empty();
-      if (resp.success) {
-        var allProtein = { value: 'all_protein', label: 'all_protein (protein, aggregated)' };
-        protSel.append($('<option>').val(allProtein.value).text(allProtein.label));
-        if (resp.data.protein && resp.data.protein.databases) {
-          protSel.append('<optgroup label="────────── Protein databases ──────────"></optgroup>');
-          resp.data.protein.databases.forEach(function(db) {
-            protSel.append($('<option>').val(db).text(db));
-          });
-        }
-        protSel.val('all_protein');
-      } else {
-        protSel.append($('<option>').val('all_protein').text('all_protein'));
-        protSel.val('all_protein');
-      }
-    })
-    .fail(function() {
-      $('#protein-db-select').html('<option value="all_protein">all_protein</option>');
-    });
 }
 
 function useExample(value, db) {
@@ -440,13 +393,12 @@ function querySequence() {
   } else {
     // ---------- Single Gene ----------
     var gene = lines[0];
-    var seqType = $('input[name="seqType"]:checked').val();
     var geneDb = $('#db-select').val();
-    var protDb = $('#protein-db-select').val() || geneDb;
+    var protDb = 'all_protein';
     $.getJSON('/api/sequence/by-gene', { gene_id: gene, gene_db: geneDb, protein_db: protDb })
       .done(function(resp) {
         $('#loading-indicator').hide();
-        renderGene(resp, seqType, gene, geneDb, protDb);
+        renderGene(resp, gene, geneDb, protDb);
       })
       .fail(function(jqXHR) {
         $('#loading-indicator').hide();
@@ -455,14 +407,12 @@ function querySequence() {
   }
 }
 
-function renderGene(resp, seqType, gene, geneDb, protDb) {
+function renderGene(resp, gene, geneDb, protDb) {
   var html = '';
   var cds = resp.gene_sequence || '';
   var prot = resp.protein_sequence || '';
-  var fasta = '';
-  if (seqType === 'cds') fasta = cds;
-  else if (seqType === 'protein') fasta = prot;
-  else fasta = (cds ? cds + '\n' : '') + (prot ? prot : '');
+  // Returned sequences depend entirely on the chosen database — no UI toggle.
+  var fasta = (cds ? cds + '\n' : '') + (prot ? prot : '');
 
   if (!cds && !prot) {
     html = '<div class="alert alert-warning">No sequence found for ' + escapeHtml(gene) + ' (gene_db: ' + escapeHtml(geneDb) + ', protein_db: ' + escapeHtml(protDb) + ').</div>';
