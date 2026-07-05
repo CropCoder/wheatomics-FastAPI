@@ -244,6 +244,18 @@
       </div>
       <div class="col-md-2">
         <div class="form-group">
+          <label>Recent</label>
+          <select id="f-recent-days" class="form-control">
+            <option value="">All time</option>
+            <option value="7" selected>Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last 365 days</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="form-group">
           <label>Min confidence</label>
           <input type="number" id="f-min-conf" class="form-control" placeholder="0.0 - 1.0" step="0.05" min="0" max="1">
         </div>
@@ -482,6 +494,26 @@ function clearFilters() {
   $('#f-q, #f-gene, #f-trait, #f-pmid, #f-year-start, #f-year-end, #f-min-conf').val('');
   $('#f-functional').val('');
   $('#f-page-size').val(20);
+  $('#f-recent-days').val('7');  // reset Recent to default (last 7 days), not 'all time'
+}
+
+/**
+ * Parse PubMed-style "2026 Jun 5" / "2026 May" / "2026 May 5-9" to a Date.
+ * Returns null when the string is empty / unparseable.
+ * Day precision: uses the first day of month for "Y M" format.
+ * For ranges "Y M D-D", uses the start day.
+ */
+function parsePubDate(s) {
+  if (!s) return null;
+  s = String(s).trim();
+  var months = { Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11 };
+  var m = s.match(/^(\d{4})\s+([A-Za-z]{3})(?:\s+(\d{1,2}))?/);
+  if (!m) return null;
+  var yr = parseInt(m[1], 10);
+  var mo = months[m[2]];
+  if (mo == null) return null;
+  var day = m[3] ? parseInt(m[3], 10) : 1;
+  return new Date(Date.UTC(yr, mo, day));
 }
 
 function parseTags(raw) {
@@ -572,6 +604,23 @@ function runSearch(offset) {
   var gene = $('#f-gene').val().trim();    if (gene) params.gene_name = gene;
   var trait = $('#f-trait').val().trim();  if (trait) params.trait_label = trait;
   var pmid = $('#f-pmid').val().trim();    if (pmid) params.pmid = pmid;
+
+  // Recent filter: when set, derive a year range so the backend query
+  // doesn't scan the whole dataset. The exact-day precision is then
+  // applied client-side (pub_date string parse) below.
+  var recentDays = parseInt($('#f-recent-days').val()) || 0;
+  var cutoffDate = null;
+  if (recentDays > 0) {
+    cutoffDate = new Date();
+    cutoffDate.setUTCDate(cutoffDate.getUTCDate() - recentDays);
+    // backend only filters by year; widen to last (recentDays/365)+1 years to be safe
+    var yearSpan = Math.max(1, Math.ceil(recentDays / 365) + 1);
+    var yEnd = new Date().getUTCFullYear();
+    var yStart = yEnd - yearSpan + 1;
+    if (!$('#f-year-start').val()) params.pub_date_start = String(yStart);
+    if (!$('#f-year-end').val())   params.pub_date_end   = String(yEnd);
+  }
+
   var ys = $('#f-year-start').val();       if (ys) params.pub_date_start = ys;
   var ye = $('#f-year-end').val();         if (ye) params.pub_date_end = ye;
   var mc = $('#f-min-conf').val();         if (mc !== '' && mc != null) params.min_confidence = parseFloat(mc);
@@ -594,13 +643,27 @@ function runSearch(offset) {
       $('#query-btn').prop('disabled', false);
       if (!resp.success) { showError('API error: ' + (resp.error || 'unknown')); return; }
       var d = resp.data || {};
+      var allPapers = d.papers || [];
+
+      // Client-side exact-day filter when "Recent" is set
+      var papers = allPapers;
+      var recentLabel = '';
+      if (cutoffDate) {
+        papers = allPapers.filter(function(p){
+          var dt = parsePubDate(p.pub_date);
+          return dt && dt >= cutoffDate;
+        });
+        recentLabel = ' · last ' + recentDays + ' days (client-filtered)';
+      }
+
       currentTotal = d.total || 0;
-      var papers = d.papers || [];
       currentResults = papers;
 
       if (papers.length === 0) {
         $('#results-card').show();
-        $('#summary-bar').show().html('<b>No papers matched.</b> Try widening the filters.');
+        var msg = '<b>No papers matched.</b> Try widening the filters.';
+        if (cutoffDate) msg += ' <span class="text-muted">(No papers in the last ' + recentDays + ' days.)</span>';
+        $('#summary-bar').html(msg).show();
         $('#page-info').text('');
         $('#prev-btn, #next-btn').prop('disabled', true);
         return;
@@ -609,8 +672,9 @@ function runSearch(offset) {
       var from = currentOffset + 1;
       var to = Math.min(currentOffset + papers.length, currentTotal);
       $('#summary-bar').html(
-        'Showing <b>' + from + '–' + to + '</b> of <b>' + currentTotal.toLocaleString() + '</b> papers ' +
-        '(page size ' + currentLimit + ', offset ' + currentOffset + ')'
+        'Showing <b>' + from + '–' + to + '</b> of <b>' + currentTotal.toLocaleString() + '</b> backend papers' +
+        ' · <b>' + papers.length + '</b> after date filter' +
+        recentLabel
       ).show();
 
       var html = '';
@@ -632,6 +696,9 @@ function runSearch(offset) {
       showError('Request failed: ' + msg);
     });
 }
+
+// Auto-load on page open with the default "Last 7 days" filter.
+$(function() { runSearch(0); });
 
 function exportTSV() {
   if (!currentResults.length) return;
