@@ -31,8 +31,8 @@
   function renderVisitStats(data) {
     var el = document.getElementById('visit-stats');
     if (!el || !data) return;
-    var today = data.today != null ? fmt(data.today) : '—';
-    var total = data.total != null ? fmt(data.total) : '—';
+    var today = (data.today && data.today.pv != null) ? fmt(data.today.pv) : '—';
+    var total = (data.total && data.total.pv != null) ? fmt(data.total.pv) : '—';
     var online = data.online != null ? data.online : '—';
     el.innerHTML =
       '<span class="vs-pill"><span class="vs-dot vs-dot-today"></span>today <b>' + today + '</b></span>' +
