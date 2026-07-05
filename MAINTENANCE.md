@@ -356,6 +356,15 @@ fetch('/header.html').then(r => r.text()).then(html => document.getElementById('
 
 页脚显示累计访问量（用 `GET /api/track/stats`）。**每个 SPA 都要接**，不要漏。
 
+> ⚠️ **`/api/track/stats` 真实响应是嵌套结构**：
+> ```json
+> {"today":{"pv":293,"uv":72}, "total":{"pv":7000569,"uv":184}, "online":0}
+> ```
+> 前端必须读 `data.today.pv` / `data.total.pv` / `data.online`，**不要**直接读 `data.today` / `data.total` 当数字。
+>
+> 错误写法：`fmt(data.today)` → 永远显示 NaN / 0（triticeae 这次踩坑，`11b5ec4` 修了）
+> 正确写法：`fmt(data.today.pv)` / `fmt(data.total.pv)`
+
 ### 4. 标题层级（card-title 三种角色）
 
 | 角色 | 用法 | 标签 | class | 例子 |
