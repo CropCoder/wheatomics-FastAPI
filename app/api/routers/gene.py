@@ -505,8 +505,8 @@ def list_gene_function_registry() -> dict:
 
     功能:
         返回 genefunc_registry 表中所有注册的基因功能表元数据。
-        包含 table_name, NameGroup, Polyploidy, chromosome_level, DOI,
-        title, Abstract, example_chr_ID, example_gene_id 等字段。
+        包含 id, table_name, display_name, Subgenome, Polyploidy, chromosome_level,
+        Doi, title, Abstract, example_chr, example_id 等字段。
 
     用法:
         GET /api/genes/functions/registry
@@ -524,15 +524,17 @@ def list_gene_function_registry() -> dict:
               "count": 2,
               "records": [
                 {
+                  "id": 1,
                   "table_name": "Genefunc_Abo_table",
-                  "name_group": "Abbondanza (Abo)",
+                  "display_name": "Abbondanza (Abo)",
+                  "subgenome": "ABD",
                   "polyploidy": "Allohexaploid",
                   "chromosome_level": "AABBDD",
                   "doi": "10.1038/s41586-024-08277-0",
                   "title": "Unraveling Allelic Impacts...",
                   "abstract": "The TaVP1-B gene...",
-                  "example_chr_id": "chr1A",
-                  "example_gene_id": "Abo1A000100.1"
+                  "example_chr": "chr1A_Abo",
+                  "example_id": "Abo1A000100.1"
                 }
               ]
             }
@@ -542,28 +544,33 @@ def list_gene_function_registry() -> dict:
     with mysql_cursor(settings.DB_GENEFUNC) as cursor:
         cursor.execute("""
             SELECT
+                id,
                 table_name,
-                NameGroup,
+                display_name,
+                Subgenome,
                 Polyploidy,
                 chromosome_level,
-                DOI,
+                Doi,
                 title,
                 Abstract,
-                example_chr_ID,
-                example_gene_id
+                example_chr,
+                example_id
             FROM genefunc_registry
+            ORDER BY display_order, id
         """)
         for row in cursor.fetchall():
             records.append({
+                "id": row.get("id"),
                 "table_name": row.get("table_name"),
-                "name_group": row.get("NameGroup"),
+                "display_name": row.get("display_name"),
+                "subgenome": row.get("Subgenome"),
                 "polyploidy": row.get("Polyploidy"),
                 "chromosome_level": row.get("chromosome_level"),
-                "doi": row.get("DOI"),
+                "doi": row.get("Doi"),
                 "title": row.get("title"),
                 "abstract": row.get("Abstract"),
-                "example_chr_id": row.get("example_chr_ID"),
-                "example_gene_id": row.get("example_gene_id"),
+                "example_chr": row.get("example_chr"),
+                "example_id": row.get("example_id"),
             })
     return ok({"database": "genefunc_registry", "count": len(records), "records": records})
 
