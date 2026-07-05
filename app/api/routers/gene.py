@@ -501,12 +501,16 @@ def list_genome_examples() -> dict:
     return ok({"examples": GENOME_EXAMPLES})
 @interval_router.get("/registry")
 def list_gene_function_registry() -> dict:
-    """查询 Genefuncdb.genefunc_registry 表。
+    """查询 Genefuncdb.Genefunc_registry 表。
 
     功能:
-        返回 genefunc_registry 表中所有注册的基因功能表元数据。
+        返回 Genefunc_registry 表中所有注册的基因功能表元数据。
         包含 id, table_name, display_name, Subgenome, Polyploidy, chromosome_level,
         Doi, title, Abstract, example_chr, example_id 等字段。
+
+    注意:
+        表名大小写敏感（Linux 下 MySQL `lower_case_table_names=0`），必须写
+        `Genefunc_registry`（首字母大写），否则 MySQL 抛 1146 表不存在。
 
     用法:
         GET /api/genes/functions/registry
@@ -542,6 +546,8 @@ def list_gene_function_registry() -> dict:
     """
     records: list[dict] = []
     with mysql_cursor(settings.DB_GENEFUNC) as cursor:
+        # MySQL table names are case-sensitive on Linux. The actual table on
+        # Genefuncdb is `Genefunc_registry` (capital G), per /tables endpoint.
         cursor.execute("""
             SELECT
                 id,
@@ -555,7 +561,7 @@ def list_gene_function_registry() -> dict:
                 Abstract,
                 example_chr,
                 example_id
-            FROM genefunc_registry
+            FROM Genefunc_registry
             ORDER BY display_order, id
         """)
         for row in cursor.fetchall():
