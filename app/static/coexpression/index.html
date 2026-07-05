@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wheat Co-expression - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+
+<script>
+// ===== Visit tracking =====
+(function() {
+  var page = location.pathname || 'unknown';
+  try {
+    fetch('/api/track/visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page: page })
+    }).catch(function(){});
+  } catch (e) {}
+
+  function fmt(n) {
+    n = Number(n) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
+    if (n >= 10000)   return (n / 1000).toFixed(3) + 'k';
+    return String(n);
+  }
+
+  function setHtml(html) {
+    var el = document.getElementById('visit-stats');
+    if (el) el.innerHTML = html;
+  }
+
+  fetch('/api/track/stats')
+    .then(function(r) { return r.json(); })
+    .then(function(resp) {
+      if (!resp || !resp.success) {
+        setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
+        return;
+      }
+      var d = resp.data;
+      var html =
+        '<span class="vs-pill vs-today" title="Today pageviews">' +
+          '<span class="vs-dot vs-dot-today"></span>' +
+          'Today <b>' + fmt(d.today.pv) + '</b></span>' +
+        '<span class="vs-pill vs-total" title="Total pageviews (since 2019-08-01)">' +
+          '<span class="vs-dot vs-dot-total"></span>' +
+          'Total <b>' + fmt(d.total.pv) + '</b></span>' +
+        '<span class="vs-pill vs-online" title="Visitors active in the last 15 minutes">' +
+          '<span class="vs-dot vs-dot-online"></span>' +
+          'Online <b>' + fmt(d.online) + '</b></span>';
+      setHtml(html);
+    })
+    .catch(function() {
+      setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
+    });
+})();
+</script>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+<style>
+  body { background: #f8f9fa; margin:0; padding:0; }
+  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+  #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
+  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+  #header-tabs li { display:inline-block !important; width:190px !important; }
+  #header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+  #header-tabs a:hover { background:#98c1d9; color:#000000; }
+  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+  #header-tabs ul li ul { display:none !important; position:absolute; }
+  #header-tabs ul li:hover ul { display:block !important; }
+  #header-tabs ul li ul a { border-radius:0; }
+  #home_content { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+  .query-card { background:#fff; border-radius:6px; padding:20px; margin-top:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+  .results-card { background:#fff; border-radius:6px; padding:20px; margin-top:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); display:none; }
+  .card-title { color:#333; border-left:4px solid #007bff; padding-left:12px; }
+  .help-text { font-size:0.85rem; color:#6c757d; margin-top:4px; }
+  #error-msg { display:none; margin-top:10px; }
+  #loading-indicator { display:none; text-align:center; padding:30px; }
+  #loading-indicator .spinner-border { width:2.5rem; height:2.5rem; }
+  .filter-radio { display:inline-block; margin-right:18px; font-size:14px; cursor:pointer; }
+  .filter-radio input { margin-right:5px; vertical-align:middle; cursor:pointer; }
+  .filter-block { padding:8px 12px; background:#f8f9fa; border-radius:4px; margin-top:6px; }
+  .filter-block select { max-width:240px; }
+  .results-summary { font-size:13px; color:#6c757d; margin-bottom:10px; }
+  .results-table th { position:sticky; top:0; background:#f8f9fa; font-size:13px; }
+  .results-table td { font-size:13px; }
+  .results-table .pcc-cell { font-weight:600; }
+  .pcc-positive { color:#1d4ed8; }
+  .pcc-negative { color:#b91c1c; }
+  .db-desc { font-size:12px; color:#6c757d; margin-left:6px; }
+  .db-option { padding:4px 0; }
+  .citation-block { font-size:13px; color:#495057; margin-top:14px; line-height:1.55; }
+  .citation-block a { word-break:break-all; }
+
+  /* visit stats */
+  .visit-stats { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .visit-stats .vs-pill {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:3px 8px; border-radius:12px;
+    font-size:11px; line-height:1.4;
+    background:#f1f5f9; color:#334155;
+    border:1px solid #e2e8f0;
+  }
+  .visit-stats .vs-pill b { color:#0f172a; font-weight:600; }
+  .visit-stats .vs-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#94a3b8; }
+  .visit-stats .vs-dot-today  { background:#22c55e; box-shadow:0 0 0 2px rgba(34,197,94,0.18); }
+  .visit-stats .vs-dot-total  { background:#3b82f6; }
+  .visit-stats .vs-dot-online { background:#f59e0b; animation:vs-pulse 1.6s ease-in-out infinite; }
+  .visit-stats .vs-loading { color:#64748b; }
+  .visit-stats .vs-loading .vs-dot { animation:vs-pulse 1.6s ease-in-out infinite; }
+  .visit-stats .vs-error { background:#fef2f2; color:#b91c1c; border-color:#fecaca; }
+  @keyframes vs-pulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+</style>
+
+<!-- Baidu Tongji (async) -->
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?f76ca60fcad9ddaf7cb0c8548eab7808";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+</head>
+<body>
+<!-- header -->
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
+</div>
+
+<!-- nav menu -->
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/index.html">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/snprimer">CAPS/KASP(Beta)</a></li>
+        <li><a href="/PfamSearch/">PfamSearch</a></li>
+        <li><a href="/idConvert/">IDConvert</a></li>
+        <li><a href="/HomologFinder/">HomologFinder</a></li>
+        <li><a href="/interval/">IntervalTool</a></li>
+        <li><a href="/expression/">GeneExpression</a></li>
+        <li><a href="/coexpression/index.html">Co-expression</a></li>
+        <li><a href="/wheatPPI/">WheatPPI</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/genes">KnownGene</a></li>
+        <li><a href="/symap/index.html">SyntenySearch</a></li>
+        <li><a href="/preblast/">preBLAST</a></li>
+        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+        <li><a href="DWGVa.html">DWGVa</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/scRNA">scRNA</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/eqtl">eQTL Atlas</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/literature_auto/literature.html">Literature</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href=#><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div id="home_content">
+  <br><h5 class="card-title">Retrieve co-expressed genes for your query genes</h5><br>
+
+  <div class="query-card">
+    <div class="row">
+      <div class="col-md-5">
+        <div class="form-group">
+          <label for="gene-input"><strong>Gene ID(s)</strong></label>
+          <textarea id="gene-input" class="form-control" rows="6" placeholder="e.g. TraesCS3A02G077900&#10;Separate multiple IDs by comma, space or newline">TraesCS3A02G077900</textarea>
+          <small class="help-text">Up to ~50 gene IDs per request</small>
+        </div>
+      </div>
+      <div class="col-md-7">
+        <div class="form-group">
+          <label><strong>Co-expression database</strong></label>
+          <select id="db-select" class="form-control"></select>
+        </div>
+        <div class="form-group">
+          <label><strong>Filter mode</strong></label>
+          <div>
+            <label class="filter-radio">
+              <input type="radio" name="filter-mode" value="pcc" checked> PCC (Pearson Correlation)
+            </label>
+            <label class="filter-radio">
+              <input type="radio" name="filter-mode" value="mr"> MR (Mutual Rank)
+            </label>
+          </div>
+          <div class="filter-block">
+            <select id="filter-value" class="form-control"></select>
+          </div>
+          <small class="help-text" id="filter-help"></small>
+        </div>
+      </div>
+    </div>
+    <button id="query-btn" class="btn btn-primary" onclick="queryCoexpression()">Search co-expressed genes</button>
+    <button id="export-btn" class="btn btn-outline-secondary ml-2" onclick="exportTSV()" style="display:none;">Export TSV</button>
+  </div>
+
+  <div id="error-msg" class="alert alert-danger"></div>
+
+  <div id="loading-indicator">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted">Querying co-expression database…</p>
+  </div>
+
+  <div id="results-card" class="results-card">
+    <h6 class="card-title" id="results-title">Results</h6>
+    <div class="results-summary" id="results-summary"></div>
+    <div style="max-height:600px;overflow-y:auto;">
+      <table class="table table-bordered table-hover table-sm results-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Query gene</th>
+            <th>Co-expressed gene</th>
+            <th>PCC</th>
+            <th>MR</th>
+          </tr>
+        </thead>
+        <tbody id="results-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="citation-block">
+      <strong>About the data:</strong><br>
+      <strong>Wheat grain</strong>: a total of 90 RNA-seq data of wheat grain samples from 14 studies
+      (<a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA396738" target="_blank">PRJNA396738</a>,
+      <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA407398" target="_blank">PRJNA407398</a>,
+      <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA427246" target="_blank">PRJNA427246</a>,
+      <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA471426" target="_blank">PRJNA471426</a>,
+      <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA477934" target="_blank">PRJNA477934</a>,
+      <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA485741" target="_blank">PRJNA485741</a>,
+      <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJEB25639" target="_blank">PRJEB25639</a>,
+      <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJEB5314" target="_blank">PRJEB5314</a>,
+      <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJEB5135" target="_blank">PRJEB5135</a>,
+      <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJEB22854" target="_blank">PRJEB22854</a>,
+      <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJEB7795" target="_blank">PRJEB7795</a>,
+      <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA322418" target="_blank">PRJNA322418</a>,
+      <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA358808" target="_blank">PRJNA358808</a>,
+      <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA532455" target="_blank">PRJNA532455</a>).
+      <br><br>
+      <strong>Wheat multiple tissues</strong> &mdash; IWGSC RefSeq v1.0 from
+      <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJEB25639" target="_blank">PRJEB25639</a>:
+      Shifting the limits in wheat research and breeding using a fully annotated reference genome.
+      International Wheat Genome Sequencing Consortium (IWGSC).
+      <em>Science</em> 2018, 361:eaar7191.
+      <a href="https://www.ncbi.nlm.nih.gov/pubmed/30115783" target="_blank">doi:10.1126/science.aar7191</a>.
+      <br><br>
+      <strong>MR (Mutual Rank)</strong> is the geometric mean of the PCC rank from gene A to gene B and from gene B to gene A;
+      smaller MR indicates stronger co-expression.
+      Obayashi T, Kinoshita K.
+      <em>DNA Res.</em> 2009;16(5):249&ndash;260.
+      <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2762411" target="_blank">doi:10.1093/dnares/dsp016</a>.
+    </div>
+  </div>
+</div>
+
+<!-- footer -->
+<div class="line" style="height:10px;background-color:white"></div>
+<div id="home_footer">
+  <center style="margin-top:5px">
+    <table>
+      <tr>
+        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><div class="line" style="height:50px;width:15px;"></div></td>
+        <td>
+          <div id="visit-stats" class="visit-stats">
+            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+  </center>
+</div>
+
+<script>
+var PCC_OPTIONS = ['0.9', '0.8', '0.7', '0.6', '0.5', '0.4', '0.3', '0.2'];
+var MR_OPTIONS  = ['5', '10', '20', '30', '50', '90', '150', '300', '600', '900'];
+
+var allDbs = [];
+var currentResults = [];   // [{query, partner, pcc, mr}]
+
+$(function() {
+  loadDatabases();
+  renderFilterOptions();
+  $('input[name="filter-mode"]').on('change', renderFilterOptions);
+});
+
+function loadDatabases() {
+  var $sel = $('#db-select');
+  $sel.html('<option>Loading…</option>').prop('disabled', true);
+  $.getJSON('/api/coexpression/databases')
+    .done(function(resp) {
+      allDbs = (resp.success && resp.data) ? resp.data : [];
+      if (allDbs.length === 0) {
+        $sel.html('<option value="">(no databases available)</option>');
+        return;
+      }
+      var html = '';
+      allDbs.forEach(function(db, i) {
+        var selected = (i === 0) ? ' selected' : '';
+        html += '<option value="' + db.id + '"' + selected + '>' + db.id + ' &mdash; ' + db.description + '</option>';
+      });
+      $sel.html(html).prop('disabled', false);
+    })
+    .fail(function() {
+      $sel.html('<option value="">(failed to load databases)</option>');
+      showError('Failed to load co-expression databases');
+    });
+}
+
+function renderFilterOptions() {
+  var mode = $('input[name="filter-mode"]:checked').val();
+  var $sel = $('#filter-value').empty();
+  var opts = (mode === 'mr') ? MR_OPTIONS : PCC_OPTIONS;
+  var defaultIdx = (mode === 'mr') ? 3 : 1;  // MR: index 3 -> '30'; PCC: index 1 -> '0.8'
+  opts.forEach(function(v, i) {
+    var label = (mode === 'mr') ? ('MR &le; ' + v) : ('PCC &ge; ' + v);
+    var sel = (i === defaultIdx) ? ' selected' : '';
+    $sel.append('<option value="' + v + '"' + sel + '>' + label + '</option>');
+  });
+  $('#filter-help').text(
+    mode === 'mr'
+      ? 'Smaller MR means stronger co-expression.'
+      : 'Larger |PCC| (closer to ±1) means stronger correlation.'
+  );
+}
+
+function showError(msg) {
+  $('#error-msg').text(msg).show();
+  $('#loading-indicator').hide();
+  $('#results-card').hide();
+}
+
+function queryCoexpression() {
+  var genesRaw = $('#gene-input').val().trim();
+  var db = $('#db-select').val();
+  var fv = $('#filter-value').val();
+
+  if (!genesRaw) { showError('Please input at least one gene ID'); return; }
+  if (!db)      { showError('Please choose a co-expression database'); return; }
+
+  var genes = [];
+  var seen = {};
+  genesRaw.split(/[,\s\n]+/).forEach(function(g) {
+    g = g.trim();
+    if (g && !seen[g]) { seen[g] = true; genes.push(g); }
+  });
+  if (genes.length === 0) { showError('No valid gene IDs'); return; }
+
+  $('#error-msg').hide();
+  $('#results-card').hide();
+  $('#loading-indicator').show();
+
+  $.getJSON('/api/coexpression/query', {
+    gene_ids: genes.join(','),
+    database: db,
+    filter_value: fv
+  })
+  .done(function(resp) {
+    $('#loading-indicator').hide();
+    if (!resp.success) { showError('Query failed'); return; }
+    renderResults(resp.data, genes, db, fv);
+  })
+  .fail(function(jqXHR) {
+    $('#loading-indicator').hide();
+    var msg = (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.detail) || jqXHR.statusText || 'Query failed';
+    showError(msg);
+  });
+}
+
+function renderResults(data, queryGenes, db, fv) {
+  var pairs = data.pairs || [];
+  var mode = $('input[name="filter-mode"]:checked').val();
+
+  // Expand each pair into two query->partner rows so the query gene is always visible
+  var expanded = [];
+  pairs.forEach(function(p) {
+    var q1 = queryGenes.indexOf(p.gene1) >= 0 ? p.gene1 : (queryGenes.indexOf(p.gene2) >= 0 ? p.gene2 : p.gene1);
+    var partner = (q1 === p.gene1) ? p.gene2 : p.gene1;
+    expanded.push({ query: q1, partner: partner, pcc: p.pcc, mr: p.mr });
+  });
+
+  // Sort: by query gene, then PCC desc (PCC mode) or MR asc (MR mode)
+  expanded.sort(function(a, b) {
+    if (a.query !== b.query) return a.query < b.query ? -1 : 1;
+    if (mode === 'mr') return a.mr - b.mr;
+    return Math.abs(b.pcc) - Math.abs(a.pcc);
+  });
+
+  currentResults = expanded;
+
+  var dbObj = allDbs.find(function(d) { return d.id === db; }) || { id: db, description: '' };
+  $('#results-title').text(dbObj.id + ' — ' + dbObj.description);
+
+  var filterLabel = (mode === 'mr') ? ('MR ≤ ' + fv) : ('PCC ≥ ' + fv);
+  var summary = 'Database: <strong>' + dbObj.id + '</strong> · '
+              + 'Filter: <strong>' + filterLabel + '</strong> · '
+              + 'Query genes: <strong>' + queryGenes.length + '</strong> · '
+              + 'Pairs found: <strong>' + pairs.length + '</strong> · '
+              + 'Rows (after expansion): <strong>' + expanded.length + '</strong>';
+  $('#results-summary').html(summary);
+
+  var tbody = $('#results-tbody').empty();
+  if (expanded.length === 0) {
+    tbody.append('<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No co-expressed genes match the current filter. Try lowering the PCC threshold or increasing the MR threshold.</td></tr>');
+  } else {
+    expanded.forEach(function(r, i) {
+      var pccClass = r.pcc >= 0 ? 'pcc-positive' : 'pcc-negative';
+      tbody.append(
+        '<tr>' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td><strong>' + r.query + '</strong></td>' +
+          '<td>' + r.partner + '</td>' +
+          '<td class="pcc-cell ' + pccClass + '">' + r.pcc.toFixed(3) + '</td>' +
+          '<td>' + r.mr + '</td>' +
+        '</tr>'
+      );
+    });
+  }
+
+  $('#results-card').show();
+  $('#export-btn').show();
+  $('html, body').animate({ scrollTop: $('#results-card').offset().top - 20 }, 300);
+}
+
+function exportTSV() {
+  if (currentResults.length === 0) return;
+  var db = $('#db-select').val();
+  var mode = $('input[name="filter-mode"]:checked').val();
+  var fv = $('#filter-value').val();
+  var lines = ['# Database\t' + db + '\n# Filter\t' + ((mode === 'mr') ? ('MR <= ' + fv) : ('PCC >= ' + fv)) + '\n# Generated\t' + new Date().toISOString() + '\nQuery_gene\tPartner_gene\tPCC\tMR'];
+  currentResults.forEach(function(r) {
+    lines.push(r.query + '\t' + r.partner + '\t' + r.pcc.toFixed(4) + '\t' + r.mr);
+  });
+  var blob = new Blob([lines.join('\n')], { type: 'text/tab-separated-values' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'coexpression_' + db + '_' + new Date().toISOString().slice(0,10) + '.tsv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
