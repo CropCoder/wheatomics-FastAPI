@@ -314,11 +314,13 @@ function shouldHideDb(name) {
   return lower.includes('chr');
 }
 
-// CDS libraries (names containing 'cds') are collected into their own group
-// instead of being scattered under Genome-specific.
-function isCdsDb(name) {
+// Coding/transcript databases — names containing cds / gene / mrna /
+// transcript — are collected into their own group instead of being
+// scattered under Genome-specific.
+function isCodingTranscriptDb(name) {
   if (!name) return false;
-  return name.toLowerCase().includes('cds');
+  var low = name.toLowerCase();
+  return low.includes('cds') || low.includes('gene') || low.includes('mrna') || low.includes('transcript');
 }
 
 function loadDatabases() {
@@ -344,14 +346,14 @@ function loadDatabases() {
       // Note: /api/blast/databases returns a FLAT shape (categories /
       // nucleotide / protein at the top level), not the wrapped { data: {...} }
       // shape used by other endpoints.
-      var cdsDbs = [];
+      var codingDbs = [];
       if (resp.categories) {
         var genomeDbs = [];
         resp.categories.forEach(function(cat) {
           cat.databases.forEach(function(db) {
             if (shouldHideDb(db)) return;
-            if (isCdsDb(db)) {
-              cdsDbs.push({ name: db, catLabel: cat.label });
+            if (isCodingTranscriptDb(db)) {
+              codingDbs.push({ name: db, catLabel: cat.label });
             } else {
               genomeDbs.push({ name: db, catLabel: cat.label });
             }
@@ -365,9 +367,9 @@ function loadDatabases() {
             databaseOptions.push({ value: item.name, label: label });
           });
         }
-        if (cdsDbs.length) {
-          sel.append('<optgroup label="────────── Coding sequences ──────────"></optgroup>');
-          cdsDbs.forEach(function(item) {
+        if (codingDbs.length) {
+          sel.append('<optgroup label="────────── Coding/transcript sequences ──────────"></optgroup>');
+          codingDbs.forEach(function(item) {
             sel.append($('<option>').val(item.name).text(item.name));
             databaseOptions.push({ value: item.name, label: item.name });
           });
