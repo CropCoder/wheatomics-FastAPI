@@ -4,8 +4,9 @@ Aggregates per-day PV/UV and tracks currently-online visitors
 (15-minute sliding window). Data lives in `wheatomics_db.visit_stats`
 and `wheatomics_db.visit_log`. No external tracking dependency.
 
-Schema lives in `init_visit_stats.sql` and must be applied by an
-admin user — `wheatomics_user` only has DML privileges, not DDL.
+Schema lives in `visit_stats` tables on `wheatomics_db` and must exist before
+this router is mounted. `wheatomics_user` only has DML privileges, not DDL —
+apply the schema with a privileged account during deployment.
 """
 
 from __future__ import annotations
@@ -44,7 +45,7 @@ def _check_schema() -> None:
     if missing:
         raise RuntimeError(
             f"visit-counter tables missing: {missing}. "
-            f"Run init_visit_stats.sql as a privileged user."
+            f"Create the visit_stats schema with a privileged user."
         )
 
 
