@@ -305,6 +305,15 @@ function autoDetectMode() {
   }
 }
 
+// Hide chromosome-level genome libraries (names containing 'chr' or 'Chr')
+// from the dropdown — interval queries should default to all_genomes instead,
+// and these per-chromosome .genome_chr1A, .chr1H, etc. entries clutter the list.
+function shouldHideDb(name) {
+  if (!name) return true;
+  var lower = name.toLowerCase();
+  return lower.includes('chr');
+}
+
 function loadDatabases() {
   $('#db-select').html('<option>Loading...</option>');
   $.getJSON('/api/blast/databases?program=blastn')
@@ -316,7 +325,8 @@ function loadDatabases() {
       // Preferred presets
       var presets = [
         { value: 'all_genomes', label: 'all_genomes (aggregated, recommended for intervals)' },
-        { value: 'all_gene', label: 'all_gene (CDS, aggregated)' }
+        { value: 'all_gene', label: 'all_gene (CDS, aggregated)' },
+        { value: 'all_protein', label: 'all_protein (protein, aggregated)' }
       ];
       presets.forEach(function(p) {
         sel.append($('<option>').val(p.value).text(p.label));
@@ -331,6 +341,7 @@ function loadDatabases() {
         sel.append('<optgroup label="────────── Genome-specific ──────────"></optgroup>');
         resp.categories.forEach(function(cat) {
           cat.databases.forEach(function(db) {
+            if (shouldHideDb(db)) return;
             sel.append($('<option>').val(db).text(db + ' [' + cat.label + ']'));
             databaseOptions.push({ value: db, label: db + ' [' + cat.label + ']' });
           });
@@ -338,6 +349,7 @@ function loadDatabases() {
       } else if (resp.nucleotide && resp.nucleotide.databases) {
         sel.append('<optgroup label="────────── Nucleotide databases ──────────"></optgroup>');
         resp.nucleotide.databases.forEach(function(db) {
+          if (shouldHideDb(db)) return;
           sel.append($('<option>').val(db).text(db));
           databaseOptions.push({ value: db, label: db });
         });
