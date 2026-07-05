@@ -324,18 +324,21 @@ function loadDatabases() {
         databaseOptions.push(p);
       });
 
-      // Group by category if available
-      if (resp.data.categories) {
+      // Group by category if available.
+      // Note: /api/blast/databases returns a FLAT shape (categories /
+      // nucleotide / protein at the top level), not the wrapped { data: {...} }
+      // shape used by other endpoints.
+      if (resp.categories) {
         sel.append('<optgroup label="────────── Genome-specific ──────────"></optgroup>');
-        resp.data.categories.forEach(function(cat) {
+        resp.categories.forEach(function(cat) {
           cat.databases.forEach(function(db) {
             sel.append($('<option>').val(db).text(db + ' [' + cat.label + ']'));
             databaseOptions.push({ value: db, label: db + ' [' + cat.label + ']' });
           });
         });
-      } else if (resp.data.nucleotide && resp.data.nucleotide.databases) {
+      } else if (resp.nucleotide && resp.nucleotide.databases) {
         sel.append('<optgroup label="────────── Nucleotide databases ──────────"></optgroup>');
-        resp.data.nucleotide.databases.forEach(function(db) {
+        resp.nucleotide.databases.forEach(function(db) {
           sel.append($('<option>').val(db).text(db));
           databaseOptions.push({ value: db, label: db });
         });
