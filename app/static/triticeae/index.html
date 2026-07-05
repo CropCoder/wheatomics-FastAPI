@@ -6,13 +6,11 @@
 <title>Triticeae Papers - WheatOmics</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
-<script src="/js/jquery/1.9.1/jquery.min.js"></script>
 
 <script>
 // ===== Visit tracking =====
 (function() {
   var page = location.pathname || 'unknown';
-  // POST a pageview (best-effort, ignore failures)
   try {
     fetch('/api/track/visit', {
       method: 'POST',
@@ -20,14 +18,12 @@
       body: JSON.stringify({ page: page })
     }).catch(function(){});
   } catch (e) {}
-
   function fmt(n) {
     n = Number(n) || 0;
     if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
     if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
     return String(n);
   }
-
   function renderVisitStats(data) {
     var el = document.getElementById('visit-stats');
     if (!el || !data) return;
@@ -39,8 +35,6 @@
       '<span class="vs-pill"><span class="vs-dot vs-dot-total"></span>total <b>' + total + '</b></span>' +
       '<span class="vs-pill"><span class="vs-dot vs-dot-online"></span>online <b>' + online + '</b></span>';
   }
-
-  // GET cumulative stats (best-effort)
   fetch('/api/track/stats').then(function(r){ return r.ok ? r.json() : null; })
     .then(function(resp){
       if (resp && resp.success && resp.data) renderVisitStats(resp.data);
@@ -49,110 +43,123 @@
 })();
 </script>
 
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+
 <style>
-  body { background: #f8f9fa; margin:0; padding:0; }
-  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
-  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
-  #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
-  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
-  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
-  #header-tabs li { display:inline-block !important; width:190px !important; }
-  #header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
-  #header-tabs a:hover { background:#98c1d9; color:#000000; }
-  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
-  #header-tabs ul li ul { display:none !important; position:absolute; }
-  #header-tabs ul li:hover ul { display:block !important; }
-  #header-tabs ul li ul a { border-radius:0; }
-  #home_content { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+/* ============================================================
+   WheatOmics chrome (top bar + nav) — same as other SPAs
+   ============================================================ */
+html, body { margin:0; padding:0; }
+#home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+#logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+#home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
+#header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+#header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+#header-tabs li { display:inline-block !important; width:190px !important; }
+#header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+#header-tabs a:hover { background:#98c1d9; color:#000000; }
+#header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+#header-tabs ul li ul { display:none !important; position:absolute; }
+#header-tabs ul li:hover ul { display:block !important; }
+#header-tabs ul li ul a { border-radius:0; }
+#line { height:10px; background-color:#fff; }
+#home_footer { margin:0 auto; padding:5px 0 10px 0; text-align:center; width:100%; background:#d9d9d9; }
+#home_footer table { margin:0 auto; }
+#home_footer .line { display:inline-block; height:30px; width:2px; background:#000; vertical-align:middle; margin:5px; }
+#home_footer .visit-stats { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; vertical-align:middle; margin-left:15px; }
+.visit-stats .vs-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:11px; line-height:1.4; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; }
+.visit-stats .vs-pill b { color:#0f172a; font-weight:600; }
+.visit-stats .vs-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#94a3b8; }
+.visit-stats .vs-dot-today  { background:#22c55e; }
+.visit-stats .vs-dot-total  { background:#3b82f6; }
+.visit-stats .vs-dot-online { background:#f59e0b; }
+.visit-stats .vs-loading { color:#64748b; }
+.visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
+@keyframes vs-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 
-  /* ----- paper cards ----- */
-  .paper-card { background: #fff; border-radius: 6px; padding: 18px 22px; margin-top: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 4px solid #6c757d; }
-  .paper-card.is-functional { border-left-color: #28a745; }
-  .paper-card.is-negative   { border-left-color: #dc3545; }
-  .paper-card .pc-title { font-size: 17px; font-weight: 600; color: #003366; margin-bottom: 6px; line-height: 1.4; }
-  .paper-card .pc-title a { color: inherit; text-decoration: none; }
-  .paper-card .pc-title a:hover { text-decoration: underline; }
-  .paper-card .pc-meta { font-size: 12px; color: #6c757d; margin-bottom: 8px; }
-  .paper-card .pc-authors { font-size: 13px; color: #495057; margin-bottom: 8px; line-height: 1.5; }
-  .paper-card .pc-abstract { font-size: 13px; color: #495057; line-height: 1.55; margin-bottom: 8px; }
-  .paper-card .pc-abstract.collapsed { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .paper-card .pc-abstract .toggle { color: #007bff; cursor: pointer; font-size: 12px; }
-  .paper-card .pc-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
-  .paper-card .pc-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #e9ecef; color: #495057; }
-  .paper-card .pc-tag.trait { background: #cfe2ff; color: #084298; }
-  .paper-card .pc-tag.gene  { background: #d1e7dd; color: #0f5132; font-weight: 600; }
-  .paper-card .pc-confidence { font-size: 11px; color: #6c757d; margin-top: 6px; }
+/* ============================================================
+   Literature-style project theme — copied verbatim from
+   https://wheatomics.sdau.edu.cn/literature_auto/literature.html
+   (MHTML offline archive, 2026-07-06). Only fields renamed for
+   triticeae; layout, fonts, colors unchanged.
+   ============================================================ */
+.container-main { max-width: 1180px; width: 96%; margin: 18px auto 26px; }
+.page-title-wrap { max-width: 1180px; width: 96%; margin: 18px auto 10px; }
+.page-title-wrap h2 { font-size: 28px; font-weight: 700; margin: 0 0 6px 0; line-height: 1.25; color: #222; }
+.page-title-wrap p { margin: 0; color: #555; font-size: 14px; }
 
-  /* badges */
-  .badge-functional { background: #28a745; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-  .badge-negative   { background: #dc3545; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-  .badge-review     { background: #6c757d; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; }
+.sidebar-section { background: #fff; border: 1px solid #e6e6e6; border-radius: 4px; padding: 15px; margin-bottom: 18px; }
+.sidebar-section h5 { font-size: 18px; font-weight: 700; margin-bottom: 14px; color: #222; }
 
-  /* filters */
-  .filter-panel { background: #fff; border-radius: 6px; padding: 16px 20px; margin-top: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-  .filter-panel label { font-size: 12px; color: #495057; font-weight: 600; margin-bottom: 4px; }
-  .filter-panel .form-control { font-size: 13px; }
+#loading-status { font-size: 12px; padding: 8px 10px; border-radius: 4px; margin-bottom: 12px; }
+.status-loading { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+.status-ready   { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.status-error   { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
-  /* summary bar */
-  .summary-bar { background: #e7f1ff; border-left: 4px solid #0d6efd; padding: 10px 16px; border-radius: 4px; margin-top: 16px; font-size: 13px; }
+.small-label { font-size: 12px; color: #555; font-weight: 600; margin-bottom: 4px; }
+.helper-text { font-size: 12px; color: #666; line-height: 1.5; }
 
-  /* loading + errors */
-  .loading { display: none; text-align: center; padding: 50px; }
-  .loading .spinner-border { width: 3rem; height: 3rem; }
-  #error-msg { display: none; margin-top: 10px; }
+.chart-box { background: #fafafa; border: 1px solid #ececec; border-radius: 4px; padding: 12px; margin-bottom: 14px; }
+.chart-title { font-size: 12px; font-weight: 700; color: #666; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+.year-chart-shell { border: 1px solid #efefef; background: #fff; padding: 8px 8px 2px; }
+#yearChart { width: 100%; height: 120px; display: block; background: #fff; }
+.chart-endpoints { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #333; margin-top: 2px; padding: 0 2px; }
+.year-slider-wrap { margin-top: 12px; }
+.year-selected-text { font-size: 12px; color: #333; font-weight: 600; margin-bottom: 8px; }
+.range-wrap { position: relative; height: 34px; }
+.range-track { position: absolute; left: 0; right: 0; top: 13px; height: 3px; background: #cfd6dc; border-radius: 999px; }
+.range-selected { position: absolute; top: 13px; height: 3px; background: #7fd6c6; border-radius: 999px; }
+.range-wrap input[type=range] { position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; -webkit-appearance: none; background: none; height: 34px; margin: 0; }
+.range-wrap input[type=range]::-webkit-slider-thumb { pointer-events: auto; -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid #33bfa6; cursor: pointer; box-shadow: 0 0 0 1px rgba(0,0,0,0.05); margin-top: -6px; }
+.range-wrap input[type=range]::-moz-range-thumb { pointer-events: auto; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid #33bfa6; cursor: pointer; box-shadow: 0 0 0 1px rgba(0,0,0,0.05); }
+.range-wrap input[type=range]::-webkit-slider-runnable-track { height: 3px; background: transparent; }
+.range-wrap input[type=range]::-moz-range-track { height: 3px; background: transparent; }
+.year-values { display: flex; justify-content: space-between; font-size: 12px; color: #333; margin-top: 6px; }
 
-  /* ----- stats overview panel ----- */
-  .stats-card { background: #fff; border-radius: 6px; padding: 0; margin-top: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-  .stats-card .stats-header { padding: 10px 16px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
-  .stats-card .stats-header:hover { background: #f8f9fa; }
-  .stats-card .stats-header h6 { margin: 0; font-size: 14px; font-weight: 600; color: #495057; }
-  .stats-card .stats-header .toggle-icon { font-size: 12px; color: #6c757d; transition: transform 0.15s; }
-  .stats-card.open .stats-header .toggle-icon { transform: rotate(180deg); }
-  .stats-card .stats-body { padding: 12px 16px 16px 16px; display: none; border-top: 1px solid #e9ecef; }
-  .stats-card.open .stats-body { display: block; }
-  .stats-card .stat-block { margin-bottom: 14px; }
-  .stats-card .stat-block:last-child { margin-bottom: 0; }
-  .stats-card .stat-block-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #6c757d; font-weight: 700; margin-bottom: 6px; }
-  .stats-card .stat-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; background: #e7f1ff; color: #084298; margin-right: 6px; margin-bottom: 4px; }
-  .stats-card .stat-bar-row { display: flex; align-items: center; font-size: 12px; margin-bottom: 4px; }
-  .stats-card .stat-bar-label { width: 110px; color: #495057; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .stats-card .stat-bar-track { flex-grow: 1; background: #f1f3f5; border-radius: 4px; height: 14px; overflow: hidden; margin: 0 8px; }
-  .stats-card .stat-bar-fill { height: 100%; background: linear-gradient(90deg, #6c757d, #adb5bd); border-radius: 4px; }
-  .stats-card .stat-bar-fill.functional { background: linear-gradient(90deg, #28a745, #85d399); }
-  .stats-card .stat-bar-fill.year { background: linear-gradient(90deg, #007bff, #6cb2ff); }
-  .stats-card .stat-bar-count { width: 60px; text-align: right; color: #495057; font-weight: 600; flex-shrink: 0; }
-  .stats-card .stat-meta { font-size: 11px; color: #6c757d; margin-top: 4px; }
-  .stats-card .stat-error { color: #dc3545; font-size: 12px; }
+#res-info { margin-bottom: 12px; color: #666; font-size: 13px; }
+#list-content { min-height: 600px; }
 
-  .info-box { background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 12px 16px; border-radius: 4px; margin-top: 12px; font-size: 14px; color: #495057; }
+.paper-item { padding-bottom: 18px; margin-bottom: 20px; border-bottom: 1px solid #ececec; }
+.paper-item:last-child { border-bottom: none; margin-bottom: 0; }
 
-  /* pagination */
-  .pagination-wrap { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+.journal-meta { color: #666; font-size: 12px; line-height: 1.5; margin-bottom: 4px; }
+.paper-title { color: #007bff; font-size: 19px; font-weight: 700; line-height: 1.4; text-decoration: none; }
+.paper-title:hover { color: #0056b3; text-decoration: underline; }
+.id-link { color: #007bff; font-size: 12px; }
+.authors-full { font-size: 13px; color: #444; line-height: 1.6; white-space: normal; word-break: break-word; }
 
-  /* ----- visit stats footer ----- */
-  .visit-stats { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-  .visit-stats .vs-pill {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 8px; border-radius: 12px;
-    font-size: 11px; line-height: 1.4;
-    background: #f1f5f9; color: #334155;
-    border: 1px solid #e2e8f0;
-  }
-  .visit-stats .vs-pill b { color: #0f172a; font-weight: 600; }
-  .visit-stats .vs-dot {
-    display: inline-block; width: 6px; height: 6px;
-    border-radius: 50%; background: #94a3b8;
-  }
-  .visit-stats .vs-dot-today  { background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.18); }
-  .visit-stats .vs-dot-total  { background: #3b82f6; }
-  .visit-stats .vs-dot-online { background: #f59e0b; animation: vs-pulse 1.6s ease-in-out infinite; }
-  .visit-stats .vs-loading { color: #64748b; }
-  .visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
-  @keyframes vs-pulse {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.35; }
-  }
+.abstract-box { display: none; background: #f8f9fa; border-left: 4px solid #007bff; padding: 10px 12px; margin-top: 6px; color: #444; line-height: 1.6; border-radius: 2px; }
+.abstract-box.open { display: block; }
+
+.badge-tag { display: inline-block; background: #eef5fc; color: #2b5f91; border: 1px solid #d5e4f2; border-radius: 999px; padding: 3px 8px; font-size: 11px; margin-right: 5px; margin-bottom: 5px; cursor: pointer; }
+.badge-tag:hover { background: #ddeefe; }
+.badge-tag-red    { background: #d93a49; color: #fff; border-color: #c92a3a; font-weight: 600; }
+.badge-tag-green  { background: #28a745; color: #fff; border-color: #1e7e34; font-weight: 600; }
+.badge-tag-yellow { background: #f5c518; color: #4a3b00; border-color: #e0b400; font-weight: 600; }
+
+.tag-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 9px; border-radius: 4px; border: 1px solid #ededed; background: #fafafa; margin-bottom: 6px; cursor: pointer; }
+.tag-item:hover { background: #f0f7ff; }
+.tag-item span { font-size: 13px; color: #333; word-break: break-word; padding-right: 8px; }
+.tag-item small { color: #777; background: #fff; border: 1px solid #e1e1e1; border-radius: 10px; padding: 1px 6px; min-width: 24px; text-align: center; }
+
+.paper-filter-box { background: #fafafa; border: 1px solid #ececec; border-radius: 4px; padding: 12px; margin-bottom: 14px; }
+.paper-filter-title { font-size: 12px; font-weight: 700; color: #666; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.journal-check-list { max-height: 240px; overflow-y: auto; padding-right: 4px; }
+.journal-check-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border: 1px solid #e7e7e7; border-radius: 4px; background: #fff; margin-bottom: 6px; font-size: 13px; }
+.journal-check-item label { margin: 0; cursor: pointer; flex: 1 1 0%; padding-left: 6px; padding-right: 8px; word-break: break-word; }
+.journal-check-item input { cursor: pointer; }
+.journal-count { display: inline-block; min-width: 28px; text-align: center; font-size: 12px; color: #666; border: 1px solid #e0e0e0; border-radius: 999px; padding: 1px 6px; background: #fafafa; }
+
+.pagination-container { gap: 10px; }
+.row.align-items-start { align-items: flex-start !important; }
+
+@media (max-width: 767px) {
+  .container-main, .page-title-wrap { width: 98%; }
+  .paper-title { font-size: 17px; }
+  .id-link { display: block; margin-top: 4px; float: none !important; }
+}
 </style>
 </head>
 <body>
@@ -199,283 +206,149 @@
   </ul>
 </div>
 
-<div id="home_content">
-  <br><h5 class="card-title">Triticeae Papers</h5><br>
-
-  <div class="filter-panel">
-    <div class="row">
-      <div class="col-md-4">
-        <div class="form-group">
-          <label>Full-text keyword</label>
-          <input type="text" id="f-q" class="form-control" placeholder="e.g. powdery mildew, TaCPK, stripe rust">
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="form-group">
-          <label>Gene name</label>
-          <input type="text" id="f-gene" class="form-control" placeholder="e.g. TaCPK-1">
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="form-group">
-          <label>Trait label</label>
-          <input type="text" id="f-trait" class="form-control" placeholder="e.g. stripe_rust, heat_tolerance">
-        </div>
-      </div>
-      <div class="col-md-2">
-        <div class="form-group">
-          <label>PMID (exact)</label>
-          <input type="text" id="f-pmid" class="form-control" placeholder="42105133">
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-2">
-        <div class="form-group">
-          <label>Year start</label>
-          <input type="number" id="f-year-start" class="form-control" placeholder="2020" min="1900" max="2100">
-        </div>
-      </div>
-      <div class="col-md-2">
-        <div class="form-group">
-          <label>Year end</label>
-          <input type="number" id="f-year-end" class="form-control" placeholder="2026" min="1900" max="2100">
-        </div>
-      </div>
-      <div class="col-md-2">
-        <div class="form-group">
-          <label>Recent</label>
-          <select id="f-recent-days" class="form-control">
-            <option value="">All time</option>
-            <option value="7" selected>Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="90">Last 90 days</option>
-            <option value="365">Last 365 days</option>
-          </select>
-        </div>
-      </div>
-      <div class="col-md-2">
-        <div class="form-group">
-          <label>Min confidence</label>
-          <input type="number" id="f-min-conf" class="form-control" placeholder="0.0 - 1.0" step="0.05" min="0" max="1">
-        </div>
-      </div>
-      <div class="col-md-2">
-        <div class="form-group">
-          <label>Functional gene</label>
-          <select id="f-functional" class="form-control">
-            <option value="">Any</option>
-            <option value="true">Yes</option>
-            <option value="false">No</option>
-          </select>
-        </div>
-      </div>
-      <div class="col-md-2">
-        <div class="form-group">
-          <label>Page size</label>
-          <select id="f-page-size" class="form-control">
-            <option>10</option>
-            <option selected>20</option>
-            <option>50</option>
-            <option>100</option>
-          </select>
-        </div>
-      </div>
-      <div class="col-md-2">
-        <div class="form-group">
-          <label>&nbsp;</label>
-          <button id="query-btn" class="btn btn-primary btn-block" onclick="runSearch(0)">Search</button>
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">Clear filters</button>
-        <button class="btn btn-outline-success btn-sm ml-2" onclick="exportTSV()" id="export-btn" disabled>Export current page (TSV)</button>
-        <span class="ml-3 text-muted" style="font-size:12px;">API: <code>GET /api/triticeae/papers</code></span>
-      </div>
-    </div>
-  </div>
-
-  <div class="stats-card" id="stats-card">
-    <div class="stats-header" onclick="toggleStats()">
-      <h6>Dataset overview <span class="text-muted" id="stats-headline" style="font-weight:400;"></span></h6>
-      <span class="toggle-icon">▼</span>
-    </div>
-    <div class="stats-body" id="stats-body">
-      <div id="stats-content"><div class="text-muted" style="font-size:13px;">Loading…</div></div>
-    </div>
-  </div>
-
-  <div id="error-msg" class="alert alert-danger"></div>
-
-  <div class="loading" id="loading-indicator">
-    <div class="spinner-border text-primary" role="status"></div>
-    <p class="mt-2 text-muted">Searching papers...</p>
-  </div>
-
-  <div id="results-card" class="result-table" style="display:none;">
-    <h6 class="card-title">Results</h6>
-    <div id="summary-bar" class="summary-bar" style="display:none;"></div>
-    <div id="papers-list"></div>
-    <div class="pagination-wrap">
-      <div>
-        <button id="prev-btn" class="btn btn-sm btn-outline-primary" onclick="runSearch(currentOffset - currentLimit)">&laquo; Prev</button>
-        <button id="next-btn" class="btn btn-sm btn-outline-primary ml-2" onclick="runSearch(currentOffset + currentLimit)">Next &raquo;</button>
-      </div>
-      <div class="text-muted" id="page-info" style="font-size:12px;"></div>
-    </div>
-  </div>
+<div class="page-title-wrap">
+  <h2>Triticeae Papers</h2>
+  <p>Curated functional-gene annotations for wheat, barley, rye and relatives. Search by keyword, year range, journal, or trait tag.</p>
 </div>
 
-<div class="line" style="height:10px;background-color:white"></div>
-<div id="home_footer">
-  <center style="margin-top:5px">
-    <table>
-      <tr>
-        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><div class="line" style="height:50px;width:15px;"></div></td>
-        <td>
-          <div id="visit-stats" class="visit-stats">
-            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
+<main class="container-main">
+<div class="row align-items-start">
+
+  <!-- ============= LEFT SIDEBAR ============= -->
+  <div class="col-lg-3 col-md-4">
+
+    <div class="sidebar-section">
+      <div id="loading-status" class="status-loading">Loading dataset…</div>
+
+      <h5>Search Papers</h5>
+
+      <div class="form-group mb-2">
+        <label for="searchField" class="small-label">Search Field</label>
+        <select id="searchField" class="form-control form-control-sm">
+          <option value="all">All Fields</option>
+          <option value="title">Title</option>
+          <option value="authors">Authors</option>
+          <option value="journal">Journal</option>
+          <option value="abstract">Abstract</option>
+          <option value="gene_name">Gene name</option>
+          <option value="trait">Trait tag</option>
+        </select>
+      </div>
+      <div class="form-group mb-2">
+        <label for="searchInp" class="small-label">Search Input</label>
+        <textarea id="searchInp" class="form-control" rows="3" placeholder="Examples: TaCPK, stripe rust, Plant Cell, 2024"></textarea>
+      </div>
+      <div class="helper-text mb-2">Use commas to separate multiple terms (OR within a field, AND across fields).</div>
+
+      <!-- Year chart + slider -->
+      <div class="chart-box">
+        <div class="chart-title">Results by Year</div>
+        <div class="year-chart-shell">
+          <canvas id="yearChart" width="520" height="120"></canvas>
+          <div class="chart-endpoints">
+            <span id="chartMinYear">—</span>
+            <span id="chartMaxYear">—</span>
           </div>
-        </td>
-      </tr>
-    </table>
-    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
-  </center>
+        </div>
+        <div class="year-slider-wrap">
+          <div class="year-selected-text"><span id="yearRangeText">All years</span></div>
+          <div class="range-wrap">
+            <div class="range-track"></div>
+            <div class="range-selected" id="rangeSelected" style="left: 0%; width: 100%;"></div>
+            <input type="range" id="yearStart" min="1900" max="2030" value="1900" step="1">
+            <input type="range" id="yearEnd"   min="1900" max="2030" value="2030" step="1">
+          </div>
+          <div class="year-values">
+            <span id="yearMinLabel">1900</span>
+            <span id="yearMaxLabel">2030</span>
+          </div>
+          <button type="button" id="clear-year" class="btn btn-link btn-sm p-0 mt-1">Clear year filter</button>
+        </div>
+      </div>
+
+      <!-- Journal filter -->
+      <div class="paper-filter-box">
+        <div class="paper-filter-title">Journal Filter</div>
+        <div class="helper-text mb-2">Only checked journals will be displayed.</div>
+        <div style="margin-bottom:8px;">
+          <button type="button" id="journal-all" class="btn btn-sm btn-outline-primary mr-1">Select All</button>
+          <button type="button" id="journal-none" class="btn btn-sm btn-outline-secondary">Clear All</button>
+        </div>
+        <div id="journal-filter-list" class="journal-check-list"></div>
+      </div>
+
+      <div class="btn-group w-100">
+        <button type="button" id="search-btn" class="btn btn-primary btn-sm">Search</button>
+        <button type="button" id="reset-btn"  class="btn btn-outline-secondary btn-sm">Reset</button>
+      </div>
+      <button type="button" id="export-btn" class="btn btn-success btn-sm btn-block mt-2" disabled>
+        Export Results (CSV + Abstract)
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <h5>Top Trait Keywords</h5>
+      <div class="helper-text mb-2">Click a tag to filter papers by that trait.</div>
+      <div id="trait-tag-cloud"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <h5>Top Keywords</h5>
+      <div id="tag-cloud"></div>
+    </div>
+
+  </div>
+
+  <!-- ============= RIGHT MAIN ============= -->
+  <div class="col-lg-9 col-md-8">
+    <div id="res-info">Loading…</div>
+    <div id="list-content"></div>
+    <div class="pagination-container d-flex justify-content-center align-items-center mt-4 mb-5">
+      <button type="button" id="prev-btn" class="btn btn-sm btn-outline-primary" disabled>Prev</button>
+      <span id="page-num" class="font-weight-bold mx-2">Page 1 / 1</span>
+      <button type="button" id="next-btn" class="btn btn-sm btn-outline-primary" disabled>Next</button>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<div class="line" id="line"></div>
+<div id="home_footer">
+  <table>
+    <tr>
+      <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+      <td><span class="line"></span></td>
+      <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+      <td><span class="line"></span></td>
+      <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+      <td><span class="line"></span></td>
+      <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+      <td><span class="line"></span></td>
+      <td><span style="display:inline-block; height:50px; width:15px;"></span></td>
+      <td>
+        <div id="visit-stats" class="visit-stats">
+          <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
+        </div>
+      </td>
+    </tr>
+  </table>
+  <div>For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a></div>
 </div>
 
 <script>
-var currentOffset = 0;
-var currentLimit = 20;
-var currentTotal = 0;
-var currentResults = [];
-
-function toggleStats() {
-  var card = document.getElementById('stats-card');
-  card.classList.toggle('open');
-  if (card.classList.contains('open') && !card.dataset.loaded) {
-    loadStats();
-  }
-}
-
-function loadStats() {
-  var card = document.getElementById('stats-card');
-  var content = document.getElementById('stats-content');
-  content.innerHTML = '<div class="text-muted" style="font-size:13px;">Loading…</div>';
-  $.getJSON('/api/triticeae/stats')
-    .done(function(resp) {
-      if (!resp.success) { content.innerHTML = '<div class="stat-error">Failed to load stats.</div>'; return; }
-      renderStats(resp.data || {});
-      card.dataset.loaded = '1';
-    })
-    .fail(function(xhr){
-      content.innerHTML = '<div class="stat-error">Stats unavailable (HTTP ' + xhr.status + ').</div>';
-    });
-}
-
-function renderStats(d) {
-  var totalPapers = d.total_papers || 0;
-  var withAbstract = d.with_abstract || 0;
-  var withJournal = d.with_journal || 0;
-  var totalAnno = d.total_annotations || 0;
-  var annoPapers = d.annotated_papers || 0;
-  var yMin = d.year_min, yMax = d.year_max;
-
-  // headline pill 一直显示
-  var headline = totalPapers.toLocaleString() + ' papers';
-  if (yMin && yMax) headline += ' · ' + yMin + '–' + yMax;
-  document.getElementById('stats-headline').textContent = '· ' + headline;
-
-  var html = '';
-
-  // 基础计数
-  html += '<div class="stat-block">' +
-    '<span class="stat-pill"><b>' + totalPapers.toLocaleString() + '</b> papers</span>' +
-    '<span class="stat-pill"><b>' + withAbstract.toLocaleString() + '</b> with abstract</span>' +
-    '<span class="stat-pill"><b>' + withJournal.toLocaleString() + '</b> with journal</span>' +
-    '<span class="stat-pill"><b>' + totalAnno.toLocaleString() + '</b> annotations</span>' +
-    '<span class="stat-pill"><b>' + annoPapers.toLocaleString() + '</b> annotated papers</span>' +
-  '</div>';
-
-  // 年份直方图（最近 15 年）
-  var hist = d.year_histogram || [];
-  if (hist.length) {
-    var recent = hist.slice(0, 15);
-    var maxCount = recent.reduce(function(m, r){ return Math.max(m, r.count); }, 1);
-    html += '<div class="stat-block"><div class="stat-block-title">Papers by year (last 15)</div>';
-    recent.forEach(function(r){
-      var w = Math.max(2, Math.round(r.count / maxCount * 100));
-      html += '<div class="stat-bar-row">' +
-        '<div class="stat-bar-label">' + r.year + '</div>' +
-        '<div class="stat-bar-track"><div class="stat-bar-fill year" style="width:' + w + '%;"></div></div>' +
-        '<div class="stat-bar-count">' + r.count.toLocaleString() + '</div>' +
-      '</div>';
-    });
-    html += '</div>';
-  }
-
-  // top 期刊
-  var journals = d.top_journals || [];
-  if (journals.length) {
-    var maxJ = journals[0].count;
-    html += '<div class="stat-block"><div class="stat-block-title">Top journals</div>';
-    journals.slice(0, 10).forEach(function(j){
-      var w = Math.max(2, Math.round(j.count / maxJ * 100));
-      html += '<div class="stat-bar-row">' +
-        '<div class="stat-bar-label" title="' + escapeHtml(j.journal) + '">' + escapeHtml(j.journal) + '</div>' +
-        '<div class="stat-bar-track"><div class="stat-bar-fill" style="width:' + w + '%;"></div></div>' +
-        '<div class="stat-bar-count">' + j.count.toLocaleString() + '</div>' +
-      '</div>';
-    });
-    html += '</div>';
-  }
-
-  // 功能基因比例
-  var fg = d.functional_dist || {};
-  if (fg.total) {
-    var fPct = Math.round(fg.functional / fg.total * 100);
-    var nPct = Math.round(fg.non_functional / fg.total * 100);
-    var uPct = Math.max(0, 100 - fPct - nPct);
-    html += '<div class="stat-block"><div class="stat-block-title">Functional gene annotation (' + fg.total.toLocaleString() + ' records)</div>' +
-      '<div class="stat-bar-row"><div class="stat-bar-label">Functional</div>' +
-        '<div class="stat-bar-track"><div class="stat-bar-fill functional" style="width:' + fPct + '%;"></div></div>' +
-        '<div class="stat-bar-count">' + fg.functional.toLocaleString() + ' (' + fPct + '%)</div></div>' +
-      '<div class="stat-bar-row"><div class="stat-bar-label">Non-functional</div>' +
-        '<div class="stat-bar-track"><div class="stat-bar-fill" style="width:' + nPct + '%;"></div></div>' +
-        '<div class="stat-bar-count">' + fg.non_functional.toLocaleString() + ' (' + nPct + '%)</div></div>' +
-      '<div class="stat-bar-row"><div class="stat-bar-label">Unknown</div>' +
-        '<div class="stat-bar-track"><div class="stat-bar-fill" style="width:' + uPct + '%;"></div></div>' +
-        '<div class="stat-bar-count">' + fg.unknown.toLocaleString() + ' (' + uPct + '%)</div></div>' +
-    '</div>';
-  }
-
-  // 审核状态
-  var rs = d.review_status_dist || [];
-  if (rs.length) {
-    var maxRS = rs[0].count;
-    html += '<div class="stat-block"><div class="stat-block-title">Review status</div>';
-    rs.slice(0, 8).forEach(function(r){
-      var w = Math.max(2, Math.round(r.count / maxRS * 100));
-      html += '<div class="stat-bar-row">' +
-        '<div class="stat-bar-label" title="' + escapeHtml(r.status) + '">' + escapeHtml(r.status) + '</div>' +
-        '<div class="stat-bar-track"><div class="stat-bar-fill" style="width:' + w + '%;"></div></div>' +
-        '<div class="stat-bar-count">' + r.count.toLocaleString() + '</div>' +
-      '</div>';
-    });
-    html += '</div>';
-  }
-
-  document.getElementById('stats-content').innerHTML = html;
-}
+/* ============================================================
+   Triticeae Papers SPA — search logic
+   ============================================================ */
+var allResults = [];
+var filteredResults = [];
+var currentPage = 1;
+var pageSize = 25;
+var currentJournals = null;   // null = no filter, array = allowed journals
+var currentTag = null;        // null = no filter, string = tag to filter by
+var stats = null;             // cached /api/triticeae/stats
+var yearHist = [];            // [{year, count}], sorted asc
+var yearMin = 1900, yearMax = 2030;
 
 function escapeHtml(s) {
   if (s == null) return '';
@@ -484,25 +357,12 @@ function escapeHtml(s) {
   });
 }
 
-function showError(msg) {
-  $('#error-msg').text(msg).show();
-  $('#loading-indicator').hide();
-  $('#query-btn').prop('disabled', false);
+function setStatus(kind, msg) {
+  var el = document.getElementById('loading-status');
+  el.className = 'status-' + kind;
+  el.textContent = msg;
 }
 
-function clearFilters() {
-  $('#f-q, #f-gene, #f-trait, #f-pmid, #f-year-start, #f-year-end, #f-min-conf').val('');
-  $('#f-functional').val('');
-  $('#f-page-size').val(20);
-  $('#f-recent-days').val('7');  // reset Recent to default (last 7 days), not 'all time'
-}
-
-/**
- * Parse PubMed-style "2026 Jun 5" / "2026 May" / "2026 May 5-9" to a Date.
- * Returns null when the string is empty / unparseable.
- * Day precision: uses the first day of month for "Y M" format.
- * For ranges "Y M D-D", uses the start day.
- */
 function parsePubDate(s) {
   if (!s) return null;
   s = String(s).trim();
@@ -516,195 +376,312 @@ function parsePubDate(s) {
   return new Date(Date.UTC(yr, mo, day));
 }
 
-function parseTags(raw) {
+function extractYear(p) {
+  var dt = parsePubDate(p.pub_date);
+  return dt ? dt.getUTCFullYear() : null;
+}
+
+function parseTagList(raw) {
   if (!raw) return [];
   var s = String(raw).trim();
-  if (s.startsWith('[')) {
-    try { return JSON.parse(s); } catch (e) { return []; }
-  }
+  if (s.startsWith('[')) { try { return JSON.parse(s); } catch (e) { return []; } }
   return s.split(/[,;]\s*/).filter(Boolean);
+}
+
+/* ============ Stats loading ============ */
+function loadStats() {
+  setStatus('loading', 'Loading dataset…');
+  $.getJSON('/api/triticeae/stats')
+    .done(function(resp){
+      if (!resp.success) { setStatus('error', 'Failed to load stats.'); return; }
+      stats = resp.data || {};
+      yearMin = stats.year_min || 1900;
+      yearMax = stats.year_max || new Date().getFullYear();
+      yearHist = (stats.year_histogram || []).slice().sort(function(a,b){ return a.year - b.year; });
+      initYearSlider();
+      drawYearChart();
+      renderJournalList();
+      renderTagClouds();
+      setStatus('ready', 'Ready · ' + stats.total_papers.toLocaleString() + ' papers · ' + yearMin + '–' + yearMax);
+      // Auto-load default view: last 7 days (matching recent feature)
+      runSearch(0);
+    })
+    .fail(function(xhr){
+      setStatus('error', 'Stats unavailable (HTTP ' + xhr.status + '). Cannot search.');
+    });
+}
+
+/* ============ Year slider + chart ============ */
+function initYearSlider() {
+  document.getElementById('yearStart').min = yearMin;
+  document.getElementById('yearStart').max = yearMax;
+  document.getElementById('yearStart').value = yearMin;
+  document.getElementById('yearEnd').min   = yearMin;
+  document.getElementById('yearEnd').max   = yearMax;
+  document.getElementById('yearEnd').value   = yearMax;
+  document.getElementById('chartMinYear').textContent = yearMin;
+  document.getElementById('chartMaxYear').textContent = yearMax;
+  document.getElementById('yearMinLabel').textContent = yearMin;
+  document.getElementById('yearMaxLabel').textContent = yearMax;
+  updateYearSlider();
+}
+
+function updateYearSlider() {
+  var s = parseInt(document.getElementById('yearStart').value, 10);
+  var e = parseInt(document.getElementById('yearEnd').value, 10);
+  if (s > e) { /* ensure start <= end */ var t = s; s = e; e = t; document.getElementById('yearStart').value = s; document.getElementById('yearEnd').value = e; }
+  var span = yearMax - yearMin;
+  var left = span > 0 ? (s - yearMin) / span * 100 : 0;
+  var width = span > 0 ? (e - s) / span * 100 : 100;
+  document.getElementById('rangeSelected').style.left = left + '%';
+  document.getElementById('rangeSelected').style.width = width + '%';
+  document.getElementById('yearRangeText').textContent = (s === yearMin && e === yearMax) ? 'All years' : (s + ' – ' + e);
+}
+
+function drawYearChart() {
+  var c = document.getElementById('yearChart');
+  if (!c) return;
+  var ctx = c.getContext('2d');
+  // Match canvas pixel size to its CSS box
+  var rect = c.getBoundingClientRect();
+  c.width  = Math.max(200, Math.round(rect.width));
+  c.height = 120;
+  ctx.clearRect(0, 0, c.width, c.height);
+  if (!yearHist.length) return;
+  // Show last 15 years for readability
+  var recent = yearHist.slice(-15);
+  var maxCount = recent.reduce(function(m, r){ return Math.max(m, r.count); }, 1);
+  var pad = 6;
+  var barW = (c.width - pad * 2) / recent.length;
+  recent.forEach(function(r, i){
+    var h = (r.count / maxCount) * (c.height - pad * 2);
+    var x = pad + i * barW;
+    var y = c.height - pad - h;
+    ctx.fillStyle = '#7fd6c6';
+    ctx.fillRect(x + 1, y, Math.max(2, barW - 2), h);
+  });
+}
+
+/* ============ Journal list ============ */
+function renderJournalList() {
+  var list = (stats && stats.top_journals) || [];
+  var html = '';
+  list.slice(0, 23).forEach(function(j){
+    var id = 'j_' + j.journal.replace(/[^a-zA-Z0-9]/g,'_');
+    html += '<div class="journal-check-item">' +
+              '<input type="checkbox" id="' + id + '" data-journal="' + escapeHtml(j.journal) + '" checked>' +
+              '<label for="' + id + '">' + escapeHtml(j.journal) + '</label>' +
+              '<span class="journal-count">' + j.count.toLocaleString() + '</span>' +
+            '</div>';
+  });
+  document.getElementById('journal-filter-list').innerHTML = html;
+}
+
+function getCheckedJournals() {
+  var items = document.querySelectorAll('#journal-filter-list input[type=checkbox]');
+  var all = [];
+  var checked = [];
+  items.forEach(function(cb){
+    all.push(cb.dataset.journal);
+    if (cb.checked) checked.push(cb.dataset.journal);
+  });
+  return { all: all, checked: checked };
+}
+
+/* ============ Tag clouds ============ */
+function renderTagClouds() {
+  // Trait cloud: take top 10 from top_ai_tags (server returns 30, take 10)
+  var tags = (stats && stats.top_ai_tags) || [];
+  var traitHtml = '';
+  tags.slice(0, 10).forEach(function(t){
+    var label = (t.tags || '').split(';')[0] || t.tags;  // pick first tag from semicolon-joined
+    traitHtml += '<div class="tag-item" data-tag="' + escapeHtml(label.trim()) + '">' +
+      '<span>' + escapeHtml(label.trim()) + '</span>' +
+      '<small>' + t.count.toLocaleString() + '</small>' +
+    '</div>';
+  });
+  document.getElementById('trait-tag-cloud').innerHTML = traitHtml || '<div class="text-muted" style="font-size:12px;">No data</div>';
+
+  // Top keywords cloud: use functional_dist.review_status_dist or just re-list ai_tags 11-20
+  var tags2 = (stats && stats.top_ai_tags) || [];
+  var tagHtml = '';
+  tags2.slice(10, 20).forEach(function(t){
+    var label = (t.tags || '').split(';')[0] || t.tags;
+    tagHtml += '<div class="tag-item" data-tag="' + escapeHtml(label.trim()) + '">' +
+      '<span>' + escapeHtml(label.trim()) + '</span>' +
+      '<small>' + t.count.toLocaleString() + '</small>' +
+    '</div>';
+  });
+  document.getElementById('tag-cloud').innerHTML = tagHtml || '<div class="text-muted" style="font-size:12px;">No data</div>';
+}
+
+/* ============ Search ============ */
+function buildQuery() {
+  var field = document.getElementById('searchField').value;
+  var inp = document.getElementById('searchInp').value.trim();
+  var params = { limit: 200, offset: 0 };  // fetch a big chunk; we filter/paginate client-side for UX
+  if (inp) {
+    var parts = inp.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+    if (field === 'all') {
+      // AND across comma-separated terms, each term matches any field
+      // We'll fetch all and filter client-side below
+    } else if (field === 'gene_name') {
+      params.gene_name = parts[0];
+    } else if (field === 'trait') {
+      params.trait_label = parts[0];
+    } else if (field === 'authors') {
+      params.authors = parts[0];
+    } else if (field === 'journal') {
+      params.journal = parts[0];
+    } else {
+      params.q = parts[0];
+    }
+  }
+  return { params: params, rawInput: inp, field: field };
+}
+
+function clientFilter(papers, q) {
+  if (!q || !q.rawInput) return papers;
+  var terms = q.rawInput.split(',').map(function(s){ return s.trim().toLowerCase(); }).filter(Boolean);
+  if (!terms.length) return papers;
+  if (q.field === 'all') {
+    return papers.filter(function(p){
+      var hay = ((p.paper_title||'') + ' ' + (p.journal||'') + ' ' + (p.authors||'') + ' ' + (p.abstract||'')).toLowerCase();
+      return terms.every(function(t){ return hay.indexOf(t) >= 0; });
+    });
+  }
+  // Specific field: server already filtered, but also do client text-match on the chosen field for precision
+  var f = q.field;
+  return papers.filter(function(p){
+    var v = '';
+    if (f === 'title') v = p.paper_title || '';
+    else if (f === 'authors') v = p.authors || '';
+    else if (f === 'journal') v = p.journal || '';
+    else if (f === 'abstract') v = p.abstract || '';
+    else return true;
+    return terms.every(function(t){ return v.toLowerCase().indexOf(t) >= 0; });
+  });
+}
+
+function runSearch(/* unused offset, kept for compat */) {
+  var q = buildQuery();
+  var yStart = parseInt(document.getElementById('yearStart').value, 10);
+  var yEnd   = parseInt(document.getElementById('yearEnd').value, 10);
+  if (yStart !== yearMin) paramsSet(params, 'pub_date_start', String(yStart));
+  if (yEnd   !== yearMax) paramsSet(params, 'pub_date_end',   String(yEnd));
+
+  var j = getCheckedJournals();
+  if (j.checked.length > 0 && j.checked.length < j.all.length) currentJournals = j.checked;
+  else currentJournals = null;  // all checked OR none checked = no filter
+
+  setStatus('loading', 'Searching…');
+  document.getElementById('res-info').textContent = 'Searching…';
+  document.getElementById('list-content').innerHTML = '<div class="text-muted text-center" style="padding:60px;">Loading…</div>';
+
+  $.getJSON('/api/triticeae/papers', q.params)
+    .done(function(resp){
+      if (!resp.success) { setStatus('error', 'API error: ' + (resp.error||'unknown')); return; }
+      var papers = (resp.data && resp.data.papers) || [];
+      // Apply client-side text filter
+      papers = clientFilter(papers, q);
+      // Apply year filter (server is year-only, so fine-tune by month/day when needed)
+      if (yStart !== yearMin || yEnd !== yearMax) {
+        papers = papers.filter(function(p){
+          var y = extractYear(p);
+          return y != null && y >= yStart && y <= yEnd;
+        });
+      }
+      // Apply journal filter
+      if (currentJournals) {
+        var set = {}; currentJournals.forEach(function(j){ set[j.toLowerCase()] = true; });
+        papers = papers.filter(function(p){ return set[(p.journal||'').toLowerCase()]; });
+      }
+      // Apply tag filter (if user clicked a tag chip)
+      if (currentTag) {
+        var tlow = currentTag.toLowerCase();
+        papers = papers.filter(function(p){
+          var tags = parseTagList(p.new_tags).concat((p.trait_label||'').split(/[,;]\s*/)).concat((p.ai_tags||'').split(/[,;]\s*/));
+          return tags.some(function(x){ return (x||'').trim().toLowerCase() === tlow; });
+        });
+      }
+      allResults = papers;
+      currentPage = 1;
+      renderPage();
+      setStatus('ready', 'Found ' + papers.length.toLocaleString() + ' papers');
+    })
+    .fail(function(xhr){
+      setStatus('error', 'Search failed: HTTP ' + xhr.status);
+      document.getElementById('list-content').innerHTML = '<div class="alert alert-danger">Search failed.</div>';
+    });
+}
+
+function paramsSet(params, key, val) { params[key] = val; }
+
+function renderPage() {
+  var total = allResults.length;
+  var pages = Math.max(1, Math.ceil(total / pageSize));
+  if (currentPage > pages) currentPage = pages;
+  var start = (currentPage - 1) * pageSize;
+  var pageItems = allResults.slice(start, start + pageSize);
+
+  document.getElementById('res-info').textContent =
+    'Found ' + total.toLocaleString() + (total === 1 ? ' paper' : ' papers') +
+    (currentJournals ? ' · ' + currentJournals.length + ' journals' : '') +
+    (currentTag ? ' · tag "' + currentTag + '"' : '');
+  document.getElementById('page-num').textContent = 'Page ' + currentPage + ' / ' + pages;
+  document.getElementById('prev-btn').disabled = currentPage <= 1;
+  document.getElementById('next-btn').disabled = currentPage >= pages;
+  document.getElementById('export-btn').disabled = total === 0;
+
+  if (pageItems.length === 0) {
+    document.getElementById('list-content').innerHTML =
+      '<div class="text-muted text-center" style="padding:60px;">No papers matched. Try widening the filters.</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < pageItems.length; i++) html += renderPaper(pageItems[i]);
+  document.getElementById('list-content').innerHTML = html;
 }
 
 function renderPaper(p) {
   var title = escapeHtml(p.paper_title || p.fga_title || '(untitled)');
-  var pmid = escapeHtml(p.pmid || p.pubmedid || '');
-  var link = p.link || (pmid ? 'https://pubmed.ncbi.nlm.nih.gov/' + pmid + '/' : '#');
+  var pmid  = escapeHtml(p.pmid || p.pubmedid || '');
+  var link  = p.link || (pmid ? 'https://pubmed.ncbi.nlm.nih.gov/' + pmid + '/' : '#');
   var journal = escapeHtml(p.journal || '');
   var date = escapeHtml(p.pub_date || '');
   var authors = escapeHtml(p.authors || '');
-  var abs = p.abstract || '';
-  var absShort = abs.length > 400;
-
-  var isFunctional = p.is_functional_gene === true;
-  var isNegative = p.review_status === 'negative';
-  var cardClass = 'paper-card';
-  if (isFunctional) cardClass += ' is-functional';
-  else if (isNegative) cardClass += ' is-negative';
-
-  var badgeHtml = '';
-  if (isFunctional) {
-    badgeHtml = '<span class="badge-functional mr-1">FUNCTIONAL GENE</span>';
-  } else if (isNegative) {
-    badgeHtml = '<span class="badge-negative mr-1">NEGATIVE</span>';
-  }
-  if (p.review_status && p.review_status !== 'negative') {
-    badgeHtml += '<span class="badge-review mr-1">' + escapeHtml(p.review_status) + '</span>';
-  }
-
-  var confidenceHtml = '';
-  if (typeof p.confidence === 'number') {
-    var pct = Math.round(p.confidence * 100);
-    confidenceHtml = '<div class="pc-confidence">AI confidence: <b>' + pct + '%</b></div>';
-  }
+  var abs = escapeHtml(p.abstract || 'No abstract available.');
+  var tags = parseTagList(p.new_tags);
+  if (p.trait_label) tags = tags.concat(p.trait_label.split(/[,;]\s*/).filter(Boolean));
+  if (p.ai_tags)     tags = tags.concat((p.ai_tags||'').split(/[,;]\s*/).filter(Boolean));
+  // Dedup
+  var seen = {}; var uniqTags = [];
+  tags.forEach(function(t){ t = (t||'').trim(); if (t && !seen[t]) { seen[t] = true; uniqTags.push(t); } });
 
   var tagsHtml = '';
-  var tags = parseTags(p.new_tags);
-  if (p.trait_label) tags.push(p.trait_label);
-  if (tags.length) {
-    tagsHtml = '<div class="pc-tags">' +
-      tags.map(function(t){ return '<span class="pc-tag">' + escapeHtml(t) + '</span>'; }).join('') +
-      '</div>';
-  }
+  uniqTags.slice(0, 12).forEach(function(t){
+    tagsHtml += '<span class="badge-tag" data-tag="' + escapeHtml(t) + '">' + escapeHtml(t) + '</span>';
+  });
 
-  var geneHtml = '';
-  if (p.gene_name && p.gene_name.length) {
-    geneHtml = '<div class="pc-tags">' +
-      p.gene_name.map(function(g){ return '<span class="pc-tag gene">' + escapeHtml(g) + '</span>'; }).join('') +
-      '</div>';
-  }
-
-  var absId = 'abs-' + pmid;
-  var absHtml = '<div id="' + absId + '" class="pc-abstract collapsed">' + escapeHtml(abs) + '</div>';
-  if (absShort) {
-    absHtml += '<span class="toggle" onclick="var e=document.getElementById(\'' + absId + '\'); e.classList.toggle(\'collapsed\'); this.textContent = this.textContent === \'Show more\' ? \'Show less\' : \'Show more\';">Show more</span>';
-  }
-
-  return '<div class="' + cardClass + '">' +
-    badgeHtml +
-    '<div class="pc-title"><a href="' + escapeHtml(link) + '" target="_blank">' + title + '</a></div>' +
-    '<div class="pc-meta">' + journal + (journal && date ? ' | ' : '') + date + ' <a href="' + escapeHtml(link) + '" target="_blank" class="float-right">PMID: ' + pmid + '</a></div>' +
-    '<div class="pc-authors">' + authors + '</div>' +
-    absHtml +
-    tagsHtml + geneHtml +
-    confidenceHtml +
+  var abstractId = 'abs-' + pmid;
+  return '<div class="paper-item">' +
+    '<div class="journal-meta">' + journal + (journal && date ? ' | ' : '') + date +
+      '<a href="' + escapeHtml(link) + '" target="_blank" class="id-link float-right">PMID: ' + pmid + '</a>' +
+    '</div>' +
+    '<a href="' + escapeHtml(link) + '" target="_blank" class="paper-title d-block mb-2">' + title + '</a>' +
+    (tagsHtml ? '<div class="mb-2">' + tagsHtml + '</div>' : '') +
+    '<div class="authors-full"><strong>Authors:</strong> ' + authors + '</div>' +
+    '<button type="button" class="btn btn-sm btn-link pl-0 text-primary toggle-abs" data-target="' + abstractId + '">[+ View Abstract]</button>' +
+    '<div id="' + abstractId + '" class="abstract-box">' + abs + '</div>' +
   '</div>';
 }
 
-function runSearch(offset) {
-  if (offset == null) offset = 0;
-  if (offset < 0) offset = 0;
-  currentLimit = parseInt($('#f-page-size').val()) || 20;
-  currentOffset = offset;
-
-  var params = {
-    limit: currentLimit,
-    offset: currentOffset
-  };
-  var q = $('#f-q').val().trim();          if (q) params.q = q;
-  var gene = $('#f-gene').val().trim();    if (gene) params.gene_name = gene;
-  var trait = $('#f-trait').val().trim();  if (trait) params.trait_label = trait;
-  var pmid = $('#f-pmid').val().trim();    if (pmid) params.pmid = pmid;
-
-  // Recent filter: when set, derive a year range so the backend query
-  // doesn't scan the whole dataset. The exact-day precision is then
-  // applied client-side (pub_date string parse) below.
-  var recentDays = parseInt($('#f-recent-days').val()) || 0;
-  var cutoffDate = null;
-  if (recentDays > 0) {
-    cutoffDate = new Date();
-    cutoffDate.setUTCDate(cutoffDate.getUTCDate() - recentDays);
-    // backend only filters by year; widen to last (recentDays/365)+1 years to be safe
-    var yearSpan = Math.max(1, Math.ceil(recentDays / 365) + 1);
-    var yEnd = new Date().getUTCFullYear();
-    var yStart = yEnd - yearSpan + 1;
-    if (!$('#f-year-start').val()) params.pub_date_start = String(yStart);
-    if (!$('#f-year-end').val())   params.pub_date_end   = String(yEnd);
-  }
-
-  var ys = $('#f-year-start').val();       if (ys) params.pub_date_start = ys;
-  var ye = $('#f-year-end').val();         if (ye) params.pub_date_end = ye;
-  var mc = $('#f-min-conf').val();         if (mc !== '' && mc != null) params.min_confidence = parseFloat(mc);
-  var fn = $('#f-functional').val();
-  if (fn === 'true')  params.is_functional_gene = true;
-  if (fn === 'false') params.is_functional_gene = false;
-
-  $('#error-msg').hide();
-  $('#results-card').hide();
-  $('#summary-bar').hide();
-  $('#papers-list').empty();
-  currentResults = [];
-  $('#export-btn').prop('disabled', true);
-  $('#loading-indicator').show();
-  $('#query-btn').prop('disabled', true);
-
-  $.getJSON('/api/triticeae/papers', params)
-    .done(function(resp){
-      $('#loading-indicator').hide();
-      $('#query-btn').prop('disabled', false);
-      if (!resp.success) { showError('API error: ' + (resp.error || 'unknown')); return; }
-      var d = resp.data || {};
-      var allPapers = d.papers || [];
-
-      // Client-side exact-day filter when "Recent" is set
-      var papers = allPapers;
-      var recentLabel = '';
-      if (cutoffDate) {
-        papers = allPapers.filter(function(p){
-          var dt = parsePubDate(p.pub_date);
-          return dt && dt >= cutoffDate;
-        });
-        recentLabel = ' · last ' + recentDays + ' days (client-filtered)';
-      }
-
-      currentTotal = d.total || 0;
-      currentResults = papers;
-
-      if (papers.length === 0) {
-        $('#results-card').show();
-        var msg = '<b>No papers matched.</b> Try widening the filters.';
-        if (cutoffDate) msg += ' <span class="text-muted">(No papers in the last ' + recentDays + ' days.)</span>';
-        $('#summary-bar').html(msg).show();
-        $('#page-info').text('');
-        $('#prev-btn, #next-btn').prop('disabled', true);
-        return;
-      }
-
-      var from = currentOffset + 1;
-      var to = Math.min(currentOffset + papers.length, currentTotal);
-      $('#summary-bar').html(
-        'Showing <b>' + from + '–' + to + '</b> of <b>' + currentTotal.toLocaleString() + '</b> backend papers' +
-        ' · <b>' + papers.length + '</b> after date filter' +
-        recentLabel
-      ).show();
-
-      var html = '';
-      for (var i = 0; i < papers.length; i++) html += renderPaper(papers[i]);
-      $('#papers-list').html(html);
-
-      $('#page-info').text('Page ' + (Math.floor(currentOffset / currentLimit) + 1) + ' / ' + Math.max(1, Math.ceil(currentTotal / currentLimit)));
-      $('#prev-btn').prop('disabled', currentOffset === 0);
-      $('#next-btn').prop('disabled', currentOffset + currentLimit >= currentTotal);
-
-      $('#results-card').show();
-      $('#export-btn').prop('disabled', false);
-    })
-    .fail(function(xhr){
-      $('#loading-indicator').hide();
-      $('#query-btn').prop('disabled', false);
-      var msg = 'HTTP ' + xhr.status + ' ' + xhr.statusText;
-      try { var j = JSON.parse(xhr.responseText); if (j.error) msg = j.error; } catch(e){}
-      showError('Request failed: ' + msg);
-    });
-}
-
-// Auto-load on page open with the default "Last 7 days" filter.
-$(function() { runSearch(0); });
-
-function exportTSV() {
-  if (!currentResults.length) return;
-  var cols = ['pmid','paper_title','journal','pub_date','authors','abstract','gene_name','trait_label','is_functional_gene','confidence','review_status','ai_tags','pubmed_keywords','link'];
+/* ============ CSV export ============ */
+function exportCSV() {
+  if (!allResults.length) return;
+  var cols = ['pmid','paper_title','journal','pub_date','authors','abstract','gene_name','trait_label','is_functional_gene','confidence','review_status','ai_tags','link'];
   var header = cols.join('\t');
-  var rows = currentResults.map(function(p){
+  var rows = allResults.map(function(p){
     return cols.map(function(c){
       var v = p[c];
       if (v == null) v = '';
@@ -723,6 +700,64 @@ function exportTSV() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+/* ============ Reset ============ */
+function resetAll() {
+  document.getElementById('searchInp').value = '';
+  document.getElementById('searchField').value = 'all';
+  document.getElementById('yearStart').value = yearMin;
+  document.getElementById('yearEnd').value   = yearMax;
+  updateYearSlider();
+  document.querySelectorAll('#journal-filter-list input[type=checkbox]').forEach(function(cb){ cb.checked = true; });
+  currentTag = null;
+  runSearch();
+}
+
+/* ============ Wire-up ============ */
+$(function(){
+  loadStats();
+
+  $('#yearStart, #yearEnd').on('input', function(){
+    updateYearSlider();
+    runSearch();
+  });
+  $('#clear-year').on('click', function(){
+    $('#yearStart').val(yearMin); $('#yearEnd').val(yearMax); updateYearSlider(); runSearch();
+  });
+  $('#search-btn').on('click', runSearch);
+  $('#reset-btn').on('click', resetAll);
+  $('#export-btn').on('click', exportCSV);
+  $('#prev-btn').on('click', function(){ if (currentPage > 1) { currentPage--; renderPage(); window.scrollTo(0,0); } });
+  $('#next-btn').on('click', function(){ currentPage++; renderPage(); window.scrollTo(0,0); });
+  $('#journal-all').on('click',  function(){ $('#journal-filter-list input').prop('checked', true);  runSearch(); });
+  $('#journal-none').on('click', function(){ $('#journal-filter-list input').prop('checked', false); runSearch(); });
+  $('#journal-filter-list').on('change', 'input', runSearch);
+
+  // Delegated click handlers inside main area
+  $('#list-content').on('click', '.toggle-abs', function(){
+    var id = $(this).data('target');
+    var box = document.getElementById(id);
+    if (box) box.classList.toggle('open');
+    $(this).text(box.classList.contains('open') ? '[− Hide Abstract]' : '[+ View Abstract]');
+  });
+  $('#list-content').on('click', '.badge-tag', function(){
+    var t = $(this).data('tag');
+    currentTag = (currentTag === t) ? null : t;
+    runSearch();
+  });
+
+  // Tag cloud clicks (sidebar)
+  $('#trait-tag-cloud, #tag-cloud').on('click', '.tag-item', function(){
+    var t = $(this).data('tag');
+    currentTag = (currentTag === t) ? null : t;
+    runSearch();
+  });
+
+  // Search input Enter
+  $('#searchInp').on('keydown', function(e){
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runSearch(); }
+  });
+});
 </script>
 </body>
 </html>
