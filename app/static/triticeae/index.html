@@ -102,6 +102,29 @@
   .loading .spinner-border { width: 3rem; height: 3rem; }
   #error-msg { display: none; margin-top: 10px; }
 
+  /* ----- stats overview panel ----- */
+  .stats-card { background: #fff; border-radius: 6px; padding: 0; margin-top: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .stats-card .stats-header { padding: 10px 16px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
+  .stats-card .stats-header:hover { background: #f8f9fa; }
+  .stats-card .stats-header h6 { margin: 0; font-size: 14px; font-weight: 600; color: #495057; }
+  .stats-card .stats-header .toggle-icon { font-size: 12px; color: #6c757d; transition: transform 0.15s; }
+  .stats-card.open .stats-header .toggle-icon { transform: rotate(180deg); }
+  .stats-card .stats-body { padding: 12px 16px 16px 16px; display: none; border-top: 1px solid #e9ecef; }
+  .stats-card.open .stats-body { display: block; }
+  .stats-card .stat-block { margin-bottom: 14px; }
+  .stats-card .stat-block:last-child { margin-bottom: 0; }
+  .stats-card .stat-block-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #6c757d; font-weight: 700; margin-bottom: 6px; }
+  .stats-card .stat-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; background: #e7f1ff; color: #084298; margin-right: 6px; margin-bottom: 4px; }
+  .stats-card .stat-bar-row { display: flex; align-items: center; font-size: 12px; margin-bottom: 4px; }
+  .stats-card .stat-bar-label { width: 110px; color: #495057; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stats-card .stat-bar-track { flex-grow: 1; background: #f1f3f5; border-radius: 4px; height: 14px; overflow: hidden; margin: 0 8px; }
+  .stats-card .stat-bar-fill { height: 100%; background: linear-gradient(90deg, #6c757d, #adb5bd); border-radius: 4px; }
+  .stats-card .stat-bar-fill.functional { background: linear-gradient(90deg, #28a745, #85d399); }
+  .stats-card .stat-bar-fill.year { background: linear-gradient(90deg, #007bff, #6cb2ff); }
+  .stats-card .stat-bar-count { width: 60px; text-align: right; color: #495057; font-weight: 600; flex-shrink: 0; }
+  .stats-card .stat-meta { font-size: 11px; color: #6c757d; margin-top: 4px; }
+  .stats-card .stat-error { color: #dc3545; font-size: 12px; }
+
   .info-box { background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 12px 16px; border-radius: 4px; margin-top: 12px; font-size: 14px; color: #495057; }
 
   /* pagination */
@@ -262,6 +285,16 @@
     </div>
   </div>
 
+  <div class="stats-card" id="stats-card">
+    <div class="stats-header" onclick="toggleStats()">
+      <h6>Dataset overview <span class="text-muted" id="stats-headline" style="font-weight:400;"></span></h6>
+      <span class="toggle-icon">▼</span>
+    </div>
+    <div class="stats-body" id="stats-body">
+      <div id="stats-content"><div class="text-muted" style="font-size:13px;">Loading…</div></div>
+    </div>
+  </div>
+
   <div id="error-msg" class="alert alert-danger"></div>
 
   <div class="loading" id="loading-indicator">
@@ -326,6 +359,124 @@ var currentOffset = 0;
 var currentLimit = 20;
 var currentTotal = 0;
 var currentResults = [];
+
+function toggleStats() {
+  var card = document.getElementById('stats-card');
+  card.classList.toggle('open');
+  if (card.classList.contains('open') && !card.dataset.loaded) {
+    loadStats();
+  }
+}
+
+function loadStats() {
+  var card = document.getElementById('stats-card');
+  var content = document.getElementById('stats-content');
+  content.innerHTML = '<div class="text-muted" style="font-size:13px;">Loading…</div>';
+  $.getJSON('/api/triticeae/stats')
+    .done(function(resp) {
+      if (!resp.success) { content.innerHTML = '<div class="stat-error">Failed to load stats.</div>'; return; }
+      renderStats(resp.data || {});
+      card.dataset.loaded = '1';
+    })
+    .fail(function(xhr){
+      content.innerHTML = '<div class="stat-error">Stats unavailable (HTTP ' + xhr.status + ').</div>';
+    });
+}
+
+function renderStats(d) {
+  var totalPapers = d.total_papers || 0;
+  var withAbstract = d.with_abstract || 0;
+  var withJournal = d.with_journal || 0;
+  var totalAnno = d.total_annotations || 0;
+  var annoPapers = d.annotated_papers || 0;
+  var yMin = d.year_min, yMax = d.year_max;
+
+  // headline pill 一直显示
+  var headline = totalPapers.toLocaleString() + ' papers';
+  if (yMin && yMax) headline += ' · ' + yMin + '–' + yMax;
+  document.getElementById('stats-headline').textContent = '· ' + headline;
+
+  var html = '';
+
+  // 基础计数
+  html += '<div class="stat-block">' +
+    '<span class="stat-pill"><b>' + totalPapers.toLocaleString() + '</b> papers</span>' +
+    '<span class="stat-pill"><b>' + withAbstract.toLocaleString() + '</b> with abstract</span>' +
+    '<span class="stat-pill"><b>' + withJournal.toLocaleString() + '</b> with journal</span>' +
+    '<span class="stat-pill"><b>' + totalAnno.toLocaleString() + '</b> annotations</span>' +
+    '<span class="stat-pill"><b>' + annoPapers.toLocaleString() + '</b> annotated papers</span>' +
+  '</div>';
+
+  // 年份直方图（最近 15 年）
+  var hist = d.year_histogram || [];
+  if (hist.length) {
+    var recent = hist.slice(0, 15);
+    var maxCount = recent.reduce(function(m, r){ return Math.max(m, r.count); }, 1);
+    html += '<div class="stat-block"><div class="stat-block-title">Papers by year (last 15)</div>';
+    recent.forEach(function(r){
+      var w = Math.max(2, Math.round(r.count / maxCount * 100));
+      html += '<div class="stat-bar-row">' +
+        '<div class="stat-bar-label">' + r.year + '</div>' +
+        '<div class="stat-bar-track"><div class="stat-bar-fill year" style="width:' + w + '%;"></div></div>' +
+        '<div class="stat-bar-count">' + r.count.toLocaleString() + '</div>' +
+      '</div>';
+    });
+    html += '</div>';
+  }
+
+  // top 期刊
+  var journals = d.top_journals || [];
+  if (journals.length) {
+    var maxJ = journals[0].count;
+    html += '<div class="stat-block"><div class="stat-block-title">Top journals</div>';
+    journals.slice(0, 10).forEach(function(j){
+      var w = Math.max(2, Math.round(j.count / maxJ * 100));
+      html += '<div class="stat-bar-row">' +
+        '<div class="stat-bar-label" title="' + escapeHtml(j.journal) + '">' + escapeHtml(j.journal) + '</div>' +
+        '<div class="stat-bar-track"><div class="stat-bar-fill" style="width:' + w + '%;"></div></div>' +
+        '<div class="stat-bar-count">' + j.count.toLocaleString() + '</div>' +
+      '</div>';
+    });
+    html += '</div>';
+  }
+
+  // 功能基因比例
+  var fg = d.functional_dist || {};
+  if (fg.total) {
+    var fPct = Math.round(fg.functional / fg.total * 100);
+    var nPct = Math.round(fg.non_functional / fg.total * 100);
+    var uPct = Math.max(0, 100 - fPct - nPct);
+    html += '<div class="stat-block"><div class="stat-block-title">Functional gene annotation (' + fg.total.toLocaleString() + ' records)</div>' +
+      '<div class="stat-bar-row"><div class="stat-bar-label">Functional</div>' +
+        '<div class="stat-bar-track"><div class="stat-bar-fill functional" style="width:' + fPct + '%;"></div></div>' +
+        '<div class="stat-bar-count">' + fg.functional.toLocaleString() + ' (' + fPct + '%)</div></div>' +
+      '<div class="stat-bar-row"><div class="stat-bar-label">Non-functional</div>' +
+        '<div class="stat-bar-track"><div class="stat-bar-fill" style="width:' + nPct + '%;"></div></div>' +
+        '<div class="stat-bar-count">' + fg.non_functional.toLocaleString() + ' (' + nPct + '%)</div></div>' +
+      '<div class="stat-bar-row"><div class="stat-bar-label">Unknown</div>' +
+        '<div class="stat-bar-track"><div class="stat-bar-fill" style="width:' + uPct + '%;"></div></div>' +
+        '<div class="stat-bar-count">' + fg.unknown.toLocaleString() + ' (' + uPct + '%)</div></div>' +
+    '</div>';
+  }
+
+  // 审核状态
+  var rs = d.review_status_dist || [];
+  if (rs.length) {
+    var maxRS = rs[0].count;
+    html += '<div class="stat-block"><div class="stat-block-title">Review status</div>';
+    rs.slice(0, 8).forEach(function(r){
+      var w = Math.max(2, Math.round(r.count / maxRS * 100));
+      html += '<div class="stat-bar-row">' +
+        '<div class="stat-bar-label" title="' + escapeHtml(r.status) + '">' + escapeHtml(r.status) + '</div>' +
+        '<div class="stat-bar-track"><div class="stat-bar-fill" style="width:' + w + '%;"></div></div>' +
+        '<div class="stat-bar-count">' + r.count.toLocaleString() + '</div>' +
+      '</div>';
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('stats-content').innerHTML = html;
+}
 
 function escapeHtml(s) {
   if (s == null) return '';
