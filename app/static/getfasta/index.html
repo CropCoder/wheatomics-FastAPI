@@ -214,8 +214,11 @@ var _hmt = _hmt || [];
       </div>
 
       <div id="genomes-box" class="info-box" style="margin-top:12px; display:none;">
-        <strong>Supported genomes</strong>
-        <div id="genomes-groups"></div>
+        <strong id="genomes-toggle" style="cursor:pointer; user-select:none;">
+          Supported genomes <span id="genomes-arrow" style="color:#64748b;">▸</span>
+        </strong>
+        <small class="text-muted d-block" id="genomes-summary"></small>
+        <div id="genomes-groups" style="display:none;"></div>
       </div>
     </div>
   </div>
@@ -460,6 +463,25 @@ function renderGenomes(records) {
       groupEl.append(btn);
     }
     container.append(groupEl);
+  });
+
+  // Show a short summary line under the heading (e.g. "86 genomes · 8
+  // karyotype groups") and wire the heading itself as a click-to-toggle
+  // so the whole chip grid stays collapsed by default.
+  var total = records.length;
+  $('#genomes-summary').text(
+    total + ' genomes · ' + groups.length + ' karyotype group' + (groups.length === 1 ? '' : 's') +
+    ' · click to expand'
+  );
+  $('#genomes-toggle').off('click').on('click', function() {
+    var expanded = $('#genomes-groups').is(':visible');
+    if (expanded) {
+      $('#genomes-groups').hide();
+      $('#genomes-arrow').text('▸');
+    } else {
+      $('#genomes-groups').show();
+      $('#genomes-arrow').text('▾');
+    }
   });
 }
 
