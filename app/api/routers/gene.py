@@ -552,31 +552,35 @@ def list_gene_function_registry() -> dict:
             SELECT
                 id,
                 table_name,
-                display_name,
-                Subgenome,
+                Accession,
+                `Group`,
                 Polyploidy,
                 chromosome_level,
                 Doi,
                 title,
                 Abstract,
-                example_chr,
-                example_id
+                example_chr_id,
+                example_gene_id,
+                display_order,
+                visible
             FROM Genefunc_registry
+            WHERE visible = 1
             ORDER BY display_order, id
         """)
         for row in cursor.fetchall():
             records.append({
                 "id": row.get("id"),
                 "table_name": row.get("table_name"),
-                "display_name": row.get("display_name"),
-                "subgenome": row.get("Subgenome"),
+                "display_name": row.get("table_name"),
+                "subgenome": row.get("Accession"),
+                "group": row.get("Group"),
                 "polyploidy": row.get("Polyploidy"),
                 "chromosome_level": row.get("chromosome_level"),
                 "doi": row.get("Doi"),
                 "title": row.get("title"),
                 "abstract": row.get("Abstract"),
-                "example_chr": row.get("example_chr"),
-                "example_id": row.get("example_id"),
+                "example_chr": row.get("example_chr_id"),
+                "example_id": row.get("example_gene_id"),
             })
     return ok({"database": "genefunc_registry", "count": len(records), "records": records})
 
