@@ -562,9 +562,16 @@ function runSearch() {
   if (yStart !== yearMin) params.pub_date_start = String(yStart);
   if (yEnd   !== yearMax) params.pub_date_end   = String(yEnd);
 
-  // Recent filter: only filter by fga_created_at when user picks a value
+  // Recent filter: only filter by papers.created_at when user picks a value
   var recent = parseInt(document.getElementById('f-recent-days').value, 10) || 0;
   if (recent > 0) params.since_days = recent;
+
+  // Tag chip filter: currentTag is set when the user clicks a tag in the
+  // sidebar tag-cloud or a badge-tag chip on a paper card. The matching
+  // label lives in papers.ai_tags (papers table column), so map to that
+  // param. Previously this used params.trait_label, but that parameter
+  // was removed when we split /papers away from the annotations JOIN.
+  if (currentTag) params.ai_tags = currentTag;
 
   // Journal filter: when user has unchecked some, pass the kept list as a
   // comma-separated `journal` parameter. When all are checked (or none), no filter.
