@@ -7,7 +7,7 @@ import importlib.util
 import sys
 from pathlib import Path
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
 from app.core.config import settings
 from app.core.exceptions import ResourceNotFound, ValidationFailure
@@ -160,42 +160,78 @@ def batch_sequence(
     database: str = Query(...),
     ids: str = Query(..., alias="ID"),
 ) -> dict:
-    """批量获取多个基因的 FASTA 序列。
+    """批量获取多个基因/区间的 FASTA 序列。
 
     功能:
-        一次性查询多个基因的 CDS 或蛋白序列。基因 ID 用空格分隔
-        （URL 中可用 %20 或 + 编码空格）。自动补充转录本版本号 .1。
+        一次性查询多个基因 ID 或基因组区间。ID 用空格分隔
+        （URL 中可用 %20 或 + 编码空格）。基因 ID 自动补充转录本版本号 .1。
+        区间格式：chr:start-end（如 Chr1A_Chinese_Spring1.0:200-500）。
 
     用法:
-        GET /api/sequence/batch?ID=<基因1 基因2>&database=<数据库名>
-        - ID: 必填，空格分隔的基因 ID 列表（URL 中用 %20 编码），会自动加 .1 后缀
-        - database: 必填，BLAST 数据库名
+        GET /api/sequence/batch?ID=<id1 id2>&database=<数据库名>
 
     案例:
-        请求:
-          curl -X GET "http://localhost:8000/api/sequence/batch?ID=TraesCS5A02G391700%20TraesCS5A02G391700.1&database=all_gene"
+        curl -X GET "http://localhost:8000/api/sequence/batch?ID=TraesCS5A02G391700%20TraesCS5A02G391701&database=all_gene"
+        curl -X GET "http://localhost:8000/api/sequence/batch?ID=Chr1A:200-500%20Chr5B:1000-2000&database=all_genomes"
 
-        响应:
-          {
-            "success": true,
-            "data": {
-              "database": "all_gene",
-              "records": [
-                { "sequence_id": "TraesCS5A02G391700", "fasta": ">TraesCS5A02G391700.1\n..." },
-                { "sequence_id": "TraesCS5A02G391700.1", "fasta": ">TraesCS5A02G391700.1\n..." }
-              ]
-            }
+    响应:
+        {
+          "success": true,
+          "data": {
+            "database": "...",
+            "records": [
+              {"sequence_id": "Chr1A:200-500", "fasta": ">Chr1A:200-500\n..."},
+              ...
+            ]
           }
+        }
     """
 
-    identifiers = [ensure_gene_like(token.strip()) for token in ids.split() if token.strip()]
-    records: list[SequenceRecord] = []
-    for identifier in identifiers:
-        # 自动补充转录本版本号（如 TraesCS5A02G391700 → TraesCS5A02G391700.1）
-        entry = identifier if identifier.endswith(".1") else f"{identifier}.1"
-        fasta = _blastdbcmd("-db", str(settings.BLAST_DB_PATH / database), "-entry", entry)
-        records.append(SequenceRecord(sequence_id=identifier, fasta=fasta))
-    return ok({"database": database, "records": [record.model_dump() for record in records]})
+    import re
+    from concurrent.futures import ThreadPoolExecutor
+
+    from app.core.exceptions import ExternalToolFailure
+
+    raw_tokens = [t.strip() for t in ids.split() if t.strip()]
+    if not raw_tokens:
+        raise HTTPException(status_code=400, detail="ID parameter is empty")
+
+    db_path = settings.BLAST_DB_PATH / database
+    if not db_path.exists():
+        raise HTTPException(status_code=404, detail=f"Database not found: {database}")
+
+    interval_re = re.compile(r"^([^:]+):(\d+)-(\d+)$")
+
+    def _fetch_one(token: str) -> dict:
+        """Fetch a single token; return a record dict or an error record."""
+        m = interval_re.match(token)
+        try:
+            if m:
+                chrom, start, end = m.group(1), int(m.group(2)), int(m.group(3))
+                fasta = _try_interval(db_path, chrom, start, end)
+                return {"sequence_id": token, "fasta": fasta, "ok": True}
+            # Gene-like ID: append .1 if missing, then look up by entry
+            entry = token if token.endswith(".1") else f"{token}.1"
+            fasta = _blastdbcmd("-db", str(db_path), "-entry", entry)
+            return {"sequence_id": token, "fasta": fasta, "ok": True}
+        except ExternalToolFailure as e:
+            return {"sequence_id": token, "fasta": "", "ok": False, "error": str(e)[:300]}
+        except Exception as e:  # noqa: BLE001 — never let one bad id abort the batch
+            return {"sequence_id": token, "fasta": "", "ok": False, "error": repr(e)[:300]}
+
+    # Concurrent fetch (max 8 workers) — keeps wall time well under Apache
+    # ProxyTimeout. Each record is independent so order doesn't matter.
+    with ThreadPoolExecutor(max_workers=min(8, len(raw_tokens))) as pool:
+        records = list(pool.map(_fetch_one, raw_tokens))
+
+    succeeded = sum(1 for r in records if r.get("ok"))
+    return ok({
+        "database": database,
+        "requested": len(records),
+        "succeeded": succeeded,
+        "failed": len(records) - succeeded,
+        "records": records,
+    })
 
 
 @router.get("/novabrowse")
