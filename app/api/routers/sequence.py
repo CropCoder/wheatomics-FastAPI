@@ -21,11 +21,49 @@ router = APIRouter(tags=["Sequences"])
 blast_extra_router = APIRouter(tags=["BLAST"])
 
 
-def _blastdbcmd(*args: str) -> str:
-    """Run blastdbcmd and return trimmed output."""
+def _blastdbcmd_path() -> str:
+    """Locate blastdbcmd binary. Prefer settings.BLAST_BIN_DIR, fall back to
+    common system paths. Mirrors _find_blast_prog in blast.py.
+    """
+    candidates = [
+        settings.BLAST_BIN_DIR / "blastdbcmd",
+        Path("/usr/bin/blastdbcmd"),
+        Path("/usr/local/bin/blastdbcmd"),
+        Path("/home/fei/mambaforge/envs/zjw/bin/blastdbcmd"),
+    ]
+    for c in candidates:
+        if c.exists():
+            return str(c)
+    # Return default; run_command will surface a clear error if missing
+    return str(settings.BLAST_BIN_DIR / "blastdbcmd")
 
-    result = run_command(["/usr/bin/blastdbcmd", *args])
+
+def _blastdbcmd(*args: str, stdin_data: str | None = None) -> str:
+    """Run blastdbcmd and return trimmed stdout.
+
+    `stdin_data` (if given) is piped to the process — used for `-entry_batch -`.
+    """
+    result = run_command([_blastdbcmd_path(), *args], stdin=stdin_data)
     return result.stdout.strip()
+
+
+def _check_db_exists(db_path: Path) -> bool:
+    """A BLAST DB is a set of index files (.nsq/.nin/.nhr or .psq/.pin/.phr),
+    not necessarily a single path. Return True if any of those exist.
+
+    We don't trust Path.exists() because the user may pass a basename
+    (e.g. "all_genomes") and BLAST searches for all_genomes.nsq etc.
+    """
+    for ext in (".nsq", ".nin", ".nhr", ".nal",   # nucleotide
+                ".psq", ".pin", ".phr", ".pal"):   # protein
+        if (db_path.parent / (db_path.name + ext)).exists():
+            return True
+    # Also accept a literal directory containing index files
+    if db_path.is_dir():
+        for ext in (".nsq", ".psq"):
+            if any(db_path.glob("*" + ext)):
+                return True
+    return False
 
 
 def _try_interval(database: Path, chrom: str, start: int, end: int) -> str:
@@ -188,7 +226,6 @@ def batch_sequence(
     """
 
     import re
-    import subprocess
     from concurrent.futures import ThreadPoolExecutor
 
     from app.core.exceptions import ExternalToolFailure
@@ -198,7 +235,9 @@ def batch_sequence(
         raise HTTPException(status_code=400, detail="ID parameter is empty")
 
     db_path = settings.BLAST_DB_PATH / database
-    if not db_path.exists():
+    # BLAST databases are a set of index files (.nsq/.nin/.nhr for nucleotide,
+    # .psq/.pin/.phr for protein), not a single path. Check via blastdbcmd.
+    if not _check_db_exists(db_path):
         raise HTTPException(status_code=404, detail=f"Database not found: {database}")
 
     interval_re = re.compile(r"^([^:]+):(\d+)-(\d+)$")
@@ -224,47 +263,36 @@ def batch_sequence(
     # ---- 1) Genes: single blastdbcmd -entry_batch - call ----
     if gene_ids:
         try:
-            proc = subprocess.run(
-                ["/usr/bin/blastdbcmd", "-db", str(db_path), "-entry_batch", "-"],
-                input="\n".join(gene_ids) + "\n",
-                capture_output=True,
-                text=True,
-                timeout=settings.REQUEST_TIMEOUT_SECONDS,
-                check=False,
-            )
-            if proc.returncode != 0:
-                # Whole batch failed — record per-token error
-                err = (proc.stderr or proc.stdout or "").strip()[:300]
-                for token in gene_tokens:
-                    records_by_token[token] = {"sequence_id": token, "fasta": "", "ok": False, "error": err}
-            else:
-                # Parse FASTA blocks: >id\nsequence...>id\nsequence...
-                blocks: dict[str, str] = {}
-                cur_id = None
-                cur_lines: list[str] = []
-                for line in proc.stdout.splitlines():
-                    if line.startswith(">"):
-                        if cur_id is not None:
-                            blocks[cur_id] = ">" + cur_id + "\n" + "\n".join(cur_lines)
-                        cur_id = line[1:].split()[0]
-                        cur_lines = []
-                    else:
-                        cur_lines.append(line)
-                if cur_id is not None:
-                    blocks[cur_id] = ">" + cur_id + "\n" + "\n".join(cur_lines)
+            stdout = _blastdbcmd("-db", str(db_path), "-entry_batch", "-",
+                                  stdin_data="\n".join(gene_ids) + "\n")
+            blocks: dict[str, str] = {}
+            cur_id = None
+            cur_lines: list[str] = []
+            for line in stdout.splitlines():
+                if line.startswith(">"):
+                    if cur_id is not None:
+                        blocks[cur_id] = ">" + cur_id + "\n" + "\n".join(cur_lines)
+                    cur_id = line[1:].split()[0]
+                    cur_lines = []
+                else:
+                    cur_lines.append(line)
+            if cur_id is not None:
+                blocks[cur_id] = ">" + cur_id + "\n" + "\n".join(cur_lines)
 
-                for token, entry in zip(gene_tokens, gene_ids):
-                    if entry in blocks:
-                        records_by_token[token] = {"sequence_id": token, "fasta": blocks[entry], "ok": True}
-                    else:
-                        records_by_token[token] = {"sequence_id": token, "fasta": "", "ok": False,
-                                                    "error": f"Entry not found: {entry}"}
-        except subprocess.TimeoutExpired:
+            for token, entry in zip(gene_tokens, gene_ids):
+                if entry in blocks:
+                    records_by_token[token] = {"sequence_id": token, "fasta": blocks[entry], "ok": True}
+                else:
+                    records_by_token[token] = {"sequence_id": token, "fasta": "", "ok": False,
+                                                "error": f"Entry not found: {entry}"}
+        except ExternalToolFailure as e:
+            err = str(e)[:300]
             for token in gene_tokens:
-                records_by_token[token] = {"sequence_id": token, "fasta": "", "ok": False, "error": "timeout"}
+                records_by_token[token] = {"sequence_id": token, "fasta": "", "ok": False, "error": err}
         except Exception as e:  # noqa: BLE001
+            err = repr(e)[:300]
             for token in gene_tokens:
-                records_by_token[token] = {"sequence_id": token, "fasta": "", "ok": False, "error": repr(e)[:300]}
+                records_by_token[token] = {"sequence_id": token, "fasta": "", "ok": False, "error": err}
 
     # ---- 2) Ranges: parallel _try_interval calls ----
     def _fetch_range(job: tuple) -> dict:
