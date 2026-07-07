@@ -294,27 +294,9 @@ def get_paper_annotation(pmid: str) -> dict:
     return ok({"pmid": pmid, "has_annotation": True, "annotation": annotation})
 
 
-@router.get("/papers/{pubmedid}")
-def get_paper(pubmedid: str) -> dict:
-    """按 PubMed ID 获取单篇论文元数据（只查 papers 表）。
-
-    返回 papers.* 字段；fga_* 字段全部为空。
-    需要 LLM 标注请调 /papers/{pmid}/annotation。
-
-    注意路由顺序：必须在 /papers/{pmid}/annotation **之后**声明，否则
-    Starlette 会先匹配这个单段路径，把请求 42105133/annotation 拆成
-    pubmedid="42105133" + 一个未知的 "annotation" 查询参数。
-    """
-    with mysql_cursor(settings.DB_TRITICEAE) as cursor:
-        cursor.execute(f"{_SQL_SELECT} WHERE p.pmid = %s", (pubmedid,))
-        row = cursor.fetchone()
-
-    if not row:
-        raise HTTPException(status_code=404, detail=f"Paper not found: {pubmedid}")
-
-    return ok(_row_to_paper(row))
-
-
+# Stats endpoint MUST be declared before /papers/{pubmedid}.
+# Otherwise the wildcard route greedily matches /papers/stats and
+# treats 'stats' as a PMID, returning 'Paper not found: stats'.
 @router.get("/stats")
 def stats() -> dict:
     """数据集聚合统计：年份分布、期刊 top-20、AI 标签 top-30、功能基因比例、审核状态分布。
@@ -436,3 +418,25 @@ def stats() -> dict:
         "review_status_dist": review_status_dist,
         "source_method_dist": source_method_dist,
     })
+
+@router.get("/papers/{pubmedid}")
+def get_paper(pubmedid: str) -> dict:
+    """按 PubMed ID 获取单篇论文元数据（只查 papers 表）。
+
+    返回 papers.* 字段；fga_* 字段全部为空。
+    需要 LLM 标注请调 /papers/{pmid}/annotation。
+
+    注意路由顺序：必须在 /papers/{pmid}/annotation **之后**声明，否则
+    Starlette 会先匹配这个单段路径，把请求 42105133/annotation 拆成
+    pubmedid="42105133" + 一个未知的 "annotation" 查询参数。
+    """
+    with mysql_cursor(settings.DB_TRITICEAE) as cursor:
+        cursor.execute(f"{_SQL_SELECT} WHERE p.pmid = %s", (pubmedid,))
+        row = cursor.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail=f"Paper not found: {pubmedid}")
+
+    return ok(_row_to_paper(row))
+
+
