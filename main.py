@@ -77,7 +77,7 @@ app = FastAPI(
         "<td>GeneHub：基因标准化详情查询（v1/v2/v3 ID映射、蛋白参数、功能注释）</td></tr>"
         "<tr><td><b>Sequences 序列</b></td><td><code>/api/sequence</code></td>"
         "<td>基因及区间序列提取、预计算 BLAST 结果检索</td></tr>"
-        "<tr><td><b>Triticeae Papers</b></td><td><code>/api/triticeae/papers</code></td><td>小麦族研究文献筛选：基因/性状/置信度/AI标签多维过滤</td></tr><tr><td><b>Blast</b></td><td><code>/api/blast</code></td>"
+        "<tr><td><b>Triticeae Papers</b></td><td><code>/api/papers</code></td><td>小麦族研究文献筛选：基因/性状/置信度/AI标签多维过滤</td></tr><tr><td><b>Blast</b></td><td><code>/api/blast</code></td>"
         "<td>序列比对搜索（blastn/blastp/blastx/tblastn/tblastx）</td></tr>"
         "<tr><td><b>OrthoFinder</b></td><td><code>/api/orthofinder</code></td><td>OrthoFinder orthogroup search: gene tree, MSA, homologous gene families</td></tr>"
 "<tr><td><b>PrimerServer (SNP)</b></td><td><code>/api/tasks</code></td>"
@@ -117,6 +117,7 @@ app.mount("/HomologFinder", StaticFiles(directory=Path(__file__).parent / "app" 
 app.mount("/PfamSearch", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "PfamSearch", html=True), name="PfamSearch")
 app.mount("/coexpression", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "coexpression", html=True), name="coexpression")
 app.mount("/triticeae", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "triticeae", html=True), name="triticeae")
+app.mount("/papers", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "papers", html=True), name="papers")
 
 
 @app.middleware("http")

@@ -12,7 +12,7 @@ from app.core.response import ok
 from app.db.mysql import mysql_cursor
 from app.schemas.triticeae import TriticeaePaper, TriticeaeSearchResult
 
-router = APIRouter(prefix="/triticeae", tags=["Triticeae Papers"])
+router = APIRouter(prefix="/papers", tags=["Triticeae Papers"])
 
 # papers 表是论文元数据的主表（来自 PubMed + 论文级 AI 标注）；
 # functional_gene_annotations 是 LLM 标注层（细粒度）。两个独立查询：

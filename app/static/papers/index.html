@@ -191,7 +191,7 @@ html, body { margin:0; padding:0; }
         <li><a href="http://wheatomics.sdau.edu.cn/scRNA">scRNA</a></li>
         <li><a href="http://wheatomics.sdau.edu.cn/eqtl">eQTL Atlas</a></li>
         <li><a href="http://wheatomics.sdau.edu.cn/literature_auto/literature.html">Literature</a></li>
-        <li><a href="/triticeae/">Triticeae Papers</a></li>
+        <li><a href="/papers/">Triticeae Papers</a></li>
       </ul>
     </li>
     <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
@@ -358,7 +358,7 @@ var totalPapers = 0;             // backend-reported total (truth)
 var currentResults = [];         // current page's rows (from backend)
 var currentJournals = null;      // null = no filter, array = allowed journals
 var currentTag = null;           // null = no filter, string = tag to filter by
-var stats = null;                // cached /api/triticeae/stats
+var stats = null;                // cached /api/papers/stats
 var yearHist = [];               // [{year, count}], sorted asc
 var yearMin = 1900, yearMax = 2030;
 var searchInFlight = null;       // AbortController for the latest request
@@ -404,7 +404,7 @@ function parseTagList(raw) {
 /* ============ Stats loading ============ */
 function loadStats() {
   setStatus('loading', 'Loading dataset…');
-  $.getJSON('/api/triticeae/stats')
+  $.getJSON('/api/papers/stats')
     .done(function(resp){
       if (!resp.success) { setStatus('error', 'Failed to load stats.'); return; }
       stats = resp.data || {};
@@ -587,7 +587,7 @@ function runSearch() {
   var ajaxOpts = { dataType: 'json' };
   if (searchInFlight) ajaxOpts.signal = searchInFlight.signal;
 
-  $.ajax(Object.assign({ url: '/api/triticeae/papers', data: params, method: 'GET' }, ajaxOpts))
+  $.ajax(Object.assign({ url: '/api/papers', data: params, method: 'GET' }, ajaxOpts))
     .done(function(resp){
       if (!resp || !resp.success) { setStatus('error', 'API error: ' + ((resp && resp.error) || 'unknown')); return; }
       var data = resp.data || {};
@@ -721,7 +721,7 @@ function exportCSV() {
 
   var collected = [];
   function fetchChunk() {
-    $.getJSON('/api/triticeae/papers', params)
+    $.getJSON('/api/papers', params)
       .done(function(resp){
         if (!resp.success) { setStatus('error', 'Export failed: ' + (resp.error||'unknown')); return; }
         var rows = (resp.data && resp.data.papers) || [];
@@ -827,7 +827,7 @@ $(function(){
     }
     btn.disabled = true;
     btn.textContent = 'Loading annotation…';
-    $.getJSON('/api/triticeae/papers/' + encodeURIComponent(pmid) + '/annotation')
+    $.getJSON('/api/papers/' + encodeURIComponent(pmid) + '/annotation')
       .done(function(resp){
         if (!resp || !resp.success) {
           btn.textContent = 'Show annotation';
