@@ -654,6 +654,7 @@ function renderPaper(p) {
   });
 
   var abstractId = 'abs-' + pmid;
+  var annotationId = 'anno-' + pmid;
   return '<div class="paper-item">' +
     '<div class="journal-meta">' + journal + (journal && date ? ' | ' : '') + date +
       '<a href="' + escapeHtml(link) + '" target="_blank" class="id-link float-right">PMID: ' + pmid + '</a>' +
@@ -663,6 +664,46 @@ function renderPaper(p) {
     '<div class="authors-full"><strong>Authors:</strong> ' + authors + '</div>' +
     '<button type="button" class="btn btn-sm btn-link pl-0 text-primary toggle-abs" data-target="' + abstractId + '">[+ View Abstract]</button>' +
     '<div id="' + abstractId + '" class="abstract-box">' + abs + '</div>' +
+    '<button type="button" class="btn btn-sm btn-outline-secondary mt-1 toggle-anno" data-pmid="' + pmid + '" data-target="' + annotationId + '">Show annotation</button>' +
+    '<div id="' + annotationId + '" class="annotation-box" style="display:none; margin-top:8px;"></div>' +
+  '</div>';
+}
+
+function renderAnnotation(p) {
+  var funcBadge = p.is_functional_gene === true
+    ? '<span class="badge-tag-green">FUNCTIONAL GENE</span> '
+    : (p.review_status === 'negative' ? '<span class="badge-tag-red">NEGATIVE</span> ' : '');
+  var revExtra = p.review_status && p.review_status !== 'negative'
+    ? '<span class="badge-tag">' + escapeHtml(p.review_status) + '</span> '
+    : '';
+
+  var confidenceHtml = '';
+  if (typeof p.confidence === 'number') {
+    confidenceHtml = '<div style="font-size:12px;color:#495057;margin-bottom:4px;">AI confidence: <b>' +
+      Math.round(p.confidence * 100) + '%</b></div>';
+  }
+
+  var rows = [];
+  if (p.fga_title)         rows.push(['LLM title',        p.fga_title]);
+  if (p.gene_name && p.gene_name.length) rows.push(['Gene names',     p.gene_name.join(', ')]);
+  if (p.gene_type)         rows.push(['Gene type',         p.gene_type]);
+  if (p.trait_label)       rows.push(['Trait label',       p.trait_label]);
+  if (p.function_summary)  rows.push(['Function summary',  p.function_summary]);
+  if (p.evidence_type)     rows.push(['Evidence type',     p.evidence_type]);
+  if (p.new_tags)          rows.push(['New tags',          p.new_tags]);
+  if (p.source_method)     rows.push(['Source method',     p.source_method]);
+  if (p.fga_disease_gene_tags) rows.push(['Disease gene tags', p.fga_disease_gene_tags]);
+  if (p.fga_created_at)    rows.push(['Annotated at',      p.fga_created_at]);
+  if (p.llm_reason)        rows.push(['LLM reason',        p.llm_reason]);
+
+  var rowsHtml = rows.map(function(r){
+    return '<div style="font-size:12px;margin-bottom:4px;"><b>' + escapeHtml(r[0]) + ':</b> ' +
+           escapeHtml(String(r[1])) + '</div>';
+  }).join('');
+
+  return '<div class="annotation-meta" style="background:#f8f9fa;border-left:3px solid #17a2b8;padding:8px 12px;border-radius:2px;">' +
+    '<div style="margin-bottom:6px;">' + funcBadge + revExtra + confidenceHtml + '</div>' +
+    rowsHtml +
   '</div>';
 }
 
@@ -770,6 +811,51 @@ $(function(){
     var box = document.getElementById(id);
     if (box) box.classList.toggle('open');
     $(this).text(box.classList.contains('open') ? '[− Hide Abstract]' : '[+ View Abstract]');
+  });
+  $('#list-content').on('click', '.toggle-anno', function(){
+    var btn = this;
+    var pmid = $(btn).data('pmid');
+    var targetId = $(btn).data('target');
+    var box = document.getElementById(targetId);
+    if (!pmid || !box) return;
+    if (box.dataset.loaded === '1') {
+      // Already loaded — just toggle visibility
+      var visible = box.style.display !== 'none';
+      box.style.display = visible ? 'none' : 'block';
+      btn.textContent = visible ? 'Show annotation' : 'Hide annotation';
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Loading annotation…';
+    $.getJSON('/api/triticeae/papers/' + encodeURIComponent(pmid) + '/annotation')
+      .done(function(resp){
+        if (!resp || !resp.success) {
+          btn.textContent = 'Show annotation';
+          btn.disabled = false;
+          box.innerHTML = '<div class="text-muted" style="font-size:12px;">Failed to load annotation.</div>';
+          box.style.display = 'block';
+          return;
+        }
+        var data = resp.data || {};
+        if (data.has_annotation) {
+          box.innerHTML = renderAnnotation(data.annotation);
+          box.dataset.loaded = '1';
+          box.style.display = 'block';
+          btn.textContent = 'Hide annotation';
+        } else {
+          box.innerHTML = '<div class="text-muted" style="font-size:12px;"><i>This paper was judged not to be a functional gene study — no detailed LLM annotation was created.</i></div>';
+          box.dataset.loaded = '1';
+          box.style.display = 'block';
+          btn.textContent = 'Hide annotation';
+        }
+        btn.disabled = false;
+      })
+      .fail(function(xhr){
+        btn.textContent = 'Show annotation';
+        btn.disabled = false;
+        box.innerHTML = '<div class="text-danger" style="font-size:12px;">HTTP ' + xhr.status + '</div>';
+        box.style.display = 'block';
+      });
   });
   $('#list-content').on('click', '.badge-tag', function(){
     var t = $(this).data('tag');
