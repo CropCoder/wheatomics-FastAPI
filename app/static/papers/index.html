@@ -88,6 +88,32 @@ html, body { margin:0; padding:0; }
 .page-title-wrap { max-width: 1180px; width: 96%; margin: 18px auto 10px; }
 .page-title-wrap h2 { font-size: 28px; font-weight: 700; margin: 0 0 6px 0; line-height: 1.25; color: #222; }
 .page-title-wrap p { margin: 0; color: #555; font-size: 14px; }
+.page-title-wrap .card-title {
+  display: inline-block;
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  padding: 0;
+  color: #222;
+  border-bottom: 2px solid #0077b6;
+  padding-bottom: 4px;
+}
+
+/* ----- top-bottom layout ----- */
+.search-row { margin-bottom: 18px; }
+.results-row { margin-top: 0; }
+
+.filter-block {
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 4px;
+  padding: 12px 15px;
+  margin-bottom: 12px;
+}
+.filter-block-main { padding: 14px 16px; }
+.filter-block h5 { font-size: 16px; font-weight: 700; margin: 0 0 10px 0; color: #222; }
+.filter-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.filter-block-quarter { flex: 1 1 calc(25% - 9px); min-width: 220px; }
 
 .sidebar-section { background: #fff; border: 1px solid #e6e6e6; border-radius: 4px; padding: 15px; margin-bottom: 18px; }
 .sidebar-section h5 { font-size: 18px; font-weight: 700; margin-bottom: 14px; color: #222; }
@@ -206,113 +232,126 @@ html, body { margin:0; padding:0; }
   </ul>
 </div>
 
-<div class="page-title-wrap">
-  <h2>Triticeae Papers</h2>
+<div class="page-title-wrap text-center">
+  <h5 class="card-title">Triticeae Papers</h5>
   <p>Curated functional-gene annotations for wheat, barley, rye and relatives. Search by keyword, year range, journal, or trait tag.</p>
 </div>
 
 <main class="container-main">
-<div class="row align-items-start">
 
-  <!-- ============= LEFT SIDEBAR ============= -->
-  <div class="col-lg-3 col-md-4">
+  <!-- ============= TOP: SEARCH / FILTERS ============= -->
+  <div class="search-row">
 
-    <div class="sidebar-section">
+    <div class="filter-block filter-block-main">
       <div id="loading-status" class="status-loading">Loading dataset…</div>
 
-      <h5>Search Papers</h5>
+      <h5>Search</h5>
 
-      <div class="form-group mb-2">
-        <label for="searchField" class="small-label">Search Field</label>
-        <select id="searchField" class="form-control form-control-sm">
-          <option value="all">All Fields</option>
-          <option value="title">Title</option>
-          <option value="authors">Authors</option>
-          <option value="journal">Journal</option>
-          <option value="abstract">Abstract</option>
-          <option value="gene_name">Gene name</option>
-          <option value="trait">Trait tag</option>
-        </select>
-      </div>
-      <div class="form-group mb-2">
-        <label for="searchInp" class="small-label">Search Input</label>
-        <textarea id="searchInp" class="form-control" rows="3" placeholder="Examples: TaCPK, stripe rust, Plant Cell, 2024"></textarea>
+      <div class="form-row">
+        <div class="form-group col-md-2 mb-2">
+          <label for="searchField" class="small-label">Field</label>
+          <select id="searchField" class="form-control form-control-sm">
+            <option value="all">All Fields</option>
+            <option value="title">Title</option>
+            <option value="authors">Authors</option>
+            <option value="journal">Journal</option>
+            <option value="abstract">Abstract</option>
+            <option value="gene_name">Gene name</option>
+            <option value="trait">Trait tag</option>
+          </select>
+        </div>
+        <div class="form-group col-md-6 mb-2">
+          <label for="searchInp" class="small-label">Search Input</label>
+          <textarea id="searchInp" class="form-control form-control-sm" rows="2" placeholder="Examples: TaCPK, stripe rust, Plant Cell, 2024"></textarea>
+        </div>
+        <div class="form-group col-md-2 mb-2">
+          <label for="f-recent-days" class="small-label">Recent Updates</label>
+          <select id="f-recent-days" class="form-control form-control-sm">
+            <option value="">All time</option>
+            <option value="7" selected>Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last 365 days</option>
+          </select>
+          <div class="helper-text">By paper import time</div>
+        </div>
+        <div class="form-group col-md-2 mb-2 d-flex align-items-end">
+          <button type="button" id="search-btn" class="btn btn-primary btn-sm btn-block mr-1">Search</button>
+          <button type="button" id="reset-btn"  class="btn btn-outline-secondary btn-sm btn-block ml-1">Reset</button>
+        </div>
       </div>
       <div class="helper-text mb-2">Use commas to separate multiple terms (OR within a field, AND across fields).</div>
-
-      <div class="form-group mb-2">
-        <label for="f-recent-days" class="small-label">Recent Updates</label>
-        <select id="f-recent-days" class="form-control form-control-sm">
-          <option value="" selected>All time</option>
-          <option value="7">Last 7 days</option>
-          <option value="30">Last 30 days</option>
-          <option value="90">Last 90 days</option>
-          <option value="365">Last 365 days</option>
-        </select>
-        <div class="helper-text mt-1">By paper import time (papers.created_at).</div>
-      </div>
-
-      <!-- Year chart + slider -->
-      <div class="chart-box">
-        <div class="chart-title">Results by Year</div>
-        <div class="year-chart-shell">
-          <canvas id="yearChart" width="520" height="120"></canvas>
-          <div class="chart-endpoints">
-            <span id="chartMinYear">—</span>
-            <span id="chartMaxYear">—</span>
-          </div>
-        </div>
-        <div class="year-slider-wrap">
-          <div class="year-selected-text"><span id="yearRangeText">All years</span></div>
-          <div class="range-wrap">
-            <div class="range-track"></div>
-            <div class="range-selected" id="rangeSelected" style="left: 0%; width: 100%;"></div>
-            <input type="range" id="yearStart" min="1900" max="2030" value="1900" step="1">
-            <input type="range" id="yearEnd"   min="1900" max="2030" value="2030" step="1">
-          </div>
-          <div class="year-values">
-            <span id="yearMinLabel">1900</span>
-            <span id="yearMaxLabel">2030</span>
-          </div>
-          <button type="button" id="clear-year" class="btn btn-link btn-sm p-0 mt-1">Clear year filter</button>
-        </div>
-      </div>
-
-      <!-- Journal filter -->
-      <div class="paper-filter-box">
-        <div class="paper-filter-title">Journal Filter</div>
-        <div class="helper-text mb-2">Only checked journals will be displayed.</div>
-        <div style="margin-bottom:8px;">
-          <button type="button" id="journal-all" class="btn btn-sm btn-outline-primary mr-1">Select All</button>
-          <button type="button" id="journal-none" class="btn btn-sm btn-outline-secondary">Clear All</button>
-        </div>
-        <div id="journal-filter-list" class="journal-check-list"></div>
-      </div>
-
-      <div class="btn-group w-100">
-        <button type="button" id="search-btn" class="btn btn-primary btn-sm">Search</button>
-        <button type="button" id="reset-btn"  class="btn btn-outline-secondary btn-sm">Reset</button>
-      </div>
-      <button type="button" id="export-btn" class="btn btn-success btn-sm btn-block mt-2" disabled>
-        Export Results (CSV + Abstract)
-      </button>
     </div>
 
-    <div class="sidebar-section">
-      <h5>Top Trait Keywords</h5>
-      <div class="helper-text mb-2">Click a tag to filter papers by that trait.</div>
-      <div id="trait-tag-cloud"></div>
+    <!-- Year chart + slider — compact strip -->
+    <div class="filter-block">
+      <div class="chart-title">Results by Year</div>
+      <div class="year-chart-shell">
+        <canvas id="yearChart" width="520" height="100"></canvas>
+        <div class="chart-endpoints">
+          <span id="chartMinYear">—</span>
+          <span id="chartMaxYear">—</span>
+        </div>
+      </div>
+      <div class="year-slider-wrap">
+        <div class="range-wrap">
+          <div class="range-track"></div>
+          <div class="range-selected" id="rangeSelected" style="left: 0%; width: 100%;"></div>
+          <input type="range" id="yearStart" min="1900" max="2030" value="1900" step="1">
+          <input type="range" id="yearEnd"   min="1900" max="2030" value="2030" step="1">
+        </div>
+        <div class="year-values">
+          <span id="yearMinLabel">1900</span>
+          <span id="yearMaxLabel">2030</span>
+          <span class="year-selected-text" style="margin-left:8px;"><span id="yearRangeText">All years</span></span>
+          <button type="button" id="clear-year" class="btn btn-link btn-sm p-0 ml-auto">Clear</button>
+        </div>
+      </div>
     </div>
 
-    <div class="sidebar-section">
-      <h5>Top Keywords</h5>
-      <div id="tag-cloud"></div>
+    <div class="filter-row">
+      <!-- Journal filter — collapsed by default, expand on click -->
+      <div class="filter-block filter-block-quarter">
+        <div class="paper-filter-title" data-toggle="collapse" data-target="#journal-collapse" style="cursor:pointer; user-select:none;">
+          <span class="gg-arrow">▸</span> Journal Filter <span id="journal-count" class="text-muted" style="font-weight:400;"></span>
+        </div>
+        <div id="journal-collapse" class="collapse" style="margin-top:6px;">
+          <div class="helper-text mb-2">Only checked journals will be displayed.</div>
+          <div style="margin-bottom:8px;">
+            <button type="button" id="journal-all" class="btn btn-sm btn-outline-primary mr-1">Select All</button>
+            <button type="button" id="journal-none" class="btn btn-sm btn-outline-secondary">Clear All</button>
+          </div>
+          <div id="journal-filter-list" class="journal-check-list"></div>
+        </div>
+      </div>
+
+      <!-- Top Trait Keywords -->
+      <div class="filter-block filter-block-quarter">
+        <div class="paper-filter-title">Top Trait Keywords</div>
+        <div class="helper-text mb-2">Click a tag to filter papers by that trait.</div>
+        <div id="trait-tag-cloud"></div>
+      </div>
+
+      <!-- Top Keywords -->
+      <div class="filter-block filter-block-quarter">
+        <div class="paper-filter-title">Top Keywords</div>
+        <div id="tag-cloud"></div>
+      </div>
+
+      <!-- Export -->
+      <div class="filter-block filter-block-quarter">
+        <div class="paper-filter-title">Export</div>
+        <div class="helper-text mb-2">Download current page as TSV.</div>
+        <button type="button" id="export-btn" class="btn btn-success btn-sm btn-block" disabled>
+          Export Results (CSV + Abstract)
+        </button>
+      </div>
     </div>
 
   </div>
 
-  <!-- ============= RIGHT MAIN ============= -->
-  <div class="col-lg-9 col-md-8">
+  <!-- ============= BOTTOM: RESULTS ============= -->
+  <div class="results-row">
     <div id="res-info">Loading…</div>
     <div id="list-content"></div>
     <div class="pagination-container d-flex justify-content-center align-items-center mt-4 mb-5">
@@ -321,8 +360,6 @@ html, body { margin:0; padding:0; }
       <button type="button" id="next-btn" class="btn btn-sm btn-outline-primary" disabled>Next</button>
     </div>
   </div>
-
-</div>
 </main>
 
 <div class="line" id="line"></div>
@@ -780,7 +817,7 @@ function resetAll() {
   document.getElementById('searchField').value = 'all';
   document.getElementById('yearStart').value = yearMin;
   document.getElementById('yearEnd').value   = yearMax;
-  document.getElementById('f-recent-days').value = '';
+  document.getElementById('f-recent-days').value = '7';
   updateYearSlider();
   document.querySelectorAll('#journal-filter-list input[type=checkbox]').forEach(function(cb){ cb.checked = true; });
   currentTag = null;
