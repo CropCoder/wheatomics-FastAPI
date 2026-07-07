@@ -412,7 +412,6 @@ function loadStats() {
     .done(function(resp){
       if (!resp.success) { setStatus('error', 'Failed to load stats.'); return; }
       stats = resp.data || {};
-      renderTagClouds();
       setStatus('ready', 'Ready · ' + stats.total_papers.toLocaleString() + ' papers');
       // Auto-load default view: last 7 days (matching recent feature)
       runSearch(0);
