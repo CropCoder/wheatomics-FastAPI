@@ -393,11 +393,6 @@ function parsePubDate(s) {
   return new Date(Date.UTC(yr, mo, day));
 }
 
-function extractYear(p) {
-  var dt = parsePubDate(p.pub_date);
-  return dt ? dt.getUTCFullYear() : null;
-}
-
 function parseTagList(raw) {
   if (!raw) return [];
   var s = String(raw).trim();
@@ -419,6 +414,47 @@ function loadStats() {
     .fail(function(xhr){
       setStatus('error', 'Stats unavailable (HTTP ' + xhr.status + '). Cannot search.');
     });
+}
+
+function buildQuery() {
+  // Map queryTerms to backend query params. Each term becomes its own
+  // parameter; the backend combines them with AND.
+  var params = { limit: pageSize, offset: (currentPage - 1) * pageSize };
+
+  // Default time range from the searchField dropdown when its value
+  // is a 'since:N' entry (e.g. 'since:7' for Last 7 days).
+  var sf = document.getElementById('searchField').value;
+  if (sf && sf.indexOf('since:') === 0) {
+    var d = parseInt(sf.substring(6), 10);
+    if (d > 0) params.since_days = d;
+  }
+
+  queryTerms.forEach(function(t) {
+    if (!t.value) return;
+    var v = t.value;
+    // Multiple same-field terms are comma-joined within a single param;
+    // the backend LIKE filter applies across all of them.
+    function mergeParam(key, newVal) {
+      if (!params[key]) params[key] = newVal;
+      else if (params[key] !== newVal) params[key] = params[key] + ',' + newVal;
+    }
+    if (t.field === 'all' || t.field === 'title' || t.field === 'abstract' || t.field === 'gene_name') {
+      mergeParam('q', v);
+    } else if (t.field === 'authors') {
+      mergeParam('authors', v);
+    } else if (t.field === 'journal') {
+      mergeParam('journal', v);
+    } else if (t.field === 'trait' || t.field === 'ai_tags') {
+      mergeParam('ai_tags', v);
+    } else if (t.field === 'pmid') {
+      mergeParam('pmid', v);
+    } else if (t.field && t.field.indexOf('since:') === 0) {
+      // 'since:N' as an explicit ADD term overrides the default.
+      var days = parseInt(t.field.substring(6), 10);
+      if (days > 0) params.since_days = days;
+    }
+  });
+  return params;
 }
 
 function runSearch() {
