@@ -413,6 +413,23 @@ function useExample(value, db) {
 // and example gene ID, so users can immediately query a known-good entry.
 var GENOMES_BY_KARYOTYPE = null;
 
+// Display-name overrides for a few hexaploid shorthand karyotypes that
+// the source database stores in a legacy single-letter form. We render
+// them in the conventional mixed-case (bold subgenome, regular lower)
+// so users see the standard cytogenetic notation in the UI.
+var KARYOTYPE_DISPLAY_OVERRIDES = {
+  'STST':   'StSt',         // e.g. pseudo-hexaploid Thinopyrum / StStStStStSt
+  'NSNSXMXM': 'NsNsXmXm',   // e.g. hexaploid with Ns (Aegilops) + Xm genomes
+};
+
+function formatKaryotype(raw) {
+  if (!raw) return '?';
+  if (Object.prototype.hasOwnProperty.call(KARYOTYPE_DISPLAY_OVERRIDES, raw)) {
+    return KARYOTYPE_DISPLAY_OVERRIDES[raw];
+  }
+  return raw;
+}
+
 function groupByKaryotype(records) {
   var groups = {};
   records.forEach(function(r) {
@@ -437,7 +454,7 @@ function renderGenomes(records) {
   groups.forEach(function(g) {
     var groupEl = $('<div class="gg-group"></div>');
     var label = $('<div class="gg-group-label" style="cursor:pointer; user-select:none;">' +
-      '<span class="gg-arrow">▸</span> ' + escapeHtml(g.karyotype) +
+      '<span class="gg-arrow">▸</span> ' + escapeHtml(formatKaryotype(g.karyotype)) +
       ' <span class="gg-count">(' + g.items.length + ')</span></div>');
     groupEl.append(label);
     var body = $('<div class="gg-body" style="display:none;"></div>');
