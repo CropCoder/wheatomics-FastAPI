@@ -297,7 +297,12 @@ def get_paper_annotation(pmid: str) -> dict:
 # Stats endpoint MUST be declared before /papers/{pubmedid}.
 # Otherwise the wildcard route greedily matches /papers/stats and
 # treats 'stats' as a PMID, returning 'Paper not found: stats'.
-@router.get("/stats")
+#
+# Path uses /papers/stats (not /stats) so it's namespaced under the
+# /papers resource — clearer for OpenAPI consumers and avoids
+# conflicting with any future /api/stats resource shared by other
+# routers.
+@router.get("/papers/stats")
 def stats() -> dict:
     """数据集聚合统计：年份分布、期刊 top-20、AI 标签 top-30、功能基因比例、审核状态分布。
 
