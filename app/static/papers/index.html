@@ -416,6 +416,53 @@ function loadStats() {
     });
 }
 
+// queryTerms is the PubMed-style accumulator: array of {field, value}.
+// Each entry was added via the ADD button; renderQueryBox() updates
+// the textarea visualization; clearTerms() empties the array.
+var queryTerms = [];        // [{field: 'all', value: 'TaCPK'}, ...]
+var combineOp = 'AND';      // 'AND' or 'OR' — combines multiple terms
+
+function renderQueryBox() {
+  // Render the queryTerms array into the textarea visualization, one
+  // term per line as 'field: value'. Read-only — terms are removed
+  // via the × button, not by editing the textarea directly.
+  var box = document.getElementById('query-box');
+  if (queryTerms.length === 0) {
+    box.value = '';
+    box.placeholder = 'Click ADD to add terms. Click × to remove a term. Empty = no text filter.';
+    return;
+  }
+  box.value = queryTerms.map(function(t, i) {
+    return (i + 1) + '. [' + t.field + '] ' + t.value + '   ×';
+  }).join('\n');
+}
+
+function clearTerms() {
+  queryTerms = [];
+  renderQueryBox();
+}
+
+function addTerm() {
+  var field = document.getElementById('searchField').value;
+  var inp = document.getElementById('searchInp').value.trim();
+  if (!inp) {
+    document.getElementById('searchInp').focus();
+    return;
+  }
+  // One term = one (field, value) pair. Don't split on commas — the
+  // user explicitly typed the whole string. PubMed's "ADD" does the
+  // same: ADD adds whatever is in the box as one logical term.
+  queryTerms.push({ field: field, value: inp });
+  document.getElementById('searchInp').value = '';
+  renderQueryBox();
+  document.getElementById('searchInp').focus();
+}
+
+function removeTerm(idx) {
+  queryTerms.splice(idx, 1);
+  renderQueryBox();
+}
+
 function buildQuery() {
   // Map queryTerms to backend query params. Each term becomes its own
   // parameter; the backend combines them with AND.
