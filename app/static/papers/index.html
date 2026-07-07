@@ -262,6 +262,11 @@ html, body { margin:0; padding:0; }
             <option value="trait">Trait tag</option>
             <option value="pmid">PMID</option>
             <option value="ai_tags">AI tag</option>
+            <option value="">── Time range ──</option>
+            <option value="since:7" selected>Last 7 days</option>
+            <option value="since:30">Last 30 days</option>
+            <option value="since:90">Last 90 days</option>
+            <option value="since:365">Last 365 days</option>
           </select>
         </div>
         <div class="form-group col-md-7 mb-2">
@@ -284,19 +289,8 @@ html, body { margin:0; padding:0; }
         <textarea id="query-box" class="form-control form-control-sm" rows="3" placeholder="Click ADD to add terms. Click × to remove a term. Empty = no text filter."></textarea>
       </div>
 
-      <!-- Year / Recent + Search row -->
+      <!-- Combine + Search + Reset row (Recent moved to Field dropdown) -->
       <div class="form-row align-items-end">
-        <div class="form-group col-md-3 mb-2">
-          <label for="f-recent-days" class="small-label">Recent Updates</label>
-          <select id="f-recent-days" class="form-control form-control-sm">
-            <option value="">All time</option>
-            <option value="7" selected>Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="90">Last 90 days</option>
-            <option value="365">Last 365 days</option>
-          </select>
-          <div class="helper-text">By paper import time</div>
-        </div>
         <div class="form-group col-md-3 mb-2">
           <label for="op-select" class="small-label">Combine terms with</label>
           <select id="op-select" class="form-control form-control-sm">
@@ -310,79 +304,23 @@ html, body { margin:0; padding:0; }
         <div class="form-group col-md-3 mb-2 d-flex align-items-end">
           <button type="button" id="reset-btn" class="btn btn-outline-secondary btn-sm btn-block">Reset</button>
         </div>
-      </div>
-    </div>
-
-    <!-- Year chart + slider — compact strip -->
-    <div class="filter-block">
-      <div class="chart-title">Results by Year</div>
-      <div class="year-chart-shell">
-        <canvas id="yearChart" width="520" height="100"></canvas>
-        <div class="chart-endpoints">
-          <span id="chartMinYear">—</span>
-          <span id="chartMaxYear">—</span>
-        </div>
-      </div>
-      <div class="year-slider-wrap">
-        <div class="range-wrap">
-          <div class="range-track"></div>
-          <div class="range-selected" id="rangeSelected" style="left: 0%; width: 100%;"></div>
-          <input type="range" id="yearStart" min="1900" max="2030" value="1900" step="1">
-          <input type="range" id="yearEnd"   min="1900" max="2030" value="2030" step="1">
-        </div>
-        <div class="year-values">
-          <span id="yearMinLabel">1900</span>
-          <span id="yearMaxLabel">2030</span>
-          <span class="year-selected-text" style="margin-left:8px;"><span id="yearRangeText">All years</span></span>
-          <button type="button" id="clear-year" class="btn btn-link btn-sm p-0 ml-auto">Clear</button>
+        <div class="form-group col-md-3 mb-2 d-flex align-items-end">
+          <span class="helper-text">Default time: Last 7 days (papers.created_at)</span>
         </div>
       </div>
     </div>
 
-    <div class="filter-row">
-      <!-- Journal filter — collapsed by default, expand on click -->
-      <div class="filter-block filter-block-quarter">
-        <div class="paper-filter-title" data-toggle="collapse" data-target="#journal-collapse" style="cursor:pointer; user-select:none;">
-          <span class="gg-arrow">▸</span> Journal Filter <span id="journal-count" class="text-muted" style="font-weight:400;"></span>
-        </div>
-        <div id="journal-collapse" class="collapse" style="margin-top:6px;">
-          <div class="helper-text mb-2">Only checked journals will be displayed.</div>
-          <div style="margin-bottom:8px;">
-            <button type="button" id="journal-all" class="btn btn-sm btn-outline-primary mr-1">Select All</button>
-            <button type="button" id="journal-none" class="btn btn-sm btn-outline-secondary">Clear All</button>
-          </div>
-          <div id="journal-filter-list" class="journal-check-list"></div>
-        </div>
-      </div>
+    <!-- Year chart + Journal Filter + Top Trait + Top Keywords removed
+         in simplification (commit moving them out). -->
 
-      <!-- Top Trait Keywords -->
-      <div class="filter-block filter-block-quarter">
-        <div class="paper-filter-title">Top Trait Keywords</div>
-        <div class="helper-text mb-2">Click a tag to filter papers by that trait.</div>
-        <div id="trait-tag-cloud"></div>
-      </div>
-
-      <!-- Top Keywords -->
-      <div class="filter-block filter-block-quarter">
-        <div class="paper-filter-title">Top Keywords</div>
-        <div id="tag-cloud"></div>
-      </div>
-
-      <!-- Export -->
-      <div class="filter-block filter-block-quarter">
-        <div class="paper-filter-title">Export</div>
-        <div class="helper-text mb-2">Download current page as TSV.</div>
-        <button type="button" id="export-btn" class="btn btn-success btn-sm btn-block" disabled>
-          Export Results (CSV + Abstract)
-        </button>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ============= BOTTOM: RESULTS ============= -->
+    <!-- ============= BOTTOM: RESULTS ============= -->
   <div class="results-row">
-    <div id="res-info">Loading…</div>
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <div id="res-info">Loading…</div>
+      <button type="button" id="export-btn" class="btn btn-success btn-sm" disabled>
+        Export Results (TSV)
+      </button>
+    </div>
     <div id="list-content"></div>
     <div class="pagination-container d-flex justify-content-center align-items-center mt-4 mb-5">
       <button type="button" id="prev-btn" class="btn btn-sm btn-outline-primary" disabled>Prev</button>
@@ -652,6 +590,17 @@ function buildQuery() {
   // parameter; the backend combines them with AND.
   var params = { limit: pageSize, offset: (currentPage - 1) * pageSize };
   var op = document.getElementById('op-select').value;
+
+  // Default time range from the searchField dropdown when its value
+  // is a 'since:N' entry. The user can change it by selecting another
+  // time option (it replaces the default but never ends up in
+  // queryTerms because the ADD button is what pushes terms there, and
+  // they wouldn't usually ADD a 'since:7' to the query box).
+  var sf = document.getElementById('searchField').value;
+  if (sf && sf.indexOf('since:') === 0) {
+    var d = parseInt(sf.substring(6), 10);
+    if (d > 0) params.since_days = d;
+  }
   queryTerms.forEach(function(t) {
     if (!t.value) return;
     var v = t.value;
@@ -685,6 +634,13 @@ function buildQuery() {
       mergeParam('pmid', v);
     } else if (t.field === 'ai_tags') {
       mergeParam('ai_tags', v);
+    } else if (t.field && t.field.indexOf('since:') === 0) {
+      // Time range option (e.g. 'since:7' / 'since:30'). Map directly
+      // to the since_days backend param. Multiple since: terms collapse
+      // — last write wins, which is what the user expects when changing
+      // their mind on a time window.
+      var days = parseInt(t.field.substring(6), 10);
+      if (days > 0) params.since_days = days;
     }
   });
   // Note: 'AND' / 'OR' combo is approximated client-side here by the
@@ -703,9 +659,15 @@ function runSearch() {
   if (yStart !== yearMin) params.pub_date_start = String(yStart);
   if (yEnd   !== yearMax) params.pub_date_end   = String(yEnd);
 
-  // Recent filter: only filter by papers.created_at when user picks a value
-  var recent = parseInt(document.getElementById('f-recent-days').value, 10) || 0;
-  if (recent > 0) params.since_days = recent;
+  // Time range: derive from searchField if it starts with 'since:'.
+  //   'Last 7 days' option has value 'since:7' -> since_days=7
+  //   'All time' / no selection -> no since_days (default to backend's
+  //     7-day server-side default? No — we keep an explicit no-filter
+  //     by leaving since_days off the params entirely).
+  // The field's "── Time range ──" separator is value="" which we
+  // skip. Anything else is a regular field term handled by queryTerms.
+  // (Recent filter removed in commit <simplify-ui>; use the searchField
+  // dropdown's "since:N" entries instead.)
 
   // Tag chip filter: currentTag is set when the user clicks a tag in the
   // sidebar tag-cloud or a badge-tag chip on a paper card. The matching
@@ -921,9 +883,7 @@ function resetAll() {
   clearTerms();
   document.getElementById('yearStart').value = yearMin;
   document.getElementById('yearEnd').value   = yearMax;
-  document.getElementById('f-recent-days').value = '7';
   updateYearSlider();
-  document.querySelectorAll('#journal-filter-list input[type=checkbox]').forEach(function(cb){ cb.checked = true; });
   currentTag = null;
   currentPage = 1;
   runSearch();
@@ -1054,7 +1014,8 @@ $(function(){
   });
 
   // Recent dropdown changes
-  $('#f-recent-days').on('change', function(){ currentPage = 1; runSearch(); });
+  // Recent filter moved to the searchField dropdown (since:N entries)
+  // so no separate change handler here.
 
   // Search input Enter
   $('#searchInp').on('keydown', function(e){
