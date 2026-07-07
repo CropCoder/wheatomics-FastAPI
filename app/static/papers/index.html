@@ -412,7 +412,6 @@ function loadStats() {
     .done(function(resp){
       if (!resp.success) { setStatus('error', 'Failed to load stats.'); return; }
       stats = resp.data || {};
-      renderJournalList();
       renderTagClouds();
       setStatus('ready', 'Ready · ' + stats.total_papers.toLocaleString() + ' papers');
       // Auto-load default view: last 7 days (matching recent feature)
@@ -421,15 +420,10 @@ function loadStats() {
     .fail(function(xhr){
       setStatus('error', 'Stats unavailable (HTTP ' + xhr.status + '). Cannot search.');
     });
-  // Journal filter: when user has unchecked some, pass the kept list as a
-  // comma-separated `journal` parameter. When all are checked (or none), no filter.
-  var j = getCheckedJournals();
-  if (j.checked.length > 0 && j.checked.length < j.all.length) {
-    currentJournals = j.checked;
-    params.journal = j.checked.join(',');
-  } else {
-    currentJournals = null;
-  }
+}
+
+function runSearch() {
+  var params = buildQuery();
 
   setStatus('loading', 'Searching…');
   document.getElementById('res-info').textContent = 'Searching…';
