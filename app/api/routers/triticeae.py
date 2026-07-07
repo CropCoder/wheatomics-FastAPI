@@ -385,6 +385,21 @@ def stats() -> dict:
             for r in cursor.fetchall()
         ]
 
+        # --- top 单个 AI 标签（按 ai_tags 里的分号拆分后 GROUP BY） ---
+        # MySQL 没有内置 string_to_array 拆分分号分隔字符串，所以用 Python 拆。
+        # 22K 行内存里跑 ~50ms，比复杂的 SUBSTRING_INDEX 链 JOIN 简单得多。
+        tag_counter: dict[str, int] = {}
+        for r in top_ai_tags:
+            for tag in (r["tags"] or "").split(";"):
+                tag = tag.strip()
+                if tag:
+                    tag_counter[tag] = tag_counter.get(tag, 0) + int(r["count"])
+        top_individual_tags = sorted(
+            ({"tag": k, "count": v} for k, v in tag_counter.items()),
+            key=lambda x: x["count"],
+            reverse=True,
+        )[:30]
+
         # --- 功能基因比例（基于标注层 f.） ---
         cursor.execute("""
             SELECT
@@ -437,6 +452,7 @@ def stats() -> dict:
         "year_histogram": year_histogram,
         "top_journals": top_journals,
         "top_ai_tags": top_ai_tags,
+        "top_individual_tags": top_individual_tags,
         "functional_dist": functional_dist,
         "review_status_dist": review_status_dist,
         "source_method_dist": source_method_dist,

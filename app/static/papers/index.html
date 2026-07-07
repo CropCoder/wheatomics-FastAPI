@@ -503,25 +503,28 @@ function getCheckedJournals() {
 
 /* ============ Tag clouds ============ */
 function renderTagClouds() {
-  // Trait cloud: take top 10 from top_ai_tags (server returns 30, take 10)
-  var tags = (stats && stats.top_ai_tags) || [];
+  // Use the pre-split top_individual_tags list — the server splits
+  // semicolon-joined ai_tags and groups per individual tag, so the
+  // front-end no longer needs to do split(';')[0] (which duplicated
+  // the first tag of each combination and hid real distribution).
+  var tags = (stats && stats.top_individual_tags) || [];
   var traitHtml = '';
-  tags.slice(0, 10).forEach(function(t){
-    var label = (t.tags || '').split(';')[0] || t.tags;  // pick first tag from semicolon-joined
-    traitHtml += '<div class="tag-item" data-tag="' + escapeHtml(label.trim()) + '">' +
-      '<span>' + escapeHtml(label.trim()) + '</span>' +
+  tags.slice(0, 20).forEach(function(t){
+    var label = t.tag;
+    traitHtml += '<div class="tag-item" data-tag="' + escapeHtml(label) + '">' +
+      '<span>' + escapeHtml(label) + '</span>' +
       '<small>' + t.count.toLocaleString() + '</small>' +
     '</div>';
   });
   document.getElementById('trait-tag-cloud').innerHTML = traitHtml || '<div class="text-muted" style="font-size:12px;">No data</div>';
 
-  // Top keywords cloud: use functional_dist.review_status_dist or just re-list ai_tags 11-20
-  var tags2 = (stats && stats.top_ai_tags) || [];
+  // Top keywords: same dataset, different slice — split top 20 into
+  // 10 trait-style + 10 keyword-style for visual variety.
   var tagHtml = '';
-  tags2.slice(10, 20).forEach(function(t){
-    var label = (t.tags || '').split(';')[0] || t.tags;
-    tagHtml += '<div class="tag-item" data-tag="' + escapeHtml(label.trim()) + '">' +
-      '<span>' + escapeHtml(label.trim()) + '</span>' +
+  tags.slice(20, 40).forEach(function(t){
+    var label = t.tag;
+    tagHtml += '<div class="tag-item" data-tag="' + escapeHtml(label) + '">' +
+      '<span>' + escapeHtml(label) + '</span>' +
       '<small>' + t.count.toLocaleString() + '</small>' +
     '</div>';
   });
