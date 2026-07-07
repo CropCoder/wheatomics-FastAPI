@@ -135,6 +135,54 @@ git pull --rebase origin main
 git push origin main
 ```
 
+### Q: Router 路径变成 `/api/{prefix}/{endpoint}`（双前缀）
+**症状**: 重命名 router 的 `prefix=` 后，`curl /api/openapi.json` 显示路径是
+`/api/papers/papers` 而不是 `/api/papers`。
+
+**原因**: `main.py` 的 `include_router()` 已经把 `settings.API_PREFIX`（`/api`）拼到所有路由前面。如果 router 自身又写 `prefix="/papers"`，然后 `@router.get("/papers")`，最终路径变成 `/api` + `/papers` + `/papers`。
+
+**正确写法**（推荐）：router prefix 留空，由每个 `@router.get` 写完整路径：
+```python
+router = APIRouter(prefix="", tags=["..."])
+
+@router.get("/papers")                  # → /api/papers
+@router.get("/papers/{pmid}/annotation") # → /api/papers/{pmid}/annotation
+@router.get("/stats")                    # → /api/stats
+```
+
+**反例**（会出现双前缀）：
+```python
+router = APIRouter(prefix="/papers")
+@router.get("/papers")  # → /api/papers/papers ❌
+```
+
+**诊断**：先看 OpenAPI，确认实际注册的路径：
+```bash
+curl -s https://wheatomics.sdau.edu.cn/api/openapi.json | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+for p in sorted(d['paths']):
+    print(' ', p)
+"
+```
+
+---
+
+### Q: 改了 Python 后端代码，访问接口还是老逻辑
+**症状**: 提交了 Python 文件改动，`git pull` 也跑了，但 `curl /api/xxx` 仍然返回老逻辑（404 / 老 SQL / 老参数）。
+
+**原因**: webhook 只 `git pull`，**不重启 uvicorn**。见第一节 4 的 ⚠️ 警告。
+
+**修法**:
+```bash
+pkill -f 'uvicorn main:app'
+sleep 2
+cd /var/www/FastAPI_backend_Port8000
+nohup /home/fei/mambaforge/envs/zjw/bin/uvicorn main:app --host 0.0.0.0 --port 8000 >> api.log 2>&1 &
+```
+
+**判断**: `git log -1` vs `ps -o lstart` 看是不是老进程。
+
 ---
 
 ## 四、配置与路径速查
