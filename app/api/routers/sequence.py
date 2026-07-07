@@ -188,6 +188,7 @@ def batch_sequence(
     """
 
     import re
+    import subprocess
     from concurrent.futures import ThreadPoolExecutor
 
     from app.core.exceptions import ExternalToolFailure
@@ -202,28 +203,85 @@ def batch_sequence(
 
     interval_re = re.compile(r"^([^:]+):(\d+)-(\d+)$")
 
-    def _fetch_one(token: str) -> dict:
-        """Fetch a single token; return a record dict or an error record."""
+    # Partition into two buckets:
+    #   - gene_ids: tokens without ":" → fetch in ONE blastdbcmd call via -entry_batch stdin
+    #   - ranges:   tokens matching "chr:start-end" → fetched in parallel threads
+    #              (blastdbcmd has no native batch mode for -range)
+    gene_ids = []
+    gene_tokens = []   # original tokens in the same order
+    range_jobs = []    # (token, chrom, start, end)
+    for token in raw_tokens:
         m = interval_re.match(token)
-        try:
-            if m:
-                chrom, start, end = m.group(1), int(m.group(2)), int(m.group(3))
-                fasta = _try_interval(db_path, chrom, start, end)
-                return {"sequence_id": token, "fasta": fasta, "ok": True}
-            # Gene-like ID: append .1 if missing, then look up by entry
+        if m:
+            range_jobs.append((token, m.group(1), int(m.group(2)), int(m.group(3))))
+        else:
             entry = token if token.endswith(".1") else f"{token}.1"
-            fasta = _blastdbcmd("-db", str(db_path), "-entry", entry)
+            gene_tokens.append(token)
+            gene_ids.append(entry)
+
+    records_by_token: dict[str, dict] = {}
+
+    # ---- 1) Genes: single blastdbcmd -entry_batch - call ----
+    if gene_ids:
+        try:
+            proc = subprocess.run(
+                ["/usr/bin/blastdbcmd", "-db", str(db_path), "-entry_batch", "-"],
+                input="\n".join(gene_ids) + "\n",
+                capture_output=True,
+                text=True,
+                timeout=settings.REQUEST_TIMEOUT_SECONDS,
+                check=False,
+            )
+            if proc.returncode != 0:
+                # Whole batch failed — record per-token error
+                err = (proc.stderr or proc.stdout or "").strip()[:300]
+                for token in gene_tokens:
+                    records_by_token[token] = {"sequence_id": token, "fasta": "", "ok": False, "error": err}
+            else:
+                # Parse FASTA blocks: >id\nsequence...>id\nsequence...
+                blocks: dict[str, str] = {}
+                cur_id = None
+                cur_lines: list[str] = []
+                for line in proc.stdout.splitlines():
+                    if line.startswith(">"):
+                        if cur_id is not None:
+                            blocks[cur_id] = ">" + cur_id + "\n" + "\n".join(cur_lines)
+                        cur_id = line[1:].split()[0]
+                        cur_lines = []
+                    else:
+                        cur_lines.append(line)
+                if cur_id is not None:
+                    blocks[cur_id] = ">" + cur_id + "\n" + "\n".join(cur_lines)
+
+                for token, entry in zip(gene_tokens, gene_ids):
+                    if entry in blocks:
+                        records_by_token[token] = {"sequence_id": token, "fasta": blocks[entry], "ok": True}
+                    else:
+                        records_by_token[token] = {"sequence_id": token, "fasta": "", "ok": False,
+                                                    "error": f"Entry not found: {entry}"}
+        except subprocess.TimeoutExpired:
+            for token in gene_tokens:
+                records_by_token[token] = {"sequence_id": token, "fasta": "", "ok": False, "error": "timeout"}
+        except Exception as e:  # noqa: BLE001
+            for token in gene_tokens:
+                records_by_token[token] = {"sequence_id": token, "fasta": "", "ok": False, "error": repr(e)[:300]}
+
+    # ---- 2) Ranges: parallel _try_interval calls ----
+    def _fetch_range(job: tuple) -> dict:
+        token, chrom, start, end = job
+        try:
+            fasta = _try_interval(db_path, chrom, start, end)
             return {"sequence_id": token, "fasta": fasta, "ok": True}
-        except ExternalToolFailure as e:
-            return {"sequence_id": token, "fasta": "", "ok": False, "error": str(e)[:300]}
-        except Exception as e:  # noqa: BLE001 — never let one bad id abort the batch
+        except Exception as e:  # noqa: BLE001
             return {"sequence_id": token, "fasta": "", "ok": False, "error": repr(e)[:300]}
 
-    # Concurrent fetch (max 8 workers) — keeps wall time well under Apache
-    # ProxyTimeout. Each record is independent so order doesn't matter.
-    with ThreadPoolExecutor(max_workers=min(8, len(raw_tokens))) as pool:
-        records = list(pool.map(_fetch_one, raw_tokens))
+    if range_jobs:
+        with ThreadPoolExecutor(max_workers=min(8, len(range_jobs))) as pool:
+            for r in pool.map(_fetch_range, range_jobs):
+                records_by_token[r["sequence_id"]] = r
 
+    # Preserve input order
+    records = [records_by_token[t] for t in raw_tokens]
     succeeded = sum(1 for r in records if r.get("ok"))
     return ok({
         "database": database,
