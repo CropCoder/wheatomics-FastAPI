@@ -271,9 +271,17 @@ $(function() {
   $('#query-input').on('input', function() {
     autoDetectMode();
   });
+  // Mark user-picked when the dropdown changes manually
+  $('#db-select').on('change', function() {
+    userPickedDatabase = true;
+  });
 });
 
 // ----- mode detection -----
+
+// User-driven flag — once they manually pick a database from the
+// dropdown, stop auto-overriding it on input changes.
+var userPickedDatabase = false;
 
 function autoDetectMode() {
   var input = $('#query-input').val().trim();
@@ -281,28 +289,27 @@ function autoDetectMode() {
     $('#db-hint').text('CDS / gene database. Defaults to all_gene.');
     return;
   }
-  // Check if input looks like a region: contains ":" with start-end
-  var regionPattern = /^[A-Za-z0-9_.-]+:\d+(?:-|\.\.)\d+$/;
-  var lines = input.split(/[\n,;]+/).filter(function(s) { return s.trim(); });
-  var isRegion = lines.length === 1 && regionPattern.test(lines[0]);
-  var isBatch = lines.length > 1;
+  // Split into tokens (space / newline / comma / semicolon)
+  var tokens = input.split(/[\s,;]+/).filter(function(s) { return s.trim(); });
+  // Any token containing ':' looks like a chromosome interval
+  var hasInterval = tokens.some(function(t) { return t.indexOf(':') >= 0; });
 
-  if (isRegion) {
-    // Interval mode
-    $('#db-hint').text('Use a genome database. all_genomes aggregates all available genomes; otherwise select a specific one.');
-    var allGenomes = databaseOptions.find(function(o) { return o.value === 'all_genomes'; });
-    if (allGenomes) $('#db-select').val('all_genomes');
-  } else if (isBatch) {
-    // Batch mode
-    $('#db-hint').text('Select a database that contains your gene IDs (e.g. all_gene, or a genome-specific one).');
-    if (databaseOptions.find(function(o) { return o.value === 'all_gene'; })) {
-      $('#db-select').val('all_gene');
+  if (hasInterval) {
+    // At least one interval token — need a genome DB
+    $('#db-hint').text('Detected interval token (chr:start-end). Defaulting to all_genomes.');
+    if (!userPickedDatabase) {
+      var allGenomes = databaseOptions.find(function(o) { return o.value === 'all_genomes'; });
+      if (allGenomes) $('#db-select').val('all_genomes');
     }
   } else {
-    // Single gene mode
-    $('#db-hint').text('CDS / gene database. Defaults to all_gene.');
-    if (databaseOptions.find(function(o) { return o.value === 'all_gene'; })) {
-      $('#db-select').val('all_gene');
+    // Pure gene ID batch / single — default to CDS / all_gene
+    $('#db-hint').text(tokens.length > 1
+      ? ('Detected ' + tokens.length + ' gene IDs. Defaulting to all_gene.')
+      : 'CDS / gene database. Defaults to all_gene.');
+    if (!userPickedDatabase) {
+      if (databaseOptions.find(function(o) { return o.value === 'all_gene'; })) {
+        $('#db-select').val('all_gene');
+      }
     }
   }
 }
