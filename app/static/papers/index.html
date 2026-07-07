@@ -518,7 +518,23 @@ function buildQuery() {
 }
 
 function runSearch() {
+  // If the input box has text, search it as a one-shot term (AND on top
+  // of whatever queryTerms already hold), then remove it so it doesn't
+  // get double-counted if the user hits Search again after the result.
+  var inpVal = document.getElementById('searchInp').value.trim();
+  if (inpVal) {
+    var sf = document.getElementById('searchField').value;
+    var field = (sf && sf.indexOf('since:') !== 0) ? sf : 'all';
+    var op = queryTerms.length === 0 ? 'AND' : activeOp;
+    queryTerms.push({ op: op, field: field, value: inpVal });
+  }
+
   var params = buildQuery();
+
+  if (inpVal) {
+    // Undo the temporary push so the query-box display stays accurate.
+    queryTerms.pop();
+  }
 
   setStatus('loading', 'Searching…');
   document.getElementById('res-info').textContent = 'Searching…';
