@@ -140,6 +140,7 @@ def _build_search(
     function_gene_tags: str | None = None,
     pub_date_start: str | None = None,
     pub_date_end: str | None = None,
+    since_days: int | None = None,
     limit: int = 20,
     offset: int = 0,
 ) -> dict:
@@ -190,6 +191,14 @@ def _build_search(
         conditions.append("SUBSTRING(p.pub_date, 1, 4) <= %s")
         params.append(pub_date_end[:4])
 
+    if since_days is not None and since_days > 0:
+        # papers.created_at = row insertion time into the papers table
+        # (when the PubMed fetch + import step ran). Distinct from
+        # fga.created_at, which is when the LLM annotation was made.
+        # Use since_days for "what new papers did we add this week".
+        conditions.append("p.created_at >= (NOW() - INTERVAL %s DAY)")
+        params.append(int(since_days))
+
     where = " WHERE " + " AND ".join(conditions) if conditions else ""
 
     with mysql_cursor(settings.DB_TRITICEAE) as cursor:
@@ -211,7 +220,7 @@ def _build_search(
 @router.get("/papers")
 def search_papers(
     q: str | None = Query(None, description="全文关键词搜索（paper_title / abstract）"),
-    authors: str | None = Query(None, description="作者精确匹配（逗号分隔列表中精确查找）"),
+    authors: str | None = Query(None, description="作者模糊匹配（LIKE %...%，跨整词）"),
     pmid: str | None = Query(None, description="PubMed ID 精确匹配（自动去除空白字符）"),
     ai_tags: str | None = Query(None, description="AI 标签（papers.ai_tags）"),
     functional_gene_tags: str | None = Query(None, description="论文级功能基因标签"),
@@ -222,6 +231,8 @@ def search_papers(
     function_gene_tags: str | None = Query(None, description="第二套功能基因标签"),
     pub_date_start: str | None = Query(None, description="发布年份起始"),
     pub_date_end: str | None = Query(None, description="发布年份结束"),
+    since_days: int | None = Query(None, ge=1, le=3650,
+        description="按 papers 表的入库时间（p.created_at）过滤最近 N 天"),
     limit: int = Query(20, ge=1, le=200, description="返回条数上限"),
     offset: int = Query(0, ge=0, description="分页偏移量"),
 ) -> dict:
@@ -230,6 +241,10 @@ def search_papers(
     只查 `papers` 表（包含论文级标注：functional_gene_flag / ai_tags / keywords_source 等），
     不再 LEFT JOIN functional_gene_annotations。需要细粒度 LLM 标注（gene_name /
     trait_label / confidence 等）请调 /papers/{pmid}/annotation。
+
+    `since_days` is anchored to `papers.created_at` (when the row was
+    inserted), not `fga.created_at`. Use it for "what new papers did
+    we add this week".
 
     默认排序：paper_created_at DESC（最近入库优先）。
     """

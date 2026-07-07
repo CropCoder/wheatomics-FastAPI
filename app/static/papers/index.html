@@ -243,8 +243,8 @@ html, body { margin:0; padding:0; }
       <div class="form-group mb-2">
         <label for="f-recent-days" class="small-label">Recent Updates</label>
         <select id="f-recent-days" class="form-control form-control-sm">
-          <option value="">All time</option>
-          <option value="7" selected>Last 7 days</option>
+          <option value="" selected>All time</option>
+          <option value="7">Last 7 days</option>
           <option value="30">Last 30 days</option>
           <option value="90">Last 90 days</option>
           <option value="365">Last 365 days</option>
@@ -770,7 +770,7 @@ function resetAll() {
   document.getElementById('searchField').value = 'all';
   document.getElementById('yearStart').value = yearMin;
   document.getElementById('yearEnd').value   = yearMax;
-  document.getElementById('f-recent-days').value = '7';
+  document.getElementById('f-recent-days').value = '';
   updateYearSlider();
   document.querySelectorAll('#journal-filter-list input[type=checkbox]').forEach(function(cb){ cb.checked = true; });
   currentTag = null;
