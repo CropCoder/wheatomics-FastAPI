@@ -285,23 +285,13 @@ html, body { margin:0; padding:0; }
         <textarea id="query-box" class="form-control form-control-sm" rows="3" placeholder="Click ADD to add terms. Click × to remove a term. Empty = no text filter."></textarea>
       </div>
 
-      <!-- Combine + Search + Reset row (Recent moved to Field dropdown) -->
+      <!-- Search + Reset row -->
       <div class="form-row align-items-end">
-        <div class="form-group col-md-3 mb-2">
-          <label for="op-select" class="small-label">Combine terms with</label>
-          <select id="op-select" class="form-control form-control-sm">
-            <option value="AND" selected>AND (all must match)</option>
-            <option value="OR">OR (any can match)</option>
-          </select>
-        </div>
-        <div class="form-group col-md-3 mb-2 d-flex align-items-end">
+        <div class="form-group col-md-6 mb-2 d-flex align-items-end">
           <button type="button" id="search-btn" class="btn btn-primary btn-sm btn-block mr-1">Search</button>
         </div>
-        <div class="form-group col-md-3 mb-2 d-flex align-items-end">
+        <div class="form-group col-md-6 mb-2 d-flex align-items-end">
           <button type="button" id="reset-btn" class="btn btn-outline-secondary btn-sm btn-block">Reset</button>
-        </div>
-        <div class="form-group col-md-3 mb-2 d-flex align-items-end">
-          <span class="helper-text">Default time: Last 7 days (papers.created_at)</span>
         </div>
       </div>
     </div>
@@ -420,7 +410,6 @@ function loadStats() {
 // Each entry was added via the ADD button; renderQueryBox() updates
 // the textarea visualization; clearTerms() empties the array.
 var queryTerms = [];        // [{field: 'all', value: 'TaCPK'}, ...]
-var combineOp = 'AND';      // 'AND' or 'OR' — combines multiple terms
 
 function renderQueryBox() {
   // Render the queryTerms array into the textarea visualization, one
@@ -700,8 +689,6 @@ function writeTSV(rows) {
 function resetAll() {
   document.getElementById('searchInp').value = '';
   document.getElementById('searchField').value = 'all';
-  document.getElementById('op-select').value = 'AND';
-  combineOp = 'AND';
   clearTerms();
   currentTag = null;
   currentPage = 1;
@@ -719,7 +706,6 @@ $(function(){
   // PubMed-style advanced search wiring
   $('#add-term-btn').on('click', function(){ addTerm(); });
   $('#clear-terms-btn').on('click', function(){ clearTerms(); });
-  $('#op-select').on('change', function(){ combineOp = $(this).val(); });
   // Show Index link placeholder (year-slider was removed; jump to top
   // of the search-row instead).
   // Allow × click on query-box to remove the corresponding term.
