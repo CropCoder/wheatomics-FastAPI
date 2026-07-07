@@ -270,15 +270,16 @@ html, body { margin:0; padding:0; }
           <input type="text" id="searchInp" class="form-control form-control-sm" placeholder="e.g. TaCPK, stripe rust, Plant Cell, Ma Shengwei">
         </div>
         <div class="form-group col-md-3 mb-2 d-flex">
-          <div class="btn-group btn-block" role="group">
-            <button type="button" id="add-term-btn" class="btn btn-primary btn-sm">ADD <span id="add-op-label">AND</span> &#9662;</button>
-            <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <span class="sr-only">Toggle operator</span>
+          <div class="dropdown btn-block">
+            <button type="button" id="add-term-btn"
+                    class="btn btn-primary btn-sm dropdown-toggle btn-block"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              ADD <span id="add-op-label">with AND</span> &#9662;
             </button>
             <div class="dropdown-menu">
-              <a class="dropdown-item add-op-item" href="#" data-op="AND">AND — both must match</a>
-              <a class="dropdown-item add-op-item" href="#" data-op="OR">OR — either may match</a>
-              <a class="dropdown-item add-op-item" href="#" data-op="NOT">NOT — exclude matches</a>
+              <a class="dropdown-item add-op-item" href="#" data-op="AND">Add with AND — both must match</a>
+              <a class="dropdown-item add-op-item" href="#" data-op="OR">Add with OR — either may match</a>
+              <a class="dropdown-item add-op-item" href="#" data-op="NOT">Add with NOT — exclude matches</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item small text-muted" href="#">First term is always AND</a>
             </div>
@@ -722,14 +723,18 @@ $(function(){
   $('#export-btn').on('click', exportCSV);
 
   // PubMed-style advanced search wiring
-  $('#add-term-btn').on('click', function(){ addTerm(); });
+  // ADD button itself opens the dropdown (Bootstrap's data-toggle handles
+  // that). Selecting an item from the dropdown commits the term
+  // immediately with that operator and updates the label for the
+  // next click.
   $('#clear-terms-btn').on('click', function(){ clearTerms(); });
-  // Dropdown items: pick AND/OR/NOT for the next ADD
   $('.add-op-item').on('click', function(e){
     e.preventDefault();
     var op = $(this).data('op');
     activeOp = op;
-    document.getElementById('add-op-label').textContent = op;
+    document.getElementById('add-op-label').textContent = 'with ' + op;
+    addTerm();  // commit the term immediately on selection
+  });
   });
   // Show Index link placeholder (year-slider was removed; jump to top
   // of the search-row instead).
