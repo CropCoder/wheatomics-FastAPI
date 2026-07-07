@@ -317,10 +317,14 @@ function autoDetectMode() {
 // Hide chromosome-level genome libraries (names containing 'chr' or 'Chr')
 // from the dropdown — interval queries should default to all_genomes instead,
 // and these per-chromosome .genome_chr1A, .chr1H, etc. entries clutter the list.
+// Also hide Primer-related databases (primer_*, *_primer, primer3, etc.) —
+// they belong to the PrimerServer / snprimer tools, not the FASTA retrieval.
 function shouldHideDb(name) {
   if (!name) return true;
   var lower = name.toLowerCase();
-  return lower.includes('chr');
+  if (lower.includes('chr')) return true;
+  if (lower.includes('primer')) return true;
+  return false;
 }
 
 // Coding/transcript databases — names containing cds / gene / mrna /
