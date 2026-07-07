@@ -14,24 +14,13 @@ from app.schemas.triticeae import TriticeaePaper, TriticeaeSearchResult
 
 router = APIRouter(prefix="/triticeae", tags=["Triticeae Papers"])
 
-_SQL_COLUMNS = """f.id AS fga_id,
-        f.pubmedid,
-        f.title AS fga_title,
-        f.is_functional_gene,
-        f.confidence,
-        f.gene_name,
-        f.gene_type,
-        f.trait_label,
-        f.function_summary,
-        f.evidence_type,
-        f.new_tags,
-        f.llm_reason,
-        f.source_method,
-        f.review_status,
-        f.created_at AS fga_created_at,
-        f.updated_at AS fga_updated_at,
-        f.disease_gene_tags AS fga_disease_gene_tags,
-        p.id AS paper_id,
+# papers 表是论文元数据的主表（来自 PubMed + 论文级 AI 标注）；
+# functional_gene_annotations 是 LLM 标注层（细粒度）。两个独立查询：
+#   /api/triticeae/papers           → 只查 papers
+#   /api/triticeae/papers/{pmid}/annotation → 只查 annotations
+# 这样 /papers 不再 LEFT JOIN，每次查询只跑一张表。
+
+_SQL_COLUMNS = """p.id AS paper_id,
         p.pmid,
         p.pub_date,
         p.title AS paper_title,
@@ -50,24 +39,21 @@ _SQL_COLUMNS = """f.id AS fga_id,
         p.function_gene_flag,
         p.function_gene_tags"""
 
-_SQL_FROM = """FROM papers p LEFT JOIN functional_gene_annotations f ON p.pmid = f.pubmedid"""
+_SQL_FROM = """FROM papers p"""
 
 _SQL_COUNT = f"""SELECT COUNT(*) AS cnt {_SQL_FROM}"""
 _SQL_SELECT = f"""SELECT {_SQL_COLUMNS} {_SQL_FROM}"""
 
-# Mapping: query param -> SQL column expression for WHERE
+# Mapping: query param -> SQL column expression for WHERE.
+# Annotation-only filters (gene_name / trait_label / new_tags / gene_type /
+# source_method / is_functional_gene / evidence_type / review_status) were
+# dropped here — those columns live in functional_gene_annotations, and
+# /papers no longer joins that table. Use /papers/{pmid}/annotation to
+# fetch annotation details for a single paper.
 _FILTER_MAP: dict[str, str] = {
-    "gene_name": "f.gene_name",
-    "trait_label": "f.trait_label",
-    "evidence_type": "f.evidence_type",
-    "review_status": "f.review_status",
     "ai_tags": "p.ai_tags",
     "functional_gene_tags": "p.functional_gene_tags",
     "pubmed_keywords": "p.pubmed_keywords",
-    "new_tags": "f.new_tags",
-    "gene_type": "f.gene_type",
-    "source_method": "f.source_method",
-    "is_functional_gene": "f.is_functional_gene",
     "functional_gene_flag": "p.functional_gene_flag",
     "functional_gene_source": "p.functional_gene_source",
     "function_gene_flag": "p.function_gene_flag",
@@ -89,25 +75,33 @@ def _parse_gene_name(raw) -> list[str]:
 
 
 def _row_to_paper(row: dict) -> dict:
-    """Convert a raw MySQL row to a cleaned dict ready for JSON response."""
+    """Convert a raw `papers` row to a cleaned dict for JSON response.
+
+    Annotation-level fields (fga_*) live in TriticeaePaper schema with default
+    None / "" so the existing front-end can still render the row; clients
+    that want them populated should call /papers/{pmid}/annotation.
+    """
     return TriticeaePaper(
-        fga_id=row.get("fga_id"),
-        pubmedid=str(row.get("pubmedid") or ""),
-        fga_title=str(row.get("fga_title") or ""),
-        is_functional_gene=bool(row.get("is_functional_gene")) if row.get("is_functional_gene") is not None else None,
-        confidence=float(row["confidence"]) if row.get("confidence") is not None else None,
-        gene_name=_parse_gene_name(row.get("gene_name")),
-        gene_type=str(row.get("gene_type") or ""),
-        trait_label=str(row.get("trait_label") or ""),
-        function_summary=str(row.get("function_summary") or ""),
-        evidence_type=str(row.get("evidence_type") or ""),
-        new_tags=str(row.get("new_tags") or ""),
-        llm_reason=str(row.get("llm_reason") or ""),
-        source_method=str(row.get("source_method") or ""),
-        review_status=str(row.get("review_status") or ""),
-        fga_created_at=str(row.get("fga_created_at") or ""),
-        fga_updated_at=str(row.get("fga_updated_at") or ""),
-        fga_disease_gene_tags=str(row.get("fga_disease_gene_tags") or ""),
+        # annotation fields — always None / empty here
+        fga_id=None,
+        pubmedid="",
+        fga_title="",
+        is_functional_gene=None,
+        confidence=None,
+        gene_name=[],
+        gene_type="",
+        trait_label="",
+        function_summary="",
+        evidence_type="",
+        new_tags="",
+        llm_reason="",
+        source_method="",
+        review_status="",
+        fga_created_at="",
+        fga_updated_at="",
+        fga_disease_gene_tags="",
+
+        # paper fields — populated from SELECT
         paper_id=row.get("paper_id"),
         pmid=str(row.get("pmid") or ""),
         pub_date=str(row.get("pub_date") or ""),
@@ -133,33 +127,20 @@ def _build_search(
     q: str | None = None,
     authors: str | None = None,
     pmid: str | None = None,
-    gene_name: str | None = None,
-    trait_label: str | None = None,
-    evidence_type: str | None = None,
-    min_confidence: float | None = None,
-    review_status: str | None = None,
     ai_tags: str | None = None,
     functional_gene_tags: str | None = None,
     pubmed_keywords: str | None = None,
-    new_tags: str | None = None,
-    gene_type: str | None = None,
-    source_method: str | None = None,
-    is_functional_gene: bool | None = None,
     functional_gene_flag: str | None = None,
     functional_gene_source: str | None = None,
     function_gene_flag: str | None = None,
     function_gene_tags: str | None = None,
     pub_date_start: str | None = None,
     pub_date_end: str | None = None,
-    since_days: int | None = None,
     limit: int = 20,
     offset: int = 0,
 ) -> dict:
-    """Shared search logic for single-paper and multi-paper endpoints.
-
-    `since_days` filters by fga_created_at (annotation import time), distinct
-    from pub_date_start/end (paper publication year). Useful for showing
-    "what was newly curated this week".
+    """Search the papers table only (no JOIN). Annotation-only filters
+    were dropped — use /papers/{pmid}/annotation for that data.
     """
     conditions: list[str] = []
     params: list = []
@@ -195,10 +176,6 @@ def _build_search(
             conditions.append(f"{sql_col} LIKE %s")
             params.append(f"%{val}%")
 
-    if min_confidence is not None:
-        conditions.append("f.confidence >= %s")
-        params.append(min_confidence)
-
     if pub_date_start:
         conditions.append("SUBSTRING(p.pub_date, 1, 4) >= %s")
         params.append(pub_date_start[:4])
@@ -206,23 +183,15 @@ def _build_search(
         conditions.append("SUBSTRING(p.pub_date, 1, 4) <= %s")
         params.append(pub_date_end[:4])
 
-    # Filter by annotation import time (functional_gene_annotations.created_at).
-    # LEFT JOIN means annotations may be absent; only restrict when rows have one.
-    if since_days is not None and since_days > 0:
-        conditions.append("f.id IS NOT NULL AND f.created_at >= (NOW() - INTERVAL %s DAY)")
-        params.append(int(since_days))
-
     where = " WHERE " + " AND ".join(conditions) if conditions else ""
 
     with mysql_cursor(settings.DB_TRITICEAE) as cursor:
         cursor.execute(f"{_SQL_COUNT}{where}", params)
         total = cursor.fetchone()["cnt"]
 
-        # ORDER BY: prefer fga_created_at DESC (recent annotations first).
-        # Fall back to pub_date DESC for rows without an annotation.
         cursor.execute(
             f"{_SQL_SELECT}{where} "
-            "ORDER BY f.created_at DESC, p.pub_date DESC "
+            "ORDER BY p.created_at DESC, p.pub_date DESC "
             "LIMIT %s OFFSET %s",
             [*params, limit, offset],
         )
@@ -234,7 +203,10 @@ def _build_search(
 
 @router.get("/papers/{pubmedid}")
 def get_paper(pubmedid: str) -> dict:
-    """按 PubMed ID 获取单篇论文详情。
+    """按 PubMed ID 获取单篇论文元数据（只查 papers 表）。
+
+    返回 papers.* 字段；fga_* 字段全部为空。
+    需要 LLM 标注请调 /papers/{pmid}/annotation。
     """
     with mysql_cursor(settings.DB_TRITICEAE) as cursor:
         cursor.execute(f"{_SQL_SELECT} WHERE p.pmid = %s", (pubmedid,))
@@ -251,34 +223,90 @@ def search_papers(
     q: str | None = Query(None, description="全文关键词搜索（paper_title / abstract）"),
     authors: str | None = Query(None, description="作者精确匹配（逗号分隔列表中精确查找）"),
     pmid: str | None = Query(None, description="PubMed ID 精确匹配（自动去除空白字符）"),
-    gene_name: str | None = Query(None, description="基因名称关键词"),
-    trait_label: str | None = Query(None, description="性状标签"),
-    evidence_type: str | None = Query(None, description="证据类型"),
-    min_confidence: float | None = Query(None, ge=0, le=1, description="最低置信度(0-1)"),
-    review_status: str | None = Query(None, description="审核状态"),
-    ai_tags: str | None = Query(None, description="AI 标签"),
-    functional_gene_tags: str | None = Query(None, description="功能基因标签"),
+    ai_tags: str | None = Query(None, description="AI 标签（papers.ai_tags）"),
+    functional_gene_tags: str | None = Query(None, description="论文级功能基因标签"),
     pubmed_keywords: str | None = Query(None, description="PubMed 关键词"),
-    new_tags: str | None = Query(None, description="新标签"),
-    gene_type: str | None = Query(None, description="基因类型"),
-    source_method: str | None = Query(None, description="标注来源方法"),
-    is_functional_gene: bool | None = Query(None, description="是否为功能基因(true/false)"),
-    functional_gene_flag: str | None = Query(None, description="功能基因标记"),
-    functional_gene_source: str | None = Query(None, description="功能基因来源"),
-    function_gene_flag: str | None = Query(None, description="新增功能基因标记"),
-    function_gene_tags: str | None = Query(None, description="新增功能基因标签"),
+    functional_gene_flag: str | None = Query(None, description="论文级功能基因标记"),
+    functional_gene_source: str | None = Query(None, description="论文级功能基因来源"),
+    function_gene_flag: str | None = Query(None, description="第二套功能基因标记"),
+    function_gene_tags: str | None = Query(None, description="第二套功能基因标签"),
     pub_date_start: str | None = Query(None, description="发布年份起始"),
     pub_date_end: str | None = Query(None, description="发布年份结束"),
-    since_days: int | None = Query(None, ge=1, le=3650,
-        description="按标注入库时间 fga_created_at 过滤最近 N 天内的标注（与 pub_date_start/end 独立）"),
     limit: int = Query(20, ge=1, le=200, description="返回条数上限"),
     offset: int = Query(0, ge=0, description="分页偏移量"),
 ) -> dict:
-    """搜索 Triticeae 研究文献，支持多维度过滤。
+    """搜索 Triticeae 论文元数据。
 
-    默认排序：fga_created_at DESC（最近标注入库的优先），null 时按 pub_date DESC 兜底。
+    只查 `papers` 表（包含论文级标注：functional_gene_flag / ai_tags / keywords_source 等），
+    不再 LEFT JOIN functional_gene_annotations。需要细粒度 LLM 标注（gene_name /
+    trait_label / confidence 等）请调 /papers/{pmid}/annotation。
+
+    默认排序：paper_created_at DESC（最近入库优先）。
     """
     return _build_search(**locals())
+
+
+@router.get("/papers/{pmid}/annotation")
+def get_paper_annotation(pubmedid: str) -> dict:
+    """按 PMID 获取单篇论文的 LLM 标注（functional_gene_annotations 表）。
+
+    返回标注层全部字段：fga_id, is_functional_gene, confidence,
+    gene_name, gene_type, trait_label, function_summary, evidence_type,
+    new_tags, llm_reason, source_method, review_status, created_at,
+    updated_at。
+
+    如果该论文没有 annotation 记录（AI 判定不是 functional gene study），
+    返回 404 + ok-false 响应体。
+    """
+    with mysql_cursor(settings.DB_TRITICEAE) as cursor:
+        cursor.execute("""
+            SELECT id AS fga_id,
+                   pubmedid,
+                   title AS fga_title,
+                   is_functional_gene,
+                   confidence,
+                   gene_name,
+                   gene_type,
+                   trait_label,
+                   function_summary,
+                   evidence_type,
+                   new_tags,
+                   llm_reason,
+                   source_method,
+                   review_status,
+                   created_at AS fga_created_at,
+                   updated_at AS fga_updated_at,
+                   disease_gene_tags AS fga_disease_gene_tags
+            FROM functional_gene_annotations
+            WHERE pubmedid = %s
+        """, (pubmedid,))
+        row = cursor.fetchone()
+
+    if not row:
+        return ok({"pmid": pubmedid, "has_annotation": False, "annotation": None})
+
+    # Reuse TriticeaePaper but only annotation-prefixed fields are populated;
+    # caller reads them from response.data.annotation.
+    annotation = {
+        "fga_id":               row.get("fga_id"),
+        "pubmedid":             str(row.get("pubmedid") or ""),
+        "fga_title":            str(row.get("fga_title") or ""),
+        "is_functional_gene":   bool(row.get("is_functional_gene")) if row.get("is_functional_gene") is not None else None,
+        "confidence":           float(row["confidence"]) if row.get("confidence") is not None else None,
+        "gene_name":            _parse_gene_name(row.get("gene_name")),
+        "gene_type":            str(row.get("gene_type") or ""),
+        "trait_label":          str(row.get("trait_label") or ""),
+        "function_summary":     str(row.get("function_summary") or ""),
+        "evidence_type":        str(row.get("evidence_type") or ""),
+        "new_tags":             str(row.get("new_tags") or ""),
+        "llm_reason":           str(row.get("llm_reason") or ""),
+        "source_method":        str(row.get("source_method") or ""),
+        "review_status":        str(row.get("review_status") or ""),
+        "fga_created_at":       str(row.get("fga_created_at") or ""),
+        "fga_updated_at":       str(row.get("fga_updated_at") or ""),
+        "fga_disease_gene_tags": str(row.get("fga_disease_gene_tags") or ""),
+    }
+    return ok({"pmid": pubmedid, "has_annotation": True, "annotation": annotation})
 
 
 @router.get("/stats")
