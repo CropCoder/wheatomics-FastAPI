@@ -230,7 +230,7 @@ def search_papers(
 
 
 @router.get("/papers/{pmid}/annotation")
-def get_paper_annotation(pubmedid: str) -> dict:
+def get_paper_annotation(pmid: str) -> dict:
     """按 PMID 获取单篇论文的 LLM 标注（functional_gene_annotations 表）。
 
     返回标注层全部字段：fga_id, is_functional_gene, confidence,
@@ -239,7 +239,7 @@ def get_paper_annotation(pubmedid: str) -> dict:
     updated_at。
 
     如果该论文没有 annotation 记录（AI 判定不是 functional gene study），
-    返回 404 + ok-false 响应体。
+    返回 has_annotation: false + annotation: null。
     """
     with mysql_cursor(settings.DB_TRITICEAE) as cursor:
         cursor.execute("""
@@ -262,14 +262,12 @@ def get_paper_annotation(pubmedid: str) -> dict:
                    disease_gene_tags AS fga_disease_gene_tags
             FROM functional_gene_annotations
             WHERE pubmedid = %s
-        """, (pubmedid,))
+        """, (pmid,))
         row = cursor.fetchone()
 
     if not row:
-        return ok({"pmid": pubmedid, "has_annotation": False, "annotation": None})
+        return ok({"pmid": pmid, "has_annotation": False, "annotation": None})
 
-    # Reuse TriticeaePaper but only annotation-prefixed fields are populated;
-    # caller reads them from response.data.annotation.
     annotation = {
         "fga_id":               row.get("fga_id"),
         "pubmedid":             str(row.get("pubmedid") or ""),
@@ -289,7 +287,7 @@ def get_paper_annotation(pubmedid: str) -> dict:
         "fga_updated_at":       str(row.get("fga_updated_at") or ""),
         "fga_disease_gene_tags": str(row.get("fga_disease_gene_tags") or ""),
     }
-    return ok({"pmid": pubmedid, "has_annotation": True, "annotation": annotation})
+    return ok({"pmid": pmid, "has_annotation": True, "annotation": annotation})
 
 
 @router.get("/papers/{pubmedid}")
