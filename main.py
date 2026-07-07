@@ -116,7 +116,6 @@ app.mount("/orthofinder", StaticFiles(directory=Path(__file__).parent / "app" / 
 app.mount("/HomologFinder", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "HomologFinder", html=True), name="HomologFinder")
 app.mount("/PfamSearch", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "PfamSearch", html=True), name="PfamSearch")
 app.mount("/coexpression", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "coexpression", html=True), name="coexpression")
-app.mount("/triticeae", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "triticeae", html=True), name="triticeae")
 app.mount("/papers", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "papers", html=True), name="papers")
 
 
