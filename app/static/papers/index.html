@@ -488,16 +488,21 @@ function buildQuery() {
     if (!term.value) return;
     var v = term.value;
     var suffix = (term.op === 'NOT') ? '_exclude' : '';
-    if (term.field === 'all' || term.field === 'title' || term.field === 'abstract' || term.field === 'gene_name') {
-      merge('q' + suffix, v);
-    } else if (term.field === 'authors') {
-      merge('authors' + suffix, v);
-    } else if (term.field === 'journal') {
-      merge('journal' + suffix, v);
-    } else if (term.field === 'trait' || term.field === 'ai_tags') {
-      merge('ai_tags' + suffix, v);
-    } else if (term.field === 'pmid') {
-      merge('pmid' + suffix, v);
+    // Map each dropdown field to its dedicated backend parameter.
+    var fieldToParam = {
+      'all': 'q',
+      'title': 'title',
+      'abstract': 'abstract',
+      'journal': 'journal',
+      'authors': 'authors',
+      'gene_name': 'gene_name',
+      'trait': 'ai_tags',
+      'ai_tags': 'ai_tags',
+      'pmid': 'pmid'
+    };
+    var base = fieldToParam[term.field];
+    if (base) {
+      merge(base + suffix, v);
     } else if (term.field && term.field.indexOf('since:') === 0) {
       // 'since:N' as an explicit ADD term overrides the default.
       var days = parseInt(term.field.substring(6), 10);

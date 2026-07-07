@@ -48,20 +48,41 @@ _SQL_FROM = """FROM papers p"""
 _SQL_COUNT = f"""SELECT COUNT(*) AS cnt {_SQL_FROM}"""
 _SQL_SELECT = f"""SELECT {_SQL_COLUMNS} {_SQL_FROM}"""
 
-# Mapping: query param -> SQL column expression for WHERE.
-# Annotation-only filters (gene_name / trait_label / new_tags / gene_type /
-# source_method / is_functional_gene / evidence_type / review_status) were
-# dropped here — those columns live in functional_gene_annotations, and
-# /papers no longer joins that table. Use /papers/{pmid}/annotation to
-# fetch annotation details for a single paper.
-_FILTER_MAP: dict[str, str] = {
-    "ai_tags": "p.ai_tags",
-    "functional_gene_tags": "p.functional_gene_tags",
-    "pubmed_keywords": "p.pubmed_keywords",
-    "functional_gene_flag": "p.functional_gene_flag",
+# Columns searched by the "All Fields" (q) parameter.
+_Q_FIELDS = [
+    "p.title",
+    "p.abstract",
+    "p.journal",
+    "p.authors",
+    "p.pubmed_keywords",
+    "p.ai_tags",
+    "p.function_gene_tags",
+]
+
+# Mapping: query param -> list of SQL column expressions for LIKE OR.
+# Positive param and its <param>_exclude counterpart are both accepted.
+_TEXT_FILTER_MAP: dict[str, list[str]] = {
+    "q": _Q_FIELDS,
+    "title": ["p.title"],
+    "abstract": ["p.abstract"],
+    "journal": ["p.journal"],
+    "authors": ["p.authors"],
+    "pubmed_keywords": ["p.pubmed_keywords"],
+    "ai_tags": ["p.ai_tags"],
+    "function_gene_tags": ["p.function_gene_tags"],
+    # gene_name lives in functional_gene_annotations, but papers has two
+    # paper-level gene tag columns we can search without a JOIN.
+    "gene_name": ["p.function_gene_tags", "p.functional_gene_tags"],
+}
+
+# Exact-match filters (e.g. PMID).
+_EXACT_FILTER_MAP: dict[str, str] = {
+    "pmid": "TRIM(p.pmid)",
+}
+
+# Named flag/source filters kept for backward compatibility.
+_NAMED_FILTER_MAP: dict[str, str] = {
     "functional_gene_source": "p.functional_gene_source",
-    "function_gene_flag": "p.function_gene_flag",
-    "function_gene_tags": "p.function_gene_tags",
 }
 
 
@@ -129,15 +150,28 @@ def _row_to_paper(row: dict) -> dict:
 
 def _build_search(
     q: str | None = None,
+    q_exclude: str | None = None,
+    title: str | None = None,
+    title_exclude: str | None = None,
+    abstract: str | None = None,
+    abstract_exclude: str | None = None,
+    journal: str | None = None,
+    journal_exclude: str | None = None,
     authors: str | None = None,
-    pmid: str | None = None,
-    ai_tags: str | None = None,
-    functional_gene_tags: str | None = None,
+    authors_exclude: str | None = None,
     pubmed_keywords: str | None = None,
+    pubmed_keywords_exclude: str | None = None,
+    ai_tags: str | None = None,
+    ai_tags_exclude: str | None = None,
+    function_gene_tags: str | None = None,
+    function_gene_tags_exclude: str | None = None,
+    gene_name: str | None = None,
+    gene_name_exclude: str | None = None,
+    pmid: str | None = None,
+    pmid_exclude: str | None = None,
     functional_gene_flag: str | None = None,
     functional_gene_source: str | None = None,
     function_gene_flag: str | None = None,
-    function_gene_tags: str | None = None,
     pub_date_start: str | None = None,
     pub_date_end: str | None = None,
     since_days: int | None = None,
@@ -150,39 +184,52 @@ def _build_search(
     conditions: list[str] = []
     params: list = []
 
-    if q:
-        conditions.append(
-            "(p.title LIKE %s OR p.abstract LIKE %s)")
-        like = f"%{q}%"
-        params.extend([like, like])
-
-    if authors:
-        # Substring match against the comma-separated authors string.
-        # FIND_IN_SET would only match whole-token entries (e.g. "Shengwei"
-        # alone, but not "Ma Shengwei" or "Shengwei Ma"); LIKE %...% finds
-        # any author whose name contains the term anywhere in the field.
-        conditions.append("p.authors LIKE %s")
-        params.append(f"%{authors}%")
-
-    if pmid:
-        # TRIM for exact PMID match (handles whitespace)
-        conditions.append("TRIM(p.pmid) = %s")
-        params.append(pmid.strip())
-
-    # Named filters
-    for param_name, sql_col in _FILTER_MAP.items():
+    # Text filters (positive): LIKE across one or more columns.
+    for param_name, cols in _TEXT_FILTER_MAP.items():
         val = locals().get(param_name)
-        if val is None:
+        if not val:
             continue
-        if param_name == "is_functional_gene":
-            conditions.append(f"{sql_col} = %s")
-            params.append(1 if val else 0)
-        elif param_name == "gene_name" and val:
-            conditions.append(f"{sql_col} LIKE %s")
-            params.append(f"%{val}%")
-        elif val:
-            conditions.append(f"{sql_col} LIKE %s")
-            params.append(f"%{val}%")
+        like = f"%{val}%"
+        clauses = [f"{col} LIKE %s" for col in cols]
+        conditions.append(f"({' OR '.join(clauses)})")
+        params.extend([like] * len(cols))
+
+    # Text filters (exclude / NOT): NOT LIKE across all columns.
+    for param_name, cols in _TEXT_FILTER_MAP.items():
+        exclude_param = f"{param_name}_exclude"
+        val = locals().get(exclude_param)
+        if not val:
+            continue
+        like = f"%{val}%"
+        clauses = [f"{col} NOT LIKE %s" for col in cols]
+        conditions.append(f"({' AND '.join(clauses)})")
+        params.extend([like] * len(cols))
+
+    # Exact-match filters (positive).
+    for param_name, sql_expr in _EXACT_FILTER_MAP.items():
+        val = locals().get(param_name)
+        if val:
+            conditions.append(f"{sql_expr} = %s")
+            params.append(val.strip())
+
+    # Exact-match filters (exclude).
+    for param_name, sql_expr in _EXACT_FILTER_MAP.items():
+        exclude_param = f"{param_name}_exclude"
+        val = locals().get(exclude_param)
+        if val:
+            conditions.append(f"{sql_expr} != %s")
+            params.append(val.strip())
+
+    # Backward-compatible named filters.
+    if functional_gene_flag is not None:
+        conditions.append("p.functional_gene_flag = %s")
+        params.append(functional_gene_flag)
+    if function_gene_flag is not None:
+        conditions.append("p.function_gene_flag = %s")
+        params.append(function_gene_flag)
+    if functional_gene_source:
+        conditions.append("p.functional_gene_source LIKE %s")
+        params.append(f"%{functional_gene_source}%")
 
     if pub_date_start:
         conditions.append("SUBSTRING(p.pub_date, 1, 4) >= %s")
@@ -219,16 +266,29 @@ def _build_search(
 
 @router.get("/papers")
 def search_papers(
-    q: str | None = Query(None, description="全文关键词搜索（paper_title / abstract）"),
+    q: str | None = Query(None, description="全文关键词搜索（title / abstract / journal / authors / pubmed_keywords / ai_tags / function_gene_tags）"),
+    q_exclude: str | None = Query(None, description="排除关键词（NOT 语义），搜索范围同 q"),
+    title: str | None = Query(None, description="标题模糊匹配"),
+    title_exclude: str | None = Query(None, description="标题排除"),
+    abstract: str | None = Query(None, description="摘要模糊匹配"),
+    abstract_exclude: str | None = Query(None, description="摘要排除"),
+    journal: str | None = Query(None, description="期刊模糊匹配"),
+    journal_exclude: str | None = Query(None, description="期刊排除"),
     authors: str | None = Query(None, description="作者模糊匹配（LIKE %...%，跨整词）"),
+    authors_exclude: str | None = Query(None, description="作者排除"),
+    pubmed_keywords: str | None = Query(None, description="PubMed 关键词模糊匹配"),
+    pubmed_keywords_exclude: str | None = Query(None, description="PubMed 关键词排除"),
+    ai_tags: str | None = Query(None, description="AI 标签模糊匹配（papers.ai_tags）"),
+    ai_tags_exclude: str | None = Query(None, description="AI 标签排除"),
+    function_gene_tags: str | None = Query(None, description="功能基因标签模糊匹配（papers.function_gene_tags）"),
+    function_gene_tags_exclude: str | None = Query(None, description="功能基因标签排除"),
+    gene_name: str | None = Query(None, description="基因名模糊匹配（papers.function_gene_tags + functional_gene_tags）"),
+    gene_name_exclude: str | None = Query(None, description="基因名排除"),
     pmid: str | None = Query(None, description="PubMed ID 精确匹配（自动去除空白字符）"),
-    ai_tags: str | None = Query(None, description="AI 标签（papers.ai_tags）"),
-    functional_gene_tags: str | None = Query(None, description="论文级功能基因标签"),
-    pubmed_keywords: str | None = Query(None, description="PubMed 关键词"),
+    pmid_exclude: str | None = Query(None, description="PubMed ID 精确排除"),
     functional_gene_flag: str | None = Query(None, description="论文级功能基因标记"),
     functional_gene_source: str | None = Query(None, description="论文级功能基因来源"),
     function_gene_flag: str | None = Query(None, description="第二套功能基因标记"),
-    function_gene_tags: str | None = Query(None, description="第二套功能基因标签"),
     pub_date_start: str | None = Query(None, description="发布年份起始"),
     pub_date_end: str | None = Query(None, description="发布年份结束"),
     since_days: int | None = Query(None, ge=1, le=3650,
@@ -241,6 +301,8 @@ def search_papers(
     只查 `papers` 表（包含论文级标注：functional_gene_flag / ai_tags / keywords_source 等），
     不再 LEFT JOIN functional_gene_annotations。需要细粒度 LLM 标注（gene_name /
     trait_label / confidence 等）请调 /papers/{pmid}/annotation。
+
+    支持 <param>_exclude 形式参数实现 NOT 语义。
 
     `since_days` is anchored to `papers.created_at` (when the row was
     inserted), not `fga.created_at`. Use it for "what new papers did
