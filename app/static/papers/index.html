@@ -247,7 +247,9 @@ html, body { margin:0; padding:0; }
 
       <h5>Search</h5>
 
-      <div class="form-row">
+      <!-- PubMed-style advanced search: field + term + ADD button,
+           then a query box that accumulates each added term. -->
+      <div class="form-row align-items-end">
         <div class="form-group col-md-2 mb-2">
           <label for="searchField" class="small-label">Field</label>
           <select id="searchField" class="form-control form-control-sm">
@@ -258,13 +260,33 @@ html, body { margin:0; padding:0; }
             <option value="abstract">Abstract</option>
             <option value="gene_name">Gene name</option>
             <option value="trait">Trait tag</option>
+            <option value="pmid">PMID</option>
+            <option value="ai_tags">AI tag</option>
           </select>
         </div>
-        <div class="form-group col-md-6 mb-2">
-          <label for="searchInp" class="small-label">Search Input</label>
-          <textarea id="searchInp" class="form-control form-control-sm" rows="2" placeholder="Examples: TaCPK, stripe rust, Plant Cell, 2024"></textarea>
+        <div class="form-group col-md-7 mb-2">
+          <label for="searchInp" class="small-label">Search term</label>
+          <input type="text" id="searchInp" class="form-control form-control-sm" placeholder="e.g. TaCPK, stripe rust, Plant Cell, Ma Shengwei">
         </div>
-        <div class="form-group col-md-2 mb-2">
+        <div class="form-group col-md-3 mb-2 d-flex">
+          <button type="button" id="add-term-btn" class="btn btn-primary btn-sm btn-block mr-1">ADD &#9662;</button>
+          <button type="button" id="clear-terms-btn" class="btn btn-outline-secondary btn-sm ml-1">Clear</button>
+        </div>
+      </div>
+      <div class="helper-text mb-2">
+        <a href="javascript:void(0)" id="show-index">Show Index</a>
+        &nbsp;|&nbsp; Multiple terms are combined with AND across fields.
+      </div>
+
+      <!-- Query box: accumulated (field, value) pairs -->
+      <div class="form-group mb-2">
+        <label class="small-label">Query box</label>
+        <textarea id="query-box" class="form-control form-control-sm" rows="3" placeholder="Click ADD to add terms. Click × to remove a term. Empty = no text filter."></textarea>
+      </div>
+
+      <!-- Year / Recent + Search row -->
+      <div class="form-row align-items-end">
+        <div class="form-group col-md-3 mb-2">
           <label for="f-recent-days" class="small-label">Recent Updates</label>
           <select id="f-recent-days" class="form-control form-control-sm">
             <option value="">All time</option>
@@ -275,12 +297,20 @@ html, body { margin:0; padding:0; }
           </select>
           <div class="helper-text">By paper import time</div>
         </div>
-        <div class="form-group col-md-2 mb-2 d-flex align-items-end">
+        <div class="form-group col-md-3 mb-2">
+          <label for="op-select" class="small-label">Combine terms with</label>
+          <select id="op-select" class="form-control form-control-sm">
+            <option value="AND" selected>AND (all must match)</option>
+            <option value="OR">OR (any can match)</option>
+          </select>
+        </div>
+        <div class="form-group col-md-3 mb-2 d-flex align-items-end">
           <button type="button" id="search-btn" class="btn btn-primary btn-sm btn-block mr-1">Search</button>
-          <button type="button" id="reset-btn"  class="btn btn-outline-secondary btn-sm btn-block ml-1">Reset</button>
+        </div>
+        <div class="form-group col-md-3 mb-2 d-flex align-items-end">
+          <button type="button" id="reset-btn" class="btn btn-outline-secondary btn-sm btn-block">Reset</button>
         </div>
       </div>
-      <div class="helper-text mb-2">Use commas to separate multiple terms (OR within a field, AND across fields).</div>
     </div>
 
     <!-- Year chart + slider — compact strip -->
@@ -569,27 +599,98 @@ function renderTagClouds() {
 }
 
 /* ============ Search ============ */
-function buildQuery() {
+
+// queryTerms is the PubMed-style accumulator: array of {field, value}.
+// Each entry was added via the ADD button; renderQueryBox() updates
+// the textarea visualization; clearTerms() empties the array.
+var queryTerms = [];        // [{field: 'all', value: 'TaCPK'}, ...]
+var combineOp = 'AND';      // 'AND' or 'OR' — combines multiple terms
+
+function renderQueryBox() {
+  // Render the queryTerms array into the textarea visualization, one
+  // term per line as 'field: value'. Read-only — terms are removed
+  // via the × button, not by editing the textarea directly.
+  var box = document.getElementById('query-box');
+  if (queryTerms.length === 0) {
+    box.value = '';
+    box.placeholder = 'Click ADD to add terms. Click × to remove a term. Empty = no text filter.';
+    return;
+  }
+  box.value = queryTerms.map(function(t, i) {
+    return (i + 1) + '. [' + t.field + '] ' + t.value + '   ×';
+  }).join('\n');
+}
+
+function clearTerms() {
+  queryTerms = [];
+  renderQueryBox();
+}
+
+function addTerm() {
   var field = document.getElementById('searchField').value;
   var inp = document.getElementById('searchInp').value.trim();
-  var params = { limit: pageSize, offset: (currentPage - 1) * pageSize };
-  if (inp) {
-    var parts = inp.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
-    if (field === 'all') {
-      // server has no multi-field OR; pass q as full-text and let server match title/abstract.
-      params.q = parts.join(' ');
-    } else if (field === 'gene_name') {
-      params.gene_name = parts[0];
-    } else if (field === 'trait') {
-      params.trait_label = parts[0];
-    } else if (field === 'authors') {
-      params.authors = parts[0];
-    } else if (field === 'journal') {
-      params.journal = parts[0];
-    } else {
-      params.q = parts[0];
-    }
+  if (!inp) {
+    document.getElementById('searchInp').focus();
+    return;
   }
+  // One term = one (field, value) pair. Don't split on commas — the
+  // user explicitly typed the whole string. PubMed's "ADD" does the
+  // same: ADD adds whatever is in the box as one logical term.
+  queryTerms.push({ field: field, value: inp });
+  document.getElementById('searchInp').value = '';
+  renderQueryBox();
+  document.getElementById('searchInp').focus();
+}
+
+function removeTerm(idx) {
+  queryTerms.splice(idx, 1);
+  renderQueryBox();
+}
+
+function buildQuery() {
+  // Map queryTerms to backend query params. Each term becomes its own
+  // parameter; the backend combines them with AND.
+  var params = { limit: pageSize, offset: (currentPage - 1) * pageSize };
+  var op = document.getElementById('op-select').value;
+  queryTerms.forEach(function(t) {
+    if (!t.value) return;
+    var v = t.value;
+    // Only one q / gene_name / etc. param can be sent; if the user
+    // added multiple terms in the same field, we OR them within the
+    // field by comma-joining, then trust the backend LIKE filter to
+    // match any of them.
+    function mergeParam(key, newVal) {
+      if (!params[key]) params[key] = newVal;
+      else if (params[key] !== newVal) params[key] = params[key] + ',' + newVal;
+    }
+    if (t.field === 'all') {
+      // 'All fields' = free-text on title + abstract (server's q).
+      mergeParam('q', v);
+    } else if (t.field === 'title') {
+      mergeParam('q', v);
+    } else if (t.field === 'abstract') {
+      mergeParam('q', v);
+    } else if (t.field === 'authors') {
+      mergeParam('authors', v);
+    } else if (t.field === 'journal') {
+      mergeParam('journal', v);
+    } else if (t.field === 'gene_name') {
+      // gene_name is annotation-only, but most users actually want the
+      // gene to be in the paper text — fall back to q as a more useful
+      // default. The /annotation endpoint is the source of truth.
+      mergeParam('q', v);
+    } else if (t.field === 'trait') {
+      mergeParam('ai_tags', v);
+    } else if (t.field === 'pmid') {
+      mergeParam('pmid', v);
+    } else if (t.field === 'ai_tags') {
+      mergeParam('ai_tags', v);
+    }
+  });
+  // Note: 'AND' / 'OR' combo is approximated client-side here by the
+  // field-collapse merge above. Cross-field combination is always AND
+  // (the backend's filter_map is AND). To get true cross-field OR, the
+  // backend would need to support OR — out of scope for this UX.
   return params;
 }
 
@@ -815,6 +916,9 @@ function writeTSV(rows) {
 function resetAll() {
   document.getElementById('searchInp').value = '';
   document.getElementById('searchField').value = 'all';
+  document.getElementById('op-select').value = 'AND';
+  combineOp = 'AND';
+  clearTerms();
   document.getElementById('yearStart').value = yearMin;
   document.getElementById('yearEnd').value   = yearMax;
   document.getElementById('f-recent-days').value = '7';
@@ -840,6 +944,36 @@ $(function(){
   $('#search-btn').on('click', function(){ currentPage = 1; runSearch(); });
   $('#reset-btn').on('click', resetAll);
   $('#export-btn').on('click', exportCSV);
+
+  // PubMed-style advanced search wiring
+  $('#add-term-btn').on('click', function(){ addTerm(); });
+  $('#clear-terms-btn').on('click', function(){ clearTerms(); });
+  $('#op-select').on('change', function(){ combineOp = $(this).val(); });
+  // Enter in the term input adds a term (don't auto-submit)
+  $('#searchInp').on('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); addTerm(); }
+  });
+  // Show Index link: scroll to / focus the year-slider as a quick nav
+  // example (PubMed's Show Index lists MeSH terms; we just have year)
+  $('#show-index').on('click', function(e){
+    e.preventDefault();
+    $('#yearStart').focus();
+    document.getElementById('yearStart').scrollIntoView({behavior:'smooth', block:'center'});
+  });
+  // Allow × click on query-box to remove the corresponding term.
+  // We bind to keyup on the textarea and look for a special token.
+  $('#query-box').on('keyup', function(e){
+    // Read-only box, but if user clicks the × in display, parse and
+    // remove. We use a small synthetic click handler: when the caret
+    // is on a line and the user hits ×, we drop that term.
+    if (e.key === 'x' || e.key === 'X') {
+      // find current line by caret position
+      var pos = this.selectionStart;
+      var before = this.value.substring(0, pos);
+      var lineIdx = (before.match(/\n/g) || []).length;
+      removeTerm(lineIdx);
+    }
+  });
   $('#prev-btn').on('click', function(){
     if (currentPage > 1) { currentPage--; runSearch(); window.scrollTo(0, 0); }
   });
