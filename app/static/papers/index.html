@@ -706,8 +706,9 @@ function runSearch() {
       currentResults = data.papers || [];
       renderPage();
       var label = 'Found ' + totalPapers.toLocaleString() + (totalPapers === 1 ? ' paper' : ' papers');
-      if (recent > 0) label += ' · curated in last ' + recent + ' days';
-      setStatus('ready', label);
+      // The "since:N" suffix is rendered automatically by res-info
+      // when since_days is set in buildQuery().
+      document.getElementById('res-info').textContent = label;
     })
     .fail(function(xhr, status){
       if (status === 'abort') return;  // a newer request superseded us
