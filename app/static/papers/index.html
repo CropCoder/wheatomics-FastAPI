@@ -270,7 +270,19 @@ html, body { margin:0; padding:0; }
           <input type="text" id="searchInp" class="form-control form-control-sm" placeholder="e.g. TaCPK, stripe rust, Plant Cell, Ma Shengwei">
         </div>
         <div class="form-group col-md-3 mb-2 d-flex">
-          <button type="button" id="add-term-btn" class="btn btn-primary btn-sm btn-block mr-1">ADD &#9662;</button>
+          <div class="btn-group btn-block" role="group">
+            <button type="button" id="add-term-btn" class="btn btn-primary btn-sm">ADD <span id="add-op-label">AND</span> &#9662;</button>
+            <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <span class="sr-only">Toggle operator</span>
+            </button>
+            <div class="dropdown-menu">
+              <a class="dropdown-item add-op-item" href="#" data-op="AND">AND — both must match</a>
+              <a class="dropdown-item add-op-item" href="#" data-op="OR">OR — either may match</a>
+              <a class="dropdown-item add-op-item" href="#" data-op="NOT">NOT — exclude matches</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item small text-muted" href="#">First term is always AND</a>
+            </div>
+          </div>
           <button type="button" id="clear-terms-btn" class="btn btn-outline-secondary btn-sm ml-1">Clear</button>
         </div>
       </div>
@@ -410,8 +422,9 @@ var queryTerms = [];        // [{field: 'all', value: 'TaCPK'}, ...]
 
 function renderQueryBox() {
   // Render the queryTerms array into the textarea visualization, one
-  // term per line as 'field: value'. Read-only — terms are removed
-  // via the × button, not by editing the textarea directly.
+  // term per line as 'OP [field] value ×'. OP is the operator that
+  // combines this term with the previous one (AND/OR/NOT). Read-only
+  // — terms are removed via the × button.
   var box = document.getElementById('query-box');
   if (queryTerms.length === 0) {
     box.value = '';
@@ -419,7 +432,8 @@ function renderQueryBox() {
     return;
   }
   box.value = queryTerms.map(function(t, i) {
-    return (i + 1) + '. [' + t.field + '] ' + t.value + '   ×';
+    var opLabel = i === 0 ? '' : '  ' + t.op + ' ';
+    return (i + 1) + '.' + opLabel + '[' + t.field + '] ' + t.value + '   ×';
   }).join('\n');
 }
 
@@ -428,6 +442,10 @@ function clearTerms() {
   renderQueryBox();
 }
 
+// Active operator for the next ADD. Default AND. Updated by the
+// dropdown menu items below the ADD button.
+var activeOp = 'AND';
+
 function addTerm() {
   var field = document.getElementById('searchField').value;
   var inp = document.getElementById('searchInp').value.trim();
@@ -435,10 +453,9 @@ function addTerm() {
     document.getElementById('searchInp').focus();
     return;
   }
-  // One term = one (field, value) pair. Don't split on commas — the
-  // user explicitly typed the whole string. PubMed's "ADD" does the
-  // same: ADD adds whatever is in the box as one logical term.
-  queryTerms.push({ field: field, value: inp });
+  // First term is always AND (no previous term to combine with).
+  var op = queryTerms.length === 0 ? 'AND' : activeOp;
+  queryTerms.push({ op: op, field: field, value: inp });
   document.getElementById('searchInp').value = '';
   renderQueryBox();
   document.getElementById('searchInp').focus();
@@ -451,7 +468,9 @@ function removeTerm(idx) {
 
 function buildQuery() {
   // Map queryTerms to backend query params. Each term becomes its own
-  // parameter; the backend combines them with AND.
+  // parameter; the backend combines positive terms with AND. NOT
+  // terms are routed via separate *_exclude params (the backend
+  // supports these as NOT clauses).
   var params = { limit: pageSize, offset: (currentPage - 1) * pageSize };
 
   // Default time range from the searchField dropdown when its value
@@ -462,31 +481,33 @@ function buildQuery() {
     if (d > 0) params.since_days = d;
   }
 
-  queryTerms.forEach(function(t) {
-    if (!t.value) return;
-    var v = t.value;
-    // Multiple same-field terms are comma-joined within a single param;
-    // the backend LIKE filter applies across all of them.
-    function mergeParam(key, newVal) {
-      if (!params[key]) params[key] = newVal;
-      else if (params[key] !== newVal) params[key] = params[key] + ',' + newVal;
-    }
-    if (t.field === 'all' || t.field === 'title' || t.field === 'abstract' || t.field === 'gene_name') {
-      mergeParam('q', v);
-    } else if (t.field === 'authors') {
-      mergeParam('authors', v);
-    } else if (t.field === 'journal') {
-      mergeParam('journal', v);
-    } else if (t.field === 'trait' || t.field === 'ai_tags') {
-      mergeParam('ai_tags', v);
-    } else if (t.field === 'pmid') {
-      mergeParam('pmid', v);
-    } else if (t.field && t.field.indexOf('since:') === 0) {
+  // Append a term to the right param list. Positive terms (AND/OR)
+  // share the field param. NOT terms go to *_exclude variants.
+  function appendFor(term) {
+    if (!term.value) return;
+    var v = term.value;
+    var suffix = (term.op === 'NOT') ? '_exclude' : '';
+    if (term.field === 'all' || term.field === 'title' || term.field === 'abstract' || term.field === 'gene_name') {
+      merge('q' + suffix, v);
+    } else if (term.field === 'authors') {
+      merge('authors' + suffix, v);
+    } else if (term.field === 'journal') {
+      merge('journal' + suffix, v);
+    } else if (term.field === 'trait' || term.field === 'ai_tags') {
+      merge('ai_tags' + suffix, v);
+    } else if (term.field === 'pmid') {
+      merge('pmid' + suffix, v);
+    } else if (term.field && term.field.indexOf('since:') === 0) {
       // 'since:N' as an explicit ADD term overrides the default.
-      var days = parseInt(t.field.substring(6), 10);
+      var days = parseInt(term.field.substring(6), 10);
       if (days > 0) params.since_days = days;
     }
-  });
+  }
+  function merge(key, newVal) {
+    if (!params[key]) params[key] = newVal;
+    else if (params[key] !== newVal) params[key] = params[key] + ',' + newVal;
+  }
+  queryTerms.forEach(appendFor);
   return params;
 }
 
@@ -703,6 +724,13 @@ $(function(){
   // PubMed-style advanced search wiring
   $('#add-term-btn').on('click', function(){ addTerm(); });
   $('#clear-terms-btn').on('click', function(){ clearTerms(); });
+  // Dropdown items: pick AND/OR/NOT for the next ADD
+  $('.add-op-item').on('click', function(e){
+    e.preventDefault();
+    var op = $(this).data('op');
+    activeOp = op;
+    document.getElementById('add-op-label').textContent = op;
+  });
   // Show Index link placeholder (year-slider was removed; jump to top
   // of the search-row instead).
   // Allow × click on query-box to remove the corresponding term.
