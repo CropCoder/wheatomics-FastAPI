@@ -360,8 +360,6 @@ var currentResults = [];         // current page's rows (from backend)
 var currentJournals = null;      // null = no filter, array = allowed journals
 var currentTag = null;           // null = no filter, string = tag to filter by
 var stats = null;                // cached /api/papers/stats
-var yearHist = [];               // [{year, count}], sorted asc
-var yearMin = 1900, yearMax = 2030;
 var searchInFlight = null;       // AbortController for the latest request
 
 function escapeHtml(s) {
@@ -414,269 +412,15 @@ function loadStats() {
     .done(function(resp){
       if (!resp.success) { setStatus('error', 'Failed to load stats.'); return; }
       stats = resp.data || {};
-      yearMin = stats.year_min || 1900;
-      yearMax = stats.year_max || new Date().getFullYear();
-      yearHist = (stats.year_histogram || []).slice().sort(function(a,b){ return a.year - b.year; });
-      initYearSlider();
-      drawYearChart();
       renderJournalList();
       renderTagClouds();
-      setStatus('ready', 'Ready · ' + stats.total_papers.toLocaleString() + ' papers · ' + yearMin + '–' + yearMax);
+      setStatus('ready', 'Ready · ' + stats.total_papers.toLocaleString() + ' papers');
       // Auto-load default view: last 7 days (matching recent feature)
       runSearch(0);
     })
     .fail(function(xhr){
       setStatus('error', 'Stats unavailable (HTTP ' + xhr.status + '). Cannot search.');
     });
-}
-
-/* ============ Year slider + chart ============ */
-function initYearSlider() {
-  document.getElementById('yearStart').min = yearMin;
-  document.getElementById('yearStart').max = yearMax;
-  document.getElementById('yearStart').value = yearMin;
-  document.getElementById('yearEnd').min   = yearMin;
-  document.getElementById('yearEnd').max   = yearMax;
-  document.getElementById('yearEnd').value   = yearMax;
-  document.getElementById('chartMinYear').textContent = yearMin;
-  document.getElementById('chartMaxYear').textContent = yearMax;
-  document.getElementById('yearMinLabel').textContent = yearMin;
-  document.getElementById('yearMaxLabel').textContent = yearMax;
-  updateYearSlider();
-}
-
-function updateYearSlider() {
-  var s = parseInt(document.getElementById('yearStart').value, 10);
-  var e = parseInt(document.getElementById('yearEnd').value, 10);
-  if (s > e) { /* ensure start <= end */ var t = s; s = e; e = t; document.getElementById('yearStart').value = s; document.getElementById('yearEnd').value = e; }
-  var span = yearMax - yearMin;
-  var left = span > 0 ? (s - yearMin) / span * 100 : 0;
-  var width = span > 0 ? (e - s) / span * 100 : 100;
-  document.getElementById('rangeSelected').style.left = left + '%';
-  document.getElementById('rangeSelected').style.width = width + '%';
-  document.getElementById('yearRangeText').textContent = (s === yearMin && e === yearMax) ? 'All years' : (s + ' – ' + e);
-}
-
-function drawYearChart() {
-  var c = document.getElementById('yearChart');
-  if (!c) return;
-  var ctx = c.getContext('2d');
-  // Match canvas pixel size to its CSS box
-  var rect = c.getBoundingClientRect();
-  c.width  = Math.max(200, Math.round(rect.width));
-  c.height = 120;
-  ctx.clearRect(0, 0, c.width, c.height);
-  if (!yearHist.length) return;
-  // Show last 15 years for readability
-  var recent = yearHist.slice(-15);
-  var maxCount = recent.reduce(function(m, r){ return Math.max(m, r.count); }, 1);
-  var pad = 6;
-  var barW = (c.width - pad * 2) / recent.length;
-  recent.forEach(function(r, i){
-    var h = (r.count / maxCount) * (c.height - pad * 2);
-    var x = pad + i * barW;
-    var y = c.height - pad - h;
-    ctx.fillStyle = '#7fd6c6';
-    ctx.fillRect(x + 1, y, Math.max(2, barW - 2), h);
-  });
-}
-
-/* ============ Journal list ============ */
-function renderJournalList() {
-  var list = (stats && stats.top_journals) || [];
-  var html = '';
-  list.slice(0, 23).forEach(function(j){
-    var id = 'j_' + j.journal.replace(/[^a-zA-Z0-9]/g,'_');
-    html += '<div class="journal-check-item">' +
-              '<input type="checkbox" id="' + id + '" data-journal="' + escapeHtml(j.journal) + '" checked>' +
-              '<label for="' + id + '">' + escapeHtml(j.journal) + '</label>' +
-              '<span class="journal-count">' + j.count.toLocaleString() + '</span>' +
-            '</div>';
-  });
-  document.getElementById('journal-filter-list').innerHTML = html;
-}
-
-function getCheckedJournals() {
-  var items = document.querySelectorAll('#journal-filter-list input[type=checkbox]');
-  var all = [];
-  var checked = [];
-  items.forEach(function(cb){
-    all.push(cb.dataset.journal);
-    if (cb.checked) checked.push(cb.dataset.journal);
-  });
-  return { all: all, checked: checked };
-}
-
-/* ============ Tag clouds ============ */
-function renderTagClouds() {
-  // Use the pre-split top_individual_tags list — the server splits
-  // semicolon-joined ai_tags and groups per individual tag, so the
-  // front-end no longer needs to do split(';')[0] (which duplicated
-  // the first tag of each combination and hid real distribution).
-  var tags = (stats && stats.top_individual_tags) || [];
-  var traitHtml = '';
-  tags.slice(0, 20).forEach(function(t){
-    var label = t.tag;
-    traitHtml += '<div class="tag-item" data-tag="' + escapeHtml(label) + '">' +
-      '<span>' + escapeHtml(label) + '</span>' +
-      '<small>' + t.count.toLocaleString() + '</small>' +
-    '</div>';
-  });
-  document.getElementById('trait-tag-cloud').innerHTML = traitHtml || '<div class="text-muted" style="font-size:12px;">No data</div>';
-
-  // Top keywords: same dataset, different slice — split top 20 into
-  // 10 trait-style + 10 keyword-style for visual variety.
-  var tagHtml = '';
-  tags.slice(20, 40).forEach(function(t){
-    var label = t.tag;
-    tagHtml += '<div class="tag-item" data-tag="' + escapeHtml(label) + '">' +
-      '<span>' + escapeHtml(label) + '</span>' +
-      '<small>' + t.count.toLocaleString() + '</small>' +
-    '</div>';
-  });
-  document.getElementById('tag-cloud').innerHTML = tagHtml || '<div class="text-muted" style="font-size:12px;">No data</div>';
-}
-
-/* ============ Search ============ */
-
-// queryTerms is the PubMed-style accumulator: array of {field, value}.
-// Each entry was added via the ADD button; renderQueryBox() updates
-// the textarea visualization; clearTerms() empties the array.
-var queryTerms = [];        // [{field: 'all', value: 'TaCPK'}, ...]
-var combineOp = 'AND';      // 'AND' or 'OR' — combines multiple terms
-
-function renderQueryBox() {
-  // Render the queryTerms array into the textarea visualization, one
-  // term per line as 'field: value'. Read-only — terms are removed
-  // via the × button, not by editing the textarea directly.
-  var box = document.getElementById('query-box');
-  if (queryTerms.length === 0) {
-    box.value = '';
-    box.placeholder = 'Click ADD to add terms. Click × to remove a term. Empty = no text filter.';
-    return;
-  }
-  box.value = queryTerms.map(function(t, i) {
-    return (i + 1) + '. [' + t.field + '] ' + t.value + '   ×';
-  }).join('\n');
-}
-
-function clearTerms() {
-  queryTerms = [];
-  renderQueryBox();
-}
-
-function addTerm() {
-  var field = document.getElementById('searchField').value;
-  var inp = document.getElementById('searchInp').value.trim();
-  if (!inp) {
-    document.getElementById('searchInp').focus();
-    return;
-  }
-  // One term = one (field, value) pair. Don't split on commas — the
-  // user explicitly typed the whole string. PubMed's "ADD" does the
-  // same: ADD adds whatever is in the box as one logical term.
-  queryTerms.push({ field: field, value: inp });
-  document.getElementById('searchInp').value = '';
-  renderQueryBox();
-  document.getElementById('searchInp').focus();
-}
-
-function removeTerm(idx) {
-  queryTerms.splice(idx, 1);
-  renderQueryBox();
-}
-
-function buildQuery() {
-  // Map queryTerms to backend query params. Each term becomes its own
-  // parameter; the backend combines them with AND.
-  var params = { limit: pageSize, offset: (currentPage - 1) * pageSize };
-  var op = document.getElementById('op-select').value;
-
-  // Default time range from the searchField dropdown when its value
-  // is a 'since:N' entry. The user can change it by selecting another
-  // time option (it replaces the default but never ends up in
-  // queryTerms because the ADD button is what pushes terms there, and
-  // they wouldn't usually ADD a 'since:7' to the query box).
-  var sf = document.getElementById('searchField').value;
-  if (sf && sf.indexOf('since:') === 0) {
-    var d = parseInt(sf.substring(6), 10);
-    if (d > 0) params.since_days = d;
-  }
-  queryTerms.forEach(function(t) {
-    if (!t.value) return;
-    var v = t.value;
-    // Only one q / gene_name / etc. param can be sent; if the user
-    // added multiple terms in the same field, we OR them within the
-    // field by comma-joining, then trust the backend LIKE filter to
-    // match any of them.
-    function mergeParam(key, newVal) {
-      if (!params[key]) params[key] = newVal;
-      else if (params[key] !== newVal) params[key] = params[key] + ',' + newVal;
-    }
-    if (t.field === 'all') {
-      // 'All fields' = free-text on title + abstract (server's q).
-      mergeParam('q', v);
-    } else if (t.field === 'title') {
-      mergeParam('q', v);
-    } else if (t.field === 'abstract') {
-      mergeParam('q', v);
-    } else if (t.field === 'authors') {
-      mergeParam('authors', v);
-    } else if (t.field === 'journal') {
-      mergeParam('journal', v);
-    } else if (t.field === 'gene_name') {
-      // gene_name is annotation-only, but most users actually want the
-      // gene to be in the paper text — fall back to q as a more useful
-      // default. The /annotation endpoint is the source of truth.
-      mergeParam('q', v);
-    } else if (t.field === 'trait') {
-      mergeParam('ai_tags', v);
-    } else if (t.field === 'pmid') {
-      mergeParam('pmid', v);
-    } else if (t.field === 'ai_tags') {
-      mergeParam('ai_tags', v);
-    } else if (t.field && t.field.indexOf('since:') === 0) {
-      // Time range option (e.g. 'since:7' / 'since:30'). Map directly
-      // to the since_days backend param. Multiple since: terms collapse
-      // — last write wins, which is what the user expects when changing
-      // their mind on a time window.
-      var days = parseInt(t.field.substring(6), 10);
-      if (days > 0) params.since_days = days;
-    }
-  });
-  // Note: 'AND' / 'OR' combo is approximated client-side here by the
-  // field-collapse merge above. Cross-field combination is always AND
-  // (the backend's filter_map is AND). To get true cross-field OR, the
-  // backend would need to support OR — out of scope for this UX.
-  return params;
-}
-
-function runSearch() {
-  var params = buildQuery();
-
-  // Year range from slider
-  var yStart = parseInt(document.getElementById('yearStart').value, 10);
-  var yEnd   = parseInt(document.getElementById('yearEnd').value, 10);
-  if (yStart !== yearMin) params.pub_date_start = String(yStart);
-  if (yEnd   !== yearMax) params.pub_date_end   = String(yEnd);
-
-  // Time range: derive from searchField if it starts with 'since:'.
-  //   'Last 7 days' option has value 'since:7' -> since_days=7
-  //   'All time' / no selection -> no since_days (default to backend's
-  //     7-day server-side default? No — we keep an explicit no-filter
-  //     by leaving since_days off the params entirely).
-  // The field's "── Time range ──" separator is value="" which we
-  // skip. Anything else is a regular field term handled by queryTerms.
-  // (Recent filter removed in commit <simplify-ui>; use the searchField
-  // dropdown's "since:N" entries instead.)
-
-  // Tag chip filter: currentTag is set when the user clicks a tag in the
-  // sidebar tag-cloud or a badge-tag chip on a paper card. The matching
-  // label lives in papers.ai_tags (papers table column), so map to that
-  // param. Previously this used params.trait_label, but that parameter
-  // was removed when we split /papers away from the annotations JOIN.
-  if (currentTag) params.ai_tags = currentTag;
-
   // Journal filter: when user has unchecked some, pass the kept list as a
   // comma-separated `journal` parameter. When all are checked (or none), no filter.
   var j = getCheckedJournals();
@@ -883,9 +627,6 @@ function resetAll() {
   document.getElementById('op-select').value = 'AND';
   combineOp = 'AND';
   clearTerms();
-  document.getElementById('yearStart').value = yearMin;
-  document.getElementById('yearEnd').value   = yearMax;
-  updateYearSlider();
   currentTag = null;
   currentPage = 1;
   runSearch();
@@ -895,14 +636,6 @@ function resetAll() {
 $(function(){
   loadStats();
 
-  $('#yearStart, #yearEnd').on('input', function(){
-    updateYearSlider();
-    currentPage = 1;
-    runSearch();
-  });
-  $('#clear-year').on('click', function(){
-    $('#yearStart').val(yearMin); $('#yearEnd').val(yearMax); updateYearSlider(); currentPage = 1; runSearch();
-  });
   $('#search-btn').on('click', function(){ currentPage = 1; runSearch(); });
   $('#reset-btn').on('click', resetAll);
   $('#export-btn').on('click', exportCSV);
@@ -917,10 +650,6 @@ $(function(){
   });
   // Show Index link: scroll to / focus the year-slider as a quick nav
   // example (PubMed's Show Index lists MeSH terms; we just have year)
-  $('#show-index').on('click', function(e){
-    e.preventDefault();
-    $('#yearStart').focus();
-    document.getElementById('yearStart').scrollIntoView({behavior:'smooth', block:'center'});
   });
   // Allow × click on query-box to remove the corresponding term.
   // We bind to keyup on the textarea and look for a special token.
