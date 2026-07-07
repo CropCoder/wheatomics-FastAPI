@@ -201,23 +201,6 @@ def _build_search(
     return ok(TriticeaeSearchResult(total=total, limit=limit, offset=offset, papers=papers).model_dump())
 
 
-@router.get("/papers/{pubmedid}")
-def get_paper(pubmedid: str) -> dict:
-    """按 PubMed ID 获取单篇论文元数据（只查 papers 表）。
-
-    返回 papers.* 字段；fga_* 字段全部为空。
-    需要 LLM 标注请调 /papers/{pmid}/annotation。
-    """
-    with mysql_cursor(settings.DB_TRITICEAE) as cursor:
-        cursor.execute(f"{_SQL_SELECT} WHERE p.pmid = %s", (pubmedid,))
-        row = cursor.fetchone()
-
-    if not row:
-        raise HTTPException(status_code=404, detail=f"Paper not found: {pubmedid}")
-
-    return ok(_row_to_paper(row))
-
-
 @router.get("/papers")
 def search_papers(
     q: str | None = Query(None, description="全文关键词搜索（paper_title / abstract）"),
@@ -307,6 +290,27 @@ def get_paper_annotation(pubmedid: str) -> dict:
         "fga_disease_gene_tags": str(row.get("fga_disease_gene_tags") or ""),
     }
     return ok({"pmid": pubmedid, "has_annotation": True, "annotation": annotation})
+
+
+@router.get("/papers/{pubmedid}")
+def get_paper(pubmedid: str) -> dict:
+    """按 PubMed ID 获取单篇论文元数据（只查 papers 表）。
+
+    返回 papers.* 字段；fga_* 字段全部为空。
+    需要 LLM 标注请调 /papers/{pmid}/annotation。
+
+    注意路由顺序：必须在 /papers/{pmid}/annotation **之后**声明，否则
+    Starlette 会先匹配这个单段路径，把请求 42105133/annotation 拆成
+    pubmedid="42105133" + 一个未知的 "annotation" 查询参数。
+    """
+    with mysql_cursor(settings.DB_TRITICEAE) as cursor:
+        cursor.execute(f"{_SQL_SELECT} WHERE p.pmid = %s", (pubmedid,))
+        row = cursor.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail=f"Paper not found: {pubmedid}")
+
+    return ok(_row_to_paper(row))
 
 
 @router.get("/stats")
