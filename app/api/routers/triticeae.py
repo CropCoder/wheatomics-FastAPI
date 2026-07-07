@@ -156,9 +156,12 @@ def _build_search(
         params.extend([like, like])
 
     if authors:
-        # FIND_IN_SET for exact author match within comma-separated list
-        conditions.append("FIND_IN_SET(%s, p.authors) > 0")
-        params.append(authors)
+        # Substring match against the comma-separated authors string.
+        # FIND_IN_SET would only match whole-token entries (e.g. "Shengwei"
+        # alone, but not "Ma Shengwei" or "Shengwei Ma"); LIKE %...% finds
+        # any author whose name contains the term anywhere in the field.
+        conditions.append("p.authors LIKE %s")
+        params.append(f"%{authors}%")
 
     if pmid:
         # TRIM for exact PMID match (handles whitespace)
