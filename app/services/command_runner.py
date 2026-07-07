@@ -15,6 +15,7 @@ def run_command(
     *,
     cwd: Path | None = None,
     timeout: int | None = None,
+    stdin: str | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run a command without shell interpolation and raise a structured error on failure."""
 
@@ -24,6 +25,7 @@ def run_command(
             cwd=str(cwd) if cwd else None,
             capture_output=True,
             text=True,
+            input=stdin,
             timeout=timeout or settings.REQUEST_TIMEOUT_SECONDS,
             check=False,
         )

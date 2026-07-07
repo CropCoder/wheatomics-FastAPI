@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     DB_TRITICEAE: str = "Triticeae_Research_filter"
 
     BLAST_DB_PATH: Path = Path("/var/www/html/getfasta/blastdb")
+    BLAST_BIN_DIR: Path = Path("/var/www/html/blast/blast+/bin")
     FASTA_DB_PATH: Path = Path("/data/fasta")
     ORTHOFINDER_BASE_DIR: Path = Path("/var/www/html/orthefind/Results_Jun24")
     SNPRIMER_TMP_DIR: Path = Path("/var/www/html/snprimer/tmp")
