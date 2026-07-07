@@ -58,6 +58,21 @@ sleep 1
 nohup /home/fei/mambaforge/envs/zjw/bin/uvicorn main:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
 ```
 
+> ⚠️ **改动任何 `.py` 文件都必须手动跑这步**。
+>
+> Webhook（`/api/webhook/gitee`）**只跑 `git pull`，不会自动重启 uvicorn**。
+> 即使新代码已经拉到 `/var/www/FastAPI_backend_Port8000/`，正在跑的进程仍然加载旧版本，
+> 表现为：路由 404（新增端点没注册）、接口行为错乱（旧逻辑）。
+>
+> **典型症状**：curl 返回 404 但 OpenAPI 里有路由 → uvicorn 没重启加载新代码。
+>
+> **判断方法**（服务器上）：
+> ```bash
+> cd /var/www/FastAPI_backend_Port8000 && git log --oneline -1
+> ps -o etime= -p $(pgrep -f 'uvicorn main:app' | head -1)
+> ```
+> 如果 git 最新 commit 比 uvicorn 进程启动时间晚 → 必须重启。
+
 ---
 
 ## 二、后端路由注册模式
