@@ -642,11 +642,21 @@ function renderGene(resp, gene, geneDb, protDb) {
   if (!cds && !prot) {
     html = '<div class="alert alert-warning">No sequence found for ' + escapeHtml(gene) + ' (gene_db: ' + escapeHtml(geneDb) + ', protein_db: ' + escapeHtml(protDb) + ').</div>';
   } else {
+    // Build the summary bar. Only show CDS / Protein columns when the
+    // matching lookup was actually run — skip the column entirely when
+    // the side was intentionally bypassed (e.g. user picked all_gene,
+    // so protein_db is N/A).
+    var barParts = [
+      '<strong>Gene:</strong> ' + escapeHtml(gene),
+      '<strong>Gene DB:</strong> ' + escapeHtml(geneDb)
+    ];
+    if (protDb && protDb !== '—') {
+      barParts.push('<strong>Protein DB:</strong> ' + escapeHtml(protDb));
+    }
+    barParts.push('<strong>CDS:</strong> ' + (cds ? '✓' : '—'));
+    barParts.push('<strong>Protein:</strong> ' + (prot ? '✓' : '—'));
     $('#summary-bar')
-      .html('<strong>Gene:</strong> ' + escapeHtml(gene) + ' &nbsp;|&nbsp; <strong>Gene DB:</strong> ' + escapeHtml(geneDb) +
-            ' &nbsp;|&nbsp; <strong>Protein DB:</strong> ' + escapeHtml(protDb) +
-            ' &nbsp;|&nbsp; <strong>CDS:</strong> ' + (cds ? '✓' : '—') +
-            ' &nbsp;|&nbsp; <strong>Protein:</strong> ' + (prot ? '✓' : '—'))
+      .html(barParts.join(' &nbsp;|&nbsp; '))
       .show();
     html = '<div class="d-flex justify-content-between align-items-center mb-2">';
     html += '<h6 class="mb-0">FASTA Output</h6>';
