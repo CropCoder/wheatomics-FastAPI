@@ -952,8 +952,13 @@ $(function(){
   function showTab(name) {
     $('.tab-pane').removeClass('show active');
     $('.nav-link').removeClass('active');
-    $('#tab-' + name).addClass('show active');
+    var pane = $('#tab-' + name);
+    pane.addClass('show active');
+    pane.show();  // belt-and-suspenders: ignore any inline display:none
     $('a[href="#tab-' + name + '"]').addClass('active');
+    console.log('[tab] showTab', name,
+                'pane display=', pane.css('display'),
+                'pane classList=', pane.attr('class'));
   }
   var statsLoaded = false;
   $('a[href="#tab-search"]').on('click', function(e){
