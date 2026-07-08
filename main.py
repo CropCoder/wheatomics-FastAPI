@@ -117,6 +117,7 @@ app.mount("/HomologFinder", StaticFiles(directory=Path(__file__).parent / "app" 
 app.mount("/PfamSearch", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "PfamSearch", html=True), name="PfamSearch")
 app.mount("/coexpression", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "coexpression", html=True), name="coexpression")
 app.mount("/papers", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "papers", html=True), name="papers")
+app.mount("/genes", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "genes", html=True), name="genes")
 
 
 @app.middleware("http")
