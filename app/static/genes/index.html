@@ -261,7 +261,7 @@ html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-ser
         </div>
         <div class="col-md-3 mb-2">
           <div class="kpi-card">
-            <div class="kpi-label">Distinct chromosomes</div>
+            <div class="kpi-label">Wheat chromosomes covered</div>
             <div class="kpi-value" id="kpi-chroms">—</div>
           </div>
         </div>
@@ -359,6 +359,13 @@ function chromLabel(s) {
   var m = String(s).match(/(\d+[A-Da-d])/);
   return m ? m[1].toUpperCase() : String(s);
 }
+
+// 21 hexaploid wheat chromosomes (1A-7A, 1B-7B, 1D-7D). Some rows in the DB
+// carry a stray non-wheat label (e.g. "0C" from malformed imports); we
+// exclude anything outside this set so the chart shows the real karyotype.
+var WHEAT_CHROMS = [];
+for (var g = 1; g <= 7; g++) ['A','B','D'].forEach(function(sub){ WHEAT_CHROMS.push(g + sub); });
+function isWheatChrom(label) { return WHEAT_CHROMS.indexOf(label) !== -1; }
 
 function loadAllGenes() {
   if (allGenes) {
@@ -498,20 +505,23 @@ function loadStats() {
 
       var chromMap = {}, speciesMap = {}, phenoMap = {};
       records.forEach(function(r) {
+        // A row's chrom_pos can mention several loci (e.g. homeologs on 5A
+        // and 5B). Count each wheat chromosome that appears, but only
+        // within the 21-chromosome wheat karyotype.
         var c = chromLabel(r.chrom_pos);
-        if (c) chromMap[c] = (chromMap[c] || 0) + 1;
+        if (c && isWheatChrom(c)) chromMap[c] = (chromMap[c] || 0) + 1;
         if (r.species)    speciesMap[r.species]     = (speciesMap[r.species]    || 0) + 1;
         if (r.phenotype)  phenoMap[r.phenotype]     = (phenoMap[r.phenotype]    || 0) + 1;
       });
-      $('#kpi-chroms').text(Object.keys(chromMap).length);
+      // KPI: number of wheat chromosomes (out of 21) that have ≥1 gene.
+      var coveredChroms = Object.keys(chromMap).filter(isWheatChrom).length;
+      $('#kpi-chroms').text(coveredChroms + ' / ' + WHEAT_CHROMS.length);
       $('#kpi-species').text(Object.keys(speciesMap).length);
       $('#kpi-phenotypes').text(Object.keys(phenoMap).length);
 
-      var chromEntries = Object.keys(chromMap).sort(function(a, b) {
-        var na = parseInt(a, 10), nb = parseInt(b, 10);
-        if (na !== nb) return na - nb;
-        return a.localeCompare(b);
-      }).map(function(k){ return [k, chromMap[k]]; });
+      // Show all 21 wheat chromosomes on the bar chart, even if a given
+      // chromosome currently has zero genes (count = 0 → empty bar).
+      var chromEntries = WHEAT_CHROMS.map(function(k){ return [k, chromMap[k] || 0]; });
       renderBars($('#chrom-bars'), chromEntries, null);
 
       var phenoEntries = Object.keys(phenoMap)
