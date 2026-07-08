@@ -236,7 +236,8 @@ html, body { margin:0; padding:0; }
       <h5 class="card-title">Triticeae Papers</h5>
       <p>Explore LLM-tagged papers across Triticeae crops (wheat, barley, rye, relatives). Filter by keyword, date range, author, journal, or trait tag.</p>
     </div>
-    <a href="/papers_stats/" class="btn btn-outline-primary btn-sm ml-2"
+    <a href="#tab-stats" id="view-stats-btn" class="btn btn-outline-primary btn-sm ml-2"
+       data-toggle="tab" role="tab"
        title="Dataset refreshes weekly">
       📊 View stats
     </a>
@@ -245,7 +246,24 @@ html, body { margin:0; padding:0; }
 
 <main class="container-main">
 
+  <!-- ============= TAB NAV: Search / Stats ============= -->
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" id="tab-search-link" data-toggle="tab" href="#tab-search" role="tab">
+        🔍 Search
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="tab-stats-link" data-toggle="tab" href="#tab-stats" role="tab">
+        📊 Stats
+      </a>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+
   <!-- ============= TOP: SEARCH / FILTERS ============= -->
+  <div class="tab-pane fade show active" id="tab-search" role="tabpanel">
   <div class="search-row">
 
     <div class="filter-block filter-block-main">
@@ -349,6 +367,74 @@ html, body { margin:0; padding:0; }
       <button type="button" id="next-btn" class="btn btn-sm btn-outline-primary" disabled>Next</button>
     </div>
   </div>
+  </div><!-- /#tab-search -->
+
+  <!-- ============= TAB: STATS ============= -->
+  <div class="tab-pane fade" id="tab-stats" role="tabpanel">
+    <div id="stats-loading" class="text-muted text-center" style="padding:40px;">Loading dataset stats…</div>
+    <div id="stats-content" style="display:none;">
+      <h5>Dataset Overview</h5>
+      <p class="text-muted small">Numbers reflect the database snapshot the API was last queried against; we refresh weekly.</p>
+
+      <!-- KPI cards -->
+      <div class="row mb-4" id="stats-kpis">
+        <div class="col-md-3 mb-2">
+          <div class="card text-center h-100">
+            <div class="card-body">
+              <div class="small text-muted">Total papers</div>
+              <div class="h3 mb-0" id="kpi-total">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-2">
+          <div class="card text-center h-100">
+            <div class="card-body">
+              <div class="small text-muted">Annotated (LLM)</div>
+              <div class="h3 mb-0" id="kpi-annotated">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-2">
+          <div class="card text-center h-100">
+            <div class="card-body">
+              <div class="small text-muted">Year range</div>
+              <div class="h3 mb-0" id="kpi-years">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-2">
+          <div class="card text-center h-100">
+            <div class="card-body">
+              <div class="small text-muted">Annotated ratio</div>
+              <div class="h3 mb-0" id="kpi-ratio">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Year histogram -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <h6 class="card-title">Papers per year</h6>
+          <div id="year-histogram" style="min-height:200px;"></div>
+        </div>
+      </div>
+
+      <!-- Top journals -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <h6 class="card-title">Top journals</h6>
+          <table class="table table-sm table-striped mb-0">
+            <thead><tr><th>#</th><th>Journal</th><th class="text-right">Papers</th></tr></thead>
+            <tbody id="top-journals-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div id="stats-error" class="alert alert-danger" style="display:none;"></div>
+  </div><!-- /#tab-stats -->
+
+  </div><!-- /.tab-content -->
 </main>
 
 <div class="line" id="line"></div>
@@ -439,6 +525,78 @@ function loadStats() {
     .fail(function(xhr){
       setStatus('error', 'Stats unavailable (HTTP ' + xhr.status + '). Cannot search.');
     });
+}
+
+/* ============ Stats tab render ============ */
+// Render the /api/papers/stats payload into KPI cards + year histogram
+// + top-journals table. Pure DOM/HTML so no extra chart library is
+// needed; bars use inline width %.
+function renderStatsTab() {
+  var loading = document.getElementById('stats-loading');
+  var content = document.getElementById('stats-content');
+  var error   = document.getElementById('stats-error');
+
+  function showError(msg) {
+    loading.style.display = 'none';
+    content.style.display = 'none';
+    error.textContent = 'Failed to load stats: ' + msg;
+    error.style.display = 'block';
+  }
+
+  $.getJSON('/api/papers/stats')
+    .done(function(resp){
+      if (!resp || !resp.success || !resp.data) {
+        return showError((resp && resp.error) || 'unknown');
+      }
+      var s = resp.data;
+
+      // KPIs
+      document.getElementById('kpi-total').textContent     = (s.total_papers || 0).toLocaleString();
+      document.getElementById('kpi-annotated').textContent = (s.annotated_papers || 0).toLocaleString();
+      document.getElementById('kpi-years').textContent     = (s.year_min || '—') + '–' + (s.year_max || '—');
+      var ratio = s.total_papers > 0
+        ? Math.round((s.annotated_papers / s.total_papers) * 100)
+        : 0;
+      document.getElementById('kpi-ratio').textContent = ratio + '%';
+
+      // Year histogram (vertical bars)
+      var hist = (s.year_histogram || []).slice().sort(function(a, b){ return a.year - b.year; });
+      var maxCnt = hist.reduce(function(m, h){ return Math.max(m, h.count); }, 1);
+      var html = '<div class="d-flex align-items-end" style="height:180px; gap:2px;">';
+      hist.forEach(function(h){
+        var pct = Math.round((h.count / maxCnt) * 100);
+        html += '<div class="text-center" style="flex:1; min-width:14px;" '
+              +    'title="' + h.year + ': ' + h.count.toLocaleString() + ' papers">'
+              +    '<div style="height:' + pct + '%; background:#0077b6; min-height:2px; border-radius:2px 2px 0 0;"></div>'
+              +    '<div style="font-size:9px; color:#666; transform:rotate(-45deg); transform-origin:left top; margin-top:4px; white-space:nowrap;">' + h.year + '</div>'
+              +  '</div>';
+      });
+      html += '</div>';
+      document.getElementById('year-histogram').innerHTML = html;
+
+      // Top journals table
+      var topJ = s.top_journals || [];
+      var tbody = document.getElementById('top-journals-body');
+      var rows = '';
+      topJ.forEach(function(j, i){
+        var pct = s.total_papers > 0
+          ? Math.round((j.count / s.total_papers) * 1000) / 10
+          : 0;
+        rows += '<tr>'
+              +   '<td>' + (i + 1) + '</td>'
+              +   '<td>' + escapeHtml(j.journal) + '</td>'
+              +   '<td class="text-right">' + j.count.toLocaleString()
+              +     ' <span class="text-muted small">(' + pct + '%)</span>'
+              +   '</td>'
+              + '</tr>';
+      });
+      tbody.innerHTML = rows || '<tr><td colspan="3" class="text-muted text-center">No journal data.</td></tr>';
+
+      loading.style.display = 'none';
+      error.style.display   = 'none';
+      content.style.display = 'block';
+    })
+    .fail(function(xhr){ showError('HTTP ' + xhr.status); });
 }
 
 // queryTerms is the PubMed-style accumulator: array of {field, value}.
@@ -784,6 +942,13 @@ $(function(){
   $('#search-btn').on('click', function(){ currentPage = 1; runSearch(); });
   $('#reset-btn').on('click', resetAll);
   $('#export-btn').on('click', exportCSV);
+
+  // Lazy-fetch stats payload the first time the user opens the Stats
+  // tab so the Search tab stays fast on initial load.
+  var statsLoaded = false;
+  $('a[href="#tab-stats"]').on('show.bs.tab', function(){
+    if (!statsLoaded) { renderStatsTab(); statsLoaded = true; }
+  });
 
   // PubMed-style advanced search wiring
   // ADD button itself opens the dropdown (Bootstrap's data-toggle handles
