@@ -284,7 +284,7 @@ html, body { margin:0; padding:0; }
         </button>
         <div class="collapse mt-2" id="advanced-wrap">
           <label class="small-label">Query box</label>
-          <textarea id="query-box" class="form-control form-control-sm mb-2" rows="3" placeholder="Click ADD to add terms. Click × to remove a term. Empty = no text filter."></textarea>
+          <textarea id="query-box" class="form-control form-control-sm mb-2" rows="1" placeholder="Click ADD to add terms. Use Clear to empty."></textarea>
           <div class="form-row align-items-end">
             <div class="form-group col-md-8 mb-2 d-flex">
               <div class="dropdown btn-block">
@@ -431,16 +431,15 @@ function loadStats() {
 var queryTerms = [];        // [{field: 'all', value: 'TaCPK'}, ...]
 
 function renderQueryBox() {
-  // Render the queryTerms array into the textarea visualization, one
-  // term per line as 'OP [field] value ×'. OP is the operator that
-  // combines this term with the previous one (AND/OR/NOT). Read-only
-  // — terms are removed via the × button.
+  // Render the queryTerms array as a single line of 'OP [field] value'
+  // tokens separated by spaces. First term has no OP prefix (always
+  // AND by convention). Use Clear to empty.
   var box = document.getElementById('query-box');
   var wrap = document.getElementById('advanced-wrap');
   var toggle = document.getElementById('advanced-toggle');
   if (queryTerms.length === 0) {
     box.value = '';
-    box.placeholder = 'Click ADD to add terms. Click × to remove a term. Empty = no text filter.';
+    box.placeholder = 'Click ADD to add terms. Use Clear to empty.';
     // Collapse the panel and reset the arrow.
     if (wrap && wrap.classList.contains('show')) {
       $(wrap).collapse('hide');
@@ -450,8 +449,8 @@ function renderQueryBox() {
   }
   box.value = queryTerms.map(function(t, i) {
     var opLabel = i === 0 ? '' : t.op + ' ';
-    return opLabel + '[' + t.field + '] ' + t.value + '   ×';
-  }).join('\n');
+    return opLabel + '[' + t.field + '] ' + t.value;
+  }).join('   ');
   // Auto-expand so the user sees the term they just added, and flip
   // the arrow to indicate the open state.
   if (wrap && !wrap.classList.contains('show')) {
@@ -489,8 +488,8 @@ function addTerm() {
   runSearch();
 }
 
-function removeTerm(idx) {
-  queryTerms.splice(idx, 1);
+function clearTerms() {
+  queryTerms = [];
   renderQueryBox();
   currentPage = 1;
   runSearch();
@@ -793,20 +792,6 @@ $(function(){
   });
   // Show Index link placeholder (year-slider was removed; jump to top
   // of the search-row instead).
-  // Allow × click on query-box to remove the corresponding term.
-  // We bind to keyup on the textarea and look for a special token.
-  $('#query-box').on('keyup', function(e){
-    // Read-only box, but if user clicks the × in display, parse and
-    // remove. We use a small synthetic click handler: when the caret
-    // is on a line and the user hits ×, we drop that term.
-    if (e.key === 'x' || e.key === 'X') {
-      // find current line by caret position
-      var pos = this.selectionStart;
-      var before = this.value.substring(0, pos);
-      var lineIdx = (before.match(/\n/g) || []).length;
-      removeTerm(lineIdx);
-    }
-  });
   $('#prev-btn').on('click', function(){
     if (currentPage > 1) { currentPage--; runSearch(); window.scrollTo(0, 0); }
   });
