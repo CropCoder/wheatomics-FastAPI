@@ -572,16 +572,14 @@ function renderYearLineChart(hist) {
   // 1) Sort by year ascending
   hist = hist.slice().sort(function(a, b){ return a.year - b.year; });
 
-  // 2) Bucket all years < 2000 into a single "Pre-2000" point.
-  var pre2000Count = 0;
-  var recent = [];
-  hist.forEach(function(h){
-    if (h.year < 2000) pre2000Count += h.count;
-    else recent.push(h);
-  });
+  // 2) Show only 2000+ — the user wants recent decades.
+  var CUTOFF = 2000;
+  var dropped = 0;
   var points = [];
-  if (pre2000Count > 0) points.push({ year: 'Pre-2000', count: pre2000Count });
-  recent.forEach(function(h){ points.push({ year: h.year, count: h.count }); });
+  hist.forEach(function(h){
+    if (h.year < CUTOFF) dropped += h.count;
+    else points.push({ year: h.year, count: h.count });
+  });
   if (points.length === 0) return '<div class="text-muted">No year data.</div>';
 
   // 3) Lay out SVG. Width = 1000, height = 220.
