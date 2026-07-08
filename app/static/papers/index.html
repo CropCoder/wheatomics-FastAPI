@@ -265,12 +265,15 @@ html, body { margin:0; padding:0; }
             <option value="since:365">Last 365 days</option>
           </select>
         </div>
-        <div class="form-group col-md-7 mb-2">
+        <div class="form-group col-md-8 mb-2">
           <label for="searchInp" class="small-label">Search term</label>
           <input type="text" id="searchInp" class="form-control form-control-sm" placeholder="e.g. TaCPK, stripe rust, Plant Cell, Ma Shengwei">
         </div>
-        <div class="form-group col-md-2 mb-2 d-flex align-items-end">
+        <div class="form-group col-md-1 mb-2 d-flex align-items-end">
           <button type="button" id="search-btn" class="btn btn-primary btn-sm btn-block">Search</button>
+        </div>
+        <div class="form-group col-md-1 mb-2 d-flex align-items-end">
+          <button type="button" id="reset-btn" class="btn btn-outline-secondary btn-sm btn-block">Reset</button>
         </div>
       </div>
       <div class="helper-text mb-2">Multiple terms are combined with AND across fields.</div>
@@ -307,12 +310,6 @@ html, body { margin:0; padding:0; }
         </div>
       </div>
 
-      <!-- Reset (separate, less prominent) -->
-      <div class="form-row align-items-end">
-        <div class="form-group col-md-12 mb-2">
-          <button type="button" id="reset-btn" class="btn btn-outline-secondary btn-sm">Reset</button>
-        </div>
-      </div>
     </div>
 
     <!-- Year chart + Journal Filter + Top Trait + Top Keywords removed
