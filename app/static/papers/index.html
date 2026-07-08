@@ -883,10 +883,10 @@ $(function(){
   // Recent filter moved to the searchField dropdown (since:N entries)
   // so no separate change handler here.
 
-  // Search input Enter
-  $('#searchInp').on('keydown', function(e){
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runSearch(); }
-  });
+  // Search is triggered only by clicking the Search button or by
+  // Enter inside a multi-line term editor (none today). Pressing
+  // Enter in the search input just inserts a newline / focus moves
+  // naturally — the user must click Search to commit.
 });
 </script>
 </body>
