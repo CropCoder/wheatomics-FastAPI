@@ -367,7 +367,7 @@ html, body { margin:0; padding:0; }
   <!-- ============= TAB: STATS ============= -->
   <div class="tab-pane fade" id="tab-stats" role="tabpanel">
     <div id="stats-loading" class="text-muted text-center" style="padding:40px;">Loading dataset stats…</div>
-    <div id="stats-content" style="display:none;">
+    <div id="stats-content" hidden>
       <h5>Dataset Overview</h5>
       <p class="text-muted small">Numbers reflect the database snapshot the API was last queried against; we refresh weekly.</p>
 
@@ -426,7 +426,7 @@ html, body { margin:0; padding:0; }
         </div>
       </div>
     </div>
-    <div id="stats-error" class="alert alert-danger" style="display:none;"></div>
+    <div id="stats-error" class="alert alert-danger" hidden></div>
   </div><!-- /#tab-stats -->
 
   </div><!-- /.tab-content -->
@@ -537,10 +537,10 @@ function renderStatsTab() {
   }
 
   function showError(msg) {
-    loading.style.display = 'none';
-    content.style.display = 'none';
+    loading.hidden = true;
+    content.hidden = true;
     error.textContent = 'Failed to load stats: ' + msg;
-    error.style.display = 'block';
+    error.hidden = false;
   }
 
   $.getJSON('/api/papers/stats')
@@ -593,11 +593,12 @@ function renderStatsTab() {
       });
       tbody.innerHTML = rows || '<tr><td colspan="3" class="text-muted text-center">No journal data.</td></tr>';
 
-      loading.style.display = 'none';
-      error.style.display   = 'none';
-      content.style.display = 'block';
+      loading.hidden = true;
+      error.hidden   = true;
+      content.hidden = false;
+      console.log('[stats] content shown; total =', s.total_papers, 'years =', (s.year_histogram||[]).length, 'journals =', (s.top_journals||[]).length);
     })
-    .fail(function(xhr){ showError('HTTP ' + xhr.status); });
+    .fail(function(xhr){ console.error('[stats] getJSON fail', xhr); showError('HTTP ' + xhr.status); });
 }
 
 // queryTerms is the PubMed-style accumulator: array of {field, value}.
