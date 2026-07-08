@@ -790,6 +790,15 @@ $(function(){
   }).on('hide.bs.collapse', function(){
     var t = document.getElementById('advanced-toggle'); if (t) t.textContent = '▶ Advanced';
   });
+  // Pressing Enter inside the Query box re-runs the current search
+  // (Shift+Enter inserts a newline for line wrapping).
+  $('#query-box').on('keydown', function(e){
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      currentPage = 1;
+      runSearch();
+    }
+  });
   // Show Index link placeholder (year-slider was removed; jump to top
   // of the search-row instead).
   $('#prev-btn').on('click', function(){
