@@ -84,66 +84,23 @@ def _candidate_entries(gene_id: str) -> list[str]:
 def _pick_existing_entry(candidates: list[str], database: Path) -> str | None:
     """Return the first candidate that BLAST resolves, or None if none.
 
-    Strategy: try a single `-entry_batch -` call that ignores unknown
-    IDs and prints only resolved ones. If the database itself can't be
-    opened (.nal alias points to a missing volume, etc.), re-raise
-    ExternalToolFailure so the API can return 502 instead of a
-    misleading 404.
+    Mirrors the same pattern `_try_interval` uses for chromosome names:
+    try each candidate via a single `-entry` probe and swallow the
+    ExternalToolFailure so that an entry-specific error (e.g. "Entry
+    not found") on one variant doesn't mask a hit on another variant.
 
-    If the batch call returns nothing, fall back to per-candidate
-    `-entry` probes — some alias files behave differently for batch
-    vs single-entry fetches.
+    We do NOT call `-entry_batch -` here. Alias setups (.nal files
+    that point to chained volumes) sometimes return empty for batch
+    fetches even when individual entries resolve fine — and that
+    earlier probe mode produced misleading 502s.
     """
-    from app.core.exceptions import ExternalToolFailure
-
     db_str = str(database)
-    try:
-        out = _blastdbcmd(
-            "-db", db_str,
-            "-entry_batch", "-",
-            stdin_data="\n".join(candidates) + "\n")
-    except ExternalToolFailure as e:
-        raise ExternalToolFailure(
-            f"BLAST database '{database.name}' could not be opened: {e}")
-    except Exception:
-        return None
-
-    # The output contains resolved FASTAs. Disambiguate which of our
-    # candidates survived by matching the resolved IDs back to our
-    # candidate list.
-    import re
-    resolved = set(re.findall(r"^>([^\s]+)", out, flags=re.M))
-    matched = _match_candidate(candidates, resolved)
-    if matched:
-        return matched
-
-    # Batch came back empty but the database opened OK — try each
-    # candidate one at a time. Some alias setups only resolve a
-    # single-entry probe, not a batch.
     for name in candidates:
         try:
-            single = _blastdbcmd("-db", db_str, "-entry", name)
+            out = _blastdbcmd("-db", db_str, "-entry", name)
         except Exception:
             continue
-        if single.strip():
-            return name
-    return None
-
-
-def _match_candidate(candidates: list[str], resolved: set[str]) -> str | None:
-    """Return the first candidate that appears in `resolved` (exact
-    match, then prefix match). None if nothing matches.
-    """
-    for name in candidates:
-        if name in resolved:
-            return name
-        # blastdbcmd may strip the .1 trailing allele on output; allow
-        # a prefix match as fallback.
-        prefix_hit = any(
-            r == name or r.startswith(name + ".") or name.startswith(r + ".")
-            for r in resolved
-        )
-        if prefix_hit:
+        if out.strip():
             return name
     return None
 
