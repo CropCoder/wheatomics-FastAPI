@@ -664,7 +664,7 @@ function renderYearLineChart(hist) {
           : 0;
         rows += '<tr>'
               +   '<td>' + (i + 1) + '</td>'
-              +   '<td>' + escapeHtml(j.journal) + '</td>'
+              +   '<td><em>' + escapeHtml(j.journal) + '</em></td>'
               +   '<td class="text-right">' + j.count.toLocaleString()
               +     ' <span class="text-muted small">(' + pct + '%)</span>'
               +   '</td>'
@@ -896,7 +896,7 @@ function renderPaper(p) {
   var abstractId = 'abs-' + pmid;
   var annotationId = 'anno-' + pmid;
   return '<div class="paper-item">' +
-    '<div class="journal-meta">' + journal + (journal && date ? ' | ' : '') + date +
+    '<div class="journal-meta"><em>' + journal + '</em>' + (journal && date ? ' | ' : '') + date +
       ' · <a href="' + escapeHtml(link) + '" target="_blank" class="id-link">PMID: ' + pmid + '</a>' +
     '</div>' +
     '<a href="' + escapeHtml(link) + '" target="_blank" class="paper-title d-block mb-2">' + title + '</a>' +
