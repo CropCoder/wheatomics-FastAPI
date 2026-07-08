@@ -12,7 +12,7 @@ from app.db.mysql import mysql_cursor
 from app.schemas.comparative import HomologHit, IDMapping, SyntenyRecord
 from app.services.legacy_parsers import normalize_text, pick_first
 
-router = APIRouter(tags=["Comparative"])
+router = APIRouter(tags=["Comparative genomics"])
 
 
 @router.get("/homologs/wheat-rice-arabidopsis")
