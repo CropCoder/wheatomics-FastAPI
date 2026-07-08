@@ -944,17 +944,26 @@ $(function(){
   $('#reset-btn').on('click', resetAll);
   $('#export-btn').on('click', exportCSV);
 
-  // Lazy-fetch stats payload the first time the user opens the Stats
-  // tab so the Search tab stays fast on initial load.
+  // Manual tab switcher — the Bootstrap data-toggle="tab" path was
+  // silent on this page (no show.bs.tab firing, panels stayed hidden).
+  // We drive the show/hide ourselves and lazy-fetch stats on first
+  // entry to the Stats panel.
+  function showTab(name) {
+    $('.tab-pane').removeClass('show active');
+    $('.nav-link').removeClass('active');
+    $('#tab-' + name).addClass('show active');
+    $('a[href="#tab-' + name + '"]').addClass('active');
+  }
   var statsLoaded = false;
-  $('a[href="#tab-stats"]').on('show.bs.tab', function(){
+  $('a[href="#tab-search"]').on('click', function(e){
+    e.preventDefault(); showTab('search');
+  });
+  $('a[href="#tab-stats"]').on('click', function(e){
+    e.preventDefault(); showTab('stats');
     if (!statsLoaded) { renderStatsTab(); statsLoaded = true; }
   });
-  // Fallback: also bind directly to the link by ID in case the
-  // attribute selector misses (e.g. if Bootstrap is re-rendering).
-  $('#tab-stats-link').on('click', function(){
-    if (!statsLoaded) { renderStatsTab(); statsLoaded = true; }
-  });
+  // Make sure the Search tab is the visible one on initial load.
+  showTab('search');
 
   // PubMed-style advanced search wiring
   // ADD button itself opens the dropdown (Bootstrap's data-toggle handles
