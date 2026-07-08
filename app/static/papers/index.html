@@ -361,6 +361,7 @@ var currentJournals = null;      // null = no filter, array = allowed journals
 var currentTag = null;           // null = no filter, string = tag to filter by
 var stats = null;                // cached /api/papers/stats
 var searchInFlight = null;       // AbortController for the latest request
+var defaultSinceDays = 7;        // default time window when none is picked
 
 function escapeHtml(s) {
   if (s == null) return '';
@@ -408,7 +409,7 @@ function loadStats() {
       if (!resp.success) { setStatus('error', 'Failed to load stats.'); return; }
       stats = resp.data || {};
       setStatus('ready', 'Ready · ' + stats.total_papers.toLocaleString() + ' papers');
-      // Auto-load default view: last 7 days (matching recent feature)
+      // Auto-load default view: last N days (defaultSinceDays)
       runSearch(0);
     })
     .fail(function(xhr){
@@ -474,9 +475,13 @@ function buildQuery() {
   // supports these as NOT clauses).
   var params = { limit: pageSize, offset: (currentPage - 1) * pageSize };
 
-  // Default time range from the searchField dropdown when its value
-  // is a 'since:N' entry (e.g. 'since:7' for Last 7 days).
+  // Time range:
+  // - 'since:N' entry in the searchField dropdown uses that window
+  // - a queryTerms entry with field 'since:N' overrides the default
+  // - otherwise fall back to defaultSinceDays (last N days) unless the
+  //   user explicitly appended any since term below
   var sf = document.getElementById('searchField').value;
+  var hasUserSinceTerm = false;
   if (sf && sf.indexOf('since:') === 0) {
     var d = parseInt(sf.substring(6), 10);
     if (d > 0) params.since_days = d;
@@ -506,7 +511,10 @@ function buildQuery() {
     } else if (term.field && term.field.indexOf('since:') === 0) {
       // 'since:N' as an explicit ADD term overrides the default.
       var days = parseInt(term.field.substring(6), 10);
-      if (days > 0) params.since_days = days;
+      if (days > 0) {
+        params.since_days = days;
+        hasUserSinceTerm = true;
+      }
     }
   }
   function merge(key, newVal) {
@@ -514,6 +522,13 @@ function buildQuery() {
     else if (params[key] !== newVal) params[key] = params[key] + ',' + newVal;
   }
   queryTerms.forEach(appendFor);
+
+  // If no time window was picked from the dropdown or queryTerms,
+  // apply the default (last defaultSinceDays days).
+  if (params.since_days == null) {
+    params.since_days = defaultSinceDays;
+  }
+
   return params;
 }
 
