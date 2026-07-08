@@ -419,14 +419,14 @@ def stats() -> dict:
             for r in cursor.fetchall() if r["year"]
         ]
 
-        # --- top 期刊（按 PMID 去重） ---
+        # --- top 期刊（按 PMID 去重；列出所有期刊，不做截断） ---
         cursor.execute("""
             SELECT TRIM(p.journal) AS journal, COUNT(DISTINCT p.pmid) AS cnt
             FROM papers p
             WHERE p.journal IS NOT NULL AND TRIM(p.journal) != ''
             GROUP BY journal
-            ORDER BY cnt DESC
-            LIMIT 20
+            ORDER BY cnt DESC, journal ASC
+            LIMIT 1000
         """)
         top_journals = [
             {"journal": r["journal"], "count": int(r["cnt"])}
