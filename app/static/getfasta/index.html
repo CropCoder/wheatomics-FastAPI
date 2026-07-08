@@ -592,18 +592,38 @@ function querySequence() {
       return;
     }
 
-    // For all other databases we call /by-gene with two parallel DBs:
-    // gene_db for CDS, protein_db for protein. When the user picks a
-    // single-purpose DB (e.g. all_protein) we still send both — the
-    // API gracefully nullifies whichever it can't find.
-    var geneDb = db;
-    var protDb = (db === 'all_protein') ? 'all_protein'
-                 : (db === 'all_gene') ? 'all_protein'
-                 : db;  // genome-specific CDS-like DBs
-    $.getJSON('/api/sequence/by-gene', { gene_id: gene, gene_db: geneDb, protein_db: protDb })
+    // For single-gene queries, the database the user picked
+    // determines which side of /by-gene we hit:
+    //   - all_gene       → CDS only (skip protein lookup)
+    //   - all_protein    → protein only (skip CDS lookup)
+    //   - other coding   → try CDS + protein in parallel
+    var geneDb, protDb;
+    if (db === 'all_protein') {
+      geneDb = null;       // skip CDS
+      protDb = 'all_protein';
+    } else if (db === 'all_gene') {
+      geneDb = 'all_gene';
+      protDb = null;       // skip protein
+    } else {
+      geneDb = db;
+      protDb = 'all_protein';
+    }
+
+    // FastAPI's Query(...) on gene_db / protein_db is not Optional,
+    // so we always send both keys; the backend uses the defaults when
+    // value matches. To "skip", we pass an unmatchable value and let
+    // the API nullify it — done above by setting one side to null and
+    // branching below.
+    var params = { gene_id: gene };
+    if (geneDb) params.gene_db     = geneDb;
+    if (protDb) params.protein_db  = protDb;
+
+    $.getJSON('/api/sequence/by-gene', params)
       .done(function(resp) {
         $('#loading-indicator').hide();
-        renderGene(resp, gene, geneDb, protDb);
+        // geneDb / protDb can be null for skipped side; pass the
+        // actual DB used (or '—') for display.
+        renderGene(resp, gene, geneDb || '—', protDb || '—');
       })
       .fail(function(jqXHR) {
         $('#loading-indicator').hide();

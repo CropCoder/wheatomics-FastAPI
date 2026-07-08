@@ -101,8 +101,8 @@ def _try_interval(database: Path, chrom: str, start: int, end: int) -> str:
 @router.get("/sequence/by-gene")
 def sequence_by_gene(
     gene_id: str = Query(...),
-    gene_db: str = Query("all_gene"),
-    protein_db: str = Query("all_protein"),
+    gene_db: str | None = Query(None, description="CDS / genomic BLAST DB. Omit to skip CDS lookup."),
+    protein_db: str | None = Query(None, description="Protein BLAST DB. Omit to skip protein lookup."),
 ) -> SequenceBundle:
     """根据基因 ID 获取基因和蛋白质序列（FASTA 格式）。
 
@@ -140,13 +140,19 @@ def sequence_by_gene(
     gene_entry = gene_id if gene_id.endswith(".1") else f"{gene_id}.1"
 
     bundle = SequenceBundle(gene_id=gene_id)
-    try:
-        bundle.gene_sequence = _blastdbcmd("-db", str(settings.BLAST_DB_PATH / gene_db), "-entry", gene_entry)
-    except Exception:
+    if gene_db:
+        try:
+            bundle.gene_sequence = _blastdbcmd("-db", str(settings.BLAST_DB_PATH / gene_db), "-entry", gene_entry)
+        except Exception:
+            bundle.gene_sequence = None
+    else:
         bundle.gene_sequence = None
-    try:
-        bundle.protein_sequence = _blastdbcmd("-db", str(settings.BLAST_DB_PATH / protein_db), "-entry", gene_entry)
-    except Exception:
+    if protein_db:
+        try:
+            bundle.protein_sequence = _blastdbcmd("-db", str(settings.BLAST_DB_PATH / protein_db), "-entry", gene_entry)
+        except Exception:
+            bundle.protein_sequence = None
+    else:
         bundle.protein_sequence = None
 
     if not bundle.gene_sequence and not bundle.protein_sequence:
