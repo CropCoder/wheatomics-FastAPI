@@ -233,23 +233,6 @@ html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-ser
           <button type="button" id="reset-btn" class="btn btn-outline-secondary btn-sm btn-block">Reset</button>
         </div>
       </div>
-      <div class="form-row align-items-end">
-        <div class="form-group col-md-3 mb-2">
-          <label for="chromosomeFilter" class="small-label">Chromosome (post-filter)</label>
-          <select id="chromosomeFilter" class="form-control form-control-sm">
-            <option value="">All chromosomes</option>
-          </select>
-        </div>
-        <div class="form-group col-md-4 mb-2">
-          <label for="speciesFilter" class="small-label">Species (post-filter)</label>
-          <select id="speciesFilter" class="form-control form-control-sm">
-            <option value="">All species</option>
-          </select>
-        </div>
-        <div class="form-group col-md-5 mb-2 small-label text-muted d-flex align-items-end">
-          Chromosome and species are applied client-side to the search results.
-        </div>
-      </div>
     </div>
 
     <div class="results-row">
@@ -394,8 +377,6 @@ function loadAllGenes() {
 // =====================================================================
 function runSearch() {
   var term = $('#searchInp').val().trim();
-  var chrom = $('#chromosomeFilter').val();
-  var species = $('#speciesFilter').val();
   var $info = $('#res-info');
   var $list = $('#list-content');
 
@@ -403,10 +384,6 @@ function runSearch() {
   $list.html('');
 
   function renderResults(records) {
-    // Apply client-side filters
-    if (chrom)    records = records.filter(function(r){ return chromLabel(r.chrom_pos) === chrom; });
-    if (species)  records = records.filter(function(r){ return (r.species || '') === species; });
-
     if (records.length === 0) {
       $info.text('No genes found.');
       $list.html('<div class="alert alert-warning">No matching known gene. Try a different keyword or clear the post-filters.</div>');
@@ -466,41 +443,7 @@ function runSearch() {
 
 function resetSearch() {
   $('#searchInp').val('');
-  $('#chromosomeFilter').val('');
-  $('#speciesFilter').val('');
   runSearch();
-}
-
-// =====================================================================
-//  Filter dropdowns
-// =====================================================================
-function populateFilterDropdowns(records) {
-  var chroms = {}, species = {};
-  records.forEach(function(r) {
-    var c = chromLabel(r.chrom_pos);
-    if (c) chroms[c] = (chroms[c] || 0) + 1;
-    if (r.species) species[r.species] = (species[r.species] || 0) + 1;
-  });
-  // Sort chromosomes: 1A 1B 1D 2A 2B 2D ...
-  var chromKeys = Object.keys(chroms).sort(function(a, b) {
-    var na = parseInt(a, 10), nb = parseInt(b, 10);
-    if (na !== nb) return na - nb;
-    return a.localeCompare(b);
-  });
-  var speciesKeys = Object.keys(species).sort(function(a, b) {
-    return chroms[b] !== chroms[a]
-      ? (species[b] || 0) - (species[a] || 0)
-      : a.localeCompare(b);
-  });
-
-  var $c = $('#chromosomeFilter').empty().append('<option value="">All chromosomes</option>');
-  chromKeys.forEach(function(k) {
-    $c.append('<option value="' + esc(k) + '">' + esc(k) + ' (' + chroms[k] + ')</option>');
-  });
-  var $s = $('#speciesFilter').empty().append('<option value="">All species</option>');
-  speciesKeys.forEach(function(k) {
-    $s.append('<option value="' + esc(k) + '">' + esc(k) + ' (' + species[k] + ')</option>');
-  });
 }
 
 // =====================================================================
@@ -575,21 +518,13 @@ $('#reset-btn').on('click', resetSearch);
 $('#searchInp').on('keydown', function(e) {
   if (e.key === 'Enter') { e.preventDefault(); runSearch(); }
 });
-$('#chromosomeFilter, #speciesFilter').on('change', runSearch);
 
-// Lazy-load stats + dropdown contents when the tab is first shown.
+// Lazy-load stats when the tab is first shown.
 var statsLoaded = false;
 $('a[href="#tab-stats"]').on('shown.bs.tab', function() {
   if (statsLoaded) return;
   statsLoaded = true;
-  loadAllGenes()
-    .then(function(records) {
-      populateFilterDropdowns(records);
-      loadStats();
-    })
-    .catch(function() {
-      loadStats();
-    });
+  loadStats();
 });
 
 // Initial load: pull the full list once, populate filters lazily on first
