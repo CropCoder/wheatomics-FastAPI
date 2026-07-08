@@ -265,50 +265,56 @@ html, body { margin:0; padding:0; }
             <option value="since:365">Last 365 days</option>
           </select>
         </div>
-        <div class="form-group col-md-7 mb-2">
+        <div class="form-group col-md-10 mb-2">
           <label for="searchInp" class="small-label">Search term</label>
           <input type="text" id="searchInp" class="form-control form-control-sm" placeholder="e.g. TaCPK, stripe rust, Plant Cell, Ma Shengwei">
         </div>
-        <div class="form-group col-md-3 mb-2 d-flex">
-          <div class="dropdown btn-block">
-            <button type="button" id="add-term-btn"
-                    class="btn btn-primary btn-sm dropdown-toggle btn-block"
-                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <span id="add-op-label">AND</span>
-            </button>
-            <div class="dropdown-menu">
-              <a class="dropdown-item add-op-item" href="#" data-op="AND">Add with AND — both must match</a>
-              <a class="dropdown-item add-op-item" href="#" data-op="OR">Add with OR — either may match</a>
-              <a class="dropdown-item add-op-item" href="#" data-op="NOT">Add with NOT — exclude matches</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item small text-muted" href="#">First term is always AND</a>
-            </div>
-          </div>
-          <button type="button" id="clear-terms-btn" class="btn btn-outline-secondary btn-sm ml-1">Clear</button>
+      </div>
+
+      <!-- Search button (primary action) -->
+      <div class="form-row align-items-end mb-2">
+        <div class="form-group col-md-12 mb-0">
+          <button type="button" id="search-btn" class="btn btn-primary btn-sm">Search</button>
         </div>
       </div>
       <div class="helper-text mb-2">Multiple terms are combined with AND across fields.</div>
 
-      <!-- Query box: accumulated (field, value) pairs (collapsible) -->
+      <!-- Advanced: Query box + ADD button + Clear -->
       <div class="form-group mb-2">
         <button type="button" id="advanced-toggle" class="btn btn-link btn-sm p-0 small-label"
-                data-toggle="collapse" data-target="#query-box-wrap"
-                aria-expanded="false" aria-controls="query-box-wrap">
+                data-toggle="collapse" data-target="#advanced-wrap"
+                aria-expanded="false" aria-controls="advanced-wrap">
           ▶ Advanced
         </button>
-        <div class="collapse mt-2" id="query-box-wrap">
+        <div class="collapse mt-2" id="advanced-wrap">
           <label class="small-label">Query box</label>
-          <textarea id="query-box" class="form-control form-control-sm" rows="3" placeholder="Click ADD to add terms. Click × to remove a term. Empty = no text filter."></textarea>
+          <textarea id="query-box" class="form-control form-control-sm mb-2" rows="3" placeholder="Click ADD to add terms. Click × to remove a term. Empty = no text filter."></textarea>
+          <div class="form-row align-items-end">
+            <div class="form-group col-md-8 mb-2 d-flex">
+              <div class="dropdown btn-block">
+                <button type="button" id="add-term-btn"
+                        class="btn btn-primary btn-sm dropdown-toggle btn-block"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  ADD <span id="add-op-label">AND</span>
+                </button>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item add-op-item" href="#" data-op="AND">Add with AND — both must match</a>
+                  <a class="dropdown-item add-op-item" href="#" data-op="OR">Add with OR — either may match</a>
+                  <a class="dropdown-item add-op-item" href="#" data-op="NOT">Add with NOT — exclude matches</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item small text-muted" href="#">First term is always AND</a>
+                </div>
+              </div>
+              <button type="button" id="clear-terms-btn" class="btn btn-outline-secondary btn-sm ml-1">Clear</button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Search + Reset row -->
+      <!-- Reset (separate, less prominent) -->
       <div class="form-row align-items-end">
-        <div class="form-group col-md-6 mb-2 d-flex align-items-end">
-          <button type="button" id="search-btn" class="btn btn-primary btn-sm btn-block mr-1">Search</button>
-        </div>
-        <div class="form-group col-md-6 mb-2 d-flex align-items-end">
-          <button type="button" id="reset-btn" class="btn btn-outline-secondary btn-sm btn-block">Reset</button>
+        <div class="form-group col-md-12 mb-2">
+          <button type="button" id="reset-btn" class="btn btn-outline-secondary btn-sm">Reset</button>
         </div>
       </div>
     </div>
@@ -434,7 +440,7 @@ function renderQueryBox() {
   // combines this term with the previous one (AND/OR/NOT). Read-only
   // — terms are removed via the × button.
   var box = document.getElementById('query-box');
-  var wrap = document.getElementById('query-box-wrap');
+  var wrap = document.getElementById('advanced-wrap');
   var toggle = document.getElementById('advanced-toggle');
   if (queryTerms.length === 0) {
     box.value = '';
@@ -777,7 +783,7 @@ $(function(){
     addTerm();  // commit the term immediately on selection
   });
   // Keep the Advanced toggle arrow in sync with manual show/hide.
-  $('#query-box-wrap').on('show.bs.collapse', function(){
+  $('#advanced-wrap').on('show.bs.collapse', function(){
     var t = document.getElementById('advanced-toggle'); if (t) t.textContent = '▼ Advanced';
   }).on('hide.bs.collapse', function(){
     var t = document.getElementById('advanced-toggle'); if (t) t.textContent = '▶ Advanced';
