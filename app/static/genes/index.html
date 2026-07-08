@@ -123,12 +123,15 @@ html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-ser
   margin-bottom:10px;
 }
 .gene-card-head { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.gene-card-head .gene-name {
+  font-size:16px; font-weight:700; color:#222;
+  font-style:italic;
+}
 .gene-card-head .gene-id {
-  font-size:17px; font-weight:700; color:#1f5f9f;
+  font-size:12px; color:#1f5f9f;
   text-decoration:none; font-family:Menlo,Consolas,monospace;
 }
 .gene-card-head .gene-id:hover { text-decoration:underline; }
-.gene-card-head .gene-name { font-size:15px; color:#222; font-style:italic; }
 .gene-card-body { margin-top:6px; font-size:13px; color:#555; display:flex; flex-wrap:wrap; gap:14px; }
 .gene-card-body .badge { font-size:11px; }
 
@@ -425,8 +428,8 @@ function runSearch() {
       html +=
         '<div class="gene-card">' +
           '<div class="gene-card-head">' +
-            '<a class="gene-id" href="' + esc(detailUrl(r.gene_id)) + '" target="_blank">' + esc(r.gene_id) + '</a>' +
             (r.gene_name ? '<span class="gene-name">' + esc(r.gene_name) + '</span>' : '') +
+            '<a class="gene-id" href="' + esc(detailUrl(r.gene_id)) + '" target="_blank">' + esc(r.gene_id) + '</a>' +
           '</div>' +
           '<div class="gene-card-body">' +
             chromBadge + sp + ph + doiCount +
