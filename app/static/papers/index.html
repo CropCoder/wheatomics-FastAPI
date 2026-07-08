@@ -236,11 +236,6 @@ html, body { margin:0; padding:0; }
       <h5 class="card-title">Triticeae Papers</h5>
       <p>Explore LLM-tagged papers across Triticeae crops (wheat, barley, rye, relatives). Filter by keyword, date range, author, journal, or trait tag.</p>
     </div>
-    <a href="#tab-stats" id="view-stats-btn" class="btn btn-outline-primary btn-sm ml-2"
-       data-toggle="tab" role="tab"
-       title="Dataset refreshes weekly">
-      📊 View stats
-    </a>
   </div>
 </div>
 
@@ -532,9 +527,14 @@ function loadStats() {
 // + top-journals table. Pure DOM/HTML so no extra chart library is
 // needed; bars use inline width %.
 function renderStatsTab() {
+  console.log('[stats] renderStatsTab called');
   var loading = document.getElementById('stats-loading');
   var content = document.getElementById('stats-content');
   var error   = document.getElementById('stats-error');
+  if (!loading || !content) {
+    console.error('[stats] tab DOM not found');
+    return;
+  }
 
   function showError(msg) {
     loading.style.display = 'none';
@@ -545,6 +545,7 @@ function renderStatsTab() {
 
   $.getJSON('/api/papers/stats')
     .done(function(resp){
+      console.log('[stats] getJSON done', resp);
       if (!resp || !resp.success || !resp.data) {
         return showError((resp && resp.error) || 'unknown');
       }
@@ -947,6 +948,11 @@ $(function(){
   // tab so the Search tab stays fast on initial load.
   var statsLoaded = false;
   $('a[href="#tab-stats"]').on('show.bs.tab', function(){
+    if (!statsLoaded) { renderStatsTab(); statsLoaded = true; }
+  });
+  // Fallback: also bind directly to the link by ID in case the
+  // attribute selector misses (e.g. if Bootstrap is re-rendering).
+  $('#tab-stats-link').on('click', function(){
     if (!statsLoaded) { renderStatsTab(); statsLoaded = true; }
   });
 
