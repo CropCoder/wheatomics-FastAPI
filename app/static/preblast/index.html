@@ -251,7 +251,7 @@ function searchBlastp() {
   $('#result-area').hide();
   $('#loading-indicator').show();
 
-  $.getJSON('/api/sequence/blastp', { gene: gene, limit: 5000 })
+  $.getJSON('/api/blastp', { gene: gene, limit: 5000 })
     .done(function(resp) {
       $('#loading-indicator').hide();
       if (!resp.success) { showError('Search failed'); return; }
