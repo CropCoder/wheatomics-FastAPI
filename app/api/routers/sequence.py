@@ -454,14 +454,14 @@ def search_blastp(
         结果按 bit_score 降序、evalue 升序排列。
 
     用法:
-        GET /api/sequence/blastp?gene=<基因ID>&limit=5000&offset=0
+        GET /api/blastp?gene=<基因ID>&limit=5000&offset=0
         - gene: 必填，基因 ID
         - limit: 可选，最多返回条数，默认 5000
         - offset: 可选，偏移量，默认 0
 
     案例:
         请求:
-          curl -X GET "http://localhost:8000/api/sequence/blastp?gene=TraesCS5A02G391700"
+          curl -X GET "http://localhost:8000/api/blastp?gene=TraesCS5A02G391700"
 
         响应:
           {
