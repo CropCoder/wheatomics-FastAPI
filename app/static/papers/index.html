@@ -374,7 +374,7 @@ html, body { margin:0; padding:0; }
 
       <!-- KPI cards -->
       <div class="row mb-4" id="stats-kpis">
-        <div class="col-md-3 mb-2">
+        <div class="col-md-2 mb-2">
           <div class="card text-center h-100">
             <div class="card-body">
               <div class="small text-muted">Total papers</div>
@@ -382,7 +382,7 @@ html, body { margin:0; padding:0; }
             </div>
           </div>
         </div>
-        <div class="col-md-3 mb-2">
+        <div class="col-md-2 mb-2">
           <div class="card text-center h-100">
             <div class="card-body">
               <div class="small text-muted">Annotated (LLM)</div>
@@ -390,7 +390,7 @@ html, body { margin:0; padding:0; }
             </div>
           </div>
         </div>
-        <div class="col-md-3 mb-2">
+        <div class="col-md-2 mb-2">
           <div class="card text-center h-100">
             <div class="card-body">
               <div class="small text-muted">Year range</div>
@@ -398,11 +398,19 @@ html, body { margin:0; padding:0; }
             </div>
           </div>
         </div>
-        <div class="col-md-3 mb-2">
+        <div class="col-md-2 mb-2">
           <div class="card text-center h-100">
             <div class="card-body">
               <div class="small text-muted">Annotated ratio</div>
               <div class="h3 mb-0" id="kpi-ratio">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2 mb-2">
+          <div class="card text-center h-100">
+            <div class="card-body">
+              <div class="small text-muted">Distinct journals</div>
+              <div class="h3 mb-0" id="kpi-journals">—</div>
             </div>
           </div>
         </div>
@@ -419,7 +427,7 @@ html, body { margin:0; padding:0; }
       <!-- Top journals -->
       <div class="card mb-4">
         <div class="card-body">
-          <h6 class="card-title">Top journals</h6>
+          <h6 class="card-title">All journals by paper count</h6>
           <table class="table table-sm table-striped mb-0">
             <thead><tr><th>#</th><th>Journal</th><th class="text-right">Papers</th></tr></thead>
             <tbody id="top-journals-body"></tbody>
@@ -560,6 +568,7 @@ function renderStatsTab() {
         ? Math.round((s.annotated_papers / s.total_papers) * 100)
         : 0;
       document.getElementById('kpi-ratio').textContent = ratio + '%';
+      document.getElementById('kpi-journals').textContent = (s.top_journals || []).length.toLocaleString();
 
       // Year line chart
       document.getElementById('year-histogram').innerHTML =
