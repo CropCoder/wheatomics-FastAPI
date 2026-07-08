@@ -18,7 +18,7 @@ from app.schemas.sequence import SequenceBundle, SequenceRecord
 from app.services.command_runner import run_command
 
 router = APIRouter(tags=["Sequences"])
-blast_extra_router = APIRouter(tags=["BLAST"])
+blast_extra_router = APIRouter(tags=["Comparative genomics"])
 
 
 def _blastdbcmd_path() -> str:
@@ -574,3 +574,16 @@ def search_blastp(
         "offset": offset,
         "results": results,
     })
+
+
+# Backward-compatible alias: the original route was /api/sequence/blastp.
+# Keep it reachable for existing clients (and for OpenAPI users who
+# look under the Sequences tag) by exposing the same handler at the
+# old path.
+@router.get("/sequence/blastp", tags=["Comparative genomics"])
+def search_blastp_alias(
+    gene: str = Query(..., description="Same as /api/blastp's `gene` param."),
+    limit: int = Query(5000, ge=1, le=50000),
+    offset: int = Query(0, ge=0),
+) -> dict:
+    return search_blastp(gene_id=gene, limit=limit, offset=offset)
