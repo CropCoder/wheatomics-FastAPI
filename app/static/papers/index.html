@@ -289,10 +289,17 @@ html, body { margin:0; padding:0; }
       </div>
       <div class="helper-text mb-2">Multiple terms are combined with AND across fields.</div>
 
-      <!-- Query box: accumulated (field, value) pairs -->
+      <!-- Query box: accumulated (field, value) pairs (collapsible) -->
       <div class="form-group mb-2">
-        <label class="small-label">Query box</label>
-        <textarea id="query-box" class="form-control form-control-sm" rows="3" placeholder="Click ADD to add terms. Click × to remove a term. Empty = no text filter."></textarea>
+        <button type="button" id="advanced-toggle" class="btn btn-link btn-sm p-0 small-label"
+                data-toggle="collapse" data-target="#query-box-wrap"
+                aria-expanded="false" aria-controls="query-box-wrap">
+          ▶ Advanced
+        </button>
+        <div class="collapse mt-2" id="query-box-wrap">
+          <label class="small-label">Query box</label>
+          <textarea id="query-box" class="form-control form-control-sm" rows="3" placeholder="Click ADD to add terms. Click × to remove a term. Empty = no text filter."></textarea>
+        </div>
       </div>
 
       <!-- Search + Reset row -->
@@ -427,15 +434,28 @@ function renderQueryBox() {
   // combines this term with the previous one (AND/OR/NOT). Read-only
   // — terms are removed via the × button.
   var box = document.getElementById('query-box');
+  var wrap = document.getElementById('query-box-wrap');
+  var toggle = document.getElementById('advanced-toggle');
   if (queryTerms.length === 0) {
     box.value = '';
     box.placeholder = 'Click ADD to add terms. Click × to remove a term. Empty = no text filter.';
+    // Collapse the panel and reset the arrow.
+    if (wrap && wrap.classList.contains('show')) {
+      $(wrap).collapse('hide');
+    }
+    if (toggle) toggle.textContent = '▶ Advanced';
     return;
   }
   box.value = queryTerms.map(function(t, i) {
     var opLabel = i === 0 ? '' : '  ' + t.op + ' ';
     return (i + 1) + '.' + opLabel + '[' + t.field + '] ' + t.value + '   ×';
   }).join('\n');
+  // Auto-expand so the user sees the term they just added, and flip
+  // the arrow to indicate the open state.
+  if (wrap && !wrap.classList.contains('show')) {
+    $(wrap).collapse('show');
+  }
+  if (toggle) toggle.textContent = '▼ Advanced';
 }
 
 function clearTerms() {
@@ -755,6 +775,12 @@ $(function(){
     activeOp = op;
     document.getElementById('add-op-label').textContent = op;
     addTerm();  // commit the term immediately on selection
+  });
+  // Keep the Advanced toggle arrow in sync with manual show/hide.
+  $('#query-box-wrap').on('show.bs.collapse', function(){
+    var t = document.getElementById('advanced-toggle'); if (t) t.textContent = '▼ Advanced';
+  }).on('hide.bs.collapse', function(){
+    var t = document.getElementById('advanced-toggle'); if (t) t.textContent = '▶ Advanced';
   });
   // Show Index link placeholder (year-slider was removed; jump to top
   // of the search-row instead).
