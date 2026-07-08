@@ -66,6 +66,38 @@ def _check_db_exists(db_path: Path) -> bool:
     return False
 
 
+def _candidate_entries(gene_id: str) -> list[str]:
+    """Common suffix variants BLAST databases may have stored an entry
+    under. TraesCSxxx-style IDs may appear with a trailing .1 allele,
+    no suffix, or sometimes .1.cds / .1.prot.
+    """
+    g = gene_id.strip()
+    candidates: list[str] = [g]
+    if not g.endswith(".1"):
+        candidates.append(g + ".1")
+    # some databases also keep .1.cds / .1.prot suffixes
+    if g.endswith(".1"):
+        candidates.extend([g + ".cds", g + ".prot"])
+    return candidates
+
+
+def _pick_existing_entry(candidates: list[str], database: Path) -> str | None:
+    """Return the first candidate that blastdbcmd resolves, or None if
+    none of them exist. Avoids surfacing noisy 404s for slightly
+    different entry-name conventions.
+    """
+    for name in candidates:
+        try:
+            # -target_only + -entry returns the entry ID verbatim if
+            # it exists, or exits with code 1 if not.
+            out = _blastdbcmd("-db", str(database), "-entry", name, "-outfmt", "%t")
+            if out:
+                return name
+        except Exception:
+            continue
+    return None
+
+
 def _try_interval(database: Path, chrom: str, start: int, end: int) -> str:
     """Try fetching interval with case-tolerant chromosome name matching (chr / Chr prefix)."""
 
@@ -137,26 +169,50 @@ def sequence_by_gene(
             f"'{gene_id[:60]}...' looks like a chromosomal interval, not a gene ID. "
             f"Use /api/sequence/by-interval?region=<chr:start-end> instead."
         )
-    gene_entry = gene_id if gene_id.endswith(".1") else f"{gene_id}.1"
+
+    # Fail fast if either DB doesn't exist on disk — much clearer than
+    # the generic "No sequence found" 404 that comes out when blastdbcmd
+    # silently can't open the database file.
+    if gene_db and not _check_db_exists(settings.BLAST_DB_PATH / gene_db):
+        raise ValidationFailure(
+            f"Gene database '{gene_db}' not found under {settings.BLAST_DB_PATH}.")
+    if protein_db and not _check_db_exists(settings.BLAST_DB_PATH / protein_db):
+        raise ValidationFailure(
+            f"Protein database '{protein_db}' not found under {settings.BLAST_DB_PATH}.")
+
+    # BLAST entries sometimes have a trailing allele / isoform suffix we
+    # don't know in advance. Probe a few common forms in order; the first
+    # one that blastdbcmd actually resolves wins.
+    candidate_entries = _candidate_entries(gene_id)
+    gene_entry = _pick_existing_entry(candidate_entries, settings.BLAST_DB_PATH / gene_db) \
+                 if gene_db else None
 
     bundle = SequenceBundle(gene_id=gene_id)
-    if gene_db:
+    if gene_db and gene_entry:
         try:
-            bundle.gene_sequence = _blastdbcmd("-db", str(settings.BLAST_DB_PATH / gene_db), "-entry", gene_entry)
+            bundle.gene_sequence = _blastdbcmd(
+                "-db", str(settings.BLAST_DB_PATH / gene_db),
+                "-entry", gene_entry)
         except Exception:
             bundle.gene_sequence = None
     else:
         bundle.gene_sequence = None
-    if protein_db:
+
+    protein_entry = _pick_existing_entry(candidate_entries, settings.BLAST_DB_PATH / protein_db) \
+                    if protein_db else None
+    if protein_db and protein_entry:
         try:
-            bundle.protein_sequence = _blastdbcmd("-db", str(settings.BLAST_DB_PATH / protein_db), "-entry", gene_entry)
+            bundle.protein_sequence = _blastdbcmd(
+                "-db", str(settings.BLAST_DB_PATH / protein_db),
+                "-entry", protein_entry)
         except Exception:
             bundle.protein_sequence = None
     else:
         bundle.protein_sequence = None
 
     if not bundle.gene_sequence and not bundle.protein_sequence:
-        raise ResourceNotFound(f"No sequence found for {gene_id}")
+        raise ResourceNotFound(
+            f"No sequence found for {gene_id} (tried: {', '.join(candidate_entries)}).")
     return bundle
 
 
