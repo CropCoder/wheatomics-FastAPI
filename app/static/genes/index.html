@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Known Genes - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+
+<script>
+// ===== Visit tracking =====
+(function() {
+  var page = location.pathname || 'unknown';
+  try {
+    fetch('/api/track/visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page: page })
+    }).catch(function(){});
+  } catch (e) {}
+  function fmt(n) {
+    n = Number(n) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
+    if (n >= 1000)    return (n / 1000).toFixed(1) + 'k';
+    return String(n);
+  }
+  function renderVisitStats(data) {
+    var el = document.getElementById('visit-stats');
+    if (!el || !data) return;
+    var today  = (data.today && data.today.pv != null) ? fmt(data.today.pv) : '—';
+    var total  = (data.total && data.total.pv != null) ? fmt(data.total.pv) : '—';
+    var online = data.online != null ? data.online : '—';
+    el.innerHTML =
+      '<span class="vs-pill"><span class="vs-dot vs-dot-today"></span>today <b>' + today + '</b></span>' +
+      '<span class="vs-pill"><span class="vs-dot vs-dot-total"></span>total <b>' + total + '</b></span>' +
+      '<span class="vs-pill"><span class="vs-dot vs-dot-online"></span>online <b>' + online + '</b></span>';
+  }
+  fetch('/api/track/stats').then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(resp){
+      if (resp && resp.success && resp.data) renderVisitStats(resp.data);
+    })
+    .catch(function(){});
+})();
+</script>
+
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.bundle.js"></script>
+
+<!-- Baidu Tongji (async) -->
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?f76ca60fcad9ddaf7cb0c8548eab7808";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<style>
+html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-serif; }
+#home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+#logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+#home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
+#header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+#header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+#header-tabs li { display:inline-block !important; width:190px !important; }
+#header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+#header-tabs a:hover { background:#98c1d9; color:#000000; }
+#header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+#header-tabs ul li ul { display:none !important; position:absolute; z-index:1000; background:#0077b6; }
+#header-tabs ul li:hover ul { display:block !important; }
+#header-tabs ul li ul a { border-radius:0; }
+#home_footer { margin:0 auto; padding:5px 0 10px 0; text-align:center; width:100%; background:#d9d9d9; }
+#home_footer table { margin:0 auto; }
+#home_footer .line { display:inline-block; height:30px; width:2px; background:#000; vertical-align:middle; margin:5px; }
+#home_footer .visit-stats { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; vertical-align:middle; margin-left:15px; }
+.visit-stats .vs-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:11px; line-height:1.4; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; }
+.visit-stats .vs-pill b { color:#0f172a; font-weight:600; }
+.visit-stats .vs-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#94a3b8; }
+.visit-stats .vs-dot-today  { background:#22c55e; }
+.visit-stats .vs-dot-total  { background:#3b82f6; }
+.visit-stats .vs-dot-online { background:#f59e0b; }
+.visit-stats .vs-loading { color:#64748b; }
+.visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
+@keyframes vs-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+.container-main { max-width: 1180px; width: 96%; margin: 18px auto 26px; }
+.page-title-wrap { max-width: 1180px; width: 96%; margin: 18px auto 10px; }
+.page-title-wrap h2 { font-size: 28px; font-weight: 700; margin: 0 0 6px 0; line-height: 1.25; color: #222; }
+.page-title-wrap p { margin: 0; color: #555; font-size: 14px; }
+.page-title-wrap .card-title {
+  display: inline-block;
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  padding: 0;
+  color: #222;
+  border-bottom: 2px solid #0077b6;
+  padding-bottom: 4px;
+}
+
+.filter-block {
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 4px;
+  padding: 12px 15px;
+  margin-bottom: 12px;
+}
+.filter-block h5 { font-size: 16px; font-weight: 700; margin: 0 0 10px 0; color: #222; }
+.small-label { font-size: 12px; color: #555; margin-bottom: 4px; }
+.helper-text { font-size: 12px; color: #888; }
+
+.results-row { margin-top: 0; }
+
+/* gene result cards */
+.gene-card {
+  background:#fff;
+  border:1px solid #e6e6e6;
+  border-left:4px solid #0077b6;
+  border-radius:4px;
+  padding:14px 16px;
+  margin-bottom:10px;
+}
+.gene-card-head { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.gene-card-head .gene-id {
+  font-size:17px; font-weight:700; color:#1f5f9f;
+  text-decoration:none; font-family:Menlo,Consolas,monospace;
+}
+.gene-card-head .gene-id:hover { text-decoration:underline; }
+.gene-card-head .gene-name { font-size:15px; color:#222; font-style:italic; }
+.gene-card-body { margin-top:6px; font-size:13px; color:#555; display:flex; flex-wrap:wrap; gap:14px; }
+.gene-card-body .badge { font-size:11px; }
+
+/* stats tab */
+#stats-loading, #stats-error { padding:40px; text-align:center; }
+.kpi-card { background:#fff; border:1px solid #e6e6e6; border-radius:4px; padding:18px; text-align:center; height:100%; }
+.kpi-card .kpi-label { font-size:12px; color:#777; text-transform:uppercase; letter-spacing:0.5px; }
+.kpi-card .kpi-value { font-size:24px; font-weight:700; color:#1f5f9f; margin-top:4px; }
+.bar-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:13px; }
+.bar-row .bar-label { width:140px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bar-row .bar-track { flex:1; background:#eef2f7; height:18px; border-radius:2px; position:relative; overflow:hidden; }
+.bar-row .bar-fill { background:#1f5f9f; height:100%; }
+.bar-row .bar-count { width:50px; text-align:right; color:#555; font-variant-numeric:tabular-nums; }
+</style>
+</head>
+<body>
+
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
+</div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/snprimer">CAPS/KASP(Beta)</a></li>
+        <li><a href="/PfamSearch/">PfamSearch</a></li>
+        <li><a href="/idConvert/">IDConvert</a></li>
+        <li><a href="/HomologFinder/">HomologFinder</a></li>
+        <li><a href="/interval/">IntervalTool</a></li>
+        <li><a href="/expression/">GeneExpression</a></li>
+        <li><a href="/coexpression/index.html">Co-expression</a></li>
+        <li><a href="/wheatPPI/">WheatPPI</a></li>
+        <li><a href="/genes/">KnownGene</a></li>
+        <li><a href="/symap/index.html">SyntenySearch</a></li>
+        <li><a href="/preblast/">preBLAST</a></li>
+        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+        <li><a href="DWGVa.html">DWGVa</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/scRNA">scRNA</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/eqtl">eQTL Atlas</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/literature_auto/literature.html">Literature</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href="#"><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<main class="container-main">
+  <div class="page-title-wrap">
+    <span class="card-title">Known Wheat Genes</span>
+    <p>Curated functional-gene annotations for wheat and its relatives. Search by gene ID, name, chromosome, phenotype, or species.</p>
+  </div>
+
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" id="tab-search-link" data-toggle="tab" href="#tab-search" role="tab">🔍 Search</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="tab-stats-link" data-toggle="tab" href="#tab-stats" role="tab">📊 Stats</a>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+
+  <!-- ============= TAB: SEARCH ============= -->
+  <div class="tab-pane fade show active" id="tab-search" role="tabpanel">
+    <div class="filter-block">
+      <h5>Search</h5>
+      <div class="form-row align-items-end">
+        <div class="form-group col-md-3 mb-2">
+          <label for="searchField" class="small-label">Field</label>
+          <select id="searchField" class="form-control form-control-sm">
+            <option value="all">All Fields</option>
+            <option value="gene_id">Gene ID</option>
+            <option value="gene_name">Gene name</option>
+            <option value="chrom_pos">Chromosome</option>
+            <option value="phenotype">Phenotype</option>
+            <option value="species">Species</option>
+            <option value="doi">DOI</option>
+          </select>
+        </div>
+        <div class="form-group col-md-7 mb-2">
+          <label for="searchInp" class="small-label">Search term</label>
+          <input type="text" id="searchInp" class="form-control form-control-sm"
+                 placeholder="e.g. VRN1, TraesCS5A02G391700, vernalization">
+        </div>
+        <div class="form-group col-md-1 mb-2 d-flex align-items-end">
+          <button type="button" id="search-btn" class="btn btn-primary btn-sm btn-block">Search</button>
+        </div>
+        <div class="form-group col-md-1 mb-2 d-flex align-items-end">
+          <button type="button" id="reset-btn" class="btn btn-outline-secondary btn-sm btn-block">Reset</button>
+        </div>
+      </div>
+      <div class="form-row align-items-end">
+        <div class="form-group col-md-3 mb-2">
+          <label for="chromosomeFilter" class="small-label">Chromosome (post-filter)</label>
+          <select id="chromosomeFilter" class="form-control form-control-sm">
+            <option value="">All chromosomes</option>
+          </select>
+        </div>
+        <div class="form-group col-md-4 mb-2">
+          <label for="speciesFilter" class="small-label">Species (post-filter)</label>
+          <select id="speciesFilter" class="form-control form-control-sm">
+            <option value="">All species</option>
+          </select>
+        </div>
+        <div class="form-group col-md-5 mb-2 small-label text-muted d-flex align-items-end">
+          Chromosome and species are applied client-side to the search results.
+        </div>
+      </div>
+    </div>
+
+    <div class="results-row">
+      <div id="res-info" class="mb-2 text-muted">Loading…</div>
+      <div id="list-content"></div>
+    </div>
+  </div><!-- /#tab-search -->
+
+  <!-- ============= TAB: STATS ============= -->
+  <div class="tab-pane fade" id="tab-stats" role="tabpanel">
+    <div id="stats-loading" class="text-muted">Loading dataset stats…</div>
+    <div id="stats-content" hidden>
+      <h5>Dataset Overview</h5>
+      <p class="text-muted small">Aggregates are computed client-side from the full <code>/api/genes/known/all</code> response.</p>
+
+      <div class="row mb-4">
+        <div class="col-md-3 mb-2">
+          <div class="kpi-card">
+            <div class="kpi-label">Total known genes</div>
+            <div class="kpi-value" id="kpi-total">—</div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-2">
+          <div class="kpi-card">
+            <div class="kpi-label">Distinct chromosomes</div>
+            <div class="kpi-value" id="kpi-chroms">—</div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-2">
+          <div class="kpi-card">
+            <div class="kpi-label">Distinct species</div>
+            <div class="kpi-value" id="kpi-species">—</div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-2">
+          <div class="kpi-card">
+            <div class="kpi-label">Distinct phenotypes</div>
+            <div class="kpi-value" id="kpi-phenotypes">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <h6 class="card-title">Genes per chromosome</h6>
+          <div id="chrom-bars"></div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <h6 class="card-title">Top 15 phenotypes</h6>
+          <div id="phenotype-bars"></div>
+        </div>
+      </div>
+    </div>
+    <div id="stats-error" class="alert alert-danger" hidden></div>
+  </div><!-- /#tab-stats -->
+
+  </div><!-- /.tab-content -->
+</main>
+
+<div class="line" style="height:10px;background-color:white"></div>
+<div id="home_footer">
+  <center style="margin-top:5px">
+    <table>
+      <tr>
+        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><div style="height:50px;width:15px;"></div></td>
+        <td>
+          <div id="visit-stats" class="visit-stats">
+            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+  </center>
+</div>
+
+<script>
+// =====================================================================
+//  State
+// =====================================================================
+// allGenes is populated on first call to loadAllGenes(); reused for stats
+// and as a client-side cache so empty search can show the full list
+// without re-fetching.
+var allGenes = null;
+var allGenesLoading = null;
+
+// =====================================================================
+//  Helpers
+// =====================================================================
+function esc(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function detailUrl(geneId) {
+  return '/genes/detail.html?id=' + encodeURIComponent(geneId);
+}
+
+// Group a chrom_pos string ("chr5A", "5A", "chr1A:1-1000", "Chr2B:...") into
+// the chromosome label "1A"/"2B"/"5D" etc. Falls back to the raw token when
+// no digit prefix is found.
+function chromLabel(s) {
+  if (!s) return '';
+  var m = String(s).match(/(\d+[A-Da-d])/);
+  return m ? m[1].toUpperCase() : String(s);
+}
+
+function loadAllGenes() {
+  if (allGenes) return Promise.resolve(allGenes);
+  if (allGenesLoading) return allGenesLoading;
+  allGenesLoading = $.getJSON('/api/genes/known/all')
+    .then(function(resp) {
+      if (!resp || !resp.success) {
+        allGenesLoading = null;
+        throw new Error((resp && resp.detail) || 'Failed to load genes');
+      }
+      allGenes = resp.data.records || [];
+      return allGenes;
+    })
+    .catch(function() {
+      allGenesLoading = null;
+      throw new Error('Failed to load /api/genes/known/all');
+    });
+  return allGenesLoading;
+}
+
+// =====================================================================
+//  Search
+// =====================================================================
+function runSearch() {
+  var term = $('#searchInp').val().trim();
+  var chrom = $('#chromosomeFilter').val();
+  var species = $('#speciesFilter').val();
+  var $info = $('#res-info');
+  var $list = $('#list-content');
+
+  $info.text('Searching…');
+  $list.html('');
+
+  function renderResults(records) {
+    // Apply client-side filters
+    if (chrom)    records = records.filter(function(r){ return chromLabel(r.chrom_pos) === chrom; });
+    if (species)  records = records.filter(function(r){ return (r.species || '') === species; });
+
+    if (records.length === 0) {
+      $info.text('No genes found.');
+      $list.html('<div class="alert alert-warning">No matching known gene. Try a different keyword or clear the post-filters.</div>');
+      return;
+    }
+
+    $info.text('Showing ' + records.length + ' known gene' + (records.length === 1 ? '' : 's') + '.');
+
+    var html = '';
+    records.forEach(function(r) {
+      var chromBadge = chromLabel(r.chrom_pos)
+        ? '<span class="badge badge-secondary">' + esc(chromLabel(r.chrom_pos)) + '</span>'
+        : '';
+      var sp  = r.species  ? '<span>Species: ' + esc(r.species) + '</span>' : '';
+      var ph  = r.phenotype ? '<span>Phenotype: ' + esc(r.phenotype) + '</span>' : '';
+      var doiCount = (r.dois && r.dois.length) ? '<span class="text-info">' + r.dois.length + ' reference' + (r.dois.length === 1 ? '' : 's') + '</span>' : '';
+      html +=
+        '<div class="gene-card">' +
+          '<div class="gene-card-head">' +
+            '<a class="gene-id" href="' + esc(detailUrl(r.gene_id)) + '" target="_blank">' + esc(r.gene_id) + '</a>' +
+            (r.gene_name ? '<span class="gene-name">' + esc(r.gene_name) + '</span>' : '') +
+          '</div>' +
+          '<div class="gene-card-body">' +
+            chromBadge + sp + ph + doiCount +
+          '</div>' +
+        '</div>';
+    });
+    $list.html(html);
+  }
+
+  // If the user typed a term, hit the search endpoint; otherwise show the
+  // cached full list (still subject to post-filters).
+  if (term) {
+    $.getJSON('/api/genes/known/search', { searchid: term })
+      .done(function(resp) {
+        if (!resp || !resp.success) {
+          $info.text('Search failed');
+          $list.html('<div class="alert alert-danger">' + esc((resp && resp.detail) || 'Unknown error') + '</div>');
+          return;
+        }
+        renderResults(resp.data.records || []);
+      })
+      .fail(function(jqXHR) {
+        var msg = (jqXHR.responseJSON && jqXHR.responseJSON.detail) || jqXHR.statusText || 'Search failed';
+        $info.text('Search failed');
+        $list.html('<div class="alert alert-danger">' + esc(msg) + '</div>');
+      });
+  } else {
+    loadAllGenes()
+      .then(function(records) { renderResults(records.slice()); })
+      .catch(function(err) {
+        $info.text('Load failed');
+        $list.html('<div class="alert alert-danger">' + esc(err.message) + '</div>');
+      });
+  }
+}
+
+function resetSearch() {
+  $('#searchInp').val('');
+  $('#chromosomeFilter').val('');
+  $('#speciesFilter').val('');
+  runSearch();
+}
+
+// =====================================================================
+//  Filter dropdowns
+// =====================================================================
+function populateFilterDropdowns(records) {
+  var chroms = {}, species = {};
+  records.forEach(function(r) {
+    var c = chromLabel(r.chrom_pos);
+    if (c) chroms[c] = (chroms[c] || 0) + 1;
+    if (r.species) species[r.species] = (species[r.species] || 0) + 1;
+  });
+  // Sort chromosomes: 1A 1B 1D 2A 2B 2D ...
+  var chromKeys = Object.keys(chroms).sort(function(a, b) {
+    var na = parseInt(a, 10), nb = parseInt(b, 10);
+    if (na !== nb) return na - nb;
+    return a.localeCompare(b);
+  });
+  var speciesKeys = Object.keys(species).sort(function(a, b) {
+    return chroms[b] !== chroms[a]
+      ? (species[b] || 0) - (species[a] || 0)
+      : a.localeCompare(b);
+  });
+
+  var $c = $('#chromosomeFilter').empty().append('<option value="">All chromosomes</option>');
+  chromKeys.forEach(function(k) {
+    $c.append('<option value="' + esc(k) + '">' + esc(k) + ' (' + chroms[k] + ')</option>');
+  });
+  var $s = $('#speciesFilter').empty().append('<option value="">All species</option>');
+  speciesKeys.forEach(function(k) {
+    $s.append('<option value="' + esc(k) + '">' + esc(k) + ' (' + species[k] + ')</option>');
+  });
+}
+
+// =====================================================================
+//  Stats tab
+// =====================================================================
+function renderBars($container, entries, topN) {
+  if (!entries || entries.length === 0) {
+    $container.html('<div class="text-muted">No data.</div>');
+    return;
+  }
+  if (topN) entries = entries.slice(0, topN);
+  var max = entries[0][1];
+  var html = '';
+  entries.forEach(function(e) {
+    var label = e[0], count = e[1];
+    var pct = max > 0 ? (count / max * 100) : 0;
+    html +=
+      '<div class="bar-row" title="' + esc(label) + '">' +
+        '<div class="bar-label">' + esc(label) + '</div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + pct.toFixed(1) + '%;"></div></div>' +
+        '<div class="bar-count">' + count + '</div>' +
+      '</div>';
+  });
+  $container.html(html);
+}
+
+function loadStats() {
+  $('#stats-loading').show();
+  $('#stats-content').hide();
+  $('#stats-error').hide();
+  loadAllGenes()
+    .then(function(records) {
+      $('#stats-loading').hide();
+      $('#stats-content').show();
+
+      $('#kpi-total').text(records.length);
+
+      var chromMap = {}, speciesMap = {}, phenoMap = {};
+      records.forEach(function(r) {
+        var c = chromLabel(r.chrom_pos);
+        if (c) chromMap[c] = (chromMap[c] || 0) + 1;
+        if (r.species)    speciesMap[r.species]     = (speciesMap[r.species]    || 0) + 1;
+        if (r.phenotype)  phenoMap[r.phenotype]     = (phenoMap[r.phenotype]    || 0) + 1;
+      });
+      $('#kpi-chroms').text(Object.keys(chromMap).length);
+      $('#kpi-species').text(Object.keys(speciesMap).length);
+      $('#kpi-phenotypes').text(Object.keys(phenoMap).length);
+
+      var chromEntries = Object.keys(chromMap).sort(function(a, b) {
+        var na = parseInt(a, 10), nb = parseInt(b, 10);
+        if (na !== nb) return na - nb;
+        return a.localeCompare(b);
+      }).map(function(k){ return [k, chromMap[k]]; });
+      renderBars($('#chrom-bars'), chromEntries, null);
+
+      var phenoEntries = Object.keys(phenoMap)
+        .map(function(k){ return [k, phenoMap[k]]; })
+        .sort(function(a, b){ return b[1] - a[1] || a[0].localeCompare(b[0]); });
+      renderBars($('#phenotype-bars'), phenoEntries, 15);
+    })
+    .catch(function(err) {
+      $('#stats-loading').hide();
+      $('#stats-error').text(err.message).show();
+    });
+}
+
+// =====================================================================
+//  Wiring
+// =====================================================================
+$('#search-btn').on('click', runSearch);
+$('#reset-btn').on('click', resetSearch);
+$('#searchInp').on('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); runSearch(); }
+});
+$('#chromosomeFilter, #speciesFilter').on('change', runSearch);
+
+// Lazy-load stats + dropdown contents when the tab is first shown.
+var statsLoaded = false;
+$('a[href="#tab-stats"]').on('shown.bs.tab', function() {
+  if (statsLoaded) return;
+  statsLoaded = true;
+  loadAllGenes()
+    .then(function(records) {
+      populateFilterDropdowns(records);
+      loadStats();
+    })
+    .catch(function() {
+      loadStats();
+    });
+});
+
+// Initial load: pull the full list once, populate filters lazily on first
+// search (so the page is responsive even before the user types anything).
+runSearch();
+</script>
+</body>
+</html>

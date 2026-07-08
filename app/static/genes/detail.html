@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gene Detail - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+
+<script>
+// ===== Visit tracking =====
+(function() {
+  var page = location.pathname + location.search || 'unknown';
+  try {
+    fetch('/api/track/visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page: page })
+    }).catch(function(){});
+  } catch (e) {}
+  function fmt(n) {
+    n = Number(n) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
+    if (n >= 1000)    return (n / 1000).toFixed(1) + 'k';
+    return String(n);
+  }
+  function renderVisitStats(data) {
+    var el = document.getElementById('visit-stats');
+    if (!el || !data) return;
+    var today  = (data.today && data.today.pv != null) ? fmt(data.today.pv) : '—';
+    var total  = (data.total && data.total.pv != null) ? fmt(data.total.pv) : '—';
+    var online = data.online != null ? data.online : '—';
+    el.innerHTML =
+      '<span class="vs-pill"><span class="vs-dot vs-dot-today"></span>today <b>' + today + '</b></span>' +
+      '<span class="vs-pill"><span class="vs-dot vs-dot-total"></span>total <b>' + total + '</b></span>' +
+      '<span class="vs-pill"><span class="vs-dot vs-dot-online"></span>online <b>' + online + '</b></span>';
+  }
+  fetch('/api/track/stats').then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(resp){
+      if (resp && resp.success && resp.data) renderVisitStats(resp.data);
+    })
+    .catch(function(){});
+})();
+</script>
+
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.bundle.js"></script>
+
+<!-- Baidu Tongji (async) -->
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?f76ca60fcad9ddaf7cb0c8548eab7808";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<style>
+html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-serif; }
+#home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+#logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+#home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
+#header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+#header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+#header-tabs li { display:inline-block !important; width:190px !important; }
+#header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+#header-tabs a:hover { background:#98c1d9; color:#000000; }
+#header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+#header-tabs ul li ul { display:none !important; position:absolute; z-index:1000; background:#0077b6; }
+#header-tabs ul li:hover ul { display:block !important; }
+#header-tabs ul li ul a { border-radius:0; }
+#home_footer { margin:0 auto; padding:5px 0 10px 0; text-align:center; width:100%; background:#d9d9d9; }
+#home_footer table { margin:0 auto; }
+#home_footer .line { display:inline-block; height:30px; width:2px; background:#000; vertical-align:middle; margin:5px; }
+#home_footer .visit-stats { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; vertical-align:middle; margin-left:15px; }
+.visit-stats .vs-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:11px; line-height:1.4; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; }
+.visit-stats .vs-pill b { color:#0f172a; font-weight:600; }
+.visit-stats .vs-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#94a3b8; }
+.visit-stats .vs-dot-today  { background:#22c55e; }
+.visit-stats .vs-dot-total  { background:#3b82f6; }
+.visit-stats .vs-dot-online { background:#f59e0b; }
+.visit-stats .vs-loading { color:#64748b; }
+.visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
+@keyframes vs-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+.container-main { max-width: 1180px; width: 96%; margin: 18px auto 26px; }
+
+.detail-head { background:#fff; border:1px solid #e6e6e6; border-left:4px solid #0077b6; border-radius:4px; padding:20px 24px; margin-bottom:16px; }
+.detail-head h2 { font-family:Menlo,Consolas,monospace; font-size:26px; color:#1f5f9f; margin:0 0 4px 0; word-break:break-all; }
+.detail-head .gene-name { font-size:18px; color:#444; font-style:italic; margin:0; }
+.detail-head .meta { font-size:13px; color:#888; margin-top:6px; }
+
+.meta-card { background:#fff; border:1px solid #e6e6e6; border-radius:4px; padding:16px; text-align:center; height:100%; }
+.meta-card .meta-label { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px; }
+.meta-card .meta-value { font-size:18px; color:#222; margin-top:4px; font-weight:600; word-break:break-word; }
+
+.section-card { background:#fff; border:1px solid #e6e6e6; border-radius:4px; padding:18px 22px; margin-bottom:14px; }
+.section-card h5 { color:#1f5f9f; font-size:16px; font-weight:700; margin:0 0 10px 0; padding-bottom:6px; border-bottom:1px solid #eef2f7; }
+.section-card ul { margin:0; padding-left:20px; }
+.section-card li { margin-bottom:6px; line-height:1.55; color:#333; }
+.section-card a { color:#1f5f9f; word-break:break-all; }
+.section-card a.doi { font-family:Menlo,Consolas,monospace; font-size:13px; }
+
+.back-link { font-size:14px; color:#1f5f9f; }
+.back-link:hover { text-decoration:underline; }
+
+.loading-wrap { padding:60px; text-align:center; }
+</style>
+</head>
+<body>
+
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
+</div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/snprimer">CAPS/KASP(Beta)</a></li>
+        <li><a href="/PfamSearch/">PfamSearch</a></li>
+        <li><a href="/idConvert/">IDConvert</a></li>
+        <li><a href="/HomologFinder/">HomologFinder</a></li>
+        <li><a href="/interval/">IntervalTool</a></li>
+        <li><a href="/expression/">GeneExpression</a></li>
+        <li><a href="/coexpression/index.html">Co-expression</a></li>
+        <li><a href="/wheatPPI/">WheatPPI</a></li>
+        <li><a href="/genes/">KnownGene</a></li>
+        <li><a href="/symap/index.html">SyntenySearch</a></li>
+        <li><a href="/preblast/">preBLAST</a></li>
+        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+        <li><a href="DWGVa.html">DWGVa</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/scRNA">scRNA</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/eqtl">eQTL Atlas</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/literature_auto/literature.html">Literature</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href="#"><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<main class="container-main">
+  <a href="/genes/" class="back-link">← Back to gene search</a>
+
+  <div id="loading" class="loading-wrap">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted">Loading gene…</p>
+  </div>
+
+  <div id="error-box" class="alert alert-danger" hidden></div>
+
+  <div id="detail-content" hidden>
+    <div class="detail-head">
+      <h2 id="d-gene-id">—</h2>
+      <p class="gene-name" id="d-gene-name"></p>
+      <p class="meta" id="d-meta"></p>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-4 mb-2">
+        <div class="meta-card">
+          <div class="meta-label">Chromosome</div>
+          <div class="meta-value" id="d-chrom">—</div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-2">
+        <div class="meta-card">
+          <div class="meta-label">Species</div>
+          <div class="meta-value" id="d-species">—</div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-2">
+        <div class="meta-card">
+          <div class="meta-label">Phenotype</div>
+          <div class="meta-value" id="d-phenotype">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h5>References</h5>
+      <ul id="d-references"><li class="text-muted">No references.</li></ul>
+    </div>
+
+    <div class="section-card">
+      <h5>Key results</h5>
+      <ul id="d-key-result"><li class="text-muted">No key results recorded.</li></ul>
+    </div>
+
+    <div class="section-card">
+      <h5>Submitted by</h5>
+      <p id="d-author" class="text-muted">—</p>
+    </div>
+  </div>
+</main>
+
+<div class="line" style="height:10px;background-color:white"></div>
+<div id="home_footer">
+  <center style="margin-top:5px">
+    <table>
+      <tr>
+        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><div style="height:50px;width:15px;"></div></td>
+        <td>
+          <div id="visit-stats" class="visit-stats">
+            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+  </center>
+</div>
+
+<script>
+function esc(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function doiUrl(doi) {
+  if (!doi) return '';
+  var d = String(doi).trim();
+  if (/^https?:\/\//i.test(d)) return d;
+  return 'https://doi.org/' + d;
+}
+
+function showError(msg) {
+  $('#loading').hide();
+  $('#detail-content').hide();
+  $('#error-box').html(esc(msg) + ' <a href="/genes/" class="back-link">Back to search</a>.').show();
+}
+
+function renderDetail(d) {
+  $('#loading').hide();
+  $('#error-box').hide();
+  $('#detail-content').show();
+
+  document.title = (d.gene_id || 'Gene') + ' - WheatOmics';
+  $('#d-gene-id').text(d.gene_id || '—');
+  $('#d-gene-name').text(d.gene_name || '');
+  if (!d.gene_name) $('#d-gene-name').hide();
+
+  var metaBits = [];
+  if (d.clone_id)        metaBits.push('Clone ID: ' + esc(d.clone_id));
+  if (d.submission_date) metaBits.push('Submitted: ' + esc(d.submission_date));
+  if (metaBits.length)   $('#d-meta').html(metaBits.join(' &nbsp;|&nbsp; '));
+  else                   $('#d-meta').hide();
+
+  $('#d-chrom').text(d.chrom_pos || '—');
+  $('#d-species').text(d.species || '—');
+  $('#d-phenotype').text(d.phenotype || '—');
+
+  // References
+  var refs = d.references || [];
+  if (refs.length === 0) {
+    $('#d-references').html('<li class="text-muted">No references.</li>');
+  } else {
+    var html = '';
+    refs.forEach(function(r) {
+      var doi  = (r.doi || '').trim();
+      var ttl  = (r.title || '').trim();
+      if (doi) {
+        html += '<li><a class="doi" href="' + esc(doiUrl(doi)) + '" target="_blank" rel="noopener">' + esc(doi) + '</a>';
+        if (ttl) html += ' — ' + esc(ttl);
+        html += '</li>';
+      } else if (ttl) {
+        html += '<li>' + esc(ttl) + '</li>';
+      }
+    });
+    if (!html) html = '<li class="text-muted">No references.</li>';
+    $('#d-references').html(html);
+  }
+
+  // Key results
+  var kr = d.key_result || [];
+  if (kr.length === 0) {
+    $('#d-key-result').html('<li class="text-muted">No key results recorded.</li>');
+  } else {
+    var html = '';
+    kr.forEach(function(s) {
+      if (s && String(s).trim()) html += '<li>' + esc(s) + '</li>';
+    });
+    if (!html) html = '<li class="text-muted">No key results recorded.</li>';
+    $('#d-key-result').html(html);
+  }
+
+  // Submitter
+  var name = d.author || '';
+  var mail = d.author_mail || '';
+  if (!name && !mail) {
+    $('#d-author').text('—');
+  } else {
+    var html = '';
+    if (name) html += esc(name);
+    if (mail) {
+      if (name) html += ' ';
+      html += '<a href="mailto:' + esc(mail) + '">&lt;' + esc(mail) + '&gt;</a>';
+    }
+    $('#d-author').html(html);
+  }
+}
+
+$(function() {
+  var params = new URLSearchParams(location.search);
+  var id = params.get('id');
+  if (!id) {
+    showError('No gene ID provided.');
+    return;
+  }
+
+  document.title = id + ' - WheatOmics';
+  $('#d-gene-id').text(id);
+
+  $.getJSON('/api/genes/known/' + encodeURIComponent(id))
+    .done(function(resp) {
+      if (resp && resp.success && resp.data) {
+        renderDetail(resp.data);
+      } else {
+        showError((resp && (resp.detail || resp.error)) || 'Failed to load gene.');
+      }
+    })
+    .fail(function(jqXHR) {
+      var msg = (jqXHR.responseJSON && (jqXHR.responseJSON.detail || jqXHR.responseJSON.error))
+        || (jqXHR.status === 404 ? 'Gene not found: ' + id
+            : 'Failed to load gene (' + jqXHR.status + ').');
+      showError(msg);
+    });
+});
+</script>
+</body>
+</html>
