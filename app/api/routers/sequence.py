@@ -89,15 +89,27 @@ def _pick_existing_entry(candidates: list[str], database: Path) -> str | None:
     prints resolved ones, so a non-empty stdout implies at least
     one of our candidates hit. To learn which one(s) hit, fall
     back to per-candidate `-entry` probes.
+
+    Raises ExternalToolFailure (verbatim from blastdbcmd stderr) if the
+    database itself can't be opened — e.g. .nal alias files that point
+    to a missing volume. That distinction matters because callers
+    need to map "DB broken" to a 502 / 500, not a misleading 404.
     """
+    from app.core.exceptions import ExternalToolFailure
+
     db_str = str(database)
     try:
         out = _blastdbcmd(
             "-db", db_str,
             "-entry_batch", "-",
             stdin_data="\n".join(candidates) + "\n")
+    except ExternalToolFailure as e:
+        # Database itself is broken (.nal references a missing file, or
+        # the index is corrupt). Surface it — this is not an "entry
+        # not found" condition.
+        raise ExternalToolFailure(
+            f"BLAST database '{database.name}' could not be opened: {e}")
     except Exception:
-        # batch failed entirely (DB doesn't exist or all entries unknown)
         return None
 
     # The output contains resolved FASTAs. Disambiguate which of our
