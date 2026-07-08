@@ -444,7 +444,7 @@ def search_blastp(
     limit: int = Query(5000, ge=1, le=50000),
     offset: int = Query(0, ge=0),
 ) -> dict:
-    """Search Blastp or find Homologs in Triticeae
+    """Triticeae protein pre-blastp results.
 
     功能:
         可以用来搜索 query 基因在小麦族里的目标基因，
@@ -574,16 +574,3 @@ def search_blastp(
         "offset": offset,
         "results": results,
     })
-
-
-# Backward-compatible alias: the original route was /api/sequence/blastp.
-# Keep it reachable for existing clients (and for OpenAPI users who
-# look under the Sequences tag) by exposing the same handler at the
-# old path.
-@router.get("/sequence/blastp", tags=["Comparative genomics"])
-def search_blastp_alias(
-    gene: str = Query(..., description="Same as /api/blastp's `gene` param."),
-    limit: int = Query(5000, ge=1, le=50000),
-    offset: int = Query(0, ge=0),
-) -> dict:
-    return search_blastp(gene_id=gene, limit=limit, offset=offset)
