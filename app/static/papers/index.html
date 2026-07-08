@@ -561,20 +561,91 @@ function renderStatsTab() {
         : 0;
       document.getElementById('kpi-ratio').textContent = ratio + '%';
 
-      // Year histogram (vertical bars)
-      var hist = (s.year_histogram || []).slice().sort(function(a, b){ return a.year - b.year; });
-      var maxCnt = hist.reduce(function(m, h){ return Math.max(m, h.count); }, 1);
-      var html = '<div class="d-flex align-items-end" style="height:180px; gap:2px;">';
-      hist.forEach(function(h){
-        var pct = Math.round((h.count / maxCnt) * 100);
-        html += '<div class="text-center" style="flex:1; min-width:14px;" '
-              +    'title="' + h.year + ': ' + h.count.toLocaleString() + ' papers">'
-              +    '<div style="height:' + pct + '%; background:#0077b6; min-height:2px; border-radius:2px 2px 0 0;"></div>'
-              +    '<div style="font-size:9px; color:#666; transform:rotate(-45deg); transform-origin:left top; margin-top:4px; white-space:nowrap;">' + h.year + '</div>'
-              +  '</div>';
-      });
-      html += '</div>';
-      document.getElementById('year-histogram').innerHTML = html;
+      // Year line chart
+      document.getElementById('year-histogram').innerHTML =
+        renderYearLineChart(s.year_histogram || []);
+
+// Year line chart: SVG curve, with pre-2000 buckets merged into
+// a single "Pre-2000" point so the recent years (where most of the
+// data lives) get a readable x-axis.
+function renderYearLineChart(hist) {
+  // 1) Sort by year ascending
+  hist = hist.slice().sort(function(a, b){ return a.year - b.year; });
+
+  // 2) Bucket all years < 2000 into a single "Pre-2000" point.
+  var pre2000Count = 0;
+  var recent = [];
+  hist.forEach(function(h){
+    if (h.year < 2000) pre2000Count += h.count;
+    else recent.push(h);
+  });
+  var points = [];
+  if (pre2000Count > 0) points.push({ year: 'Pre-2000', count: pre2000Count });
+  recent.forEach(function(h){ points.push({ year: h.year, count: h.count }); });
+  if (points.length === 0) return '<div class="text-muted">No year data.</div>';
+
+  // 3) Lay out SVG. Width = 1000, height = 220.
+  var W = 1000, H = 220;
+  var M = { top: 16, right: 24, bottom: 56, left: 48 };
+  var innerW = W - M.left - M.right;
+  var innerH = H - M.top - M.bottom;
+  var maxCnt = points.reduce(function(m, p){ return Math.max(m, p.count); }, 1);
+
+  function x(i){ return M.left + (i * innerW) / Math.max(1, points.length - 1); }
+  function y(c){ return M.top + innerH - (c / maxCnt) * innerH; }
+
+  // 4) Smooth path: quadratic-bezier midpoints between consecutive
+  //    points so the line curves through them.
+  var pathD = '';
+  points.forEach(function(p, i){
+    var px = x(i), py = y(p.count);
+    if (i === 0) { pathD += 'M' + px + ' ' + py; return; }
+    var prev = points[i - 1];
+    var midX = (x(i - 1) + px) / 2;
+    pathD += ' Q ' + midX + ' ' + y(prev.count) + ' ' + midX + ' ' + ((y(prev.count) + py) / 2)
+          +  ' T ' + px + ' ' + py;
+  });
+
+  // 5) Light area fill under the curve for readability.
+  var areaD = pathD
+    + ' L ' + x(points.length - 1) + ' ' + (M.top + innerH)
+    + ' L ' + x(0) + ' ' + (M.top + innerH) + ' Z';
+
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" '
+          + 'style="width:100%; height:220px; display:block;">';
+  // y gridlines + labels
+  for (var g = 0; g <= 4; g++) {
+    var gy = M.top + (innerH * g) / 4;
+    var gv = Math.round(maxCnt * (1 - g / 4));
+    svg += '<line x1="' + M.left + '" y1="' + gy + '" x2="' + (W - M.right)
+        +  '" y2="' + gy + '" stroke="#eef2f6" stroke-width="1"/>'
+        +  '<text x="' + (M.left - 6) + '" y="' + (gy + 4)
+        +  '" font-size="10" fill="#888" text-anchor="end">' + gv + '</text>';
+  }
+  // x-axis baseline
+  svg += '<line x1="' + M.left + '" y1="' + (M.top + innerH)
+      +  '" x2="' + (W - M.right) + '" y2="' + (M.top + innerH)
+      +  '" stroke="#ccc" stroke-width="1"/>';
+  // area + line
+  svg += '<path d="' + areaD + '" fill="rgba(0,119,182,0.12)"/>';
+  svg += '<path d="' + pathD + '" fill="none" stroke="#0077b6" stroke-width="2.5" '
+      +  'stroke-linecap="round" stroke-linejoin="round"/>';
+  // points + labels
+  points.forEach(function(p, i){
+    var px = x(i), py = y(p.count);
+    svg += '<circle cx="' + px + '" cy="' + py + '" r="3.5" fill="#0077b6" '
+        +  'stroke="#fff" stroke-width="1.5">'
+        +  '<title>' + escapeHtml(String(p.year)) + ': ' + p.count.toLocaleString() + ' papers</title></circle>';
+    var labelY = M.top + innerH + 8;
+    svg += '<text x="' + px + '" y="' + labelY
+        +  '" font-size="10" fill="#555" text-anchor="end" '
+        +  'transform="rotate(-45 ' + px + ' ' + labelY + ')">'
+        +  escapeHtml(String(p.year)) + '</text>';
+  });
+  svg += '</svg>';
+  return svg;
+}
+
 
       // Top journals table
       var topJ = s.top_journals || [];
