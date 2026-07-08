@@ -354,21 +354,26 @@ function chromLabel(s) {
 }
 
 function loadAllGenes() {
-  if (allGenes) return Promise.resolve(allGenes);
+  if (allGenes) {
+    return $.Deferred().resolve(allGenes).promise();
+  }
   if (allGenesLoading) return allGenesLoading;
-  allGenesLoading = $.getJSON('/api/genes/known/all')
-    .then(function(resp) {
+  var d = $.Deferred();
+  $.getJSON('/api/genes/known/all')
+    .done(function(resp) {
       if (!resp || !resp.success) {
         allGenesLoading = null;
-        throw new Error((resp && resp.detail) || 'Failed to load genes');
+        d.reject((resp && resp.detail) || 'Failed to load genes');
+        return;
       }
       allGenes = resp.data.records || [];
-      return allGenes;
+      d.resolve(allGenes);
     })
-    .catch(function() {
+    .fail(function() {
       allGenesLoading = null;
-      throw new Error('Failed to load /api/genes/known/all');
+      d.reject('Failed to load /api/genes/known/all');
     });
+  allGenesLoading = d.promise();
   return allGenesLoading;
 }
 
@@ -433,10 +438,10 @@ function runSearch() {
       });
   } else {
     loadAllGenes()
-      .then(function(records) { renderResults(records.slice()); })
-      .catch(function(err) {
+      .done(function(records) { renderResults(records.slice()); })
+      .fail(function(msg) {
         $info.text('Load failed');
-        $list.html('<div class="alert alert-danger">' + esc(err.message) + '</div>');
+        $list.html('<div class="alert alert-danger">' + esc(msg) + '</div>');
       });
   }
 }
@@ -475,7 +480,7 @@ function loadStats() {
   $('#stats-content').hide();
   $('#stats-error').hide();
   loadAllGenes()
-    .then(function(records) {
+    .done(function(records) {
       $('#stats-loading').hide();
       $('#stats-content').show();
 
@@ -504,9 +509,9 @@ function loadStats() {
         .sort(function(a, b){ return b[1] - a[1] || a[0].localeCompare(b[0]); });
       renderBars($('#phenotype-bars'), phenoEntries, 15);
     })
-    .catch(function(err) {
+    .fail(function(msg) {
       $('#stats-loading').hide();
-      $('#stats-error').text(err.message).show();
+      $('#stats-error').text(msg).show();
     });
 }
 
