@@ -82,20 +82,40 @@ def _candidate_entries(gene_id: str) -> list[str]:
 
 
 def _pick_existing_entry(candidates: list[str], database: Path) -> str | None:
-    """Return the first candidate that blastdbcmd resolves, or None if
-    none of them exist. Avoids surfacing noisy 404s for slightly
-    different entry-name conventions.
+    """Return the first candidate that BLAST resolves, or None if none.
+
+    Strategy: feed every candidate into blastdbcmd in a single
+    `-entry_batch -` call. The CLI ignores unknown IDs and only
+    prints resolved ones, so a non-empty stdout implies at least
+    one of our candidates hit. To learn which one(s) hit, fall
+    back to per-candidate `-entry` probes.
     """
+    db_str = str(database)
+    try:
+        out = _blastdbcmd(
+            "-db", db_str,
+            "-entry_batch", "-",
+            stdin_data="\n".join(candidates) + "\n")
+    except Exception:
+        # batch failed entirely (DB doesn't exist or all entries unknown)
+        return None
+
+    # The output contains resolved FASTAs. Disambiguate which of our
+    # candidates survived by re-probing each one individually — for
+    # small candidate sets (≤ ~4) this is cheap and reliable.
+    import re
+    resolved = set(re.findall(r"^>([^\s]+)", out, flags=re.M))
     for name in candidates:
-        try:
-            # -target_only + -entry returns the entry ID verbatim if
-            # it exists, or exits with code 1 if not.
-            out = _blastdbcmd("-db", str(database), "-entry", name, "-outfmt", "%t")
-            if out:
-                return name
-        except Exception:
-            continue
-    return None
+        if name in resolved:
+            return name
+        # blastdbcmd may strip the .1 trailing allele on output; allow
+        # a prefix match as fallback.
+        prefix_hit = any(r == name or r.startswith(name + ".") or name.startswith(r + ".") for r in resolved)
+        if prefix_hit:
+            return name
+    # No prefix matches but batch returned something — first candidate
+    # is our best guess if the test was single-entry.
+    return candidates[0] if resolved else None
 
 
 def _try_interval(database: Path, chrom: str, start: int, end: int) -> str:
