@@ -449,8 +449,8 @@ function renderQueryBox() {
     return;
   }
   box.value = queryTerms.map(function(t, i) {
-    var opLabel = i === 0 ? '' : '  ' + t.op + ' ';
-    return (i + 1) + '.' + opLabel + '[' + t.field + '] ' + t.value + '   ×';
+    var opLabel = i === 0 ? '' : t.op + ' ';
+    return opLabel + '[' + t.field + '] ' + t.value + '   ×';
   }).join('\n');
   // Auto-expand so the user sees the term they just added, and flip
   // the arrow to indicate the open state.
