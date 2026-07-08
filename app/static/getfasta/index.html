@@ -578,8 +578,28 @@ function querySequence() {
   } else {
     // ---------- Single Gene ----------
     var gene = lines[0];
-    var geneDb = $('#db-select').val();
-    var protDb = 'all_protein';
+
+    // all_genomes is a chromosome-level database; it indexes intervals
+    // (chr:start-end) but not TraesCSxxx gene entry IDs. Refuse
+    // non-interval queries here and route the user to the interval
+    // mode / the /by-interval endpoint instead.
+    if (db === 'all_genomes') {
+      $('#loading-indicator').hide();
+      showError("all_genomes stores chromosome sequences, not gene entry IDs. " +
+                "Please switch the input format to 'Chr1A_Abo:200-500' " +
+                "(interval mode) or pick a different database " +
+                "(all_gene / all_protein).");
+      return;
+    }
+
+    // For all other databases we call /by-gene with two parallel DBs:
+    // gene_db for CDS, protein_db for protein. When the user picks a
+    // single-purpose DB (e.g. all_protein) we still send both — the
+    // API gracefully nullifies whichever it can't find.
+    var geneDb = db;
+    var protDb = (db === 'all_protein') ? 'all_protein'
+                 : (db === 'all_gene') ? 'all_protein'
+                 : db;  // genome-specific CDS-like DBs
     $.getJSON('/api/sequence/by-gene', { gene_id: gene, gene_db: geneDb, protein_db: protDb })
       .done(function(resp) {
         $('#loading-indicator').hide();
