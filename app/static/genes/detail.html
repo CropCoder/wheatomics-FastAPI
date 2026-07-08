@@ -248,15 +248,15 @@ function doiUrl(doi) {
 }
 
 function showError(msg) {
-  $('#loading').hide();
-  $('#detail-content').hide();
-  $('#error-box').html(esc(msg) + ' <a href="/genes/" class="back-link">Back to search</a>.').show();
+  $('#loading').prop('hidden', true);
+  $('#detail-content').prop('hidden', true);
+  $('#error-box').html(esc(msg) + ' <a href="/genes/" class="back-link">Back to search</a>.').prop('hidden', false);
 }
 
 function renderDetail(d) {
-  $('#loading').hide();
-  $('#error-box').hide();
-  $('#detail-content').show();
+  $('#loading').prop('hidden', true);
+  $('#error-box').prop('hidden', true);
+  $('#detail-content').prop('hidden', false);
 
   document.title = (d.gene_id || 'Gene') + ' - WheatOmics';
   $('#d-gene-id').text(d.gene_id || '—');
