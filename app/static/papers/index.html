@@ -640,7 +640,7 @@ function renderPaper(p) {
   var annotationId = 'anno-' + pmid;
   return '<div class="paper-item">' +
     '<div class="journal-meta">' + journal + (journal && date ? ' | ' : '') + date +
-      '<a href="' + escapeHtml(link) + '" target="_blank" class="id-link float-right">PMID: ' + pmid + '</a>' +
+      ' · <a href="' + escapeHtml(link) + '" target="_blank" class="id-link">PMID: ' + pmid + '</a>' +
     '</div>' +
     '<a href="' + escapeHtml(link) + '" target="_blank" class="paper-title d-block mb-2">' + title + '</a>' +
     (tagsHtml ? '<div class="mb-2">' + tagsHtml + '</div>' : '') +
