@@ -84,16 +84,15 @@ def _candidate_entries(gene_id: str) -> list[str]:
 def _pick_existing_entry(candidates: list[str], database: Path) -> str | None:
     """Return the first candidate that BLAST resolves, or None if none.
 
-    Strategy: feed every candidate into blastdbcmd in a single
-    `-entry_batch -` call. The CLI ignores unknown IDs and only
-    prints resolved ones, so a non-empty stdout implies at least
-    one of our candidates hit. To learn which one(s) hit, fall
-    back to per-candidate `-entry` probes.
+    Strategy: try a single `-entry_batch -` call that ignores unknown
+    IDs and prints only resolved ones. If the database itself can't be
+    opened (.nal alias points to a missing volume, etc.), re-raise
+    ExternalToolFailure so the API can return 502 instead of a
+    misleading 404.
 
-    Raises ExternalToolFailure (verbatim from blastdbcmd stderr) if the
-    database itself can't be opened — e.g. .nal alias files that point
-    to a missing volume. That distinction matters because callers
-    need to map "DB broken" to a 502 / 500, not a misleading 404.
+    If the batch call returns nothing, fall back to per-candidate
+    `-entry` probes — some alias files behave differently for batch
+    vs single-entry fetches.
     """
     from app.core.exceptions import ExternalToolFailure
 
@@ -104,30 +103,49 @@ def _pick_existing_entry(candidates: list[str], database: Path) -> str | None:
             "-entry_batch", "-",
             stdin_data="\n".join(candidates) + "\n")
     except ExternalToolFailure as e:
-        # Database itself is broken (.nal references a missing file, or
-        # the index is corrupt). Surface it — this is not an "entry
-        # not found" condition.
         raise ExternalToolFailure(
             f"BLAST database '{database.name}' could not be opened: {e}")
     except Exception:
         return None
 
     # The output contains resolved FASTAs. Disambiguate which of our
-    # candidates survived by re-probing each one individually — for
-    # small candidate sets (≤ ~4) this is cheap and reliable.
+    # candidates survived by matching the resolved IDs back to our
+    # candidate list.
     import re
     resolved = set(re.findall(r"^>([^\s]+)", out, flags=re.M))
+    matched = _match_candidate(candidates, resolved)
+    if matched:
+        return matched
+
+    # Batch came back empty but the database opened OK — try each
+    # candidate one at a time. Some alias setups only resolve a
+    # single-entry probe, not a batch.
+    for name in candidates:
+        try:
+            single = _blastdbcmd("-db", db_str, "-entry", name)
+        except Exception:
+            continue
+        if single.strip():
+            return name
+    return None
+
+
+def _match_candidate(candidates: list[str], resolved: set[str]) -> str | None:
+    """Return the first candidate that appears in `resolved` (exact
+    match, then prefix match). None if nothing matches.
+    """
     for name in candidates:
         if name in resolved:
             return name
         # blastdbcmd may strip the .1 trailing allele on output; allow
         # a prefix match as fallback.
-        prefix_hit = any(r == name or r.startswith(name + ".") or name.startswith(r + ".") for r in resolved)
+        prefix_hit = any(
+            r == name or r.startswith(name + ".") or name.startswith(r + ".")
+            for r in resolved
+        )
         if prefix_hit:
             return name
-    # No prefix matches but batch returned something — first candidate
-    # is our best guess if the test was single-entry.
-    return candidates[0] if resolved else None
+    return None
 
 
 def _try_interval(database: Path, chrom: str, start: int, end: int) -> str:
