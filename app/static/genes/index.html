@@ -486,13 +486,13 @@ function renderBars($container, entries, topN) {
 }
 
 function loadStats() {
-  $('#stats-loading').show();
-  $('#stats-content').hide();
-  $('#stats-error').hide();
+  $('#stats-loading').prop('hidden', false);
+  $('#stats-content').prop('hidden', true);
+  $('#stats-error').prop('hidden', true);
   loadAllGenes()
     .done(function(records) {
-      $('#stats-loading').hide();
-      $('#stats-content').show();
+      $('#stats-loading').prop('hidden', true);
+      $('#stats-content').prop('hidden', false);
 
       $('#kpi-total').text(records.length);
 
@@ -520,8 +520,8 @@ function loadStats() {
       renderBars($('#phenotype-bars'), phenoEntries, 15);
     })
     .fail(function(msg) {
-      $('#stats-loading').hide();
-      $('#stats-error').text(msg).show();
+      $('#stats-loading').prop('hidden', true);
+      $('#stats-error').text(msg).prop('hidden', false);
     });
 }
 
