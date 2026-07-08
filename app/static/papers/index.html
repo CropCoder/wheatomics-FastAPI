@@ -463,6 +463,8 @@ function renderQueryBox() {
 function clearTerms() {
   queryTerms = [];
   renderQueryBox();
+  currentPage = 1;
+  runSearch();
 }
 
 // Active operator for the next ADD. Default AND. Updated by the
@@ -482,11 +484,16 @@ function addTerm() {
   document.getElementById('searchInp').value = '';
   renderQueryBox();
   document.getElementById('searchInp').focus();
+  // Advanced is "add-and-go": committing a term also kicks off a search.
+  currentPage = 1;
+  runSearch();
 }
 
 function removeTerm(idx) {
   queryTerms.splice(idx, 1);
   renderQueryBox();
+  currentPage = 1;
+  runSearch();
 }
 
 function buildQuery() {
