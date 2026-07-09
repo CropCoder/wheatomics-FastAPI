@@ -463,11 +463,15 @@ function renderGenomes(records) {
       var chip = $('<span class="gg-chip"></span>');
       chip.append('<span class="gg-name">' + escapeHtml(r.display_name || r.table_name) + '</span>');
       // Click → fill query with example chr + example gene id (one per line).
-      chip.attr('title', 'Click to load example: ' + (r.example_chr || '?') + ' / ' + (r.example_id || '?'));
+      chip.attr('title',
+        'Click to load example: '
+        + (r.example_species_chr || '?') + ' / '
+        + (r.example_cds || '?')
+        + (r.example_protein ? '\nProtein: ' + r.example_protein : ''));
       chip.on('click', function() {
         var val = '';
-        if (r.example_chr) val += r.example_chr + ':1-1000';
-        if (r.example_id) val += (val ? '\n' : '') + r.example_id;
+        if (r.example_species_chr) val += r.example_species_chr + ':1-1000';
+        if (r.example_cds)         val += (val ? '\n' : '') + r.example_cds;
         if (val) useExample(val, 'all_genomes');
       });
       list.append(chip);
