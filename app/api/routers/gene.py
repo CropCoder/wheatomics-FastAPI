@@ -537,8 +537,9 @@ def list_gene_function_registry() -> dict:
                   "doi": "10.1038/s41586-024-08277-0",
                   "title": "Unraveling Allelic Impacts...",
                   "abstract": "The TaVP1-B gene...",
-                  "example_chr": "chr1A_Abo",
-                  "example_id": "Abo1A000100.1"
+                  "example_species_chr": "chr1A_Abo",
+                  "example_cds": "Abo1A000100.1",
+                  "example_protein": "Abo1A000100.1.p"
                 }
               ]
             }
@@ -559,8 +560,9 @@ def list_gene_function_registry() -> dict:
                 Doi,
                 title,
                 Abstract,
-                example_chr_id,
-                example_gene_id,
+                example_species_chr_id,
+                example_cds_id,
+                example_protein_id,
                 display_order,
                 visible
             FROM Genefunc_registry
@@ -579,8 +581,9 @@ def list_gene_function_registry() -> dict:
                 "doi": row.get("Doi"),
                 "title": row.get("title"),
                 "abstract": row.get("Abstract"),
-                "example_chr": row.get("example_chr_id"),
-                "example_id": row.get("example_gene_id"),
+                "example_species_chr": row.get("example_species_chr_id"),
+                "example_cds": row.get("example_cds_id"),
+                "example_protein": row.get("example_protein_id"),
             })
     return ok({"database": "genefunc_registry", "count": len(records), "records": records})
 
