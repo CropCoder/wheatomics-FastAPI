@@ -469,9 +469,13 @@ function renderGenomes(records) {
         + (r.example_cds || '?')
         + (r.example_protein ? '\nProtein: ' + r.example_protein : ''));
       chip.on('click', function() {
+        // example_species_chr may already include ":start-end" (e.g.
+        // "Chr1A_Abo:1-1000") — strip any trailing range and re-apply
+        // the canonical 1-1000 example window.
+        var chr = (r.example_species_chr || '').replace(/:.*$/, '');
         var val = '';
-        if (r.example_species_chr) val += r.example_species_chr + ':1-1000';
-        if (r.example_cds)         val += (val ? '\n' : '') + r.example_cds;
+        if (chr)             val += chr + ':1-1000';
+        if (r.example_cds)   val += (val ? '\n' : '') + r.example_cds;
         if (val) useExample(val, 'all_genomes');
       });
       list.append(chip);
