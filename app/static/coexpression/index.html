@@ -425,7 +425,16 @@ function renderResults(data, queryGenes, db, fv) {
 
   var tbody = $('#results-tbody').empty();
   if (expanded.length === 0) {
-    tbody.append('<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No co-expressed genes match the current filter. Try lowering the PCC threshold or increasing the MR threshold.</td></tr>');
+    var emptyMsg;
+    if (data.gene_present === false) {
+      emptyMsg = 'No records found for the queried gene(s) in <strong>'
+               + escapeHtml(dbObj.id)
+               + '</strong>. The gene ID may be wrong, or it is not present in this dataset. '
+               + 'Try a different database or a different gene.';
+    } else {
+      emptyMsg = 'No co-expressed genes match the current filter. Try lowering the PCC threshold or increasing the MR threshold.';
+    }
+    tbody.append('<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">' + emptyMsg + '</td></tr>');
   } else {
     expanded.forEach(function(r, i) {
       var pccClass = r.pcc >= 0 ? 'pcc-positive' : 'pcc-negative';

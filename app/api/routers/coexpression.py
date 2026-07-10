@@ -86,6 +86,7 @@ def query_coexpression(
     genes = [ensure_gene_like(gene.strip()) for gene in gene_ids.split(",") if gene.strip()]
     pairs: list[CoexpressionPair] = []
     seen: set[tuple[str, str]] = set()
+    gene_present = False
 
     # Column-name casing differs across tables:
     #   CO_result2 / CO_PRJEB25639  → Gene1, Gene2, PCC, MR (PascalCase)
@@ -136,5 +137,27 @@ def query_coexpression(
                     )
                 )
 
-    return ok({"database": database, "pairs": [pair.model_dump() for pair in pairs]})
+    # If we found no pairs at all, probe whether the genes actually exist
+    # in the chosen database so the caller can distinguish "no partners
+    # for this gene" from "this gene is not in this database". Skip the
+    # probe when the threshold already eliminates everything, but at
+    # least one gene exists — that's a real "no partners" answer.
+    if not pairs and genes:
+        with mysql_cursor(settings.DB_COEXPRESSION) as cursor:
+            # Probe one gene at a time; if any is found, gene_present=True.
+            for gene in genes:
+                cursor.execute(
+                    f"SELECT 1 FROM `{database}` WHERE Gene1 = %s OR Gene2 = %s LIMIT 1",
+                    (gene, gene),
+                )
+                if cursor.fetchone():
+                    gene_present = True
+                    break
+
+    return ok({
+        "database": database,
+        "genes": genes,
+        "gene_present": gene_present,
+        "pairs": [pair.model_dump() for pair in pairs],
+    })
 
