@@ -528,6 +528,24 @@ function clearAll() {
   lastResults = [];
 }
 
+function readErrorDetail(jqXHR) {
+  // jQuery 1.9.1's $.getJSON does not always populate responseJSON on
+  // failure (depending on Accept headers and the CORS path). Fall back
+  // to manually parsing the response text.
+  if (jqXHR.responseJSON && (jqXHR.responseJSON.detail || jqXHR.responseJSON.error)) {
+    return jqXHR.responseJSON.detail || jqXHR.responseJSON.error;
+  }
+  var text = jqXHR.responseText || '';
+  if (text && text.charAt(0) === '{') {
+    try {
+      var parsed = JSON.parse(text);
+      if (parsed.detail) return parsed.detail;
+      if (parsed.error)  return parsed.error;
+    } catch (e) { /* fall through */ }
+  }
+  return jqXHR.statusText || ('HTTP ' + jqXHR.status);
+}
+
 function showError(msg) {
   // Preserve newlines from server-side error detail (e.g. the
   // /by-interval validator returns a multi-line hint with
@@ -572,7 +590,7 @@ function querySequence() {
       })
       .fail(function(jqXHR) {
         $('#loading-indicator').hide();
-        showError(jqXHR.responseJSON ? (jqXHR.responseJSON.detail || jqXHR.responseJSON.error) : jqXHR.statusText);
+        showError(readErrorDetail(jqXHR));
       });
   } else if (isBatch) {
     // ---------- Batch ----------
@@ -584,7 +602,7 @@ function querySequence() {
       })
       .fail(function(jqXHR) {
         $('#loading-indicator').hide();
-        showError(jqXHR.responseJSON ? (jqXHR.responseJSON.detail || jqXHR.responseJSON.error) : jqXHR.statusText);
+        showError(readErrorDetail(jqXHR));
       });
   } else {
     // ---------- Single Gene ----------
@@ -638,7 +656,7 @@ function querySequence() {
       })
       .fail(function(jqXHR) {
         $('#loading-indicator').hide();
-        showError(jqXHR.responseJSON ? (jqXHR.responseJSON.detail || jqXHR.responseJSON.error) : jqXHR.statusText);
+        showError(readErrorDetail(jqXHR));
       });
   }
 }
