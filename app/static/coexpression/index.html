@@ -191,10 +191,10 @@ var _hmt = _hmt || [];
           <label><strong>Filter mode</strong></label>
           <div>
             <label class="filter-radio">
-              <input type="radio" name="filter-mode" value="pcc" checked> PCC (Pearson Correlation)
+              <input type="radio" name="filter-mode" value="pcc"> PCC (Pearson Correlation)
             </label>
             <label class="filter-radio">
-              <input type="radio" name="filter-mode" value="mr"> MR (Mutual Rank)
+              <input type="radio" name="filter-mode" value="mr" checked> MR (Mutual Rank)
             </label>
           </div>
           <div class="filter-block">
@@ -413,7 +413,7 @@ function renderFilterOptions() {
   var mode = $('input[name="filter-mode"]:checked').val();
   var $sel = $('#filter-value').empty();
   var opts = (mode === 'mr') ? MR_OPTIONS : PCC_OPTIONS;
-  var defaultIdx = (mode === 'mr') ? 3 : 1;  // MR: index 3 -> '30'; PCC: index 1 -> '0.8'
+  var defaultIdx = (mode === 'mr') ? 7 : 1;  // MR: index 7 -> '300'; PCC: index 1 -> '0.8'
   opts.forEach(function(v, i) {
     var label = (mode === 'mr') ? ('MR &le; ' + v) : ('PCC &ge; ' + v);
     var sel = (i === defaultIdx) ? ' selected' : '';

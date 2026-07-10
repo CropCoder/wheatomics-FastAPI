@@ -45,7 +45,7 @@ def list_coexpression_databases() -> dict:
 def query_coexpression(
     gene_ids: str = Query(...),
     database: str = Query("CO_PRJEB25639"),
-    filter_value: float = Query(0.8),
+    filter_value: float = Query(300),
 ) -> dict:
     """查询基因的共表达关系对。
 
@@ -61,7 +61,7 @@ def query_coexpression(
         GET /api/coexpression/query?gene_ids=<基因1,基因2>&database=<数据库>&filter_value=<阈值>
         - gene_ids: 必填，逗号分隔的基因 ID 列表
         - database: 可选，共表达数据库 ID（CO_result2 或 CO_PRJEB25639），默认 CO_PRJEB25639
-        - filter_value: 可选，筛选阈值，默认 0.8（PCC 模式）
+        - filter_value: 可选，筛选阈值，默认 300（MR 模式）
 
     案例:
         请求 (PCC 模式):
