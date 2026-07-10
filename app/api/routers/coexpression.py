@@ -87,15 +87,14 @@ def query_coexpression(
     pairs: list[CoexpressionPair] = []
     seen: set[tuple[str, str]] = set()
 
-    # SELECT aliases make the row dict case-insensitive: existing tables
-    # (CO_result2, CO_PRJEB25639) use Gene1/Gene2/PCC/MR (PascalCase),
-    # while coexpression_filter_ext uses lowercase gene1/gene2/pcc/mr.
-    select_cols = """
-        COALESCE(NULLIF(Gene1, ''), gene1) AS Gene1,
-        COALESCE(NULLIF(Gene2, ''), gene2) AS Gene2,
-        COALESCE(NULLIF(PCC,   ''), pcc)   AS PCC,
-        COALESCE(NULLIF(MR,    ''), mr)    AS MR
-    """
+    # Column-name casing differs across tables:
+    #   CO_result2 / CO_PRJEB25639  → Gene1, Gene2, PCC, MR (PascalCase)
+    #   coexpression_filter_ext    → gene1, gene2, pcc, mr (lowercase)
+    # MySQL folds identifier case in expressions, so `Gene1` resolves to
+    # `gene1` on the lowercase table. SELECT aliases the canonical names
+    # in a fixed casing so the row dict is consistent regardless of
+    # which table is queried.
+    select_cols = "Gene1 AS gene1, Gene2 AS gene2, PCC AS pcc, MR AS mr"
 
     with mysql_cursor(settings.DB_COEXPRESSION) as cursor:
         for gene in genes:
@@ -104,26 +103,26 @@ def query_coexpression(
                     f"""
                     SELECT {select_cols}
                     FROM `{database}`
-                    WHERE (Gene1 = %s OR Gene2 = %s OR gene1 = %s OR gene2 = %s)
+                    WHERE (Gene1 = %s OR Gene2 = %s)
                     AND (CAST(PCC AS DECIMAL(10,4)) >= %s OR CAST(PCC AS DECIMAL(10,4)) <= %s)
                     ORDER BY CAST(PCC AS DECIMAL(10,4)) DESC
                     """,
-                    (gene, gene, gene, gene, filter_value, -filter_value),
+                    (gene, gene, filter_value, -filter_value),
                 )
             else:
                 cursor.execute(
                     f"""
                     SELECT {select_cols}
                     FROM `{database}`
-                    WHERE (Gene1 = %s OR Gene2 = %s OR gene1 = %s OR gene2 = %s)
+                    WHERE (Gene1 = %s OR Gene2 = %s)
                     AND CAST(MR AS UNSIGNED) <= %s
                     ORDER BY CAST(MR AS UNSIGNED) ASC
                     """,
-                    (gene, gene, gene, gene, int(filter_value)),
+                    (gene, gene, int(filter_value)),
                 )
             for row in cursor.fetchall():
-                gene1 = str(row["Gene1"]).strip()
-                gene2 = str(row["Gene2"]).strip()
+                gene1 = str(row["gene1"]).strip()
+                gene2 = str(row["gene2"]).strip()
                 key = tuple(sorted((gene1, gene2)))
                 if key in seen:
                     continue
@@ -132,8 +131,8 @@ def query_coexpression(
                     CoexpressionPair(
                         gene1=gene1,
                         gene2=gene2,
-                        pcc=float(row["PCC"]),
-                        mr=int(str(row["MR"]).split(".")[0]),
+                        pcc=float(row["pcc"]),
+                        mr=int(str(row["mr"]).split(".")[0]),
                     )
                 )
 
