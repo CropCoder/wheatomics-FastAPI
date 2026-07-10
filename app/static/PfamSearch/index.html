@@ -78,7 +78,7 @@
   .result-table th { position: sticky; top: 0; background: #f8f9fa; white-space: nowrap; }
   .loading { display: none; text-align: center; padding: 60px; }
   .loading .spinner-border { width: 3rem; height: 3rem; }
-  #error-msg { display: none; margin-top: 10px; }
+  #error-msg { display: none; margin-top: 10px; white-space: pre-wrap; }
   .info-box { background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 12px 16px; border-radius: 4px; margin-top: 16px; font-size: 14px; color: #495057; }
 
   /* ----- visit stats footer ----- */
@@ -292,8 +292,23 @@ function clearAll() {
   // 不重置 select，保留用户上次的表选择
 }
 
+function readErrorDetail(jqXHR) {
+  if (jqXHR.responseJSON && (jqXHR.responseJSON.detail || jqXHR.responseJSON.error)) {
+    return jqXHR.responseJSON.detail || jqXHR.responseJSON.error;
+  }
+  var text = jqXHR.responseText || '';
+  if (text && text.charAt(0) === '{') {
+    try {
+      var parsed = JSON.parse(text);
+      if (parsed.detail) return parsed.detail;
+      if (parsed.error)  return parsed.error;
+    } catch (e) { /* fall through */ }
+  }
+  return jqXHR.statusText || ('HTTP ' + jqXHR.status);
+}
+
 function showError(msg) {
-  $('#error-msg').text(msg).show();
+  $('#error-msg').html(escapeHtml(msg)).show();
   $('#loading-indicator').hide();
 }
 
@@ -319,7 +334,7 @@ function queryPfam() {
     })
     .fail(function(jqXHR) {
       $('#loading-indicator').hide();
-      showError(jqXHR.responseJSON ? (jqXHR.responseJSON.detail || jqXHR.responseJSON.error) : jqXHR.statusText);
+      showError(readErrorDetail(jqXHR));
     });
 }
 
