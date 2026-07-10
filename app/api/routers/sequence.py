@@ -131,9 +131,19 @@ def _try_interval(database: Path, chrom: str, start: int, end: int) -> str:
             continue
 
     raise ValidationFailure(
-        f"Chromosome {chrom!r} not found in database. "
-        "Check the naming convention at "
-        "https://wheatomics.sdau.edu.cn/doc/getsequence_search.txt"
+        f"Chromosome {chrom!r} not found in database {database!r}.\n"
+        "Please verify the chromosome naming convention for this genome — the "
+        "exact name depends on which database you're querying.\n"
+        "Examples of valid region formats:\n"
+        "  - Chinese Spring v1.0 (default):  Chr1A_Chinese_Spring1.0:200-500\n"
+        "  - Abbondanza:                     Chr1A_Abo:200-500\n"
+        "  - Barley v3:                       chr1H_Barley3:200-500\n"
+        "  - Aegilops tauschii TA1675:        chr1D_Aegilops_tauschii_TA1675:200-500\n"
+        "  - Wild emmer:                      chr1A_Wild_emmer:200-500\n"
+        "Note: there is no 'Chinese_Spring_v1.0' database — that suffix is "
+        "Chinese Spring **v1.0** as a different build; the current default "
+        "uses Chinese_Spring1.0 (no 'v').\n"
+        "Full reference: https://wheatomics.sdau.edu.cn/doc/getsequence_search.txt"
     )
 
 

@@ -65,7 +65,16 @@ def ensure_gene_like(value: str, label: str = "gene_id") -> str:
     """Validate gene-like identifiers and interval-like tokens."""
 
     if not value or not GENE_ID_PATTERN.match(value):
-        raise ValidationFailure(f"Invalid {label}: {value}")
+        raise ValidationFailure(
+            f"Invalid {label}: {value!r}.\n"
+            "Wheat gene IDs follow patterns like:\n"
+            "  - TraesCS5A02G391700          (IWGSC v1.1 / 02G, no version suffix)\n"
+            "  - TraesCS5A02G391700.1        (with transcript version)\n"
+            "  - TraesCS5A03G1158600         (IWGSC v3 / 03G)\n"
+            "  - Abo1A000100.1               (Abbondanza)\n"
+            "If you typed a region (chr:start-end) instead, use the "
+            "/api/sequence/by-interval endpoint."
+        )
     return value
 
 
@@ -74,6 +83,14 @@ def ensure_interval_like(value: str) -> str:
 
     if not REGION_PATTERN.match(value):
         raise ValidationFailure(
-            "Invalid region format. Expected e.g. Chr1A_Abo:200-500 or chr1A:10-100. See https://wheatomics.sdau.edu.cn/doc/getsequence_search.txt"
+            f"Invalid region format: {value!r}.\n"
+            "Expected: <chromosome>:<start>-<end>, e.g.\n"
+            "  - Chr1A_Abo:200-500                 (Abbondanza)\n"
+            "  - chr1A:200-500                     (Chinese Spring, no suffix)\n"
+            "  - Chr1A_Chinese_Spring1.0:200-500   (Chinese Spring v1.0)\n"
+            "  - chr1H_Barley3:200-500             (Barley v3)\n"
+            "Note: there is NO 'Chinese_Spring_v1.0' (with a 'v') database — "
+            "use 'Chinese_Spring1.0' (no 'v').\n"
+            "Full chromosome-name reference: https://wheatomics.sdau.edu.cn/doc/getsequence_search.txt"
         )
     return value
