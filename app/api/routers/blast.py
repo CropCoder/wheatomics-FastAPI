@@ -176,12 +176,15 @@ def list_dbs(program: str) -> List[str]:
     """列出可用的 BLAST 数据库"""
     if not os.path.isdir(DB_DIR):
         return []
-    # 蛋白库索引: .pin .phr .psq | 核酸库索引: .nin .nhr .nsq
+    # 蛋白库索引: .pin .phr/.phd .psq/.psd | 核酸库索引: .nin .nhr .nsq
     # 完整 BLAST 索引扩展名:
-    #   .pin/.phr/.psq = 蛋白核心索引 | .pal = 蛋白别名
-    #   .nin/.nhr/.nsq = 核酸核心索引 | .nal = 核酸别名
-    prot_exts = (".pin", ".phr", ".psq", ".pal")
-    nuc_exts = (".nin", ".nhr", ".nsq", ".nal")
+    #   .pin/.phr/.phd/.psq/.psd = 蛋白核心索引 | .pal = 蛋白别名
+    #   .nin/.nsq/.nhr/.ndb/.not/.ntf/.nto = 核酸核心索引 | .nal = 核酸别名
+    # An alias file (.nal / .pal) can stand on its own and point at
+    # other aliases / volume files anywhere on disk, so we accept any
+    # single file that has a BLAST-DB-like extension.
+    prot_exts = (".pin", ".phr", ".phd", ".psq", ".psd", ".pal")
+    nuc_exts  = (".nin", ".nsq", ".nhr", ".ndb", ".not", ".ntf", ".nto", ".nal")
     exts = prot_exts if _program_db_type(program) == "prot" else nuc_exts
     dbs = {}
     for f in os.listdir(DB_DIR):
@@ -190,12 +193,17 @@ def list_dbs(program: str) -> List[str]:
                 name = f[:-(len(ext))]
                 name = _strip_volume(name)
                 dbs[name] = dbs.get(name, 0) + 1
-    return sorted(name for name, count in dbs.items() if count >= 2)
+    # A real BLAST DB is valid with as few as ONE index file (e.g. a
+    # single .nal alias file pointing at a multi-volume .00/.01 split,
+    # or a fresh makeblastdb that's only produced .nsq + .nto so far).
+    return sorted(dbs.keys())
 
 
 def check_db_exists(db_name: str, program: str) -> bool:
     """检查数据库是否有 BLAST 索引"""
-    exts = (".pin", ".phr", ".psq", ".pal") if _program_db_type(program) == "prot" else (".nin", ".nhr", ".nsq", ".nal")
+    exts = (".pin", ".phr", ".phd", ".psq", ".psd", ".pal") \
+        if _program_db_type(program) == "prot" \
+        else (".nin", ".nsq", ".nhr", ".ndb", ".not", ".ntf", ".nto", ".nal")
     full = os.path.join(DB_DIR, db_name)
     return any(os.path.exists(full + ext) for ext in exts)
 
