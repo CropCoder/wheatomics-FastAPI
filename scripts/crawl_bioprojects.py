@@ -26,10 +26,12 @@ import sys
 import time
 from typing import Any
 
+# pymysql is only required when actually writing to MySQL; --help and
+# --dry-run work without it.
 try:
     import pymysql
 except ImportError:
-    sys.exit("pymysql is required: pip install pymysql")
+    pymysql = None  # type: ignore[assignment]
 
 try:
     import requests
@@ -375,14 +377,9 @@ def main(argv: list[str] | None = None) -> int:
     output_format = args["output_format"]
     limit = args["limit"]
 
-    # If --dry-run was passed, or MySQL isn't importable (e.g. running on
-    # a dev laptop), skip the connection and just print/save.
-    can_db = True
-    try:
-        import pymysql  # noqa: F401
-    except ImportError:
-        can_db = False
-    dry_run = explicit_dry or not can_db
+    # If --dry-run was passed, or pymysql isn't installed (e.g. running on
+    # a dev laptop without MySQL bindings), skip the connection.
+    dry_run = explicit_dry or pymysql is None
 
     conn = None
     if not dry_run:
