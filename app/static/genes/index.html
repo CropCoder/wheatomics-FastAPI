@@ -362,8 +362,12 @@ function esc(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-function detailUrl(geneId) {
-  return '/genes/detail.html?id=' + encodeURIComponent(geneId);
+// Build the detail page URL. Prefer clone_id (a numeric primary key)
+// over gene_id, because gene_id can contain slashes or DOI strings
+// (e.g. "MT783929/MT783930") that complicate URL encoding.
+function detailUrl(r) {
+  var key = (r.clone_id != null && r.clone_id !== '') ? r.clone_id : r.gene_id;
+  return '/genes/detail.html?id=' + encodeURIComponent(key);
 }
 
 // Group a chrom_pos string ("chr5A", "5A", "chr1A:1-1000", "Chr2B:...") into
@@ -441,7 +445,7 @@ function runSearch() {
         '<div class="gene-card">' +
           '<div class="gene-card-head">' +
             (r.gene_name ? '<span class="gene-name">' + esc(r.gene_name) + '</span>' : '') +
-            '<a class="gene-id" href="' + esc(detailUrl(r.gene_id)) + '" target="_blank">' + esc(r.gene_id) + '</a>' +
+            '<a class="gene-id" href="' + esc(detailUrl(r)) + '" target="_blank">' + esc(r.gene_id) + '</a>' +
           '</div>' +
           '<div class="gene-card-body">' +
             chromBadge + sp + ph + doiCount +
@@ -608,7 +612,7 @@ function buildCsv(records) {
   records.forEach(function(r) {
     var row = CSV_COLUMNS.map(function(c) {
       var key = c[0];
-      if (key === 'detail_url') return csvField(location.origin + detailUrl(r.gene_id));
+      if (key === 'detail_url') return csvField(location.origin + detailUrl(r));
       return csvField(r[key]);
     });
     lines.push(row.join(','));

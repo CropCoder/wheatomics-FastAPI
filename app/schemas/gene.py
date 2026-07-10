@@ -17,6 +17,7 @@ class DOIReference(BaseModel):
 class KnownGeneSummary(BaseModel):
     """Known/cloned gene summary row."""
 
+    clone_id: int | str | None = None
     gene_id: str
     gene_name: str
     chrom_pos: str
