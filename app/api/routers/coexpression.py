@@ -87,27 +87,39 @@ def query_coexpression(
     pairs: list[CoexpressionPair] = []
     seen: set[tuple[str, str]] = set()
 
+    # SELECT aliases make the row dict case-insensitive: existing tables
+    # (CO_result2, CO_PRJEB25639) use Gene1/Gene2/PCC/MR (PascalCase),
+    # while coexpression_filter_ext uses lowercase gene1/gene2/pcc/mr.
+    select_cols = """
+        COALESCE(NULLIF(Gene1, ''), gene1) AS Gene1,
+        COALESCE(NULLIF(Gene2, ''), gene2) AS Gene2,
+        COALESCE(NULLIF(PCC,   ''), pcc)   AS PCC,
+        COALESCE(NULLIF(MR,    ''), mr)    AS MR
+    """
+
     with mysql_cursor(settings.DB_COEXPRESSION) as cursor:
         for gene in genes:
             if "." in str(filter_value):
                 cursor.execute(
                     f"""
-                    SELECT * FROM `{database}`
-                    WHERE (Gene1 = %s OR Gene2 = %s)
+                    SELECT {select_cols}
+                    FROM `{database}`
+                    WHERE (Gene1 = %s OR Gene2 = %s OR gene1 = %s OR gene2 = %s)
                     AND (CAST(PCC AS DECIMAL(10,4)) >= %s OR CAST(PCC AS DECIMAL(10,4)) <= %s)
                     ORDER BY CAST(PCC AS DECIMAL(10,4)) DESC
                     """,
-                    (gene, gene, filter_value, -filter_value),
+                    (gene, gene, gene, gene, filter_value, -filter_value),
                 )
             else:
                 cursor.execute(
                     f"""
-                    SELECT * FROM `{database}`
-                    WHERE (Gene1 = %s OR Gene2 = %s)
+                    SELECT {select_cols}
+                    FROM `{database}`
+                    WHERE (Gene1 = %s OR Gene2 = %s OR gene1 = %s OR gene2 = %s)
                     AND CAST(MR AS UNSIGNED) <= %s
                     ORDER BY CAST(MR AS UNSIGNED) ASC
                     """,
-                    (gene, gene, int(filter_value)),
+                    (gene, gene, gene, gene, int(filter_value)),
                 )
             for row in cursor.fetchall():
                 gene1 = str(row["Gene1"]).strip()
