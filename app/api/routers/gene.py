@@ -21,7 +21,7 @@ def _validate_genefunc_table(table: str) -> str:
     return table
 from app.db.mysql import mysql_cursor
 from app.schemas.gene import DOIReference, GeneDetailResponse, GeneFunctionRecord, KnownGeneDetail, KnownGeneSummary
-from app.services.genome_examples import GENOME_EXAMPLES
+from app.services.genome_examples import GENOME_EXAMPLES  # noqa: F401  (legacy re-export)
 from app.services.legacy_parsers import normalize_text, split_legacy_multi_value
 
 router = APIRouter(prefix="/genes", tags=["Known Genes"])
@@ -507,7 +507,33 @@ def list_genome_examples() -> dict:
           }
     """
 
-    return ok({"examples": GENOME_EXAMPLES})
+    # Read from Genefunc_registry so the dropdown stays in sync with
+    # the actual list of installed genomes. The registry has 86 rows
+    # (visible=1) as of 2026-07; the legacy hardcoded GENOME_EXAMPLES
+    # list only had 32.
+    sql = """
+        SELECT table_name, display_name, example_species_chr_id,
+               example_cds_id, example_protein_id
+        FROM Genefunc_registry
+        WHERE visible = 1
+        ORDER BY display_order, id
+    """
+    with mysql_cursor(settings.DB_GENEFUNC) as cursor:
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+
+    examples = [
+        {
+            "table_name":   r.get("table_name"),
+            "display_name": r.get("display_name"),
+            # Frontend keys are region / gene / pfam for backward compat.
+            "region":       r.get("example_species_chr_id"),
+            "gene":         r.get("example_cds_id"),
+            "pfam":         r.get("example_protein_id") or "",
+        }
+        for r in rows
+    ]
+    return ok({"examples": examples})
 @interval_router.get("/registry")
 def list_gene_function_registry() -> dict:
     """查询 Genefuncdb.Genefunc_registry 表。
