@@ -399,7 +399,7 @@ function loadDatabases() {
       var html = '';
       allDbs.forEach(function(db, i) {
         var selected = (i === 0) ? ' selected' : '';
-        html += '<option value="' + db.id + '"' + selected + '>' + db.id + ' &mdash; ' + db.description + '</option>';
+        html += '<option value="' + db.id + '"' + selected + '>' + db.description + ' <span style="color:#888;">(' + db.id + ')</span></option>';
       });
       $sel.html(html).prop('disabled', false);
     })

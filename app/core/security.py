@@ -9,9 +9,9 @@ from .exceptions import ValidationFailure
 
 
 COEXPRESSION_TABLES = {
-    "CO_result2": "Wheat grain",
     "CO_PRJEB25639": "Wheat multiple tissues",
     "CO_BioticStress_2026": "Wheat biotic stress (filter-extracted)",
+    "CO_result2": "Wheat grain",
 }
 
 GENE_FUNCTION_TABLES = {
