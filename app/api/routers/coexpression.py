@@ -91,6 +91,7 @@ def query_coexpression(
     # Column-name casing differs across tables:
     #   CO_result2 / CO_PRJEB25639  → Gene1, Gene2, PCC, MR (PascalCase)
     #   coexpression_filter_ext    → gene1, gene2, pcc, mr (lowercase)
+    #   (now renamed to CO_BioticStress_2026; same lowercase schema)
     # MySQL folds identifier case in expressions, so `Gene1` resolves to
     # `gene1` on the lowercase table. SELECT aliases the canonical names
     # in a fixed casing so the row dict is consistent regardless of

@@ -11,7 +11,7 @@ from .exceptions import ValidationFailure
 COEXPRESSION_TABLES = {
     "CO_result2": "Wheat grain",
     "CO_PRJEB25639": "Wheat multiple tissues",
-    "coexpression_filter_ext": "Wheat biotic stress (filter-extracted)",
+    "CO_BioticStress_2026": "Wheat biotic stress (filter-extracted)",
 }
 
 GENE_FUNCTION_TABLES = {
