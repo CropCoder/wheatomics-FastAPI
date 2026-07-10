@@ -73,7 +73,7 @@ def search_known_genes(search: str = Query(..., alias="searchid")) -> dict:
 
     pattern = f"%{term}%"
     sql = """
-        SELECT gene_id, gene_name, chrom_pos, gene_phenotype, gene_species, paper_doi
+        SELECT clone_id, gene_id, gene_name, chrom_pos, gene_phenotype, gene_species, paper_doi
         FROM cloned_gene_tbl
         WHERE gene_id LIKE %s
         OR gene_name LIKE %s
@@ -88,6 +88,7 @@ def search_known_genes(search: str = Query(..., alias="searchid")) -> dict:
 
     records = [
         KnownGeneSummary(
+            clone_id=row.get("clone_id", row.get("id")),
             gene_id=str(row["gene_id"]),
             gene_name=normalize_text(row["gene_name"]),
             chrom_pos=normalize_text(row["chrom_pos"]),
@@ -128,11 +129,12 @@ def list_known_genes() -> dict:
     """
 
     with mysql_cursor(settings.DB_CLONED_GENE) as cursor:
-        cursor.execute("SELECT gene_id, gene_name, chrom_pos, gene_phenotype, gene_species FROM cloned_gene_tbl")
+        cursor.execute("SELECT clone_id, gene_id, gene_name, chrom_pos, gene_phenotype, gene_species FROM cloned_gene_tbl")
         rows = cursor.fetchall()
 
     records = [
         {
+            "clone_id": row.get("clone_id", row.get("id")),
             "gene_id": str(row["gene_id"]),
             "gene_name": normalize_text(row["gene_name"]),
             "chrom_pos": normalize_text(row["chrom_pos"]),
@@ -215,7 +217,14 @@ def get_known_gene(gene_id: str) -> dict:
 
     gene_id = ensure_gene_like(gene_id)
     with mysql_cursor(settings.DB_CLONED_GENE) as cursor:
-        cursor.execute("SELECT * FROM cloned_gene_tbl WHERE gene_id = %s OR gene_name = %s", (gene_id, gene_id))
+        # Try clone_id first (numeric path-param), then fall back to
+        # gene_id / gene_name. The URL detail page prefers clone_id
+        # because gene_id can contain slashes, spaces, or DOI strings
+        # (e.g. "MT783929/MT783930") that complicate URL encoding.
+        if gene_id.isdigit():
+            cursor.execute("SELECT * FROM cloned_gene_tbl WHERE clone_id = %s LIMIT 1", (int(gene_id),))
+        else:
+            cursor.execute("SELECT * FROM cloned_gene_tbl WHERE gene_id = %s OR gene_name = %s", (gene_id, gene_id))
         row = cursor.fetchone()
 
     if not row:
