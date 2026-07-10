@@ -210,7 +210,12 @@ var _hmt = _hmt || [];
 
   <div id="result-area" style="display:none;">
     <div class="result-table" id="table-container">
-      <h6 id="result-title"></h6>
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <h6 id="result-title" class="mb-0">Results</h6>
+        <button type="button" id="export-btn" class="btn btn-success btn-sm" disabled>
+          Export Results (CSV)
+        </button>
+      </div>
       <div style="max-height:600px;overflow-y:auto;" id="result-table-body"></div>
     </div>
   </div>
@@ -370,19 +375,29 @@ function renderResults(resp, title) {
   } else if (resp.data && resp.data.results) {
     records = resp.data.results;
   } else {
-    $('#table-container').html('<div class="alert alert-warning">No results found.</div>');
+    lastResults = [];
+    $('#export-btn').prop('disabled', true);
+    $('#result-title').text('Results');
+    $('#result-table-body').html('<div class="alert alert-warning">No results found.</div>');
     $('#result-area').show();
     return;
   }
 
   if (records.length === 0) {
-    $('#table-container').html('<div class="alert alert-warning">No results found.</div>');
+    lastResults = [];
+    $('#export-btn').prop('disabled', true);
+    $('#result-title').text('Results');
+    $('#result-table-body').html('<div class="alert alert-warning">No results found.</div>');
     $('#result-area').show();
     return;
   }
 
-  var html = '<h6>' + title + ' (' + records.length + ' records)</h6>';
-  html += '<table class="table table-bordered table-hover table-sm">';
+  // Cache the result set so the Export button can serialise it.
+  lastResults = records;
+  $('#export-btn').prop('disabled', false);
+  $('#result-title').text(title + ' (' + records.length + ' records)');
+
+  var html = '<table class="table table-bordered table-hover table-sm">';
   html += '<thead><tr><th>Chrom</th><th>Start (Mb)</th><th>End (Mb)</th><th>Gene</th><th>Strand</th><th>Description</th><th>Domain</th></tr></thead><tbody>';
 
   records.forEach(function(r) {
@@ -398,9 +413,64 @@ function renderResults(resp, title) {
   });
 
   html += '</tbody></table>';
-  $('#table-container').html(html);
+  $('#result-table-body').html(html);
   $('#result-area').show();
 }
+
+// =====================================================================
+//  Export CSV
+// =====================================================================
+// Cached result set from the most recent query. Empty until renderResults
+// runs successfully.
+var lastResults = [];
+
+var CSV_COLUMNS = [
+  ['chromosome',  'Chromosome'],
+  ['start_mb',    'Start (Mb)'],
+  ['end_mb',      'End (Mb)'],
+  ['gene_primary','Gene'],
+  ['gene_secondary', 'Gene (secondary)'],
+  ['strand',      'Strand'],
+  ['description', 'Description'],
+  ['domain',      'Domain'],
+];
+
+// RFC 4180-ish: wrap in double quotes, escape embedded quotes by doubling.
+function csvField(value) {
+  if (value == null) return '';
+  var s = Array.isArray(value) ? value.join('; ') : String(value);
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+
+function buildCsv(records) {
+  var lines = [CSV_COLUMNS.map(function(c){ return csvField(c[1]); }).join(',')];
+  records.forEach(function(r) {
+    var row = CSV_COLUMNS.map(function(c) { return csvField(r[c[0]]); });
+    lines.push(row.join(','));
+  });
+  // Excel-friendly: BOM + CRLF.
+  return '﻿' + lines.join('\r\n');
+}
+
+function exportCsv() {
+  if (!lastResults || lastResults.length === 0) return;
+  var csv = buildCsv(lastResults);
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  // Best-effort filename from the current query.
+  var q = ($('#query-input').val().trim() || 'interval').replace(/[^A-Za-z0-9_.-]+/g, '_').slice(0, 40);
+  var tbl = ($('#table-select').val() || 'result').replace(/[^A-Za-z0-9_.-]+/g, '_');
+  var ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'interval_' + tbl + '_' + q + '_' + ts + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+$('#export-btn').on('click', exportCsv);
 </script>
 </body>
 </html>
