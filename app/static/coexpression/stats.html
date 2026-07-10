@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bioproject Stats - Wheat Co-expression - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+
+<script>
+// ===== Visit tracking =====
+(function() {
+  var page = location.pathname || 'unknown';
+  try {
+    fetch('/api/track/visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page: page })
+    }).catch(function(){});
+  } catch (e) {}
+  function fmt(n) {
+    n = Number(n) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
+    if (n >= 1000)    return (n / 1000).toFixed(1) + 'k';
+    return String(n);
+  }
+  function renderVisitStats(data) {
+    var el = document.getElementById('visit-stats');
+    if (!el || !data) return;
+    var today  = (data.today && data.today.pv != null) ? fmt(data.today.pv) : '—';
+    var total  = (data.total && data.total.pv != null) ? fmt(data.total.pv) : '—';
+    var online = data.online != null ? data.online : '—';
+    el.innerHTML =
+      '<span class="vs-pill"><span class="vs-dot vs-dot-today"></span>today <b>' + today + '</b></span>' +
+      '<span class="vs-pill"><span class="vs-dot vs-dot-total"></span>total <b>' + total + '</b></span>' +
+      '<span class="vs-pill"><span class="vs-dot vs-dot-online"></span>online <b>' + online + '</b></span>';
+  }
+  fetch('/api/track/stats').then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(resp){
+      if (resp && resp.success && resp.data) renderVisitStats(resp.data);
+    })
+    .catch(function(){});
+})();
+</script>
+
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.bundle.js"></script>
+
+<!-- Baidu Tongji (async) -->
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?f76ca60fcad9ddaf7cb0c8548eab7808";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<style>
+html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-serif; }
+#home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+#logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+#home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
+#header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+#header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+#header-tabs li { display:inline-block !important; width:190px !important; }
+#header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+#header-tabs a:hover { background:#98c1d9; color:#000000; }
+#header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+#header-tabs ul li ul { display:none !important; position:absolute; z-index:1000; background:#0077b6; }
+#header-tabs ul li:hover ul { display:block !important; }
+#header-tabs ul li ul a { border-radius:0; }
+#home_footer { margin:0 auto; padding:5px 0 10px 0; text-align:center; width:100%; background:#d9d9d9; }
+#home_footer table { margin:0 auto; }
+#home_footer .line { display:inline-block; height:30px; width:2px; background:#000; vertical-align:middle; margin:5px; }
+#home_footer .visit-stats { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; vertical-align:middle; margin-left:15px; }
+.visit-stats .vs-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:11px; line-height:1.4; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; }
+.visit-stats .vs-pill b { color:#0f172a; font-weight:600; }
+.visit-stats .vs-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#94a3b8; }
+.visit-stats .vs-dot-today  { background:#22c55e; }
+.visit-stats .vs-dot-total  { background:#3b82f6; }
+.visit-stats .vs-dot-online { background:#f59e0b; }
+.visit-stats .vs-loading { color:#64748b; }
+.visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
+.visit-stats .vs-error   { background:#fef2f2; color:#b91c1c; border-color:#fecaca; }
+@keyframes vs-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+.container-main { max-width: 1280px; width: 96%; margin: 18px auto 26px; }
+.page-title-wrap h2 { font-size: 28px; font-weight: 700; margin: 0 0 6px 0; line-height: 1.25; color: #222; }
+.page-title-wrap p  { margin: 0 0 12px 0; color: #555; font-size: 14px; }
+
+.kpi-card { background:#fff; border:1px solid #e6e6e6; border-radius:4px; padding:18px; text-align:center; height:100%; }
+.kpi-card .kpi-label { font-size:11px; color:#777; text-transform:uppercase; letter-spacing:0.5px; }
+.kpi-card .kpi-value { font-size:24px; font-weight:700; color:#1f5f9f; margin-top:4px; }
+
+.filter-block { background:#fff; border:1px solid #e6e6e6; border-radius:4px; padding:12px 15px; margin-bottom:12px; }
+.filter-block h5 { font-size: 16px; font-weight: 700; margin: 0 0 10px 0; color: #222; }
+.small-label { font-size: 12px; color: #555; margin-bottom: 4px; }
+
+.bar-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:13px; }
+.bar-row .bar-label { width:80px; min-width:80px; max-width:80px; color:#333; }
+.bar-row .bar-track { flex:1; background:#eef2f7; height:18px; border-radius:2px; overflow:hidden; }
+.bar-row .bar-fill { background:#1f5f9f; height:100%; }
+.bar-row .bar-count { width:50px; text-align:right; color:#555; font-variant-numeric:tabular-nums; }
+
+.bp-table { background:#fff; border:1px solid #e6e6e6; border-radius:4px; }
+.bp-table th { background:#1f5f9f; color:white; font-size:12px; white-space:nowrap; position:sticky; top:0; }
+.bp-table td { font-size:12px; vertical-align:top; }
+.bp-table tr.expand td { background:#f5f9ff; }
+.bp-detail { padding:10px 16px; }
+.bp-detail dl { margin:0; display:grid; grid-template-columns:120px 1fr; gap:4px 12px; font-size:12px; }
+.bp-detail dt { color:#888; }
+.bp-detail dd { margin:0; color:#222; }
+.bp-link { color:#1f5f9f; word-break:break-all; }
+
+.loading-wrap { padding:60px; text-align:center; color:#888; }
+.source-badge { font-size:10px; padding:2px 6px; border-radius:3px; color:white; font-weight:600; }
+.source-badge.NCBI { background:#1f5f9f; }
+.source-badge.ENA  { background:#0d9488; }
+.source-badge.CNGB { background:#c2410c; }
+</style>
+</head>
+<body>
+
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
+</div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/snprimer">CAPS/KASP(Beta)</a></li>
+        <li><a href="/PfamSearch/">PfamSearch</a></li>
+        <li><a href="/idConvert/">IDConvert</a></li>
+        <li><a href="/HomologFinder/">HomologFinder</a></li>
+        <li><a href="/interval/">IntervalTool</a></li>
+        <li><a href="/expression/">GeneExpression</a></li>
+        <li><a href="/coexpression/index.html">Co-expression</a></li>
+        <li><a href="/wheatPPI/">WheatPPI</a></li>
+        <li><a href="/genes/">KnownGene</a></li>
+        <li><a href="/symap/index.html">SyntenySearch</a></li>
+        <li><a href="/preblast/">preBLAST</a></li>
+        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+        <li><a href="DWGVa.html">DWGVa</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/scRNA">scRNA</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/eqtl">eQTL Atlas</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/literature_auto/literature.html">Literature</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href="#"><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<main class="container-main">
+  <div class="page-title-wrap">
+    <h2>Bioproject Stats</h2>
+    <p>Metadata for the public RNA-seq bioprojects that back the co-expression databases
+       (especially <code>CO_BioticStress_2026</code>). Click a row to expand the full
+       description, submitter, and related publications.</p>
+  </div>
+
+  <div id="loading" class="loading-wrap">Loading bioproject stats…</div>
+  <div id="error-box" class="alert alert-danger" hidden></div>
+
+  <div id="content" hidden>
+
+    <div class="row mb-3">
+      <div class="col-md-3 mb-2">
+        <div class="kpi-card">
+          <div class="kpi-label">Total bioprojects</div>
+          <div class="kpi-value" id="kpi-total">—</div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-2">
+        <div class="kpi-card">
+          <div class="kpi-label">Distinct organisms</div>
+          <div class="kpi-value" id="kpi-organisms">—</div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-2">
+        <div class="kpi-card">
+          <div class="kpi-label">Total samples</div>
+          <div class="kpi-value" id="kpi-samples">—</div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-2">
+        <div class="kpi-card">
+          <div class="kpi-label">Sources</div>
+          <div class="kpi-value" id="kpi-sources">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="card-title">By data source</h6>
+        <div id="source-bars"></div>
+      </div>
+    </div>
+
+    <div class="filter-block">
+      <h5>Filter &amp; search</h5>
+      <div class="form-row align-items-end">
+        <div class="form-group col-md-2 mb-2">
+          <label class="small-label" for="sourceFilter">Source</label>
+          <select id="sourceFilter" class="form-control form-control-sm">
+            <option value="">All sources</option>
+            <option value="NCBI">NCBI</option>
+            <option value="ENA">ENA</option>
+            <option value="CNGB">CNGB</option>
+          </select>
+        </div>
+        <div class="form-group col-md-8 mb-2">
+          <label class="small-label" for="searchInp">Search title / description / organism</label>
+          <input type="text" id="searchInp" class="form-control form-control-sm"
+                 placeholder="e.g. wheat, stripe rust, Triticum aestivum">
+        </div>
+        <div class="form-group col-md-2 mb-2 d-flex align-items-end">
+          <button type="button" id="reset-btn" class="btn btn-outline-secondary btn-sm btn-block">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <div id="res-info" class="text-muted small">—</div>
+    </div>
+
+    <div class="bp-table table-responsive">
+      <table class="table table-sm table-striped mb-0">
+        <thead>
+          <tr>
+            <th style="width:130px;">Accession</th>
+            <th style="width:60px;">Source</th>
+            <th>Title</th>
+            <th style="width:160px;">Organism</th>
+            <th style="width:90px;">Date</th>
+            <th style="width:60px;" class="text-right">Samples</th>
+          </tr>
+        </thead>
+        <tbody id="bp-tbody"></tbody>
+      </table>
+    </div>
+
+  </div>
+</main>
+
+<div class="line" style="height:10px;background-color:white"></div>
+<div id="home_footer">
+  <center style="margin-top:5px">
+    <table>
+      <tr>
+        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><div style="height:50px;width:15px;"></div></td>
+        <td>
+          <div id="visit-stats" class="visit-stats">
+            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+  </center>
+</div>
+
+<script>
+var allRecords = [];
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function sourceUrl(acc, source) {
+  if (source === 'NCBI') return 'https://www.ncbi.nlm.nih.gov/bioproject/' + acc;
+  if (source === 'ENA')  return 'https://www.ebi.ac.uk/ena/browser/view/' + acc;
+  if (source === 'CNGB') return 'https://db.cngb.org/search/project/' + acc;
+  return '#';
+}
+
+function renderBars($container, entries) {
+  if (!entries.length) { $container.html('<div class="text-muted">No data.</div>'); return; }
+  var max = entries[0][1];
+  var html = '';
+  entries.forEach(function(e) {
+    var label = e[0], count = e[1];
+    var pct = max > 0 ? (count / max * 100) : 0;
+    html += '<div class="bar-row">' +
+      '<div class="bar-label">' + esc(label) + '</div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + pct.toFixed(1) + '%;"></div></div>' +
+      '<div class="bar-count">' + count + '</div>' +
+    '</div>';
+  });
+  $container.html(html);
+}
+
+function renderKpis(records) {
+  $('#kpi-total').text(records.length);
+  var orgs = {};
+  var samples = 0;
+  var sources = {};
+  records.forEach(function(r) {
+    if (r.organism) orgs[r.organism] = true;
+    if (r.sample_count) samples += r.sample_count;
+    if (r.source) sources[r.source] = (sources[r.source] || 0) + 1;
+  });
+  $('#kpi-organisms').text(Object.keys(orgs).length);
+  $('#kpi-samples').text(samples);
+  $('#kpi-sources').text(Object.keys(sources).length);
+
+  // Source bars
+  var srcEntries = Object.keys(sources).map(function(k){ return [k, sources[k]]; })
+    .sort(function(a, b){ return b[1] - a[1] || a[0].localeCompare(b[0]); });
+  renderBars($('#source-bars'), srcEntries);
+}
+
+function renderTable(records) {
+  var $tb = $('#bp-tbody').empty();
+  if (!records.length) {
+    $tb.html('<tr><td colspan="6" class="text-center text-muted" style="padding:20px;">No bioproject records match the current filter.</td></tr>');
+    return;
+  }
+  var html = '';
+  records.forEach(function(r, idx) {
+    var acc  = r.accession || '';
+    var src  = r.source    || '';
+    var url  = sourceUrl(acc, src);
+    var date = r.submission_date || r.publication_date || '';
+    var samples = (r.sample_count != null) ? r.sample_count : '—';
+    var title = (r.title || '(no title)');
+    html +=
+      '<tr data-idx="' + idx + '">' +
+        '<td><a class="bp-link" href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(acc) + '</a></td>' +
+        '<td><span class="source-badge ' + esc(src) + '">' + esc(src) + '</span></td>' +
+        '<td>' + esc(title) + '</td>' +
+        '<td>' + esc(r.organism || '—') + '</td>' +
+        '<td>' + esc(date) + '</td>' +
+        '<td class="text-right">' + esc(samples) + '</td>' +
+      '</tr>';
+  });
+  $tb.html(html);
+
+  // Row click → expand detail row
+  $tb.find('tr[data-idx]').off('click').on('click', function() {
+    var idx  = $(this).data('idx');
+    var r    = records[idx];
+    var $next = $(this).next('tr.expand');
+    if ($next.length) { $next.remove(); return; }
+    var pmidUrl = r.related_pubmed ? 'https://pubmed.ncbi.nlm.nih.gov/' + r.related_pubmed : '';
+    var doiUrl  = r.related_doi
+      ? (r.related_doi.match(/^https?:/) ? r.related_doi : 'https://doi.org/' + r.related_doi)
+      : '';
+    var detail =
+      '<tr class="expand"><td colspan="6"><div class="bp-detail">' +
+        '<dl>' +
+          '<dt>Description</dt><dd>' + esc(r.description || '—') + '</dd>' +
+          '<dt>Submitter</dt><dd>' + esc(r.submitter || '—') + '</dd>' +
+          '<dt>Study type</dt><dd>' + esc(r.study_type || '—') + '</dd>' +
+          '<dt>Data type</dt><dd>' + esc(r.data_type || '—') + '</dd>' +
+          '<dt>PubMed</dt><dd>' +
+            (pmidUrl ? '<a class="bp-link" href="' + esc(pmidUrl) + '" target="_blank">' + esc(r.related_pubmed) + '</a>' : '—') +
+          '</dd>' +
+          '<dt>DOI</dt><dd>' +
+            (doiUrl  ? '<a class="bp-link" href="' + esc(doiUrl)  + '" target="_blank">' + esc(r.related_doi) + '</a>' : '—') +
+          '</dd>' +
+        '</dl>' +
+      '</div></td></tr>';
+    $(this).after(detail);
+  });
+}
+
+function applyFilters() {
+  var source = $('#sourceFilter').val();
+  var q = $('#searchInp').val().trim().toLowerCase();
+  var filtered = allRecords.filter(function(r) {
+    if (source && r.source !== source) return false;
+    if (q) {
+      var hay = ((r.title || '') + ' ' + (r.description || '') + ' ' + (r.organism || '')).toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
+    }
+    return true;
+  });
+  renderTable(filtered);
+  $('#res-info').text('Showing ' + filtered.length + ' of ' + allRecords.length + ' bioprojects.');
+}
+
+function loadStats() {
+  $('#loading').show();
+  $('#content').prop('hidden', true);
+  $('#error-box').prop('hidden', true).text('');
+  $.getJSON('/api/coexpression/projects')
+    .done(function(resp) {
+      $('#loading').hide();
+      if (!resp || !resp.success || !resp.data) {
+        $('#error-box').text((resp && (resp.detail || resp.error)) || 'Failed to load bioproject stats.').prop('hidden', false);
+        return;
+      }
+      allRecords = resp.data.records || [];
+      $('#content').prop('hidden', false);
+      renderKpis(allRecords);
+      applyFilters();
+    })
+    .fail(function(jqXHR) {
+      $('#loading').hide();
+      var msg = (jqXHR.responseJSON && (jqXHR.responseJSON.detail || jqXHR.responseJSON.error))
+        || 'Failed to load bioproject stats (' + jqXHR.status + ').';
+      $('#error-box').text(msg).prop('hidden', false);
+    });
+}
+
+$('#sourceFilter').on('change', applyFilters);
+$('#searchInp').on('input', applyFilters);
+$('#reset-btn').on('click', function() {
+  $('#sourceFilter').val('');
+  $('#searchInp').val('');
+  applyFilters();
+});
+
+loadStats();
+</script>
+</body>
+</html>
