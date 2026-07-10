@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from pydantic import BaseModel
 
 
@@ -24,3 +26,21 @@ class PPIInteraction(BaseModel):
     score: float
     annotation1: str
     annotation2: str
+
+
+class BioprojectMeta(BaseModel):
+    """Metadata for one bioproject (NCBI / ENA / CNGB)."""
+
+    accession: str
+    source: str
+    title: str | None = None
+    description: str | None = None
+    organism: str | None = None
+    submitter: str | None = None
+    submission_date: date | str | None = None
+    publication_date: date | str | None = None
+    data_type: str | None = None
+    sample_count: int | None = None
+    study_type: str | None = None
+    related_pubmed: str | None = None
+    related_doi: str | None = None

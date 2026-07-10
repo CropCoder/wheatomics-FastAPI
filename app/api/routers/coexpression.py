@@ -5,10 +5,11 @@ from __future__ import annotations
 from fastapi import APIRouter, Query
 
 from app.core.config import settings
+from app.core.exceptions import ResourceNotFound
 from app.core.response import ok
 from app.core.security import COEXPRESSION_TABLES, ensure_allowed_table, ensure_gene_like
 from app.db.mysql import mysql_cursor
-from app.schemas.network import CoexpressionPair
+from app.schemas.network import BioprojectMeta, CoexpressionPair
 
 coexpression_router = APIRouter(tags=["Coexpression"])
 
@@ -161,4 +162,85 @@ def query_coexpression(
         "gene_present": gene_present,
         "pairs": [pair.model_dump() for pair in pairs],
     })
+
+
+# ---------------------------------------------------------------------------
+# Bioproject metadata endpoints
+# ---------------------------------------------------------------------------
+# Reads from coexpressiondb.bioproject_meta, populated by
+# scripts/crawl_bioprojects.py from NCBI E-utilities, ENA portal API, and
+# CNGB. The bioproject_meta table must exist (init_bioproject_meta.sql)
+# and have rows (run the crawler) before these endpoints return data.
+
+def _bioproject_from_row(row: dict) -> BioprojectMeta:
+    return BioprojectMeta(
+        accession=str(row.get("accession", "")),
+        source=str(row.get("source", "")),
+        title=row.get("title"),
+        description=row.get("description"),
+        organism=row.get("organism"),
+        submitter=row.get("submitter"),
+        submission_date=row.get("submission_date"),
+        publication_date=row.get("publication_date"),
+        data_type=row.get("data_type"),
+        sample_count=row.get("sample_count"),
+        study_type=row.get("study_type"),
+        related_pubmed=row.get("related_pubmed"),
+        related_doi=row.get("related_doi"),
+    )
+
+
+@coexpression_router.get("/coexpression/projects")
+def list_bioprojects(
+    source: str | None = Query(None, pattern="^(NCBI|ENA|CNGB)$"),
+    q: str | None = Query(None, description="Substring search over title/description/organism"),
+) -> dict:
+    """List bioproject metadata records.
+
+    功能:
+        返回 `coexpressiondb.bioproject_meta` 表中已爬取的 bioproject
+        元数据。可选按数据源过滤（NCBI/ENA/CNGB），可选按标题/描述/
+        物种做子串模糊搜索。
+
+    用法:
+        GET /api/coexpression/projects
+        GET /api/coexpression/projects?source=NCBI
+        GET /api/coexpression/projects?q=wheat
+    """
+    where = []
+    params: list = []
+    if source:
+        where.append("source = %s")
+        params.append(source)
+    if q:
+        like = f"%{q}%"
+        where.append("(title LIKE %s OR description LIKE %s OR organism LIKE %s)")
+        params.extend([like, like, like])
+
+    sql = "SELECT * FROM bioproject_meta"
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY source, accession"
+
+    with mysql_cursor(settings.DB_COEXPRESSION) as cursor:
+        cursor.execute(sql, params)
+        rows = cursor.fetchall()
+
+    records = [_bioproject_from_row(r).model_dump() for r in rows]
+    return ok({"total": len(records), "records": records})
+
+
+@coexpression_router.get("/coexpression/projects/{accession}")
+def get_bioproject(accession: str) -> dict:
+    """Return one bioproject's metadata, 404 if absent.
+
+    用法:
+        GET /api/coexpression/projects/PRJNA976214
+    """
+    with mysql_cursor(settings.DB_COEXPRESSION) as cursor:
+        cursor.execute("SELECT * FROM bioproject_meta WHERE accession = %s", (accession,))
+        row = cursor.fetchone()
+    if not row:
+        raise ResourceNotFound(f"Bioproject not found: {accession}")
+    return ok(_bioproject_from_row(row).model_dump())
 
