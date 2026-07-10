@@ -511,8 +511,11 @@ def list_genome_examples() -> dict:
     # the actual list of installed genomes. The registry has 86 rows
     # (visible=1) as of 2026-07; the legacy hardcoded GENOME_EXAMPLES
     # list only had 32.
+    # Note: Genefunc_registry has no `display_name` column; we alias
+    # table_name to display_name for the frontend (the /registry
+    # endpoint does the same thing).
     sql = """
-        SELECT table_name, display_name, example_species_chr_id,
+        SELECT table_name AS display_name, example_species_chr_id,
                example_cds_id, example_protein_id
         FROM Genefunc_registry
         WHERE visible = 1
@@ -524,7 +527,7 @@ def list_genome_examples() -> dict:
 
     examples = [
         {
-            "table_name":   r.get("table_name"),
+            "table_name":   r.get("display_name"),
             "display_name": r.get("display_name"),
             # Frontend keys are region / gene / pfam for backward compat.
             "region":       r.get("example_species_chr_id"),
