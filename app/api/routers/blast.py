@@ -234,7 +234,7 @@ async def blast_search(
         description="FASTA 格式的查询序列"),
     evalue: float = Form(default=10.0,
         description="E-value 阈值"),
-    max_targets: int = Form(default=20, alias="max_target_seqs",
+    max_targets: int = Form(default=1000, alias="max_target_seqs",
         description="最多返回的匹配数"),
     word_size: Optional[int] = Form(default=None),
     matrix: Optional[str] = Form(default=None),
