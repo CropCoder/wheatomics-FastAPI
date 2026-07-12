@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gene ID Conversion</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+
+<script>
+// ===== Visit tracking =====
+(function() {
+  var page = location.pathname || 'unknown';
+  try {
+    fetch('/api/track/visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page: page })
+    }).catch(function(){});
+  } catch (e) {}
+
+  function fmt(n) {
+    n = Number(n) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
+    if (n >= 10000)   return (n / 1000).toFixed(3) + 'k';
+    return String(n);
+  }
+
+  function setHtml(html) {
+    var el = document.getElementById('visit-stats');
+    if (el) el.innerHTML = html;
+  }
+
+  fetch('/api/track/stats')
+    .then(function(r) { return r.json(); })
+    .then(function(resp) {
+      if (!resp || !resp.success) {
+        setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
+        return;
+      }
+      var d = resp.data;
+      var html =
+        '<span class="vs-pill vs-today" title="Today pageviews">' +
+          '<span class="vs-dot vs-dot-today"></span>' +
+          'Today <b>' + fmt(d.today.pv) + '</b></span>' +
+        '<span class="vs-pill vs-total" title="Total pageviews (since 2019-08-01)">' +
+          '<span class="vs-dot vs-dot-total"></span>' +
+          'Total <b>' + fmt(d.total.pv) + '</b></span>' +
+        '<span class="vs-pill vs-online" title="Visitors active in the last 15 minutes">' +
+          '<span class="vs-dot vs-dot-online"></span>' +
+          'Online <b>' + fmt(d.online) + '</b></span>';
+      setHtml(html);
+    })
+    .catch(function() {
+      setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
+    });
+})();
+</script>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+<style>
+  body { background: #f8f9fa; margin:0; padding:0; }
+  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+  #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
+  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+  #header-tabs li { display:inline-block !important; width:190px !important; }
+  #header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+  #header-tabs a:hover { background:#98c1d9; color:#000000; }
+  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+  #header-tabs ul li ul { display:none !important; position:absolute; }
+  #header-tabs ul li:hover ul { display:block !important; }
+  #header-tabs ul li ul a { border-radius:0; }
+  #home_content { max-width: 1100px; margin: 0 auto; padding: 0 15px; }
+  textarea { font-family: Menlo, Consolas, monospace; font-size: 13px; }
+  #error-msg { display: none; margin-top: 10px; white-space: pre-wrap; }
+  #result-table-body { max-height:600px; overflow-y:auto; }
+  .code-img { display: block; margin: 12px auto 0; max-width: 100%; height: auto; }
+
+  /* ----- visit stats footer ----- */
+  .visit-stats { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .visit-stats .vs-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px; border-radius: 12px;
+    font-size: 11px; line-height: 1.4;
+    background: #f1f5f9; color: #334155;
+    border: 1px solid #e2e8f0;
+  }
+  .visit-stats .vs-pill b { color: #0f172a; font-weight: 600; }
+  .visit-stats .vs-dot {
+    display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; background: #94a3b8;
+  }
+  .visit-stats .vs-dot-today  { background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.18); }
+  .visit-stats .vs-dot-total  { background: #3b82f6; }
+  .visit-stats .vs-dot-online { background: #f59e0b; animation: vs-pulse 1.6s ease-in-out infinite; }
+  .visit-stats .vs-loading { color: #64748b; }
+  .visit-stats .vs-error   { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+  @keyframes vs-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+  }
+</style>
+
+<!-- Baidu Tongji (async) -->
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?f76ca60fcad9ddaf7cb0c8548eab7808";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+</head>
+<body>
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
+</div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/index.html">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/snprimer">CAPS/KASP(Beta)</a></li>
+        <li><a href="/PfamSearch/">PfamSearch</a></li>
+        <li><a href="/idConvert/">IDConvert</a></li>
+        <li><a href="/HomologFinder/">HomologFinder</a></li>
+        <li><a href="/interval/">IntervalTool</a></li>
+        <li><a href="/expression/">GeneExpression</a></li>
+        <li><a href="/coexpression/index.html">Co-expression</a></li>
+        <li><a href="/wheatPPI/">WheatPPI</a></li>
+        <li><a href="/genes/">KnownGene</a></li>
+        <li><a href="/symap/index.html">SyntenySearch</a></li>
+        <li><a href="/preblast/">preBLAST</a></li>
+        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+        <li><a href="DWGVa.html">DWGVa</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/scRNA">scRNA</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/eqtl">eQTL Atlas</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/literature_auto/literature.html">Literature</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href=#><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div id="home_content">
+  <br><h3 style="text-align:center">Convert gene ids between different annotation versions</h3><br>
+
+  <div style="padding-left:60px;padding-right:60px;">
+
+    <form id="convert-form" onsubmit="return queryIdConvert(event);">
+      <a>Convert </a>
+      <select name="gene_version" id="version-select">
+        <option value="MIPS_result">MIPSv2.2</option>
+        <option value="TGACv1_result">TGACv1</option>
+        <option value="IWGSCv1_result">IWGSCv1.0</option>
+      </select>
+      gene id to <strong>IWGSCV1.1</strong>
+      <br><br>
+
+      <a>For example: MIPSv2.2 transcript id Traes_1AS_E6058767A.1</a>
+      <br>
+      <a>For example: TGACv1 transcript id TRIAE_CS42_6BL_TGACv1_501926_AA1621570.1</a>
+      <br>
+      <a>For example: IWGSCv1.0 transcript id TraesCS6B01G342500.1</a>
+      <br><br>
+
+      <textarea id="id-input" name="ID" cols="100" rows="10"></textarea>
+      <br>
+      <a>The input list should contain not more than 100 genes !!!</a>
+      <br><br>
+      <input type="submit" value="Submit" class="btn btn-primary">
+    </form>
+
+    <div id="error-msg" class="alert alert-danger"></div>
+
+    <div id="result-area" style="display:none; margin-top:18px;">
+      <h5>Results</h5>
+      <div id="result-summary" class="text-muted" style="font-size:13px;"></div>
+      <div id="result-table-body"></div>
+      <div id="not-found-area" style="display:none; margin-top:14px;"></div>
+    </div>
+
+    <br>
+    <a>We also provide files containing all genes.</a>
+    <a href="https://pan.baidu.com/s/1CeWJbVVCLRIFKuPU93Yc8A" target="_blank">Download here</a>
+    <br><br>
+    <a href="https://ccb.jhu.edu/software/stringtie/gffcompare.shtml" target="_blank">Classification codes</a>
+    <br>
+    <a>"class code" value showing the relationship between a transfrag and the closest reference transcript (where applicable).</a>
+    <br>
+    <img class="code-img" alt="gffcompare classification codes"
+         src="gffcompare_codes.png" width="900" height="600">
+    <br><br>
+  </div>
+</div>
+
+<div class="line" style="height:10px;background-color:white"></div>
+<div id="home_footer">
+  <center style="margin-top:5px">
+    <table>
+      <tr>
+        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><div class="line" style="height:50px;width:15px;"></div></td>
+        <td>
+          <div id="visit-stats" class="visit-stats">
+            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+  </center>
+</div>
+
+<script>
+var MAX_INPUT_GENES = 100;
+var lastMappings = [];
+
+function escapeHtml(s) {
+  return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+}
+
+function readErrorDetail(jqXHR) {
+  if (jqXHR.responseJSON && (jqXHR.responseJSON.detail || jqXHR.responseJSON.error)) {
+    return jqXHR.responseJSON.detail || jqXHR.responseJSON.error;
+  }
+  var text = jqXHR.responseText || '';
+  if (text && text.charAt(0) === '{') {
+    try {
+      var parsed = JSON.parse(text);
+      if (parsed.detail) return parsed.detail;
+      if (parsed.error)  return parsed.error;
+    } catch (e) { /* fall through */ }
+  }
+  return jqXHR.statusText || ('HTTP ' + jqXHR.status);
+}
+
+function showError(msg) {
+  $('#error-msg').html(escapeHtml(msg)).show();
+  $('#result-area').hide();
+}
+
+function parseIds() {
+  var raw = $('#id-input').val() || '';
+  var parts = raw.split(/[\s,;]+/).map(function(s) { return s.trim(); }).filter(Boolean);
+  return parts;
+}
+
+function queryIdConvert(ev) {
+  if (ev) ev.preventDefault();
+
+  var ids = parseIds();
+  var version = $('#version-select').val();
+
+  if (ids.length === 0) {
+    showError('Please enter at least one transcript ID (one per line).');
+    return false;
+  }
+  if (ids.length > MAX_INPUT_GENES) {
+    showError('The input list should contain not more than ' + MAX_INPUT_GENES + ' genes (you sent ' + ids.length + ').');
+    return false;
+  }
+
+  $('#error-msg').hide();
+  $('#result-area').hide();
+
+  $.ajax({
+    url: '/api/id-conversion',
+    method: 'GET',
+    dataType: 'json',
+    data: { ID: ids.join('\r\n'), gene_version: version }
+  })
+  .done(function(resp) {
+    if (!resp || !resp.success) { showError('Query failed.'); return; }
+    renderResults(resp.data);
+  })
+  .fail(function(jqXHR) {
+    showError(readErrorDetail(jqXHR));
+  });
+
+  return false;
+}
+
+function renderResults(data) {
+  var mappings = (data && data.mappings) || [];
+  var notFound = (data && data.not_found) || [];
+  var version = (data && data.version) || '';
+
+  lastMappings = mappings.slice();
+
+  $('#result-summary').text(
+    'Source: ' + version + ' — ' + mappings.length + ' mapped, ' + notFound.length + ' not found.'
+  );
+
+  var html = '<table class="table table-bordered table-hover table-sm" style="margin-top:8px;">';
+  html += '<thead><tr><th>#</th><th>Query gene</th><th>Reference gene (02G)</th><th>Code</th><th>Length</th></tr></thead><tbody>';
+  mappings.forEach(function(m, i) {
+    html += '<tr>';
+    html += '<td>' + (i + 1) + '</td>';
+    html += '<td><code>' + escapeHtml(m.query_gene || '') + '</code></td>';
+    html += '<td><strong><code>' + escapeHtml(m.reference_gene || '') + '</code></strong></td>';
+    html += '<td>' + escapeHtml(m.code || '-') + '</td>';
+    html += '<td>' + escapeHtml(m.length || '-') + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  $('#result-table-body').html(html);
+
+  if (notFound.length > 0) {
+    var nfHtml = '<div class="alert alert-warning" style="margin-bottom:0;">';
+    nfHtml += '<strong>Not found in ' + escapeHtml(version) + ' (' + notFound.length + '):</strong><br>';
+    nfHtml += notFound.map(function(g) { return '<code>' + escapeHtml(g) + '</code>'; }).join(', ');
+    nfHtml += '</div>';
+    $('#not-found-area').html(nfHtml).show();
+  } else {
+    $('#not-found-area').hide();
+  }
+
+  $('#result-area').show();
+}
+</script>
+</body>
+</html>
