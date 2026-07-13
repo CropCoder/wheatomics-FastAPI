@@ -58,6 +58,7 @@ RENAMES = [
     ("Genefunc_sharonensis_AS_1644_table",      "Genefunc_ae_sharonensis_AS1644_table"),
     ("Genefunc_RM271_table",                    "Genefunc_Ae_ventricosa_RM271_table"),
     ("Genefunc_AeComosa_PI551049_table",        "Genefunc_Ae_Comosa_PI551049_table"),
+    ("Genefunc_IWGSC03G_table",                 "Genefunc_CS_IWGSC03G_table"),
 ]
 
 
