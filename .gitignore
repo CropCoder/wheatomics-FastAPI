@@ -13,3 +13,4 @@ build/
 .vscode/
 .claude/
 app/static/*/_ref/
+app/static/sms2/
