@@ -195,6 +195,17 @@ html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-ser
       <ul id="d-key-result"><li class="text-muted">No key results recorded.</li></ul>
     </div>
 
+    <div class="section-card" id="sec-function" hidden>
+      <h5>Function</h5>
+      <p id="d-function" class="text-muted">—</p>
+    </div>
+
+    <div class="section-card" id="sec-cloning" hidden>
+      <h5>Cloning method</h5>
+      <p id="d-cloning-method" class="text-muted">—</p>
+      <p id="d-cloning-desc" class="text-muted" hidden></p>
+    </div>
+
     <div class="section-card">
       <h5>References</h5>
       <ul id="d-references"><li class="text-muted">No references.</li></ul>
@@ -305,6 +316,34 @@ function renderDetail(d) {
     });
     if (!html) html = '<li class="text-muted">No key results recorded.</li>';
     $('#d-key-result').html(html);
+  }
+
+  // Publication year — show in meta
+  if (d.publication_year) {
+    metaBits.push('Published: ' + esc(d.publication_year));
+    $('#d-meta').html(metaBits.join(' &nbsp;|&nbsp; '));
+    $('#d-meta').show();
+  }
+
+  // Function description
+  if (d.function_description) {
+    $('#d-function').text(d.function_description);
+    $('#sec-function').prop('hidden', false);
+  } else {
+    $('#sec-function').prop('hidden', true);
+  }
+
+  // Cloning method
+  if (d.cloning_method) {
+    $('#d-cloning-method').text('Method: ' + esc(d.cloning_method));
+    $('#sec-cloning').prop('hidden', false);
+    if (d.cloning_method_description) {
+      $('#d-cloning-desc').text(esc(d.cloning_method_description)).prop('hidden', false);
+    } else {
+      $('#d-cloning-desc').prop('hidden', true);
+    }
+  } else {
+    $('#sec-cloning').prop('hidden', true);
   }
 
   // Submitter

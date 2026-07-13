@@ -94,6 +94,7 @@ def search_known_genes(search: str = Query(..., alias="searchid")) -> dict:
             chrom_pos=normalize_text(row["chrom_pos"]),
             phenotype=normalize_text(row["gene_phenotype"]),
             species=normalize_text(row["gene_species"]),
+            publication_year=str(row.get("publication_year", "")) or None,
             dois=split_legacy_multi_value(row["paper_doi"]),
         )
         for row in rows
@@ -244,6 +245,10 @@ def get_known_gene(gene_id: str) -> dict:
         paper_title=titles,
         references=references,
         key_result=split_legacy_multi_value(row.get("key_result")),
+        publication_year=str(row.get("publication_year", "")) or None,
+        function_description=normalize_text(row.get("function_description")) or None,
+        cloning_method=normalize_text(row.get("cloning_method")) or None,
+        cloning_method_description=normalize_text(row.get("cloning_method_description")) or None,
         author=normalize_text(row.get("author")) or None,
         author_mail=normalize_text(row.get("author_mail")) or None,
         submission_date=row.get("submission_date"),
