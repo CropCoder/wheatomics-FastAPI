@@ -60,6 +60,8 @@ REQUIRED_COLUMNS = ("Chrom", "Start1", "End1")
 
 def connect() -> "pymysql.Connection":
     _require_pymysql()
+    from pymysql.cursors import DictCursor
+
     return pymysql.connect(
         host=DB_HOST,
         port=DB_PORT,
@@ -68,6 +70,7 @@ def connect() -> "pymysql.Connection":
         database=DB_NAME,
         charset="utf8mb4",
         autocommit=True,
+        cursorclass=DictCursor,
     )
 
 
