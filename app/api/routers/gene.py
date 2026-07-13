@@ -346,7 +346,12 @@ def get_gene_detail(gene_id: str) -> dict:
 
 def _make_function_record(row, table):
     """Build a GeneFunctionRecord from a DB row, handling different table schemas."""
-    if table == "Genefunc_IWGSC03G_table":
+    # The IWGSC v1.0 (v2) tables only have Gene03G/Gene02G columns; every
+    # other Genefunc_* table uses `Gene`. Match both the old
+    # Genefunc_IWGSC03G_table name and the renamed
+    # Genefunc_CS_IWGSC03G_table so this works after the rename.
+    is_iwgsc_v2 = table in ("Genefunc_IWGSC03G_table", "Genefunc_CS_IWGSC03G_table")
+    if is_iwgsc_v2:
         return GeneFunctionRecord(
             chromosome=str(row["Chrom"]),
             start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
@@ -728,7 +733,7 @@ def search_gene_interval(
     if ":" not in region:
         with mysql_cursor(settings.DB_GENEFUNC) as cursor:
             # 根据表类型动态选择基因列
-            if table == "Genefunc_IWGSC03G_table":
+            if table in ("Genefunc_IWGSC03G_table", "Genefunc_CS_IWGSC03G_table"):
                 gene_cols = ["Gene03G", "Gene02G"]
             else:
                 gene_cols = ["Gene"]
