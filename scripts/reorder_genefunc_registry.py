@@ -44,6 +44,17 @@ GROUP_PRIORITY = {
     "other triticeae": 5,
 }
 
+# Pinned to the top of the dropdown in this exact order, regardless of
+# group / ploidy / name. Names must match Genefunc_registry.table_name
+# AFTER any renames (e.g. the v1.0 table was Genefunc_table and is now
+# Genefunc_CS_IWGSCv1.0_table).
+PINNED_TABLES = [
+    "Genefunc_CS_IWGSCv1.0_table",
+    "Genefunc_CS_IWGSC03G_table",
+    "Genefunc_CS_CAU_table",
+    "Genefunc_CS_IAAS_table",
+]
+
 # Within the Diploid and Other-Triticeae groups, sort by the ploidy
 # letters (Polyploidy column) before table_name. AABBDD/AABB/AA/DD/SS get
 # a fixed priority; anything else falls to 6 and sorts alphabetically.
@@ -111,8 +122,15 @@ def main() -> int:
     )
     rows = cursor.fetchall()
 
+    pinned_index = {name: i for i, name in enumerate(PINNED_TABLES)}
+
+    def pin_rank(r):
+        name = r["table_name"]
+        return pinned_index.get(name, 9999)
+
     rows.sort(
         key=lambda r: (
+            pin_rank(r),
             group_rank(r["grp"]),
             ploidy_rank_for(r["grp"], r["ploidy"]),
             # for Diploid/Other Triticeae: tiebreak by ploidy letters,
