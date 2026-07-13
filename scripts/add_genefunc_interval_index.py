@@ -56,6 +56,11 @@ DB_NAME = os.environ.get("DB_GENEFUNC", "Genefuncdb")
 
 INDEX_NAME = "idx_chrom_start_end"
 REQUIRED_COLUMNS = ("Chrom", "Start1", "End1")
+# Many Genefunc_* tables declare Chrom as TEXT, which InnoDB refuses to
+# index without an explicit length. Chromosome IDs in this DB are at
+# most ~10 chars (chr1A, chrUn, ...), so prefixing the first 20 chars
+# is plenty and keeps the index compact.
+CHROM_PREFIX_LEN = 20
 
 
 def connect() -> "pymysql.Connection":
@@ -107,7 +112,7 @@ def index_exists(cursor, table: str) -> bool:
 def add_index(cursor, table: str) -> None:
     cursor.execute(
         f"ALTER TABLE `{table}` ADD INDEX `{INDEX_NAME}` "
-        f"(`Chrom`, `Start1`, `End1`)"
+        f"(`Chrom`({CHROM_PREFIX_LEN}), `Start1`, `End1`)"
     )
 
 
