@@ -556,6 +556,20 @@ def list_genome_examples() -> dict:
         cursor.execute(sql)
         rows = cursor.fetchall()
 
+        # Pull column names so the frontend can decide which tables are
+        # valid for a given tool (e.g. PfamSearch needs a `Domain` column).
+        cursor.execute(
+            """
+            SELECT TABLE_NAME, COLUMN_NAME
+            FROM information_schema.columns
+            WHERE TABLE_SCHEMA = %s
+            """,
+            (settings.DB_GENEFUNC,),
+        )
+        cols_map: dict[str, list[str]] = {}
+        for row in cursor.fetchall():
+            cols_map.setdefault(row["TABLE_NAME"], []).append(row["COLUMN_NAME"])
+
     def _ensure_range(chr_id):
         # example_chr_id may store only a chromosome (e.g. "chr1A") without
         # a start-end range. The interval frontend expects "chr:start-end",
@@ -594,6 +608,10 @@ def list_genome_examples() -> dict:
             "gene":         r.get("example_gene_id"),
             # Genefunc_registry has no Pfam-domain column; use a default.
             "pfam":         "PF00931",
+            # Columns of the underlying Genefunc_* table, so the frontend
+            # can filter to tables that support its query (e.g. PfamSearch
+            # needs a `Domain` column).
+            "columns":      cols_map.get(r.get("display_name"), []),
         }
         for r in rows
     ]
