@@ -113,7 +113,7 @@ def add_index(cursor, table: str) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--dry-run", action="store_true", help="show actions, write nothing")
+    ap.add_argument("--apply", action="store_true", help="actually run ALTER TABLE (default: dry-run)")
     ap.add_argument(
         "--only",
         help="comma-separated table allowlist (default: all Genefunc_* tables)",
@@ -147,7 +147,7 @@ def main() -> int:
             skipped_index += 1
             continue
 
-        if args.dry_run:
+        if args.dry_run or not args.apply:
             print(f"{prefix} WOULD ADD INDEX {INDEX_NAME} (Chrom, Start1, End1)")
             done += 1
             continue
