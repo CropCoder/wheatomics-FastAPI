@@ -527,15 +527,24 @@ def list_genome_examples() -> dict:
         cursor.execute(sql)
         rows = cursor.fetchall()
 
+    def _ensure_range(chr_id):
+        # example_chr_id may store only a chromosome (e.g. "chr1A") without
+        # a start-end range. The interval frontend expects "chr:start-end",
+        # so append a default 1-5000000 window when no ":" is present.
+        s = (chr_id or "").strip()
+        if not s:
+            return s
+        return s if ":" in s else f"{s}:1-5000000"
+
     examples = [
         {
             "table_name":   r.get("display_name"),
             "display_name": r.get("display_name"),
             # Frontend keys are region / gene / pfam for backward compat.
-            "region":       r.get("example_chr_id"),
+            "region":       _ensure_range(r.get("example_chr_id")),
             "gene":         r.get("example_gene_id"),
-            # Genefunc_registry has no Pfam-domain column; leave empty.
-            "pfam":         "",
+            # Genefunc_registry has no Pfam-domain column; use a default.
+            "pfam":         "PF00931",
         }
         for r in rows
     ]
