@@ -560,10 +560,25 @@ def list_genome_examples() -> dict:
             return s
         return s if ":" in s else f"{s}:1-5000000"
 
+    def _friendly_name(tbl):
+        # Turn `Genefunc_<species>_<cultivar>_table` into a short human
+        # label like `ploidy_<species>_<cultivar>` for the interval
+        # dropdown. Falls back to the raw name if the pattern doesn't
+        # match. table_name itself is unchanged so the interval query
+        # (`?table=...`) keeps working.
+        if not tbl:
+            return tbl
+        s = tbl
+        if s.startswith("Genefunc_"):
+            s = s[len("Genefunc_"):]
+        if s.endswith("_table"):
+            s = s[:-len("_table")]
+        return f"ploidy_{s}"
+
     examples = [
         {
             "table_name":   r.get("display_name"),
-            "display_name": r.get("display_name"),
+            "display_name": _friendly_name(r.get("display_name")),
             # Frontend keys are region / gene / pfam for backward compat.
             "region":       _ensure_range(r.get("example_chr_id")),
             "gene":         r.get("example_gene_id"),
