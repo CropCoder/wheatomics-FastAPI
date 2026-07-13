@@ -147,7 +147,7 @@ def main() -> int:
             skipped_index += 1
             continue
 
-        if args.dry_run or not args.apply:
+        if not args.apply:
             print(f"{prefix} WOULD ADD INDEX {INDEX_NAME} (Chrom, Start1, End1)")
             done += 1
             continue
