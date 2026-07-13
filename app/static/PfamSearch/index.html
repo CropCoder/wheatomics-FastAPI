@@ -251,19 +251,16 @@ $(function() { loadTables(); });
 
 function loadTables() {
   $('#table-select').html('<option>Loading...</option>');
-  $.getJSON('/api/genes/functions/tables')
+  $.getJSON('/api/genes/functions/examples')
     .done(function(resp) {
       if (!resp.success) { showError('Failed to load tables'); return; }
       var sel = $('#table-select').empty();
       var supported = 0;
-      resp.data.tables.forEach(function(t) {
+      resp.data.examples.forEach(function(t) {
         var cols = (t.columns || []).map(function(c) { return c.toLowerCase(); });
-        var hasDomain = cols.indexOf('domain') >= 0;
-        var hasChrom = cols.indexOf('chrom') >= 0;
-        if (!hasDomain || !hasChrom) return;
-        tableInfo[t.name] = t;
-        var label = t.name + (t.rows ? ' (' + t.rows.toLocaleString() + ' rows)' : '');
-        sel.append($('<option>').val(t.name).text(label));
+        if (cols.indexOf('domain') < 0) return;
+        tableInfo[t.table_name] = t;
+        sel.append($('<option>').val(t.table_name).text(t.display_name));
         supported++;
       });
       if (supported === 0) {
