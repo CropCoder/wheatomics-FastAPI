@@ -547,7 +547,7 @@ def list_genome_examples() -> dict:
     # endpoint does the same thing).
     sql = """
         SELECT table_name AS display_name, example_chr_id,
-               example_gene_id
+               example_gene_id, COALESCE(Polyploidy, '') AS polyploidy
         FROM Genefunc_registry
         WHERE visible = 1
         ORDER BY display_order, id
@@ -567,10 +567,11 @@ def list_genome_examples() -> dict:
 
     def _friendly_name(tbl):
         # Turn `Genefunc_<species>_<cultivar>_table` into a short human
-        # label like `ploidy_<species>_<cultivar>` for the interval
-        # dropdown. Falls back to the raw name if the pattern doesn't
-        # match. table_name itself is unchanged so the interval query
-        # (`?table=...`) keeps working.
+        # label like `<Polyploidy>_<species>_<cultivar>` for the interval
+        # dropdown, where `<Polyploidy>` comes from the Genefunc_registry
+        # row (e.g. AABBDD / AABB / AA / DD / SS). Falls back to the raw
+        # name if the pattern doesn't match. table_name itself is
+        # unchanged so the interval query (`?table=...`) keeps working.
         if not tbl:
             return tbl
         s = tbl
@@ -578,12 +579,16 @@ def list_genome_examples() -> dict:
             s = s[len("Genefunc_"):]
         if s.endswith("_table"):
             s = s[:-len("_table")]
-        return f"ploidy_{s}"
+        return s
 
     examples = [
         {
             "table_name":   r.get("display_name"),
-            "display_name": _friendly_name(r.get("display_name")),
+            "display_name": (
+                f"{r['polyploidy']}_{_friendly_name(r.get('display_name'))}"
+                if r.get("polyploidy")
+                else _friendly_name(r.get("display_name"))
+            ),
             # Frontend keys are region / gene / pfam for backward compat.
             "region":       _ensure_range(r.get("example_chr_id")),
             "gene":         r.get("example_gene_id"),
