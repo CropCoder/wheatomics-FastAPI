@@ -458,22 +458,46 @@ def list_gene_function_tables() -> dict:
 
     tables: list[dict] = []
     with mysql_cursor(settings.DB_GENEFUNC) as cursor:
-        cursor.execute("SHOW TABLES")
-        all_tables = [list(row.values())[0] for row in cursor.fetchall()]
+        # Pull row counts and column names from information_schema in two
+        # queries instead of running SHOW TABLES + COUNT(*) + DESCRIBE per
+        # table (88 tables × 2 queries = 176 round-trips, ~68s). The
+        # registry rarely changes, so approximate table_rows is fine.
+        cursor.execute(
+            """
+            SELECT TABLE_NAME, TABLE_ROWS
+            FROM information_schema.tables
+            WHERE TABLE_SCHEMA = %s
+            """,
+            (settings.DB_GENEFUNC,),
+        )
+        rows_map = {
+            row["TABLE_NAME"]: row.get("TABLE_ROWS")
+            for row in cursor.fetchall()
+        }
 
-        for tbl_name in sorted(all_tables):
-            info: dict = {"name": tbl_name}
-            try:
-                cursor.execute(f"SELECT COUNT(*) FROM `{tbl_name}`")
-                info["rows"] = list(cursor.fetchone().values())[0]
-            except Exception:
-                info["rows"] = None
-            try:
-                cursor.execute(f"DESCRIBE `{tbl_name}`")
-                info["columns"] = [list(row.values())[0] for row in cursor.fetchall()]
-            except Exception:
-                info["columns"] = []
-            tables.append(info)
+        cursor.execute(
+            """
+            SELECT TABLE_NAME, COLUMN_NAME
+            FROM information_schema.columns
+            WHERE TABLE_SCHEMA = %s
+            ORDER BY TABLE_NAME, ORDINAL_POSITION
+            """,
+            (settings.DB_GENEFUNC,),
+        )
+        cols_map: dict[str, list[str]] = {}
+        for row in cursor.fetchall():
+            cols_map.setdefault(row["TABLE_NAME"], []).append(
+                row["COLUMN_NAME"]
+            )
+
+    for tbl_name in sorted(rows_map):
+        tables.append(
+            {
+                "name": tbl_name,
+                "rows": rows_map[tbl_name],
+                "columns": cols_map.get(tbl_name, []),
+            }
+        )
 
     return ok({"database": "Genefuncdb", "total_tables": len(tables), "tables": tables})
 
