@@ -128,7 +128,7 @@ def main() -> int:
     candidates = [t for t in tables if allow is None or t in allow]
 
     print(f"DB: {DB_USER}@{DB_HOST}:{DB_PORT}/{DB_NAME}")
-    print(f"tables listed: {len(candidates)}  dry_run={args.dry_run}")
+    print(f"tables listed: {len(candidates)}  apply={args.apply}")
     print()
 
     done = skipped_index = skipped_cols = failed = 0
