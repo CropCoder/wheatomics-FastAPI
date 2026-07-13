@@ -87,8 +87,8 @@ def main() -> int:
 
     cursor.execute(
         """
-        SELECT id, table_name, COALESCE(chromosome_level, '') AS chrom,
-               COALESCE(Polyploidy, '') AS ploidy,
+        SELECT id, table_name, COALESCE(Polyploidy, '') AS ploidy,
+               COALESCE(chromosome_level, '') AS chrom,
                COALESCE(`Group`, '') AS grp, display_order
         FROM Genefunc_registry
         WHERE visible = 1
@@ -96,10 +96,14 @@ def main() -> int:
     )
     rows = cursor.fetchall()
 
+    # NOTE: in this DB the `Polyploidy` column holds genome-composition
+    # letters (AABBDD / AABB / AA / DD / SS / ...), NOT ploidy words.
+    # `chromosome_level` is a Yes/No flag for assembly level. Sort by the
+    # composition letters in Polyploidy using the AABBDD-priority map.
     rows.sort(
         key=lambda r: (
-            chrom_rank(r["chrom"]),
-            (r["chrom"] or "").lower(),
+            chrom_rank(r["ploidy"]),
+            (r["ploidy"] or "").lower(),
             (r["table_name"] or "").lower(),
             r["id"],
         )
@@ -108,13 +112,13 @@ def main() -> int:
     print(f"DB: {DB_USER}@{DB_HOST}:{DB_PORT}/{DB_NAME}")
     print(f"mode: {'APPLY' if args.apply else 'DRY-RUN'}  rows: {len(rows)}")
     print()
-    print(f"{'new':>4}  {'old':>4}  {'chrom':<10} {'ploidy':<16} table_name")
+    print(f"{'new':>4}  {'old':>4}  {'ploidy':<12} {'chromlvl':<10} table_name")
     print("-" * 80)
     to_update = []
     for new_order, r in enumerate(rows, 1):
         old = r["display_order"]
         flag = "" if old == new_order else "  <- change"
-        print(f"{new_order:>4}  {old!s:>4}  {r['chrom']:<10} {r['ploidy']:<16} {r['table_name']}{flag}")
+        print(f"{new_order:>4}  {old!s:>4}  {r['ploidy']:<12} {r['chrom']:<10} {r['table_name']}{flag}")
         if old != new_order:
             to_update.append((new_order, r["id"], r["table_name"]))
 
