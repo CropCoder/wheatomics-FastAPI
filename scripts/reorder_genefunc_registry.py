@@ -44,11 +44,33 @@ GROUP_PRIORITY = {
     "other triticeae": 5,
 }
 
+# Within the Diploid and Other-Triticeae groups, sort by the ploidy
+# letters (Polyploidy column) before table_name. AABBDD/AABB/AA/DD/SS get
+# a fixed priority; anything else falls to 6 and sorts alphabetically.
+PLOIDY_LETTER_PRIORITY = {
+    "aabbdd": 1,
+    "aabb": 2,
+    "aa": 3,
+    "dd": 4,
+    "ss": 5,
+}
+
+PLOIDY_SORTED_GROUPS = {"diploid", "other triticeae"}
+
 
 def group_rank(value):
     if not value:
         return 99
     return GROUP_PRIORITY.get(value.strip().lower(), 50)
+
+
+def ploidy_rank_for(group_value, ploidy_value):
+    """Ploidy-based rank, but only for Diploid / Other Triticeae groups."""
+    if (group_value or "").strip().lower() not in PLOIDY_SORTED_GROUPS:
+        return 0
+    if not ploidy_value:
+        return 6
+    return PLOIDY_LETTER_PRIORITY.get(ploidy_value.strip().lower(), 6)
 
 
 def connect():
@@ -92,7 +114,11 @@ def main() -> int:
     rows.sort(
         key=lambda r: (
             group_rank(r["grp"]),
-            (r["grp"] or "").lower(),
+            ploidy_rank_for(r["grp"], r["ploidy"]),
+            # for Diploid/Other Triticeae: tiebreak by ploidy letters,
+            # then table_name; for other groups ploidy_rank_for is 0 so
+            # this collapses to table_name order.
+            (r["ploidy"] or "").lower() if (r["grp"] or "").strip().lower() in PLOIDY_SORTED_GROUPS else "",
             (r["table_name"] or "").lower(),
             r["id"],
         )
