@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Renumber Genefunc_registry.display_order by ploidy group + table name.
+"""Renumber Genefunc_registry.display_order by chromosome_level + table name.
 
-Orders the 86 visible genomes so the dropdown shows hexaploid common wheat
-first, then tetraploids, then diploids, then everything else — and within
-each group, alphabetically by table_name. display_order is reassigned
-1, 2, 3, ... continuously.
+Orders the 86 visible genomes so the dropdown shows AABBDD (hexaploid
+common wheat) first, then AABB (tetraploid), then the diploid subgenome
+donors AA, DD, SS, then everything else — and within each group,
+alphabetically by table_name. display_order is reassigned 1, 2, 3, ...
+continuously.
 
 Run on the server (UPDATE is DML, so wheatomics_user is enough):
 
@@ -14,13 +15,15 @@ Run on the server (UPDATE is DML, so wheatomics_user is enough):
     # apply
     python3 scripts/reorder_genefunc_registry.py --apply
 
-Ploidy priority (lowest = shown first):
-    Allohexaploid / Hexaploid   -> 1   (common wheat AABBDD)
-    Allotetraploid / Tetraploid -> 2
-    Diploid                     -> 3
-    <other>                     -> 4   (sorted alphabetically within)
-Unknown/NULL ploidy falls into group 4. Within a group, ties break by
-table_name (case-insensitive), then by id.
+chromosome_level priority (lowest = shown first):
+    AABBDD -> 1   (hexaploid common wheat)
+    AABB   -> 2   (tetraploid)
+    AA     -> 3   (A-subgenome diploid donor)
+    DD     -> 4   (D-subgenome diploid donor)
+    SS     -> 5   (S-subgenome diploid donor)
+    <other> -> 6  (sorted alphabetically within)
+Unknown/NULL chromosome_level falls into group 6. Within a group, ties
+break by table_name (case-insensitive), then by id.
 """
 
 from __future__ import annotations
@@ -41,20 +44,19 @@ DB_USER = os.environ.get("DB_USER", "wheatomics_user")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "wheatomics115599")
 DB_NAME = os.environ.get("DB_GENEFUNC", "Genefuncdb")
 
-PLOIDY_PRIORITY = {
-    "allohexaploid": 1,
-    "hexaploid": 1,
-    "allotetraploid": 2,
-    "tetraploid": 2,
-    "amphidiploid": 2,
-    "diploid": 3,
+CHROM_PRIORITY = {
+    "aabbdd": 1,
+    "aabb": 2,
+    "aa": 3,
+    "dd": 4,
+    "ss": 5,
 }
 
 
-def ploidy_rank(value):
+def chrom_rank(value):
     if not value:
-        return 4
-    return PLOIDY_PRIORITY.get(value.strip().lower(), 4)
+        return 6
+    return CHROM_PRIORITY.get(value.strip().lower(), 6)
 
 
 def connect():
@@ -85,7 +87,8 @@ def main() -> int:
 
     cursor.execute(
         """
-        SELECT id, table_name, COALESCE(Polyploidy, '') AS ploidy,
+        SELECT id, table_name, COALESCE(chromosome_level, '') AS chrom,
+               COALESCE(Polyploidy, '') AS ploidy,
                COALESCE(`Group`, '') AS grp, display_order
         FROM Genefunc_registry
         WHERE visible = 1
@@ -95,8 +98,8 @@ def main() -> int:
 
     rows.sort(
         key=lambda r: (
-            ploidy_rank(r["ploidy"]),
-            (r["ploidy"] or "").lower(),
+            chrom_rank(r["chrom"]),
+            (r["chrom"] or "").lower(),
             (r["table_name"] or "").lower(),
             r["id"],
         )
@@ -105,13 +108,13 @@ def main() -> int:
     print(f"DB: {DB_USER}@{DB_HOST}:{DB_PORT}/{DB_NAME}")
     print(f"mode: {'APPLY' if args.apply else 'DRY-RUN'}  rows: {len(rows)}")
     print()
-    print(f"{'new':>4}  {'old':>4}  {'ploidy':<16} {'group':<14} table_name")
+    print(f"{'new':>4}  {'old':>4}  {'chrom':<10} {'ploidy':<16} table_name")
     print("-" * 80)
     to_update = []
     for new_order, r in enumerate(rows, 1):
         old = r["display_order"]
         flag = "" if old == new_order else "  <- change"
-        print(f"{new_order:>4}  {old!s:>4}  {r['ploidy']:<16} {r['grp']:<14} {r['table_name']}{flag}")
+        print(f"{new_order:>4}  {old!s:>4}  {r['chrom']:<10} {r['ploidy']:<16} {r['table_name']}{flag}")
         if old != new_order:
             to_update.append((new_order, r["id"], r["table_name"]))
 
