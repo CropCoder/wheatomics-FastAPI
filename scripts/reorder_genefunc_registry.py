@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Renumber Genefunc_registry.display_order by Group + table name.
 
-Orders the 86 visible genomes by the `Group` column (alphabetical), and
-within each group by table_name (alphabetical). display_order is
-reassigned 1, 2, 3, ... continuously.
+Orders the 86 visible genomes by the `Group` column using a fixed
+priority (Allohexaploid -> Tetraploid -> Diploid -> Barley -> Other
+Triticeae), and within each group by table_name (alphabetical).
+display_order is reassigned 1, 2, 3, ... continuously.
 
 Run on the server (UPDATE is DML, so wheatomics_user is enough):
 
@@ -13,7 +14,8 @@ Run on the server (UPDATE is DML, so wheatomics_user is enough):
     # apply
     python3 scripts/reorder_genefunc_registry.py --apply
 
-Rows with NULL/empty Group sort last (then by table_name).
+Any Group value not in the priority map sorts after the known ones
+(alphabetically). Empty Group sorts last.
 """
 
 from __future__ import annotations
@@ -33,6 +35,20 @@ DB_PORT = int(os.environ.get("DB_PORT", "3306"))
 DB_USER = os.environ.get("DB_USER", "wheatomics_user")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "wheatomics115599")
 DB_NAME = os.environ.get("DB_GENEFUNC", "Genefuncdb")
+
+GROUP_PRIORITY = {
+    "allohexaploid": 1,
+    "tetraploid": 2,
+    "diploid": 3,
+    "barley": 4,
+    "other triticeae": 5,
+}
+
+
+def group_rank(value):
+    if not value:
+        return 99
+    return GROUP_PRIORITY.get(value.strip().lower(), 50)
 
 
 def connect():
@@ -75,7 +91,8 @@ def main() -> int:
 
     rows.sort(
         key=lambda r: (
-            (r["grp"] or "").lower() or "~~~",   # empty Group sorts last
+            group_rank(r["grp"]),
+            (r["grp"] or "").lower(),
             (r["table_name"] or "").lower(),
             r["id"],
         )
