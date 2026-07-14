@@ -255,10 +255,7 @@ def get_known_gene(gene_id: str) -> dict:
         author=normalize_text(row.get("author")) or None,
         author_mail=normalize_text(row.get("author_mail")) or None,
         submission_date=row.get("submission_date"),
-        publication_year=row.get("publication_year"),
-        function_description=normalize_text(row.get("function_description")) or None,
-        cloning_method=normalize_text(row.get("cloning_method")) or None,
-        cloning_method_description=normalize_text(row.get("cloning_method_description")) or None,
+    )
     )
     return ok(detail.model_dump())
 
