@@ -81,9 +81,12 @@ def search_known_genes(search: str = Query(..., alias="searchid")) -> dict:
         OR gene_phenotype LIKE %s
         OR gene_species LIKE %s
         OR paper_doi LIKE %s
+        OR function_description LIKE %s
+        OR cloning_method LIKE %s
+        OR paper_title LIKE %s
     """
     with mysql_cursor(settings.DB_CLONED_GENE) as cursor:
-        cursor.execute(sql, (pattern, pattern, pattern, pattern, pattern, pattern))
+        cursor.execute(sql, (pattern, pattern, pattern, pattern, pattern, pattern, pattern, pattern, pattern))
         rows = cursor.fetchall()
 
     records = [
@@ -252,6 +255,10 @@ def get_known_gene(gene_id: str) -> dict:
         author=normalize_text(row.get("author")) or None,
         author_mail=normalize_text(row.get("author_mail")) or None,
         submission_date=row.get("submission_date"),
+        publication_year=row.get("publication_year"),
+        function_description=normalize_text(row.get("function_description")) or None,
+        cloning_method=normalize_text(row.get("cloning_method")) or None,
+        cloning_method_description=normalize_text(row.get("cloning_method_description")) or None,
     )
     return ok(detail.model_dump())
 

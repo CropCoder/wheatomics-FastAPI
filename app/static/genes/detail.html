@@ -170,22 +170,28 @@ html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-ser
     </div>
 
     <div class="row mb-3">
-      <div class="col-md-4 mb-2">
+      <div class="col-md-3 mb-2">
         <div class="meta-card">
           <div class="meta-label">Chromosome</div>
           <div class="meta-value" id="d-chrom">—</div>
         </div>
       </div>
-      <div class="col-md-4 mb-2">
+      <div class="col-md-3 mb-2">
         <div class="meta-card">
           <div class="meta-label">Species</div>
           <div class="meta-value" id="d-species">—</div>
         </div>
       </div>
-      <div class="col-md-4 mb-2">
+      <div class="col-md-3 mb-2">
         <div class="meta-card">
           <div class="meta-label">Phenotype</div>
           <div class="meta-value" id="d-phenotype">—</div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-2">
+        <div class="meta-card">
+          <div class="meta-label">Publication year</div>
+          <div class="meta-value" id="d-pubyear">—</div>
         </div>
       </div>
     </div>
@@ -195,15 +201,16 @@ html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-ser
       <ul id="d-key-result"><li class="text-muted">No key results recorded.</li></ul>
     </div>
 
-    <div class="section-card" id="sec-function" hidden>
-      <h5>Function</h5>
+    <div class="section-card" id="card-func" hidden>
+      <h5>Function description</h5>
       <p id="d-function" class="text-muted">—</p>
     </div>
 
-    <div class="section-card" id="sec-cloning" hidden>
+    <div class="section-card" id="card-cloning" hidden>
       <h5>Cloning method</h5>
       <p id="d-cloning-method" class="text-muted">—</p>
-      <p id="d-cloning-desc" class="text-muted" hidden></p>
+      <h6 class="mt-3" id="d-cloning-desc-label" hidden>Details</h6>
+      <p id="d-cloning-desc" class="text-muted"></p>
     </div>
 
     <div class="section-card">
@@ -283,6 +290,23 @@ function renderDetail(d) {
   $('#d-chrom').text(d.chrom_pos || '—');
   $('#d-species').text(d.species || '—');
   $('#d-phenotype').text(d.phenotype || '—');
+  $('#d-pubyear').text(d.publication_year || '—');
+
+  // Function description
+  if (d.function_description) {
+    $('#d-function').text(d.function_description);
+    $('#card-func').prop('hidden', false);
+  }
+
+  // Cloning method + description
+  if (d.cloning_method) {
+    $('#d-cloning-method').text(d.cloning_method);
+    if (d.cloning_method_description) {
+      $('#d-cloning-desc').text(d.cloning_method_description);
+      $('#d-cloning-desc-label, #d-cloning-desc').prop('hidden', false);
+    }
+    $('#card-cloning').prop('hidden', false);
+  }
 
   // References
   var refs = d.references || [];
@@ -316,34 +340,6 @@ function renderDetail(d) {
     });
     if (!html) html = '<li class="text-muted">No key results recorded.</li>';
     $('#d-key-result').html(html);
-  }
-
-  // Publication year — show in meta
-  if (d.publication_year) {
-    metaBits.push('Published: ' + esc(d.publication_year));
-    $('#d-meta').html(metaBits.join(' &nbsp;|&nbsp; '));
-    $('#d-meta').show();
-  }
-
-  // Function description
-  if (d.function_description) {
-    $('#d-function').text(d.function_description);
-    $('#sec-function').prop('hidden', false);
-  } else {
-    $('#sec-function').prop('hidden', true);
-  }
-
-  // Cloning method
-  if (d.cloning_method) {
-    $('#d-cloning-method').text('Method: ' + esc(d.cloning_method));
-    $('#sec-cloning').prop('hidden', false);
-    if (d.cloning_method_description) {
-      $('#d-cloning-desc').text(esc(d.cloning_method_description)).prop('hidden', false);
-    } else {
-      $('#d-cloning-desc').prop('hidden', true);
-    }
-  } else {
-    $('#sec-cloning').prop('hidden', true);
   }
 
   // Submitter

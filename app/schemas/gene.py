@@ -46,6 +46,10 @@ class KnownGeneDetail(BaseModel):
     author: str | None = None
     author_mail: str | None = None
     submission_date: date | str | None = None
+    publication_year: int | str | None = None
+    function_description: str | None = None
+    cloning_method: str | None = None
+    cloning_method_description: str | None = None
 
 
 class GeneDetailResponse(BaseModel):
