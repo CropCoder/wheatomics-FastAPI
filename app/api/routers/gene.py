@@ -256,7 +256,6 @@ def get_known_gene(gene_id: str) -> dict:
         author_mail=normalize_text(row.get("author_mail")) or None,
         submission_date=row.get("submission_date"),
     )
-    )
     return ok(detail.model_dump())
 
 
