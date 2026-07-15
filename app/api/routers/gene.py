@@ -248,7 +248,7 @@ def get_known_gene(gene_id: str) -> dict:
         paper_title=titles,
         references=references,
         key_result=split_legacy_multi_value(row.get("key_result")),
-        publication_year=str(row.get("publication_year", "")) or None,
+        publication_year=row.get("publication_year"),
         function_description=normalize_text(row.get("function_description")) or None,
         cloning_method=normalize_text(row.get("cloning_method")) or None,
         cloning_method_description=normalize_text(row.get("cloning_method_description")) or None,

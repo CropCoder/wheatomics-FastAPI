@@ -39,17 +39,13 @@ class KnownGeneDetail(BaseModel):
     paper_title: list[str] = Field(default_factory=list)
     references: list[DOIReference] = Field(default_factory=list)
     key_result: list[str] = Field(default_factory=list)
-    publication_year: str | None = None
+    publication_year: int | str | None = None
     function_description: str | None = None
     cloning_method: str | None = None
     cloning_method_description: str | None = None
     author: str | None = None
     author_mail: str | None = None
     submission_date: date | str | None = None
-    publication_year: int | str | None = None
-    function_description: str | None = None
-    cloning_method: str | None = None
-    cloning_method_description: str | None = None
 
 
 class GeneDetailResponse(BaseModel):
