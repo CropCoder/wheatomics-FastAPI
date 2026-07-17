@@ -414,7 +414,8 @@ function renderAllResults() {
 }
 
 function formatEvalue(val) {
-  if (val == null || val === 0) return '-';
+  if (val == null) return '-';
+  if (val === 0) return '0.0';
   if (val < 1e-100) return val.toExponential(1);
   if (val < 0.001) return val.toExponential(2);
   return val.toFixed(4);
