@@ -394,14 +394,27 @@ def _build_crosswalk(meta: dict) -> tuple[dict, dict]:
 # API endpoints  (raw JSON matching PHP api.php format)
 # ===================================================================
 
-@router.get("/api.php", summary="Main search endpoint (PHP-compatible)")
+@router.get(
+    "/api.php",
+    summary="Search by protein ID / orthogroup ID / species catalog / members / positions",
+    description="""PHP api.php compatible endpoint that dispatches based on `action`:
+
+**action=search** (default) — Search a protein/gene ID to find its orthogroup.
+Returns OG members, gene tree (Newick), cluster info, tree_label_map, debug_prune.
+
+**action=species_catalog** — List all species from the cluster file.
+
+**action=members** — List OG members filtered by subgenome (A/B/D). Requires `og` and `sub`.
+
+**action=positions** — Return chromosome positions for OG genes. Supports optional `cluster` filter.
+""",)
 def search_php(
-    q: str = Query("", description="Protein ID or OG ID"),
-    action: str = Query("search", description="action: search|species_catalog|members|positions"),
-    og: str = Query("", description="OG ID for members/positions actions"),
-    sub: str = Query("", description="Subgenome filter for members"),
-    cluster: int = Query(0, description="Cluster filter for positions"),
-    _: int = Query(0, description="Cache-buster"),
+    q: str = Query("", description="Protein/gene ID (e.g. TraesAK58CH1A01G000600.1) or orthogroup ID (OG0001234). Used when action=search."),
+    action: str = Query("search", description="Action: 'search' (default) | 'species_catalog' | 'members' | 'positions'"),
+    og: str = Query("", description="Orthogroup ID, required for action=members and action=positions"),
+    sub: str = Query("", description="Subgenome filter (A/B/D), used with action=members"),
+    cluster: int = Query(0, description="Cluster filter (1-7), used with action=positions"),
+    _: int = Query(0, description="Cache-buster (optional)"),
 ):
     """PHP api.php compatible endpoint — returns unwrapped JSON."""
     if action == "species_catalog":
@@ -582,10 +595,19 @@ def search_php(
 # download
 # ---------------------------------------------------------------------------
 
-@router.get("/download", summary="Download tree or alignment")
+@router.get(
+    "/download",
+    summary="Download gene tree (Newick) or multiple sequence alignment (FASTA)",
+    description="""Download orthogroup data files:
+
+**type=tree** — Gene tree in Newick format. Add `cluster=N` (1-7) to prune to cluster members only.
+
+**type=alignment** — Multiple sequence alignment in FASTA format, ordered by tree leaf order.
+""",)
 def download_file(
-    og: str = Query(...), type: str = Query("tree"),
-    cluster: int = Query(0),
+    og: str = Query(..., description="Orthogroup ID, e.g. OG0001897"),
+    type: str = Query("tree", description="File type: 'tree' or 'alignment'"),
+    cluster: int = Query(0, description="Cluster number (1-7). Only applies to type=tree. 0 = full OG tree."),
 ):
     if not re.match(r"^OG\d+$", og):
         raise HTTPException(400, "Invalid OG ID")
