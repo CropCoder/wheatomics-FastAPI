@@ -11,6 +11,8 @@
 PROJECT_DIR="/var/www/FastAPI_backend_Port8000"
 LOG_FILE="$PROJECT_DIR/git_update.log"
 BRANCH="main"  # 如果默认分支是 master，请修改此处
+# 固定从 Gitee 拉取（不要依赖 git remote 配置 — 服务器上 origin 可能指向 GitHub）
+REMOTE_URL="https://gitee.com/zaojewin/wheatomics-FastAPI.git"
 
 # 进入项目目录
 cd "$PROJECT_DIR" || { echo "[$(date '+%F %T')] FATAL: cannot cd to $PROJECT_DIR" >> "$LOG_FILE"; exit 1; }
@@ -23,17 +25,17 @@ log() { echo "[$(TIMESTAMP)] $*" >> "$LOG_FILE"; }
 
 # 入口分隔符
 echo "--------------------------------------------------" >> "$LOG_FILE"
-log "auto_pull.sh invoked (origin=$(git remote get-url origin 2>/dev/null || echo 'unset'), branch=$BRANCH)"
+log "auto_pull.sh invoked (remote=$REMOTE_URL, branch=$BRANCH)"
 
 # 1) 探测远程（捕获错误到 log）
-if ! git fetch origin "$BRANCH" >> "$LOG_FILE" 2>&1; then
-    log "FETCH FAILED (exit=$?). Check SSH key / HTTPS credentials."
+if ! git fetch "$REMOTE_URL" "$BRANCH" >> "$LOG_FILE" 2>&1; then
+    log "FETCH FAILED (exit=$?). Check SSH key / HTTPS credentials for Gitee."
     exit 1
 fi
 
-# 2) 比较 hash
+# 2) 比较 hash（FETCH_HEAD 指向刚刚 fetch 的 commit）
 LOCAL=$(git rev-parse HEAD)
-REMOTE=$(git rev-parse "origin/$BRANCH")
+REMOTE=$(git rev-parse FETCH_HEAD)
 
 if [ "$LOCAL" = "$REMOTE" ]; then
     log "no update (HEAD already at $LOCAL)"
@@ -42,7 +44,7 @@ fi
 
 # 3) 拉取
 log "detected update: $LOCAL -> $REMOTE"
-if ! git reset --hard "origin/$BRANCH" >> "$LOG_FILE" 2>&1; then
+if ! git reset --hard FETCH_HEAD >> "$LOG_FILE" 2>&1; then
     log "RESET FAILED (exit=$?)"
     exit 1
 fi
