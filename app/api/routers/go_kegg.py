@@ -143,6 +143,7 @@ def go_enrichment(req: EnrichmentRequest):
                 return {"N": N, "n": 0, "results": [], "gene_count": len(genes)}
 
             # Overlap counts
+            ph = ",".join(["%s"] * len(valid))
             cur.execute(
                 f"SELECT go_id, COUNT(DISTINCT gene_id) AS k FROM gene_go WHERE gene_id IN ({ph}) GROUP BY go_id",
                 valid,
@@ -225,6 +226,8 @@ def kegg_enrichment(req: EnrichmentRequest):
             if n == 0:
                 return {"N": N, "n": 0, "results": [], "gene_count": len(genes)}
 
+            # Overlap via gene_kegg -> ko_pathway
+            ph = ",".join(["%s"] * len(valid))
             cur.execute(
                 f"""
                 SELECT kp.pathway, COUNT(DISTINCT gk.gene_id) AS k
