@@ -45,6 +45,27 @@
 
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.bundle.js"></script>
+<script>
+$(function(){
+  $("#header").load("/header.html");
+  // After header loads, add our menu entry
+  setTimeout(function(){
+    var ul = document.querySelector('#header-tabs ul li ul');
+    if (ul) {
+      var li = document.createElement('li');
+      li.innerHTML = '<a href="/GO_KEGG">GO/KEGG Enrichment</a>';
+      // Insert before SyntenySearch
+      var items = ul.querySelectorAll('li a');
+      for (var i=0; i<items.length; i++) {
+        if (items[i].getAttribute('href') === '/symap/index.html') {
+          ul.insertBefore(li, items[i].parentNode);
+          break;
+        }
+      }
+    }
+  }, 500);
+});
+</script>
 <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
 
 <style>
@@ -121,48 +142,8 @@ html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-ser
 </head>
 <body>
 
-<!-- Header -->
-<div id="home_header">
-  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 2.0</span>
-</div>
-<div id="header-tabs">
-  <ul>
-    <li><a href="/"><span>Home</span></a></li>
-    <li><a href="#"><span>Tools/Browse</span></a>
-      <ul>
-        <li><a href="/getfasta/index.html">GetSequence</a></li>
-        <li><a href="/blast/blast.html">BLAST</a></li>
-        <li><a href="/PrimerServer">PrimerServer</a></li>
-        <li><a href="/snprimer">CAPS/KASP(Beta)</a></li>
-        <li><a href="/PfamSearch">PfamSearch</a></li>
-        <li><a href="/idConvert/">IDConvert</a></li>
-        <li><a href="/HomologFinder">HomologFinder</a></li>
-        <li><a href="/interval">IntervalTool</a></li>
-        <li><a href="/expression">GeneExpression</a></li>
-        <li><a href="/coexpression">Co-expression</a></li>
-        <li><a href="/wheatPPI">WheatPPI</a></li>
-        <li><a href="/genes">KnownGene</a></li>
-        <li><a href="/GO_KEGG">GO/KEGG Enrichment</a></li>
-        <li><a href="/symap/index.html">SyntenySearch</a></li>
-        <li><a href="/preblast">preBLAST</a></li>
-        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
-        <li><a href="/DWGVa.html">DWGVa</a></li>
-        <li><a href="/scRNA">scRNA</a></li>
-        <li><a href="/eqtl">eQTL Atlas</a></li>
-        <li><a href="/papers">Triticeae papers</a></li>
-      </ul>
-    </li>
-    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
-    <li><a href="/download.html"><span>Download Data</span></a></li>
-    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
-    <li><a href="#"><span>About</span></a>
-      <ul>
-        <li><a href="/help/contact.html">Contact</a></li>
-        <li><a href="/help/news.html">News</a></li>
-      </ul>
-    </li>
-  </ul>
-</div>
+<!-- Header dynamically loaded from /header.html -->
+<div id="header"></div>
 
 <!-- Main content -->
 <div class="page-title-wrap">
