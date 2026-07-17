@@ -79,7 +79,7 @@ app = FastAPI(
         "<td>基因及区间序列提取、预计算 BLAST 结果检索</td></tr>"
         "<tr><td><b>Triticeae Papers</b></td><td><code>/api/papers</code></td><td>小麦族研究文献筛选：基因/性状/置信度/AI标签多维过滤</td></tr><tr><td><b>Blast</b></td><td><code>/api/blast</code></td>"
         "<td>序列比对搜索（blastn/blastp/blastx/tblastn/tblastx）</td></tr>"
-        "<tr><td><b>OrthoFinder</b></td><td><code>/api/orthofinder</code></td><td>OrthoFinder orthogroup search: gene tree, MSA, homologous gene families</td></tr>"
+        "<tr><td><b>OrthoFinder</b></td><td><code>/api/orthofinder</code></td><td>OrthoFinder orthogroup browser: cluster-filtered gene tree, synteny, MSA download</td></tr>"
 "<tr><td><b>PrimerServer (SNP)</b></td><td><code>/api/tasks</code></td>"
         "<td>SNP 引物设计、特异性检查（PrimerServer 复刻）</td></tr>"
         "<tr><td><b>PrimerServer2</b></td><td><code>/api/PrimerServer2</code></td>"
