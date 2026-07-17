@@ -2,267 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <title>OrthoFinder Orthogroup Browser | WheatOmics</title>
   <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
-  <script src="/js/jquery/1.9.1/jquery.min.js"></script>
-
-<script>
-// ===== Visit tracking =====
-(function() {
-  var page = location.pathname || 'unknown';
-  try {
-    fetch('/api/track/visit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ page: page })
-    }).catch(function(){});
-  } catch (e) {}
-
-  function fmt(n) {
-    n = Number(n) || 0;
-    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
-    if (n >= 10000)   return (n / 1000).toFixed(3) + 'k';
-    return String(n);
-  }
-
-  function setHtml(html) {
-    var el = document.getElementById('visit-stats');
-    if (el) el.innerHTML = html;
-  }
-
-  fetch('/api/track/stats')
-    .then(function(r) { return r.json(); })
-    .then(function(resp) {
-      if (!resp || !resp.success) {
-        setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
-        return;
-      }
-      var d = resp.data;
-      var html =
-        '<span class="vs-pill vs-today" title="Today pageviews">' +
-          '<span class="vs-dot vs-dot-today"></span>' +
-          'Today <b>' + fmt(d.today.pv) + '</b></span>' +
-        '<span class="vs-pill vs-total" title="Total pageviews (since 2019-08-01)">' +
-          '<span class="vs-dot vs-dot-total"></span>' +
-          'Total <b>' + fmt(d.total.pv) + '</b></span>' +
-        '<span class="vs-pill vs-online" title="Visitors active in the last 15 minutes">' +
-          '<span class="vs-dot vs-dot-online"></span>' +
-          'Online <b>' + fmt(d.online) + '</b></span>';
-      setHtml(html);
-    })
-    .catch(function() {
-      setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
-    });
-})();</script>
-  <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
-  <style>
-    body { background: #f8f9fa; margin:0; padding:0; overflow-x:hidden; }
-    #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
-    #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
-    #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
-    #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
-    #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
-    #header-tabs li { display:inline-block !important; width:190px !important; }
-    #header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
-    #header-tabs a:hover { background:#98c1d9; color:#000000; }
-    #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
-    #header-tabs ul li ul { display:none !important; position:absolute; }
-    #header-tabs ul li:hover ul { display:block !important; }
-    #header-tabs ul li ul a { border-radius:0; }
-
-    #home_content { max-width: 1280px; margin: 26px auto 36px auto; padding: 0 15px; }
-
-    .tool-card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 28px 32px;
-      box-shadow: 0 3px 16px rgba(0,0,0,0.10);
-    }
-
-    h1 { text-align: center; margin: 0; color: #1f4e3d; font-size: 30px; }
-    .subtitle { text-align: center; color: #667; margin: 12px 0 26px 0; }
-
-    .search-box { display: flex; gap: 10px; max-width: 860px; margin: 0 auto 18px auto; }
-    .search-box input { flex:1; padding:12px 14px; font-size:15px; border:1px solid #bcc7d1; border-radius:6px; }
-    .search-box button { background:#26734d; color:#fff; border:none; border-radius:6px; padding:11px 22px; cursor:pointer; font-size:15px; }
-    .search-box button:hover { background:#1f5e3f; }
-
-    .species-select {
-      padding: 10px 12px; font-size: 14px;
-      border: 1px solid #bcc7d1; border-radius: 6px;
-      background: #fff; max-width: 220px;
-    }
-
-    #message { max-width:860px; margin:12px auto; color:#b00020; font-weight:bold; }
-
-    .summary-card { margin-top:24px; padding:18px 20px; background:#eef7f1; border-left:5px solid #26734d; border-radius:8px; display:flex; justify-content:space-between; gap:20px; align-items:center; flex-wrap:wrap; }
-    .label { color:#687685; font-size:13px; margin-bottom:6px; }
-    .og-title { font-size:18px; font-weight:bold; color:#18392b; }
-    .download-links a { display:inline-block; margin-left:12px; color:#0b65c2; text-decoration:none; font-weight:bold; }
-
-    h2 { margin-top:30px; padding-bottom:8px; border-bottom:1px solid #d8e0e6; color:#234; font-size:21px; }
-
-    /* cluster badge */
-    .cluster-badge {
-      display: inline-block; padding: 2px 10px; border-radius: 12px;
-      font-weight: bold; font-size: 13px; margin-left: 10px; vertical-align: middle;
-    }
-    .cluster-badge-1 { background: #e3f2fd; color: #1565c0; }
-    .cluster-badge-2 { background: #fce4ec; color: #c62828; }
-    .cluster-badge-3 { background: #e8f5e9; color: #2e7d32; }
-    .cluster-badge-4 { background: #fff3e0; color: #e65100; }
-    .cluster-badge-5 { background: #f3e5f5; color: #7b1fa2; }
-    .cluster-badge-6 { background: #e0f7fa; color: #00695c; }
-    .cluster-badge-7 { background: #fbe9e7; color: #4e342e; }
-
-    /* subgenome buttons */
-    .sub-summary { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-    .sub-btn {
-      padding: 8px 14px; border-radius: 5px; background: #fff;
-      cursor: pointer; border: 1px solid #ccc; font-size: 14px;
-    }
-    .sub-btn:hover { background: #f2f7f4; }
-    .sub-A { border-left: 5px solid #d73027; }
-    .sub-B { border-left: 5px solid #4575b4; }
-    .sub-D { border-left: 5px solid #1a9850; }
-    .sub-Other { border-left: 5px solid #777; }
-
-    #memberSelectBox { margin: 10px 0; }
-    #memberSelectBox select {
-      padding: 7px 10px; min-width: 260px;
-      border: 1px solid #bcc7d1; border-radius: 5px;
-    }
-    .gene-detail-list {
-      max-height: 240px; overflow: auto; font-family: Consolas, monospace;
-      font-size: 13px; line-height: 1.6; background: #fff;
-      border: 1px solid #ddd; padding: 10px;
-    }
-
-    .filter-input { width:100%; box-sizing:border-box; padding:10px 12px; margin-bottom:10px; border:1px solid #bcc7d1; border-radius:6px; }
-    .gene-grid { max-height:280px; overflow:auto; border:1px solid #d7dde3; border-radius:8px; background:#fafafa; padding:10px; display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:8px; }
-    .gene-item { background:#fff; border:1px solid #e1e6eb; border-radius:6px; padding:7px 9px; font-family:Consolas,monospace; font-size:13px; word-break:break-all; }
-    .gene-item.hit { background:#fff4d6; border-color:#e2b84b; }
-
-    .tree-toolbar { margin-bottom:8px; }
-    .tree-toolbar button { background:#26734d; color:#fff; border:none; border-radius:6px; padding:7px 13px; cursor:pointer; font-size:13px; margin-right:6px; }
-    .tree-toolbar button:hover { background:#1f5e3f; }
-
-    .tree-legend {
-      margin: 8px 0 10px 0; padding: 8px 10px; display: flex; gap: 18px;
-      flex-wrap: wrap; align-items: center; background: #fff;
-      border: 1px solid #d7dde3; border-radius: 6px; width: fit-content;
-    }
-    .legend-line { display: inline-block; width: 28px; height: 0; border-top: 2px solid #777; margin-right: 6px; vertical-align: middle; }
-    .legend-A { border-color: #d73027; }
-    .legend-B { border-color: #4575b4; }
-    .legend-D { border-color: #1a9850; }
-    .legend-Other { border-color: #777777; }
-
-    #treeBox { height:650px; overflow:auto; border:1px solid #d7dde3; border-radius:8px; background:#fff; }
-    #treeSvg { transform-origin:top left; }
-
-    #alignmentBox { overflow:auto; max-height:650px; background:#111; color:#eee; padding:14px; border-radius:8px; font-family:Consolas,monospace; font-size:13px; white-space:pre; line-height:1.45; }
-    .aa-gap { color:#777; }
-    .aa-stop { color:#ff7070; }
-    .aa-header { color:#66d9ef; font-weight:bold; }
-
-    /* synteny */
-    #syntenyBox {
-      overflow: auto; max-height: 800px; border: 1px solid #d7dde3;
-      border-radius: 8px; background: #fafafa; margin-top: 8px;
-    }
-    #syntenySvg { display: block; transform-origin: top left; }
-
-    /* visit stats footer */
-    .visit-stats { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-    .visit-stats .vs-pill {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 3px 8px; border-radius: 12px;
-      font-size: 11px; line-height: 1.4;
-      background: #f1f5f9; color: #334155;
-      border: 1px solid #e2e8f0;
-      transition: background 0.15s;
-    }
-    .visit-stats .vs-pill b { color: #0f172a; font-weight: 600; }
-    .visit-stats .vs-dot {
-      display: inline-block; width: 6px; height: 6px;
-      border-radius: 50%; background: #94a3b8;
-    }
-    .visit-stats .vs-dot-today  { background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.18); }
-    .visit-stats .vs-dot-total  { background: #3b82f6; }
-    .visit-stats .vs-dot-online { background: #f59e0b; animation: vs-pulse 1.6s ease-in-out infinite; }
-    .visit-stats .vs-loading { color: #64748b; }
-    .visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
-    .visit-stats .vs-error   { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
-    @keyframes vs-pulse {
-      0%, 100% { opacity: 1; }
-      50%      { opacity: 0.35; }
-    }
-  </style>
-
-  <!-- Baidu Tongji (async) -->
-  <script>
-  var _hmt = _hmt || [];
-  (function() {
-    var hm = document.createElement("script");
-    hm.src = "https://hm.baidu.com/hm.js?f76ca60fcad9ddaf7cb0c8548eab7808";
-    var s = document.getElementsByTagName("script")[0];
-    s.parentNode.insertBefore(hm, s);
-  })();
-  </script>
+  <link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
-<div id="home_header">
-  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
-</div>
-<div id="header-tabs">
-  <ul>
-    <li><a href="/"><span>Home</span></a></li>
-    <li><a href="#"><span>Tools/Browse</span></a>
-      <ul>
-                <li><a href="/getfasta/index.html">GetSequence</a></li>
-        <li><a href="/blast/blast.html">BLAST</a></li>
-        <li><a href="/PrimerServer">PrimerServer</a></li>
-        <li><a href="/snprimer">CAPS/KASP(Beta)</a></li>
-        <li><a href="/PfamSearch/">PfamSearch</a></li>
-        <li><a href="/idConvert/">IDConvert</a></li>
-        <li><a href="/HomologFinder/">HomologFinder</a></li>
-        <li><a href="/interval/">IntervalTool</a></li>
-        <li><a href="/expression/">GeneExpression</a></li>
-        <li><a href="/coexpression/index.html">Co-expression</a></li>
-        <li><a href="/wheatPPI/">WheatPPI</a></li>
-        <li><a href="/genes/">KnownGene</a></li>
-        <li><a href="/symap/index.html">SyntenySearch</a></li>
-        <li><a href="/preblast/">preBLAST</a></li>
-        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
-        <li><a href="DWGVa.html">DWGVa</a></li>
-        <li><a href="http://wheatomics.sdau.edu.cn/scRNA">scRNA</a></li>
-        <li><a href="http://wheatomics.sdau.edu.cn/eqtl">eQTL Atlas</a></li>
-        <li><a href="/orthofinder/">OrthoFinder</a></li>
-        <li><a href="/papers">Triticeae papers</a></li>
-      </ul>
-    </li>
-    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
-    <li><a href="/download.html"><span>Download Data</span></a></li>
-    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
-    <li><a href="#"><span>About</span></a>
-      <ul>
-        <li><a href="/help/contact.html">Contact</a></li>
-        <li><a href="/help/news.html">News</a></li>
-      </ul>
-    </li>
-  </ul>
-</div>
-
-<div id="home_content">
-  <div class="tool-card">
+<div id="siteHeader"></div>
+<main class="page-wrap">
+  <section class="tool-card">
     <h1>OrthoFinder Orthogroup Browser</h1>
-    <p class="subtitle">
-      Search a protein ID to view its orthogroup, cluster gene tree, synteny and downloadable files.
-    </p>
-
+    <p class="subtitle">Search a protein ID to view its orthogroup, cluster gene tree, synteny and downloadable files.</p>
     <form id="searchForm" class="search-box">
       <select id="speciesSelect" class="species-select" onchange="onSpeciesChange()">
         <option value="">-- Select species (optional) --</option>
@@ -273,40 +23,25 @@
         <option value="B">B subgenome</option>
         <option value="D">D subgenome</option>
       </select>
-      <input id="proteinInput" name="q" placeholder="e.g. TraesCS1A03G0053300.1">
+      <input id="proteinInput" name="q" placeholder="Example: TraesAK58CH1A01G123400.1">
       <button type="submit">Search</button>
     </form>
-    <p style="text-align:center;color:#888;margin:-4px 0 18px 0;font-size:14px;">Supports IWGSC v1 (01G) / v2 (02G) / v3 (03G), auto-conversion.</p>
-
     <div id="message"></div>
-
     <div id="result" style="display:none;">
       <div class="summary-card">
-        <div>
-          <div class="label">Orthogroup</div>
-          <div id="ogTitle" class="og-title"></div>
-          <span id="clusterBadge" class="cluster-badge" style="display:none;"></span>
-        </div>
+        <div><div class="label">Orthogroup</div><div id="ogTitle" class="og-title"></div><span id="clusterBadge" class="cluster-badge" style="display:none;"></span></div>
         <div class="download-links">
-          <a id="downloadTree" target="_blank" rel="noopener">Download tree (full OG)</a>
-          <a id="downloadClusterTree" target="_blank" rel="noopener" style="display:none;">Download cluster tree</a>
-          <a id="downloadAlignment" target="_blank" rel="noopener">Download alignment</a>
+          <a id="downloadTree" target="_blank">Download tree (full OG)</a>
+          <a id="downloadClusterTree" target="_blank" style="display:none;">Download cluster tree</a>
+          <a id="downloadAlignment" target="_blank">Download alignment</a>
         </div>
       </div>
 
-      <h2>Orthogroup Members</h2>
-      <input id="geneFilter" class="filter-input" placeholder="Filter genes in this orthogroup...">
-      <div id="geneList" class="gene-grid"></div>
+      <h2>Orthogroup Members</h2><div id="geneList" class="gene-grid"></div>
 
       <h2 id="treeHeading">Gene Tree</h2>
       <div id="treeClusterLabel" style="display:none; margin-bottom:6px; color:#26734d; font-weight:bold; font-size:15px;"></div>
-      <div class="tree-toolbar">
-        <button type="button" onclick="setTreeMode('circular')">Circular tree</button>
-        <button type="button" onclick="setTreeMode('rectangular')">Rectangular tree</button>
-        <button type="button" onclick="zoomTree(1.2)">Zoom in</button>
-        <button type="button" onclick="zoomTree(0.8)">Zoom out</button>
-        <button type="button" onclick="resetTreeZoom()">Reset</button>
-      </div>
+      <div class="tree-toolbar"><button type="button" onclick="setTreeMode('circular')">Circular tree</button><button type="button" onclick="setTreeMode('rectangular')">Rectangular tree</button><button type="button" onclick="zoomTree(1.2)">Zoom in</button><button type="button" onclick="zoomTree(0.8)">Zoom out</button><button type="button" onclick="resetTreeZoom()">Reset</button></div>
       <div id="treeLegend" class="tree-legend" aria-label="Subgenome color legend">
         <span><i class="legend-line legend-A"></i>A_subgenome</span>
         <span><i class="legend-line legend-B"></i>B_subgenome</span>
@@ -323,37 +58,11 @@
         <button type="button" onclick="downloadSynteny()">Download SVG</button>
       </div>
       <div id="syntenyBox"><svg id="syntenySvg"></svg></div>
-
-      <h2>Multiple Sequence Alignment</h2>
-      <div id="alignmentBox"></div>
     </div>
-  </div>
-</div>
+  </section>
+</main>
 
-<div class="line" style="height:10px;background-color:white"></div>
-<div id="home_footer">
-  <center style="margin-top:5px">
-    <table>
-      <tr>
-        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
-        <td><div class="line" style="height:50px;width:15px;"></div></td>
-        <td>
-          <div id="visit-stats" class="visit-stats">
-            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
-          </div>
-        </td>
-      </tr>
-    </table>
-    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
-  </center>
-</div>
-
-<script src="app.js?v=2"></script>
+<div id="siteFooter"></div>
+<script src="app.js?v=20"></script>
 </body>
 </html>
