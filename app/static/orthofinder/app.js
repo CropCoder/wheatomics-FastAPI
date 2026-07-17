@@ -22,7 +22,6 @@ const SUB_COLORS = {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  loadSiteFrame();
   loadSpeciesCatalog();
 
   document.getElementById("searchForm").addEventListener("submit", e => {
