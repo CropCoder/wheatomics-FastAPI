@@ -67,31 +67,40 @@ def wheat_rice_arabidopsis_homologs(
         if gene_id.startswith("Traes"):
             cursor.execute(f"SELECT * FROM `{table}` WHERE `Query` = %s", (gene_id,))
             rows = cursor.fetchall()
+            print(f"[DEBUG homolog] gene_id={gene_id} rows={len(rows)} keys={list(rows[0].keys()) if rows else []}")
+            if rows:
+                sample = rows[0]
+                print(f"[DEBUG homolog]   sample Species={sample.get('Species')!r} Query={sample.get('Query')!r} score={sample.get('score')!r} evalue={sample.get('evalue')!r} Target1={sample.get('Target1')!r}")
             rice_rows = [row for row in rows if str(row.get("Species", row.get("species", row.get("Target_species", "")))) == "Rice"]
             arab_rows = [row for row in rows if str(row.get("Species", row.get("species", row.get("Target_species", "")))) == "Arabidopsis"]
+            print(f"[DEBUG homolog]   rice_rows={len(rice_rows)} arab_rows={len(arab_rows)}")
             selected_rows = sorted(rice_rows, key=lambda row: float(row.get("Score", row.get("RawScore", row.get("score", 0)))), reverse=True)[:max_targets]
             selected_rows += sorted(arab_rows, key=lambda row: float(row.get("Score", row.get("RawScore", row.get("score", 0)))), reverse=True)[:max_targets]
+            print(f"[DEBUG homolog]   selected_rows={len(selected_rows)}")
         else:
             cursor.execute(f"SELECT * FROM `{table}` WHERE Target1 = %s", (gene_id.upper(),))
             rows = cursor.fetchall()
             selected_rows = sorted(rows, key=lambda row: float(row.get("Score", row.get("RawScore", row.get("score", 0)))), reverse=True)[: max_targets * 3]
 
         for row in selected_rows:
-            hits.append(
-                HomologHit(
-                    query_gene=str(row.get("Query", row.get("query", ""))),
-                    target_gene=str(row.get("Target1", row.get("Target", row.get("target", "")))),
-                    description=normalize_text(row.get("Description")),
-                    species=str(row.get("Species", row.get("species", ""))),
-                    gene_name=normalize_text(row.get("Name")) or None,
-                    qcovs=float(row.get("Qcovs", row.get("qcovs", 0)) or 0),
-                    length=int(row.get("Length", row.get("length", 0)) or 0),
-                    identity=float(row.get("Identity", row.get("identity", 0)) or 0),
-                    positive=float(row.get("Positive", row.get("positive", 0)) or 0),
-                    evalue=float(row.get("Evalue", row.get("evalue", 0)) or 0),
-                    score=float(row.get("Score", row.get("RawScore", row.get("score", 0))) or 0),
+            try:
+                hits.append(
+                    HomologHit(
+                        query_gene=str(row.get("Query", row.get("query", ""))),
+                        target_gene=str(row.get("Target1", row.get("Target", row.get("target", "")))),
+                        description=normalize_text(row.get("Description")),
+                        species=str(row.get("Species", row.get("species", ""))),
+                        gene_name=normalize_text(row.get("Name")) or None,
+                        qcovs=float(row.get("Qcovs", row.get("qcovs", 0)) or 0),
+                        length=int(row.get("Length", row.get("length", 0)) or 0),
+                        identity=float(row.get("Identity", row.get("identity", 0)) or 0),
+                        positive=float(row.get("Positive", row.get("positive", 0)) or 0),
+                        evalue=float(row.get("Evalue", row.get("evalue", 0)) or 0),
+                        score=float(row.get("Score", row.get("RawScore", row.get("score", 0))) or 0),
+                    )
                 )
-            )
+            except Exception as e:
+                print(f"[DEBUG homolog]   row failed: {e}; row={dict(row)}")
 
     return ok({"query_gene": gene_id, "count": len(hits), "hits": [hit.model_dump() for hit in hits]})
 
