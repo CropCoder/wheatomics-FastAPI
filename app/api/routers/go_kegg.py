@@ -13,7 +13,7 @@ from app.core.config import settings
 from typing import Optional, List
 import math
 
-router = APIRouter(prefix="/api/go-kegg", tags=["GO/KEGG Enrichment"])
+router = APIRouter(prefix="/go-kegg", tags=["GO/KEGG Enrichment"])
 
 
 # ============================================================
