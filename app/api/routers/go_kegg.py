@@ -102,11 +102,58 @@ def bh_correction(items: List[dict], pval_key: str = "pvalue"):
 
 
 # ============================================================
-# Request model
+# Request / Response models
 # ============================================================
 class EnrichmentRequest(BaseModel):
     genes: List[str]
     padj_threshold: float = 0.05
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "genes": ["TraesCS1A02G045300.1", "TraesCS1A02G104700.1", "TraesCS1A02G118400.1"],
+                "padj_threshold": 0.05,
+            }
+        }
+
+
+class EnrichmentResult(BaseModel):
+    id: str
+    term: Optional[str] = ""
+    ontology: Optional[str] = ""
+    k: int
+    K: int
+    ratio: float
+    pvalue: float
+    padj: float
+
+
+class EnrichmentResponse(BaseModel):
+    N: int
+    n: int
+    results: List[EnrichmentResult]
+    gene_count: int
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "N": 73626,
+                "n": 3,
+                "results": [
+                    {
+                        "id": "GO:0043425",
+                        "term": "bHLH transcription factor binding",
+                        "ontology": "molecular_function",
+                        "k": 1,
+                        "K": 4,
+                        "ratio": 6135.5,
+                        "pvalue": 0.000162,
+                        "padj": 0.009779,
+                    }
+                ],
+                "gene_count": 3,
+            }
+        }
 
 
 # ============================================================
@@ -120,20 +167,9 @@ class EnrichmentRequest(BaseModel):
         "**统计方法**: 超几何检验 (hypergeometric test) + Benjamini-Hochberg FDR 多重检验校正。\n\n"
         "**背景基因集**: wheat_function.gene_go 中所有有 GO 注释的基因。\n\n"
         "**输入**: 基因 ID 列表 (IWGSC RefSeq v1.1, 如 `TraesCS1A02G045300.1`)。\n\n"
-        "**输出**: 显著富集的 GO term 列表，包含:\n"
-        "- `id`: GO 编号\n"
-        "- `term`: GO 术语名称\n"
-        "- `ontology`: BP/MF/CC 分类\n"
-        "- `k`: 输入基因中命中该 term 的基因数\n"
-        "- `K`: 背景中该 term 的基因总数\n"
-        "- `ratio`: 富集倍数 (enrichment ratio)\n"
-        "- `pvalue`: 超几何检验原始 p 值\n"
-        "- `padj`: BH 校正后 p 值\n\n"
-        "**示例**:\n"
-        "```json\n"
-        '{"genes": ["TraesCS1A02G045300.1", "TraesCS1A02G104700.1"], "padj_threshold": 0.05}\n'
-        "```"
+        "**输出**: 显著富集的 GO term 列表。",
     ),
+    response_model=EnrichmentResponse,
 )
 def go_enrichment(req: EnrichmentRequest):
     genes = list(set(req.genes))
@@ -221,20 +257,9 @@ def go_enrichment(req: EnrichmentRequest):
         "**统计方法**: 超几何检验 + Benjamini-Hochberg FDR 校正。\n\n"
         "**背景基因集**: wheat_function.gene_kegg 中所有有 KEGG 注释的基因。\n\n"
         "**映射链**: gene_id → KO → pathway (通过 ko_pathway 和 kegg_pathway 表关联)。\n\n"
-        "**输入**: 与 GO 富集相同的基因 ID 列表。\n\n"
-        "**输出**: 显著富集的 KEGG 通路列表，包含:\n"
-        "- `id`: KEGG pathway ID (如 `path:04010`)\n"
-        "- `name`: 通路名称\n"
-        "- `k`: 输入基因中命中该通路的基因数\n"
-        "- `K`: 背景中该通路的基因总数\n"
-        "- `ratio`: 富集倍数\n"
-        "- `pvalue`: 原始 p 值\n"
-        "- `padj`: BH 校正后 p 值\n\n"
-        "**示例**:\n"
-        "```json\n"
-        '{"genes": ["TraesCS1A02G045300.1", "TraesCS1A02G104700.1"], "padj_threshold": 0.05}\n'
-        "```"
+        "**输入/输出**: 格式与 GO 富集一致。",
     ),
+    response_model=EnrichmentResponse,
 )
 def kegg_enrichment(req: EnrichmentRequest):
     genes = list(set(req.genes))
