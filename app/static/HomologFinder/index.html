@@ -300,31 +300,33 @@ function queryHomologs() {
     })
     .done(function(resp) {
       doneCount++;
+      if (!resp.success) {
+        $('#table-container').append('<div class="alert alert-warning">' + escapeHtml(geneId) + ': Query failed</div>');
+        allResults.push({ query_gene: geneId, count: 0, hits: [], error: true });
+      } else {
+        var data = resp.data;
+        if (data.hits && data.hits.length > 0) {
+          allResults.push(data);
+        } else {
+          allResults.push({ query_gene: geneId, count: 0, hits: [] });
+        }
+      }
       if (doneCount === total) {
         $('#loading-indicator').hide();
         $('#query-btn').prop('disabled', false);
         renderAllResults();
-      }
-      if (!resp.success) {
-        $('#table-container').append('<div class="alert alert-warning">' + escapeHtml(geneId) + ': Query failed</div>');
-        return;
-      }
-      var data = resp.data;
-      if (data.hits && data.hits.length > 0) {
-        allResults.push(data);
-      } else {
-        allResults.push({ query_gene: geneId, count: 0, hits: [] });
       }
     })
     .fail(function(jqXHR) {
       doneCount++;
+      var errMsg = readErrorDetail(jqXHR);
+      $('#table-container').append('<div class="alert alert-danger">' + escapeHtml(geneId) + ': ' + escapeHtml(errMsg) + '</div>');
+      allResults.push({ query_gene: geneId, count: 0, hits: [], error: true });
       if (doneCount === total) {
         $('#loading-indicator').hide();
         $('#query-btn').prop('disabled', false);
         renderAllResults();
       }
-      var errMsg = readErrorDetail(jqXHR);
-      $('#table-container').append('<div class="alert alert-danger">' + escapeHtml(geneId) + ': ' + escapeHtml(errMsg) + '</div>');
       $('#result-area').show();
     });
   });
