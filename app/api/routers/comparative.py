@@ -81,13 +81,13 @@ def wheat_rice_arabidopsis_homologs(
                 HomologHit(
                     query_gene=str(row.get("Query", row.get("query", ""))),
                     target_gene=str(row.get("Target1", row.get("Target", row.get("target", "")))),
-                    description=normalize_text(row.get("Description")),
+                    description=normalize_text(pick_first(row, "Description1", "Description")),
                     species=str(row.get("Species", row.get("species", ""))),
-                    gene_name=normalize_text(row.get("Name")) or None,
+                    gene_name=normalize_text(pick_first(row, "Name1", "Name")) or None,
                     qcovs=float(row.get("Qcovs", row.get("qcovs", 0)) or 0),
-                    length=int(row.get("Length", row.get("length", 0)) or 0),
-                    identity=float(row.get("Identity", row.get("identity", 0)) or 0),
-                    positive=float(row.get("Positive", row.get("positive", 0)) or 0),
+                    length=int(pick_first(row, "length1", "Length", "length") or 0),
+                    identity=float(pick_first(row, "pident", "Identity", "identity") or 0),
+                    positive=float(pick_first(row, "ppos", "Positive", "positive") or 0),
                     evalue=float(row.get("Evalue", row.get("evalue", 0)) or 0),
                     score=float(row.get("Score", row.get("RawScore", row.get("score", 0))) or 0),
                 )
