@@ -25,7 +25,7 @@ def get_wf_db():
         host=settings.DB_HOST,
         port=settings.DB_PORT,
         user=settings.DB_USER,
-        password=settings.DB_PASS,
+        password=settings.DB_PASSWORD,
         database="wheat_function",
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor,
