@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 from app.primerserver2.dependencies import verify_api_key
@@ -119,7 +119,7 @@ app.mount("/idConvert", StaticFiles(directory=Path(__file__).parent / "app" / "s
 app.mount("/sms2", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "sms2", html=True), name="sms2")
 app.mount("/coexpression", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "coexpression", html=True), name="coexpression")
 app.mount("/papers", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "papers", html=True), name="papers")
-app.mount("/genes", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "genes", html=True), name="genes")
+app.mount("/GO_KEGG", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "GO_KEGG", html=True), name="GO_KEGG")
 
 
 @app.middleware("http")
@@ -173,6 +173,7 @@ for router in [
     blast,
     orthofinder,
     track,
+    go_kegg,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)
 

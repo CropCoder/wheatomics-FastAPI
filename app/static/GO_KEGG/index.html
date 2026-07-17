@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GO/KEGG Enrichment - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+
+<script>
+// ===== Visit tracking =====
+(function() {
+  var page = location.pathname || 'unknown';
+  try {
+    fetch('/api/track/visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page: page })
+    }).catch(function(){});
+  } catch (e) {}
+  function fmt(n) {
+    n = Number(n) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
+    if (n >= 1000)    return (n / 1000).toFixed(1) + 'k';
+    return String(n);
+  }
+  function renderVisitStats(data) {
+    var el = document.getElementById('visit-stats');
+    if (!el || !data) return;
+    var today  = (data.today && data.today.pv != null) ? fmt(data.today.pv) : '—';
+    var total  = (data.total && data.total.pv != null) ? fmt(data.total.pv) : '—';
+    var online = data.online != null ? data.online : '—';
+    el.innerHTML =
+      '<span class="vs-pill"><span class="vs-dot vs-dot-today"></span>today <b>' + today + '</b></span>' +
+      '<span class="vs-pill"><span class="vs-dot vs-dot-total"></span>total <b>' + total + '</b></span>' +
+      '<span class="vs-pill"><span class="vs-dot vs-dot-online"></span>online <b>' + online + '</b></span>';
+  }
+  fetch('/api/track/stats').then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(resp){
+      if (resp && resp.success && resp.data) renderVisitStats(resp.data);
+    })
+    .catch(function(){});
+})();
+</script>
+
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.bundle.js"></script>
+<script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
+
+<style>
+html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-serif; }
+#home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+#logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+#home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
+#header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+#header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+#header-tabs li { display:inline-block !important; width:190px !important; }
+#header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+#header-tabs a:hover { background:#98c1d9; color:#000000; }
+#header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+#header-tabs ul li ul { display:none !important; position:absolute; z-index:1000; background:#0077b6; }
+#header-tabs ul li:hover ul { display:block !important; }
+#header-tabs ul li ul a { border-radius:0; }
+#home_footer { margin:0 auto; padding:5px 0 10px 0; text-align:center; width:100%; background:#d9d9d9; }
+#home_footer table { margin:0 auto; }
+#home_footer .line { display:inline-block; height:30px; width:2px; background:#000; vertical-align:middle; margin:5px; }
+
+/* ===== Page-specific styles ===== */
+.container-main { max-width:1400px; width:96%; margin:18px auto 26px; }
+.page-title-wrap { max-width:1400px; width:96%; margin:18px auto 10px; }
+.page-title-wrap h2 { font-size:24px; font-weight:700; margin:0 0 6px 0; color:#222; }
+.page-title-wrap p { margin:0; color:#555; font-size:14px; }
+.enrich-card { background:#fff; border-radius:10px; padding:22px; box-shadow:0 1px 8px rgba(0,0,0,.06); margin-bottom:18px; }
+.enrich-card label { display:block; font-weight:600; margin-bottom:6px; color:#1a237e; }
+.enrich-card textarea { width:100%; padding:14px; border:2px solid #d0d5e0; border-radius:8px; font-family:Consolas,monospace; font-size:.88rem; resize:vertical; transition:border-color .2s; }
+.enrich-card textarea:focus { outline:none; border-color:#3f51b5; }
+.gene-count { text-align:right; font-size:.82rem; color:#999; margin-top:4px; }
+.controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:14px; }
+.controls select { padding:8px 14px; border:1px solid #ccc; border-radius:6px; font-size:.9rem; }
+.enrich-btn { padding:10px 20px; border:none; border-radius:8px; font-size:.92rem; font-weight:600; cursor:pointer; transition:all .2s; }
+.btn-run { background:#3f51b5; color:#fff; }
+.btn-run:hover { background:#303f9f; }
+.btn-run:disabled { background:#9fa8da; cursor:not-allowed; }
+.btn-outline { background:#e8eaf6; color:#3f51b5; border:1px solid #c5cae9; }
+.btn-outline:hover { background:#c5cae9; }
+.btn-dl { background:#fff; color:#3f51b5; border:1px solid #3f51b5; padding:5px 12px; font-size:.78rem; }
+.btn-dl:hover { background:#e8eaf6; }
+.status { padding:12px 16px; border-radius:8px; margin-bottom:14px; font-weight:500; }
+.status.info { background:#e3f2fd; color:#1565c0; }
+.status.error { background:#ffebee; color:#c62828; }
+.status.hidden { display:none; }
+.enrich-tabs { display:flex; border-bottom:2px solid #e0e0e0; background:#fafafa; }
+.enrich-tab { flex:1; padding:13px; background:none; color:#666; border:none; font-size:.95rem; font-weight:600; cursor:pointer; border-bottom:3px solid transparent; transition:all .2s; }
+.enrich-tab.active { color:#3f51b5; border-bottom-color:#3f51b5; background:#fff; }
+.tab-panel { display:none; padding:18px; }
+.tab-panel.active { display:block; }
+.summary { padding:10px 16px; background:#e8eaf6; border-radius:6px; margin-bottom:16px; font-size:.9rem; }
+.go-vertical { display:flex; flex-direction:column; gap:16px; margin-bottom:18px; }
+.go-block { background:#fafbfc; border-radius:8px; padding:14px; border:1px solid #e8e8e8; }
+.go-block h3 { font-size:.92rem; color:#1a237e; text-align:center; margin:0 0 4px 0; }
+.chart { min-height:380px; }
+.chart-header { display:flex; justify-content:flex-end; margin-bottom:4px; }
+.table-wrap { overflow-x:auto; max-height:500px; overflow-y:auto; margin-top:14px; }
+.table-toolbar { display:flex; justify-content:flex-end; margin-bottom:6px; }
+.enrich-card table { width:100%; border-collapse:collapse; font-size:.87rem; }
+.enrich-card thead { position:sticky; top:0; z-index:2; }
+.enrich-card th { background:#3f51b5; color:#fff; padding:9px 10px; text-align:left; font-weight:600; white-space:nowrap; }
+.enrich-card td { padding:8px 10px; border-bottom:1px solid #eee; }
+.enrich-card tr:hover td { background:#f7f8fc; }
+.badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:.76rem; font-weight:600; color:#fff; text-transform:uppercase; }
+.badge-biological_process,.badge-biological-process { background:#2196F3; }
+.badge-molecular_function,.badge-molecular-function { background:#4CAF50; }
+.badge-cellular_component,.badge-cellular-component { background:#FF9800; }
+.gene-link { color:#3f51b5; font-weight:700; text-decoration:underline; cursor:pointer; }
+.gene-link:hover { color:#1a237e; }
+.sub-row { background:#f3f5f9; border-left:3px solid #3f51b5; }
+.sub-row td { padding:10px 14px !important; font-size:.82rem; }
+.sub-row code { background:#dfe3ee; padding:2px 8px; border-radius:4px; margin:2px; display:inline-block; font-size:.78rem; font-family:Consolas,monospace; }
+.no-data { text-align:center; color:#aaa; padding:30px; font-style:italic; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 2.0</span>
+</div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/index.html">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/snprimer">CAPS/KASP(Beta)</a></li>
+        <li><a href="/PfamSearch">PfamSearch</a></li>
+        <li><a href="/idConvert/">IDConvert</a></li>
+        <li><a href="/HomologFinder">HomologFinder</a></li>
+        <li><a href="/interval">IntervalTool</a></li>
+        <li><a href="/expression">GeneExpression</a></li>
+        <li><a href="/coexpression">Co-expression</a></li>
+        <li><a href="/wheatPPI">WheatPPI</a></li>
+        <li><a href="/genes">KnownGene</a></li>
+        <li><a href="/GO_KEGG">GO/KEGG Enrichment</a></li>
+        <li><a href="/symap/index.html">SyntenySearch</a></li>
+        <li><a href="/preblast">preBLAST</a></li>
+        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+        <li><a href="/DWGVa.html">DWGVa</a></li>
+        <li><a href="/scRNA">scRNA</a></li>
+        <li><a href="/eqtl">eQTL Atlas</a></li>
+        <li><a href="/papers">Triticeae papers</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href="#"><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<!-- Main content -->
+<div class="page-title-wrap">
+  <h2>GO & KEGG Enrichment Analysis</h2>
+  <p>Hypergeometric test + Benjamini-Hochberg FDR correction against wheat genome background</p>
+</div>
+
+<div class="container-main">
+  <div class="enrich-card">
+    <label for="geneInput">Paste gene IDs (IWGSC RefSeq v1.1):</label>
+    <textarea id="geneInput" rows="5" placeholder="TraesCS1A02G045300.1&#10;TraesCS1A02G104700.1&#10;TraesCS1A02G118400.1&#10;..."></textarea>
+    <div class="gene-count" id="geneCount">0 genes detected</div>
+    <div class="controls">
+      <label style="margin:0">FDR:</label>
+      <select id="padjThreshold">
+        <option value="0.01">0.01</option>
+        <option value="0.05" selected>0.05</option>
+        <option value="0.10">0.10</option>
+      </select>
+      <button class="enrich-btn btn-run" id="runBtn" onclick="runEnrichment()">Run Enrichment</button>
+      <button class="enrich-btn btn-outline" onclick="loadExample()">Load Example</button>
+    </div>
+  </div>
+
+  <div id="status" class="status hidden"></div>
+
+  <div id="results" style="display:none">
+    <div class="enrich-card" style="padding:0">
+      <div class="enrich-tabs">
+        <button class="enrich-tab active" data-tab="go">GO Enrichment</button>
+        <button class="enrich-tab" data-tab="kegg">KEGG Pathway</button>
+      </div>
+
+      <div id="goPanel" class="tab-panel active">
+        <div class="summary" id="goSummary"></div>
+        <div class="go-vertical">
+          <div class="go-block">
+            <div class="chart-header"><button class="btn-dl enrich-btn" onclick="downloadChart('goChartBP','GO_Biological_Process')">Download PNG</button></div>
+            <h3>Biological Process</h3><div id="goChartBP" class="chart"></div>
+          </div>
+          <div class="go-block">
+            <div class="chart-header"><button class="btn-dl enrich-btn" onclick="downloadChart('goChartMF','GO_Molecular_Function')">Download PNG</button></div>
+            <h3>Molecular Function</h3><div id="goChartMF" class="chart"></div>
+          </div>
+          <div class="go-block">
+            <div class="chart-header"><button class="btn-dl enrich-btn" onclick="downloadChart('goChartCC','GO_Cellular_Component')">Download PNG</button></div>
+            <h3>Cellular Component</h3><div id="goChartCC" class="chart"></div>
+          </div>
+        </div>
+        <div class="table-toolbar"><button class="btn-dl enrich-btn" onclick="downloadGOTable()">Download CSV</button></div>
+        <div class="table-wrap">
+          <table id="goTable">
+            <thead><tr><th>GO ID</th><th>Term</th><th>Ontology</th><th>Genes</th><th>BG</th><th>Ratio</th><th>p-value</th><th>p.adjust</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="keggPanel" class="tab-panel">
+        <div class="summary" id="keggSummary"></div>
+        <div class="chart-header"><button class="btn-dl enrich-btn" onclick="downloadChart('keggChart','KEGG_Pathway')">Download PNG</button></div>
+        <div id="keggChart" class="chart" style="min-height:500px"></div>
+        <div class="table-toolbar"><button class="btn-dl enrich-btn" onclick="downloadKEGGTable()">Download CSV</button></div>
+        <div class="table-wrap">
+          <table id="keggTable">
+            <thead><tr><th>Pathway ID</th><th>Name</th><th>Genes</th><th>BG</th><th>Ratio</th><th>p-value</th><th>p.adjust</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div id="home_footer">
+  <div class="line" style="height:10px;background-color:white"></div>
+  <center style="margin-top:5px">
+    <table>
+      <tr>
+        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><div class="line" style="height:50px;width:15px"></div></td>
+        <td><span id="visit-stats" class="visit-stats"><span class="vs-pill vs-loading"><span class="vs-dot"></span>loading...</span></span></td>
+      </tr>
+    </table>
+    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+  </center>
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

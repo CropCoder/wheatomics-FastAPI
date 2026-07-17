@@ -14,3 +14,4 @@ from .sequence import blast_extra_router as blast_extra
 from .blast import router as blast
 from .triticeae import router as triticeae
 from .track import router as track
+from .go_kegg import router as go_kegg
