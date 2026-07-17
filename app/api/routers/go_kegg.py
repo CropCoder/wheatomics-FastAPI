@@ -167,7 +167,7 @@ class EnrichmentResponse(BaseModel):
         "**统计方法**: 超几何检验 (hypergeometric test) + Benjamini-Hochberg FDR 多重检验校正。\n\n"
         "**背景基因集**: wheat_function.gene_go 中所有有 GO 注释的基因。\n\n"
         "**输入**: 基因 ID 列表 (IWGSC RefSeq v1.1, 如 `TraesCS1A02G045300.1`)。\n\n"
-        "**输出**: 显著富集的 GO term 列表。",
+        "**输出**: 显著富集的 GO term 列表。"
     ),
     response_model=EnrichmentResponse,
 )
@@ -257,7 +257,7 @@ def go_enrichment(req: EnrichmentRequest):
         "**统计方法**: 超几何检验 + Benjamini-Hochberg FDR 校正。\n\n"
         "**背景基因集**: wheat_function.gene_kegg 中所有有 KEGG 注释的基因。\n\n"
         "**映射链**: gene_id → KO → pathway (通过 ko_pathway 和 kegg_pathway 表关联)。\n\n"
-        "**输入/输出**: 格式与 GO 富集一致。",
+        "**输入/输出**: 格式与 GO 富集一致。"
     ),
     response_model=EnrichmentResponse,
 )
