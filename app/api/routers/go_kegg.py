@@ -112,17 +112,30 @@ class EnrichmentRequest(BaseModel):
 # ============================================================
 # GO Enrichment
 # ============================================================
-@router.post("/go")
+@router.post(
+    "/go",
+    summary="GO Enrichment Analysis",
+    description=(
+        "对用户提交的基因列表进行 **GO (Gene Ontology) 富集分析**。\n\n"
+        "**统计方法**: 超几何检验 (hypergeometric test) + Benjamini-Hochberg FDR 多重检验校正。\n\n"
+        "**背景基因集**: wheat_function.gene_go 中所有有 GO 注释的基因。\n\n"
+        "**输入**: 基因 ID 列表 (IWGSC RefSeq v1.1, 如 `TraesCS1A02G045300.1`)。\n\n"
+        "**输出**: 显著富集的 GO term 列表，包含:\n"
+        "- `id`: GO 编号\n"
+        "- `term`: GO 术语名称\n"
+        "- `ontology`: BP/MF/CC 分类\n"
+        "- `k`: 输入基因中命中该 term 的基因数\n"
+        "- `K`: 背景中该 term 的基因总数\n"
+        "- `ratio`: 富集倍数 (enrichment ratio)\n"
+        "- `pvalue`: 超几何检验原始 p 值\n"
+        "- `padj`: BH 校正后 p 值\n\n"
+        "**示例**:\n"
+        "```json\n"
+        '{"genes": ["TraesCS1A02G045300.1", "TraesCS1A02G104700.1"], "padj_threshold": 0.05}\n'
+        "```"
+    ),
+)
 def go_enrichment(req: EnrichmentRequest):
-    """
-    Run GO enrichment analysis using hypergeometric test + BH FDR correction.
-
-    Request body:
-        { "genes": ["TraesCS1A02G045300.1", ...], "padj_threshold": 0.05 }
-
-    Response:
-        { "N": 73626, "n": 4, "results": [...], "gene_count": 4 }
-    """
     genes = list(set(req.genes))
     if not genes:
         return JSONResponse({"error": "No genes provided"}, status_code=400)
@@ -200,13 +213,30 @@ def go_enrichment(req: EnrichmentRequest):
 # ============================================================
 # KEGG Enrichment
 # ============================================================
-@router.post("/kegg")
+@router.post(
+    "/kegg",
+    summary="KEGG Pathway Enrichment Analysis",
+    description=(
+        "对用户提交的基因列表进行 **KEGG 通路富集分析**。\n\n"
+        "**统计方法**: 超几何检验 + Benjamini-Hochberg FDR 校正。\n\n"
+        "**背景基因集**: wheat_function.gene_kegg 中所有有 KEGG 注释的基因。\n\n"
+        "**映射链**: gene_id → KO → pathway (通过 ko_pathway 和 kegg_pathway 表关联)。\n\n"
+        "**输入**: 与 GO 富集相同的基因 ID 列表。\n\n"
+        "**输出**: 显著富集的 KEGG 通路列表，包含:\n"
+        "- `id`: KEGG pathway ID (如 `path:04010`)\n"
+        "- `name`: 通路名称\n"
+        "- `k`: 输入基因中命中该通路的基因数\n"
+        "- `K`: 背景中该通路的基因总数\n"
+        "- `ratio`: 富集倍数\n"
+        "- `pvalue`: 原始 p 值\n"
+        "- `padj`: BH 校正后 p 值\n\n"
+        "**示例**:\n"
+        "```json\n"
+        '{"genes": ["TraesCS1A02G045300.1", "TraesCS1A02G104700.1"], "padj_threshold": 0.05}\n'
+        "```"
+    ),
+)
 def kegg_enrichment(req: EnrichmentRequest):
-    """
-    Run KEGG pathway enrichment analysis.
-
-    Same request/response pattern as /go endpoint.
-    """
     genes = list(set(req.genes))
     if not genes:
         return JSONResponse({"error": "No genes provided"}, status_code=400)

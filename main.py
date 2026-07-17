@@ -84,6 +84,8 @@ app = FastAPI(
         "<td>SNP 引物设计、特异性检查（PrimerServer 复刻）</td></tr>"
         "<tr><td><b>PrimerServer2</b></td><td><code>/api/PrimerServer2</code></td>"
         "<td>PCR 引物批量设计与特异性检查（Primer desgin version 2）</td></tr>"
+        "<tr><td><b>GO/KEGG Enrichment</b></td><td><code>/api/go-kegg</code></td>"
+        "<td>GO/KEGG 富集分析：超几何检验 + Benjamini-Hochberg FDR 校正，支持气泡图可视化</td></tr>"
         "</table>"
 
         "<h2>AI Agent 接入 (MCP)</h2>"
