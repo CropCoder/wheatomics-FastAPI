@@ -121,6 +121,7 @@ app.mount("/idConvert", StaticFiles(directory=Path(__file__).parent / "app" / "s
 app.mount("/sms2", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "sms2", html=True), name="sms2")
 app.mount("/coexpression", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "coexpression", html=True), name="coexpression")
 app.mount("/papers", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "papers", html=True), name="papers")
+app.mount("/genes", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "genes", html=True), name="genes")
 app.mount("/GO_KEGG", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "GO_KEGG", html=True), name="GO_KEGG")
 
 
