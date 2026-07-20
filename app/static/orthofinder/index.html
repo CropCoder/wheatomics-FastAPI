@@ -5,6 +5,41 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <title>OrthoFinder Orthogroup Browser | WheatOmics</title>
   <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+  <script>
+  // ===== Visit tracking =====
+  (function() {
+    var page = location.pathname || 'unknown';
+    try {
+      fetch('/api/track/visit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: page })
+      }).catch(function(){});
+    } catch (e) {}
+    function fmt(n) {
+      n = Number(n) || 0;
+      if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
+      if (n >= 1000)    return (n / 1000).toFixed(1) + 'k';
+      return String(n);
+    }
+    function renderVisitStats(data) {
+      var el = document.getElementById('visit-stats');
+      if (!el || !data) return;
+      var today  = (data.today && data.today.pv != null) ? fmt(data.today.pv) : '—';
+      var total  = (data.total && data.total.pv != null) ? fmt(data.total.pv) : '—';
+      var online = data.online != null ? data.online : '—';
+      el.innerHTML =
+        '<span class="vs-pill"><span class="vs-dot vs-dot-today"></span>today <b>' + today + '</b></span>' +
+        '<span class="vs-pill"><span class="vs-dot vs-dot-total"></span>total <b>' + total + '</b></span>' +
+        '<span class="vs-pill"><span class="vs-dot vs-dot-online"></span>online <b>' + online + '</b></span>';
+    }
+    fetch('/api/track/stats').then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(resp){
+        if (resp && resp.success && resp.data) renderVisitStats(resp.data);
+      })
+      .catch(function(){});
+  })();
+  </script>
   <link rel="stylesheet" href="style.css?v=21">
   <style>
     body { background: #f8f9fa; margin:0; padding:0; overflow-x:hidden; }
@@ -20,6 +55,19 @@
     #header-tabs ul li ul { display:none !important; position:absolute; }
     #header-tabs ul li:hover ul { display:block !important; }
     #header-tabs ul li ul a { border-radius:0; }
+    #home_footer { margin:0 auto; padding:5px 0 10px 0; text-align:center; width:100%; background:#d9d9d9; }
+    #home_footer table { margin:0 auto; }
+    #home_footer .line { display:inline-block; height:30px; width:2px; background:#000; vertical-align:middle; margin:5px; }
+    #home_footer .visit-stats { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; vertical-align:middle; margin-left:15px; }
+    .visit-stats .vs-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:11px; line-height:1.4; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; }
+    .visit-stats .vs-pill b { color:#0f172a; font-weight:600; }
+    .visit-stats .vs-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#94a3b8; }
+    .visit-stats .vs-dot-today  { background:#22c55e; }
+    .visit-stats .vs-dot-total  { background:#3b82f6; }
+    .visit-stats .vs-dot-online { background:#f59e0b; }
+    .visit-stats .vs-loading { color:#64748b; }
+    .visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
+    @keyframes vs-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
     #home_content { max-width: 1280px; margin: 26px auto 36px auto; padding: 0 15px; }
   </style>
 </head>
@@ -48,6 +96,9 @@
         <li><a href="/preblast/">preBLAST</a></li>
         <li><a href="/sms2/index.html">SequenceToolkit</a></li>
         <li><a href="/orthofinder/">OrthoFinder</a></li>
+        <li><a href="DWGVa.html">DWGVa</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/scRNA">scRNA</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/eqtl">eQTL Atlas</a></li>
         <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
         <li><a href="/papers">Triticeae papers</a></li>
       </ul>
@@ -129,6 +180,13 @@
         <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
         <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
         <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><div style="height:50px;width:15px;"></div></td>
+        <td>
+          <div id="visit-stats" class="visit-stats">
+            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
+          </div>
+        </td>
       </tr>
     </table>
     For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
