@@ -222,19 +222,36 @@ async function searchProtein(q) {
       `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
       `&type=alignment`;
 
+    // Badge - show "Some homologous group N (chrA/B/D)"
     const badge = document.getElementById("clusterBadge");
 
     if (currentCluster !== null && currentCluster > 0) {
-      badge.textContent =
-        "Cluster " + currentCluster;
-
-      badge.className =
-        "cluster-badge cluster-badge-" +
-        currentCluster;
-
+      // Build subgenome description from cluster_sub_counts
+      const clusterSub = (data.cluster_sub_counts && (data.cluster_sub_counts.A + data.cluster_sub_counts.B + data.cluster_sub_counts.D > 0))
+        ? (data.cluster_sub_counts.A > 0 ? "A" : "") + (data.cluster_sub_counts.B > 0 ? "B" : "") + (data.cluster_sub_counts.D > 0 ? "D" : "")
+        : "";
+      const subDesc = clusterSub ? " (chr" + clusterSub.split("").join("/") + " homologous group)" : "";
+      badge.textContent = "Some homologous group " + currentCluster + subDesc;
+      badge.className = "cluster-badge cluster-badge-" + currentCluster;
       badge.style.display = "";
     } else {
       badge.style.display = "none";
+    }
+
+    // Description line below OG title
+    var ogTitleEl = document.getElementById("ogTitle");
+    var clusterDescEl = document.getElementById("clusterDescription");
+    if (!clusterDescEl) {
+      clusterDescEl = document.createElement("div");
+      clusterDescEl.id = "clusterDescription";
+      clusterDescEl.style.cssText = "margin-top:4px;color:#687685;font-size:13px;line-height:1.5;";
+      ogTitleEl.parentNode.insertBefore(clusterDescEl, ogTitleEl.nextSibling);
+    }
+    if (currentCluster !== null && currentCluster > 0) {
+      clusterDescEl.textContent = "\"Some homologous\" represents the homoeologous group of chromosomes A, B, and D subgenomes for the queried gene.";
+      clusterDescEl.style.display = "";
+    } else {
+      clusterDescEl.style.display = "none";
     }
 
     const downloadClusterTree =
@@ -253,6 +270,25 @@ async function searchProtein(q) {
       downloadClusterTree.style.display = "";
     } else {
       downloadClusterTree.style.display = "none";
+    }
+
+    // Download some homologous alignment
+    const downloadClusterAln =
+      document.getElementById("downloadClusterAlignment");
+
+    if (
+      currentCluster !== null &&
+      currentCluster > 0 &&
+      data.query
+    ) {
+      downloadClusterAln.href =
+        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+        `&type=alignment` +
+        `&cluster=${currentCluster}`;
+
+      downloadClusterAln.style.display = "";
+    } else {
+      downloadClusterAln.style.display = "none";
     }
 
     const treeClusterLabel =
@@ -278,7 +314,7 @@ async function searchProtein(q) {
         selectedTree.error;
 
       document.getElementById("treeHeading").textContent =
-        "Cluster " +
+        "Some homologous group " +
         currentCluster +
         " Gene Tree";
 
@@ -288,7 +324,7 @@ async function searchProtein(q) {
         treeClusterLabel.textContent =
           "Showing " +
           selectedTree.leafCount +
-          " genes from cluster " +
+          " genes from some homologous group " +
           currentCluster +
           " (full OG has " +
           data.gene_count +
@@ -304,7 +340,7 @@ async function searchProtein(q) {
           );
       } else {
         treeClusterLabel.textContent =
-          "Cluster " +
+          "Some homologous group " +
           currentCluster +
           " contains " +
           expectedClusterLeaves +
