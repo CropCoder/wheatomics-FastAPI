@@ -45,28 +45,7 @@
 
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.bundle.js"></script>
-<script>
-$(function(){
-  $("#header").load("/header.html");
-  // After header loads, add our menu entry
-  setTimeout(function(){
-    var ul = document.querySelector('#header-tabs ul li ul');
-    if (ul) {
-      var li = document.createElement('li');
-      li.innerHTML = '<a href="/GO_KEGG">GO/KEGG Enrichment</a>';
-      // Insert before SyntenySearch
-      var items = ul.querySelectorAll('li a');
-      for (var i=0; i<items.length; i++) {
-        if (items[i].getAttribute('href') === '/symap/index.html') {
-          ul.insertBefore(li, items[i].parentNode);
-          break;
-        }
-      }
-    }
-  }, 500);
-});
-</script>
-<script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
+<script src="/GO_KEGG/js/plotly-3.0.1.min.js"></script>
 
 <style>
 html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-serif; }
@@ -85,6 +64,16 @@ html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-ser
 #home_footer { margin:0 auto; padding:5px 0 10px 0; text-align:center; width:100%; background:#d9d9d9; }
 #home_footer table { margin:0 auto; }
 #home_footer .line { display:inline-block; height:30px; width:2px; background:#000; vertical-align:middle; margin:5px; }
+#home_footer .visit-stats { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; vertical-align:middle; margin-left:15px; }
+.visit-stats .vs-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:11px; line-height:1.4; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; }
+.visit-stats .vs-pill b { color:#0f172a; font-weight:600; }
+.visit-stats .vs-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#94a3b8; }
+.visit-stats .vs-dot-today  { background:#22c55e; }
+.visit-stats .vs-dot-total  { background:#3b82f6; }
+.visit-stats .vs-dot-online { background:#f59e0b; }
+.visit-stats .vs-loading { color:#64748b; }
+.visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
+@keyframes vs-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 
 /* ===== Page-specific styles ===== */
 .container-main { max-width:1400px; width:96%; margin:18px auto 26px; }
@@ -142,8 +131,45 @@ html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-ser
 </head>
 <body>
 
-<!-- Header dynamically loaded from /header.html -->
-<div id="header"></div>
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
+</div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/index.html">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/snprimer">CAPS/KASP(Beta)</a></li>
+        <li><a href="/PfamSearch/">PfamSearch</a></li>
+        <li><a href="/idConvert/">IDConvert</a></li>
+        <li><a href="/HomologFinder/">HomologFinder</a></li>
+        <li><a href="/interval/">IntervalTool</a></li>
+        <li><a href="/expression/">GeneExpression</a></li>
+        <li><a href="/coexpression/index.html">Co-expression</a></li>
+        <li><a href="/wheatPPI/">WheatPPI</a></li>
+        <li><a href="/genes/">KnownGene</a></li>
+        <li><a href="/symap/index.html">SyntenySearch</a></li>
+        <li><a href="/preblast/">preBLAST</a></li>
+        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+        <li><a href="/orthofinder/">OrthoFinder</a></li>
+        <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
+        <li><a href="/papers">Triticeae papers</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href="#"><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
 
 <!-- Main content -->
 <div class="page-title-wrap">
@@ -219,8 +245,8 @@ html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-ser
 </div>
 
 <!-- Footer -->
+<div class="line" style="height:10px;background-color:white"></div>
 <div id="home_footer">
-  <div class="line" style="height:10px;background-color:white"></div>
   <center style="margin-top:5px">
     <table>
       <tr>
