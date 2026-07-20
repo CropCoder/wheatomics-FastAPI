@@ -45,60 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-async function loadSiteFrame() {
-  await loadFragment(
-    "/header.html",
-    "siteHeader",
-    ["home_header", "header-tabs"]
-  );
-
-  await loadFragment(
-    "/footer.html",
-    "siteFooter",
-    ["home_footer"]
-  );
-}
-
-async function loadFragment(url, targetId, wantedIds) {
-  const target = document.getElementById(targetId);
-
-  if (!target) return;
-
-  try {
-    const res = await fetch(url, {
-      cache: "no-store"
-    });
-
-    const html = await res.text();
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const nodes = [];
-
-    wantedIds.forEach(id => {
-      const el = doc.getElementById(id);
-
-      if (el) {
-        nodes.push(el.outerHTML);
-      }
-    });
-
-    target.innerHTML = nodes.length
-      ? nodes.join("\n")
-      : html;
-
-    target.querySelectorAll("script").forEach(el => el.remove());
-
-    target
-      .querySelectorAll("img[src*='clustrmaps']")
-      .forEach(img => {
-        img.onerror = function () {
-          this.style.display = "none";
-        };
-      });
-  } catch (e) {
-    target.innerHTML = "";
-  }
-}
-
 /* =================================================================
    Species catalog
    ================================================================= */
@@ -131,42 +77,18 @@ async function loadSpeciesCatalog() {
   } catch (e) {
     console.warn("Failed to load species catalog:", e);
   }
-}
 
-function onSpeciesChange() {
-  const species = document.getElementById("speciesSelect").value;
-
-  document.getElementById("subgenomeSelect").style.display =
-    species ? "" : "none";
-
-  updateProteinPlaceholder();
-}
-
-function onSubgenomeChange() {
-  updateProteinPlaceholder();
-}
-
-function updateProteinPlaceholder() {
-  const species = document.getElementById("speciesSelect").value;
-  const subgenome = document.getElementById("subgenomeSelect").value;
-  const input = document.getElementById("proteinInput");
-
-  if (species && subgenome) {
-    input.placeholder =
-      "Type gene ID for " +
-      species +
-      " " +
-      subgenome +
-      " subgenome...";
-  } else if (species) {
-    input.placeholder =
-      "Type gene ID for " +
-      species +
-      "...";
-  } else {
-    input.placeholder =
-      "Example: TraesAK58CH1A01G123400.1";
-  }
+  // Update placeholder when species is selected
+  const speciesSel = document.getElementById("speciesSelect");
+  speciesSel.addEventListener("change", function () {
+    const species = this.value;
+    const input = document.getElementById("proteinInput");
+    if (species) {
+      input.placeholder = "Type gene ID for " + species + "...";
+    } else {
+      input.placeholder = "Example: TraesAK58CH1A01G123400.1";
+    }
+  });
 }
 
 /* =================================================================
@@ -248,16 +170,16 @@ async function searchProtein(q) {
       `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
       `&type=alignment`;
 
+    // Badge - show "Some homologous group N (chrXA/B/D)"
     const badge = document.getElementById("clusterBadge");
-
     if (currentCluster !== null && currentCluster > 0) {
-      badge.textContent =
-        "Cluster " + currentCluster;
-
-      badge.className =
-        "cluster-badge cluster-badge-" +
-        currentCluster;
-
+      // Build description: detect subgenome from cluster_genes
+      const clusterSub = (data.cluster_sub_counts && (data.cluster_sub_counts.A + data.cluster_sub_counts.B + data.cluster_sub_counts.D > 0))
+        ? (data.cluster_sub_counts.A > 0 ? "A" : "") + (data.cluster_sub_counts.B > 0 ? "B" : "") + (data.cluster_sub_counts.D > 0 ? "D" : "")
+        : "";
+      const subDesc = clusterSub ? " (chr" + clusterSub.split("").join("/") + " homologous group)" : "";
+      badge.textContent = "Some homologous group " + currentCluster + subDesc;
+      badge.className = "cluster-badge cluster-badge-" + currentCluster;
       badge.style.display = "";
     } else {
       badge.style.display = "none";
@@ -279,6 +201,24 @@ async function searchProtein(q) {
       downloadClusterTree.style.display = "";
     } else {
       downloadClusterTree.style.display = "none";
+    }
+
+    const downloadClusterAln =
+      document.getElementById("downloadClusterAlignment");
+
+    if (
+      currentCluster !== null &&
+      currentCluster > 0 &&
+      data.query
+    ) {
+      downloadClusterAln.href =
+        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+        `&type=alignment` +
+        `&cluster=${currentCluster}`;
+
+      downloadClusterAln.style.display = "";
+    } else {
+      downloadClusterAln.style.display = "none";
     }
 
     const treeClusterLabel =
@@ -304,7 +244,7 @@ async function searchProtein(q) {
         selectedTree.error;
 
       document.getElementById("treeHeading").textContent =
-        "Cluster " +
+        "Some homologous group " +
         currentCluster +
         " Gene Tree";
 
@@ -314,7 +254,7 @@ async function searchProtein(q) {
         treeClusterLabel.textContent =
           "Showing " +
           selectedTree.leafCount +
-          " genes from cluster " +
+          " genes from some homologous group " +
           currentCluster +
           " (full OG has " +
           data.gene_count +
@@ -330,7 +270,7 @@ async function searchProtein(q) {
           );
       } else {
         treeClusterLabel.textContent =
-          "Cluster " +
+          "Some homologous group " +
           currentCluster +
           " contains " +
           expectedClusterLeaves +
@@ -366,7 +306,6 @@ async function searchProtein(q) {
     );
 
     renderTree();
-    loadAndRenderSynteny();
   } catch (e) {
     message.textContent =
       "Invalid server response: " +

@@ -607,7 +607,7 @@ def search_php(
 def download_file(
     og: str = Query(..., description="Orthogroup ID, e.g. OG0001897"),
     type: str = Query("tree", description="File type: 'tree' or 'alignment'"),
-    cluster: int = Query(0, description="Cluster number (1-7). Only applies to type=tree. 0 = full OG tree."),
+    cluster: int = Query(0, description="Cluster number (1-7) for tree pruning or alignment filtering. 0 = full OG."),
 ):
     if not re.match(r"^OG\d+$", og):
         raise HTTPException(400, "Invalid OG ID")
@@ -643,17 +643,33 @@ def download_file(
         alignment = aln_file.read_text(encoding="utf-8")
 
         with mysql_cursor(ORTHOFINDER_DB) as cur:
-            leaf_order = _parse_newick_leaves(tree) if tree else []
+            leaf_order_full = _parse_newick_leaves(tree) if tree else []
+
+            # If cluster filter active, prune leaves to cluster members
+            if 1 <= cluster <= 7 and leaf_order_full:
+                cur.execute("SELECT genes FROM orthogroups WHERE og_id = %s LIMIT 1", (og,))
+                og_row = cur.fetchone()
+                if og_row:
+                    genes_all = [g for g in og_row["genes"].split() if g]
+                    c_genes = _get_cluster_members(genes_all, cluster, cur)
+                    m2 = _fetch_meta(cur, leaf_order_full + c_genes)
+                    k2 = _build_prune_keep_set(c_genes, m2, leaf_order_full)
+                    leaf_order = [lf for lf in leaf_order_full if _clean(lf) in k2]
+                else:
+                    leaf_order = leaf_order_full
+            else:
+                leaf_order = leaf_order_full
+
             records, record_order = _parse_alignment(alignment)
             meta = _fetch_meta(cur, leaf_order + record_order)
             g2s, s2g = _build_crosswalk(meta)
             ordered, used = [], set()
             for leaf in leaf_order:
-                leaf = _first_token(leaf)
-                cand = [leaf]
-                if leaf in meta:
+                leaf_tok = _first_token(leaf)
+                cand = [leaf_tok]
+                if leaf_tok in meta:
                     for f in ("short_id", "gene_id", "raw_id"):
-                        if meta[leaf].get(f): cand.append(_clean(meta[leaf][f]))
+                        if meta[leaf_tok].get(f): cand.append(_clean(meta[leaf_tok][f]))
                 for c in list(cand):
                     if c in g2s: cand.append(g2s[c])
                 more = [re.sub(r"\.\d+$", "", c) for c in cand if c]
@@ -669,7 +685,9 @@ def download_file(
                 label = meta.get(sid, {}).get("full_label", sid)
                 lines.append(f">{label}")
                 lines.append("\n".join(records[sid]))
+
+        cluster_suffix = f".cluster{cluster}" if cluster else ""
         return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain",
-                                 headers={"Content-Disposition": f'attachment; filename="{og}.alignment.fa"'})
+                                 headers={"Content-Disposition": f'attachment; filename="{og}{cluster_suffix}.alignment.fa"'})
 
     raise HTTPException(400, "Invalid type")
