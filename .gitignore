@@ -14,3 +14,4 @@ build/
 .claude/
 app/static/*/_ref/
 app/static/sms2/
+bioprojects.sql
