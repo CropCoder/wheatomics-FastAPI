@@ -291,8 +291,6 @@ h2 {
 .cluster-badge-6 { background: #e0f7fa; color: #00695c; }
 .cluster-badge-7 { background: #fbe9e7; color: #4e342e; }
 
-/* ---------- Synteny section ---------- */
-/* ---------- Synteny section ---------- */
 .species-select {
   padding: 10px 12px;
   font-size: 14px;
@@ -300,17 +298,4 @@ h2 {
   border-radius: 6px;
   background: #fff;
   max-width: 220px;
-}
-
-#syntenyBox {
-  overflow: auto;
-  max-height: 800px;
-  border: 1px solid #d7dde3;
-  border-radius: 8px;
-  background: #fafafa;
-  margin-top: 8px;
-}
-#syntenySvg {
-  display: block;
-  transform-origin: top left;
 }
