@@ -301,7 +301,11 @@ function renderResults(data, gene) {
     cols.forEach(function(c) {
       var v = r[c];
       if (v === null || v === undefined) { v = ''; }
-      else if (typeof v === 'number') { v = v.toFixed ? v.toFixed(v % 1 !== 0 ? 4 : 0) : v; }
+      else if (typeof v === 'number') {
+        // 科学计数法 / 极小数（如 E-value 8.35e-86）不能 toFixed(4)，否则显示为 0.0000
+        if (v !== 0 && (Math.abs(v) < 0.0001 || Math.abs(v) >= 1e15)) { v = v.toExponential(2); }
+        else { v = v % 1 !== 0 ? v.toFixed(4) : v; }
+      }
       html += '<td>' + v + '</td>';
     });
     html += '</tr>';
