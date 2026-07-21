@@ -389,6 +389,33 @@ def _build_crosswalk(meta: dict) -> tuple[dict, dict]:
             s2g[info["short_id"]] = info["gene_id"]
     return g2s, s2g
 
+def _ordered_record_ids(leaf_order, record_order, records, meta):
+    """Match tree leaves to alignment records — exactly mirrors PHP d_ordered()."""
+    g2s, s2g = _build_crosswalk(meta)
+    ordered, used = [], set()
+    for leaf in leaf_order:
+        leaf_tok = _first_token(leaf)
+        sp = _split_prefixed_gene(leaf_tok)
+        cand = [leaf_tok, sp["gene"]]
+        if leaf_tok in meta:
+            for f in ("short_id", "gene_id", "raw_id"):
+                v = meta[leaf_tok].get(f)
+                if v: cand.append(_clean(v))
+        for c in list(cand):
+            if c in g2s: cand.append(g2s[c])
+        more = [re.sub(r"\.\d+$", "", c) for c in cand if c]
+        for c in {c for c in cand + more if c}:
+            if c in records and c not in used:
+                ordered.append(c); used.add(c); break
+    for rid in record_order:
+        if rid not in used:
+            ordered.append(rid)
+    return ordered
+
+def _label_for(id, meta):
+    """Build display label — exactly mirrors PHP d_label()."""
+    return meta.get(id, {}).get("full_label", id)
+
 
 # ===================================================================
 # API endpoints  (raw JSON matching PHP api.php format)
@@ -674,45 +701,16 @@ def download_file(
                 tree_leaves = tree_leaves_full
 
             records, record_order = _parse_alignment(alignment)
-            # Build meta from all tree leaves AND record IDs
             meta = _fetch_meta(cur, tree_leaves_full + list(records.keys()))
-            g2s, s2g = _build_crosswalk(meta)
 
-            # Follow TREE LEAF order. Each leaf matches one alignment record.
-            # Record name → display label uses the TREE label format:
-            # "genome_type_gene_id" like "AK58_A_TraesAK58CH1A01G226600.1"
-            ordered, used = [], set()
-            for leaf in tree_leaves:
-                leaf_tok = _first_token(leaf)
-                cand = [leaf_tok]
-                if leaf_tok in meta:
-                    for f in ("short_id", "gene_id", "raw_id"):
-                        v = meta[leaf_tok].get(f)
-                        if v: cand.append(_clean(v))
-                for c in list(cand):
-                    if c in g2s: cand.append(g2s[c])
-                    if c in s2g: cand.append(s2g[c])
-                more = [re.sub(r"\.\d+$", "", c) for c in list(cand) if c]
-                for c in {c for c in cand + more if c}:
-                    if c in records and c not in used:
-                        ordered.append(c); used.add(c); break
-
-            for rid in record_order:
-                if rid not in used:
-                    ordered.append(rid)
+            # Exactly the same ordering logic as PHP d_ordered()
+            ordered = _ordered_record_ids(tree_leaves, record_order, records, meta)
 
         lines = []
         for sid in ordered:
             if sid in records:
-                # Build tree-style label: genome_type + gene_id
-                # Tree displays "genome_type_gene_id" but FASTA needs ">gene_id genome_type"
-                rid_meta = meta.get(sid, {})
-                gene_id = rid_meta.get("gene_id", sid)
-                genome_type = rid_meta.get("genome_type", "")
-                if genome_type:
-                    label = f"{gene_id} {genome_type}"
-                else:
-                    label = gene_id if gene_id else sid
+                # Exactly the same label logic as PHP d_label()
+                label = _label_for(sid, meta)
                 lines.append(f">{label}")
                 lines.append("\n".join(records[sid]))
 
