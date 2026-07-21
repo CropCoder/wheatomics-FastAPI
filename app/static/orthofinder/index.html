@@ -40,7 +40,7 @@
       .catch(function(){});
   })();
   </script>
-  <link rel="stylesheet" href="style.css?v=22">
+  <link rel="stylesheet" href="style.css?v=25">
   <style>
     body { background: #f8f9fa; margin:0; padding:0; overflow-x:hidden; }
     #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
@@ -131,10 +131,8 @@
       <div class="summary-card">
         <div><div class="label">Orthogroup</div><div id="ogTitle" class="og-title"></div><span id="clusterBadge" class="cluster-badge" style="display:none;"></span></div>
         <div class="download-links">
-          <a id="downloadTree" target="_blank">Download OG tree</a>
-          <a id="downloadClusterTree" target="_blank" style="display:none;">Download homoeologous tree</a>
-          <a id="downloadAlignment" target="_blank">Download OG alignment</a>
-          <a id="downloadClusterAlignment" target="_blank" style="display:none;">Download homoeologous alignment</a>
+          <div class="download-row">Download OG <a id="downloadTree" target="_blank">tree</a> and <a id="downloadAlignment" target="_blank">protein alignment</a></div>
+          <div class="download-row" id="downloadClusterRow" style="display:none;">Download homoeologous <a id="downloadClusterTree" target="_blank">tree</a> and <a id="downloadClusterAlignment" target="_blank">protein alignment</a></div>
         </div>
       </div>
 
@@ -179,6 +177,6 @@
   </center>
 </div>
 
-<script src="app.js?v=25"></script>
+<script src="app.js?v=26"></script>
 </body>
 </html>

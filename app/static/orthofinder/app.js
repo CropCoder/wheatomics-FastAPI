@@ -261,41 +261,29 @@ async function searchProtein(q) {
       clusterDescEl.style.display = "none";
     }
 
-    const downloadClusterTree =
-      document.getElementById("downloadClusterTree");
+    const downloadClusterRow =
+      document.getElementById("downloadClusterRow");
 
-    if (
+    const hasCluster = (
       currentCluster !== null &&
       currentCluster > 0 &&
       data.query
-    ) {
-      downloadClusterTree.href =
+    );
+
+    if (hasCluster) {
+      document.getElementById("downloadClusterTree").href =
         `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
         `&type=tree` +
         `&cluster=${currentCluster}`;
 
-      downloadClusterTree.style.display = "";
-    } else {
-      downloadClusterTree.style.display = "none";
-    }
-
-    // Download homoeologous alignment
-    const downloadClusterAln =
-      document.getElementById("downloadClusterAlignment");
-
-    if (
-      currentCluster !== null &&
-      currentCluster > 0 &&
-      data.query
-    ) {
-      downloadClusterAln.href =
+      document.getElementById("downloadClusterAlignment").href =
         `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
         `&type=alignment` +
         `&cluster=${currentCluster}`;
 
-      downloadClusterAln.style.display = "";
+      downloadClusterRow.style.display = "";
     } else {
-      downloadClusterAln.style.display = "none";
+      downloadClusterRow.style.display = "none";
     }
 
     const treeClusterLabel =
