@@ -323,7 +323,7 @@ async function searchProtein(q) {
         selectedTree.error;
 
       document.getElementById("treeHeading").textContent =
-        "Some homoeologous group " +
+        "Homoeologous group " +
         currentCluster +
         " Gene Tree";
 
@@ -333,7 +333,7 @@ async function searchProtein(q) {
         treeClusterLabel.textContent =
           "Showing " +
           selectedTree.leafCount +
-          " genes from some homoeologous group " +
+          " genes from homoeologous group " +
           currentCluster +
           " (full OG has " +
           data.gene_count +
@@ -349,7 +349,7 @@ async function searchProtein(q) {
           );
       } else {
         treeClusterLabel.textContent =
-          "Some homoeologous group " +
+          "Homoeologous group " +
           currentCluster +
           " contains " +
           expectedClusterLeaves +
