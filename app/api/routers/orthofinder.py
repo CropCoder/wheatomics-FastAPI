@@ -902,11 +902,20 @@ def download_file(
                 pruned = _prune_tree_to_cluster(cur, og, tree, cluster)
                 leaf_order = _parse_newick_leaves(pruned)
                 include_unmatched = False
+
+                # Get cluster gene IDs and include them in the meta call so
+                # the crosswalk has the gene-level keys needed for leaf→record matching.
+                cur.execute("SELECT genes FROM orthogroups WHERE og_id = %s LIMIT 1", (og,))
+                row = cur.fetchone()
+                c_genes_for_meta = []
+                if row:
+                    genes_all = [g for g in row["genes"].split() if g]
+                    c_genes_for_meta = _get_cluster_members(genes_all, cluster, cur)
+                meta = _fetch_meta(cur, tree_leaves_full + list(records.keys()) + c_genes_for_meta)
             else:
                 leaf_order = tree_leaves_full
                 include_unmatched = True
-
-            meta = _fetch_meta(cur, tree_leaves_full + list(records.keys()))
+                meta = _fetch_meta(cur, tree_leaves_full + list(records.keys()))
             ordered = _ordered_record_ids(
                 leaf_order, record_order, records, meta,
                 include_unmatched=include_unmatched,
