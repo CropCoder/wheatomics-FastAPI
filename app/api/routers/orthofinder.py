@@ -511,16 +511,16 @@ def _match_keys(name: str, meta: dict) -> set:
 def _ordered_record_ids(leaf_order, record_order, records, meta, include_unmatched=True):
     """Order alignment records by tree-leaf order, genome-aware & one-to-one.
 
-    A leaf and a record may share the same gene_id yet belong to different
-    genomes (e.g. Chinese_Spring1.1_A vs Triticum_aestivum_alchemy_A). We build
-    candidate records per leaf via a gene-level key crosswalk, then disambiguate
-    by genome_type so each of the two same-gene records goes to the correct
-    leaf. `used` guarantees a strict one-to-one assignment (nothing dropped).
-
-    include_unmatched=True  -> append records not matched to any leaf (whole OG).
-    include_unmatched=False -> only emit records matched to a (cluster) leaf.
+    Strategy:
+    1) For each leaf, build candidate record IDs using bidirectional normalized
+       key matching (leaf variants ↔ record variants).
+    2) Disambiguate same-gene candidates by exact genome_type match, then by
+       longest common prefix.
+    3) After all leaves are processed, any records that were NOT matched and
+       whose gene-level key aligns with a remaining leaf are appended in
+       record_order (cluster mode only — ensures no records are silently lost).
     """
-    # Index gene-level key -> list of record ids.
+    # ---- Index record IDs by all normalized variants ----
     key_to_recs: dict = {}
     rec_genome: dict = {}
     for rid in records:
@@ -543,13 +543,13 @@ def _ordered_record_ids(leaf_order, record_order, records, meta, include_unmatch
         leaf_tok = _first_token(leaf)
         leaf_gt = _genome_type_of(leaf, meta)
 
-        # 1) collect candidate records via gene-level keys
         cand: list = []
+        # gene-level key intersection
         for k in _match_keys(leaf, meta):
             for rid in key_to_recs.get(k, []):
                 if rid not in used and rid not in cand:
                     cand.append(rid)
-        # 2) suffix fallback (prefixed leaf endswith record id)
+        # suffix fallback (prefixed leaf endswith record id)
         if not cand:
             for rid in rec_ids_by_len:
                 if rid in used:
@@ -561,8 +561,6 @@ def _ordered_record_ids(leaf_order, record_order, records, meta, include_unmatch
         if len(cand) == 1:
             chosen = cand[0]
         elif cand:
-            # disambiguate same-gene candidates by exact genome_type match,
-            # then by longest common prefix of the (prefixed) tokens.
             gt_hits = [r for r in cand if leaf_gt and rec_genome.get(r) == leaf_gt]
             if len(gt_hits) == 1:
                 chosen = gt_hits[0]
@@ -575,10 +573,27 @@ def _ordered_record_ids(leaf_order, record_order, records, meta, include_unmatch
         if chosen and chosen in records and chosen not in used:
             ordered.append(chosen); used.add(chosen)
 
-    if include_unmatched:
+    # ---- CLUSTER MODE: recover missed records that belong to the cluster ----
+    if not include_unmatched:
+        # Track which leaf gene keys we still have (after used matching).
+        # Any record that matches one of these keys but wasn't picked above
+        # is appended in record_order — prevents silent drops.
+        leaf_gene_keys: set[str] = set()
+        for leaf in leaf_order:
+            for k in _match_keys(leaf, meta):
+                leaf_gene_keys.add(k)
+        for rid in record_order:
+            if rid in used:
+                continue
+            if set(_match_keys(rid, meta)) & leaf_gene_keys:
+                ordered.append(rid)
+                used.add(rid)
+
+    elif include_unmatched:
         for rid in record_order:
             if rid not in used:
                 ordered.append(rid)
+
     return ordered
 
 def _label_for(id, meta):
