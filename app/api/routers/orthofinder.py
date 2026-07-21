@@ -900,8 +900,8 @@ def download_file(
                 leaf_order = _parse_newick_leaves(pruned)
                 include_unmatched = False
 
-                # Include cluster gene IDs in meta so the crosswalk has every
-                # gene-level key needed for leaf→record matching.
+                # Get cluster gene IDs and include them in the meta call so
+                # the crosswalk has the gene-level keys needed for leaf→record matching.
                 cur.execute("SELECT genes FROM orthogroups WHERE og_id = %s LIMIT 1", (og,))
                 row = cur.fetchone()
                 c_genes_for_meta = []
@@ -932,3 +932,4 @@ def download_file(
             headers={"Content-Disposition": f'attachment; filename="{og}{cluster_suffix}.alignment.fa"'})
 
     raise HTTPException(400, "Invalid type")
+
