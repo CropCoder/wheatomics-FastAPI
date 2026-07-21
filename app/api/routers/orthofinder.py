@@ -123,52 +123,65 @@ def _sequence_id_files() -> list:
         base.parent / "WorkingDirectory" / "SequenceIDs.txt",
     ]
 
-def _load_sequence_id_map(wanted) -> dict:
-    """Mirror PHP d_load_sequence_id_map(): parse SequenceIDs.txt on demand.
+_seq_id_full_cache: dict | None = None
 
-    KEY FIX: short_id is ALWAYS unique per genome (e.g. 15_53732 vs 96_17851),
-    so we store entries under both short_id AND gene_id.  When the same
-    gene_id appears from two different genomes, the per-short_id entries are
-    still accessible, and _ordered_record_ids uses the short_id to disambiguate.
+def _load_all_sequence_ids() -> dict:
+    """Parse SequenceIDs.txt ONCE and cache. Keyed by short_id/gene_id/raw_id.
+
+    Re-reading this (potentially huge) file on every request caused the
+    alignment / cluster endpoints to hang.  We parse it a single time and
+    cache the result.  short_id is unique per genome, so per-genome entries
+    remain accessible even when a gene_id appears in two genomes.
     """
+    global _seq_id_full_cache
+    if _seq_id_full_cache is not None:
+        return _seq_id_full_cache
+    mp: dict = {}
+    for f in _sequence_id_files():
+        if not f.exists():
+            continue
+        try:
+            with f.open("r", encoding="utf-8", errors="ignore") as fh:
+                for line in fh:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    m = re.match(r"^([^:\s]+)\s*:\s*(\S+)", line)
+                    if not m:
+                        m = re.match(r"^(\S+)\s+(\S+)", line)
+                    if not m:
+                        continue
+                    short = _clean(m.group(1)); full = _clean(m.group(2))
+                    if not short or not full:
+                        continue
+                    sp = _split_prefixed_gene(full)
+                    _add_info(mp, _make_info(short, full, sp["genome_type"], sp["sub"]))
+        except Exception:
+            continue
+        if mp:
+            break
+    _seq_id_full_cache = mp
+    return mp
+
+def _load_sequence_id_map(wanted) -> dict:
+    """Return only the wanted subset from the cached full map (no re-read)."""
+    full = _load_all_sequence_ids()
+    if not full:
+        return {}
     want: set[str] = set()
     for w in wanted:
         w = _first_token(w)
         if w:
             want.add(w)
             want.add(re.sub(r"\.\d+$", "", w))
-    mp: dict = {}
-    for f in _sequence_id_files():
-        if not f.exists():
-            continue
-        try:
-            lines = f.read_text(encoding="utf-8", errors="ignore").splitlines()
-        except Exception:
-            continue
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            short = full = ""
-            m = re.match(r"^([^:\s]+)\s*:\s*(\S+)", line)
-            if m:
-                short = _clean(m.group(1)); full = _clean(m.group(2))
-            else:
-                m = re.match(r"^(\S+)\s+(\S+)", line)
-                if m:
-                    short = _clean(m.group(1)); full = _clean(m.group(2))
-            if not short or not full:
-                continue
-            full0 = re.sub(r"\.\d+$", "", full)
-            short0 = re.sub(r"\.\d+$", "", short)
-            if want and short not in want and full not in want \
-               and short0 not in want and full0 not in want:
-                continue
-            sp = _split_prefixed_gene(full)
-            _add_info(mp, _make_info(short, full, sp["genome_type"], sp["sub"]))
-        if mp:
-            break
-    return mp
+    if not want:
+        return {}
+    out: dict = {}
+    for key in want:
+        info = full.get(key)
+        if info:
+            _add_info(out, info)
+    return out
 
 def _fetch_meta(cursor, names) -> dict:
     """Start from SequenceIDs.txt file map (like PHP), then overlay DB rows."""
