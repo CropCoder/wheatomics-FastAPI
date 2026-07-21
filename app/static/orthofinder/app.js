@@ -154,13 +154,15 @@ async function searchProtein(q) {
   message.textContent = "Loading...";
   result.style.display = "none";
 
+  // Append species filter if selected
+  var selectedSpecies = document.getElementById("speciesSelect").value;
+  var url = `/api/orthofinder/api.php?q=${encodeURIComponent(q)}&_=${Date.now()}`;
+  if (selectedSpecies) {
+    url += "&species=" + encodeURIComponent(selectedSpecies);
+  }
+
   try {
-    const response = await fetch(
-      `/api/orthofinder/api.php?q=${encodeURIComponent(q)}&_=${Date.now()}`,
-      {
-        cache: "no-store"
-      }
-    );
+    const response = await fetch(url, { cache: "no-store" });
 
     const text = await response.text();
     let data;

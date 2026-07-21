@@ -414,6 +414,7 @@ def search_php(
     og: str = Query("", description="Orthogroup ID, required for action=members and action=positions"),
     sub: str = Query("", description="Subgenome filter (A/B/D), used with action=members"),
     cluster: int = Query(0, description="Cluster filter (1-7), used with action=positions"),
+    species: str = Query("", description="Species filter for gene search (optional)"),
     _: int = Query(0, description="Cache-buster (optional)"),
 ):
     """PHP api.php compatible endpoint — returns unwrapped JSON."""
@@ -497,12 +498,24 @@ def search_php(
         if re.match(r"^OG\d+$", q):
             og_id = q
         else:
+            # Support species-scoped search: if species is provided, query
+            # gene_to_og with multiple candidate gene_id forms
+            cand_ids = [q]
+            if species:
+                # Build alternative gene ID forms based on the selected species
+                # e.g. "TraesCS1A02G219700.1" plus "CS-IAAS_TraesCS1A02G219700.1"
+                # This helps when the same gene ID prefix may exist across genomes
+                cand_ids.append(f"{species}_{q}")
             query_hash = hashlib.md5(q.encode()).hexdigest()
-            cur.execute(
-                "SELECT og_id FROM gene_to_og WHERE gene_hash = %s AND gene_id = %s LIMIT 1",
-                (query_hash, q),
-            )
-            row = cur.fetchone()
+            row = None
+            for cid in {c for c in cand_ids if c}:
+                cur.execute(
+                    "SELECT og_id FROM gene_to_og WHERE gene_hash = MD5(%s) AND gene_id = %s LIMIT 1",
+                    (cid, cid),
+                )
+                row = cur.fetchone()
+                if row:
+                    break
             if not row:
                 return {"error": "Protein ID was not found."}
             og_id = row["og_id"]
@@ -643,62 +656,60 @@ def download_file(
         alignment = aln_file.read_text(encoding="utf-8")
 
         with mysql_cursor(ORTHOFINDER_DB) as cur:
-            tree_leaves_all = _parse_newick_leaves(tree) if tree else []
+            tree_leaves_full = _parse_newick_leaves(tree) if tree else []
 
             # If cluster filter: prune to cluster members only
-            if 1 <= cluster <= 7 and tree_leaves_all:
+            if 1 <= cluster <= 7 and tree_leaves_full:
                 cur.execute("SELECT genes FROM orthogroups WHERE og_id = %s LIMIT 1", (og,))
                 og_row = cur.fetchone()
                 if og_row:
                     genes_all = [g for g in og_row["genes"].split() if g]
                     c_genes = _get_cluster_members(genes_all, cluster, cur)
-                    m2 = _fetch_meta(cur, tree_leaves_all + c_genes)
-                    k2 = _build_prune_keep_set(c_genes, m2, tree_leaves_all)
-                    tree_leaves = [lf for lf in tree_leaves_all if _clean(lf) in k2]
+                    m2 = _fetch_meta(cur, tree_leaves_full + c_genes)
+                    k2 = _build_prune_keep_set(c_genes, m2, tree_leaves_full)
+                    tree_leaves = [lf for lf in tree_leaves_full if _clean(lf) in k2]
                 else:
-                    tree_leaves = tree_leaves_all
+                    tree_leaves = tree_leaves_full
             else:
-                tree_leaves = tree_leaves_all
+                tree_leaves = tree_leaves_full
 
             records, record_order = _parse_alignment(alignment)
-            # Build a comprehensive cross-reference meta from all known names
             meta = _fetch_meta(cur, tree_leaves + list(records.keys()))
-            # Also build reverse lookups: short_id -> gene_id, gene_id -> short_id
             g2s, s2g = _build_crosswalk(meta)
 
-            # Strictly follow tree leaf order for output sequence
-            used_record_ids: set[str] = set()
-            lines = []
+            # Strictly follow TREE LEAF order. For each leaf, find the matching
+            # alignment record by trying ALL candidate name forms.
+            ordered, used = [], set()
             for leaf in tree_leaves:
                 leaf_tok = _first_token(leaf)
-                # Try ALL name forms to find the matching alignment record
-                matched_rid = None
                 cand = [leaf_tok]
+                # Add names from meta
                 if leaf_tok in meta:
                     for f in ("short_id", "gene_id", "raw_id"):
-                        if meta[leaf_tok].get(f):
-                            cand.append(_clean(meta[leaf_tok][f]))
+                        v = meta[leaf_tok].get(f)
+                        if v: cand.append(_clean(v))
+                # Add crosswalk names
                 for c in list(cand):
                     if c in g2s: cand.append(g2s[c])
                     if c in s2g: cand.append(s2g[c])
-                # Also try without-version variants
+                # Add without-version variants
                 more = [re.sub(r"\.\d+$", "", c) for c in list(cand) if c]
+                # Try all candidates to find a matching record
                 for c in {c for c in cand + more if c}:
-                    if c in records and c not in used_record_ids:
-                        matched_rid = c
-                        break
+                    if c in records and c not in used:
+                        ordered.append(c); used.add(c); break
 
-                if matched_rid is not None:
-                    used_record_ids.add(matched_rid)
-                    rid_meta = meta.get(matched_rid, {})
-                    gene_id = rid_meta.get("gene_id", matched_rid)
-                    genome_type = rid_meta.get("genome_type", "")
-                    if genome_type:
-                        label = f"{gene_id} {genome_type}"
-                    else:
-                        label = gene_id if gene_id else matched_rid
-                    lines.append(f">{label}")
-                    lines.append("\n".join(records[matched_rid]))
+            # Fallback: append any remaining records not yet matched
+            for rid in record_order:
+                if rid not in used:
+                    ordered.append(rid)
+
+        lines = []
+        for sid in ordered:
+            if sid in records:
+                label = meta.get(sid, {}).get("full_label", sid)
+                lines.append(f">{label}")
+                lines.append("\n".join(records[sid]))
 
         cluster_suffix = f".cluster{cluster}" if cluster else ""
         return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain",
