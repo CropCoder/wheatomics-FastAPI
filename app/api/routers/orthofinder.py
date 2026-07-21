@@ -22,9 +22,8 @@ CLUSTER_FILE = settings.ORTHOFINDER_CLUSTER_FILE
 
 router = APIRouter(prefix="/orthofinder", tags=["OrthoFinder"])
 
-# Whitespace / delimiter constants written as escapes so copy-paste can never
-# turn them into raw newlines or tabs (which previously broke the file).
-_WS = " \t\n\r\x00\x0b'\""
+# ========== 修复点：将多行字符串改为单行转义 ==========
+_WS = " \t\n\x00\x0b'\""
 _TAB = "\t"
 _NL = "\n"
 
@@ -256,7 +255,7 @@ def _split_prefixed_gene(gid: str) -> dict:
 # Newick helpers
 # ---------------------------------------------------------------------------
 
-_NEWICK_WS = " \t\n\r"          # whitespace inside a Newick string
+_NEWICK_WS = " 	\n"          # whitespace inside a Newick string (这里原为 " 	\n" 无问题)
 _NEWICK_STOP = "(),:;"          # structural delimiters
 
 def _parse_newick_leaves(newick: str) -> list[str]:
@@ -420,11 +419,17 @@ def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) ->
                 gid = _clean(meta[parts[1]].get("gene_id", ""))
                 if gid and gid in cluster_set: matched = True
         if not matched:
+            # gene id embedded in the prefixed leaf name (genome-agnostic):
+            # keep the leaf if any cluster gene id is a suffix of the leaf token.
             lf_tok = _first_token(lf)
-            cands = [cg for cg in cluster_list
-                     if lf_tok == cg or lf_tok.endswith("_" + cg) or lf_tok.endswith(cg)]
-            if len(set(cands)) == 1:
-                matched = True
+            lf_tok_nv = re.sub(r"\.\d+$", "", lf_tok)
+            for cg in cluster_list:
+                cg_nv = re.sub(r"\.\d+$", "", cg)
+                if (lf_tok == cg or lf_tok.endswith("_" + cg) or lf_tok.endswith(cg)
+                        or lf_tok_nv == cg_nv or lf_tok_nv.endswith("_" + cg_nv)
+                        or lf_tok_nv.endswith(cg_nv)):
+                    matched = True
+                    break
         if matched: keep.add(lf)
     return keep
 
@@ -472,70 +477,103 @@ def _chunk_list(lst, size):
     return [lst[i:i+size] for i in range(0, len(lst), size)]
 
 
-def _ordered_record_ids(leaf_order, record_order, records, meta, include_unmatched=True):
-    """Order alignment records by tree-leaf order.
+def _genome_type_of(name: str, meta: dict) -> str:
+    """Best-effort genome_type for a leaf or record id.
+    Prefer meta (looked up by the unique short/full token), then fall back to
+    splitting the prefixed name. This is what disambiguates two records that
+    share the same gene_id but come from different genomes."""
+    tok = _first_token(name)
+    info = meta.get(tok) or meta.get(name)
+    if info and info.get("genome_type"):
+        return info["genome_type"]
+    return _split_prefixed_gene(tok)["genome_type"]
 
-    Graded matching per leaf (stop at first hit):
-      1) exact crosswalk candidates (gene_id/short_id/raw_id + version-stripped);
-      2) unique suffix match (leaf endswith record_id) for prefixed leaf names.
+
+def _match_keys(name: str, meta: dict) -> set:
+    """All normalized keys a leaf/record can be matched by (gene-level)."""
+    tok = _first_token(name)
+    sp = _split_prefixed_gene(tok)
+    ks: set = set()
+    for v in (tok, sp["gene"]):
+        if v:
+            ks.add(v)
+            ks.add(re.sub(r"\.\d+$", "", v))
+    info = meta.get(tok)
+    if info:
+        for f in ("short_id", "gene_id", "raw_id"):
+            v = info.get(f)
+            if v:
+                ks.add(v)
+                ks.add(re.sub(r"\.\d+$", "", v))
+    return ks
+
+
+def _ordered_record_ids(leaf_order, record_order, records, meta, include_unmatched=True):
+    """Order alignment records by tree-leaf order, genome-aware & one-to-one.
+
+    A leaf and a record may share the same gene_id yet belong to different
+    genomes (e.g. Chinese_Spring1.1_A vs Triticum_aestivum_alchemy_A). We build
+    candidate records per leaf via a gene-level key crosswalk, then disambiguate
+    by genome_type so each of the two same-gene records goes to the correct
+    leaf. `used` guarantees a strict one-to-one assignment (nothing dropped).
 
     include_unmatched=True  -> append records not matched to any leaf (whole OG).
     include_unmatched=False -> only emit records matched to a (cluster) leaf.
     """
-    g2s, s2g, raw2s = {}, {}, {}
-    for info in meta.values():
-        gid = info.get("gene_id"); sid = info.get("short_id"); rid = info.get("raw_id")
-        if gid and sid: g2s[gid] = sid
-        if sid and gid: s2g[sid] = gid
-        if rid and sid: raw2s[rid] = sid
+    # Index gene-level key -> list of record ids.
+    key_to_recs: dict = {}
+    rec_genome: dict = {}
+    for rid in records:
+        rec_genome[rid] = _genome_type_of(rid, meta)
+        for k in _match_keys(rid, meta):
+            key_to_recs.setdefault(k, [])
+            if rid not in key_to_recs[k]:
+                key_to_recs[k].append(rid)
 
     rec_ids_by_len = sorted(records.keys(), key=lambda x: -len(x))
 
-    def _exact_match(leaf):
-        leaf_tok = _first_token(leaf)
-        sp = _split_prefixed_gene(leaf_tok)
-        cand = [leaf_tok, sp["gene"]]
-        if leaf_tok in meta:
-            for f in ("short_id", "gene_id", "raw_id"):
-                v = meta[leaf_tok].get(f)
-                if v: cand.append(v)
-        if leaf_tok in g2s: cand.append(g2s[leaf_tok])
-        if leaf_tok in raw2s: cand.append(raw2s[leaf_tok])
-        if sp["gene"] in g2s: cand.append(g2s[sp["gene"]])
-        more = [re.sub(r"\.\d+$", "", c) for c in cand if c]
-        seen, all_cand = set(), []
-        for c in cand + more:
-            if c and c not in seen:
-                seen.add(c); all_cand.append(c)
-        for c in all_cand:
-            if c in records:
-                return c
-        return None
-
-    def _suffix_match(leaf, used):
-        leaf_tok = _first_token(leaf)
-        cands = []
-        for fid in rec_ids_by_len:
-            if fid in used:
-                continue
-            if leaf_tok == fid or leaf_tok.endswith("_" + fid) or leaf_tok.endswith(fid):
-                cands.append(fid)
-        if not cands:
-            return None
-        if len(cands) == 1:
-            return cands[0]
-        if len(cands[0]) > len(cands[1]):
-            return cands[0]
-        return None
+    def _lcp(a: str, b: str) -> int:
+        m = min(len(a), len(b)); i = 0
+        while i < m and a[i] == b[i]:
+            i += 1
+        return i
 
     ordered, used = [], set()
     for leaf in leaf_order:
-        rid = _exact_match(leaf)
-        if not rid or rid in used:
-            rid2 = _suffix_match(leaf, used)
-            rid = rid2 if rid2 else (rid if (rid and rid not in used) else None)
-        if rid and rid in records and rid not in used:
-            ordered.append(rid); used.add(rid)
+        leaf_tok = _first_token(leaf)
+        leaf_gt = _genome_type_of(leaf, meta)
+
+        # 1) collect candidate records via gene-level keys
+        cand: list = []
+        for k in _match_keys(leaf, meta):
+            for rid in key_to_recs.get(k, []):
+                if rid not in used and rid not in cand:
+                    cand.append(rid)
+        # 2) suffix fallback (prefixed leaf endswith record id)
+        if not cand:
+            for rid in rec_ids_by_len:
+                if rid in used:
+                    continue
+                if leaf_tok == rid or leaf_tok.endswith("_" + rid) or leaf_tok.endswith(rid):
+                    cand.append(rid)
+
+        chosen = None
+        if len(cand) == 1:
+            chosen = cand[0]
+        elif cand:
+            # disambiguate same-gene candidates by exact genome_type match,
+            # then by longest common prefix of the (prefixed) tokens.
+            gt_hits = [r for r in cand if leaf_gt and rec_genome.get(r) == leaf_gt]
+            if len(gt_hits) == 1:
+                chosen = gt_hits[0]
+            else:
+                pool = gt_hits if gt_hits else cand
+                pool = sorted(pool, key=lambda r: (_lcp(leaf_tok, _first_token(r)), len(r)),
+                              reverse=True)
+                chosen = pool[0]
+
+        if chosen and chosen in records and chosen not in used:
+            ordered.append(chosen); used.add(chosen)
 
     if include_unmatched:
         for rid in record_order:
@@ -790,7 +828,7 @@ def download_file(
                     if keep:
                         p = _prune_newick(tree, keep)
                         if p: tree = p
-        suffix = f".cluster{cluster}.tree.txt" if cluster else ".tree.txt"
+        suffix = f".HomoeologousGroup{cluster}.tree.txt" if cluster else ".tree.txt"
         return PlainTextResponse(
             tree, media_type="text/plain",
             headers={"Content-Disposition": f'attachment; filename="{og}{suffix}"'})
@@ -832,7 +870,7 @@ def download_file(
                 out_lines.append(">" + _label_for(sid, meta))
                 out_lines.append(_NL.join(records[sid]))
 
-        cluster_suffix = f".cluster{cluster}" if cluster else ""
+        cluster_suffix = f".HomoeologousGroup{cluster}" if cluster else ""
         body = _NL.join(out_lines) + _NL
         return PlainTextResponse(
             body, media_type="text/plain",

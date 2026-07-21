@@ -231,7 +231,7 @@ async function searchProtein(q) {
       `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
       `&type=alignment`;
 
-    // Badge - show "Some homoeologous group N (chrA/B/D)"
+    // Badge - show "Homoeologous group N (chrA/B/D)"
     const badge = document.getElementById("clusterBadge");
 
     if (currentCluster !== null && currentCluster > 0) {
@@ -240,7 +240,7 @@ async function searchProtein(q) {
         ? (data.cluster_sub_counts.A > 0 ? "A" : "") + (data.cluster_sub_counts.B > 0 ? "B" : "") + (data.cluster_sub_counts.D > 0 ? "D" : "")
         : "";
       const subDesc = clusterSub ? " (chr" + clusterSub.split("").join("/") + " homoeologous group)" : "";
-      badge.textContent = "Some homoeologous group " + currentCluster + subDesc;
+      badge.textContent = "Homoeologous group " + currentCluster + subDesc;
       badge.className = "cluster-badge cluster-badge-" + currentCluster;
       badge.style.display = "";
     } else {
