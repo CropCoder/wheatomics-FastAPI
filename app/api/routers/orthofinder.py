@@ -643,48 +643,60 @@ def download_file(
         alignment = aln_file.read_text(encoding="utf-8")
 
         with mysql_cursor(ORTHOFINDER_DB) as cur:
-            leaf_order_full = _parse_newick_leaves(tree) if tree else []
+            tree_leaves_all = _parse_newick_leaves(tree) if tree else []
 
-            # If cluster filter active, prune leaves to cluster members
-            if 1 <= cluster <= 7 and leaf_order_full:
+            # If cluster filter: prune to cluster members only
+            if 1 <= cluster <= 7 and tree_leaves_all:
                 cur.execute("SELECT genes FROM orthogroups WHERE og_id = %s LIMIT 1", (og,))
                 og_row = cur.fetchone()
                 if og_row:
                     genes_all = [g for g in og_row["genes"].split() if g]
                     c_genes = _get_cluster_members(genes_all, cluster, cur)
-                    m2 = _fetch_meta(cur, leaf_order_full + c_genes)
-                    k2 = _build_prune_keep_set(c_genes, m2, leaf_order_full)
-                    leaf_order = [lf for lf in leaf_order_full if _clean(lf) in k2]
+                    m2 = _fetch_meta(cur, tree_leaves_all + c_genes)
+                    k2 = _build_prune_keep_set(c_genes, m2, tree_leaves_all)
+                    tree_leaves = [lf for lf in tree_leaves_all if _clean(lf) in k2]
                 else:
-                    leaf_order = leaf_order_full
+                    tree_leaves = tree_leaves_all
             else:
-                leaf_order = leaf_order_full
+                tree_leaves = tree_leaves_all
 
             records, record_order = _parse_alignment(alignment)
-            meta = _fetch_meta(cur, leaf_order + record_order)
-            g2s, s2g = _build_crosswalk(meta)
-            ordered, used = [], set()
-            for leaf in leaf_order:
+            # Build meta from tree leaves + record IDs to get full gene_id/subgenome labels
+            meta = _fetch_meta(cur, tree_leaves + list(records.keys()))
+
+            # Strictly follow tree leaf order for output sequence
+            used_record_ids: set[str] = set()
+            lines = []
+            for leaf in tree_leaves:
+                # Find the matching alignment record for this tree leaf
                 leaf_tok = _first_token(leaf)
+                # Try multiple name forms to match the record
+                matched_rid = None
+                # Build candidate names from meta
                 cand = [leaf_tok]
                 if leaf_tok in meta:
                     for f in ("short_id", "gene_id", "raw_id"):
-                        if meta[leaf_tok].get(f): cand.append(_clean(meta[leaf_tok][f]))
-                for c in list(cand):
-                    if c in g2s: cand.append(g2s[c])
-                more = [re.sub(r"\.\d+$", "", c) for c in cand if c]
+                        if meta[leaf_tok].get(f):
+                            cand.append(_clean(meta[leaf_tok][f]))
+                # Also try without-version variants
+                more = [re.sub(r"\.\d+$", "", c) for c in list(cand) if c]
                 for c in {c for c in cand + more if c}:
-                    if c in records and c not in used:
-                        ordered.append(c); used.add(c); break
-            for rid in record_order:
-                if rid not in used: ordered.append(rid)
+                    if c in records and c not in used_record_ids:
+                        matched_rid = c
+                        break
 
-        lines = []
-        for sid in ordered:
-            if sid in records:
-                label = meta.get(sid, {}).get("full_label", sid)
-                lines.append(f">{label}")
-                lines.append("\n".join(records[sid]))
+                if matched_rid is not None:
+                    used_record_ids.add(matched_rid)
+                    # Build label: "gene_id genome_type" format (matching tree display format)
+                    rid_meta = meta.get(matched_rid, {})
+                    gene_id = rid_meta.get("gene_id", matched_rid)
+                    genome_type = rid_meta.get("genome_type", "")
+                    if genome_type:
+                        label = f"{gene_id} {genome_type}"
+                    else:
+                        label = gene_id if gene_id else matched_rid
+                    lines.append(f">{label}")
+                    lines.append("\n".join(records[matched_rid]))
 
         cluster_suffix = f".cluster{cluster}" if cluster else ""
         return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain",
