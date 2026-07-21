@@ -393,8 +393,11 @@ def _prune_newick(newick: str, keep_set: set) -> str:
 def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) -> set:
     """Map tree leaves → meta → gene_id → check against cluster_genes.
 
-    Enriched crosswalk: tries leaf→meta directly, leaf token in meta,
-    without-version, genome-number prefix strip, then unique suffix guard.
+    Enriched crosswalk from 3d31957 (steps 1-4): tries leaf→meta, leaf token,
+    without-version, genome-number prefix strip — PLUS the unique suffix guard
+    from 92c08a9 (step 5) that only keeps a leaf when exactly one cluster gene
+    matches as suffix.  Together this preserves the 123 leaves (enriched) while
+    avoiding false matches (unique guard).
     """
     if not cluster_genes or not tree_leaves:
         return set()
@@ -413,7 +416,7 @@ def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) ->
                 if v and v in cluster_set:
                     matched = True; break
 
-        # 2) first-token of leaf (genome-prefixed name) in meta
+        # 2) first-token of leaf (the genome-prefixed name) in meta
         lf_tok = _first_token(lf)
         if not matched and lf_tok and lf_tok != lf and lf_tok in meta:
             for f in ("gene_id", "raw_id", "short_id"):
@@ -446,8 +449,10 @@ def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) ->
                     if v and v in cluster_set:
                         matched = True; break
 
-        # 5) unique suffix guard: leaf token ends with cluster gene, but
-        #    ONLY when exactly one cluster gene matches (avoids false match)
+        # 5) unique suffix guard (from 92c08a9): only keep if EXACTLY ONE
+        #    cluster gene is a suffix of the leaf token — avoids
+        #    over-matching on common gene IDs while still covering leaves
+        #    matched only via prefixed-name suffix.
         if not matched:
             lf_tok_val = _first_token(lf)
             lf_tok_nv_val = re.sub(r"\.\d+$", "", lf_tok_val)
