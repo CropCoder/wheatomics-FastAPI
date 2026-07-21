@@ -131,8 +131,8 @@
       <div class="summary-card">
         <div><div class="label">Orthogroup</div><div id="ogTitle" class="og-title"></div><span id="clusterBadge" class="cluster-badge" style="display:none;"></span></div>
         <div class="download-links">
-          <div class="download-row">Download OG <a id="downloadTree" target="_blank">tree</a> and <a id="downloadAlignment" target="_blank">protein alignment</a></div>
-          <div class="download-row" id="downloadClusterRow" style="display:none;">Download homoeologous <a id="downloadClusterTree" target="_blank">tree</a> and <a id="downloadClusterAlignment" target="_blank">protein alignment</a></div>
+          <div class="download-row"><a id="downloadOG" href="#" onclick="downloadBundle(event, 'og')">Download OG tree and protein alignment</a></div>
+          <div class="download-row" id="downloadClusterRow" style="display:none;"><a id="downloadCluster" href="#" onclick="downloadBundle(event, 'cluster')">Download homoeologous tree and protein alignment</a></div>
         </div>
       </div>
 
@@ -177,6 +177,6 @@
   </center>
 </div>
 
-<script src="app.js?v=26"></script>
+<script src="app.js?v=27"></script>
 </body>
 </html>
