@@ -392,8 +392,12 @@ def _prune_newick(newick: str, keep_set: set) -> str:
 
 
 def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) -> set:
-    """Map tree leaves -> meta -> gene_id -> check against cluster_genes.
-    Also uses a unique suffix (endswith) fallback for prefixed leaf names."""
+    """Map tree leaves → meta → gene_id → check against cluster_genes.
+
+    Uses the SequenceIDs crosswalk (short_id↔gene_id↔raw_id) already loaded
+    into meta by _fetch_meta, so short-ID leaves like '3_127' are correctly
+    resolved to their gene_id and matched against the cluster.
+    """
     if not cluster_genes or not tree_leaves:
         return set()
     cluster_set = {_clean(cg) for cg in cluster_genes if _clean(cg)}
@@ -403,33 +407,54 @@ def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) ->
         lf = _clean(lf)
         if not lf: continue
         matched = False
+
+        # leaf directly in meta → find gene_id
         if lf in meta:
             gid = _clean(meta[lf].get("gene_id", ""))
             rid = _clean(meta[lf].get("raw_id", ""))
-            if (gid and gid in cluster_set) or (rid and rid in cluster_set):
+            sid = _clean(meta[lf].get("short_id", ""))
+            if (gid and gid in cluster_set) or (rid and rid in cluster_set) or (sid and sid in cluster_set):
                 matched = True
+
+        # leaf token (first word) in meta via crosswalk
+        if not matched:
+            lf_tok = _first_token(lf)
+            if lf_tok and lf_tok != lf and lf_tok in meta:
+                gid = _clean(meta[lf_tok].get("gene_id", ""))
+                rid = _clean(meta[lf_tok].get("raw_id", ""))
+                if (gid and gid in cluster_set) or (rid and rid in cluster_set):
+                    matched = True
+
+        # without-version-number variants
         if not matched:
             lf_nv = re.sub(r"\.\d+$", "", lf)
             if lf_nv != lf and lf_nv in meta:
                 gid = _clean(meta[lf_nv].get("gene_id", ""))
                 if gid and gid in cluster_set: matched = True
+            lf_tok_nv = re.sub(r"\.\d+$", "", lf_tok) if lf_tok else ""
+            if not matched and lf_tok_nv and lf_tok_nv != lf_tok and lf_tok_nv in meta:
+                gid = _clean(meta[lf_tok_nv].get("gene_id", ""))
+                if gid and gid in cluster_set: matched = True
+
+        # strip genome-number prefix (e.g. "3_127" → "127")
         if not matched:
             parts = lf.split("_", 1)
             if len(parts) == 2 and parts[1] and parts[1] in meta:
                 gid = _clean(meta[parts[1]].get("gene_id", ""))
                 if gid and gid in cluster_set: matched = True
+
+        # suffix check: cluster gene_id embedded in prefixed leaf token
         if not matched:
-            # gene id embedded in the prefixed leaf name (genome-agnostic):
-            # keep the leaf if any cluster gene id is a suffix of the leaf token.
             lf_tok = _first_token(lf)
-            lf_tok_nv = re.sub(r"\.\d+$", "", lf_tok)
+            lf_tok_nv = re.sub(r"\.\d+$", "", lf_tok) if lf_tok else ""
             for cg in cluster_list:
                 cg_nv = re.sub(r"\.\d+$", "", cg)
                 if (lf_tok == cg or lf_tok.endswith("_" + cg) or lf_tok.endswith(cg)
-                        or lf_tok_nv == cg_nv or lf_tok_nv.endswith("_" + cg_nv)
-                        or lf_tok_nv.endswith(cg_nv)):
+                        or lf_tok_nv == cg_nv or (lf_tok_nv and lf_tok_nv.endswith("_" + cg_nv))
+                        or (lf_tok_nv and lf_tok_nv.endswith(cg_nv))):
                     matched = True
                     break
+
         if matched: keep.add(lf)
     return keep
 
