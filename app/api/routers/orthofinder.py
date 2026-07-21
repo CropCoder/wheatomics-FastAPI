@@ -701,15 +701,18 @@ def download_file(
                 tree_leaves = tree_leaves_full
 
             records, record_order = _parse_alignment(alignment)
+            # IMPORTANT: pass ALL tree leaves and ALL record IDs to meta so
+            # _ordered_record_ids has full crosswalk info for matching.
             meta = _fetch_meta(cur, tree_leaves_full + list(records.keys()))
 
-            # Exactly the same ordering logic as PHP d_ordered()
+            # Use the SAME _ordered_record_ids as PHP d_ordered(),
+            # but pass the CLUSTERED tree_leaves when cluster is active
+            # so only cluster members appear in the output.
             ordered = _ordered_record_ids(tree_leaves, record_order, records, meta)
 
         lines = []
         for sid in ordered:
             if sid in records:
-                # Exactly the same label logic as PHP d_label()
                 label = _label_for(sid, meta)
                 lines.append(f">{label}")
                 lines.append("\n".join(records[sid]))
