@@ -393,63 +393,42 @@ def _prune_newick(newick: str, keep_set: set) -> str:
 
 
 def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) -> set:
-    """Map tree leaves → meta (SequenceIDs crosswalk) → gene_id → cluster_set.
-
-    The meta dictionary is loaded by _fetch_meta (which parses SequenceIDs.txt
-    first, then overlays DB).  Each tree leaf can be resolved through short_id,
-    gene_id, raw_id, or first-token / without-version variants.
-    """
+    """Map tree leaves -> meta -> gene_id -> check against cluster_genes.
+    Uses a unique suffix guard: only keep a leaf if EXACTLY ONE cluster gene
+    is found as a suffix — prevents over-matching due to common gene suffixes."""
     if not cluster_genes or not tree_leaves:
         return set()
     cluster_set = {_clean(cg) for cg in cluster_genes if _clean(cg)}
+    cluster_list = sorted(cluster_set, key=lambda x: -len(x))
     keep: set[str] = set()
     for lf in tree_leaves:
         lf = _clean(lf)
         if not lf: continue
         matched = False
-
-        # 1) leaf directly keyed in meta
         if lf in meta:
-            for f in ("gene_id", "raw_id", "short_id"):
-                v = _clean(meta[lf].get(f, ""))
-                if v and v in cluster_set:
-                    matched = True; break
-
-        # 2) first-token of leaf (the genome-prefixed name)
-        lf_tok = _first_token(lf)
-        if not matched and lf_tok and lf_tok != lf and lf_tok in meta:
-            for f in ("gene_id", "raw_id", "short_id"):
-                v = _clean(meta[lf_tok].get(f, ""))
-                if v and v in cluster_set:
-                    matched = True; break
-
-        # 3) without-version-number variants
+            gid = _clean(meta[lf].get("gene_id", ""))
+            rid = _clean(meta[lf].get("raw_id", ""))
+            if (gid and gid in cluster_set) or (rid and rid in cluster_set):
+                matched = True
         if not matched:
             lf_nv = re.sub(r"\.\d+$", "", lf)
             if lf_nv != lf and lf_nv in meta:
-                for f in ("gene_id", "raw_id", "short_id"):
-                    v = _clean(meta[lf_nv].get(f, ""))
-                    if v and v in cluster_set:
-                        matched = True; break
-        if not matched:
-            lf_tok_nv = re.sub(r"\.\d+$", "", lf_tok) if lf_tok else ""
-            if lf_tok_nv and lf_tok_nv != lf_tok and lf_tok_nv in meta:
-                for f in ("gene_id", "raw_id", "short_id"):
-                    v = _clean(meta[lf_tok_nv].get(f, ""))
-                    if v and v in cluster_set:
-                        matched = True; break
-
-        # 4) strip genome-number prefix (e.g. "3_127" → "127")
+                gid = _clean(meta[lf_nv].get("gene_id", ""))
+                if gid and gid in cluster_set: matched = True
         if not matched:
             parts = lf.split("_", 1)
             if len(parts) == 2 and parts[1] and parts[1] in meta:
-                for f in ("gene_id", "raw_id", "short_id"):
-                    v = _clean(meta[parts[1]].get(f, ""))
-                    if v and v in cluster_set:
-                        matched = True; break
-
-        if matched:
-            keep.add(lf)
+                gid = _clean(meta[parts[1]].get("gene_id", ""))
+                if gid and gid in cluster_set: matched = True
+        if not matched:
+            # Unique suffix guard: only keep if EXACTLY ONE cluster gene
+            # is a suffix — avoids over-matching on common gene IDs.
+            lf_tok = _first_token(lf)
+            cands = [cg for cg in cluster_list
+                     if lf_tok == cg or lf_tok.endswith("_" + cg) or lf_tok.endswith(cg)]
+            if len(set(cands)) == 1:
+                matched = True
+        if matched: keep.add(lf)
     return keep
 
 
@@ -496,111 +475,71 @@ def _chunk_list(lst, size):
     return [lst[i:i+size] for i in range(0, len(lst), size)]
 
 
-# ---------------------------------------------------------------------------
-# Genome-aware ordered-record-id matching
-# ---------------------------------------------------------------------------
-
-def _genome_type_of(name: str, meta: dict) -> str:
-    """Best-effort genome_type for a leaf or record id.
-
-    Looks up by short_id → gene_id → genome_type (short_ids are unique per
-    genome, so this never collides).  Falls back to splitting the prefixed
-    name (e.g. Chinese_Spring1.1_A_TraesCS... → Chinese_Spring1.1_A_subgenome).
-    """
-    tok = _first_token(name)
-    info = meta.get(tok)
-    if info and info.get("genome_type"):
-        return info["genome_type"]
-    sp = _split_prefixed_gene(tok)
-    gene = sp["gene"]
-    if gene and gene != tok:
-        info2 = meta.get(gene)
-        if info2 and info2.get("genome_type"):
-            return info2["genome_type"]
-    return sp["genome_type"]
-
-
-def _match_keys(name: str, meta: dict) -> set:
-    """All normalized gene-level keys a leaf/record can be matched by."""
-    tok = _first_token(name)
-    sp = _split_prefixed_gene(tok)
-    ks: set = set()
-    for v in (tok, sp["gene"]):
-        if v:
-            ks.add(v)
-            ks.add(re.sub(r"\.\d+$", "", v))
-    info = meta.get(tok)
-    if info:
-        for f in ("short_id", "gene_id", "raw_id"):
-            v = info.get(f)
-            if v:
-                ks.add(v)
-                ks.add(re.sub(r"\.\d+$", "", v))
-    return ks
-
-
 def _ordered_record_ids(leaf_order, record_order, records, meta, include_unmatched=True):
-    """Port of PHP d_ordered(): tree-leaf order, genome-aware one-to-one.
+    """Order alignment records by tree-leaf order.
 
-    Two records can share the same gene_id but come from different genomes
-    (e.g. TraesCS1A02G219700.1 in Chinese_Spring1.1_A and in
-    Triticum_aestivum_alchemy_A).  Each leaf carries a genome prefix, and
-    each record's short_id is unique — we disambiguate by genome_type so
-    each leaf gets its own record and nothing is dropped.
+    Graded matching per leaf (stop at first hit):
+      1) exact crosswalk candidates (gene_id/short_id/raw_id + version-stripped);
+      2) unique suffix match (leaf endswith record_id) for prefixed leaf names.
 
-    include_unmatched=True  → append leftover records at end (whole OG).
-    include_unmatched=False → only records assigned to a leaf (cluster mode).
+    include_unmatched=True  -> append records not matched to any leaf (whole OG).
+    include_unmatched=False -> only emit records matched to a (cluster) leaf.
     """
-    # ---- build genome_type lookup & gene-key index ---------------------------
-    rec_genome: dict = {}
-    key_to_recs: dict = {}
-    for rid in records:
-        rec_genome[rid] = _genome_type_of(rid, meta)
-        for k in _match_keys(rid, meta):
-            key_to_recs.setdefault(k, [])
-            if rid not in key_to_recs[k]:
-                key_to_recs[k].append(rid)
+    g2s, s2g, raw2s = {}, {}, {}
+    for info in meta.values():
+        gid = info.get("gene_id"); sid = info.get("short_id"); rid = info.get("raw_id")
+        if gid and sid: g2s[gid] = sid
+        if sid and gid: s2g[sid] = gid
+        if rid and sid: raw2s[rid] = sid
 
     rec_ids_by_len = sorted(records.keys(), key=lambda x: -len(x))
 
+    def _exact_match(leaf):
+        leaf_tok = _first_token(leaf)
+        sp = _split_prefixed_gene(leaf_tok)
+        cand = [leaf_tok, sp["gene"]]
+        if leaf_tok in meta:
+            for f in ("short_id", "gene_id", "raw_id"):
+                v = meta[leaf_tok].get(f)
+                if v: cand.append(v)
+        if leaf_tok in g2s: cand.append(g2s[leaf_tok])
+        if leaf_tok in raw2s: cand.append(raw2s[leaf_tok])
+        if sp["gene"] in g2s: cand.append(g2s[sp["gene"]])
+        more = [re.sub(r"\.\d+$", "", c) for c in cand if c]
+        seen, all_cand = set(), []
+        for c in cand + more:
+            if c and c not in seen:
+                seen.add(c); all_cand.append(c)
+        for c in all_cand:
+            if c in records:
+                return c
+        return None
+
+    def _suffix_match(leaf, used):
+        leaf_tok = _first_token(leaf)
+        cands = []
+        for fid in rec_ids_by_len:
+            if fid in used:
+                continue
+            if leaf_tok == fid or leaf_tok.endswith("_" + fid) or leaf_tok.endswith(fid):
+                cands.append(fid)
+        if not cands:
+            return None
+        if len(cands) == 1:
+            return cands[0]
+        # Prefer the longer match (more specific)
+        if len(cands[0]) > len(cands[1]):
+            return cands[0]
+        return None
+
     ordered, used = [], set()
     for leaf in leaf_order:
-        leaf_tok = _first_token(leaf)
-        leaf_gt = _genome_type_of(leaf, meta)
-
-        # collect candidates via gene-level key intersection
-        cand: list = []
-        for k in _match_keys(leaf, meta):
-            for rid in key_to_recs.get(k, []):
-                if rid not in used and rid not in cand:
-                    cand.append(rid)
-
-        # suffix fallback (prefixed leaf name ends with record id)
-        if not cand:
-            for rid in rec_ids_by_len:
-                if rid in used:
-                    continue
-                if leaf_tok == rid or leaf_tok.endswith("_" + rid) or leaf_tok.endswith(rid):
-                    cand.append(rid)
-
-        chosen = None
-        if len(cand) == 1:
-            chosen = cand[0]
-        elif cand:
-            # prefer exact genome_type match
-            gt_hits = [r for r in cand if leaf_gt and rec_genome.get(r) == leaf_gt]
-            if len(gt_hits) == 1:
-                chosen = gt_hits[0]
-            elif len(gt_hits) > 1:
-                # same-genome: pick longest record id (more specific)
-                pool = sorted(gt_hits, key=lambda r: len(r), reverse=True)
-                chosen = pool[0]
-            else:
-                pool = sorted(cand, key=lambda r: len(r), reverse=True)
-                chosen = pool[0]
-
-        if chosen and chosen in records and chosen not in used:
-            ordered.append(chosen); used.add(chosen)
+        rid = _exact_match(leaf)
+        if not rid or rid in used:
+            rid2 = _suffix_match(leaf, used)
+            rid = rid2 if rid2 else (rid if (rid and rid not in used) else None)
+        if rid and rid in records and rid not in used:
+            ordered.append(rid); used.add(rid)
 
     if include_unmatched:
         for rid in record_order:
