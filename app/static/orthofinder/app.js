@@ -30,8 +30,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const q = document.getElementById("proteinInput").value.trim();
     if (!q) return;
 
-    const url = new URL(window.location.href);
+    var url = new URL(window.location.href);
     url.searchParams.set("q", q);
+    // Also include selected species in the URL
+    var speciesVal = document.getElementById("speciesSelect").value;
+    if (speciesVal) {
+      url.searchParams.set("species", speciesVal);
+    } else {
+      url.searchParams.delete("species");
+    }
     window.history.pushState({}, "", url);
 
     searchProtein(q);

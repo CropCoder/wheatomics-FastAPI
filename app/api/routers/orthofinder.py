@@ -674,32 +674,29 @@ def download_file(
                 tree_leaves = tree_leaves_full
 
             records, record_order = _parse_alignment(alignment)
-            meta = _fetch_meta(cur, tree_leaves + list(records.keys()))
+            # Build meta from all tree leaves AND record IDs
+            meta = _fetch_meta(cur, tree_leaves_full + list(records.keys()))
             g2s, s2g = _build_crosswalk(meta)
 
-            # Strictly follow TREE LEAF order. For each leaf, find the matching
-            # alignment record by trying ALL candidate name forms.
+            # Follow TREE LEAF order. Each leaf matches one alignment record.
+            # Record name → display label uses the TREE label format:
+            # "genome_type_gene_id" like "AK58_A_TraesAK58CH1A01G226600.1"
             ordered, used = [], set()
             for leaf in tree_leaves:
                 leaf_tok = _first_token(leaf)
                 cand = [leaf_tok]
-                # Add names from meta
                 if leaf_tok in meta:
                     for f in ("short_id", "gene_id", "raw_id"):
                         v = meta[leaf_tok].get(f)
                         if v: cand.append(_clean(v))
-                # Add crosswalk names
                 for c in list(cand):
                     if c in g2s: cand.append(g2s[c])
                     if c in s2g: cand.append(s2g[c])
-                # Add without-version variants
                 more = [re.sub(r"\.\d+$", "", c) for c in list(cand) if c]
-                # Try all candidates to find a matching record
                 for c in {c for c in cand + more if c}:
                     if c in records and c not in used:
                         ordered.append(c); used.add(c); break
 
-            # Fallback: append any remaining records not yet matched
             for rid in record_order:
                 if rid not in used:
                     ordered.append(rid)
@@ -707,7 +704,15 @@ def download_file(
         lines = []
         for sid in ordered:
             if sid in records:
-                label = meta.get(sid, {}).get("full_label", sid)
+                # Build tree-style label: genome_type + gene_id
+                # Tree displays "genome_type_gene_id" but FASTA needs ">gene_id genome_type"
+                rid_meta = meta.get(sid, {})
+                gene_id = rid_meta.get("gene_id", sid)
+                genome_type = rid_meta.get("genome_type", "")
+                if genome_type:
+                    label = f"{gene_id} {genome_type}"
+                else:
+                    label = gene_id if gene_id else sid
                 lines.append(f">{label}")
                 lines.append("\n".join(records[sid]))
 
