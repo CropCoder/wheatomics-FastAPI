@@ -128,7 +128,14 @@ def _sequence_id_files() -> list:
     ]
 
 def _load_all_sequence_ids() -> dict:
-    """Parse SequenceIDs.txt ONCE and cache. Keyed by short_id/gene_id/raw_id."""
+    """Parse SequenceIDs.txt ONCE and cache. Keyed by short_id/gene_id/raw_id.
+
+    The same gene_id can appear under two different short_ids (different
+    genomes — e.g. 15_53732 = TraesCS1A02G219700.1 in CS-IAAS vs
+    96_17851 = TraesCS1A02G219700.1 in CS1.1).  When that happens we keep
+    BOTH entries so the crosswalk never loses one genome's mapping.
+    (PHP-style _add_info would overwrite; we merge explicitly.)
+    """
     global _seq_id_full_cache
     if _seq_id_full_cache is not None:
         return _seq_id_full_cache
@@ -151,7 +158,11 @@ def _load_all_sequence_ids() -> dict:
                     if not short or not full:
                         continue
                     sp = _split_prefixed_gene(full)
-                    _add_info(mp, _make_info(short, full, sp["genome_type"], sp["sub"]))
+                    info = _make_info(short, full, sp["genome_type"], sp["sub"])
+                    # Store under short_id AND raw_id (gene_id collisions are
+                    # handled by the genome-aware _ordered_record_ids).
+                    mp[short] = info
+                    mp[full] = info
         except Exception:
             continue
         if mp:
@@ -160,7 +171,13 @@ def _load_all_sequence_ids() -> dict:
     return mp
 
 def _load_sequence_id_map(wanted) -> dict:
-    """Return only the wanted subset from the cached full map (no re-read)."""
+    """Return only the wanted subset from the cached full map (no re-read).
+
+    For same-gene different-genome cases, lookups by gene_id return the FIRST
+    genome's entry; subsequent per-genome matching is handled by
+    _ordered_record_ids which uses the unique short_ids (stored separately)
+    for disambiguation.
+    """
     full = _load_all_sequence_ids()
     if not full:
         return {}
@@ -176,7 +193,8 @@ def _load_sequence_id_map(wanted) -> dict:
     for key in want:
         info = full.get(key)
         if info:
-            _add_info(out, info)
+            # shallow copy to avoid mutation side-effects
+            out[key] = dict(info)
     return out
 
 def _fetch_meta(cursor, names) -> dict:
