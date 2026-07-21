@@ -28,8 +28,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const q = document.getElementById("proteinInput").value.trim();
     if (!q) return;
 
-    const url = new URL(window.location.href);
+    var url = new URL(window.location.href);
     url.searchParams.set("q", q);
+    // Also include selected species in the URL
+    var speciesVal = document.getElementById("speciesSelect").value;
+    if (speciesVal) {
+      url.searchParams.set("species", speciesVal);
+    } else {
+      url.searchParams.delete("species");
+    }
     window.history.pushState({}, "", url);
 
     searchProtein(q);
@@ -129,42 +136,16 @@ async function loadSpeciesCatalog() {
   } catch (e) {
     console.warn("Failed to load species catalog:", e);
   }
-}
-
-function onSpeciesChange() {
-  const species = document.getElementById("speciesSelect").value;
-
-  document.getElementById("subgenomeSelect").style.display =
-    species ? "" : "none";
-
-  updateProteinPlaceholder();
-}
-
-function onSubgenomeChange() {
-  updateProteinPlaceholder();
-}
-
-function updateProteinPlaceholder() {
-  const species = document.getElementById("speciesSelect").value;
-  const subgenome = document.getElementById("subgenomeSelect").value;
-  const input = document.getElementById("proteinInput");
-
-  if (species && subgenome) {
-    input.placeholder =
-      "Type gene ID for " +
-      species +
-      " " +
-      subgenome +
-      " subgenome...";
-  } else if (species) {
-    input.placeholder =
-      "Type gene ID for " +
-      species +
-      "...";
-  } else {
-    input.placeholder =
-      "Example: TraesAK58CH1A01G123400.1";
-  }
+  const speciesSel = document.getElementById("speciesSelect");
+  speciesSel.addEventListener("change", function () {
+    const species = this.value;
+    const input = document.getElementById("proteinInput");
+    if (species) {
+      input.placeholder = "Type gene ID for " + species + "...";
+    } else {
+      input.placeholder = "Example: TraesAK58CH1A01G123400.1";
+    }
+  });
 }
 
 /* =================================================================
@@ -178,13 +159,15 @@ async function searchProtein(q) {
   message.textContent = "Loading...";
   result.style.display = "none";
 
+  // Append species filter if selected
+  var selectedSpecies = document.getElementById("speciesSelect").value;
+  var url = `/api/orthofinder/api.php?q=${encodeURIComponent(q)}&_=${Date.now()}`;
+  if (selectedSpecies) {
+    url += "&species=" + encodeURIComponent(selectedSpecies);
+  }
+
   try {
-    const response = await fetch(
-      `/api/orthofinder/api.php?q=${encodeURIComponent(q)}&_=${Date.now()}`,
-      {
-        cache: "no-store"
-      }
-    );
+    const response = await fetch(url, { cache: "no-store" });
 
     const text = await response.text();
     let data;
@@ -246,19 +229,36 @@ async function searchProtein(q) {
       `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
       `&type=alignment`;
 
+    // Badge - show "Homoeologous group N (chrA/B/D)"
     const badge = document.getElementById("clusterBadge");
 
     if (currentCluster !== null && currentCluster > 0) {
-      badge.textContent =
-        "Cluster " + currentCluster;
-
-      badge.className =
-        "cluster-badge cluster-badge-" +
-        currentCluster;
-
+      // Build subgenome description from cluster_sub_counts
+      const clusterSub = (data.cluster_sub_counts && (data.cluster_sub_counts.A + data.cluster_sub_counts.B + data.cluster_sub_counts.D > 0))
+        ? (data.cluster_sub_counts.A > 0 ? "A" : "") + (data.cluster_sub_counts.B > 0 ? "B" : "") + (data.cluster_sub_counts.D > 0 ? "D" : "")
+        : "";
+      const subDesc = clusterSub ? " (chr" + clusterSub.split("").join("/") + " homoeologous group)" : "";
+      badge.textContent = "Homoeologous group " + currentCluster + subDesc;
+      badge.className = "cluster-badge cluster-badge-" + currentCluster;
       badge.style.display = "";
     } else {
       badge.style.display = "none";
+    }
+
+    // Description line below OG title
+    var ogTitleEl = document.getElementById("ogTitle");
+    var clusterDescEl = document.getElementById("clusterDescription");
+    if (!clusterDescEl) {
+      clusterDescEl = document.createElement("div");
+      clusterDescEl.id = "clusterDescription";
+      clusterDescEl.style.cssText = "margin-top:4px;color:#687685;font-size:13px;line-height:1.5;";
+      ogTitleEl.parentNode.insertBefore(clusterDescEl, ogTitleEl.nextSibling);
+    }
+    if (currentCluster !== null && currentCluster > 0) {
+      clusterDescEl.textContent = "Homoeologous represents the homoeologous group of chromosomes A, B, and D subgenomes for the queried gene.";
+      clusterDescEl.style.display = "";
+    } else {
+      clusterDescEl.style.display = "none";
     }
 
     const downloadClusterTree =
@@ -277,6 +277,25 @@ async function searchProtein(q) {
       downloadClusterTree.style.display = "";
     } else {
       downloadClusterTree.style.display = "none";
+    }
+
+    // Download homoeologous alignment
+    const downloadClusterAln =
+      document.getElementById("downloadClusterAlignment");
+
+    if (
+      currentCluster !== null &&
+      currentCluster > 0 &&
+      data.query
+    ) {
+      downloadClusterAln.href =
+        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+        `&type=alignment` +
+        `&cluster=${currentCluster}`;
+
+      downloadClusterAln.style.display = "";
+    } else {
+      downloadClusterAln.style.display = "none";
     }
 
     const treeClusterLabel =
@@ -302,7 +321,7 @@ async function searchProtein(q) {
         selectedTree.error;
 
       document.getElementById("treeHeading").textContent =
-        "Cluster " +
+        "Homoeologous group " +
         currentCluster +
         " Gene Tree";
 
@@ -312,7 +331,7 @@ async function searchProtein(q) {
         treeClusterLabel.textContent =
           "Showing " +
           selectedTree.leafCount +
-          " genes from cluster " +
+          " genes from homoeologous group " +
           currentCluster +
           " (full OG has " +
           data.gene_count +
@@ -328,7 +347,7 @@ async function searchProtein(q) {
           );
       } else {
         treeClusterLabel.textContent =
-          "Cluster " +
+          "Homoeologous group " +
           currentCluster +
           " contains " +
           expectedClusterLeaves +
