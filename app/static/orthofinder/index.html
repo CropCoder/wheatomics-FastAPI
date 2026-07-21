@@ -118,7 +118,7 @@
 <div id="home_content">
   <div class="tool-card">
     <h1>OrthoFinder Orthogroup Browser</h1>
-    <p class="subtitle">Search a protein ID to view its orthogroup, cluster gene tree, synteny and downloadable files.</p>
+    <p class="subtitle">Search a protein ID to view its orthogroup, cluster gene tree and downloadable files.</p>
     <form id="searchForm" class="search-box">
       <select id="speciesSelect" class="species-select" onchange="onSpeciesChange()">
         <option value="">-- Select species (optional) --</option>
@@ -155,15 +155,6 @@
         <span><i class="legend-line legend-Other"></i>Other</span>
       </div>
       <div id="treeBox"><svg id="treeSvg"></svg></div>
-
-      <h2>Chromosome Positions & Synteny</h2>
-      <div class="tree-toolbar" style="margin-bottom:6px;">
-        <button type="button" onclick="zoomSynteny(1.3)">Zoom in</button>
-        <button type="button" onclick="zoomSynteny(0.75)">Zoom out</button>
-        <button type="button" onclick="resetSyntenyZoom()">Reset</button>
-        <button type="button" onclick="downloadSynteny()">Download SVG</button>
-      </div>
-      <div id="syntenyBox"><svg id="syntenySvg"></svg></div>
     </div>
   </section>
 </div>
@@ -193,6 +184,6 @@
   </center>
 </div>
 
-<script src="app.js?v=21"></script>
+<script src="app.js?v=24"></script>
 </body>
 </html>
