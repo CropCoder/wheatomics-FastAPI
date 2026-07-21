@@ -257,7 +257,7 @@ async function searchProtein(q) {
       ogTitleEl.parentNode.insertBefore(clusterDescEl, ogTitleEl.nextSibling);
     }
     if (currentCluster !== null && currentCluster > 0) {
-      clusterDescEl.textContent = "\"Some homoeologous\" represents the homoeologous group of chromosomes A, B, and D subgenomes for the queried gene.";
+      clusterDescEl.textContent = "Homoeologous represents the homoeologous group of chromosomes A, B, and D subgenomes for the queried gene.";
       clusterDescEl.style.display = "";
     } else {
       clusterDescEl.style.display = "none";
@@ -281,7 +281,7 @@ async function searchProtein(q) {
       downloadClusterTree.style.display = "none";
     }
 
-    // Download some homoeologous alignment
+    // Download homoeologous alignment
     const downloadClusterAln =
       document.getElementById("downloadClusterAlignment");
 
