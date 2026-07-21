@@ -222,7 +222,7 @@ async function searchProtein(q) {
       `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
       `&type=alignment`;
 
-    // Badge - show "Some homologous group N (chrA/B/D)"
+    // Badge - show "Some homoeologous group N (chrA/B/D)"
     const badge = document.getElementById("clusterBadge");
 
     if (currentCluster !== null && currentCluster > 0) {
@@ -230,8 +230,8 @@ async function searchProtein(q) {
       const clusterSub = (data.cluster_sub_counts && (data.cluster_sub_counts.A + data.cluster_sub_counts.B + data.cluster_sub_counts.D > 0))
         ? (data.cluster_sub_counts.A > 0 ? "A" : "") + (data.cluster_sub_counts.B > 0 ? "B" : "") + (data.cluster_sub_counts.D > 0 ? "D" : "")
         : "";
-      const subDesc = clusterSub ? " (chr" + clusterSub.split("").join("/") + " homologous group)" : "";
-      badge.textContent = "Some homologous group " + currentCluster + subDesc;
+      const subDesc = clusterSub ? " (chr" + clusterSub.split("").join("/") + " homoeologous group)" : "";
+      badge.textContent = "Some homoeologous group " + currentCluster + subDesc;
       badge.className = "cluster-badge cluster-badge-" + currentCluster;
       badge.style.display = "";
     } else {
@@ -248,7 +248,7 @@ async function searchProtein(q) {
       ogTitleEl.parentNode.insertBefore(clusterDescEl, ogTitleEl.nextSibling);
     }
     if (currentCluster !== null && currentCluster > 0) {
-      clusterDescEl.textContent = "\"Some homologous\" represents the homoeologous group of chromosomes A, B, and D subgenomes for the queried gene.";
+      clusterDescEl.textContent = "\"Some homoeologous\" represents the homoeologous group of chromosomes A, B, and D subgenomes for the queried gene.";
       clusterDescEl.style.display = "";
     } else {
       clusterDescEl.style.display = "none";
@@ -272,7 +272,7 @@ async function searchProtein(q) {
       downloadClusterTree.style.display = "none";
     }
 
-    // Download some homologous alignment
+    // Download some homoeologous alignment
     const downloadClusterAln =
       document.getElementById("downloadClusterAlignment");
 
@@ -314,7 +314,7 @@ async function searchProtein(q) {
         selectedTree.error;
 
       document.getElementById("treeHeading").textContent =
-        "Some homologous group " +
+        "Some homoeologous group " +
         currentCluster +
         " Gene Tree";
 
@@ -324,7 +324,7 @@ async function searchProtein(q) {
         treeClusterLabel.textContent =
           "Showing " +
           selectedTree.leafCount +
-          " genes from some homologous group " +
+          " genes from some homoeologous group " +
           currentCluster +
           " (full OG has " +
           data.gene_count +
@@ -340,7 +340,7 @@ async function searchProtein(q) {
           );
       } else {
         treeClusterLabel.textContent =
-          "Some homologous group " +
+          "Some homoeologous group " +
           currentCluster +
           " contains " +
           expectedClusterLeaves +

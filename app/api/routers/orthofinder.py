@@ -661,23 +661,26 @@ def download_file(
                 tree_leaves = tree_leaves_all
 
             records, record_order = _parse_alignment(alignment)
-            # Build meta from tree leaves + record IDs to get full gene_id/subgenome labels
+            # Build a comprehensive cross-reference meta from all known names
             meta = _fetch_meta(cur, tree_leaves + list(records.keys()))
+            # Also build reverse lookups: short_id -> gene_id, gene_id -> short_id
+            g2s, s2g = _build_crosswalk(meta)
 
             # Strictly follow tree leaf order for output sequence
             used_record_ids: set[str] = set()
             lines = []
             for leaf in tree_leaves:
-                # Find the matching alignment record for this tree leaf
                 leaf_tok = _first_token(leaf)
-                # Try multiple name forms to match the record
+                # Try ALL name forms to find the matching alignment record
                 matched_rid = None
-                # Build candidate names from meta
                 cand = [leaf_tok]
                 if leaf_tok in meta:
                     for f in ("short_id", "gene_id", "raw_id"):
                         if meta[leaf_tok].get(f):
                             cand.append(_clean(meta[leaf_tok][f]))
+                for c in list(cand):
+                    if c in g2s: cand.append(g2s[c])
+                    if c in s2g: cand.append(s2g[c])
                 # Also try without-version variants
                 more = [re.sub(r"\.\d+$", "", c) for c in list(cand) if c]
                 for c in {c for c in cand + more if c}:
@@ -687,7 +690,6 @@ def download_file(
 
                 if matched_rid is not None:
                     used_record_ids.add(matched_rid)
-                    # Build label: "gene_id genome_type" format (matching tree display format)
                     rid_meta = meta.get(matched_rid, {})
                     gene_id = rid_meta.get("gene_id", matched_rid)
                     genome_type = rid_meta.get("genome_type", "")
