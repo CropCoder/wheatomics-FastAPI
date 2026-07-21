@@ -509,91 +509,46 @@ def _match_keys(name: str, meta: dict) -> set:
 
 
 def _ordered_record_ids(leaf_order, record_order, records, meta, include_unmatched=True):
-    """Order alignment records by tree-leaf order, genome-aware & one-to-one.
+    """Faithful port of PHP d_ordered(): tree-leaf order with a candidate-id
+    crosswalk (gene_id<->short_id<->raw_id, version-stripped forms).
 
-    Strategy:
-    1) For each leaf, build candidate record IDs using bidirectional normalized
-       key matching (leaf variants ↔ record variants).
-    2) Disambiguate same-gene candidates by exact genome_type match, then by
-       longest common prefix.
-    3) After all leaves are processed, any records that were NOT matched and
-       whose gene-level key aligns with a remaining leaf are appended in
-       record_order (cluster mode only — ensures no records are silently lost).
+    include_unmatched=True  -> append records not matched to any leaf at the end
+                               (whole OG alignment; mirrors PHP).
+    include_unmatched=False -> only emit records matched to a (cluster) leaf,
+                               so non-cluster sequences are never dumped in.
     """
-    # ---- Index record IDs by all normalized variants ----
-    key_to_recs: dict = {}
-    rec_genome: dict = {}
-    for rid in records:
-        rec_genome[rid] = _genome_type_of(rid, meta)
-        for k in _match_keys(rid, meta):
-            key_to_recs.setdefault(k, [])
-            if rid not in key_to_recs[k]:
-                key_to_recs[k].append(rid)
-
-    rec_ids_by_len = sorted(records.keys(), key=lambda x: -len(x))
-
-    def _lcp(a: str, b: str) -> int:
-        m = min(len(a), len(b)); i = 0
-        while i < m and a[i] == b[i]:
-            i += 1
-        return i
+    g2s, s2g, raw2s = {}, {}, {}
+    for info in meta.values():
+        gid = info.get("gene_id"); sid = info.get("short_id"); rid = info.get("raw_id")
+        if gid and sid: g2s[gid] = sid
+        if sid and gid: s2g[sid] = gid
+        if rid and sid: raw2s[rid] = sid
 
     ordered, used = [], set()
     for leaf in leaf_order:
-        leaf_tok = _first_token(leaf)
-        leaf_gt = _genome_type_of(leaf, meta)
+        leaf = _first_token(leaf)
+        sp = _split_prefixed_gene(leaf)
+        cand = [leaf, sp["gene"]]
+        if leaf in meta:
+            for f in ("short_id", "gene_id", "raw_id"):
+                v = meta[leaf].get(f)
+                if v: cand.append(v)
+        if leaf in g2s: cand.append(g2s[leaf])
+        if leaf in raw2s: cand.append(raw2s[leaf])
+        if sp["gene"] in g2s: cand.append(g2s[sp["gene"]])
+        more = [re.sub(r"\.\d+$", "", c) for c in cand if c]
+        seen, all_cand = set(), []
+        for c in cand + more:
+            if c and c not in seen:
+                seen.add(c); all_cand.append(c)
+        for c in all_cand:
+            if c in records and c not in used:
+                ordered.append(c); used.add(c); break
 
-        cand: list = []
-        # gene-level key intersection
-        for k in _match_keys(leaf, meta):
-            for rid in key_to_recs.get(k, []):
-                if rid not in used and rid not in cand:
-                    cand.append(rid)
-        # suffix fallback (prefixed leaf endswith record id)
-        if not cand:
-            for rid in rec_ids_by_len:
-                if rid in used:
-                    continue
-                if leaf_tok == rid or leaf_tok.endswith("_" + rid) or leaf_tok.endswith(rid):
-                    cand.append(rid)
-
-        chosen = None
-        if len(cand) == 1:
-            chosen = cand[0]
-        elif cand:
-            gt_hits = [r for r in cand if leaf_gt and rec_genome.get(r) == leaf_gt]
-            if len(gt_hits) == 1:
-                chosen = gt_hits[0]
-            else:
-                pool = gt_hits if gt_hits else cand
-                pool = sorted(pool, key=lambda r: (_lcp(leaf_tok, _first_token(r)), len(r)),
-                              reverse=True)
-                chosen = pool[0]
-
-        if chosen and chosen in records and chosen not in used:
-            ordered.append(chosen); used.add(chosen)
-
-    # ---- CLUSTER MODE: recover missed records that belong to the cluster ----
-    if not include_unmatched:
-        # Track which leaf gene keys we still have (after used matching).
-        # Any record that matches one of these keys but wasn't picked above
-        # is appended in record_order — prevents silent drops.
-        leaf_gene_keys: set[str] = set()
-        for leaf in leaf_order:
-            for k in _match_keys(leaf, meta):
-                leaf_gene_keys.add(k)
-        for rid in record_order:
-            if rid in used:
-                continue
-            if set(_match_keys(rid, meta)) & leaf_gene_keys:
-                ordered.append(rid)
-                used.add(rid)
-
-    elif include_unmatched:
+    if include_unmatched:
         for rid in record_order:
             if rid not in used:
                 ordered.append(rid)
-
     return ordered
 
 def _label_for(id, meta):
