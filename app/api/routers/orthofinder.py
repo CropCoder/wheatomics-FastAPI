@@ -380,36 +380,59 @@ def _parse_alignment(aln: str) -> tuple[dict, list]:
 def _chunk_list(lst, size):
     return [lst[i:i+size] for i in range(0, len(lst), size)]
 
-def _build_crosswalk(meta: dict) -> tuple[dict, dict]:
-    g2s, s2g = {}, {}
-    for info in meta.values():
-        if info.get("gene_id") and info.get("short_id"):
-            g2s[info["gene_id"]] = info["short_id"]
-        if info.get("short_id") and info.get("gene_id"):
-            s2g[info["short_id"]] = info["gene_id"]
-    return g2s, s2g
+def _norm_variants(s: str, meta: dict) -> list:
+    """Generate all normalized string forms an id (leaf or record) may match on."""
+    out = []
+    def add(x):
+        x = _clean(x)
+        if x and x not in out:
+            out.append(x)
+
+    s = _clean(s)
+    tok = _first_token(s)
+    add(s)
+    add(tok)
+    add(re.sub(r"\.\d+$", "", tok))
+
+    sp = _split_prefixed_gene(tok)
+    if sp["gene"]:
+        add(sp["gene"])
+        add(re.sub(r"\.\d+$", "", sp["gene"]))
+
+    info = meta.get(tok) or meta.get(s)
+    if info:
+        for f in ("short_id", "gene_id", "raw_id"):
+            v = _clean(info.get(f, ""))
+            if v:
+                add(v)
+                add(re.sub(r"\.\d+$", "", v))
+    return out
+
+
+def _build_record_index(records: dict, meta: dict) -> dict:
+    """Map every normalized variant of every record id back to that record id."""
+    index = {}
+    for rid in records:
+        for key in _norm_variants(rid, meta):
+            index.setdefault(key, rid)
+    return index
+
 
 def _ordered_record_ids(leaf_order, record_order, records, meta):
-    """Match tree leaves to alignment records — exactly mirrors PHP d_ordered()."""
-    g2s, s2g = _build_crosswalk(meta)
+    """Match tree leaves to alignment records — bidirectional normalized matching."""
+    index = _build_record_index(records, meta)
     ordered, used = [], set()
     for leaf in leaf_order:
-        leaf_tok = _first_token(leaf)
-        sp = _split_prefixed_gene(leaf_tok)
-        cand = [leaf_tok, sp["gene"]]
-        if leaf_tok in meta:
-            for f in ("short_id", "gene_id", "raw_id"):
-                v = meta[leaf_tok].get(f)
-                if v: cand.append(_clean(v))
-        for c in list(cand):
-            if c in g2s: cand.append(g2s[c])
-        more = [re.sub(r"\.\d+$", "", c) for c in cand if c]
-        for c in {c for c in cand + more if c}:
-            if c in records and c not in used:
-                ordered.append(c); used.add(c); break
+        for key in _norm_variants(leaf, meta):
+            rid = index.get(key)
+            if rid and rid in records and rid not in used:
+                ordered.append(rid)
+                used.add(rid)
+                break
     for rid in record_order:
         if rid not in used:
             ordered.append(rid)
+    return ordered
     return ordered
 
 def _label_for(id, meta):
