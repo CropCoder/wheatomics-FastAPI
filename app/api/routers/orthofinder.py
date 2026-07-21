@@ -28,7 +28,7 @@ router = APIRouter(prefix="/orthofinder", tags=["OrthoFinder"])
 # ---------------------------------------------------------------------------
 
 def _clean(s: str) -> str:
-    return s.strip(" \t\n\r\0\x0B'\"")
+    return s.strip(" \t\r\n\0\x0B'\"")
 
 def _first_token(s: str) -> str:
     parts = _clean(s).split()
@@ -283,8 +283,8 @@ def _prune_newick(newick: str, keep_set: set) -> str:
 
     def _annotate(node: dict):
         if not node["children"]:
-            n = _clean(node["name"]); n0 = re.sub(r"\.\d+$", "", n)
-            node["_keep"] = n in keep_set or n0 in keep_set or _first_token(n) in keep_set
+            nm = _clean(node["name"]); n0 = re.sub(r"\.\d+$", "", nm)
+            node["_keep"] = nm in keep_set or n0 in keep_set or _first_token(nm) in keep_set
             node["_leaf_count"] = 1 if node["_keep"] else 0
             return
         node["_keep"] = False; node["_leaf_count"] = 0
@@ -316,7 +316,7 @@ def _prune_newick(newick: str, keep_set: set) -> str:
 
 
 def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) -> set:
-    """Map tree leaves → meta → gene_id → check against cluster_genes."""
+    """Map tree leaves -> meta -> gene_id -> check against cluster_genes."""
     if not cluster_genes or not tree_leaves:
         return set()
     cluster_set = {_clean(cg) for cg in cluster_genes if _clean(cg)}
@@ -418,8 +418,15 @@ def _build_record_index(records: dict, meta: dict) -> dict:
     return index
 
 
-def _ordered_record_ids(leaf_order, record_order, records, meta):
-    """Match tree leaves to alignment records — bidirectional normalized matching."""
+def _ordered_record_ids(leaf_order, record_order, records, meta, include_unmatched=True):
+    """Match tree leaves to alignment records (bidirectional normalized matching).
+
+    include_unmatched=True  -> append records not present in the tree to the end
+                               (used for the whole OG alignment).
+    include_unmatched=False -> only emit records matched to a tree leaf
+                               (used for homoeologous/cluster alignment, so
+                               non-cluster sequences are never dumped in).
+    """
     index = _build_record_index(records, meta)
     ordered, used = [], set()
     for leaf in leaf_order:
@@ -429,10 +436,10 @@ def _ordered_record_ids(leaf_order, record_order, records, meta):
                 ordered.append(rid)
                 used.add(rid)
                 break
-    for rid in record_order:
-        if rid not in used:
-            ordered.append(rid)
-    return ordered
+    if include_unmatched:
+        for rid in record_order:
+            if rid not in used:
+                ordered.append(rid)
     return ordered
 
 def _label_for(id, meta):
@@ -655,6 +662,41 @@ def search_php(
 
 
 # ---------------------------------------------------------------------------
+# download helpers  (shared by tree & alignment so their leaf order is identical)
+# ---------------------------------------------------------------------------
+
+def _load_tree_text(og: str) -> str:
+    tree_file = ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Resolved_Gene_Trees" / f"{og}.txt"
+    return tree_file.read_text(encoding="utf-8") if tree_file.exists() else ""
+
+
+def _prune_tree_to_cluster(cur, og: str, tree: str, cluster: int) -> str:
+    """Prune a tree down to one homoeologous cluster's members.
+
+    Shared by BOTH the tree download and the alignment download so the two
+    files are guaranteed to derive their leaf order from the exact same
+    (byte-identical) pruned newick. Returns the tree unchanged when the
+    cluster filter does not apply or produces nothing.
+    """
+    if not (1 <= cluster <= 7) or not tree:
+        return tree
+    cur.execute("SELECT genes FROM orthogroups WHERE og_id = %s LIMIT 1", (og,))
+    row = cur.fetchone()
+    if not row:
+        return tree
+    genes = [g for g in row["genes"].split() if g]
+    c_genes = _get_cluster_members(genes, cluster, cur)
+    leaves = _parse_newick_leaves(tree)
+    meta = _fetch_meta(cur, leaves + c_genes)
+    keep = _build_prune_keep_set(c_genes, meta, leaves)
+    if keep:
+        pruned = _prune_newick(tree, keep)
+        if pruned:
+            return pruned
+    return tree
+
+
+# ---------------------------------------------------------------------------
 # download
 # ---------------------------------------------------------------------------
 
@@ -666,6 +708,11 @@ def search_php(
 **type=tree** — Gene tree in Newick format. Add `cluster=N` (1-7) to prune to cluster members only.
 
 **type=alignment** — Multiple sequence alignment in FASTA format, ordered by tree leaf order.
+
+The four front-end buttons pair up as:
+  Download OG tree            <-> Download OG alignment            (cluster=0)
+  Download some homoeologous  <-> Download some homoeologous       (cluster=1..7)
+Each alignment's sequence order strictly follows the leaf order of its paired tree.
 """,)
 def download_file(
     og: str = Query(..., description="Orthogroup ID, e.g. OG0001897"),
@@ -675,63 +722,42 @@ def download_file(
     if not re.match(r"^OG\d+$", og):
         raise HTTPException(400, "Invalid OG ID")
 
+    # ---- Download OG tree / Download some homoeologous tree ----
     if type == "tree":
-        tree_file = ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Resolved_Gene_Trees" / f"{og}.txt"
-        if not tree_file.exists():
+        tree = _load_tree_text(og)
+        if not tree:
             raise HTTPException(404, "Tree file not found")
-        tree = tree_file.read_text(encoding="utf-8")
-        if 1 <= cluster <= 7 and tree:
+        if 1 <= cluster <= 7:
             with mysql_cursor(ORTHOFINDER_DB) as cur:
-                cur.execute("SELECT genes FROM orthogroups WHERE og_id = %s LIMIT 1", (og,))
-                row = cur.fetchone()
-                if row:
-                    genes = [g for g in row["genes"].split() if g]
-                    c_genes = _get_cluster_members(genes, cluster, cur)
-                    leaves = _parse_newick_leaves(tree)
-                    m = _fetch_meta(cur, leaves + c_genes)
-                    k = _build_prune_keep_set(c_genes, m, leaves)
-                    if k:
-                        p = _prune_newick(tree, k)
-                        if p: tree = p
+                tree = _prune_tree_to_cluster(cur, og, tree, cluster)
         suffix = f".cluster{cluster}.tree.txt" if cluster else ".tree.txt"
-        return PlainTextResponse(tree, media_type="text/plain",
-                                 headers={"Content-Disposition": f'attachment; filename="{og}{suffix}"'})
+        return PlainTextResponse(
+            tree, media_type="text/plain",
+            headers={"Content-Disposition": f'attachment; filename="{og}{suffix}"'})
 
+    # ---- Download OG alignment / Download some homoeologous alignment ----
     if type == "alignment":
         aln_file = _find_alignment_file(og)
         if not aln_file:
             raise HTTPException(404, "Alignment file not found")
-        tree_file = ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Resolved_Gene_Trees" / f"{og}.txt"
-        tree = tree_file.read_text(encoding="utf-8") if tree_file.exists() else ""
         alignment = aln_file.read_text(encoding="utf-8")
+        records, record_order = _parse_alignment(alignment)
+        tree = _load_tree_text(og)
 
         with mysql_cursor(ORTHOFINDER_DB) as cur:
-            tree_leaves_full = _parse_newick_leaves(tree) if tree else []
-
-            # If cluster filter: prune to cluster members only
-            if 1 <= cluster <= 7 and tree_leaves_full:
-                cur.execute("SELECT genes FROM orthogroups WHERE og_id = %s LIMIT 1", (og,))
-                og_row = cur.fetchone()
-                if og_row:
-                    genes_all = [g for g in og_row["genes"].split() if g]
-                    c_genes = _get_cluster_members(genes_all, cluster, cur)
-                    m2 = _fetch_meta(cur, tree_leaves_full + c_genes)
-                    k2 = _build_prune_keep_set(c_genes, m2, tree_leaves_full)
-                    tree_leaves = [lf for lf in tree_leaves_full if _clean(lf) in k2]
-                else:
-                    tree_leaves = tree_leaves_full
-            else:
-                tree_leaves = tree_leaves_full
-
-            records, record_order = _parse_alignment(alignment)
-            # IMPORTANT: pass ALL tree leaves and ALL record IDs to meta so
-            # _ordered_record_ids has full crosswalk info for matching.
-            meta = _fetch_meta(cur, tree_leaves_full + list(records.keys()))
-
-            # Use the SAME _ordered_record_ids as PHP d_ordered(),
-            # but pass the CLUSTERED tree_leaves when cluster is active
-            # so only cluster members appear in the output.
-            ordered = _ordered_record_ids(tree_leaves, record_order, records, meta)
+            # KEY: derive the alignment leaf order from the SAME (possibly
+            # pruned) newick used by the tree download, so each
+            # "tree <-> alignment" pair is a 1:1 order match.
+            if 1 <= cluster <= 7:
+                tree = _prune_tree_to_cluster(cur, og, tree, cluster)
+            tree_leaves = _parse_newick_leaves(tree)
+            meta = _fetch_meta(cur, tree_leaves + list(records.keys()))
+            # For homoeologous (cluster) alignment, do NOT append the OG's
+            # non-cluster sequences to the end of the file.
+            ordered = _ordered_record_ids(
+                tree_leaves, record_order, records, meta,
+                include_unmatched=(cluster == 0),
+            )
 
         lines = []
         for sid in ordered:
@@ -741,7 +767,8 @@ def download_file(
                 lines.append("\n".join(records[sid]))
 
         cluster_suffix = f".cluster{cluster}" if cluster else ""
-        return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain",
-                                 headers={"Content-Disposition": f'attachment; filename="{og}{cluster_suffix}.alignment.fa"'})
+        return PlainTextResponse(
+            "\n".join(lines) + "\n", media_type="text/plain",
+            headers={"Content-Disposition": f'attachment; filename="{og}{cluster_suffix}.alignment.fa"'})
 
     raise HTTPException(400, "Invalid type")
