@@ -40,7 +40,7 @@
       .catch(function(){});
   })();
   </script>
-  <link rel="stylesheet" href="style.css?v=21">
+  <link rel="stylesheet" href="style.css?v=22">
   <style>
     body { background: #f8f9fa; margin:0; padding:0; overflow-x:hidden; }
     #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
@@ -118,16 +118,10 @@
 <div id="home_content">
   <div class="tool-card">
     <h1>OrthoFinder Orthogroup Browser</h1>
-    <p class="subtitle">Search a protein ID to view its orthogroup, cluster gene tree and downloadable files.</p>
+    <p class="subtitle">Search a protein ID to view its orthogroup, homoeologous gene tree and downloadable files.</p>
     <form id="searchForm" class="search-box">
-      <select id="speciesSelect" class="species-select" onchange="onSpeciesChange()">
+      <select id="speciesSelect" class="species-select">
         <option value="">-- Select species (optional) --</option>
-      </select>
-      <select id="subgenomeSelect" class="species-select" style="display:none;" onchange="onSubgenomeChange()">
-        <option value="">-- Select subgenome --</option>
-        <option value="A">A subgenome</option>
-        <option value="B">B subgenome</option>
-        <option value="D">D subgenome</option>
       </select>
       <input id="proteinInput" name="q" placeholder="Example: TraesAK58CH1A01G123400.1">
       <button type="submit">Search</button>
@@ -137,9 +131,10 @@
       <div class="summary-card">
         <div><div class="label">Orthogroup</div><div id="ogTitle" class="og-title"></div><span id="clusterBadge" class="cluster-badge" style="display:none;"></span></div>
         <div class="download-links">
-          <a id="downloadTree" target="_blank">Download tree (full OG)</a>
-          <a id="downloadClusterTree" target="_blank" style="display:none;">Download cluster tree</a>
-          <a id="downloadAlignment" target="_blank">Download alignment</a>
+          <a id="downloadTree" target="_blank">Download OG tree</a>
+          <a id="downloadClusterTree" target="_blank" style="display:none;">Download homoeologous tree</a>
+          <a id="downloadAlignment" target="_blank">Download OG alignment</a>
+          <a id="downloadClusterAlignment" target="_blank" style="display:none;">Download homoeologous alignment</a>
         </div>
       </div>
 
@@ -184,6 +179,6 @@
   </center>
 </div>
 
-<script src="app.js?v=24"></script>
+<script src="app.js?v=25"></script>
 </body>
 </html>

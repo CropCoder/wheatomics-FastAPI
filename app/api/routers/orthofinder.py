@@ -22,20 +22,25 @@ CLUSTER_FILE = settings.ORTHOFINDER_CLUSTER_FILE
 
 router = APIRouter(prefix="/orthofinder", tags=["OrthoFinder"])
 
+# ========== 修复点：将多行字符串改为单行转义 ==========
+_WS = " \t\n\x00\x0b'\""
+_TAB = "\t"
+_NL = "\n"
+
 
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
 
 def _clean(s: str) -> str:
-    return s.strip(" \t\n\r\0\x0B'\"")
+    return str(s).strip(_WS)
 
 def _first_token(s: str) -> str:
-    parts = _clean(s).split()
-    return _clean(parts[0]) if parts else ""
+    parts = re.split(r"\s+", _clean(s))
+    return _clean(parts[0]) if parts and parts[0] else ""
 
 def _norm_sub(s: str) -> str:
-    s = s.upper()
+    s = _clean(s).upper()
     return s if s in ("A", "B", "D") else "Other"
 
 
@@ -45,6 +50,7 @@ def _norm_sub(s: str) -> str:
 
 _cluster_cache: tuple | None = None
 _sorted_prefixes: list | None = None
+_resolve_cache: dict = {}
 
 def _load_cluster_map() -> tuple[dict, dict]:
     global _cluster_cache
@@ -54,7 +60,7 @@ def _load_cluster_map() -> tuple[dict, dict]:
     chrom_map: dict[str, int] = {}
     if CLUSTER_FILE.exists():
         for line in CLUSTER_FILE.read_text(encoding="utf-8").splitlines()[1:]:
-            cols = line.split("\t")
+            cols = line.split(_TAB)
             if len(cols) < 8:
                 continue
             for c in range(1, 8):
@@ -78,19 +84,23 @@ def _get_sorted_prefixes() -> list:
 
 def _resolve_cluster(gene_id: str, cursor=None) -> int | None:
     gene_id = _clean(gene_id)
+    if gene_id in _resolve_cache:
+        return _resolve_cache[gene_id]
     prefix_map, chrom_map = _load_cluster_map()
-    if not prefix_map and not chrom_map:
-        return None
-    for pfx in _get_sorted_prefixes():
-        if gene_id.lower().startswith(pfx.lower()):
-            return prefix_map[pfx]
-    if chrom_map and cursor is not None:
-        gh = hashlib.md5(gene_id.encode()).hexdigest()
-        cursor.execute("SELECT chromosome FROM gene_positions WHERE gene_hash = %s LIMIT 1", (gh,))
-        row = cursor.fetchone()
-        if row and row["chromosome"].lower() in chrom_map:
-            return chrom_map[row["chromosome"].lower()]
-    return None
+    result = None
+    if prefix_map or chrom_map:
+        for pfx in _get_sorted_prefixes():
+            if gene_id.lower().startswith(pfx.lower()):
+                result = prefix_map[pfx]
+                break
+        if result is None and chrom_map and cursor is not None:
+            gh = hashlib.md5(gene_id.encode()).hexdigest()
+            cursor.execute("SELECT chromosome FROM gene_positions WHERE gene_hash = %s LIMIT 1", (gh,))
+            row = cursor.fetchone()
+            if row and row["chromosome"].lower() in chrom_map:
+                result = chrom_map[row["chromosome"].lower()]
+    _resolve_cache[gene_id] = result
+    return result
 
 def _get_cluster_members(genes: list, target: int, cursor) -> list:
     members = []
@@ -104,11 +114,74 @@ def _get_cluster_members(genes: list, target: int, cursor) -> list:
 
 
 # ---------------------------------------------------------------------------
-# sequence-id helpers  (same logic as api.php fetch_meta2)
+# sequence-id helpers  (same logic as api.php / download.php fetch_meta)
 # ---------------------------------------------------------------------------
 
+_seq_id_full_cache: dict | None = None
+
+def _sequence_id_files() -> list:
+    base = ORTHOFINDER_BASE_DIR
+    return [
+        base / "WorkingDirectory" / "SequenceIDs.txt",
+        base / "SequenceIDs.txt",
+        base.parent / "WorkingDirectory" / "SequenceIDs.txt",
+    ]
+
+def _load_all_sequence_ids() -> dict:
+    """Parse SequenceIDs.txt ONCE and cache. Keyed by short_id/gene_id/raw_id."""
+    global _seq_id_full_cache
+    if _seq_id_full_cache is not None:
+        return _seq_id_full_cache
+    mp: dict = {}
+    for f in _sequence_id_files():
+        if not f.exists():
+            continue
+        try:
+            with f.open("r", encoding="utf-8", errors="ignore") as fh:
+                for line in fh:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    m = re.match(r"^([^:\s]+)\s*:\s*(\S+)", line)
+                    if not m:
+                        m = re.match(r"^(\S+)\s+(\S+)", line)
+                    if not m:
+                        continue
+                    short = _clean(m.group(1)); full = _clean(m.group(2))
+                    if not short or not full:
+                        continue
+                    sp = _split_prefixed_gene(full)
+                    _add_info(mp, _make_info(short, full, sp["genome_type"], sp["sub"]))
+        except Exception:
+            continue
+        if mp:
+            break
+    _seq_id_full_cache = mp
+    return mp
+
+def _load_sequence_id_map(wanted) -> dict:
+    """Return only the wanted subset from the cached full map (no re-read)."""
+    full = _load_all_sequence_ids()
+    if not full:
+        return {}
+    want: set[str] = set()
+    for w in wanted:
+        w = _first_token(w)
+        if w:
+            want.add(w)
+            want.add(re.sub(r"\.\d+$", "", w))
+    if not want:
+        return {}
+    out: dict = {}
+    for key in want:
+        info = full.get(key)
+        if info:
+            _add_info(out, info)
+    return out
+
 def _fetch_meta(cursor, names) -> dict:
-    meta: dict = {}
+    # Start from the (cached) SequenceIDs.txt map, then overlay DB rows.
+    meta: dict = _load_sequence_id_map(names)
     clean = list({_first_token(n) for n in names if n and _first_token(n)})
     for chunk in _chunk_list(clean, 400):
         if not chunk:
@@ -182,13 +255,16 @@ def _split_prefixed_gene(gid: str) -> dict:
 # Newick helpers
 # ---------------------------------------------------------------------------
 
+_NEWICK_WS = " 	\n"          # whitespace inside a Newick string (这里原为 " 	\n" 无问题)
+_NEWICK_STOP = "(),:;"          # structural delimiters
+
 def _parse_newick_leaves(newick: str) -> list[str]:
     i, n = 0, len(newick)
     leaves = []
 
     def _skip():
         nonlocal i
-        while i < n and newick[i] in " \t\r\n":
+        while i < n and newick[i] in _NEWICK_WS:
             i += 1
 
     def _read_name() -> str:
@@ -203,7 +279,7 @@ def _parse_newick_leaves(newick: str) -> list[str]:
             if i < n: i += 1
             return _clean(name)
         s = i
-        while i < n and newick[i] not in "(),:;": i += 1
+        while i < n and newick[i] not in _NEWICK_STOP: i += 1
         return _clean(newick[s:i])
 
     def _read_length():
@@ -211,7 +287,7 @@ def _parse_newick_leaves(newick: str) -> list[str]:
         _skip()
         if i < n and newick[i] == ":":
             i += 1
-            while i < n and newick[i] not in "(),:;": i += 1
+            while i < n and newick[i] not in _NEWICK_STOP: i += 1
 
     def _node():
         nonlocal i
@@ -237,7 +313,7 @@ def _prune_newick(newick: str, keep_set: set) -> str:
 
     def _skip():
         nonlocal i
-        while i < n and newick[i] in " \t\r\n": i += 1
+        while i < n and newick[i] in _NEWICK_WS: i += 1
 
     def _read_name() -> str:
         nonlocal i
@@ -250,7 +326,7 @@ def _prune_newick(newick: str, keep_set: set) -> str:
             if i < n: i += 1
             return _clean(name)
         s = i
-        while i < n and newick[i] not in "(),:;": i += 1
+        while i < n and newick[i] not in _NEWICK_STOP: i += 1
         return _clean(newick[s:i])
 
     def _read_length() -> float:
@@ -258,7 +334,7 @@ def _prune_newick(newick: str, keep_set: set) -> str:
         _skip()
         if i < n and newick[i] == ":":
             i += 1; s = i
-            while i < n and newick[i] not in "(),:;": i += 1
+            while i < n and newick[i] not in _NEWICK_STOP: i += 1
             try:
                 v = float(newick[s:i])
                 return v if v == v else 0.0
@@ -283,8 +359,8 @@ def _prune_newick(newick: str, keep_set: set) -> str:
 
     def _annotate(node: dict):
         if not node["children"]:
-            n = _clean(node["name"]); n0 = re.sub(r"\.\d+$", "", n)
-            node["_keep"] = n in keep_set or n0 in keep_set or _first_token(n) in keep_set
+            nm = _clean(node["name"]); n0 = re.sub(r"\.\d+$", "", nm)
+            node["_keep"] = nm in keep_set or n0 in keep_set or _first_token(nm) in keep_set
             node["_leaf_count"] = 1 if node["_keep"] else 0
             return
         node["_keep"] = False; node["_leaf_count"] = 0
@@ -316,10 +392,12 @@ def _prune_newick(newick: str, keep_set: set) -> str:
 
 
 def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) -> set:
-    """Map tree leaves → meta → gene_id → check against cluster_genes."""
+    """Map tree leaves -> meta -> gene_id -> check against cluster_genes.
+    Also uses a unique suffix (endswith) fallback for prefixed leaf names."""
     if not cluster_genes or not tree_leaves:
         return set()
     cluster_set = {_clean(cg) for cg in cluster_genes if _clean(cg)}
+    cluster_list = sorted(cluster_set, key=lambda x: -len(x))
     keep: set[str] = set()
     for lf in tree_leaves:
         lf = _clean(lf)
@@ -340,6 +418,18 @@ def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) ->
             if len(parts) == 2 and parts[1] and parts[1] in meta:
                 gid = _clean(meta[parts[1]].get("gene_id", ""))
                 if gid and gid in cluster_set: matched = True
+        if not matched:
+            # gene id embedded in the prefixed leaf name (genome-agnostic):
+            # keep the leaf if any cluster gene id is a suffix of the leaf token.
+            lf_tok = _first_token(lf)
+            lf_tok_nv = re.sub(r"\.\d+$", "", lf_tok)
+            for cg in cluster_list:
+                cg_nv = re.sub(r"\.\d+$", "", cg)
+                if (lf_tok == cg or lf_tok.endswith("_" + cg) or lf_tok.endswith(cg)
+                        or lf_tok_nv == cg_nv or lf_tok_nv.endswith("_" + cg_nv)
+                        or lf_tok_nv.endswith(cg_nv)):
+                    matched = True
+                    break
         if matched: keep.add(lf)
     return keep
 
@@ -348,22 +438,7 @@ def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) ->
 # alignment helpers
 # ---------------------------------------------------------------------------
 
-def _find_alignment_file(og_id: str) -> Path | None:
-    candidates = [
-        ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "MultipleSequenceAlignments" / f"{og_id}.fa",
-        ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "MultipleSequenceAlignments" / f"{og_id}.fasta",
-        ORTHOFINDER_BASE_DIR / "MultipleSequenceAlignments" / f"{og_id}.fa",
-        ORTHOFINDER_BASE_DIR / "MultipleSequenceAlignments" / f"{og_id}.fasta",
-        ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Alignments_ids" / f"{og_id}.fa",
-        ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Alignments_ids" / f"{og_id}.fasta",
-        ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Alignments" / f"{og_id}.fa",
-        ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Alignments" / f"{og_id}.fasta",
-        ORTHOFINDER_BASE_DIR / "Alignments_ids" / f"{og_id}.fa",
-        ORTHOFINDER_BASE_DIR / "Alignments" / f"{og_id}.fa",
-    ]
-    for p in candidates:
-        if p.exists(): return p
-    return None
+_aln_path_cache: dict = {}
 
 def _parse_alignment(aln: str) -> tuple[dict, list]:
     records, order = {}, []
@@ -377,17 +452,153 @@ def _parse_alignment(aln: str) -> tuple[dict, list]:
             records[cur].append(line.rstrip())
     return records, order
 
+def _find_alignment_file(og_id: str) -> Path | None:
+    """Fast path: return the first existing candidate; cache per OG."""
+    if og_id in _aln_path_cache:
+        return _aln_path_cache[og_id]
+    base = ORTHOFINDER_BASE_DIR
+    candidates = [
+        base / "WorkingDirectory" / "MultipleSequenceAlignments" / f"{og_id}.fa",
+        base / "WorkingDirectory" / "MultipleSequenceAlignments" / f"{og_id}.fasta",
+        base / "MultipleSequenceAlignments" / f"{og_id}.fa",
+        base / "MultipleSequenceAlignments" / f"{og_id}.fasta",
+        base / "WorkingDirectory" / "Alignments_ids" / f"{og_id}.fa",
+        base / "WorkingDirectory" / "Alignments_ids" / f"{og_id}.fasta",
+        base / "WorkingDirectory" / "Alignments" / f"{og_id}.fa",
+        base / "WorkingDirectory" / "Alignments" / f"{og_id}.fasta",
+        base / "Alignments_ids" / f"{og_id}.fa",
+        base / "Alignments" / f"{og_id}.fa",
+    ]
+    found = next((p for p in candidates if p.exists()), None)
+    _aln_path_cache[og_id] = found
+    return found
+
 def _chunk_list(lst, size):
     return [lst[i:i+size] for i in range(0, len(lst), size)]
 
-def _build_crosswalk(meta: dict) -> tuple[dict, dict]:
-    g2s, s2g = {}, {}
-    for info in meta.values():
-        if info.get("gene_id") and info.get("short_id"):
-            g2s[info["gene_id"]] = info["short_id"]
-        if info.get("short_id") and info.get("gene_id"):
-            s2g[info["short_id"]] = info["gene_id"]
-    return g2s, s2g
+
+def _genome_type_of(name: str, meta: dict) -> str:
+    """Best-effort genome_type for a leaf or record id.
+    Prefer meta (looked up by the unique short/full token), then fall back to
+    splitting the prefixed name. This is what disambiguates two records that
+    share the same gene_id but come from different genomes."""
+    tok = _first_token(name)
+    info = meta.get(tok) or meta.get(name)
+    if info and info.get("genome_type"):
+        return info["genome_type"]
+    return _split_prefixed_gene(tok)["genome_type"]
+
+
+def _match_keys(name: str, meta: dict) -> set:
+    """All normalized keys a leaf/record can be matched by (gene-level)."""
+    tok = _first_token(name)
+    sp = _split_prefixed_gene(tok)
+    ks: set = set()
+    for v in (tok, sp["gene"]):
+        if v:
+            ks.add(v)
+            ks.add(re.sub(r"\.\d+$", "", v))
+    info = meta.get(tok)
+    if info:
+        for f in ("short_id", "gene_id", "raw_id"):
+            v = info.get(f)
+            if v:
+                ks.add(v)
+                ks.add(re.sub(r"\.\d+$", "", v))
+    return ks
+
+
+def _ordered_record_ids(leaf_order, record_order, records, meta, include_unmatched=True):
+    """Order alignment records by tree-leaf order, genome-aware & one-to-one.
+
+    Strategy:
+    1) For each leaf, build candidate record IDs using bidirectional normalized
+       key matching (leaf variants ↔ record variants).
+    2) Disambiguate same-gene candidates by exact genome_type match, then by
+       longest common prefix.
+    3) After all leaves are processed, any records that were NOT matched and
+       whose gene-level key aligns with a remaining leaf are appended in
+       record_order (cluster mode only — ensures no records are silently lost).
+    """
+    # ---- Index record IDs by all normalized variants ----
+    key_to_recs: dict = {}
+    rec_genome: dict = {}
+    for rid in records:
+        rec_genome[rid] = _genome_type_of(rid, meta)
+        for k in _match_keys(rid, meta):
+            key_to_recs.setdefault(k, [])
+            if rid not in key_to_recs[k]:
+                key_to_recs[k].append(rid)
+
+    rec_ids_by_len = sorted(records.keys(), key=lambda x: -len(x))
+
+    def _lcp(a: str, b: str) -> int:
+        m = min(len(a), len(b)); i = 0
+        while i < m and a[i] == b[i]:
+            i += 1
+        return i
+
+    ordered, used = [], set()
+    for leaf in leaf_order:
+        leaf_tok = _first_token(leaf)
+        leaf_gt = _genome_type_of(leaf, meta)
+
+        cand: list = []
+        # gene-level key intersection
+        for k in _match_keys(leaf, meta):
+            for rid in key_to_recs.get(k, []):
+                if rid not in used and rid not in cand:
+                    cand.append(rid)
+        # suffix fallback (prefixed leaf endswith record id)
+        if not cand:
+            for rid in rec_ids_by_len:
+                if rid in used:
+                    continue
+                if leaf_tok == rid or leaf_tok.endswith("_" + rid) or leaf_tok.endswith(rid):
+                    cand.append(rid)
+
+        chosen = None
+        if len(cand) == 1:
+            chosen = cand[0]
+        elif cand:
+            gt_hits = [r for r in cand if leaf_gt and rec_genome.get(r) == leaf_gt]
+            if len(gt_hits) == 1:
+                chosen = gt_hits[0]
+            else:
+                pool = gt_hits if gt_hits else cand
+                pool = sorted(pool, key=lambda r: (_lcp(leaf_tok, _first_token(r)), len(r)),
+                              reverse=True)
+                chosen = pool[0]
+
+        if chosen and chosen in records and chosen not in used:
+            ordered.append(chosen); used.add(chosen)
+
+    # ---- CLUSTER MODE: recover missed records that belong to the cluster ----
+    if not include_unmatched:
+        # Track which leaf gene keys we still have (after used matching).
+        # Any record that matches one of these keys but wasn't picked above
+        # is appended in record_order — prevents silent drops.
+        leaf_gene_keys: set[str] = set()
+        for leaf in leaf_order:
+            for k in _match_keys(leaf, meta):
+                leaf_gene_keys.add(k)
+        for rid in record_order:
+            if rid in used:
+                continue
+            if set(_match_keys(rid, meta)) & leaf_gene_keys:
+                ordered.append(rid)
+                used.add(rid)
+
+    elif include_unmatched:
+        for rid in record_order:
+            if rid not in used:
+                ordered.append(rid)
+
+    return ordered
+
+def _label_for(id, meta):
+    """Build display label — exactly mirrors PHP d_label()."""
+    return meta.get(id, {}).get("full_label", id)
 
 
 # ===================================================================
@@ -397,23 +608,15 @@ def _build_crosswalk(meta: dict) -> tuple[dict, dict]:
 @router.get(
     "/api.php",
     summary="Search by protein ID / orthogroup ID / species catalog / members / positions",
-    description="""PHP api.php compatible endpoint that dispatches based on `action`:
-
-**action=search** (default) — Search a protein/gene ID to find its orthogroup.
-Returns OG members, gene tree (Newick), cluster info, tree_label_map, debug_prune.
-
-**action=species_catalog** — List all species from the cluster file.
-
-**action=members** — List OG members filtered by subgenome (A/B/D). Requires `og` and `sub`.
-
-**action=positions** — Return chromosome positions for OG genes. Supports optional `cluster` filter.
-""",)
+    description="PHP api.php compatible endpoint (action=search|species_catalog|members|positions).",
+)
 def search_php(
-    q: str = Query("", description="Protein/gene ID (e.g. TraesAK58CH1A01G000600.1) or orthogroup ID (OG0001234). Used when action=search."),
-    action: str = Query("search", description="Action: 'search' (default) | 'species_catalog' | 'members' | 'positions'"),
+    q: str = Query("", description="Protein/gene ID or orthogroup ID. Used when action=search."),
+    action: str = Query("search", description="Action: 'search' | 'species_catalog' | 'members' | 'positions'"),
     og: str = Query("", description="Orthogroup ID, required for action=members and action=positions"),
     sub: str = Query("", description="Subgenome filter (A/B/D), used with action=members"),
     cluster: int = Query(0, description="Cluster filter (1-7), used with action=positions"),
+    species: str = Query("", description="Species filter for gene search (optional)"),
     _: int = Query(0, description="Cache-buster (optional)"),
 ):
     """PHP api.php compatible endpoint — returns unwrapped JSON."""
@@ -421,7 +624,7 @@ def search_php(
         species = []
         if CLUSTER_FILE.exists():
             for line in CLUSTER_FILE.read_text(encoding="utf-8").splitlines()[1:]:
-                cols = line.split("\t")
+                cols = line.split(_TAB)
                 if len(cols) >= 8:
                     raw = re.sub(r"^\d+:\s*", "", cols[0].strip())
                     raw = re.sub(r"_[ABD]\.pep$", "", raw, flags=re.I)
@@ -497,12 +700,19 @@ def search_php(
         if re.match(r"^OG\d+$", q):
             og_id = q
         else:
+            cand_ids = [q]
+            if species:
+                cand_ids.append(f"{species}_{q}")
             query_hash = hashlib.md5(q.encode()).hexdigest()
-            cur.execute(
-                "SELECT og_id FROM gene_to_og WHERE gene_hash = %s AND gene_id = %s LIMIT 1",
-                (query_hash, q),
-            )
-            row = cur.fetchone()
+            row = None
+            for cid in {c for c in cand_ids if c}:
+                cur.execute(
+                    "SELECT og_id FROM gene_to_og WHERE gene_hash = MD5(%s) AND gene_id = %s LIMIT 1",
+                    (cid, cid),
+                )
+                row = cur.fetchone()
+                if row:
+                    break
             if not row:
                 return {"error": "Protein ID was not found."}
             og_id = row["og_id"]
@@ -537,7 +747,6 @@ def search_php(
             info = meta.get(g, _make_info("", g, "", ""))
             sub_counts[_norm_sub(info["subgenome"])] += 1
 
-        # Cluster resolution
         query_cluster = _resolve_cluster(q, cur)
         cluster_genes = _get_cluster_members(genes, query_cluster, cur) if query_cluster is not None else []
         cluster_sub_counts = {"A": 0, "B": 0, "D": 0, "Other": 0}
@@ -545,7 +754,6 @@ def search_php(
             info = meta.get(g, _make_info("", g, "", ""))
             cluster_sub_counts[_norm_sub(info["subgenome"])] += 1
 
-        # Build cluster tree
         cluster_tree = ""
         debug_prune = {}
         if query_cluster is not None and tree:
@@ -569,7 +777,6 @@ def search_php(
             else:
                 debug_prune["pruned_leaf_count"] = 0
 
-        # Return raw JSON matching PHP api.php format
         return {
             "query": q, "orthogroup": og_id, "gene_count": gene_count,
             "sub_counts": sub_counts, "tree": tree,
@@ -592,32 +799,38 @@ def search_php(
 
 
 # ---------------------------------------------------------------------------
+# download helpers  (shared by tree & alignment so leaf order is identical)
+# ---------------------------------------------------------------------------
+
+def _load_tree_text(og: str) -> str:
+    tree_file = ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Resolved_Gene_Trees" / f"{og}.txt"
+    return tree_file.read_text(encoding="utf-8") if tree_file.exists() else ""
+
+
+# ---------------------------------------------------------------------------
 # download
 # ---------------------------------------------------------------------------
 
 @router.get(
     "/download",
     summary="Download gene tree (Newick) or multiple sequence alignment (FASTA)",
-    description="""Download orthogroup data files:
-
-**type=tree** — Gene tree in Newick format. Add `cluster=N` (1-7) to prune to cluster members only.
-
-**type=alignment** — Multiple sequence alignment in FASTA format, ordered by tree leaf order.
-""",)
+    description="type=tree | type=alignment; cluster=N (1-7) for homoeologous subset. "
+                "Each alignment follows the leaf order of its paired tree.",
+)
 def download_file(
     og: str = Query(..., description="Orthogroup ID, e.g. OG0001897"),
     type: str = Query("tree", description="File type: 'tree' or 'alignment'"),
-    cluster: int = Query(0, description="Cluster number (1-7). Only applies to type=tree. 0 = full OG tree."),
+    cluster: int = Query(0, description="Cluster number (1-7). 0 = full OG."),
 ):
     if not re.match(r"^OG\d+$", og):
         raise HTTPException(400, "Invalid OG ID")
 
+    # ---- Download OG tree / Download some homoeologous tree ----
     if type == "tree":
-        tree_file = ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Resolved_Gene_Trees" / f"{og}.txt"
-        if not tree_file.exists():
+        tree = _load_tree_text(og)
+        if not tree:
             raise HTTPException(404, "Tree file not found")
-        tree = tree_file.read_text(encoding="utf-8")
-        if 1 <= cluster <= 7 and tree:
+        if 1 <= cluster <= 7:
             with mysql_cursor(ORTHOFINDER_DB) as cur:
                 cur.execute("SELECT genes FROM orthogroups WHERE og_id = %s LIMIT 1", (og,))
                 row = cur.fetchone()
@@ -625,51 +838,57 @@ def download_file(
                     genes = [g for g in row["genes"].split() if g]
                     c_genes = _get_cluster_members(genes, cluster, cur)
                     leaves = _parse_newick_leaves(tree)
-                    m = _fetch_meta(cur, leaves + c_genes)
-                    k = _build_prune_keep_set(c_genes, m, leaves)
-                    if k:
-                        p = _prune_newick(tree, k)
+                    meta = _fetch_meta(cur, leaves + c_genes)
+                    keep = _build_prune_keep_set(c_genes, meta, leaves)
+                    if keep:
+                        p = _prune_newick(tree, keep)
                         if p: tree = p
-        suffix = f".cluster{cluster}.tree.txt" if cluster else ".tree.txt"
-        return PlainTextResponse(tree, media_type="text/plain",
-                                 headers={"Content-Disposition": f'attachment; filename="{og}{suffix}"'})
+        suffix = f".HomoeologousGroup{cluster}.tree.txt" if cluster else ".tree.txt"
+        return PlainTextResponse(
+            tree, media_type="text/plain",
+            headers={"Content-Disposition": f'attachment; filename="{og}{suffix}"'})
 
+    # ---- Download OG alignment / Download some homoeologous alignment ----
     if type == "alignment":
         aln_file = _find_alignment_file(og)
         if not aln_file:
             raise HTTPException(404, "Alignment file not found")
-        tree_file = ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Resolved_Gene_Trees" / f"{og}.txt"
-        tree = tree_file.read_text(encoding="utf-8") if tree_file.exists() else ""
         alignment = aln_file.read_text(encoding="utf-8")
+        records, record_order = _parse_alignment(alignment)
+        tree = _load_tree_text(og)
 
         with mysql_cursor(ORTHOFINDER_DB) as cur:
-            leaf_order = _parse_newick_leaves(tree) if tree else []
-            records, record_order = _parse_alignment(alignment)
-            meta = _fetch_meta(cur, leaf_order + record_order)
-            g2s, s2g = _build_crosswalk(meta)
-            ordered, used = [], set()
-            for leaf in leaf_order:
-                leaf = _first_token(leaf)
-                cand = [leaf]
-                if leaf in meta:
-                    for f in ("short_id", "gene_id", "raw_id"):
-                        if meta[leaf].get(f): cand.append(_clean(meta[leaf][f]))
-                for c in list(cand):
-                    if c in g2s: cand.append(g2s[c])
-                more = [re.sub(r"\.\d+$", "", c) for c in cand if c]
-                for c in {c for c in cand + more if c}:
-                    if c in records and c not in used:
-                        ordered.append(c); used.add(c); break
-            for rid in record_order:
-                if rid not in used: ordered.append(rid)
+            tree_leaves_full = _parse_newick_leaves(tree) if tree else []
+            meta = _fetch_meta(cur, tree_leaves_full + list(records.keys()))
 
-        lines = []
+            if 1 <= cluster <= 7 and tree:
+                cur.execute("SELECT genes FROM orthogroups WHERE og_id = %s LIMIT 1", (og,))
+                row = cur.fetchone()
+                genes_all = [g for g in row["genes"].split() if g] if row else []
+                c_genes = _get_cluster_members(genes_all, cluster, cur)
+                keep = _build_prune_keep_set(c_genes, meta, tree_leaves_full)
+                pruned = _prune_newick(tree, keep) if keep else ""
+                leaf_order = _parse_newick_leaves(pruned) if pruned else []
+                include_unmatched = False
+            else:
+                leaf_order = tree_leaves_full
+                include_unmatched = True
+
+            ordered = _ordered_record_ids(
+                leaf_order, record_order, records, meta,
+                include_unmatched=include_unmatched,
+            )
+
+        out_lines = []
         for sid in ordered:
             if sid in records:
-                label = meta.get(sid, {}).get("full_label", sid)
-                lines.append(f">{label}")
-                lines.append("\n".join(records[sid]))
-        return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain",
-                                 headers={"Content-Disposition": f'attachment; filename="{og}.alignment.fa"'})
+                out_lines.append(">" + _label_for(sid, meta))
+                out_lines.append(_NL.join(records[sid]))
+
+        cluster_suffix = f".HomoeologousGroup{cluster}" if cluster else ""
+        body = _NL.join(out_lines) + _NL
+        return PlainTextResponse(
+            body, media_type="text/plain",
+            headers={"Content-Disposition": f'attachment; filename="{og}{cluster_suffix}.alignment.fa"'})
 
     raise HTTPException(400, "Invalid type")
