@@ -22,6 +22,7 @@ router = APIRouter(tags=["VariantHub"])
 # Reference genome machine name -> display name
 VARIANTHUB_REFERENCES: dict[str, str] = {
     "Chinese_Spring1.0": "Chinese Spring (IWGSCv1.0)",
+    "Chinese_Spring2.1": "Chinese Spring (IWGSCv2.1)",
 }
 
 # Dataset key -> {label, filename, source, reference}
@@ -163,6 +164,18 @@ VARIANTHUB_DATASETS: dict[str, dict[str, str]] = {
         "filename": "merge.SNP.Missing-unphasing.ID.ann.finalSID.allele2_retain.hard_retain.InbreedingCoeff_retain.clean.anno.vcf.gz",
         "source": "Cheng 等 2024 整合 SNP（Nature 2024）",
         "reference": "Chinese_Spring1.0",
+    },
+    "287exome_CS2.1": {
+        "label": "287exome (CS2.1)",
+        "filename": "287exome.SnpSiftfilter.edit.eff.vcf.gz",
+        "source": "Mol Plant 2022 (10.1016/j.molp.2022.01.004)",
+        "reference": "Chinese_Spring2.1",
+    },
+    "wheat660k_2191_CS2.1": {
+        "label": "wheat 660K 2191 (CS2.1)",
+        "filename": "wgs.1618.wheat660k.623.merge.maf0.01.2191.ann.vcf.gz",
+        "source": "Nat Genet 2025 (10.1038/s41588-025-02259-2)",
+        "reference": "Chinese_Spring2.1",
     },
 }
 
