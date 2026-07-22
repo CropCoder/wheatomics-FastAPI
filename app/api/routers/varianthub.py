@@ -166,13 +166,13 @@ VARIANTHUB_DATASETS: dict[str, dict[str, str]] = {
         "reference": "Chinese_Spring1.0",
     },
     "287exome_CS2.1": {
-        "label": "287exome (CS2.1)",
+        "label": "287exome_raw (CS2.1)",
         "filename": "287exome.SnpSiftfilter.edit.eff.vcf.gz",
         "source": "Mol Plant 2022 (10.1016/j.molp.2022.01.004)",
         "reference": "Chinese_Spring2.1",
     },
     "wheat660k_2191_CS2.1": {
-        "label": "wheat 660K 2191 (CS2.1)",
+        "label": "wgs2191 (CS2.1)",
         "filename": "wgs.1618.wheat660k.623.merge.maf0.01.2191.ann.vcf.gz",
         "source": "Nat Genet 2025 (10.1038/s41588-025-02259-2)",
         "reference": "Chinese_Spring2.1",
