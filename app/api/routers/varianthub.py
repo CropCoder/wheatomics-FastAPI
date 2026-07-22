@@ -7,6 +7,7 @@ VARIANTHUB_REFERENCES for a new genome) — no other code changes needed.
 
 from __future__ import annotations
 
+import gzip
 from pathlib import Path
 
 from fastapi import APIRouter, Query
@@ -235,9 +236,58 @@ def _parse_vcf_header(header_text: str) -> tuple[list[str], list[str]]:
 
 
 def _vcf_header(vcf: Path) -> tuple[list[str], list[str]]:
-    """Run `bcftools view -h` and return (meta_lines, samples)."""
-    result = run_command([_bcftools_path(), "view", "-h", str(vcf)])
-    return _parse_vcf_header(result.stdout)
+    """Read the VCF header directly from the (bg)gzipped file.
+
+    Reading with gzip avoids bcftools' strict header validation — some files
+    (e.g. 287exome) have duplicated sample names that make `bcftools view`
+    abort with "could not parse header".
+    """
+    header_lines: list[str] = []
+    with gzip.open(vcf, "rt") as fh:
+        for line in fh:
+            if not line.startswith("#"):
+                break
+            header_lines.append(line.rstrip("\n"))
+    return _parse_vcf_header("\n".join(header_lines))
+
+
+def _dedupe_samples(samples: list[str]) -> list[str]:
+    """Make sample names unique by appending _2, _3, ... to repeats.
+
+    bcftools refuses duplicated sample names; renaming lets queries proceed.
+    """
+    seen: dict[str, int] = {}
+    result: list[str] = []
+    for name in samples:
+        seen[name] = seen.get(name, 0) + 1
+        result.append(name if seen[name] == 1 else f"{name}_{seen[name]}")
+    return result
+
+
+def _tabix_records(vcf: Path, region: str) -> str:
+    """Fetch raw VCF lines for a region via tabix (tolerant, uses the .tbi index)."""
+    result = run_command([_tabix_path(), str(vcf), region])
+    return result.stdout
+
+
+def _zcat_records(vcf: Path) -> str:
+    """Dump the full VCF via gzip -dc (tolerant fallback for full-file ID scans)."""
+    result = run_command(["gzip", "-dc", str(vcf)])
+    return result.stdout
+
+
+def _tabix_path() -> str:
+    """Locate tabix binary (used only for files whose headers bcftools rejects)."""
+    candidates = [
+        settings.BCFTOOLS_BIN.parent / "tabix",
+        Path("/usr/bin/tabix"),
+        Path("/usr/local/bin/tabix"),
+        Path("/home/fei/data/tiantian_data/soft/htslib-1.6/bin/tabix"),
+    ]
+    for c in candidates:
+        if c.exists():
+            return str(c)
+    return str(candidates[0])
 
 
 def _parse_info(info_raw: str) -> dict[str, object]:
@@ -254,20 +304,23 @@ def _parse_info(info_raw: str) -> dict[str, object]:
     return info
 
 
-def _parse_vcf_records(text: str) -> tuple[list[str], list[dict]]:
-    """Parse bcftools view output into (samples, records).
+def _parse_vcf_records(text: str, samples: list[str] | None = None) -> tuple[list[str], list[dict]]:
+    """Parse VCF text into (samples, records).
 
-    Samples come from the #CHROM line; each record carries raw genotype
-    strings in the same order as `samples`.
+    Samples come from the #CHROM line unless `samples` is passed explicitly
+    (used by the tabix fallback, which outputs no header). Each record
+    carries raw genotype strings in the same order as the returned samples.
     """
-    samples: list[str] = []
+    if samples is None:
+        samples = []
+        for line in text.splitlines():
+            if line.startswith("#CHROM"):
+                fields = line.split("\t")
+                samples = fields[9:] if len(fields) > 9 else []
+                break
     records: list[dict] = []
     for line in text.splitlines():
-        if line.startswith("##"):
-            continue
-        if line.startswith("#CHROM"):
-            fields = line.split("\t")
-            samples = fields[9:] if len(fields) > 9 else []
+        if line.startswith("#"):
             continue
         fields = line.split("\t")
         if len(fields) < 8:
@@ -316,7 +369,11 @@ def varianthub_dataset_info(
 ) -> dict:
     """Return a dataset's VCF header: ## meta lines and sample IDs."""
     vcf = _vcf_path(dataset)
-    meta_lines, samples = _vcf_header(vcf)
+    meta_lines, raw_samples = _vcf_header(vcf)
+    duplicated = len(set(raw_samples)) != len(raw_samples)
+    # Expose the deduplicated names — these are what /query accepts in its
+    # `samples` parameter and what result columns are labelled with.
+    samples = _dedupe_samples(raw_samples) if duplicated else raw_samples
     meta = VARIANTHUB_DATASETS[dataset]
     return ok({
         "dataset": dataset,
@@ -326,6 +383,7 @@ def varianthub_dataset_info(
         "reference_display": VARIANTHUB_REFERENCES.get(meta["reference"], meta["reference"]),
         "meta_lines": meta_lines,
         "samples": samples,
+        "duplicated_samples": duplicated,
         "n_samples": len(samples),
     })
 
@@ -350,31 +408,61 @@ def varianthub_query(
         raise ValidationFailure("Provide exactly one of 'region' or 'variant_id'")
 
     vcf = _vcf_path(dataset)
-    cmd = [_bcftools_path(), "view", str(vcf)]
+    _, available_samples = _vcf_header(vcf)
+    has_duplicates = len(set(available_samples)) != len(available_samples)
 
-    if region is not None:
-        cmd += ["-r", _parse_region(region)]
-    else:
-        assert variant_id is not None
-        if not GENE_ID_PATTERN.match(variant_id):
-            raise ValidationFailure(f"Invalid variant_id: {variant_id!r}")
-        cmd += ["-i", f'ID="{variant_id}"']
-
+    requested: list[str] | None = None
     if samples:
         requested = [s.strip() for s in samples.split(",") if s.strip()]
         if not requested:
             raise ValidationFailure("Empty samples list")
-        _, available = _vcf_header(vcf)
-        unknown = [s for s in requested if s not in available]
+        # For duplicated-sample files the addressable names are the
+        # deduplicated ones (CS_A, CS_B, CS_A_2, ...).
+        valid_names = _dedupe_samples(available_samples) if has_duplicates else available_samples
+        unknown = [s for s in requested if s not in valid_names]
         if unknown:
             raise ValidationFailure(
                 f"Unknown sample(s) for dataset {dataset}: {', '.join(unknown)}. "
                 "See /api/VariantHub/dataset_info for the full sample list."
             )
-        cmd += ["-s", ",".join(requested)]
 
-    result = run_command(cmd)
-    all_samples, records = _parse_vcf_records(result.stdout)
+    if has_duplicates:
+        # bcftools aborts on duplicated sample names. Fall back to tolerant
+        # tools: tabix for region slices, zcat for full-file ID scans, and
+        # column-based sample selection. Sample names in the response are
+        # deduplicated (Wumangchunmai, Wumangchunmai_2, ...).
+        all_samples = _dedupe_samples(available_samples)
+        if region is not None:
+            text = _tabix_records(vcf, _parse_region(region))
+        else:
+            assert variant_id is not None
+            if not GENE_ID_PATTERN.match(variant_id):
+                raise ValidationFailure(f"Invalid variant_id: {variant_id!r}")
+            text = _zcat_records(vcf)
+        _, records = _parse_vcf_records(text, all_samples)
+        if variant_id is not None:
+            records = [r for r in records if r["id"] == variant_id]
+        if requested is not None:
+            keep = [all_samples.index(s) for s in requested]
+            all_samples = requested
+            for record in records:
+                genotypes = record.get("genotypes")
+                if genotypes is not None:
+                    record["genotypes"] = [genotypes[i] for i in keep]
+    else:
+        cmd = [_bcftools_path(), "view", str(vcf)]
+        if region is not None:
+            cmd += ["-r", _parse_region(region)]
+        else:
+            assert variant_id is not None
+            if not GENE_ID_PATTERN.match(variant_id):
+                raise ValidationFailure(f"Invalid variant_id: {variant_id!r}")
+            cmd += ["-i", f'ID="{variant_id}"']
+        if requested is not None:
+            cmd += ["-s", ",".join(requested)]
+
+        result = run_command(cmd)
+        all_samples, records = _parse_vcf_records(result.stdout)
 
     page = records[offset:offset + limit]
     meta = VARIANTHUB_DATASETS[dataset]
