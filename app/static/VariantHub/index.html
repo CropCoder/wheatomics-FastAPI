@@ -214,6 +214,7 @@ var _hmt = _hmt || [];
         <div class="form-group">
           <label for="samples-input"><strong>Samples (optional)</strong></label>
           <input type="text" id="samples-input" class="form-control" placeholder="Leave empty for all samples, or comma-separated sample IDs">
+          <small class="text-muted">Datasets with sample metadata also offer filter dropdowns in the Dataset information card below.</small>
         </div>
         <button id="query-btn" class="btn btn-primary" onclick="runQuery(0)">Submit</button>
       </div>
@@ -291,6 +292,7 @@ var lastHasMore = false;
 var lastTotal = 0;
 var lastResults = [];      // current page records, for CSV export
 var lastSamples = [];      // sample names of the last query
+var activeMetaFilters = null;  // metadata filters applied to the current query
 
 $(function(){
   loadDatasets();
@@ -304,9 +306,12 @@ $(function(){
     $('#dataset-select').trigger('change');
   });
   $('#dataset-select').change(function() {
+    activeMetaFilters = null;
     updateDatasetSource();
     loadDatasetInfo();
   });
+  // Typing samples manually cancels any active metadata filter.
+  $('#samples-input').on('input', function() { activeMetaFilters = null; });
   $('#export-btn').on('click', exportCsv);
 });
 
@@ -354,9 +359,19 @@ function updateDatasetSource() {
 // =====================================================================
 //  Dataset info card
 // =====================================================================
+var META_FILTER_FIELDS = [
+  { param: 'country',     key: 'country' },
+  { param: 'continent',   key: 'continent' },
+  { param: 'status',      key: 'status' },
+  { param: 'growth_habit', key: 'growth_habit' },
+  { param: 'population',  key: 'major_population' },
+];
+var sampleMetaState = { fields: [], samples: [], dataset: null };
+
 function loadDatasetInfo() {
   var key = $('#dataset-select').val();
   if (!key) { $('#dataset-info-card').hide(); return; }
+  sampleMetaState = { fields: [], samples: [], dataset: null };
   $.getJSON('/api/VariantHub/dataset_info', { dataset: key })
     .done(function(resp) {
       if (!resp.success) { $('#dataset-info-card').hide(); return; }
@@ -365,6 +380,9 @@ function loadDatasetInfo() {
         escapeHtml(d.reference_display) + ' &nbsp;·&nbsp; ' +
         '<span class="text-muted">' + escapeHtml(d.source) + '</span></p>';
       html += '<p><strong>' + d.n_samples + '</strong> samples</p>';
+      if (d.has_sample_meta) {
+        html += '<div id="sample-meta-section"></div>';
+      }
       if (d.samples && d.samples.length) {
         html += '<div class="form-group"><label><strong>Sample IDs</strong></label>' +
           '<div class="vh-sample-box">' + d.samples.map(escapeHtml).join(', ') + '</div></div>';
@@ -375,8 +393,129 @@ function loadDatasetInfo() {
       }
       $('#dataset-info-body').html(html);
       $('#dataset-info-card').show();
+      if (d.has_sample_meta) {
+        loadSampleMeta(key);
+      }
     })
     .fail(function() { $('#dataset-info-card').hide(); });
+}
+
+// =====================================================================
+//  Sample metadata: filter dropdowns + sample table
+// =====================================================================
+function loadSampleMeta(datasetKey) {
+  $.getJSON('/api/VariantHub/samples', { dataset: datasetKey })
+    .done(function(resp) {
+      if (!resp.success) return;
+      sampleMetaState = {
+        fields: resp.data.fields || [],
+        samples: resp.data.samples || [],
+        dataset: datasetKey,
+      };
+      renderSampleMetaSection();
+    });
+}
+
+function fieldLabel(key) {
+  var f = sampleMetaState.fields.find(function(x) { return x.key === key; });
+  return f ? f.label : key;
+}
+
+function distinctValues(fieldKey) {
+  var seen = {};
+  var values = [];
+  sampleMetaState.samples.forEach(function(s) {
+    var v = s[fieldKey];
+    if (v && !seen[v]) { seen[v] = true; values.push(v); }
+  });
+  return values.sort();
+}
+
+function renderSampleMetaSection() {
+  var available = META_FILTER_FIELDS.filter(function(mf) {
+    return sampleMetaState.fields.some(function(f) { return f.key === mf.key; });
+  });
+
+  var html = '<div class="form-group"><label><strong>Sample metadata</strong> ' +
+    '<span class="text-muted">(' + sampleMetaState.samples.length + ' samples — filter to query a subset)</span></label>';
+
+  // Filter dropdowns
+  html += '<div class="row">';
+  available.forEach(function(mf) {
+    html += '<div class="col-md-2 col-sm-4">' +
+      '<label style="font-size:12px;">' + escapeHtml(fieldLabel(mf.key)) + '</label>' +
+      '<select class="form-control input-sm vh-meta-filter" data-param="' + mf.param + '" data-key="' + mf.key + '">' +
+      '<option value="">(all)</option>';
+    distinctValues(mf.key).forEach(function(v) {
+      html += '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + '</option>';
+    });
+    html += '</select></div>';
+  });
+  html += '</div>';
+  html += '<div style="margin:8px 0;">' +
+    '<button class="btn btn-primary btn-sm" onclick="queryWithMetaFilters()">Query genotypes with these filters</button> ' +
+    '<span class="text-muted" id="meta-match-count"></span></div>';
+
+  // Sample table
+  var cols = sampleMetaState.fields;
+  html += '<div class="vh-table-wrap" style="max-height:300px;"><table class="table table-bordered table-condensed"><thead><tr>' +
+    '<th>Sample</th>';
+  cols.forEach(function(f) { html += '<th>' + escapeHtml(f.label) + '</th>'; });
+  html += '</tr></thead><tbody id="sample-meta-tbody">';
+  html += sampleMetaRows(sampleMetaState.samples);
+  html += '</tbody></table></div></div>';
+
+  $('#sample-meta-section').html(html);
+  $('.vh-meta-filter').change(onMetaFilterChange);
+  onMetaFilterChange();
+}
+
+function sampleMetaRows(samples) {
+  var html = '';
+  samples.forEach(function(s) {
+    html += '<tr><td><strong>' + escapeHtml(s.sample) + '</strong></td>';
+    sampleMetaState.fields.forEach(function(f) {
+      html += '<td>' + escapeHtml(s[f.key] || '') + '</td>';
+    });
+    html += '</tr>';
+  });
+  return html;
+}
+
+function currentMetaFilters() {
+  var filters = {};
+  $('.vh-meta-filter').each(function() {
+    var v = $(this).val();
+    if (v) filters[$(this).data('param')] = v;
+  });
+  return filters;
+}
+
+function onMetaFilterChange() {
+  var filters = currentMetaFilters();
+  var matched = sampleMetaState.samples.filter(function(s) {
+    return META_FILTER_FIELDS.every(function(mf) {
+      return !filters[mf.param] || s[mf.key] === filters[mf.param];
+    });
+  });
+  $('#meta-match-count').text(matched.length + ' samples match');
+  $('#sample-meta-tbody').html(sampleMetaRows(matched));
+}
+
+function queryWithMetaFilters() {
+  var filters = currentMetaFilters();
+  if (Object.keys(filters).length === 0) {
+    showError('Pick at least one metadata filter first');
+    return;
+  }
+  // Stash filters for the query builder, clear the manual samples box, submit.
+  activeMetaFilters = filters;
+  $('#samples-input').val('');
+  if (!$('#region-input').val().trim()) {
+    $('#region-input').val('chr1A:1-1000000');
+    $('input[name="queryType"][value="region"]').prop('checked', true).trigger('change');
+  }
+  runQuery(0);
 }
 
 // =====================================================================
@@ -394,7 +533,11 @@ function currentQueryParams(offset) {
     params.variant_id = $('#variant-id-input').val().trim();
     if (!params.variant_id) { showError('Please enter a variant ID'); return null; }
   }
-  if (samples) params.samples = samples;
+  if (samples) {
+    params.samples = samples;
+  } else if (activeMetaFilters) {
+    for (var k in activeMetaFilters) params[k] = activeMetaFilters[k];
+  }
   if (!key) { showError('Please select a dataset'); return null; }
   return params;
 }
@@ -435,11 +578,18 @@ function renderResults(data, params) {
 
   var queryDesc = params.region ? ('region ' + params.region) : ('variant ID ' + params.variant_id);
   $('#result-title').text(params.dataset + ' — ' + queryDesc);
+  var filterDesc = '';
+  if (params.samples) {
+    filterDesc = ' (samples: ' + escapeHtml(params.samples) + ')';
+  } else if (data.meta_filters) {
+    var parts = [];
+    for (var k in data.meta_filters) parts.push(k + '=' + data.meta_filters[k]);
+    filterDesc = ' (metadata filter: ' + escapeHtml(parts.join(', ')) + ')';
+  }
   $('#result-summary').html(
     '<strong>' + lastTotal + '</strong> variants total · showing ' +
     (lastTotal === 0 ? 0 : currentOffset + 1) + '–' + (currentOffset + lastResults.length) +
-    ' · <strong>' + data.n_samples + '</strong> samples' +
-    (params.samples ? ' (filtered: ' + escapeHtml(params.samples) + ')' : '')
+    ' · <strong>' + data.n_samples + '</strong> samples' + filterDesc
   );
 
   if (lastResults.length === 0) {
