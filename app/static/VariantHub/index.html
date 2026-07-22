@@ -84,6 +84,8 @@
   .vh-table-wrap th { position: sticky; top: 0; background: #f8f9fa; z-index: 1; }
   .vh-meta-box { max-height: 260px; overflow-y: auto; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 10px; font-family: Consolas, monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; }
   .vh-sample-box { max-height: 150px; overflow-y: auto; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 10px; font-family: Consolas, monospace; font-size: 12px; }
+  .vh-meta-filter { font-size: 12px; height: 30px; padding: 2px 6px; }
+  .vh-sample-meta-table td, .vh-sample-meta-table th { padding: 3px 8px; font-size: 11.5px; white-space: nowrap; }
   .vh-example { font-size: 13px; margin-left: 8px; }
   .vh-summary { font-size: 14px; margin-bottom: 10px; }
   .vh-pagination button { margin-right: 8px; }
@@ -458,17 +460,21 @@ function renderSampleMetaSection() {
 
   // Sample table
   var cols = sampleMetaState.fields;
-  html += '<div class="vh-table-wrap" style="max-height:300px;"><table class="table table-bordered table-condensed"><thead><tr>' +
+  html += '<div class="vh-table-wrap" style="max-height:280px;"><table class="table table-bordered table-condensed vh-sample-meta-table"><thead><tr>' +
     '<th>Sample</th>';
   cols.forEach(function(f) { html += '<th>' + escapeHtml(f.label) + '</th>'; });
   html += '</tr></thead><tbody id="sample-meta-tbody">';
-  html += sampleMetaRows(sampleMetaState.samples);
-  html += '</tbody></table></div></div>';
+  html += sampleMetaRows(sampleMetaState.samples.slice(0, 50));
+  html += '</tbody></table></div>';
+  html += '<div style="font-size:12px;margin-top:4px;"><a href="javascript:void(0)" id="sample-meta-toggle">Show all <span class="sample-meta-total"></span> samples</a></div></div>';
 
   $('#sample-meta-section').html(html);
   $('.vh-meta-filter').change(onMetaFilterChange);
+  $('#sample-meta-toggle').click(toggleSampleMetaRows);
   onMetaFilterChange();
 }
+
+var sampleMetaExpanded = false;
 
 function sampleMetaRows(samples) {
   var html = '';
@@ -482,6 +488,36 @@ function sampleMetaRows(samples) {
   return html;
 }
 
+function currentMatchedSamples() {
+  var filters = currentMetaFilters();
+  return sampleMetaState.samples.filter(function(s) {
+    return META_FILTER_FIELDS.every(function(mf) {
+      return !filters[mf.param] || s[mf.key] === filters[mf.param];
+    });
+  });
+}
+
+function renderSampleMetaRows() {
+  var matched = currentMatchedSamples();
+  $('#meta-match-count').text(matched.length + ' samples match');
+  var rows = sampleMetaExpanded ? matched : matched.slice(0, 50);
+  $('#sample-meta-tbody').html(sampleMetaRows(rows));
+  $('.sample-meta-total').text(matched.length);
+  $('#sample-meta-toggle').text(
+    sampleMetaExpanded ? 'Show first 50 only' : 'Show all ' + matched.length + ' samples'
+  ).toggle(matched.length > 50);
+}
+
+function toggleSampleMetaRows() {
+  sampleMetaExpanded = !sampleMetaExpanded;
+  renderSampleMetaRows();
+}
+
+function onMetaFilterChange() {
+  sampleMetaExpanded = false;
+  renderSampleMetaRows();
+}
+
 function currentMetaFilters() {
   var filters = {};
   $('.vh-meta-filter').each(function() {
@@ -489,17 +525,6 @@ function currentMetaFilters() {
     if (v) filters[$(this).data('param')] = v;
   });
   return filters;
-}
-
-function onMetaFilterChange() {
-  var filters = currentMetaFilters();
-  var matched = sampleMetaState.samples.filter(function(s) {
-    return META_FILTER_FIELDS.every(function(mf) {
-      return !filters[mf.param] || s[mf.key] === filters[mf.param];
-    });
-  });
-  $('#meta-match-count').text(matched.length + ' samples match');
-  $('#sample-meta-tbody').html(sampleMetaRows(matched));
 }
 
 function queryWithMetaFilters() {
