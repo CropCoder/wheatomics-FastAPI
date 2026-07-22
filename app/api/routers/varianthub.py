@@ -1,0 +1,381 @@
+"""VariantHub — query bgzipped, tabix-indexed VCF files via bcftools.
+
+All datasets are against the Chinese_Spring1.0 (IWGSCv1.0) reference genome.
+New datasets / new reference genomes: add entries to VARIANTHUB_DATASETS (and
+VARIANTHUB_REFERENCES for a new genome) — no other code changes needed.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from fastapi import APIRouter, Query
+
+from app.core.config import settings
+from app.core.exceptions import ResourceNotFound, ValidationFailure
+from app.core.response import ok
+from app.core.security import GENE_ID_PATTERN, ensure_allowed_table, ensure_interval_like
+from app.services.command_runner import run_command
+
+router = APIRouter(tags=["VariantHub"])
+
+# Reference genome machine name -> display name
+VARIANTHUB_REFERENCES: dict[str, str] = {
+    "Chinese_Spring1.0": "Chinese Spring (IWGSCv1.0)",
+}
+
+# Dataset key -> {label, filename, source, reference}
+VARIANTHUB_DATASETS: dict[str, dict[str, str]] = {
+    "WEC_filtered_SNPs": {
+        "label": "WEC_filtered_SNPs",
+        "filename": "WEC_SNP_IWGSCv1.0.eff.vcf.gz",
+        "source": "WEC SNP (PMID 25886949)",
+        "reference": "Chinese_Spring1.0",
+    },
+    "WEC_filtered_INDELs": {
+        "label": "WEC_filtered_INDELs",
+        "filename": "WEC_INDEL_IWGSCv1.0.eff.vcf.gz",
+        "source": "WEC InDel",
+        "reference": "Chinese_Spring1.0",
+    },
+    "whealbi_minocc10": {
+        "label": "whealbi.minocc10",
+        "filename": "whealbi.minocc10.imputed.vcf.gz",
+        "source": "Whealbi 群体（已插补）",
+        "reference": "Chinese_Spring1.0",
+    },
+    "Aus_UG_eff": {
+        "label": "Aus.UG.eff",
+        "filename": "Aus.UG.dedup.whole.eff.vcf.gz",
+        "source": "六倍体面包小麦泛基因组 (PMID 28231383)",
+        "reference": "Chinese_Spring1.0",
+    },
+    "Exon_dedup_HCandUG": {
+        "label": "Exon.dedup.HCandUG",
+        "filename": "Exom.dedup.HCandUG.eff.vcf.gz",
+        "source": "外显子组 HC+UG 去重",
+        "reference": "Chinese_Spring1.0",
+    },
+    "PRJNA381058_exome": {
+        "label": "PRJNA381058_exome",
+        "filename": "PRJNA381058_exome_whole_eff.vcf.gz",
+        "source": "外显子组（重组率研究）",
+        "reference": "Chinese_Spring1.0",
+    },
+    "Exome_PRJEB30905": {
+        "label": "Exome_PRJEB30905",
+        "filename": "Exome_PRJEB30905_whole_eff.vcf.gz",
+        "source": "VRN1 等发育响应 (PRJEB30905)",
+        "reference": "Chinese_Spring1.0",
+    },
+    "1000_wheat_exomes": {
+        "label": "1000 wheat exomes",
+        "filename": "1kEC_genotype_eff.vcf.gz",
+        "source": "1kEC（KSU wheatgenomics）",
+        "reference": "Chinese_Spring1.0",
+    },
+    "Canadian_wheat_lines": {
+        "label": "Canadian wheat lines",
+        "filename": "161010_Chinese_Spring_v1.novoalign.raw.whole.eff.vcf.gz",
+        "source": "加拿大小麦种质 novoalign 原始变异",
+        "reference": "Chinese_Spring1.0",
+    },
+    "1000_wheat_exomes_imputed": {
+        "label": "1000 wheat exomes after imputation and filtering",
+        "filename": "all.GP08_mm75_het3_publication01142019_eff.vcf.gz",
+        "source": "1kEC 插补过滤版",
+        "reference": "Chinese_Spring1.0",
+    },
+    "NewExomeCapute": {
+        "label": "NewExomeCapute",
+        "filename": "NewExomeCapute.whole.eff.vcf.gz",
+        "source": "新版外显子捕获（GigaScience 2019）",
+        "reference": "Chinese_Spring1.0",
+    },
+    "90_mini_core_rna_seq_HC": {
+        "label": "90_mini_core_rna_seq_HC",
+        "filename": "90_mini_core_rna_seq_whole.eff.vcf.gz",
+        "source": "90 份 mini-core RNA-seq (PMC5619896)",
+        "reference": "Chinese_Spring1.0",
+    },
+    "355_common_wheat_WGS": {
+        "label": "355 common wheat WGS",
+        "filename": "all355.maf01.mis25.het03.eff.vcf.gz",
+        "source": "355 份普通小麦 WGS 整合（Plant Cell 2023）",
+        "reference": "Chinese_Spring1.0",
+    },
+    "Vmap_1.0": {
+        "label": "Vmap 1.0",
+        "filename": "414WGS.vcf.eff.vcf.gz",
+        "source": "VMap 1.0 群体（414 份 WGS, Nat Genet 2020）",
+        "reference": "Chinese_Spring1.0",
+    },
+    "35_grain_rna_seq_HC": {
+        "label": "35_grain_rna_seq_HC",
+        "filename": "35_grain_rna_seq_whole.eff.vcf.gz",
+        "source": "35 份籽粒 RNA-seq (PMC5637334)",
+        "reference": "Chinese_Spring1.0",
+    },
+    "GBS_filtered_SNPs": {
+        "label": "GBS_filtered_SNPs",
+        "filename": "GBS_filtered_SNPs_IWGSCv1.0.eff.vcf.gz",
+        "source": "GBS SNP 过滤",
+        "reference": "Chinese_Spring1.0",
+    },
+    "GBS_filtered_Indels": {
+        "label": "GBS_filtered_Indels",
+        "filename": "GBS_filtered_Indels_IWGSCv1.0.eff.vcf.gz",
+        "source": "GBS InDel 过滤",
+        "reference": "Chinese_Spring1.0",
+    },
+    "GBS_NG_GWAS": {
+        "label": "GBS_NG_GWAS",
+        "filename": "GBS_NG_GWAS_eff1.vcf.gz",
+        "source": "GBS NG GWAS 面板 (Nat Genet 2019)",
+        "reference": "Chinese_Spring1.0",
+    },
+    "commonwheat63WGS": {
+        "label": "commonwheat63WGS",
+        "filename": "commonwheat63WGS.eff.sort.filter.vcf.gz",
+        "source": "普通小麦 63 份 WGS（PMID 30081829）",
+        "reference": "Chinese_Spring1.0",
+    },
+    "WildEmmer20WGS_SNP": {
+        "label": "WildEmmer20WGS_SNP",
+        "filename": "WildEmmer20WGS_SNP_eff.vcf.gz",
+        "source": "野生二粒麦 20× WGS SNP",
+        "reference": "Chinese_Spring1.0",
+    },
+    "WildEmmer10WGS_INDEL": {
+        "label": "WildEmmer10WGS_INDEL",
+        "filename": "WildEmmer10WGS_INDEL_eff.vcf.gz",
+        "source": "野生二粒麦 10× WGS InDel",
+        "reference": "Chinese_Spring1.0",
+    },
+    "SHW_GBS_SNP": {
+        "label": "SHW_GBS_SNP",
+        "filename": "SHW_GBS_SNP_eff.vcf.gz",
+        "source": "合成六倍体小麦 SHW GBS SNP",
+        "reference": "Chinese_Spring1.0",
+    },
+    "Cheng_2024": {
+        "label": "Cheng, S. et al. 2024",
+        "filename": "merge.SNP.Missing-unphasing.ID.ann.finalSID.allele2_retain.hard_retain.InbreedingCoeff_retain.clean.anno.vcf.gz",
+        "source": "Cheng 等 2024 整合 SNP（Nature 2024）",
+        "reference": "Chinese_Spring1.0",
+    },
+}
+
+_MAX_REGION_BP = 5_000_000
+
+
+def _bcftools_path() -> str:
+    """Locate bcftools binary. Prefer settings.BCFTOOLS_BIN, fall back to
+    common system paths. Mirrors _blastdbcmd_path in sequence.py.
+    """
+    candidates = [
+        settings.BCFTOOLS_BIN,
+        Path("/usr/bin/bcftools"),
+        Path("/usr/local/bin/bcftools"),
+    ]
+    for c in candidates:
+        if c.exists():
+            return str(c)
+    # Return default; run_command will surface a clear error if missing
+    return str(settings.BCFTOOLS_BIN)
+
+
+def _vcf_path(dataset: str) -> Path:
+    """Validate dataset key and return the on-disk VCF path (must have .tbi)."""
+    ensure_allowed_table(dataset, VARIANTHUB_DATASETS.keys(), "dataset")
+    path = settings.VARIANTHUB_VCF_DIR / VARIANTHUB_DATASETS[dataset]["filename"]
+    if not path.exists():
+        raise ResourceNotFound(f"VCF file not found on server: {path.name}")
+    if not Path(str(path) + ".tbi").exists():
+        raise ResourceNotFound(f"Tabix index missing: {path.name}.tbi")
+    return path
+
+
+def _parse_region(region: str) -> str:
+    """Validate and normalize a region string for bcftools -r."""
+    ensure_interval_like(region)
+    chrom = region.split(":")[0]
+    interval = region.split(":")[1].replace("..", "-")
+    start_text, end_text = interval.split("-")
+    start, end = int(start_text), int(end_text)
+    if end <= start or end - start > _MAX_REGION_BP:
+        raise ValidationFailure(f"Region length must be > 0 and <= {_MAX_REGION_BP} bp")
+    return f"{chrom}:{start}-{end}"
+
+
+def _parse_vcf_header(header_text: str) -> tuple[list[str], list[str]]:
+    """Split a VCF header into (## meta lines, sample names from #CHROM)."""
+    meta_lines: list[str] = []
+    samples: list[str] = []
+    for line in header_text.splitlines():
+        if line.startswith("##"):
+            meta_lines.append(line)
+        elif line.startswith("#CHROM"):
+            fields = line.split("\t")
+            samples = fields[9:] if len(fields) > 9 else []
+    return meta_lines, samples
+
+
+def _vcf_header(vcf: Path) -> tuple[list[str], list[str]]:
+    """Run `bcftools view -h` and return (meta_lines, samples)."""
+    result = run_command([_bcftools_path(), "view", "-h", str(vcf)])
+    return _parse_vcf_header(result.stdout)
+
+
+def _parse_info(info_raw: str) -> dict[str, object]:
+    """Parse a VCF INFO column into a dict. Flag keys (no '=') map to True."""
+    info: dict[str, object] = {}
+    for item in info_raw.split(";"):
+        if not item:
+            continue
+        if "=" in item:
+            key, value = item.split("=", 1)
+            info[key] = value
+        else:
+            info[item] = True
+    return info
+
+
+def _parse_vcf_records(text: str) -> tuple[list[str], list[dict]]:
+    """Parse bcftools view output into (samples, records).
+
+    Samples come from the #CHROM line; each record carries raw genotype
+    strings in the same order as `samples`.
+    """
+    samples: list[str] = []
+    records: list[dict] = []
+    for line in text.splitlines():
+        if line.startswith("##"):
+            continue
+        if line.startswith("#CHROM"):
+            fields = line.split("\t")
+            samples = fields[9:] if len(fields) > 9 else []
+            continue
+        fields = line.split("\t")
+        if len(fields) < 8:
+            continue
+        record = {
+            "chrom": fields[0],
+            "pos": int(fields[1]),
+            "id": fields[2],
+            "ref": fields[3],
+            "alt": fields[4],
+            "qual": fields[5],
+            "filter": fields[6],
+            "info": _parse_info(fields[7]),
+            "info_raw": fields[7],
+        }
+        if len(fields) > 8:
+            record["format"] = fields[8]
+            record["genotypes"] = fields[9:]
+        records.append(record)
+    return samples, records
+
+
+@router.get("/VariantHub/datasets")
+def varianthub_datasets() -> dict:
+    """List all VCF datasets, grouped by reference genome."""
+    references: dict[str, list[dict]] = {}
+    for key, meta in VARIANTHUB_DATASETS.items():
+        references.setdefault(meta["reference"], []).append(
+            {"key": key, "label": meta["label"], "source": meta["source"]}
+        )
+    return ok({
+        "references": [
+            {
+                "name": name,
+                "display": VARIANTHUB_REFERENCES.get(name, name),
+                "datasets": datasets,
+            }
+            for name, datasets in references.items()
+        ]
+    })
+
+
+@router.get("/VariantHub/dataset_info")
+def varianthub_dataset_info(
+    dataset: str = Query(..., description="Dataset key from /api/VariantHub/datasets"),
+) -> dict:
+    """Return a dataset's VCF header: ## meta lines and sample IDs."""
+    vcf = _vcf_path(dataset)
+    meta_lines, samples = _vcf_header(vcf)
+    meta = VARIANTHUB_DATASETS[dataset]
+    return ok({
+        "dataset": dataset,
+        "label": meta["label"],
+        "source": meta["source"],
+        "reference": meta["reference"],
+        "reference_display": VARIANTHUB_REFERENCES.get(meta["reference"], meta["reference"]),
+        "meta_lines": meta_lines,
+        "samples": samples,
+        "n_samples": len(samples),
+    })
+
+
+@router.get("/VariantHub/query")
+def varianthub_query(
+    dataset: str = Query(..., description="Dataset key from /api/VariantHub/datasets"),
+    region: str | None = Query(None, description="Genomic interval, e.g. chr1A:1000-50000"),
+    variant_id: str | None = Query(None, description="Variant ID (exact match on the ID column)"),
+    samples: str | None = Query(None, description="Comma-separated sample IDs; omit for all samples"),
+    limit: int = Query(200, ge=1, le=5000),
+    offset: int = Query(0, ge=0),
+) -> dict:
+    """Query variants by genomic region or by variant ID.
+
+    Exactly one of `region` / `variant_id` is required. Region queries use the
+    tabix index (`bcftools view -r`); ID queries filter on the ID column
+    (`bcftools view -i 'ID="..."'`, a full-file scan that can be slow on the
+    large population VCFs).
+    """
+    if (region is None) == (variant_id is None):
+        raise ValidationFailure("Provide exactly one of 'region' or 'variant_id'")
+
+    vcf = _vcf_path(dataset)
+    cmd = [_bcftools_path(), "view", str(vcf)]
+
+    if region is not None:
+        cmd += ["-r", _parse_region(region)]
+    else:
+        assert variant_id is not None
+        if not GENE_ID_PATTERN.match(variant_id):
+            raise ValidationFailure(f"Invalid variant_id: {variant_id!r}")
+        cmd += ["-i", f'ID="{variant_id}"']
+
+    if samples:
+        requested = [s.strip() for s in samples.split(",") if s.strip()]
+        if not requested:
+            raise ValidationFailure("Empty samples list")
+        _, available = _vcf_header(vcf)
+        unknown = [s for s in requested if s not in available]
+        if unknown:
+            raise ValidationFailure(
+                f"Unknown sample(s) for dataset {dataset}: {', '.join(unknown)}. "
+                "See /api/VariantHub/dataset_info for the full sample list."
+            )
+        cmd += ["-s", ",".join(requested)]
+
+    result = run_command(cmd)
+    all_samples, records = _parse_vcf_records(result.stdout)
+
+    page = records[offset:offset + limit]
+    meta = VARIANTHUB_DATASETS[dataset]
+    return ok({
+        "dataset": dataset,
+        "reference": meta["reference"],
+        "region": region,
+        "variant_id": variant_id,
+        "samples": all_samples,
+        "n_samples": len(all_samples),
+        "total": len(records),
+        "limit": limit,
+        "offset": offset,
+        "total_shown": len(page),
+        "has_more": offset + limit < len(records),
+        "records": page,
+    })

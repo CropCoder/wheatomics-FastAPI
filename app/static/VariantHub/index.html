@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VariantHub - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+
+<script>
+// ===== Visit tracking =====
+(function() {
+  var page = location.pathname || 'unknown';
+  // POST a pageview (best-effort, ignore failures)
+  try {
+    fetch('/api/track/visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page: page })
+    }).catch(function(){});
+  } catch (e) {}
+
+  function fmt(n) {
+    n = Number(n) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
+    if (n >= 10000)   return (n / 1000).toFixed(3) + 'k';
+    return String(n);
+  }
+
+  function setHtml(html) {
+    var el = document.getElementById('visit-stats');
+    if (el) el.innerHTML = html;
+  }
+
+  fetch('/api/track/stats')
+    .then(function(r) { return r.json(); })
+    .then(function(resp) {
+      if (!resp || !resp.success) {
+        setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
+        return;
+      }
+      var d = resp.data;
+      var html =
+        '<span class="vs-pill vs-today" title="Today pageviews">' +
+          '<span class="vs-dot vs-dot-today"></span>' +
+          'Today <b>' + fmt(d.today.pv) + '</b></span>' +
+        '<span class="vs-pill vs-total" title="Total pageviews (since 2019-08-01)">' +
+          '<span class="vs-dot vs-dot-total"></span>' +
+          'Total <b>' + fmt(d.total.pv) + '</b></span>' +
+        '<span class="vs-pill vs-online" title="Visitors active in the last 15 minutes">' +
+          '<span class="vs-dot vs-dot-online"></span>' +
+          'Online <b>' + fmt(d.online) + '</b></span>';
+      setHtml(html);
+    })
+    .catch(function() {
+      setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
+    });
+})();</script>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+<style>
+  body { background: #f8f9fa; margin:0; padding:0; }
+  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+  #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
+  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+  #header-tabs li { display:inline-block !important; width:190px !important; }
+  #header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+  #header-tabs a:hover { background:#98c1d9; color:#000000; }
+  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+  #header-tabs ul li ul { display:none !important; position:absolute; }
+  #header-tabs ul li:hover ul { display:block !important; }
+  #header-tabs ul li ul a { border-radius:0; }
+  #home_content { max-width: 1400px; margin: 0 auto; padding: 0 15px; }
+  .loading { display: none; text-align: center; padding: 60px; }
+  .loading .spinner-border { width: 3rem; height: 3rem; }
+  #error-msg { display: none; margin-top: 10px; }
+
+  /* ----- VariantHub custom (vh- prefix) ----- */
+  .vh-card { background: #fff; border-radius: 6px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .vh-table-wrap { max-height: 600px; overflow: auto; }
+  .vh-table-wrap table { font-size: 12px; white-space: nowrap; }
+  .vh-table-wrap th { position: sticky; top: 0; background: #f8f9fa; z-index: 1; }
+  .vh-meta-box { max-height: 260px; overflow-y: auto; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 10px; font-family: Consolas, monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; }
+  .vh-sample-box { max-height: 150px; overflow-y: auto; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 10px; font-family: Consolas, monospace; font-size: 12px; }
+  .vh-example { font-size: 13px; margin-left: 8px; }
+  .vh-summary { font-size: 14px; margin-bottom: 10px; }
+  .vh-pagination button { margin-right: 8px; }
+
+  /* ----- visit stats footer ----- */
+  .visit-stats { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .visit-stats .vs-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px; border-radius: 12px;
+    font-size: 11px; line-height: 1.4;
+    background: #f1f5f9; color: #334155;
+    border: 1px solid #e2e8f0;
+    transition: background 0.15s;
+  }
+  .visit-stats .vs-pill b { color: #0f172a; font-weight: 600; }
+  .visit-stats .vs-dot {
+    display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; background: #94a3b8;
+  }
+  .visit-stats .vs-dot-today  { background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.18); }
+  .visit-stats .vs-dot-total  { background: #3b82f6; }
+  .visit-stats .vs-dot-online { background: #f59e0b; animation: vs-pulse 1.6s ease-in-out infinite; }
+  .visit-stats .vs-loading { color: #64748b; }
+  .visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
+  .visit-stats .vs-error   { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+  @keyframes vs-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+  }
+
+</style>
+
+<!-- Baidu Tongji (async) -->
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?f76ca60fcad9ddaf7cb0c8548eab7808";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+</head>
+<body>
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
+</div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/index.html">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/snprimer">CAPS/KASP(Beta)</a></li>
+        <li><a href="/PfamSearch/">PfamSearch</a></li>
+        <li><a href="/idConvert/">IDConvert</a></li>
+        <li><a href="/HomologFinder/">HomologFinder</a></li>
+        <li><a href="/interval/">IntervalTool</a></li>
+        <li><a href="/expression/">GeneExpression</a></li>
+        <li><a href="/coexpression/index.html">Co-expression</a></li>
+        <li><a href="/wheatPPI/">WheatPPI</a></li>
+        <li><a href="/genes/">KnownGene</a></li>
+        <li><a href="/symap/index.html">SyntenySearch</a></li>
+        <li><a href="/preblast/">preBLAST</a></li>
+        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+        <li><a href="/orthofinder/">OrthoFinder</a></li>
+        <li><a href="/VariantHub/">VariantHub</a></li>
+        <li><a href="DWGVa.html">DWGVa</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/scRNA">scRNA</a></li>
+        <li><a href="http://wheatomics.sdau.edu.cn/eqtl">eQTL Atlas</a></li>
+        <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
+        <li><a href="/papers">Triticeae papers</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href="#"><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div id="home_content">
+  <br><h5 class="card-title">VariantHub</h5><br>
+
+  <!-- ===== Query card ===== -->
+  <div class="vh-card">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="form-group">
+          <label for="reference-select"><strong>Reference Genome</strong></label>
+          <select id="reference-select" class="form-control"></select>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="form-group">
+          <label for="dataset-select"><strong>Dataset</strong></label>
+          <select id="dataset-select" class="form-control"></select>
+          <small class="text-muted" id="dataset-source"></small>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="form-group">
+          <label><strong>Query Type</strong></label>
+          <div>
+            <label class="radio-inline" style="margin-right:20px;"><input type="radio" name="queryType" value="region" checked> By Region</label>
+            <label class="radio-inline"><input type="radio" name="queryType" value="variant_id"> By Variant ID</label>
+          </div>
+        </div>
+        <div class="form-group" id="region-group">
+          <label for="region-input"><strong>Region</strong></label>
+          <input type="text" id="region-input" class="form-control" placeholder="e.g. chr1A:1000-50000">
+          <small class="text-muted">Format: chr:start-end or chr:start..end (max 5 Mb)</small>
+        </div>
+        <div class="form-group" id="variant-id-group" style="display:none;">
+          <label for="variant-id-input"><strong>Variant ID</strong></label>
+          <input type="text" id="variant-id-input" class="form-control" placeholder="e.g. S1A_1234567">
+          <small class="text-muted">Exact match on the VCF ID column. Note: full-file scan — can be slow on large population VCFs.</small>
+        </div>
+        <div class="form-group">
+          <label for="samples-input"><strong>Samples (optional)</strong></label>
+          <input type="text" id="samples-input" class="form-control" placeholder="Leave empty for all samples, or comma-separated sample IDs">
+        </div>
+        <button id="query-btn" class="btn btn-primary" onclick="runQuery(0)">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="error-msg" class="alert alert-danger"></div>
+
+  <div class="loading" id="loading-indicator">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted">Querying VCF...</p>
+  </div>
+
+  <!-- ===== Dataset info card ===== -->
+  <div class="vh-card" id="dataset-info-card" style="display:none;">
+    <h6 class="card-title">Dataset information</h6>
+    <div id="dataset-info-body"></div>
+  </div>
+
+  <!-- ===== Result card ===== -->
+  <div class="vh-card" id="result-area" style="display:none;">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <h6 id="result-title" class="card-title mb-0">Results</h6>
+      <button type="button" id="export-btn" class="btn btn-success btn-sm" disabled>Export Results (CSV)</button>
+    </div>
+    <div class="vh-summary" id="result-summary"></div>
+    <div class="vh-table-wrap" id="result-table-body"></div>
+    <div class="vh-pagination mt-2">
+      <button id="prev-btn" class="btn btn-outline-primary btn-sm" onclick="prevPage()" disabled>&larr; Prev</button>
+      <span id="page-info"></span>
+      <button id="next-btn" class="btn btn-outline-primary btn-sm" onclick="nextPage()" disabled>Next &rarr;</button>
+    </div>
+  </div>
+
+  <!-- ===== References card ===== -->
+  <div class="vh-card" id="references-card">
+    <h6>References &amp; data sources</h6>
+    <div id="references-body"><span class="text-muted">Loading...</span></div>
+  </div>
+</div>
+
+<div class="line" style="height:10px;background-color:white"></div>
+<div id="home_footer">
+  <center style="margin-top:5px">
+    <table>
+      <tr>
+        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><div style="height:50px;width:15px;"></div></td>
+        <td>
+          <div id="visit-stats" class="visit-stats">
+            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+  </center>
+</div>
+
+<script>
+// =====================================================================
+//  State
+// =====================================================================
+var referencesData = [];   // [{name, display, datasets:[{key,label,source}]}]
+var PAGE_SIZE = 200;
+var currentOffset = 0;
+var lastHasMore = false;
+var lastTotal = 0;
+var lastResults = [];      // current page records, for CSV export
+var lastSamples = [];      // sample names of the last query
+
+$(function(){
+  loadDatasets();
+  $('input[name="queryType"]').change(function() {
+    var t = $(this).val();
+    $('#region-group').toggle(t === 'region');
+    $('#variant-id-group').toggle(t === 'variant_id');
+  });
+  $('#reference-select').change(function() {
+    fillDatasetSelect();
+    $('#dataset-select').trigger('change');
+  });
+  $('#dataset-select').change(function() {
+    updateDatasetSource();
+    loadDatasetInfo();
+  });
+  $('#export-btn').on('click', exportCsv);
+});
+
+// =====================================================================
+//  Datasets (two-level select: reference genome -> dataset)
+// =====================================================================
+function loadDatasets() {
+  $.getJSON('/api/VariantHub/datasets')
+    .done(function(resp) {
+      if (!resp.success) { showError('Failed to load datasets'); return; }
+      referencesData = resp.data.references || [];
+      var refSel = $('#reference-select').empty();
+      referencesData.forEach(function(ref) {
+        refSel.append($('<option>').val(ref.name).text(ref.display));
+      });
+      fillDatasetSelect();
+      $('#dataset-select').trigger('change');
+      renderReferences();
+    })
+    .fail(function() { showError('Failed to load datasets'); });
+}
+
+function fillDatasetSelect() {
+  var refName = $('#reference-select').val();
+  var ref = referencesData.find(function(r) { return r.name === refName; });
+  var dsSel = $('#dataset-select').empty();
+  (ref ? ref.datasets : []).forEach(function(ds) {
+    dsSel.append($('<option>').val(ds.key).text(ds.label));
+  });
+}
+
+function currentDatasetMeta() {
+  var refName = $('#reference-select').val();
+  var key = $('#dataset-select').val();
+  var ref = referencesData.find(function(r) { return r.name === refName; });
+  if (!ref) return null;
+  return ref.datasets.find(function(d) { return d.key === key; }) || null;
+}
+
+function updateDatasetSource() {
+  var meta = currentDatasetMeta();
+  $('#dataset-source').text(meta ? meta.source : '');
+}
+
+// =====================================================================
+//  Dataset info card
+// =====================================================================
+function loadDatasetInfo() {
+  var key = $('#dataset-select').val();
+  if (!key) { $('#dataset-info-card').hide(); return; }
+  $.getJSON('/api/VariantHub/dataset_info', { dataset: key })
+    .done(function(resp) {
+      if (!resp.success) { $('#dataset-info-card').hide(); return; }
+      var d = resp.data;
+      var html = '<p><strong>' + escapeHtml(d.label) + '</strong> &nbsp;·&nbsp; ' +
+        escapeHtml(d.reference_display) + ' &nbsp;·&nbsp; ' +
+        '<span class="text-muted">' + escapeHtml(d.source) + '</span></p>';
+      html += '<p><strong>' + d.n_samples + '</strong> samples</p>';
+      if (d.samples && d.samples.length) {
+        html += '<div class="form-group"><label><strong>Sample IDs</strong></label>' +
+          '<div class="vh-sample-box">' + d.samples.map(escapeHtml).join(', ') + '</div></div>';
+      }
+      if (d.meta_lines && d.meta_lines.length) {
+        html += '<div class="form-group"><label><strong>VCF header (meta lines)</strong></label>' +
+          '<div class="vh-meta-box">' + d.meta_lines.map(escapeHtml).join('\n') + '</div></div>';
+      }
+      $('#dataset-info-body').html(html);
+      $('#dataset-info-card').show();
+    })
+    .fail(function() { $('#dataset-info-card').hide(); });
+}
+
+// =====================================================================
+//  Query
+// =====================================================================
+function currentQueryParams(offset) {
+  var key = $('#dataset-select').val();
+  var qtype = $('input[name="queryType"]:checked').val();
+  var samples = $('#samples-input').val().trim();
+  var params = { dataset: key, limit: PAGE_SIZE, offset: offset };
+  if (qtype === 'region') {
+    params.region = $('#region-input').val().trim();
+    if (!params.region) { showError('Please enter a region'); return null; }
+  } else {
+    params.variant_id = $('#variant-id-input').val().trim();
+    if (!params.variant_id) { showError('Please enter a variant ID'); return null; }
+  }
+  if (samples) params.samples = samples;
+  if (!key) { showError('Please select a dataset'); return null; }
+  return params;
+}
+
+function runQuery(offset) {
+  var params = currentQueryParams(offset);
+  if (!params) return;
+
+  $('#error-msg').hide();
+  $('#result-area').hide();
+  $('#loading-indicator').show();
+
+  $.getJSON('/api/VariantHub/query', params)
+    .done(function(resp) {
+      $('#loading-indicator').hide();
+      if (!resp.success) { showError('Query failed'); return; }
+      currentOffset = resp.data.offset;
+      lastHasMore = resp.data.has_more;
+      lastTotal = resp.data.total;
+      renderResults(resp.data, params);
+    })
+    .fail(function(jqXHR) {
+      $('#loading-indicator').hide();
+      showError(jqXHR.responseJSON ? jqXHR.responseJSON.detail : 'Query failed');
+    });
+}
+
+function prevPage() { if (currentOffset > 0) runQuery(Math.max(0, currentOffset - PAGE_SIZE)); }
+function nextPage() { if (lastHasMore) runQuery(currentOffset + PAGE_SIZE); }
+
+// =====================================================================
+//  Render results
+// =====================================================================
+function renderResults(data, params) {
+  lastResults = data.records || [];
+  lastSamples = data.samples || [];
+  $('#export-btn').prop('disabled', lastResults.length === 0);
+
+  var queryDesc = params.region ? ('region ' + params.region) : ('variant ID ' + params.variant_id);
+  $('#result-title').text(params.dataset + ' — ' + queryDesc);
+  $('#result-summary').html(
+    '<strong>' + lastTotal + '</strong> variants total · showing ' +
+    (lastTotal === 0 ? 0 : currentOffset + 1) + '–' + (currentOffset + lastResults.length) +
+    ' · <strong>' + data.n_samples + '</strong> samples' +
+    (params.samples ? ' (filtered: ' + escapeHtml(params.samples) + ')' : '')
+  );
+
+  if (lastResults.length === 0) {
+    $('#result-table-body').html('<div class="alert alert-warning">No variants found.</div>');
+    updatePagination();
+    $('#result-area').show();
+    return;
+  }
+
+  var hasGenotypes = lastResults[0].genotypes !== undefined;
+  var html = '<table class="table table-bordered table-hover table-sm"><thead><tr>';
+  ['CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'].forEach(function(h) {
+    html += '<th>' + h + '</th>';
+  });
+  if (hasGenotypes) {
+    html += '<th>FORMAT</th>';
+    lastSamples.forEach(function(s) { html += '<th>' + escapeHtml(s) + '</th>'; });
+  }
+  html += '</tr></thead><tbody>';
+
+  lastResults.forEach(function(r) {
+    html += '<tr>';
+    html += '<td>' + escapeHtml(r.chrom) + '</td>';
+    html += '<td>' + r.pos + '</td>';
+    html += '<td>' + escapeHtml(r.id) + '</td>';
+    html += '<td>' + escapeHtml(r.ref) + '</td>';
+    html += '<td>' + escapeHtml(r.alt) + '</td>';
+    html += '<td>' + escapeHtml(r.qual) + '</td>';
+    html += '<td>' + escapeHtml(r.filter) + '</td>';
+    html += '<td>' + escapeHtml(r.info_raw) + '</td>';
+    if (hasGenotypes) {
+      html += '<td>' + escapeHtml(r.format || '') + '</td>';
+      (r.genotypes || []).forEach(function(g) { html += '<td>' + escapeHtml(g) + '</td>'; });
+    }
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  $('#result-table-body').html(html);
+  updatePagination();
+  $('#result-area').show();
+}
+
+function updatePagination() {
+  var page = Math.floor(currentOffset / PAGE_SIZE) + 1;
+  var pages = Math.max(1, Math.ceil(lastTotal / PAGE_SIZE));
+  $('#page-info').text('Page ' + page + ' / ' + pages);
+  $('#prev-btn').prop('disabled', currentOffset === 0);
+  $('#next-btn').prop('disabled', !lastHasMore);
+}
+
+// =====================================================================
+//  References card
+// =====================================================================
+function renderReferences() {
+  var html = '';
+  referencesData.forEach(function(ref) {
+    html += '<p><strong>' + escapeHtml(ref.display) + '</strong></p><ol>';
+    ref.datasets.forEach(function(ds) {
+      html += '<li>' + escapeHtml(ds.label) + ' — ' + escapeHtml(ds.source) + '</li>';
+    });
+    html += '</ol>';
+  });
+  $('#references-body').html(html || '<span class="text-muted">No datasets.</span>');
+}
+
+// =====================================================================
+//  CSV export
+// =====================================================================
+function csvField(value) {
+  if (value == null) return '';
+  var s = Array.isArray(value) ? value.join('; ') : String(value);
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+
+function exportCsv() {
+  if (!lastResults || lastResults.length === 0) return;
+  var hasGenotypes = lastResults[0].genotypes !== undefined;
+  var headers = ['CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'];
+  if (hasGenotypes) headers = headers.concat(['FORMAT'], lastSamples);
+
+  var lines = [headers.map(csvField).join(',')];
+  lastResults.forEach(function(r) {
+    var row = [r.chrom, r.pos, r.id, r.ref, r.alt, r.qual, r.filter, r.info_raw];
+    if (hasGenotypes) row = row.concat([r.format || ''], r.genotypes || []);
+    lines.push(row.map(csvField).join(','));
+  });
+
+  var blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var key = ($('#dataset-select').val() || 'variants').replace(/[^A-Za-z0-9_.-]+/g, '_');
+  var ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'varianthub_' + key + '_' + ts + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+// =====================================================================
+//  Utils
+// =====================================================================
+function showError(msg) {
+  $('#error-msg').text(msg).show();
+  $('#loading-indicator').hide();
+}
+
+function escapeHtml(value) {
+  if (value == null) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>

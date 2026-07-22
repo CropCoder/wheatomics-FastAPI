@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 from app.primerserver2.dependencies import verify_api_key
@@ -86,6 +86,8 @@ app = FastAPI(
         "<td>PCR 引物批量设计与特异性检查（Primer desgin version 2）</td></tr>"
         "<tr><td><b>GO/KEGG Enrichment</b></td><td><code>/api/go-kegg</code></td>"
         "<td>GO/KEGG 富集分析：超几何检验 + Benjamini-Hochberg FDR 校正，支持气泡图可视化</td></tr>"
+        "<tr><td><b>VariantHub</b></td><td><code>/api/VariantHub/query</code></td>"
+        "<td>VCF 变异查询：按基因组分组的 23 个群体变异数据集（IWGSCv1.0），支持区间/变异 ID 查询与样本子集过滤（bcftools）</td></tr>"
         "</table>"
 
         "<h2>AI Agent 接入 (MCP)</h2>"
@@ -123,6 +125,7 @@ app.mount("/coexpression", StaticFiles(directory=Path(__file__).parent / "app" /
 app.mount("/papers", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "papers", html=True), name="papers")
 app.mount("/genes", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "genes", html=True), name="genes")
 app.mount("/GO_KEGG", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "GO_KEGG", html=True), name="GO_KEGG")
+app.mount("/VariantHub", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "VariantHub", html=True), name="VariantHub")
 
 
 @app.middleware("http")
@@ -177,6 +180,7 @@ for router in [
     orthofinder,
     track,
     go_kegg,
+    varianthub,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)
 

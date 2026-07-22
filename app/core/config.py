@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     SYMAP_DEFAULT_BED: Path = Path("/var/www/html/symap/CS_CS_durum_emmer_urartu_tauschii.bed")
     NOVABROWSE_SERVICE_DIR: Path = Path("/var/www/novabrowse_service")
     NOVABROWSE_RESULT_BASE_URL: str = "/novabrowse_results"
+    VARIANTHUB_VCF_DIR: Path = Path("/var/www/html/variants")
+    BCFTOOLS_BIN: Path = Path("/home/fei/data/tiantian_data/soft/bcftools-1.8/bin/bcftools")
 
     CGI_SUBMISSION_PASSWORD: str = Field(default="wheatomics")
     REQUEST_TIMEOUT_SECONDS: int = 120
