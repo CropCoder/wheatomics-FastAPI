@@ -13,7 +13,7 @@ from pathlib import Path
 from fastapi import APIRouter, Query
 
 from app.core.config import settings
-from app.core.exceptions import ResourceNotFound, ValidationFailure
+from app.core.exceptions import ExternalToolFailure, ResourceNotFound, ValidationFailure
 from app.core.response import ok
 from app.core.security import GENE_ID_PATTERN, ensure_allowed_table, ensure_interval_like
 from app.services.command_runner import run_command
@@ -210,8 +210,13 @@ def _vcf_path(dataset: str) -> Path:
     return path
 
 
-def _parse_region(region: str) -> str:
-    """Validate and normalize a region string for bcftools -r."""
+def _parse_region(region: str) -> list[str]:
+    """Validate a region string and return candidate `chr:start-end` strings.
+
+    Chromosome names differ in case between datasets (chr1A vs Chr1A), so
+    when the name starts with chr/Chr we return both casings — the caller
+    tries the first, then falls back to the second on error or empty result.
+    """
     ensure_interval_like(region)
     chrom = region.split(":")[0]
     interval = region.split(":")[1].replace("..", "-")
@@ -219,7 +224,13 @@ def _parse_region(region: str) -> str:
     start, end = int(start_text), int(end_text)
     if end <= start or end - start > _MAX_REGION_BP:
         raise ValidationFailure(f"Region length must be > 0 and <= {_MAX_REGION_BP} bp")
-    return f"{chrom}:{start}-{end}"
+
+    candidates = [f"{chrom}:{start}-{end}"]
+    if chrom.startswith("Chr"):
+        candidates.append(f"chr{chrom[3:]}:{start}-{end}")
+    elif chrom.startswith("chr") and len(chrom) > 3:
+        candidates.append(f"Chr{chrom[3:]}:{start}-{end}")
+    return candidates
 
 
 def _parse_vcf_header(header_text: str) -> tuple[list[str], list[str]]:
@@ -433,7 +444,14 @@ def varianthub_query(
         # deduplicated (Wumangchunmai, Wumangchunmai_2, ...).
         all_samples = _dedupe_samples(available_samples)
         if region is not None:
-            text = _tabix_records(vcf, _parse_region(region))
+            text = ""
+            for candidate in _parse_region(region):
+                try:
+                    text = _tabix_records(vcf, candidate)
+                except ExternalToolFailure:
+                    continue
+                if text.strip():
+                    break
         else:
             assert variant_id is not None
             if not GENE_ID_PATTERN.match(variant_id):
@@ -451,18 +469,32 @@ def varianthub_query(
                     record["genotypes"] = [genotypes[i] for i in keep]
     else:
         cmd = [_bcftools_path(), "view", str(vcf)]
+        if requested is not None:
+            cmd += ["-s", ",".join(requested)]
+
         if region is not None:
-            cmd += ["-r", _parse_region(region)]
+            # Try the chromosome name as given, then the chr/Chr casing
+            # variant if the tool errors or the slice comes back empty.
+            result = None
+            records = []
+            candidates = _parse_region(region)
+            for i, candidate in enumerate(candidates):
+                last = i == len(candidates) - 1
+                try:
+                    result = run_command(cmd + ["-r", candidate])
+                except ExternalToolFailure:
+                    if last:
+                        raise
+                    continue
+                all_samples, records = _parse_vcf_records(result.stdout)
+                if records or last:
+                    break
         else:
             assert variant_id is not None
             if not GENE_ID_PATTERN.match(variant_id):
                 raise ValidationFailure(f"Invalid variant_id: {variant_id!r}")
-            cmd += ["-i", f'ID="{variant_id}"']
-        if requested is not None:
-            cmd += ["-s", ",".join(requested)]
-
-        result = run_command(cmd)
-        all_samples, records = _parse_vcf_records(result.stdout)
+            result = run_command(cmd + ["-i", f'ID="{variant_id}"'])
+            all_samples, records = _parse_vcf_records(result.stdout)
 
     page = records[offset:offset + limit]
     meta = VARIANTHUB_DATASETS[dataset]
