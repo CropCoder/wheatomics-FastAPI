@@ -8,6 +8,7 @@ VARIANTHUB_REFERENCES for a new genome) — no other code changes needed.
 from __future__ import annotations
 
 import gzip
+import json
 from pathlib import Path
 
 from fastapi import APIRouter, Query
@@ -210,6 +211,78 @@ def _vcf_path(dataset: str) -> Path:
     return path
 
 
+_SAMPLE_META_DIR = Path(__file__).resolve().parents[2] / "services" / "data" / "sample_meta"
+# dataset -> (mtime_seconds, payload); None payload = known-missing file
+_sample_meta_cache: dict[str, tuple[float, dict | None]] = {}
+
+
+def _sample_meta(dataset: str) -> dict | None:
+    """Load sample metadata for a dataset, or None if it has none.
+
+    Cached with an mtime check so a newly added JSON file is picked up
+    without restarting uvicorn.
+    """
+    path = _SAMPLE_META_DIR / f"{dataset}.json"
+    try:
+        mtime = path.stat().st_mtime
+    except FileNotFoundError:
+        _sample_meta_cache[dataset] = (0.0, None)
+        return None
+    cached = _sample_meta_cache.get(dataset)
+    if cached and cached[0] == mtime:
+        return cached[1]
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    _sample_meta_cache[dataset] = (mtime, payload)
+    return payload
+
+
+# Aliases from query-parameter names to sample_meta field keys. These match
+# the snake_cased headers produced by scripts/xlsx_to_sample_meta.py.
+_META_FILTER_PARAMS: dict[str, str] = {
+    "country": "country",
+    "continent": "continent",
+    "status": "status",
+    "growth_habit": "growth_habit",
+    "population": "major_population",
+}
+
+
+def _filter_samples_by_meta(
+    dataset: str, filters: dict[str, str]
+) -> tuple[dict, list[str]]:
+    """Resolve meta filters to a list of VCF sample names.
+
+    Raises ResourceNotFound if the dataset has no metadata, ValidationFailure
+    for unknown filter fields or zero matches.
+    """
+    meta = _sample_meta(dataset)
+    if meta is None:
+        raise ResourceNotFound(f"No sample metadata for dataset: {dataset}")
+
+    field_keys = {f["key"] for f in meta["fields"]}
+    resolved: dict[str, str] = {}
+    for param, value in filters.items():
+        field = _META_FILTER_PARAMS.get(param, param)
+        if field not in field_keys:
+            raise ValidationFailure(
+                f"Unknown metadata filter '{param}' for dataset {dataset}. "
+                f"Available fields: {sorted(field_keys)}"
+            )
+        resolved[field] = value
+
+    matched = [
+        name
+        for name, entry in meta["samples"].items()
+        if all(entry.get(field, "").lower() == value.lower() for field, value in resolved.items())
+    ]
+    if not matched:
+        raise ValidationFailure(
+            f"No samples match the metadata filter(s): "
+            + ", ".join(f"{k}={v}" for k, v in filters.items())
+        )
+    return meta, matched
+
+
 def _parse_region(region: str) -> list[str]:
     """Validate a region string and return candidate `chr:start-end` strings.
 
@@ -360,7 +433,12 @@ def varianthub_datasets() -> dict:
     references: dict[str, list[dict]] = {}
     for key, meta in VARIANTHUB_DATASETS.items():
         references.setdefault(meta["reference"], []).append(
-            {"key": key, "label": meta["label"], "source": meta["source"]}
+            {
+                "key": key,
+                "label": meta["label"],
+                "source": meta["source"],
+                "has_sample_meta": _sample_meta(key) is not None,
+            }
         )
     return ok({
         "references": [
@@ -385,6 +463,7 @@ def varianthub_dataset_info(
     # Expose the deduplicated names — these are what /query accepts in its
     # `samples` parameter and what result columns are labelled with.
     samples = _dedupe_samples(raw_samples) if duplicated else raw_samples
+    sample_meta = _sample_meta(dataset)
     meta = VARIANTHUB_DATASETS[dataset]
     return ok({
         "dataset": dataset,
@@ -395,7 +474,51 @@ def varianthub_dataset_info(
         "meta_lines": meta_lines,
         "samples": samples,
         "duplicated_samples": duplicated,
+        "has_sample_meta": sample_meta is not None,
+        "sample_meta_fields": sample_meta["fields"] if sample_meta else [],
         "n_samples": len(samples),
+    })
+
+
+@router.get("/VariantHub/samples")
+def varianthub_samples(
+    dataset: str = Query(..., description="Dataset key from /api/VariantHub/datasets"),
+    country: str | None = Query(None),
+    continent: str | None = Query(None),
+    status: str | None = Query(None),
+    growth_habit: str | None = Query(None),
+    population: str | None = Query(None, description="Maps to the major_population field"),
+) -> dict:
+    """List sample metadata for a dataset, optionally filtered.
+
+    Filters are exact matches (case-insensitive) on the corresponding
+    metadata fields, e.g. &country=Turkey&status=Landrace.
+    """
+    filters = {
+        k: v
+        for k, v in {
+            "country": country,
+            "continent": continent,
+            "status": status,
+            "growth_habit": growth_habit,
+            "population": population,
+        }.items()
+        if v is not None
+    }
+    ensure_allowed_table(dataset, VARIANTHUB_DATASETS.keys(), "dataset")
+    if filters:
+        meta, matched = _filter_samples_by_meta(dataset, filters)
+    else:
+        meta = _sample_meta(dataset)
+        if meta is None:
+            raise ResourceNotFound(f"No sample metadata for dataset: {dataset}")
+        matched = list(meta["samples"])
+
+    return ok({
+        "dataset": dataset,
+        "fields": meta["fields"],
+        "total": len(matched),
+        "samples": [{"sample": name, **meta["samples"][name]} for name in matched],
     })
 
 
@@ -405,6 +528,11 @@ def varianthub_query(
     region: str | None = Query(None, description="Genomic interval, e.g. chr1A:1000-50000"),
     variant_id: str | None = Query(None, description="Variant ID (exact match on the ID column)"),
     samples: str | None = Query(None, description="Comma-separated sample IDs; omit for all samples"),
+    country: str | None = Query(None, description="Sample metadata filter (exact, case-insensitive)"),
+    continent: str | None = Query(None, description="Sample metadata filter"),
+    status: str | None = Query(None, description="Sample metadata filter, e.g. Landrace"),
+    growth_habit: str | None = Query(None, description="Sample metadata filter, e.g. Winter"),
+    population: str | None = Query(None, description="Sample metadata filter (major_population)"),
     limit: int = Query(200, ge=1, le=5000),
     offset: int = Query(0, ge=0),
 ) -> dict:
@@ -414,9 +542,29 @@ def varianthub_query(
     tabix index (`bcftools view -r`); ID queries filter on the ID column
     (`bcftools view -i 'ID="..."'`, a full-file scan that can be slow on the
     large population VCFs).
+
+    Samples default to all; narrow them either explicitly with `samples` or
+    via sample-metadata filters (country/continent/status/growth_habit/
+    population) — the two are mutually exclusive.
     """
     if (region is None) == (variant_id is None):
         raise ValidationFailure("Provide exactly one of 'region' or 'variant_id'")
+
+    meta_filters = {
+        k: v
+        for k, v in {
+            "country": country,
+            "continent": continent,
+            "status": status,
+            "growth_habit": growth_habit,
+            "population": population,
+        }.items()
+        if v is not None
+    }
+    if meta_filters and samples:
+        raise ValidationFailure(
+            "'samples' and metadata filters (country/status/...) are mutually exclusive"
+        )
 
     vcf = _vcf_path(dataset)
     _, available_samples = _vcf_header(vcf)
@@ -435,6 +583,14 @@ def varianthub_query(
             raise ValidationFailure(
                 f"Unknown sample(s) for dataset {dataset}: {', '.join(unknown)}. "
                 "See /api/VariantHub/dataset_info for the full sample list."
+            )
+    elif meta_filters:
+        _, matched = _filter_samples_by_meta(dataset, meta_filters)
+        available_set = set(available_samples)
+        requested = [s for s in matched if s in available_set]
+        if not requested:
+            raise ValidationFailure(
+                "Metadata filters matched samples, but none are present in this VCF"
             )
 
     if has_duplicates:
@@ -505,6 +661,7 @@ def varianthub_query(
         "variant_id": variant_id,
         "samples": all_samples,
         "n_samples": len(all_samples),
+        "meta_filters": meta_filters or None,
         "total": len(records),
         "limit": limit,
         "offset": offset,
