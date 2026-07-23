@@ -362,8 +362,8 @@ function queryInterval() {
     .done(function(resp) {
       $('#loading-indicator').hide();
       if (!resp.success) { showError('Query failed'); return; }
-      var title = qtype === 'region' ? 'Region: ' + query : 'Pfam: ' + query;
-      renderResults(resp, title);
+      var titles = { region: 'Region: ', pfam: 'Pfam: ', gene: 'Gene: ' };
+      renderResults(resp, (titles[qtype] || '') + query);
     })
     .fail(function(jqXHR) {
       $('#loading-indicator').hide();
