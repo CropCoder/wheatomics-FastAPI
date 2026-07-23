@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from fastapi import APIRouter, Query
 
 from app.core.config import settings
@@ -762,19 +764,26 @@ def search_gene_interval(
 
     # 如果不是区间格式（不含:），按基因 ID 搜索
     if ":" not in region:
+        # 支持换行/逗号/空格分隔的多个 ID；版本号（.1、.2）自动 strip，
+        # 因为各 Genefunc 表存的是不带版本的基因 ID。
+        gene_ids = [g for g in re.split(r"[\s,;]+", region.strip()) if g]
+        if not gene_ids:
+            raise ValidationFailure("No gene ID provided")
         with mysql_cursor(settings.DB_GENEFUNC) as cursor:
             # 根据表类型动态选择基因列
             if table in ("Genefunc_IWGSC03G_table", "Genefunc_CS_IWGSC03G_table"):
                 gene_cols = ["Gene03G", "Gene02G"]
             else:
                 gene_cols = ["Gene"]
-            where_clause = " OR ".join(f"`{col}`=%s" for col in gene_cols)
-            cursor.execute(
-                f"SELECT * FROM `{table}` WHERE {where_clause}",
-                tuple(region for _ in gene_cols),
-            )
-            for row in cursor.fetchall():
-                records.append(_make_function_record(row, table))
+            for gene_id in gene_ids:
+                base_id = re.sub(r"\.\d+$", "", gene_id)
+                where_clause = " OR ".join(f"`{col}`=%s" for col in gene_cols)
+                cursor.execute(
+                    f"SELECT * FROM `{table}` WHERE {where_clause}",
+                    tuple(base_id for _ in gene_cols),
+                )
+                for row in cursor.fetchall():
+                    records.append(_make_function_record(row, table))
         return ok({"table": table, "region": region, "count": len(records), "records": [record.model_dump() for record in records]})
 
     ensure_interval_like(region)
