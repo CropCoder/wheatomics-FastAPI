@@ -1854,10 +1854,9 @@ function renderTreeToSvg(svg, parsedTree) {
   treeDisplayError = "";
 
   if (treeMode === "circular") {
-    // Build prepared tree (circular needs getPreparedTree too for leaves info)
     var prepared = getPreparedTree();
     if (!prepared) { svg.innerHTML = ""; currentParsedTree = savedParsed; treeDisplayError = savedError; currentPreparedTree = null; return; }
-    renderCircularToSvg(svg);
+    renderCircularToSvg(svg, prepared);
   } else {
     var prepared = getPreparedTree();
     if (!prepared) { svg.innerHTML = ""; currentParsedTree = savedParsed; currentPreparedTree = null; return; }
@@ -1930,10 +1929,7 @@ function renderRectangularToSvg(svg, prepared) {
   svg.innerHTML = parts.join("");
 }
 
-function renderCircularToSvg(svg) {
-  var prepared = getPreparedTree();
-  if (!prepared) { svg.innerHTML = ""; return; }
-
+function renderCircularToSvg(svg, prepared) {
   var root = prepared.root;
   var leaves = prepared.leaves;
   var showLabels = leaves.length < 220;
