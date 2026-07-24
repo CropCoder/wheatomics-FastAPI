@@ -175,25 +175,28 @@ async function searchProtein(q) {
       `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
       `&type=alignment`;
 
-    // ---- homoeologous cluster download links ----
-    const downloadClusterTree =
-      document.getElementById("downloadClusterTree");
-
-    const downloadClusterAln =
-      document.getElementById("downloadClusterAlignment");
-
+    // ---- type1/type2 homoeologous download links ----
     if (currentCluster !== null && currentCluster > 0 && data.query) {
-      downloadClusterTree.href =
+      document.getElementById("downloadType1Tree").href =
         `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-        `&type=tree&cluster=${currentCluster}`;
-      downloadClusterTree.style.display = "";
-      downloadClusterAln.href =
+        `&type=tree&cluster=${currentCluster}&type_tree=type1`;
+      document.getElementById("downloadType1Tree").style.display = "";
+      document.getElementById("downloadType2Tree").href =
         `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-        `&type=alignment&cluster=${currentCluster}`;
-      downloadClusterAln.style.display = "";
+        `&type=tree&cluster=${currentCluster}&type_tree=type2`;
+      document.getElementById("downloadType2Tree").style.display = "";
+      document.getElementById("downloadType1Alignment").href =
+        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+        `&type=alignment&cluster=${currentCluster}&type_tree=type1`;
+      document.getElementById("downloadType1Alignment").style.display = "";
+      document.getElementById("downloadType2Alignment").href =
+        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+        `&type=alignment&cluster=${currentCluster}&type_tree=type2`;
+      document.getElementById("downloadType2Alignment").style.display = "";
     } else {
-      downloadClusterTree.style.display = "none";
-      downloadClusterAln.style.display = "none";
+      ["downloadType1Tree","downloadType2Tree","downloadType1Alignment","downloadType2Alignment"].forEach(function(id) {
+        document.getElementById(id).style.display = "none";
+      });
     }
 
     // Badge - show "Homoeologous group N (chrA/B/D)"
