@@ -93,18 +93,18 @@ h1 {
   color: #18392b;
 }
 
-.download-links .download-row {
-  margin-top: 4px;
+.download-links .download-link-item {
+  margin-bottom: 3px;
 }
 
-.download-links a {
-  display: inline-block;
+.download-links .download-link-item a {
+  display: block;
   color: #0b65c2;
   text-decoration: none;
   font-weight: bold;
 }
 
-.download-links a:hover {
+.download-links .download-link-item a:hover {
   text-decoration: underline;
 }
 
@@ -290,12 +290,3 @@ h2 {
 .cluster-badge-5 { background: #f3e5f5; color: #7b1fa2; }
 .cluster-badge-6 { background: #e0f7fa; color: #00695c; }
 .cluster-badge-7 { background: #fbe9e7; color: #4e342e; }
-
-.species-select {
-  padding: 10px 12px;
-  font-size: 14px;
-  border: 1px solid #bcc7d1;
-  border-radius: 6px;
-  background: #fff;
-  max-width: 220px;
-}

@@ -199,7 +199,7 @@ nohup /home/fei/mambaforge/envs/zjw/bin/uvicorn main:app --host 0.0.0.0 --port 8
 | `DB_ORTHOFINDER` | `orthofinder_n` | OrthoFinder 数据库 |
 | `DB_PPI` | `wheatPPIdb` | 蛋白质互作数据库 |
 | `BLAST_DB_PATH` | `/var/www/html/getfasta/blastdb` | BLAST 数据库路径 |
-| `ORTHOFINDER_BASE_DIR` | `/var/www/html/orthefind/Results_Jun24` | OrthoFinder 结果根目录 |
+| `ORTHOFINDER_BASE_DIR` | `/var/www/html/orthefind/Results_Jul23` | OrthoFinder 结果根目录 |
 | `PRIMERSERVER2_CONFIG_PATH` | `/var/www/html/PrimerServer2/config.ini` | PrimerServer2 配置文件 |
 
 ### Apache 站点配置（`/etc/apache2/sites-enabled/`）

@@ -10,8 +10,6 @@ let currentPreparedTree = null;
 let treeMode = "rectangular";
 let currentCluster = null;
 let clusterGeneSet = {};
-let speciesList = [];
-let downloadUrls = { og: null, cluster: null };
 
 const SUB_COLORS = {
   A: "#d73027",
@@ -21,8 +19,6 @@ const SUB_COLORS = {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  loadSpeciesCatalog();
-
   document.getElementById("searchForm").addEventListener("submit", e => {
     e.preventDefault();
 
@@ -31,13 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     var url = new URL(window.location.href);
     url.searchParams.set("q", q);
-    // Also include selected species in the URL
-    var speciesVal = document.getElementById("speciesSelect").value;
-    if (speciesVal) {
-      url.searchParams.set("species", speciesVal);
-    } else {
-      url.searchParams.delete("species");
-    }
     window.history.pushState({}, "", url);
 
     searchProtein(q);
@@ -106,50 +95,6 @@ async function loadFragment(url, targetId, wantedIds) {
 }
 
 /* =================================================================
-   Species catalog
-   ================================================================= */
-
-async function loadSpeciesCatalog() {
-  try {
-    const res = await fetch(
-      "/api/orthofinder/api.php?action=species_catalog&_=" + Date.now(),
-      {
-        cache: "no-store"
-      }
-    );
-
-    const data = await res.json();
-
-    if (!data.error && data.species) {
-      speciesList = data.species;
-
-      const select = document.getElementById("speciesSelect");
-
-      speciesList.forEach(function (species) {
-        const option = document.createElement("option");
-
-        option.value = species;
-        option.textContent = species;
-
-        select.appendChild(option);
-      });
-    }
-  } catch (e) {
-    console.warn("Failed to load species catalog:", e);
-  }
-  const speciesSel = document.getElementById("speciesSelect");
-  speciesSel.addEventListener("change", function () {
-    const species = this.value;
-    const input = document.getElementById("proteinInput");
-    if (species) {
-      input.placeholder = "Type gene ID for " + species + "...";
-    } else {
-      input.placeholder = "Example: TraesAK58CH1A01G123400.1";
-    }
-  });
-}
-
-/* =================================================================
    Main search
    ================================================================= */
 
@@ -160,12 +105,7 @@ async function searchProtein(q) {
   message.textContent = "Loading...";
   result.style.display = "none";
 
-  // Append species filter if selected
-  var selectedSpecies = document.getElementById("speciesSelect").value;
   var url = `/api/orthofinder/api.php?q=${encodeURIComponent(q)}&_=${Date.now()}`;
-  if (selectedSpecies) {
-    url += "&species=" + encodeURIComponent(selectedSpecies);
-  }
 
   try {
     const response = await fetch(url, { cache: "no-store" });
@@ -222,17 +162,13 @@ async function searchProtein(q) {
     document.getElementById("ogTitle").textContent =
       `${data.orthogroup} | Query: ${data.query} | OG members: ${data.gene_count}`;
 
-    downloadUrls = {
-      og: {
-        tree:
-          `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-          `&type=tree`,
-        alignment:
-          `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-          `&type=alignment`
-      },
-      cluster: null
-    };
+    document.getElementById("downloadTree").href =
+      `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+      `&type=tree`;
+
+    document.getElementById("downloadAlignment").href =
+      `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+      `&type=alignment`;
 
     // Badge - show "Homoeologous group N (chrA/B/D)"
     const badge = document.getElementById("clusterBadge");
@@ -266,8 +202,8 @@ async function searchProtein(q) {
       clusterDescEl.style.display = "none";
     }
 
-    const downloadClusterRow =
-      document.getElementById("downloadClusterRow");
+    const downloadClusterTree =
+      document.getElementById("downloadClusterTree");
 
     const hasCluster = (
       currentCluster !== null &&
@@ -276,20 +212,29 @@ async function searchProtein(q) {
     );
 
     if (hasCluster) {
-      downloadUrls.cluster = {
-        tree:
-          `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-          `&type=tree` +
-          `&cluster=${currentCluster}`,
-        alignment:
-          `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-          `&type=alignment` +
-          `&cluster=${currentCluster}`
-      };
+      downloadClusterTree.href =
+        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+        `&type=tree` +
+        `&cluster=${currentCluster}`;
 
-      downloadClusterRow.style.display = "";
+      downloadClusterTree.style.display = "";
     } else {
-      downloadClusterRow.style.display = "none";
+      downloadClusterTree.style.display = "none";
+    }
+
+    // Download homoeologous alignment
+    const downloadClusterAln =
+      document.getElementById("downloadClusterAlignment");
+
+    if (hasCluster) {
+      downloadClusterAln.href =
+        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+        `&type=alignment` +
+        `&cluster=${currentCluster}`;
+
+      downloadClusterAln.style.display = "";
+    } else {
+      downloadClusterAln.style.display = "none";
     }
 
     const treeClusterLabel =
@@ -382,39 +327,6 @@ async function searchProtein(q) {
       "Invalid server response: " +
       e.message;
   }
-}
-
-/* =================================================================
-   Bundle download (tree + protein alignment in one click)
-   ================================================================= */
-
-function downloadBundle(event, kind) {
-  event.preventDefault();
-
-  const urls = downloadUrls[kind];
-
-  if (!urls) return;
-
-  [urls.tree, urls.alignment].forEach(function (url, index) {
-    // Stagger the two downloads — some browsers drop the second one
-    // when both fire in the same tick.
-    setTimeout(function () {
-      const link = document.createElement("a");
-
-      link.href = url;
-      // Hint a download; the server's Content-Disposition wins when present.
-      link.setAttribute("download", "");
-      link.style.display = "none";
-
-      document.body.appendChild(link);
-      link.click();
-      // Remove on a later tick — removing immediately after click() can
-      // cancel the download in some browsers before it starts.
-      setTimeout(function () {
-        link.remove();
-      }, 1000);
-    }, index * 400);
-  });
 }
 
 /* =================================================================
