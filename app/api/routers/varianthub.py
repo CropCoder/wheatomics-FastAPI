@@ -251,6 +251,9 @@ _META_FILTER_PARAMS: dict[str, str] = {
     "status": "status",
     "growth_habit": "growth_habit",
     "population": "major_population",
+    # all491 分组信息.xlsx 的列：Group（LR/CC/UC）和 "Growth habitate"（原表拼写）
+    "group": "group",
+    "growth_habitate": "growth_habitate",
 }
 
 
@@ -495,6 +498,7 @@ def varianthub_samples(
     status: str | None = Query(None),
     growth_habit: str | None = Query(None),
     population: str | None = Query(None, description="Maps to the major_population field"),
+    group: str | None = Query(None, description="Sample group, e.g. LR/CC/UC (all491)"),
 ) -> dict:
     """List sample metadata for a dataset, optionally filtered.
 
@@ -509,6 +513,7 @@ def varianthub_samples(
             "status": status,
             "growth_habit": growth_habit,
             "population": population,
+            "group": group,
         }.items()
         if v is not None
     }
@@ -540,6 +545,7 @@ def varianthub_query(
     status: str | None = Query(None, description="Sample metadata filter, e.g. Landrace"),
     growth_habit: str | None = Query(None, description="Sample metadata filter, e.g. Winter"),
     population: str | None = Query(None, description="Sample metadata filter (major_population)"),
+    group: str | None = Query(None, description="Sample metadata filter (group, e.g. LR/CC/UC)"),
     limit: int = Query(200, ge=1, le=5000),
     offset: int = Query(0, ge=0),
 ) -> dict:
@@ -552,7 +558,7 @@ def varianthub_query(
 
     Samples default to all; narrow them either explicitly with `samples` or
     via sample-metadata filters (country/continent/status/growth_habit/
-    population) — the two are mutually exclusive.
+    population/group) — the two are mutually exclusive.
     """
     if (region is None) == (variant_id is None):
         raise ValidationFailure("Provide exactly one of 'region' or 'variant_id'")
@@ -565,6 +571,7 @@ def varianthub_query(
             "status": status,
             "growth_habit": growth_habit,
             "population": population,
+            "group": group,
         }.items()
         if v is not None
     }
