@@ -450,11 +450,7 @@ def _make_info(short: str, gene: str, genome_type: str, sub: str) -> dict:
     if not genome_type:
         genome_type = sp.get("genome_type") or ("Unknown" if sub == "Other" else f"{sub}_subgenome")
     label_gene = gene if gene else (sp["gene"] if sp["gene"] else short)
-    # Sanitize genome_type for display — replace double underscores left by
-    # SpeciesIDs fallback when the species name already contains a subgenome
-    # suffix (e.g. RM271_N + _N_subgenome → RM271_N_N_subgenome).
-    genome_type_display = re.sub(r"_+", "_", genome_type)
-    label = f"{label_gene} {genome_type_display}".strip()
+    label = f"{label_gene} {genome_type}".strip()
     return {"short_id": short, "gene_id": gene, "raw_id": src,
             "genome_type": genome_type, "subgenome": sub,
             "label": label, "full_label": label}
