@@ -424,17 +424,18 @@ def _make_info(short: str, gene: str, genome_type: str, sub: str) -> dict:
 
     # ---- Resolve genome_type + subgenome from genome_type.txt ----
     # This is the authoritative source that maps every genome_number to its
-    # exact species+subgenome label (e.g. 113→RM271_D_subgenome, 114→RM271_N
-    # which becomes Other because N is not A/B/D).
+    # exact species+subgenome label (e.g. 114→RM271_N_subgenome, which becomes
+    # subgenome Other because N is not A/B/D).
     gn = short.split("_", 1)[0] if short else ""
     gt_info = _load_genome_type_map().get(gn)
     if gt_info:
         if not genome_type or genome_type == "Unknown":
             genome_type = gt_info["genome_type"]
         sub = gt_info["subgenome"]
-        species_name = gt_info.get("species", "")
-        if species_name:
-            sp["genome_type"] = f"{species_name}_{sub}_subgenome"
+        # Keep the exact species name from genome_type.txt (not the
+        # assembled x_A_subgenome form) so labels read correctly:
+        #   RM271_N_subgenome  not  RM271_N_N_subgenome
+        sp["genome_type"] = genome_type
 
     # Fallback: SpeciesIDs.txt if genome_type.txt didn't have an entry
     if not genome_type or genome_type == "Unknown":
@@ -444,6 +445,8 @@ def _make_info(short: str, gene: str, genome_type: str, sub: str) -> dict:
         if sp_name:
             sp["genome_type"] = f"{sp_name}_{sp_sub}_subgenome"
             sp["sub"] = sp_sub
+        if not genome_type:
+            genome_type = sp["genome_type"]
 
     if sp["gene"] != src and gene:
         gene = sp["gene"]
