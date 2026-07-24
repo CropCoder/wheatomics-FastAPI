@@ -97,15 +97,14 @@ h1 {
   margin-bottom: 3px;
 }
 
-.download-links a {
-  display: inline-block;
-  margin-left: 12px;
+.download-links .download-link-item a {
+  display: block;
   color: #0b65c2;
   text-decoration: none;
   font-weight: bold;
 }
 
-.download-links a:hover {
+.download-links .download-link-item a:hover {
   text-decoration: underline;
 }
 
