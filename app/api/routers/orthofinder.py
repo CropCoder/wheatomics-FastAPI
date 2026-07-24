@@ -1086,6 +1086,7 @@ def download_file(
     og: str = Query(..., description="Orthogroup ID, e.g. OG0001897"),
     type: str = Query("tree", description="File type: 'tree' or 'alignment'"),
     cluster: int = Query(0, description="Cluster number (1-7). 0 = full OG."),
+    type_tree: str = Query("", description="Type tree filter: 'type1' or 'type2'. Only for cluster downloads."),
 ):
     if not re.match(r"^OG\d+$", og):
         raise HTTPException(400, "Invalid OG ID")
@@ -1095,9 +1096,27 @@ def download_file(
         tree = _load_tree_text(og)
         if not tree:
             raise HTTPException(404, "Tree file not found")
-        if 1 <= cluster <= 7:
-            tree = _prune_tree_to_cluster(og, tree, cluster)
-        suffix = f".HomoeologousGroup{cluster}.tree.txt" if cluster else ".tree.txt"
+        if 1 <= cluster <= 7 and tree:
+            if type_tree in ("type1", "type2"):
+                # Prune to cluster + type subset
+                og_data = _load_orthogroups().get(og)
+                if og_data:
+                    c_genes = _get_cluster_members(og_data["genes"], cluster)
+                    if type_tree == "type1":
+                        c_genes = [g for g in c_genes if _get_type_for_gene(g)[0] == "yes"]
+                    else:
+                        c_genes = [g for g in c_genes if _get_type_for_gene(g)[1] == "yes"]
+                    leaves = _parse_newick_leaves(tree)
+                    meta = _fetch_meta(leaves + c_genes)
+                    keep = _build_prune_keep_set(c_genes, meta, leaves)
+                    if keep:
+                        pruned = _prune_newick(tree, keep)
+                        if pruned:
+                            tree = pruned
+            else:
+                tree = _prune_tree_to_cluster(og, tree, cluster)
+        label = type_tree.upper() if type_tree else ("cluster" + str(cluster) if cluster else "")
+        suffix = f".HomoeologousGroup{label}.tree.txt" if label else ".tree.txt"
         return PlainTextResponse(
             tree, media_type="text/plain",
             headers={"Content-Disposition": f'attachment; filename="{og}{suffix}"'})
@@ -1114,13 +1133,22 @@ def download_file(
         tree_leaves_full = _parse_newick_leaves(tree) if tree else []
 
         if 1 <= cluster <= 7 and tree:
-            pruned = _prune_tree_to_cluster(og, tree, cluster)
-            leaf_order = _parse_newick_leaves(pruned)
-            include_unmatched = False
             og_data = _load_orthogroups().get(og)
             c_genes_for_meta = []
             if og_data:
-                c_genes_for_meta = _get_cluster_members(og_data["genes"], cluster)
+                c_genes_all = _get_cluster_members(og_data["genes"], cluster)
+                if type_tree in ("type1", "type2"):
+                    c_genes_for_meta = [g for g in c_genes_all if (type_tree == "type1" and _get_type_for_gene(g)[0] == "yes") or (type_tree == "type2" and _get_type_for_gene(g)[1] == "yes")]
+                else:
+                    c_genes_for_meta = c_genes_all
+
+            if c_genes_for_meta:
+                keep = _build_prune_keep_set(c_genes_for_meta, _fetch_meta(tree_leaves_full + list(records.keys()) + c_genes_for_meta), tree_leaves_full)
+                pruned = _prune_newick(tree, keep) if keep else ""
+            else:
+                pruned = _prune_tree_to_cluster(og, tree, cluster)
+            leaf_order = _parse_newick_leaves(pruned) if pruned else []
+            include_unmatched = False
             meta = _fetch_meta(tree_leaves_full + list(records.keys()) + c_genes_for_meta)
         else:
             leaf_order = tree_leaves_full
@@ -1138,10 +1166,11 @@ def download_file(
                 out_lines.append(">" + _label_for(sid, meta))
                 out_lines.append(_NL.join(records[sid]))
 
-        cluster_suffix = f".HomoeologousGroup{cluster}" if cluster else ""
+        label = type_tree.upper() if type_tree else ("cluster" + str(cluster) if cluster else "")
+        suffix = f".HomoeologousGroup{label}" if label else ""
         body = _NL.join(out_lines) + _NL
         return PlainTextResponse(
             body, media_type="text/plain",
-            headers={"Content-Disposition": f'attachment; filename="{og}{cluster_suffix}.alignment.fa"'})
+            headers={"Content-Disposition": f'attachment; filename="{og}{suffix}.alignment.fa"'})
 
     raise HTTPException(400, "Invalid type")
