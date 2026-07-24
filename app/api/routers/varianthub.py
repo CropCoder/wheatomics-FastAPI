@@ -179,6 +179,12 @@ VARIANTHUB_DATASETS: dict[str, dict[str, str]] = {
         "source": "Nat Genet 2025 (10.1038/s41588-025-02259-2)",
         "reference": "Chinese_Spring2.1",
     },
+    "all491_cnv_snp_indel": {
+        "label": "all491 CNV+SNP+InDel",
+        "filename": "all491.cnv.snp.indel.missingrate0.25.maf0.01.abd.vcf.gz",
+        "source": "491 份材料 CNV/SNP/InDel 整合（missing rate<0.25, MAF>0.01, A/B/D 亚基因组）",
+        "reference": "Chinese_Spring1.0",
+    },
 }
 
 _MAX_REGION_BP = 5_000_000
