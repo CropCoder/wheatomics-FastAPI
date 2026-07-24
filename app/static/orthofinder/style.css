@@ -93,12 +93,13 @@ h1 {
   color: #18392b;
 }
 
-.download-links .download-row {
-  margin-top: 4px;
+.download-links .download-link-item {
+  margin-bottom: 3px;
 }
 
 .download-links a {
   display: inline-block;
+  margin-left: 12px;
   color: #0b65c2;
   text-decoration: none;
   font-weight: bold;
