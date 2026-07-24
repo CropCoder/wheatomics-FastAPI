@@ -10,7 +10,6 @@ let currentPreparedTree = null;
 let treeMode = "rectangular";
 let currentCluster = null;
 let clusterGeneSet = {};
-let downloadUrls = { og: null, cluster: null };
 
 const SUB_COLORS = {
   A: "#d73027",
@@ -163,17 +162,13 @@ async function searchProtein(q) {
     document.getElementById("ogTitle").textContent =
       `${data.orthogroup} | Query: ${data.query} | OG members: ${data.gene_count}`;
 
-    downloadUrls = {
-      og: {
-        tree:
-          `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-          `&type=tree`,
-        alignment:
-          `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-          `&type=alignment`
-      },
-      cluster: null
-    };
+    document.getElementById("downloadTree").href =
+      `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+      `&type=tree`;
+
+    document.getElementById("downloadAlignment").href =
+      `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+      `&type=alignment`;
 
     // Badge - show "Homoeologous group N (chrA/B/D)"
     const badge = document.getElementById("clusterBadge");
@@ -207,8 +202,8 @@ async function searchProtein(q) {
       clusterDescEl.style.display = "none";
     }
 
-    const downloadClusterRow =
-      document.getElementById("downloadClusterRow");
+    const downloadClusterTree =
+      document.getElementById("downloadClusterTree");
 
     const hasCluster = (
       currentCluster !== null &&
@@ -217,20 +212,29 @@ async function searchProtein(q) {
     );
 
     if (hasCluster) {
-      downloadUrls.cluster = {
-        tree:
-          `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-          `&type=tree` +
-          `&cluster=${currentCluster}`,
-        alignment:
-          `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-          `&type=alignment` +
-          `&cluster=${currentCluster}`
-      };
+      downloadClusterTree.href =
+        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+        `&type=tree` +
+        `&cluster=${currentCluster}`;
 
-      downloadClusterRow.style.display = "";
+      downloadClusterTree.style.display = "";
     } else {
-      downloadClusterRow.style.display = "none";
+      downloadClusterTree.style.display = "none";
+    }
+
+    // Download homoeologous alignment
+    const downloadClusterAln =
+      document.getElementById("downloadClusterAlignment");
+
+    if (hasCluster) {
+      downloadClusterAln.href =
+        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+        `&type=alignment` +
+        `&cluster=${currentCluster}`;
+
+      downloadClusterAln.style.display = "";
+    } else {
+      downloadClusterAln.style.display = "none";
     }
 
     const treeClusterLabel =
@@ -323,33 +327,6 @@ async function searchProtein(q) {
       "Invalid server response: " +
       e.message;
   }
-}
-
-/* =================================================================
-   Bundle download (tree + protein alignment in one click)
-   ================================================================= */
-
-function downloadBundle(event, kind) {
-  event.preventDefault();
-
-  const urls = downloadUrls[kind];
-
-  if (!urls) return;
-
-  [urls.tree, urls.alignment].forEach(function (url, index) {
-    // Stagger the two downloads — some browsers drop the second one
-    // when both fire in the same tick.
-    setTimeout(function () {
-      const link = document.createElement("a");
-
-      link.href = url;
-      link.style.display = "none";
-
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    }, index * 400);
-  });
 }
 
 /* =================================================================
