@@ -105,7 +105,7 @@ async function searchProtein(q) {
   message.textContent = "Loading...";
   result.style.display = "none";
 
-  var url = `/api/orthofinder/api.php?q=${encodeURIComponent(q)}&_=${Date.now()}`;
+  var url = `/api/orthofinder/search?q=${encodeURIComponent(q)}&_=${Date.now()}`;
 
   try {
     const response = await fetch(url, { cache: "no-store" });
@@ -371,7 +371,7 @@ async function showGenomeSelector(subgenome) {
 
   try {
     const response = await fetch(
-      `/api/orthofinder/api.php?action=members` +
+      `/api/orthofinder/search?action=members` +
       `&og=${encodeURIComponent(currentOG)}` +
       `&sub=${encodeURIComponent(subgenome)}` +
       `&_=${Date.now()}`,

@@ -1,7 +1,8 @@
 """OrthoFinder orthogroup browser routes.
 
-Returns raw JSON matching the PHP api.php format, so the front-end
-app.js (shared with the PHP branch) works without modification.
+Response bodies keep the legacy PHP api.php JSON structure so the front-end
+app.js works unchanged. The route path is /api/orthofinder/search (formerly
+/api/orthofinder/api.php).
 
 All data is read directly from the OrthoFinder results directory on the
 filesystem — no MySQL dependency.
@@ -802,14 +803,14 @@ def _label_for(id, meta):
 
 
 # ===================================================================
-# API endpoints  (raw JSON matching PHP api.php format)
+# API endpoints  (raw JSON matching the legacy PHP api.php response format)
 # ===================================================================
 
 @router.get(
-    "/api.php",
+    "/search",
     summary="Search by protein ID / orthogroup ID / species catalog / members / positions",
 )
-def search_php(
+def search_orthogroup(
     q: str = Query("", description="Protein/gene ID or orthogroup ID. Used when action=search."),
     action: str = Query("search", description="Action: 'search' (default) | 'species_catalog' | 'members' | 'positions'"),
     og: str = Query("", description="Orthogroup ID, required for action=members and action=positions"),
