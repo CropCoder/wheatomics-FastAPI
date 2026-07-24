@@ -10,7 +10,6 @@ let currentPreparedTree = null;
 let treeMode = "rectangular";
 let currentCluster = null;
 let clusterGeneSet = {};
-let speciesList = [];
 let downloadUrls = { og: null, cluster: null };
 
 const SUB_COLORS = {
@@ -21,8 +20,6 @@ const SUB_COLORS = {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  loadSpeciesCatalog();
-
   document.getElementById("searchForm").addEventListener("submit", e => {
     e.preventDefault();
 
@@ -31,13 +28,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     var url = new URL(window.location.href);
     url.searchParams.set("q", q);
-    // Also include selected species in the URL
-    var speciesVal = document.getElementById("speciesSelect").value;
-    if (speciesVal) {
-      url.searchParams.set("species", speciesVal);
-    } else {
-      url.searchParams.delete("species");
-    }
     window.history.pushState({}, "", url);
 
     searchProtein(q);
@@ -106,50 +96,6 @@ async function loadFragment(url, targetId, wantedIds) {
 }
 
 /* =================================================================
-   Species catalog
-   ================================================================= */
-
-async function loadSpeciesCatalog() {
-  try {
-    const res = await fetch(
-      "/api/orthofinder/api.php?action=species_catalog&_=" + Date.now(),
-      {
-        cache: "no-store"
-      }
-    );
-
-    const data = await res.json();
-
-    if (!data.error && data.species) {
-      speciesList = data.species;
-
-      const select = document.getElementById("speciesSelect");
-
-      speciesList.forEach(function (species) {
-        const option = document.createElement("option");
-
-        option.value = species;
-        option.textContent = species;
-
-        select.appendChild(option);
-      });
-    }
-  } catch (e) {
-    console.warn("Failed to load species catalog:", e);
-  }
-  const speciesSel = document.getElementById("speciesSelect");
-  speciesSel.addEventListener("change", function () {
-    const species = this.value;
-    const input = document.getElementById("proteinInput");
-    if (species) {
-      input.placeholder = "Type gene ID for " + species + "...";
-    } else {
-      input.placeholder = "Example: TraesAK58CH1A01G123400.1";
-    }
-  });
-}
-
-/* =================================================================
    Main search
    ================================================================= */
 
@@ -160,12 +106,7 @@ async function searchProtein(q) {
   message.textContent = "Loading...";
   result.style.display = "none";
 
-  // Append species filter if selected
-  var selectedSpecies = document.getElementById("speciesSelect").value;
   var url = `/api/orthofinder/api.php?q=${encodeURIComponent(q)}&_=${Date.now()}`;
-  if (selectedSpecies) {
-    url += "&species=" + encodeURIComponent(selectedSpecies);
-  }
 
   try {
     const response = await fetch(url, { cache: "no-store" });
