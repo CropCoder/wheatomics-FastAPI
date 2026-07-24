@@ -1167,9 +1167,10 @@ function setTreeMode(mode, svgId) {
   // If an SVG is specified (per-panel), only re-render that one.
   // Otherwise re-render all type panels.
   if (svgId) {
+    var typeKey = svgId === "treeSvg1" ? "type1" : "type2";
     treeMode = mode;
     currentPreparedTree = null;
-    renderTypeTree(svgId);
+    renderTypeTree(typeKey);
   } else {
     treeMode = mode;
     if (document.getElementById("type1Panel").style.display !== "none") {
