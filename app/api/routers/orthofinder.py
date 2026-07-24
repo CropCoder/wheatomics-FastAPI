@@ -303,6 +303,61 @@ def _load_species_id_map() -> dict:
     _species_id_cache = mp
     return mp
 
+# ---------------------------------------------------------------------------
+# genome_type.txt cache — authoritative mapping: genome_number → genome_type
+# Format: Number  species  type
+#         0       AK58_A   AK58_A_subgenome
+#         ...
+#         114     RM271_N  RM271_N_subgenome   → subgenome "Other" (N not in A/B/D)
+# ---------------------------------------------------------------------------
+
+_genome_type_cache: dict | None = None
+
+def _genome_type_file() -> Path:
+    """Locate genome_type.txt."""
+    base = ORTHOFINDER_BASE_DIR.parent  # /var/www/html/orthefind/
+    for p in [base / "genome_type.txt",
+              Path("/var/www/html/orthefind/genome_type.txt")]:
+        if p.exists():
+            return p
+    return Path("/var/www/html/orthefind/genome_type.txt")
+
+def _load_genome_type_map() -> dict:
+    """Parse genome_type.txt ONCE.
+
+    Returns: {genome_number_str: {"species": "...", "genome_type": "...", "subgenome": "A/B/D/Other"}}
+    """
+    global _genome_type_cache
+    if _genome_type_cache is not None:
+        return _genome_type_cache
+    mp: dict = {}
+    f = _genome_type_file()
+    if f.exists():
+        for line in f.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = line.strip()
+            if not line or line.lower().startswith("number"):
+                continue
+            cols = re.split(r"\s+", line)
+            if len(cols) < 3:
+                continue
+            gn = cols[0].strip()
+            species = cols[1].strip()
+            gtype = cols[2].strip()
+            # Determine subgenome from the final character of the type
+            sub = _norm_sub(gtype[0] if gtype else "")
+            if gtype:
+                m_sub = re.search(r"_([ABD])_subgenome$", gtype, re.I)
+                if m_sub:
+                    sub = m_sub.group(1).upper()
+                else:
+                    # Try to extract from species name (e.g. RM271_N → N)
+                    m_sub2 = re.search(r"_([ABD])$", species, re.I)
+                    if m_sub2:
+                        sub = m_sub2.group(1).upper()
+            mp[gn] = {"species": species, "genome_type": gtype, "subgenome": sub}
+    _genome_type_cache = mp
+    return mp
+
 _seq_id_full_cache: dict | None = None
 
 def _load_all_sequence_ids() -> dict:
@@ -365,28 +420,35 @@ def _make_info(short: str, gene: str, genome_type: str, sub: str) -> dict:
     short = _clean(short); gene = _clean(gene); genome_type = _clean(genome_type)
     sub = _norm_sub(sub)
     src = gene if gene else short
-
     sp = _split_prefixed_gene(src)
-    if not genome_type or genome_type == "Unknown" or "_" not in genome_type:
-        sp = _split_prefixed_gene(src)
-        if short:
-            gn = short.split("_", 1)[0]          # e.g. "8" from "8_38163"
-            species_map = _load_species_id_map()
-            sm = species_map.get(gn, {})
-            sp_name = sm.get("species", "")
-            sp_sub  = sm.get("subgenome", "Other")
-            if sp_name:
-                sp["genome_type"] = f"{sp_name}_{sp_sub}_subgenome"
-                sp["sub"] = sp_sub
+
+    # ---- Resolve genome_type + subgenome from genome_type.txt ----
+    # This is the authoritative source that maps every genome_number to its
+    # exact species+subgenome label (e.g. 113→RM271_D_subgenome, 114→RM271_N_subgenome
+    # which becomes Other because N is not A/B/D).
+    gn = short.split("_", 1)[0] if short else ""
+    gt_info = _load_genome_type_map().get(gn)
+    if gt_info:
+        if not genome_type or genome_type == "Unknown":
+            genome_type = gt_info["genome_type"]
+        sub = gt_info["subgenome"]
+        species_name = gt_info.get("species", "")
+        if species_name:
+            sp["genome_type"] = f"{species_name}_{sub}_subgenome"
+
+    # Fallback: SpeciesIDs.txt if genome_type.txt didn't have an entry
+    if not genome_type or genome_type == "Unknown":
+        sm = _load_species_id_map().get(gn, {})
+        sp_name = sm.get("species", "")
+        sp_sub  = sm.get("subgenome", "Other")
+        if sp_name:
+            sp["genome_type"] = f"{sp_name}_{sp_sub}_subgenome"
+            sp["sub"] = sp_sub
 
     if sp["gene"] != src and gene:
         gene = sp["gene"]
-    if not genome_type and sp["genome_type"]:
-        genome_type = sp["genome_type"]
-    if sub == "Other" and sp["sub"] != "Other":
-        sub = sp["sub"]
     if not genome_type:
-        genome_type = "Unknown" if sub == "Other" else f"{sub}_subgenome"
+        genome_type = sp.get("genome_type") or ("Unknown" if sub == "Other" else f"{sub}_subgenome")
     label_gene = gene if gene else (sp["gene"] if sp["gene"] else short)
     label = f"{label_gene} {genome_type}".strip()
     return {"short_id": short, "gene_id": gene, "raw_id": src,
