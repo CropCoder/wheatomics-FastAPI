@@ -259,8 +259,8 @@ async function searchProtein(q) {
         "Homoeologous group " + currentCluster + " Gene Trees";
       treeClusterLabel.style.display = "none";
 
-      renderTypeTree(type1TreeData, "type1");
-      renderTypeTree(type2TreeData, "type2");
+      renderTypeTree("type1");
+      renderTypeTree("type2");
 
       // ---- download wiring (original cluster) ----
       const selectedTree =
@@ -1163,23 +1163,54 @@ function clearSvg(svg) {
    Tree rendering
    ================================================================= */
 
-function setTreeMode(mode) {
-  treeMode = mode;
-  // Re-render all visible tree SVGs
-  if (document.getElementById("type1Panel").style.display !== "none") {
-    renderTypeTree(type1TreeData, "type1");
-  }
-  if (document.getElementById("type2Panel").style.display !== "none") {
-    renderTypeTree(type2TreeData, "type2");
+function setTreeMode(mode, svgId) {
+  // If an SVG is specified (per-panel), only re-render that one.
+  // Otherwise re-render all type panels.
+  if (svgId) {
+    treeMode = mode;
+    currentPreparedTree = null;
+    renderTypeTree(svgId);
+  } else {
+    treeMode = mode;
+    if (document.getElementById("type1Panel").style.display !== "none") {
+      currentPreparedTree = null;
+      renderTypeTree("type1");
+    }
+    if (document.getElementById("type2Panel").style.display !== "none") {
+      currentPreparedTree = null;
+      renderTypeTree("type2");
+    }
   }
 }
 
-function renderTree() {
-  if (treeMode === "circular") {
-    renderTreeCircular();
-  } else {
-    renderTreeRectangular();
+function renderTypeTree(typeKey) {
+  var treeData = typeKey === "type1" ? type1TreeData : type2TreeData;
+  var svgId = typeKey === "type1" ? "treeSvg1" : "treeSvg2";
+  var labelId = typeKey === "type1" ? "type1TreeLabel" : "type2TreeLabel";
+  var svg = document.getElementById(svgId);
+  var labelEl = document.getElementById(labelId);
+
+  if (!treeData || !treeData.tree) {
+    if (svg) svg.innerHTML = "";
+    if (labelEl) labelEl.textContent = "No genes in this group.";
+    return;
   }
+
+  if (labelEl) {
+    labelEl.textContent =
+      "Showing " + treeData.leafCount + " genes from homoeologous group " +
+      currentCluster + " (full cluster has " + (dataRef?.cluster_gene_count || "?") + " genes)";
+  }
+
+  var savedTree = currentParsedTree;
+  currentParsedTree = parseNewick(treeData.tree.trim());
+  treeDisplayError = treeData.error || "";
+
+  if (svg) {
+    renderTreeToSvg(svg, currentParsedTree);
+  }
+
+  currentParsedTree = savedTree;
 }
 
 /* -----------------------------------------------------------------
@@ -1826,45 +1857,6 @@ function switchTypeTree(typeKey) {
   }
   currentPreparedTree = null;
   renderTree();
-}
-
-function renderTypeTree(treeData, typeKey) {
-  var svgId = typeKey === "type1" ? "treeSvg1" : "treeSvg2";
-  var labelId = typeKey === "type1" ? "type1TreeLabel" : "type2TreeLabel";
-  var svg = document.getElementById(svgId);
-  var labelEl = document.getElementById(labelId);
-
-  if (!treeData || !treeData.tree) {
-    if (svg) svg.innerHTML = "";
-    if (labelEl) labelEl.textContent = "No genes in this group.";
-    return;
-  }
-
-  if (labelEl) {
-    labelEl.textContent =
-      "Showing " + treeData.leafCount + " genes from homoeologous group " +
-      currentCluster + " (full cluster has " + (dataRef?.cluster_gene_count || "?") + " genes)";
-  }
-
-  // Render using the existing rectangular/circular pipeline
-  var savedTree = currentParsedTree;
-  var savedSvg = null;
-
-  // Temporarily swap globals so renderTree() draws to the correct SVG
-  var origSvgEl = document.getElementById("treeSvg");
-  currentParsedTree = parseNewick(treeData.tree.trim());
-  treeDisplayError = treeData.error || "";
-
-  // Override SVG element temporarily
-  var origTreeSvg = document.getElementById("treeSvg");
-  // Run renderTreeRectangular / renderTreeCircular with treeMode
-  if (svg) {
-    // Render directly to target SVG
-    renderTreeToSvg(svg, currentParsedTree);
-  }
-
-  // Restore
-  currentParsedTree = savedTree;
 }
 
 function renderTreeToSvg(svg, parsedTree) {
