@@ -123,6 +123,52 @@ def _sequence_id_files() -> list:
         base.parent / "WorkingDirectory" / "SequenceIDs.txt",
     ]
 
+def _species_id_files() -> list:
+    """Paths to SpeciesIDs.txt — maps genome_number → species_subgenome."""
+    base = ORTHOFINDER_BASE_DIR
+    return [
+        base / "WorkingDirectory" / "SpeciesIDs.txt",
+        base / "SpeciesIDs.txt",
+        base.parent / "WorkingDirectory" / "SpeciesIDs.txt",
+    ]
+
+_species_id_cache: dict | None = None
+
+def _load_species_id_map() -> dict:
+    """Parse SpeciesIDs.txt ONCE and cache.
+
+    Format: "0: AK58_A.pep"
+    Returns: {"0": {"species": "AK58", "subgenome": "A"}}
+    """
+    global _species_id_cache
+    if _species_id_cache is not None:
+        return _species_id_cache
+    mp: dict = {}
+    for f in _species_id_files():
+        if not f.exists():
+            continue
+        try:
+            for line in f.read_text(encoding="utf-8", errors="ignore").splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                m = re.match(r"^(\d+)\s*:\s*(\S+)", line)
+                if not m:
+                    continue
+                genome_number = m.group(1)
+                species_raw = _clean(m.group(2))
+                species_raw = re.sub(r"\.pep$", "", species_raw, flags=re.I)
+                parts = species_raw.rsplit("_", 1)
+                species_name = parts[0] if len(parts) == 2 else species_raw
+                sub = _norm_sub(parts[1]) if len(parts) == 2 else "Other"
+                mp[genome_number] = {"species": species_name, "subgenome": sub}
+        except Exception:
+            continue
+        if mp:
+            break
+    _species_id_cache = mp
+    return mp
+
 _seq_id_full_cache: dict | None = None
 
 def _load_all_sequence_ids() -> dict:
@@ -220,7 +266,23 @@ def _make_info(short: str, gene: str, genome_type: str, sub: str) -> dict:
     short = _clean(short); gene = _clean(gene); genome_type = _clean(genome_type)
     sub = _norm_sub(sub)
     src = gene if gene else short
+
+    # ---- resolve genome_type from SpeciesIDs if the gene_id-based regex did
+    #      not produce a usable value (e.g. when short_id is a numeric ID like
+    #      "8_38163" and gene_id is "TraesCM421D01G000100.1").
     sp = _split_prefixed_gene(src)
+    if not genome_type or genome_type == "Unknown" or "_" not in genome_type:
+        sp = _split_prefixed_gene(src)
+        if short:
+            gn = short.split("_", 1)[0]          # e.g. "8" from "8_38163"
+            species_map = _load_species_id_map()
+            sm = species_map.get(gn, {})
+            sp_name = sm.get("species", "")
+            sp_sub  = sm.get("subgenome", "Other")
+            if sp_name:
+                sp["genome_type"] = f"{sp_name}_{sp_sub}_subgenome"
+                sp["sub"] = sp_sub
+
     if sp["gene"] != src and gene:
         gene = sp["gene"]
     if not genome_type and sp["genome_type"]:
@@ -724,7 +786,7 @@ def search_php(
         genes = [g for g in og_row["genes"].split() if g]
         gene_count = og_row["gene_count"]
 
-        tree_file = ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Resolved_Gene_Trees" / f"{og_id}.txt"
+        tree_file = ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Trees_ids" / f"{og_id}.txt"
         aln_file = _find_alignment_file(og_id)
         tree = tree_file.read_text(encoding="utf-8") if tree_file.exists() else ""
         alignment = aln_file.read_text(encoding="utf-8") if aln_file else ""
@@ -804,7 +866,7 @@ def search_php(
 # ---------------------------------------------------------------------------
 
 def _load_tree_text(og: str) -> str:
-    tree_file = ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Resolved_Gene_Trees" / f"{og}.txt"
+    tree_file = ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Trees_ids" / f"{og}.txt"
     return tree_file.read_text(encoding="utf-8") if tree_file.exists() else ""
 
 
