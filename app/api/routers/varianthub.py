@@ -207,13 +207,14 @@ def _bcftools_path() -> str:
 
 
 def _vcf_path(dataset: str) -> Path:
-    """Validate dataset key and return the on-disk VCF path (must have .tbi)."""
+    """Validate dataset key and return the on-disk VCF path (must be indexed)."""
     ensure_allowed_table(dataset, VARIANTHUB_DATASETS.keys(), "dataset")
     path = settings.VARIANTHUB_VCF_DIR / VARIANTHUB_DATASETS[dataset]["filename"]
     if not path.exists():
         raise ResourceNotFound(f"VCF file not found on server: {path.name}")
-    if not Path(str(path) + ".tbi").exists():
-        raise ResourceNotFound(f"Tabix index missing: {path.name}.tbi")
+    # Accept either tabix (.tbi) or CSI (.csi) indexes.
+    if not (Path(str(path) + ".tbi").exists() or Path(str(path) + ".csi").exists()):
+        raise ResourceNotFound(f"Index missing: {path.name}.tbi / .csi")
     return path
 
 
