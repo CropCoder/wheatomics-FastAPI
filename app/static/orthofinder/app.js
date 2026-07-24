@@ -207,41 +207,6 @@ async function searchProtein(q) {
       clusterDescEl.style.display = "none";
     }
 
-    const downloadClusterTree =
-      document.getElementById("downloadClusterTree");
-
-    const hasCluster = (
-      currentCluster !== null &&
-      currentCluster > 0 &&
-      data.query
-    );
-
-    if (hasCluster) {
-      downloadClusterTree.href =
-        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-        `&type=tree` +
-        `&cluster=${currentCluster}`;
-
-      downloadClusterTree.style.display = "";
-    } else {
-      downloadClusterTree.style.display = "none";
-    }
-
-    // Download homoeologous alignment
-    const downloadClusterAln =
-      document.getElementById("downloadClusterAlignment");
-
-    if (hasCluster) {
-      downloadClusterAln.href =
-        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-        `&type=alignment` +
-        `&cluster=${currentCluster}`;
-
-      downloadClusterAln.style.display = "";
-    } else {
-      downloadClusterAln.style.display = "none";
-    }
-
     const treeClusterLabel =
       document.getElementById("treeClusterLabel");
 
