@@ -301,8 +301,6 @@ async function searchProtein(q) {
     renderMembers(
       data.sub_counts || {}
     );
-
-    renderTree();
   } catch (e) {
     message.textContent =
       "Invalid server response: " +
@@ -1846,21 +1844,6 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
-}
-
-function switchTypeTree(typeKey) {
-  currentType = typeKey;
-  var td = typeKey === "type1" ? type1TreeData : type2TreeData;
-  // Update tab active states (kept for backward compat — not used in stacked mode)
-  if (td && td.tree) {
-    currentParsedTree = parseNewick(td.tree.trim());
-    treeDisplayError = "";
-  } else {
-    currentParsedTree = null;
-    treeDisplayError = td ? td.error : "No tree data";
-  }
-  currentPreparedTree = null;
-  renderTree();
 }
 
 function renderTreeToSvg(svg, parsedTree) {
