@@ -11,7 +11,7 @@ import gzip
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 
 from app.core.config import settings
 from app.core.exceptions import ExternalToolFailure, ResourceNotFound, ValidationFailure
@@ -243,18 +243,31 @@ def _sample_meta(dataset: str) -> dict | None:
     return payload
 
 
-# Aliases from query-parameter names to sample_meta field keys. These match
-# the snake_cased headers produced by scripts/xlsx_to_sample_meta.py.
-_META_FILTER_PARAMS: dict[str, str] = {
-    "country": "country",
-    "continent": "continent",
-    "status": "status",
-    "growth_habit": "growth_habit",
+# Minimal cross-dataset aliases (conventional name -> actual field key).
+# Everything else is matched against each dataset's own fields by name, so
+# dataset-specific fields (e.g. all491's `group`) need no entry here.
+_META_FILTER_ALIASES: dict[str, str] = {
     "population": "major_population",
-    # all491 分组信息.xlsx 的列：Group（LR/CC/UC）和 "Growth habitate"（原表拼写）
-    "group": "group",
-    "growth_habitate": "growth_habitate",
 }
+
+# Query parameters that are NOT metadata filters (endpoint plumbing).
+_RESERVED_PARAMS = {
+    "dataset", "region", "variant_id", "samples", "limit", "offset", "_",
+}
+
+
+def _extract_meta_filters(query_params) -> dict[str, str]:
+    """Pull metadata filters out of the raw query string.
+
+    Any parameter that isn't a reserved endpoint parameter is treated as a
+    candidate metadata field; validation against the dataset's actual fields
+    happens in _filter_samples_by_meta.
+    """
+    return {
+        k: v
+        for k, v in query_params.items()
+        if k and k not in _RESERVED_PARAMS and v
+    }
 
 
 def _filter_samples_by_meta(
@@ -272,7 +285,7 @@ def _filter_samples_by_meta(
     field_keys = {f["key"] for f in meta["fields"]}
     resolved: dict[str, str] = {}
     for param, value in filters.items():
-        field = _META_FILTER_PARAMS.get(param, param)
+        field = _META_FILTER_ALIASES.get(param, param)
         if field not in field_keys:
             raise ValidationFailure(
                 f"Unknown metadata filter '{param}' for dataset {dataset}. "
@@ -492,31 +505,16 @@ def varianthub_dataset_info(
 
 @router.get("/VariantHub/samples")
 def varianthub_samples(
+    request: Request,
     dataset: str = Query(..., description="Dataset key from /api/VariantHub/datasets"),
-    country: str | None = Query(None),
-    continent: str | None = Query(None),
-    status: str | None = Query(None),
-    growth_habit: str | None = Query(None),
-    population: str | None = Query(None, description="Maps to the major_population field"),
-    group: str | None = Query(None, description="Sample group, e.g. LR/CC/UC (all491)"),
 ) -> dict:
     """List sample metadata for a dataset, optionally filtered.
 
-    Filters are exact matches (case-insensitive) on the corresponding
-    metadata fields, e.g. &country=Turkey&status=Landrace.
+    Any extra query parameter is treated as a metadata filter on the
+    dataset's own fields (exact, case-insensitive), e.g.
+    &country=Turkey&status=Landrace or &group=LR.
     """
-    filters = {
-        k: v
-        for k, v in {
-            "country": country,
-            "continent": continent,
-            "status": status,
-            "growth_habit": growth_habit,
-            "population": population,
-            "group": group,
-        }.items()
-        if v is not None
-    }
+    filters = _extract_meta_filters(request.query_params)
     ensure_allowed_table(dataset, VARIANTHUB_DATASETS.keys(), "dataset")
     if filters:
         meta, matched = _filter_samples_by_meta(dataset, filters)
@@ -536,16 +534,11 @@ def varianthub_samples(
 
 @router.get("/VariantHub/query")
 def varianthub_query(
+    request: Request,
     dataset: str = Query(..., description="Dataset key from /api/VariantHub/datasets"),
     region: str | None = Query(None, description="Genomic interval, e.g. chr1A:1000-50000"),
     variant_id: str | None = Query(None, description="Variant ID (exact match on the ID column)"),
     samples: str | None = Query(None, description="Comma-separated sample IDs; omit for all samples"),
-    country: str | None = Query(None, description="Sample metadata filter (exact, case-insensitive)"),
-    continent: str | None = Query(None, description="Sample metadata filter"),
-    status: str | None = Query(None, description="Sample metadata filter, e.g. Landrace"),
-    growth_habit: str | None = Query(None, description="Sample metadata filter, e.g. Winter"),
-    population: str | None = Query(None, description="Sample metadata filter (major_population)"),
-    group: str | None = Query(None, description="Sample metadata filter (group, e.g. LR/CC/UC)"),
     limit: int = Query(200, ge=1, le=5000),
     offset: int = Query(0, ge=0),
 ) -> dict:
@@ -557,24 +550,14 @@ def varianthub_query(
     large population VCFs).
 
     Samples default to all; narrow them either explicitly with `samples` or
-    via sample-metadata filters (country/continent/status/growth_habit/
-    population/group) — the two are mutually exclusive.
+    via sample-metadata filters — any extra query parameter matching one of
+    the dataset's metadata fields (e.g. &country=Turkey, &group=LR) — the
+    two are mutually exclusive.
     """
     if (region is None) == (variant_id is None):
         raise ValidationFailure("Provide exactly one of 'region' or 'variant_id'")
 
-    meta_filters = {
-        k: v
-        for k, v in {
-            "country": country,
-            "continent": continent,
-            "status": status,
-            "growth_habit": growth_habit,
-            "population": population,
-            "group": group,
-        }.items()
-        if v is not None
-    }
+    meta_filters = _extract_meta_filters(request.query_params)
     if meta_filters and samples:
         raise ValidationFailure(
             "'samples' and metadata filters (country/status/...) are mutually exclusive"

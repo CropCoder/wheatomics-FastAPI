@@ -361,15 +361,10 @@ function updateDatasetSource() {
 // =====================================================================
 //  Dataset info card
 // =====================================================================
-var META_FILTER_FIELDS = [
-  { param: 'country',     key: 'country' },
-  { param: 'continent',   key: 'continent' },
-  { param: 'status',      key: 'status' },
-  { param: 'growth_habit', key: 'growth_habit' },
-  { param: 'population',  key: 'major_population' },
-  { param: 'group',       key: 'group' },
-  { param: 'growth_habitate', key: 'growth_habitate' },
-];
+// Fields that get a filter dropdown (the rest are table-only: names, IDs,
+// coordinates, etc.). Each dataset only shows the ones it actually has.
+var FILTERABLE_KEYS = ['country', 'continent', 'status', 'growth_habit',
+  'growth_habitate', 'major_population', 'group'];
 var sampleMetaState = { fields: [], samples: [], dataset: null };
 
 function loadDatasetInfo() {
@@ -420,11 +415,6 @@ function loadSampleMeta(datasetKey) {
     });
 }
 
-function fieldLabel(key) {
-  var f = sampleMetaState.fields.find(function(x) { return x.key === key; });
-  return f ? f.label : key;
-}
-
 function distinctValues(fieldKey) {
   var seen = {};
   var values = [];
@@ -436,8 +426,9 @@ function distinctValues(fieldKey) {
 }
 
 function renderSampleMetaSection() {
-  var available = META_FILTER_FIELDS.filter(function(mf) {
-    return sampleMetaState.fields.some(function(f) { return f.key === mf.key; });
+  // Filter dropdowns only for the filterable fields this dataset actually has.
+  var available = sampleMetaState.fields.filter(function(f) {
+    return FILTERABLE_KEYS.indexOf(f.key) !== -1;
   });
 
   var html = '<div class="form-group"><label><strong>Sample metadata</strong> ' +
@@ -445,12 +436,12 @@ function renderSampleMetaSection() {
 
   // Filter dropdowns
   html += '<div class="row">';
-  available.forEach(function(mf) {
+  available.forEach(function(f) {
     html += '<div class="col-md-2 col-sm-4">' +
-      '<label style="font-size:12px;">' + escapeHtml(fieldLabel(mf.key)) + '</label>' +
-      '<select class="form-control input-sm vh-meta-filter" data-param="' + mf.param + '" data-key="' + mf.key + '">' +
+      '<label style="font-size:12px;">' + escapeHtml(f.label) + '</label>' +
+      '<select class="form-control input-sm vh-meta-filter" data-key="' + f.key + '">' +
       '<option value="">(all)</option>';
-    distinctValues(mf.key).forEach(function(v) {
+    distinctValues(f.key).forEach(function(v) {
       html += '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + '</option>';
     });
     html += '</select></div>';
@@ -493,8 +484,8 @@ function sampleMetaRows(samples) {
 function currentMatchedSamples() {
   var filters = currentMetaFilters();
   return sampleMetaState.samples.filter(function(s) {
-    return META_FILTER_FIELDS.every(function(mf) {
-      return !filters[mf.param] || s[mf.key] === filters[mf.param];
+    return Object.keys(filters).every(function(key) {
+      return s[key] === filters[key];
     });
   });
 }
@@ -524,7 +515,7 @@ function currentMetaFilters() {
   var filters = {};
   $('.vh-meta-filter').each(function() {
     var v = $(this).val();
-    if (v) filters[$(this).data('param')] = v;
+    if (v) filters[$(this).data('key')] = v;
   });
   return filters;
 }
