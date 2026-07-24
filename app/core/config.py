@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     BLAST_BIN_DIR: Path = Path("/var/www/html/blast/blast+/bin")
     FASTA_DB_PATH: Path = Path("/data/fasta")
     ORTHOFINDER_BASE_DIR: Path = Path("/var/www/html/orthefind/Results_Jul23")
-    ORTHOFINDER_CLUSTER_FILE: Path = Path("/var/www/html/orthefind/Results_Jul23/Orthogroups/SpeciesIDs_cluster.txt")
+    ORTHOFINDER_CLUSTER_FILE: Path = Path("/var/www/html/orthefind/Results_Jul23/WorkingDirectory/SpeciesIDs_cluster.txt")
     SNPRIMER_TMP_DIR: Path = Path("/var/www/html/snprimer/tmp")
     SNPRIMER_RESULT_DIR: Path = Path("/var/www/html/snprimer/result")
     SNPRIMER_PIPELINE: Path = Path("/var/www/html/snprimer/SNP_Primer_Pipeline/run_getkasp.py")
