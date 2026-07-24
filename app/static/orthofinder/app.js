@@ -1144,7 +1144,15 @@ function clearSvg(svg) {
 
 function setTreeMode(mode) {
   treeMode = mode;
+  // Re-render all visible tree SVGs
   renderTree();
+  if (document.getElementById("type1Panel").style.display !== "none") {
+    type1TreeData.leafCount = type1TreeData.leafCount; // force re-render
+    renderTypeTree(type1TreeData, "type1");
+  }
+  if (document.getElementById("type2Panel").style.display !== "none") {
+    renderTypeTree(type2TreeData, "type2");
+  }
 }
 
 function renderTree() {
@@ -1760,19 +1768,19 @@ function zoomTree(factor) {
       )
     );
 
-  document.getElementById(
-    "treeSvg"
-  ).style.transform =
-    `scale(${treeZoom})`;
+  // Apply to all tree SVGs
+  ["treeSvg", "treeSvg1", "treeSvg2"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.transform = `scale(${treeZoom})`;
+  });
 }
 
 function resetTreeZoom() {
   treeZoom = 1;
-
-  document.getElementById(
-    "treeSvg"
-  ).style.transform =
-    "scale(1)";
+  ["treeSvg", "treeSvg1", "treeSvg2"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.transform = "scale(1)";
+  });
 }
 
 function escapeHtml(value) {
@@ -1907,8 +1915,9 @@ function renderTreeToSvg(svg, parsedTree) {
   drawNode(root);
   svg.innerHTML = parts.join("");
 
-  // Restore
+  // Restore — must clear the cache so the NEXT call starts fresh
   currentParsedTree = savedParsed;
+  currentPreparedTree = null;
 }
 
 var dataRef = null;  // reference to raw API response for renderTypeTree
