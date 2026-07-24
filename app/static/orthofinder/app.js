@@ -1147,7 +1147,6 @@ function setTreeMode(mode) {
   // Re-render all visible tree SVGs
   renderTree();
   if (document.getElementById("type1Panel").style.display !== "none") {
-    type1TreeData.leafCount = type1TreeData.leafCount; // force re-render
     renderTypeTree(type1TreeData, "type1");
   }
   if (document.getElementById("type2Panel").style.display !== "none") {
@@ -1850,12 +1849,27 @@ function renderTreeToSvg(svg, parsedTree) {
   if (!parsedTree) { svg.innerHTML = ""; return; }
   // Save current globals
   var savedParsed = currentParsedTree;
-  var savedSVG = document.getElementById("treeSvg");
+  var savedError = treeDisplayError;
   currentParsedTree = parsedTree;
-  // Build prepared tree for this subtree
-  var prepared = getPreparedTree();
-  if (!prepared) { svg.innerHTML = ""; currentParsedTree = savedParsed; return; }
+  treeDisplayError = "";
 
+  if (treeMode === "circular") {
+    // Build prepared tree (circular needs getPreparedTree too for leaves info)
+    var prepared = getPreparedTree();
+    if (!prepared) { svg.innerHTML = ""; currentParsedTree = savedParsed; treeDisplayError = savedError; currentPreparedTree = null; return; }
+    renderCircularToSvg(svg);
+  } else {
+    var prepared = getPreparedTree();
+    if (!prepared) { svg.innerHTML = ""; currentParsedTree = savedParsed; currentPreparedTree = null; return; }
+    renderRectangularToSvg(svg, prepared);
+  }
+
+  currentParsedTree = savedParsed;
+  treeDisplayError = savedError;
+  currentPreparedTree = null;
+}
+
+function renderRectangularToSvg(svg, prepared) {
   var root = prepared.root;
   var leaves = prepared.leaves;
   var maxDepth = prepared.maxDepth;
@@ -1914,10 +1928,69 @@ function renderTreeToSvg(svg, parsedTree) {
   }
   drawNode(root);
   svg.innerHTML = parts.join("");
+}
 
-  // Restore — must clear the cache so the NEXT call starts fresh
-  currentParsedTree = savedParsed;
-  currentPreparedTree = null;
+function renderCircularToSvg(svg) {
+  var prepared = getPreparedTree();
+  if (!prepared) { svg.innerHTML = ""; return; }
+
+  var root = prepared.root;
+  var leaves = prepared.leaves;
+  var showLabels = leaves.length < 220;
+  var size = showLabels ? 2200 : Math.max(1000, Math.min(2800, leaves.length * 10));
+  var centerX = size / 2, centerY = size / 2;
+  var radius = showLabels ? size / 2 - 430 : size / 2 - 120;
+  var labelRadius = showLabels ? radius + 135 : radius + 20;
+  var innerRadius = showLabels ? 18 : 8;
+  var leafCount = Math.max(1, leaves.length);
+
+  function angleForOrder(order) {
+    return 2 * Math.PI * (order + 0.5) / leafCount - Math.PI / 2;
+  }
+  leaves.forEach(function(leaf) { leaf.angle = angleForOrder(leaf.order); });
+
+  function setNodeAngle(node) {
+    if (!node.children || node.children.length === 0) return node.angle;
+    node.children.forEach(setNodeAngle);
+    var sx = 0, sy = 0, sc = 0;
+    node.children.forEach(function(c) { var w = c.maxOrder - c.minOrder + 1 || 1; sx += Math.cos(c.angle) * w; sy += Math.sin(c.angle) * w; sc += w; });
+    node.angle = sc ? Math.atan2(sy / sc, sx / sc) : 0;
+    return node.angle;
+  }
+  setNodeAngle(root);
+
+  function nodeRadius(node) {
+    return innerRadius + (node.depth / Math.max(prepared.maxDepth, 1)) * (radius - innerRadius);
+  }
+  function polar(r, a) { return {x: centerX + r * Math.cos(a), y: centerY + r * Math.sin(a)}; }
+
+  svg.setAttribute("width", size); svg.setAttribute("height", size);
+  svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+
+  var parts = [];
+  function drawNode(node) {
+    var pt = polar(nodeRadius(node), node.angle);
+    if (!node.children || node.children.length === 0) {
+      if (showLabels) {
+        var le = polar(labelRadius - 22, node.angle), lp = polar(labelRadius, node.angle);
+        var lbl = node.displayLabel || node.name;
+        parts.push('<g class="tree-leaf"><title>' + escapeHtml(lbl) + ' [' + node.sub + '_subgenome]</title>');
+        parts.push(lineSvg(pt.x, pt.y, le.x, le.y, node.sub, 0.9));
+        parts.push(radialTextSvg(lp.x, lp.y, node.angle, lbl, node.sub));
+        parts.push('</g>');
+      }
+      return;
+    }
+    node.children.forEach(function(c) {
+      var cp = polar(nodeRadius(c), c.angle);
+      parts.push('<g><title>' + c.numLeaves + ' genes</title>');
+      parts.push(lineSvg(pt.x, pt.y, cp.x, cp.y, c.sub, 1.6));
+      parts.push('</g>');
+      drawNode(c);
+    });
+  }
+  drawNode(root);
+  svg.innerHTML = parts.join("");
 }
 
 var dataRef = null;  // reference to raw API response for renderTypeTree
