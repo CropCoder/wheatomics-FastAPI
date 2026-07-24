@@ -175,6 +175,27 @@ async function searchProtein(q) {
       `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
       `&type=alignment`;
 
+    // ---- homoeologous cluster download links ----
+    const downloadClusterTree =
+      document.getElementById("downloadClusterTree");
+
+    const downloadClusterAln =
+      document.getElementById("downloadClusterAlignment");
+
+    if (currentCluster !== null && currentCluster > 0 && data.query) {
+      downloadClusterTree.href =
+        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+        `&type=tree&cluster=${currentCluster}`;
+      downloadClusterTree.style.display = "";
+      downloadClusterAln.href =
+        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+        `&type=alignment&cluster=${currentCluster}`;
+      downloadClusterAln.style.display = "";
+    } else {
+      downloadClusterTree.style.display = "none";
+      downloadClusterAln.style.display = "none";
+    }
+
     // Badge - show "Homoeologous group N (chrA/B/D)"
     const badge = document.getElementById("clusterBadge");
 
@@ -1756,7 +1777,7 @@ function radialTextSvg(
   );
 }
 
-function zoomTree(factor) {
+function zoomTree(factor, svgId) {
   treeZoom =
     Math.max(
       0.3,
@@ -1766,16 +1787,18 @@ function zoomTree(factor) {
       )
     );
 
-  // Apply to all tree SVGs
-  ["treeSvg", "treeSvg1", "treeSvg2"].forEach(function(id) {
+  // Apply only to the specified SVG (or all if none specified)
+  var ids = svgId ? [svgId] : ["treeSvg1", "treeSvg2"];
+  ids.forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.style.transform = `scale(${treeZoom})`;
   });
 }
 
-function resetTreeZoom() {
+function resetTreeZoom(svgId) {
   treeZoom = 1;
-  ["treeSvg", "treeSvg1", "treeSvg2"].forEach(function(id) {
+  var ids = svgId ? [svgId] : ["treeSvg1", "treeSvg2"];
+  ids.forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.style.transform = "scale(1)";
   });
