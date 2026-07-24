@@ -2,11 +2,15 @@
 
 Returns raw JSON matching the PHP api.php format, so the front-end
 app.js (shared with the PHP branch) works without modification.
+
+All data is read directly from the OrthoFinder results directory on the
+filesystem — no MySQL dependency.
 """
 
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 from pathlib import Path
 
@@ -14,11 +18,10 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import PlainTextResponse
 
 from app.core.config import settings
-from app.db.mysql import mysql_cursor
 
 ORTHOFINDER_BASE_DIR = settings.ORTHOFINDER_BASE_DIR
-ORTHOFINDER_DB = settings.DB_ORTHOFINDER
 CLUSTER_FILE = settings.ORTHOFINDER_CLUSTER_FILE
+BED_DIR = Path("/var/www/html/jcvi_col/db")  # where *.filter.bed files live
 
 router = APIRouter(prefix="/orthofinder", tags=["OrthoFinder"])
 
@@ -84,35 +87,166 @@ def _get_sorted_prefixes() -> list:
     _sorted_prefixes = sorted(prefix_map.keys(), key=lambda x: -len(x))
     return _sorted_prefixes
 
-def _resolve_cluster(gene_id: str, cursor=None) -> int | None:
+#: gene_id → chromosome, lazily populated from BED files
+_bed_chromosome_cache: dict | None = None
+
+def _load_bed_chromosome_map() -> dict:
+    """Build gene_id → chromosome dict from *.filter.bed files (lazy + cached).
+
+    Only scans BED files that correspond to genomes listed in
+    SpeciesIDs_cluster.txt.  Each BED line is tab-separated:
+        chromosome  start  end  gene_id
+    """
+    global _bed_chromosome_cache
+    if _bed_chromosome_cache is not None:
+        return _bed_chromosome_cache
+
+    mp: dict = {}
+    if not BED_DIR.exists():
+        _bed_chromosome_cache = mp
+        return mp
+
+    # --- determine which genomes are in the analysis ---
+    genomes: set[str] = set()
+    if CLUSTER_FILE.exists():
+        for line in CLUSTER_FILE.read_text(encoding="utf-8").splitlines()[1:]:
+            cols = line.split(_TAB)
+            if len(cols) < 8:
+                continue
+            raw = re.sub(r"^\d+:\s*", "", cols[0].strip())
+            raw = re.sub(r"_[ABD]\.pep$", "", raw, flags=re.I)
+            if raw:
+                genomes.add(raw)
+
+    # --- helper: fuzzy-match BED file name to genome ---
+    def _bed_matches(fname: str) -> str | None:
+        """Return genome name if *fname* matches a known genome."""
+        for g in genomes:
+            if fname == g:
+                return g
+            if fname.lower() == g.lower():
+                return g
+            # prefix match (e.g. Chinese_Spring2.1_A.filter.bed  vs  Chinese_Spring2.1)
+            if fname.startswith(g + "_") or fname.startswith(g + "."):
+                return g
+        return None
+
+    # --- scan BED files ---
+    for entry in sorted(BED_DIR.iterdir()):
+        fname = entry.name
+        if not fname.endswith(".filter.bed"):
+            continue
+        # strip subgenome suffix and .filter.bed
+        base = os.path.splitext(fname)[0]           # Chinese_Spring2.1_A.filter
+        base = re.sub(r"\.filter$", "", base)        # Chinese_Spring2.1_A
+        parts = base.rsplit("_", 1)
+        genome_name = parts[0] if len(parts) == 2 else base
+        sub = parts[1] if len(parts) == 2 and parts[1] in ("A", "B", "D") else ""
+        if not sub:
+            continue
+        if not _bed_matches(genome_name):
+            continue
+        try:
+            for line in entry.read_text(encoding="utf-8", errors="ignore").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or line.startswith("track"):
+                    continue
+                cols = line.split("\t")
+                if len(cols) < 4:
+                    continue
+                gid = _clean(cols[3])
+                chrom = _clean(cols[0])
+                if gid and chrom:
+                    mp[gid] = chrom
+        except Exception:
+            continue
+
+    _bed_chromosome_cache = mp
+    return mp
+
+def _resolve_cluster(gene_id: str) -> int | None:
+    """Map a gene_id to its homoeologous cluster (1-7)."""
     gene_id = _clean(gene_id)
     prefix_map, chrom_map = _load_cluster_map()
     if not prefix_map and not chrom_map:
         return None
+
+    # 1) prefix match
     for pfx in _get_sorted_prefixes():
         if gene_id.lower().startswith(pfx.lower()):
             return prefix_map[pfx]
-    if chrom_map and cursor is not None:
-        gh = hashlib.md5(gene_id.encode()).hexdigest()
-        cursor.execute("SELECT chromosome FROM gene_positions WHERE gene_hash = %s LIMIT 1", (gh,))
-        row = cursor.fetchone()
-        if row and row["chromosome"].lower() in chrom_map:
-            return chrom_map[row["chromosome"].lower()]
+
+    # 2) chromosome fallback via BED files
+    if chrom_map:
+        chrom = _load_bed_chromosome_map().get(gene_id)
+        if chrom and chrom.lower() in chrom_map:
+            return chrom_map[chrom.lower()]
+
     return None
 
-def _get_cluster_members(genes: list, target: int, cursor) -> list:
+def _get_cluster_members(genes: list, target: int) -> list:
     members = []
     for g in genes:
         g = _clean(g)
         if not g:
             continue
-        if _resolve_cluster(g, cursor) == target:
+        if _resolve_cluster(g) == target:
             members.append(g)
     return members
 
 
 # ---------------------------------------------------------------------------
-# sequence-id helpers — ported from PHP download.php
+# Orthogroups.txt cache  (replaces orthogroups + gene_to_og MySQL tables)
+# ---------------------------------------------------------------------------
+
+_orthogroups_cache: dict | None = None
+_gene_to_og_cache: dict | None = None
+
+def _orthogroups_file() -> Path:
+    base = ORTHOFINDER_BASE_DIR
+    for p in [base / "Orthogroups" / "Orthogroups.txt",
+              base / "WorkingDirectory" / "Orthogroups.txt",
+              base.parent / "Orthogroups" / "Orthogroups.txt"]:
+        if p.exists():
+            return p
+    return base / "Orthogroups" / "Orthogroups.txt"
+
+def _load_orthogroups() -> dict:
+    """Parse Orthogroups.txt ONCE.
+
+    Returns: {og_id: {"genes": [gene_id, ...], "gene_count": int}}
+    Also populates _gene_to_og_cache: {gene_id: og_id}.
+    """
+    global _orthogroups_cache, _gene_to_og_cache
+    if _orthogroups_cache is not None:
+        return _orthogroups_cache
+
+    mp: dict = {}
+    g2og: dict = {}
+    f = _orthogroups_file()
+    if f.exists():
+        for line in f.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = line.strip()
+            if not line or ":" not in line:
+                continue
+            og_id, genes_str = line.split(":", 1)
+            og_id = _clean(og_id)
+            genes = [_clean(g) for g in genes_str.strip().split() if _clean(g)]
+            mp[og_id] = {"genes": genes, "gene_count": len(genes)}
+            for g in genes:
+                if g not in g2og:            # first OG wins (same as INSERT IGNORE)
+                    g2og[g] = og_id
+    _orthogroups_cache = mp
+    _gene_to_og_cache = g2og
+    return mp
+
+def _find_og_for_gene(gene_id: str) -> str | None:
+    _load_orthogroups()
+    return _gene_to_og_cache.get(gene_id)
+
+
+# ---------------------------------------------------------------------------
+# sequence-id helpers
 # ---------------------------------------------------------------------------
 
 def _sequence_id_files() -> list:
@@ -172,13 +306,7 @@ def _load_species_id_map() -> dict:
 _seq_id_full_cache: dict | None = None
 
 def _load_all_sequence_ids() -> dict:
-    """Parse SequenceIDs.txt ONCE and cache. Keyed by short_id/gene_id/raw_id.
-
-    Re-reading this (potentially huge) file on every request caused the
-    alignment / cluster endpoints to hang.  We parse it a single time and
-    cache the result.  short_id is unique per genome, so per-genome entries
-    remain accessible even when a gene_id appears in two genomes.
-    """
+    """Parse SequenceIDs.txt ONCE and cache. Keyed by short_id/gene_id/raw_id."""
     global _seq_id_full_cache
     if _seq_id_full_cache is not None:
         return _seq_id_full_cache
@@ -210,7 +338,7 @@ def _load_all_sequence_ids() -> dict:
     return mp
 
 def _load_sequence_id_map(wanted) -> dict:
-    """Return only the wanted subset from the cached full map (no re-read)."""
+    """Return only the wanted subset from the cached full map."""
     full = _load_all_sequence_ids()
     if not full:
         return {}
@@ -229,47 +357,15 @@ def _load_sequence_id_map(wanted) -> dict:
             _add_info(out, info)
     return out
 
-def _fetch_meta(cursor, names) -> dict:
-    """Start from SequenceIDs.txt file map (like PHP), then overlay DB rows."""
-    meta: dict = _load_sequence_id_map(names)
-    clean = list({_first_token(n) for n in names if n and _first_token(n)})
-    for chunk in _chunk_list(clean, 400):
-        if not chunk:
-            continue
-        for field in ("short_id", "gene_id"):
-            ph = ",".join(["%s"] * len(chunk))
-            try:
-                cursor.execute(
-                    f"SELECT short_id,gene_id,genome_type,subgenome FROM sequence_ids WHERE {field} IN ({ph})",
-                    chunk,
-                )
-                for r in cursor.fetchall():
-                    info = _make_info(r["short_id"], r["gene_id"], r["genome_type"], r["subgenome"])
-                    _add_info(meta, info)
-            except Exception:
-                pass
-        hashes = [hashlib.md5(x.encode()).hexdigest() for x in chunk]
-        ph2 = ",".join(["%s"] * len(hashes))
-        try:
-            cursor.execute(
-                f"SELECT short_id,gene_id,genome_type,subgenome FROM sequence_ids WHERE gene_hash IN ({ph2})",
-                hashes,
-            )
-            for r in cursor.fetchall():
-                info = _make_info(r["short_id"], r["gene_id"], r["genome_type"], r["subgenome"])
-                _add_info(meta, info)
-        except Exception:
-            pass
-    return meta
+def _fetch_meta(names) -> dict:
+    """Build metadata dictionary from SequenceIDs.txt (file-only, no DB)."""
+    return _load_sequence_id_map(names)
 
 def _make_info(short: str, gene: str, genome_type: str, sub: str) -> dict:
     short = _clean(short); gene = _clean(gene); genome_type = _clean(genome_type)
     sub = _norm_sub(sub)
     src = gene if gene else short
 
-    # ---- resolve genome_type from SpeciesIDs if the gene_id-based regex did
-    #      not produce a usable value (e.g. when short_id is a numeric ID like
-    #      "8_38163" and gene_id is "TraesCM421D01G000100.1").
     sp = _split_prefixed_gene(src)
     if not genome_type or genome_type == "Unknown" or "_" not in genome_type:
         sp = _split_prefixed_gene(src)
@@ -455,14 +551,7 @@ def _prune_newick(newick: str, keep_set: set) -> str:
 
 
 def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) -> set:
-    """Map tree leaves → meta → gene_id → check against cluster_genes.
-
-    Enriched crosswalk from 3d31957 (steps 1-4): tries leaf→meta, leaf token,
-    without-version, genome-number prefix strip — PLUS the unique suffix guard
-    from 92c08a9 (step 5) that only keeps a leaf when exactly one cluster gene
-    matches as suffix.  Together this preserves the 122-123 leaves (enriched)
-    while avoiding false matches (unique guard).
-    """
+    """Map tree leaves → meta → gene_id → check against cluster_genes."""
     if not cluster_genes or not tree_leaves:
         return set()
     cluster_set = {_clean(cg) for cg in cluster_genes if _clean(cg)}
@@ -513,10 +602,7 @@ def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) ->
                     if v and v in cluster_set:
                         matched = True; break
 
-        # 5) unique suffix guard (from 92c08a9): only keep if EXACTLY ONE
-        #    cluster gene is a suffix of the leaf token — avoids
-        #    over-matching on common gene IDs while still covering leaves
-        #    matched only via prefixed-name suffix.
+        # 5) unique suffix guard
         if not matched:
             lf_tok_val = _first_token(lf)
             lf_tok_nv_val = re.sub(r"\.\d+$", "", lf_tok_val)
@@ -583,9 +669,6 @@ def _ordered_record_ids(leaf_order, record_order, records, meta, include_unmatch
     Graded matching per leaf (stop at first hit):
       1) exact crosswalk candidates (gene_id/short_id/raw_id + version-stripped);
       2) unique suffix match (leaf endswith record_id) for prefixed leaf names.
-
-    include_unmatched=True  -> append records not matched to any leaf (whole OG).
-    include_unmatched=False -> only emit records matched to a (cluster) leaf.
     """
     g2s, s2g, raw2s = {}, {}, {}
     for info in meta.values():
@@ -629,7 +712,6 @@ def _ordered_record_ids(leaf_order, record_order, records, meta, include_unmatch
             return None
         if len(cands) == 1:
             return cands[0]
-        # Prefer the longer match (more specific)
         if len(cands[0]) > len(cands[1]):
             return cands[0]
         return None
@@ -661,19 +743,9 @@ def _label_for(id, meta):
 @router.get(
     "/api.php",
     summary="Search by protein ID / orthogroup ID / species catalog / members / positions",
-    description="""PHP api.php compatible endpoint that dispatches based on `action`:
-
-**action=search** (default) — Search a protein/gene ID to find its orthogroup.
-Returns OG members, gene tree (Newick), cluster info, tree_label_map, debug_prune.
-
-**action=species_catalog** — List all species from the cluster file.
-
-**action=members** — List OG members filtered by subgenome (A/B/D). Requires `og` and `sub`.
-
-**action=positions** — Return chromosome positions for OG genes. Supports optional `cluster` filter.
-""",)
+)
 def search_php(
-    q: str = Query("", description="Protein/gene ID (e.g. TraesAK58CH1A01G000600.1) or orthogroup ID (OG0001234). Used when action=search."),
+    q: str = Query("", description="Protein/gene ID or orthogroup ID. Used when action=search."),
     action: str = Query("search", description="Action: 'search' (default) | 'species_catalog' | 'members' | 'positions'"),
     og: str = Query("", description="Orthogroup ID, required for action=members and action=positions"),
     sub: str = Query("", description="Subgenome filter (A/B/D), used with action=members"),
@@ -681,7 +753,6 @@ def search_php(
     species: str = Query("", description="Species filter for gene search (optional)"),
     _: int = Query(0, description="Cache-buster (optional)"),
 ):
-    """PHP api.php compatible endpoint — returns unwrapped JSON."""
     if action == "species_catalog":
         species = []
         if CLUSTER_FILE.exists():
@@ -698,167 +769,155 @@ def search_php(
         if not re.match(r"^OG\d+$", og):
             return {"error": "Invalid orthogroup"}
         sub = _norm_sub(sub)
-        with mysql_cursor(ORTHOFINDER_DB) as cur:
-            cur.execute("SELECT genes FROM orthogroups WHERE og_id = %s LIMIT 1", (og,))
-            row = cur.fetchone()
-            if not row:
-                return {"error": "Orthogroup not found"}
-            genes = [g for g in row["genes"].split() if g]
-            meta = _fetch_meta(cur, genes)
-            items = {}
-            for g in genes:
-                info = meta.get(g, _make_info("", g, "", ""))
-                if _norm_sub(info["subgenome"]) != sub: continue
-                gt = info["genome_type"] or "Unknown"
-                items.setdefault(gt, []).append(info.get("gene_id") or g)
-            for arr in items.values():
-                arr.sort()
-            return {"items": dict(sorted(items.items()))}
+        og_data = _load_orthogroups().get(og)
+        if not og_data:
+            return {"error": "Orthogroup not found"}
+        genes = og_data["genes"]
+        meta = _fetch_meta(genes)
+        items = {}
+        for g in genes:
+            info = meta.get(g, _make_info("", g, "", ""))
+            if _norm_sub(info["subgenome"]) != sub:
+                continue
+            gt = info["genome_type"] or "Unknown"
+            items.setdefault(gt, []).append(info.get("gene_id") or g)
+        for arr in items.values():
+            arr.sort()
+        return {"items": dict(sorted(items.items()))}
 
     if action == "positions":
         if not re.match(r"^OG\d+$", og):
             return {"error": "Invalid orthogroup"}
-        with mysql_cursor(ORTHOFINDER_DB) as cur:
-            cur.execute("SELECT genes FROM orthogroups WHERE og_id = %s LIMIT 1", (og,))
-            row = cur.fetchone()
-            if not row:
-                return {"error": "Orthogroup not found"}
-            genes = [g for g in row["genes"].split() if g]
-            gene_hashes = []
-            for g in genes:
-                g = _clean(g)
-                if not g: continue
-                if cluster > 0 and _resolve_cluster(g, cur) != cluster:
-                    continue
-                gene_hashes.append(hashlib.md5(g.encode()).hexdigest())
-            if not gene_hashes:
-                return {"positions": [], "chromosomes": [], "genomes": []}
-            result = []
-            for chunk in _chunk_list(gene_hashes, 500):
-                ph = ",".join(["%s"] * len(chunk))
-                try:
-                    cur.execute(
-                        f"SELECT gene_id,chromosome,start_pos,end_pos,genome,subgenome "
-                        f"FROM gene_positions WHERE gene_hash IN ({ph})", chunk)
-                    for r in cur.fetchall():
-                        info = _make_info("", r["gene_id"], "", r.get("subgenome", ""))
-                        result.append({
-                            "gene_id": r["gene_id"], "chromosome": r["chromosome"],
-                            "start": int(r["start_pos"]), "end": int(r["end_pos"]),
-                            "genome": r["genome"], "subgenome": r.get("subgenome", "Other"),
-                            "label": info["full_label"],
-                        })
-                except Exception: pass
-            chromosomes = sorted(set(r["chromosome"] for r in result))
-            genomes = sorted(set(r["genome"] for r in result))
-            return {"positions": result, "chromosomes": chromosomes, "genomes": genomes}
+        og_data = _load_orthogroups().get(og)
+        if not og_data:
+            return {"error": "Orthogroup not found"}
+        genes = og_data["genes"]
+        bc_map = _load_bed_chromosome_map()
+        result = []
+        for g in genes:
+            g = _clean(g)
+            if not g:
+                continue
+            if cluster > 0 and _resolve_cluster(g) != cluster:
+                continue
+            chrom = bc_map.get(g, "")
+            info = _make_info("", g, "", "")
+            result.append({
+                "gene_id": g, "chromosome": chrom,
+                "start": 0, "end": 0,
+                "genome": "", "subgenome": info.get("subgenome", "Other"),
+                "label": info["full_label"],
+            })
+        chromosomes = sorted(set(r["chromosome"] for r in result if r["chromosome"]))
+        genomes = sorted(set(r["genome"] for r in result if r["genome"]))
+        return {"positions": result, "chromosomes": chromosomes, "genomes": genomes}
 
     # -- main search --
     q = q.strip()
     if not q:
         return {"error": "Please input a protein ID or orthogroup ID."}
 
-    with mysql_cursor(ORTHOFINDER_DB) as cur:
-        if re.match(r"^OG\d+$", q):
-            og_id = q
-        else:
-            cand_ids = [q]
-            if species:
-                cand_ids.append(f"{species}_{q}")
-            row = None
-            for cid in {c for c in cand_ids if c}:
-                cur.execute(
-                    "SELECT og_id FROM gene_to_og WHERE gene_hash = MD5(%s) AND gene_id = %s LIMIT 1",
-                    (cid, cid),
-                )
-                row = cur.fetchone()
-                if row:
+    # Resolve og_id from query
+    if re.match(r"^OG\d+$", q):
+        og_id = q
+    else:
+        # Try direct gene → OG lookup
+        og_id = _find_og_for_gene(q)
+        if not og_id and species:
+            og_id = _find_og_for_gene(f"{species}_{q}")
+        if not og_id:
+            # Try hash-based fallback via Orthogroups.txt
+            qh = hashlib.md5(q.encode()).hexdigest()
+            for oid, odata in _load_orthogroups().items():
+                for g in odata["genes"]:
+                    if g == q or hashlib.md5(g.encode()).hexdigest() == qh:
+                        og_id = oid
+                        break
+                if og_id:
                     break
-            if not row:
-                return {"error": "Protein ID was not found."}
-            og_id = row["og_id"]
+        if not og_id:
+            return {"error": "Protein ID was not found."}
 
-        cur.execute("SELECT genes,gene_count FROM orthogroups WHERE og_id = %s LIMIT 1", (og_id,))
-        og_row = cur.fetchone()
-        if not og_row:
-            return {"error": "Orthogroup was not found."}
+    og_data = _load_orthogroups().get(og_id)
+    if not og_data:
+        return {"error": "Orthogroup was not found."}
 
-        genes = [g for g in og_row["genes"].split() if g]
-        gene_count = og_row["gene_count"]
+    genes = og_data["genes"]
+    gene_count = og_data["gene_count"]
 
-        tree_file = ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Trees_ids" / f"{og_id}.txt"
-        aln_file = _find_alignment_file(og_id)
-        tree = tree_file.read_text(encoding="utf-8") if tree_file.exists() else ""
-        alignment = aln_file.read_text(encoding="utf-8") if aln_file else ""
+    tree_file = ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Trees_ids" / f"{og_id}.txt"
+    aln_file = _find_alignment_file(og_id)
+    tree = tree_file.read_text(encoding="utf-8") if tree_file.exists() else ""
+    alignment = aln_file.read_text(encoding="utf-8") if aln_file else ""
 
-        leaf_order = _parse_newick_leaves(tree) if tree else []
-        records, record_order = _parse_alignment(alignment) if alignment else ({}, [])
+    leaf_order = _parse_newick_leaves(tree) if tree else []
+    records, record_order = _parse_alignment(alignment) if alignment else ({}, [])
 
-        meta = _fetch_meta(cur, leaf_order + record_order + genes)
+    meta = _fetch_meta(leaf_order + record_order + genes)
 
-        tree_label_map = {}
-        for rid in set(leaf_order + record_order + genes):
-            if rid in meta:
-                _add_info(tree_label_map, meta[rid])
-            else:
-                _add_info(tree_label_map, _make_info("", rid, "", ""))
+    tree_label_map = {}
+    for rid in set(leaf_order + record_order + genes):
+        if rid in meta:
+            _add_info(tree_label_map, meta[rid])
+        else:
+            _add_info(tree_label_map, _make_info("", rid, "", ""))
 
-        sub_counts = {"A": 0, "B": 0, "D": 0, "Other": 0}
-        for g in genes:
-            info = meta.get(g, _make_info("", g, "", ""))
-            sub_counts[_norm_sub(info["subgenome"])] += 1
+    sub_counts = {"A": 0, "B": 0, "D": 0, "Other": 0}
+    for g in genes:
+        info = meta.get(g, _make_info("", g, "", ""))
+        sub_counts[_norm_sub(info["subgenome"])] += 1
 
-        # Cluster resolution
-        query_cluster = _resolve_cluster(q, cur)
-        cluster_genes = _get_cluster_members(genes, query_cluster, cur) if query_cluster is not None else []
-        cluster_sub_counts = {"A": 0, "B": 0, "D": 0, "Other": 0}
-        for g in cluster_genes:
-            info = meta.get(g, _make_info("", g, "", ""))
-            cluster_sub_counts[_norm_sub(info["subgenome"])] += 1
+    # Cluster resolution
+    query_cluster = _resolve_cluster(q)
+    cluster_genes = _get_cluster_members(genes, query_cluster) if query_cluster is not None else []
+    cluster_sub_counts = {"A": 0, "B": 0, "D": 0, "Other": 0}
+    for g in cluster_genes:
+        info = meta.get(g, _make_info("", g, "", ""))
+        cluster_sub_counts[_norm_sub(info["subgenome"])] += 1
 
-        # Build cluster tree
-        cluster_tree = ""
-        debug_prune = {}
-        if query_cluster is not None and tree:
-            tree_leaves = _parse_newick_leaves(tree)
-            debug_prune = {
-                "query_cluster": query_cluster,
-                "cluster_genes_n": len(cluster_genes),
-                "tree_leaves_n": len(tree_leaves),
-            }
-            keep = _build_prune_keep_set(cluster_genes, meta, tree_leaves)
-            debug_prune["keep_count"] = len(keep)
-            ok_samp = [lf for lf in tree_leaves[:60] if _clean(lf) in keep][:5]
-            nok_samp = [lf for lf in tree_leaves[:60] if _clean(lf) not in keep][:5]
-            debug_prune["sample_ok"] = ok_samp
-            debug_prune["sample_nok"] = nok_samp
-            if keep:
-                pruned = _prune_newick(tree, keep)
-                if pruned: cluster_tree = pruned
-                pl = _parse_newick_leaves(cluster_tree) if cluster_tree else []
-                debug_prune["pruned_leaf_count"] = len(pl)
-            else:
-                debug_prune["pruned_leaf_count"] = 0
-
-        return {
-            "query": q, "orthogroup": og_id, "gene_count": gene_count,
-            "sub_counts": sub_counts, "tree": tree,
-            "cluster_tree": cluster_tree, "debug_prune": debug_prune,
-            "tree_label_map": {k: {
-                "full_label": v.get("full_label", v.get("label", k)),
-                "gene_id": v.get("gene_id", k),
-                "short_id": v.get("short_id", ""),
-                "raw_id": v.get("raw_id", v.get("gene_id", k)),
-                "subgenome": v.get("subgenome", "Other"),
-                "genome_type": v.get("genome_type", ""),
-            } for k, v in tree_label_map.items()},
-            "rectangular_leaf_order": leaf_order,
-            "tree_leaf_count": len(leaf_order),
+    # Build cluster tree
+    cluster_tree = ""
+    debug_prune = {}
+    if query_cluster is not None and tree:
+        tree_leaves = _parse_newick_leaves(tree)
+        debug_prune = {
             "query_cluster": query_cluster,
-            "cluster_gene_count": len(cluster_genes),
-            "cluster_genes": cluster_genes,
-            "cluster_sub_counts": cluster_sub_counts,
+            "cluster_genes_n": len(cluster_genes),
+            "tree_leaves_n": len(tree_leaves),
         }
+        keep = _build_prune_keep_set(cluster_genes, meta, tree_leaves)
+        debug_prune["keep_count"] = len(keep)
+        ok_samp = [lf for lf in tree_leaves[:60] if _clean(lf) in keep][:5]
+        nok_samp = [lf for lf in tree_leaves[:60] if _clean(lf) not in keep][:5]
+        debug_prune["sample_ok"] = ok_samp
+        debug_prune["sample_nok"] = nok_samp
+        if keep:
+            pruned = _prune_newick(tree, keep)
+            if pruned: cluster_tree = pruned
+            pl = _parse_newick_leaves(cluster_tree) if cluster_tree else []
+            debug_prune["pruned_leaf_count"] = len(pl)
+        else:
+            debug_prune["pruned_leaf_count"] = 0
+
+    return {
+        "query": q, "orthogroup": og_id, "gene_count": gene_count,
+        "sub_counts": sub_counts, "tree": tree,
+        "cluster_tree": cluster_tree, "debug_prune": debug_prune,
+        "tree_label_map": {k: {
+            "full_label": v.get("full_label", v.get("label", k)),
+            "gene_id": v.get("gene_id", k),
+            "short_id": v.get("short_id", ""),
+            "raw_id": v.get("raw_id", v.get("gene_id", k)),
+            "subgenome": v.get("subgenome", "Other"),
+            "genome_type": v.get("genome_type", ""),
+        } for k, v in tree_label_map.items()},
+        "rectangular_leaf_order": leaf_order,
+        "tree_leaf_count": len(leaf_order),
+        "query_cluster": query_cluster,
+        "cluster_gene_count": len(cluster_genes),
+        "cluster_genes": cluster_genes,
+        "cluster_sub_counts": cluster_sub_counts,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -870,19 +929,17 @@ def _load_tree_text(og: str) -> str:
     return tree_file.read_text(encoding="utf-8") if tree_file.exists() else ""
 
 
-def _prune_tree_to_cluster(cur, og: str, tree: str, cluster: int) -> str:
-    """Prune a tree to one homoeologous cluster. Shared by tree & alignment
-    downloads so they derive from the exact same pruned newick."""
+def _prune_tree_to_cluster(og: str, tree: str, cluster: int) -> str:
+    """Prune a tree to one homoeologous cluster."""
     if not (1 <= cluster <= 7) or not tree:
         return tree
-    cur.execute("SELECT genes FROM orthogroups WHERE og_id = %s LIMIT 1", (og,))
-    row = cur.fetchone()
-    if not row:
+    og_data = _load_orthogroups().get(og)
+    if not og_data:
         return tree
-    genes = [g for g in row["genes"].split() if g]
-    c_genes = _get_cluster_members(genes, cluster, cur)
+    genes = og_data["genes"]
+    c_genes = _get_cluster_members(genes, cluster)
     leaves = _parse_newick_leaves(tree)
-    meta = _fetch_meta(cur, leaves + c_genes)
+    meta = _fetch_meta(leaves + c_genes)
     keep = _build_prune_keep_set(c_genes, meta, leaves)
     if keep:
         pruned = _prune_newick(tree, keep)
@@ -898,18 +955,11 @@ def _prune_tree_to_cluster(cur, og: str, tree: str, cluster: int) -> str:
 @router.get(
     "/download",
     summary="Download gene tree (Newick) or multiple sequence alignment (FASTA)",
-    description="""Download orthogroup data files:
-
-**type=tree** — Gene tree in Newick format. Add `cluster=N` (1-7) to prune to cluster members only.
-
-**type=alignment** — Multiple sequence alignment in FASTA format, ordered by tree leaf order.
-
-Each alignment follows the leaf order of its paired tree.
-""",)
+)
 def download_file(
     og: str = Query(..., description="Orthogroup ID, e.g. OG0001897"),
     type: str = Query("tree", description="File type: 'tree' or 'alignment'"),
-    cluster: int = Query(0, description="Cluster number (1-7) for tree pruning or alignment filtering. 0 = full OG."),
+    cluster: int = Query(0, description="Cluster number (1-7). 0 = full OG."),
 ):
     if not re.match(r"^OG\d+$", og):
         raise HTTPException(400, "Invalid OG ID")
@@ -920,8 +970,7 @@ def download_file(
         if not tree:
             raise HTTPException(404, "Tree file not found")
         if 1 <= cluster <= 7:
-            with mysql_cursor(ORTHOFINDER_DB) as cur:
-                tree = _prune_tree_to_cluster(cur, og, tree, cluster)
+            tree = _prune_tree_to_cluster(og, tree, cluster)
         suffix = f".HomoeologousGroup{cluster}.tree.txt" if cluster else ".tree.txt"
         return PlainTextResponse(
             tree, media_type="text/plain",
@@ -936,31 +985,26 @@ def download_file(
         records, record_order = _parse_alignment(alignment)
         tree = _load_tree_text(og)
 
-        with mysql_cursor(ORTHOFINDER_DB) as cur:
-            tree_leaves_full = _parse_newick_leaves(tree) if tree else []
+        tree_leaves_full = _parse_newick_leaves(tree) if tree else []
 
-            if 1 <= cluster <= 7 and tree:
-                pruned = _prune_tree_to_cluster(cur, og, tree, cluster)
-                leaf_order = _parse_newick_leaves(pruned)
-                include_unmatched = False
+        if 1 <= cluster <= 7 and tree:
+            pruned = _prune_tree_to_cluster(og, tree, cluster)
+            leaf_order = _parse_newick_leaves(pruned)
+            include_unmatched = False
+            og_data = _load_orthogroups().get(og)
+            c_genes_for_meta = []
+            if og_data:
+                c_genes_for_meta = _get_cluster_members(og_data["genes"], cluster)
+            meta = _fetch_meta(tree_leaves_full + list(records.keys()) + c_genes_for_meta)
+        else:
+            leaf_order = tree_leaves_full
+            include_unmatched = True
+            meta = _fetch_meta(tree_leaves_full + list(records.keys()))
 
-                # Get cluster gene IDs and include them in the meta call so
-                # the crosswalk has the gene-level keys needed for leaf→record matching.
-                cur.execute("SELECT genes FROM orthogroups WHERE og_id = %s LIMIT 1", (og,))
-                row = cur.fetchone()
-                c_genes_for_meta = []
-                if row:
-                    genes_all = [g for g in row["genes"].split() if g]
-                    c_genes_for_meta = _get_cluster_members(genes_all, cluster, cur)
-                meta = _fetch_meta(cur, tree_leaves_full + list(records.keys()) + c_genes_for_meta)
-            else:
-                leaf_order = tree_leaves_full
-                include_unmatched = True
-                meta = _fetch_meta(cur, tree_leaves_full + list(records.keys()))
-            ordered = _ordered_record_ids(
-                leaf_order, record_order, records, meta,
-                include_unmatched=include_unmatched,
-            )
+        ordered = _ordered_record_ids(
+            leaf_order, record_order, records, meta,
+            include_unmatched=include_unmatched,
+        )
 
         out_lines = []
         for sid in ordered:
