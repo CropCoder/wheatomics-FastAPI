@@ -266,12 +266,17 @@ async function searchProtein(q) {
         error: ""
       };
 
-      // Show type tree tabs
-      document.getElementById("typeTreeTabs").style.display = "";
-      currentType = "type1";
-      switchTypeTree("type1");
+      // Show both panels stacked vertically
+      document.getElementById("type1Panel").style.display = "";
+      document.getElementById("type2Panel").style.display = "";
+      document.getElementById("treeHeading").textContent =
+        "Homoeologous group " + currentCluster + " Gene Trees";
+      treeClusterLabel.style.display = "none";
 
-      // Cluster tree (original — kept for download logic)
+      renderTypeTree(type1TreeData, "type1");
+      renderTypeTree(type2TreeData, "type2");
+
+      // ---- download wiring (original cluster) ----
       const selectedTree =
         selectClusterTree(
           data,
@@ -281,45 +286,7 @@ async function searchProtein(q) {
       currentClusterTree =
         selectedTree.tree;
 
-      treeDisplayError =
-        selectedTree.error;
-
-      document.getElementById("treeHeading").textContent =
-        "Homoeologous group " +
-        currentCluster +
-        " Gene Tree";
-
-      treeClusterLabel.style.display = "";
-
-      if (selectedTree.tree) {
-        treeClusterLabel.textContent =
-          "Showing " +
-          selectedTree.leafCount +
-          " genes from homoeologous group " +
-          currentCluster +
-          " (full OG has " +
-          data.gene_count +
-          " genes)";
-
-        treeClusterLabel.title =
-          "Tree source: " +
-          selectedTree.source;
-
-        currentParsedTree =
-          parseNewick(
-            selectedTree.tree.trim()
-          );
-      } else {
-        treeClusterLabel.textContent =
-          "Homoeologous group " +
-          currentCluster +
-          " contains " +
-          expectedClusterLeaves +
-          " genes, but a matching pruned tree could not be constructed.";
-
-        treeClusterLabel.title = "";
-        currentParsedTree = null;
-      }
+      treeDisplayError = "";
 
       if (data.debug_prune) {
         console.log(
@@ -1855,29 +1822,7 @@ function escapeHtml(value) {
 function switchTypeTree(typeKey) {
   currentType = typeKey;
   var td = typeKey === "type1" ? type1TreeData : type2TreeData;
-  // Update tab active states
-  var tabs = document.querySelectorAll("#typeTreeTabs .type-tree-tab");
-  tabs.forEach(function(t) { t.classList.remove("active"); });
-  if (typeKey === "type1") tabs[0].classList.add("active");
-  else tabs[1].classList.add("active");
-
-  // Update heading
-  document.getElementById("treeHeading").textContent =
-    "Homoeologous group " + currentCluster + " — " +
-    (typeKey === "type1" ? "Triticum aestivum" : "Triticeae");
-
-  // Update label
-  if (td && td.tree) {
-    document.getElementById("typeTreeLabel").textContent =
-      "Showing " + td.leafCount + " genes from homoeologous group " +
-      currentCluster + " (full cluster has " + (dataRef?.cluster_gene_count || "?") + " genes)";
-  } else {
-    document.getElementById("typeTreeLabel").textContent =
-      "No " + (typeKey === "type1" ? "Triticum aestivum" : "Triticeae") +
-      " genes in this homoeologous group.";
-  }
-
-  // Parse and render the tree
+  // Update tab active states (kept for backward compat — not used in stacked mode)
   if (td && td.tree) {
     currentParsedTree = parseNewick(td.tree.trim());
     treeDisplayError = "";
@@ -1889,5 +1834,117 @@ function switchTypeTree(typeKey) {
   renderTree();
 }
 
-var dataRef = null;  // reference to raw API response for switchTypeTree
+function renderTypeTree(treeData, typeKey) {
+  var svgId = typeKey === "type1" ? "treeSvg1" : "treeSvg2";
+  var labelId = typeKey === "type1" ? "type1TreeLabel" : "type2TreeLabel";
+  var svg = document.getElementById(svgId);
+  var labelEl = document.getElementById(labelId);
+
+  if (!treeData || !treeData.tree) {
+    if (svg) svg.innerHTML = "";
+    if (labelEl) labelEl.textContent = "No genes in this group.";
+    return;
+  }
+
+  if (labelEl) {
+    labelEl.textContent =
+      "Showing " + treeData.leafCount + " genes from homoeologous group " +
+      currentCluster + " (full cluster has " + (dataRef?.cluster_gene_count || "?") + " genes)";
+  }
+
+  // Render using the existing rectangular/circular pipeline
+  var savedTree = currentParsedTree;
+  var savedSvg = null;
+
+  // Temporarily swap globals so renderTree() draws to the correct SVG
+  var origSvgEl = document.getElementById("treeSvg");
+  currentParsedTree = parseNewick(treeData.tree.trim());
+  treeDisplayError = treeData.error || "";
+
+  // Override SVG element temporarily
+  var origTreeSvg = document.getElementById("treeSvg");
+  // Run renderTreeRectangular / renderTreeCircular with treeMode
+  if (svg) {
+    // Render directly to target SVG
+    renderTreeToSvg(svg, currentParsedTree);
+  }
+
+  // Restore
+  currentParsedTree = savedTree;
+}
+
+function renderTreeToSvg(svg, parsedTree) {
+  if (!parsedTree) { svg.innerHTML = ""; return; }
+  // Save current globals
+  var savedParsed = currentParsedTree;
+  var savedSVG = document.getElementById("treeSvg");
+  currentParsedTree = parsedTree;
+  // Build prepared tree for this subtree
+  var prepared = getPreparedTree();
+  if (!prepared) { svg.innerHTML = ""; currentParsedTree = savedParsed; return; }
+
+  var root = prepared.root;
+  var leaves = prepared.leaves;
+  var maxDepth = prepared.maxDepth;
+  var showLabels = leaves.length < 220;
+  var rowHeight = showLabels ? 24 : 12;
+  var top = 42, left = 45;
+  var treeRight = showLabels ? 690 : 1040;
+  var labelX = showLabels ? 820 : 1080;
+  var width = showLabels ? 1900 : 1180;
+  var height = Math.max(720, top * 2 + leaves.length * rowHeight);
+
+  leaves.forEach(function (leaf, index) { leaf.y = top + index * rowHeight; });
+
+  function setNodeY(node) {
+    if (!node.children || node.children.length === 0) return node.y;
+    node.children.forEach(setNodeY);
+    var sum = 0;
+    node.children.forEach(function(c) { sum += c.y; });
+    node.y = sum / node.children.length;
+    return node.y;
+  }
+  setNodeY(root);
+
+  function xCoordinate(depth) {
+    return left + (maxDepth > 0 ? depth / maxDepth : 0) * (treeRight - left);
+  }
+
+  svg.setAttribute("width", width);
+  svg.setAttribute("height", height);
+  svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+
+  var parts = [];
+  function drawNode(node) {
+    if (!node.children || node.children.length === 0) {
+      if (showLabels) {
+        var bx = xCoordinate(node.depth);
+        var label = node.displayLabel || node.name;
+        parts.push('<g class="tree-leaf"><title>' + escapeHtml(label) + ' [' + node.sub + '_subgenome]</title>');
+        parts.push(lineSvg(bx, node.y, labelX - 12, node.y, node.sub, 0.9));
+        parts.push(textSvg(labelX, node.y + 4, label, node.sub, 11, true));
+        parts.push('</g>');
+      }
+      return;
+    }
+    var px = xCoordinate(node.depth);
+    var childY = node.children.map(function(c) { return c.y; });
+    parts.push('<g><title>' + node.numLeaves + ' genes</title>');
+    parts.push(lineSvg(px, Math.min.apply(null, childY), px, Math.max.apply(null, childY), node.sub, 1.6));
+    parts.push('</g>');
+    node.children.forEach(function(child) {
+      parts.push('<g><title>' + child.numLeaves + ' genes</title>');
+      parts.push(lineSvg(px, child.y, xCoordinate(child.depth), child.y, child.sub, 1.6));
+      parts.push('</g>');
+      drawNode(child);
+    });
+  }
+  drawNode(root);
+  svg.innerHTML = parts.join("");
+
+  // Restore
+  currentParsedTree = savedParsed;
+}
+
+var dataRef = null;  // reference to raw API response for renderTypeTree
 
