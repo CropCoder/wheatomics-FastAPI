@@ -402,11 +402,17 @@ function downloadBundle(event, kind) {
       const link = document.createElement("a");
 
       link.href = url;
+      // Hint a download; the server's Content-Disposition wins when present.
+      link.setAttribute("download", "");
       link.style.display = "none";
 
       document.body.appendChild(link);
       link.click();
-      link.remove();
+      // Remove on a later tick — removing immediately after click() can
+      // cancel the download in some browsers before it starts.
+      setTimeout(function () {
+        link.remove();
+      }, 1000);
     }, index * 400);
   });
 }
