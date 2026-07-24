@@ -9,7 +9,10 @@ let currentParsedTree = null;
 let currentPreparedTree = null;
 let treeMode = "rectangular";
 let currentCluster = null;
+let currentType = "type1";  // "type1" | "type2" — current visible sub-tree
 let clusterGeneSet = {};
+let type1TreeData = null;   // {tree, leafCount, source, error}
+let type2TreeData = null;
 
 const SUB_COLORS = {
   A: "#d73027",
@@ -132,6 +135,8 @@ async function searchProtein(q) {
       return;
     }
 
+    dataRef = data;
+
     currentOG = data.orthogroup || "";
     currentTree = data.tree || "";
     currentLabelMap = data.tree_label_map || {};
@@ -247,6 +252,26 @@ async function searchProtein(q) {
       const expectedClusterLeaves =
         Number(data.cluster_gene_count || 0);
 
+      // ---- type1 / type2 sub-trees ----
+      type1TreeData = {
+        tree: data.cluster_tree_type1 || "",
+        leafCount: Number(data.cluster_gene_count_type1 || 0),
+        source: "server-pruned type1 tree",
+        error: ""
+      };
+      type2TreeData = {
+        tree: data.cluster_tree_type2 || "",
+        leafCount: Number(data.cluster_gene_count_type2 || 0),
+        source: "server-pruned type2 tree",
+        error: ""
+      };
+
+      // Show type tree tabs
+      document.getElementById("typeTreeTabs").style.display = "";
+      currentType = "type1";
+      switchTypeTree("type1");
+
+      // Cluster tree (original — kept for download logic)
       const selectedTree =
         selectClusterTree(
           data,
@@ -1826,4 +1851,43 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+function switchTypeTree(typeKey) {
+  currentType = typeKey;
+  var td = typeKey === "type1" ? type1TreeData : type2TreeData;
+  // Update tab active states
+  var tabs = document.querySelectorAll("#typeTreeTabs .type-tree-tab");
+  tabs.forEach(function(t) { t.classList.remove("active"); });
+  if (typeKey === "type1") tabs[0].classList.add("active");
+  else tabs[1].classList.add("active");
+
+  // Update heading
+  document.getElementById("treeHeading").textContent =
+    "Homoeologous group " + currentCluster + " — " +
+    (typeKey === "type1" ? "Triticum aestivum" : "Triticeae");
+
+  // Update label
+  if (td && td.tree) {
+    document.getElementById("typeTreeLabel").textContent =
+      "Showing " + td.leafCount + " genes from homoeologous group " +
+      currentCluster + " (full cluster has " + (dataRef?.cluster_gene_count || "?") + " genes)";
+  } else {
+    document.getElementById("typeTreeLabel").textContent =
+      "No " + (typeKey === "type1" ? "Triticum aestivum" : "Triticeae") +
+      " genes in this homoeologous group.";
+  }
+
+  // Parse and render the tree
+  if (td && td.tree) {
+    currentParsedTree = parseNewick(td.tree.trim());
+    treeDisplayError = "";
+  } else {
+    currentParsedTree = null;
+    treeDisplayError = td ? td.error : "No tree data";
+  }
+  currentPreparedTree = null;
+  renderTree();
+}
+
+var dataRef = null;  // reference to raw API response for switchTypeTree
 

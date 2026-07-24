@@ -64,6 +64,7 @@ def _load_cluster_map() -> tuple[dict, dict]:
         return _cluster_cache
     prefix_map: dict[str, int] = {}
     chrom_map: dict[str, int] = {}
+    _type_map: dict = {}
     if CLUSTER_FILE.exists():
         for line in CLUSTER_FILE.read_text(encoding="utf-8").splitlines()[1:]:
             cols = line.split(_TAB)
@@ -77,8 +78,30 @@ def _load_cluster_map() -> tuple[dict, dict]:
                     chrom_map[val.lower()] = c
                 else:
                     prefix_map[val] = c
+                    # collect type1/type2 classification for this prefix row
+                    t1 = (cols[8].strip().lower() if len(cols) > 8 else "no")
+                    t2 = (cols[9].strip().lower() if len(cols) > 9 else "no")
+                    _type_map[val] = (t1, t2)
     _cluster_cache = (prefix_map, chrom_map)
+    global _type_map_cache
+    if _type_map_cache is None:
+        _type_map_cache = _type_map
     return _cluster_cache
+
+def _load_type_map() -> dict:
+    """Return type classification cache: {gene_prefix: [type1_yesno, type2_yesno]}.
+    Lazy-loaded on first _load_cluster_map call."""
+    _load_cluster_map()
+    return _type_map_cache if _type_map_cache is not None else {}
+
+def _get_type_for_gene(gene_id: str) -> tuple[str, str]:
+    """Return (type1, type2) for a gene_id — 'yes' or 'no' per column."""
+    gene_id = _clean(gene_id)
+    type_map = _load_type_map()
+    for pfx in _get_sorted_prefixes():
+        if pfx in type_map and gene_id.lower().startswith(pfx.lower()):
+            return type_map[pfx][0], type_map[pfx][1]
+    return "no", "no"
 
 def _get_sorted_prefixes() -> list:
     global _sorted_prefixes
@@ -90,6 +113,9 @@ def _get_sorted_prefixes() -> list:
 
 #: gene_id → chromosome, lazily populated from BED files
 _bed_chromosome_cache: dict | None = None
+
+#: type classification cache — per row(gene_prefix → type1/type2)
+_type_map_cache: dict | None = None
 
 def _load_bed_chromosome_map() -> dict:
     """Build gene_id → chromosome dict from *.filter.bed files (lazy + cached).
@@ -952,7 +978,24 @@ def search_orthogroup(
         info = meta.get(g, _make_info("", g, "", ""))
         cluster_sub_counts[_norm_sub(info["subgenome"])] += 1
 
-    # Build cluster tree
+    # ---- type1 / type2 split ----
+    cluster_genes_type1 = [g for g in cluster_genes if _get_type_for_gene(g)[0] == "yes"]
+    cluster_genes_type2 = [g for g in cluster_genes if _get_type_for_gene(g)[1] == "yes"]
+
+    def _prune_typed_tree(type_genes):
+        """Prune the full OG tree to a subset of cluster genes (type1 or type2)."""
+        if not type_genes or not tree:
+            return ""
+        keep = _build_prune_keep_set(type_genes, meta, _parse_newick_leaves(tree))
+        if keep:
+            pruned = _prune_newick(tree, keep)
+            return pruned if pruned else ""
+        return ""
+
+    cluster_tree_type1 = _prune_typed_tree(cluster_genes_type1)
+    cluster_tree_type2 = _prune_typed_tree(cluster_genes_type2)
+
+    # Build cluster tree (original — all cluster genes)
     cluster_tree = ""
     debug_prune = {}
     if query_cluster is not None and tree:
@@ -980,6 +1023,12 @@ def search_orthogroup(
         "query": q, "orthogroup": og_id, "gene_count": gene_count,
         "sub_counts": sub_counts, "tree": tree,
         "cluster_tree": cluster_tree, "debug_prune": debug_prune,
+        "cluster_tree_type1": cluster_tree_type1,
+        "cluster_tree_type2": cluster_tree_type2,
+        "cluster_genes_type1": cluster_genes_type1,
+        "cluster_genes_type2": cluster_genes_type2,
+        "cluster_gene_count_type1": len(cluster_genes_type1),
+        "cluster_gene_count_type2": len(cluster_genes_type2),
         "tree_label_map": {k: {
             "full_label": v.get("full_label", v.get("label", k)),
             "gene_id": v.get("gene_id", k),
