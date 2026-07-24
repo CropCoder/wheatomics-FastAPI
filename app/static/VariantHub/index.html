@@ -355,7 +355,7 @@ function currentDatasetMeta() {
 
 function updateDatasetSource() {
   var meta = currentDatasetMeta();
-  $('#dataset-source').text(meta ? meta.source : '');
+  $('#dataset-source').html(meta ? linkifySource(meta.source) : '');
 }
 
 // =====================================================================
@@ -377,7 +377,7 @@ function loadDatasetInfo() {
       var d = resp.data;
       var html = '<p><strong>' + escapeHtml(d.label) + '</strong> &nbsp;·&nbsp; ' +
         escapeHtml(d.reference_display) + ' &nbsp;·&nbsp; ' +
-        '<span class="text-muted">' + escapeHtml(d.source) + '</span></p>';
+        '<span class="text-muted">' + linkifySource(d.source) + '</span></p>';
       html += '<p><strong>' + d.n_samples + '</strong> samples</p>';
       if (d.has_sample_meta) {
         html += '<div id="sample-meta-section"></div>';
@@ -667,7 +667,7 @@ function renderReferences() {
   referencesData.forEach(function(ref) {
     html += '<p><strong>' + escapeHtml(ref.display) + '</strong></p><ol>';
     ref.datasets.forEach(function(ds) {
-      html += '<li>' + escapeHtml(ds.label) + ' — ' + escapeHtml(ds.source) + '</li>';
+      html += '<li>' + escapeHtml(ds.label) + ' — ' + linkifySource(ds.source) + '</li>';
     });
     html += '</ol>';
   });
@@ -724,6 +724,18 @@ function escapeHtml(value) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+// Escape, then turn doi:/PMID/PMC identifiers into clickable links.
+function linkifySource(text) {
+  var html = escapeHtml(text);
+  html = html.replace(/doi:\s*(10\.\d{4,9}\/[^\s)]+)/gi,
+    '<a href="https://doi.org/$1" target="_blank" rel="noopener">doi:$1</a>');
+  html = html.replace(/\bPMID\s*(\d+)/gi,
+    '<a href="https://pubmed.ncbi.nlm.nih.gov/$1/" target="_blank" rel="noopener">PMID $1</a>');
+  html = html.replace(/\bPMC\s*(\d+)/gi,
+    '<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC$1/" target="_blank" rel="noopener">PMC$1</a>');
+  return html;
 }
 </script>
 </body>
