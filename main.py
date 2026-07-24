@@ -88,7 +88,7 @@ app = FastAPI(
         "<tr><td><b>GO/KEGG Enrichment</b></td><td><code>/api/go-kegg</code></td>"
         "<td>GO/KEGG 富集分析：超几何检验 + Benjamini-Hochberg FDR 校正，支持气泡图可视化</td></tr>"
         "<tr><td><b>VariantHub</b></td><td><code>/api/VariantHub/query</code></td>"
-        "<td>VCF 变异查询：按基因组分组的 25 个群体变异数据集（IWGSCv1.0 / IWGSCv2.1），支持区间/变异 ID 查询与样本子集过滤（bcftools）</td></tr>"
+        "<td>VCF 变异查询：按基因组分组的 26 个群体变异数据集（IWGSCv1.0 / IWGSCv2.1），支持区间/变异 ID 查询与样本子集过滤（bcftools）</td></tr>"
         "</table>"
 
         "<h2>AI Agent 接入 (MCP)</h2>"
