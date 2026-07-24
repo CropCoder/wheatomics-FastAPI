@@ -1,0 +1,4455 @@
+{
+ "dataset": "all491_cnv_snp_indel",
+ "source_file": "分组信息.xlsx",
+ "fields": [
+  {
+   "key": "group",
+   "label": "Group"
+  },
+  {
+   "key": "species",
+   "label": "Species"
+  },
+  {
+   "key": "name",
+   "label": "Name"
+  },
+  {
+   "key": "country",
+   "label": "Country"
+  },
+  {
+   "key": "latitude",
+   "label": "Latitude"
+  },
+  {
+   "key": "longitude",
+   "label": "Longitude"
+  },
+  {
+   "key": "growth_habitate",
+   "label": "Growth habitate"
+  }
+ ],
+ "samples": {
+  "1496A": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JiMai 20",
+   "country": "CHN",
+   "latitude": "36.4",
+   "longitude": "117",
+   "growth_habitate": "Winter"
+  },
+  "1497B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "86PK1308-001.07",
+   "country": "PAK",
+   "latitude": "36.3",
+   "longitude": "74.5",
+   "growth_habitate": "Winter"
+  },
+  "1498B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "HuangMangBai",
+   "country": "CHN",
+   "latitude": "31",
+   "longitude": "120",
+   "growth_habitate": "Winter"
+  },
+  "1499B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "W157",
+   "country": "IND",
+   "latitude": "33.2",
+   "longitude": "75.6",
+   "growth_habitate": "Spring"
+  },
+  "1500B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "K35",
+   "country": "CHN",
+   "latitude": "36.4",
+   "longitude": "117",
+   "growth_habitate": "Spring"
+  },
+  "1503A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "79TK112-1067B",
+   "country": "TUR",
+   "latitude": "40",
+   "longitude": "41.3",
+   "growth_habitate": "Spring"
+  },
+  "1504B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 57902",
+   "country": "IND",
+   "latitude": "34.3",
+   "longitude": "75.3",
+   "growth_habitate": "Winter"
+  },
+  "1505B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 366582",
+   "country": "AFG",
+   "latitude": "33.8",
+   "longitude": "62.2",
+   "growth_habitate": "Spring"
+  },
+  "1506A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 125367",
+   "country": "AFG",
+   "latitude": "36.1",
+   "longitude": "68.7",
+   "growth_habitate": "Spring"
+  },
+  "1508B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "TAM 202",
+   "country": "USA",
+   "latitude": "31.39",
+   "longitude": "-98.5",
+   "growth_habitate": "Winter"
+  },
+  "1510B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "4B269-10-10-15-2-3",
+   "country": "CHN",
+   "latitude": "34.4",
+   "longitude": "113.4",
+   "growth_habitate": "Winter"
+  },
+  "1511B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Fuller",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1512B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YuMai 57",
+   "country": "CHN",
+   "latitude": "34.6",
+   "longitude": "113",
+   "growth_habitate": "Semi-winter"
+  },
+  "1513B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Cougar",
+   "country": "USA",
+   "latitude": "41.58",
+   "longitude": "-99.6",
+   "growth_habitate": "Winter"
+  },
+  "1514B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Misria",
+   "country": "IRQ",
+   "latitude": "33.2",
+   "longitude": "43.7",
+   "growth_habitate": "Spring"
+  },
+  "1517B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TJK04-379",
+   "country": "TJK",
+   "latitude": "38.5",
+   "longitude": "69.2",
+   "growth_habitate": "Spring"
+  },
+  "1518B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Hawasia",
+   "country": "IRQ",
+   "latitude": "33.2",
+   "longitude": "43.7",
+   "growth_habitate": "Spring"
+  },
+  "1519B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Karakilcik",
+   "country": "TUR",
+   "latitude": "38.7",
+   "longitude": "44",
+   "growth_habitate": "Spring"
+  },
+  "1520B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhengZi 8709-4-4",
+   "country": "CHN",
+   "latitude": "34.4",
+   "longitude": "113.4",
+   "growth_habitate": "Spring"
+  },
+  "1521B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TJK04-3",
+   "country": "TJK",
+   "latitude": "38.4",
+   "longitude": "68.7",
+   "growth_habitate": "Spring"
+  },
+  "1523B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Kirmizi Yazlik",
+   "country": "TUR",
+   "latitude": "37.9",
+   "longitude": "40.7",
+   "growth_habitate": "Spring"
+  },
+  "1524B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Kandihari",
+   "country": "TUR",
+   "latitude": "37.2",
+   "longitude": "40.6",
+   "growth_habitate": "Spring"
+  },
+  "1525B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 80736",
+   "country": "AFG",
+   "latitude": "36.7",
+   "longitude": "67.1",
+   "growth_habitate": "Winter"
+  },
+  "1526B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Laredo",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1527B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Bond CL",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1528B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "WanYuanXuan 9",
+   "country": "CHN",
+   "latitude": "33",
+   "longitude": "112.52",
+   "growth_habitate": "Winter"
+  },
+  "1529B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Crimson",
+   "country": "USA",
+   "latitude": "44.33",
+   "longitude": "-100.27",
+   "growth_habitate": "Winter"
+  },
+  "1530B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Gandom",
+   "country": "AFG",
+   "latitude": "34.6",
+   "longitude": "65.8",
+   "growth_habitate": "Spring"
+  },
+  "1531B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 289819",
+   "country": "IRN",
+   "latitude": "30.9",
+   "longitude": "49.5",
+   "growth_habitate": "Spring"
+  },
+  "1532B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XinMai 9817",
+   "country": "CHN",
+   "latitude": "35.2",
+   "longitude": "113.6",
+   "growth_habitate": "Spring"
+  },
+  "1533B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TJK2006:204",
+   "country": "TJK",
+   "latitude": "38.9",
+   "longitude": "71.3",
+   "growth_habitate": "Spring"
+  },
+  "1534B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiaoYan 92",
+   "country": "CHN",
+   "latitude": "34.2",
+   "longitude": "108.6",
+   "growth_habitate": "Spring"
+  },
+  "1535B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Arrowsmith",
+   "country": "USA",
+   "latitude": "41.58",
+   "longitude": "-99.6",
+   "growth_habitate": "Winter"
+  },
+  "1536B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 537977",
+   "country": "TUR",
+   "latitude": "37.8",
+   "longitude": "38.9",
+   "growth_habitate": "-"
+  },
+  "1537B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TJK03-194",
+   "country": "TJK",
+   "latitude": "37.4",
+   "longitude": "71.6",
+   "growth_habitate": "Winter"
+  },
+  "1538B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShanNong 05-066",
+   "country": "CHN",
+   "latitude": "36.1",
+   "longitude": "117.1",
+   "growth_habitate": "Semi-winter"
+  },
+  "1539B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShiMai 15",
+   "country": "CHN",
+   "latitude": "38",
+   "longitude": "114.3",
+   "growth_habitate": "Winter"
+  },
+  "1540B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "L8",
+   "country": "CHN",
+   "latitude": "31.8",
+   "longitude": "120.3",
+   "growth_habitate": "Winter"
+  },
+  "1541B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "WB411W",
+   "country": "USA",
+   "latitude": "45.7",
+   "longitude": "-111.2",
+   "growth_habitate": "Winter"
+  },
+  "1542B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "IWA8604270",
+   "country": "IRN",
+   "latitude": "35.6",
+   "longitude": "47",
+   "growth_habitate": "Winter"
+  },
+  "1543B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Cankiri",
+   "country": "TUR",
+   "latitude": "38.6",
+   "longitude": "39.3",
+   "growth_habitate": "Spring"
+  },
+  "1544B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "86PK1272-001.00",
+   "country": "PAK",
+   "latitude": "36.3",
+   "longitude": "74.3",
+   "growth_habitate": "Spring"
+  },
+  "1545B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 211637",
+   "country": "AFG",
+   "latitude": "32.4",
+   "longitude": "62.1",
+   "growth_habitate": "Spring"
+  },
+  "1547B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "GaoMai 8901",
+   "country": "CHN",
+   "latitude": "38",
+   "longitude": "114.3",
+   "growth_habitate": "Winter"
+  },
+  "1548B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "HanMai 13",
+   "country": "CHN",
+   "latitude": "36.4",
+   "longitude": "114.3",
+   "growth_habitate": "Winter"
+  },
+  "1549B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "TAM 303",
+   "country": "USA",
+   "latitude": "31.39",
+   "longitude": "-98.5",
+   "growth_habitate": "Winter"
+  },
+  "1551B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XinMai 18",
+   "country": "CHN",
+   "latitude": "35.2",
+   "longitude": "113.6",
+   "growth_habitate": "Winter"
+  },
+  "1552B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Antelope",
+   "country": "USA",
+   "latitude": "41.58",
+   "longitude": "-99.6",
+   "growth_habitate": "Winter"
+  },
+  "1553B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "PH82-2-2",
+   "country": "CHN",
+   "latitude": "36.7007",
+   "longitude": "117.101",
+   "growth_habitate": "Winter"
+  },
+  "1555B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Chul",
+   "country": "UZB",
+   "latitude": "40.1",
+   "longitude": "67.83",
+   "growth_habitate": "-"
+  },
+  "1556B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "HongYouZi",
+   "country": "CHN",
+   "latitude": "33.13",
+   "longitude": "111.48",
+   "growth_habitate": "Winter"
+  },
+  "1558B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "FAO 33.213",
+   "country": "PAK",
+   "latitude": "33.6",
+   "longitude": "73.1",
+   "growth_habitate": "Winter"
+  },
+  "1559B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Shi B05-7388",
+   "country": "CHN",
+   "latitude": "38",
+   "longitude": "114.3",
+   "growth_habitate": "Winter"
+  },
+  "1560B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Santa Fe",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1561B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Homara Mania",
+   "country": "IRQ",
+   "latitude": "33.2",
+   "longitude": "43.7",
+   "growth_habitate": "Spring"
+  },
+  "1563B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TJK2006:335",
+   "country": "TJK",
+   "latitude": "39.2",
+   "longitude": "68.7",
+   "growth_habitate": "Spring"
+  },
+  "1564B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Dame",
+   "country": "IRN",
+   "latitude": "37.5",
+   "longitude": "45.2",
+   "growth_habitate": "Spring"
+  },
+  "1565B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Yosifia",
+   "country": "IRQ",
+   "latitude": "33.2",
+   "longitude": "43.7",
+   "growth_habitate": "Spring"
+  },
+  "1566B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Platte",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1567B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Halt",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1568B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "TAM 107",
+   "country": "USA",
+   "latitude": "31.39",
+   "longitude": "-98.5",
+   "growth_habitate": "Winter"
+  },
+  "1569B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 177973",
+   "country": "TUR",
+   "latitude": "37.7",
+   "longitude": "44.6",
+   "growth_habitate": "Spring"
+  },
+  "1570B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Neosho",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1571B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Chang 6154",
+   "country": "CHN",
+   "latitude": "36.1",
+   "longitude": "113.1",
+   "growth_habitate": "Winter"
+  },
+  "1572B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Windstar",
+   "country": "USA",
+   "latitude": "41.58",
+   "longitude": "-99.6",
+   "growth_habitate": "Winter"
+  },
+  "1575B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "K2003-55",
+   "country": "KAZ",
+   "latitude": "48",
+   "longitude": "66.9",
+   "growth_habitate": "Winter"
+  },
+  "1576B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Shi 5033",
+   "country": "CHN",
+   "latitude": "38",
+   "longitude": "114.3",
+   "growth_habitate": "Spring"
+  },
+  "1577B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TJK03-195",
+   "country": "TJK",
+   "latitude": "37.4",
+   "longitude": "71.6",
+   "growth_habitate": "Winter"
+  },
+  "1578B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "86PK1306-002.00",
+   "country": "PAK",
+   "latitude": "36.3",
+   "longitude": "74.3",
+   "growth_habitate": "Spring"
+  },
+  "1579B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Homara",
+   "country": "IRQ",
+   "latitude": "33.2",
+   "longitude": "43.7",
+   "growth_habitate": "Spring"
+  },
+  "1580A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Mania",
+   "country": "IRQ",
+   "latitude": "33.2",
+   "longitude": "43.7",
+   "growth_habitate": "Spring"
+  },
+  "1581B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JiMai 585",
+   "country": "CHN",
+   "latitude": "38",
+   "longitude": "114.3",
+   "growth_habitate": "Winter"
+  },
+  "1582B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Alice",
+   "country": "USA",
+   "latitude": "44.33",
+   "longitude": "-100.27",
+   "growth_habitate": "Winter"
+  },
+  "1583B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Gandom-i-Safade",
+   "country": "AFG",
+   "latitude": "34.4",
+   "longitude": "67",
+   "growth_habitate": "Spring"
+  },
+  "1585B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "C104",
+   "country": "CHN",
+   "latitude": "32",
+   "longitude": "114",
+   "growth_habitate": "Winter"
+  },
+  "1586B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Burchett",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1587B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Goodstreak",
+   "country": "USA",
+   "latitude": "41.58",
+   "longitude": "-99.6",
+   "growth_habitate": "Winter"
+  },
+  "1588B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "BaiMangXiaoMai",
+   "country": "CHN",
+   "latitude": "31",
+   "longitude": "120",
+   "growth_habitate": "Winter"
+  },
+  "1590B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShanYou 225",
+   "country": "CHN",
+   "latitude": "34.5",
+   "longitude": "108.5",
+   "growth_habitate": "Winter"
+  },
+  "1591B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Betty",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1592B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhouMai 13",
+   "country": "CHN",
+   "latitude": "33.4",
+   "longitude": "114.4",
+   "growth_habitate": "Winter"
+  },
+  "1593B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Floransa",
+   "country": "TUR",
+   "latitude": "37",
+   "longitude": "35.3",
+   "growth_habitate": "Spring"
+  },
+  "1594B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 178030",
+   "country": "TUR",
+   "latitude": "39.78",
+   "longitude": "40.39",
+   "growth_habitate": "-"
+  },
+  "1595B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "TaiShan 4033",
+   "country": "CHN",
+   "latitude": "36.1",
+   "longitude": "117",
+   "growth_habitate": "Winter"
+  },
+  "1596B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Rowdy",
+   "country": "USA",
+   "latitude": "39.79",
+   "longitude": "-85.99",
+   "growth_habitate": "Winter"
+  },
+  "1597B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhouMai 16",
+   "country": "CHN",
+   "latitude": "33.4",
+   "longitude": "114.4",
+   "growth_habitate": "Winter"
+  },
+  "1598B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YuMai 62",
+   "country": "CHN",
+   "latitude": "34.6",
+   "longitude": "113",
+   "growth_habitate": "Winter"
+  },
+  "1599B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Ripper",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1600B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "OK00421",
+   "country": "USA",
+   "latitude": "35.4",
+   "longitude": "-97.17",
+   "growth_habitate": "Winter"
+  },
+  "1601B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YuMai 34",
+   "country": "CHN",
+   "latitude": "34.6",
+   "longitude": "113",
+   "growth_habitate": "Spring"
+  },
+  "1602B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "IWA8614070",
+   "country": "IRN",
+   "latitude": "32.7",
+   "longitude": "51.7",
+   "growth_habitate": "Winter"
+  },
+  "1603B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "B-872",
+   "country": "TUR",
+   "latitude": "40",
+   "longitude": "41.5",
+   "growth_habitate": "Spring"
+  },
+  "1604B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "K17",
+   "country": "CHN",
+   "latitude": "31.8",
+   "longitude": "120.3",
+   "growth_habitate": "Winter"
+  },
+  "1605B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiaoYan 54",
+   "country": "CHN",
+   "latitude": "34.2",
+   "longitude": "108.6",
+   "growth_habitate": "Winter"
+  },
+  "1606B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Type No. 23-2",
+   "country": "PAK",
+   "latitude": "30.3",
+   "longitude": "71.1",
+   "growth_habitate": "Spring"
+  },
+  "1607B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 70622",
+   "country": "CHN",
+   "latitude": "50.3",
+   "longitude": "127.5",
+   "growth_habitate": "Spring"
+  },
+  "1608B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Kalvesta",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1609B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 366569",
+   "country": "AFG",
+   "latitude": "33.8",
+   "longitude": "62.2",
+   "growth_habitate": "Spring"
+  },
+  "1610B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JiaoMai 668",
+   "country": "CHN",
+   "latitude": "35.1",
+   "longitude": "113.1",
+   "growth_habitate": "Winter"
+  },
+  "1611B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "86PK1304-001.00",
+   "country": "PAK",
+   "latitude": "36",
+   "longitude": "74.4",
+   "growth_habitate": "Spring"
+  },
+  "1612B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Thunderbolt",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1613B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "WanMai 19",
+   "country": "CHN",
+   "latitude": "31.5",
+   "longitude": "117.2",
+   "growth_habitate": "Winter"
+  },
+  "1614B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Type No. 25",
+   "country": "PAK",
+   "latitude": "31.9",
+   "longitude": "72.2",
+   "growth_habitate": "Spring"
+  },
+  "1616B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Damaskus 6",
+   "country": "SYR",
+   "latitude": "34.8",
+   "longitude": "39",
+   "growth_habitate": "Spring"
+  },
+  "1617B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiaoYan 15",
+   "country": "CHN",
+   "latitude": "34.2",
+   "longitude": "108.6",
+   "growth_habitate": "Spring"
+  },
+  "1618B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "79TK104-552B",
+   "country": "TUR",
+   "latitude": "40.8",
+   "longitude": "43.1",
+   "growth_habitate": "Spring"
+  },
+  "1619B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "NongDa 135",
+   "country": "CHN",
+   "latitude": "39.5",
+   "longitude": "116.2",
+   "growth_habitate": "Winter"
+  },
+  "1620B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Heyne",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1621B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "NongDa 179",
+   "country": "CHN",
+   "latitude": "39.5",
+   "longitude": "116.2",
+   "growth_habitate": "Winter"
+  },
+  "1622B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Jing 411",
+   "country": "CHN",
+   "latitude": "39.5",
+   "longitude": "116.2",
+   "growth_habitate": "Winter"
+  },
+  "1623B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Shi 4185",
+   "country": "CHN",
+   "latitude": "38",
+   "longitude": "114.3",
+   "growth_habitate": "Winter"
+  },
+  "1624B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Sturdy 2K",
+   "country": "USA",
+   "latitude": "31.39",
+   "longitude": "-98.5",
+   "growth_habitate": "Winter"
+  },
+  "1625B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TU86-14-04-1",
+   "country": "TUR",
+   "latitude": "38",
+   "longitude": "42.1",
+   "growth_habitate": "Spring"
+  },
+  "1626B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Ogallala",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1627B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Hong Huo Mai",
+   "country": "CHN",
+   "latitude": "39",
+   "longitude": "116",
+   "growth_habitate": "Winter"
+  },
+  "1628B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YuZhan 89106",
+   "country": "CHN",
+   "latitude": "35",
+   "longitude": "114.28",
+   "growth_habitate": "Winter"
+  },
+  "1629B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Kasisik",
+   "country": "TUR",
+   "latitude": "36.7",
+   "longitude": "38.9",
+   "growth_habitate": "Spring"
+  },
+  "1630B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhengYuMai9987",
+   "country": "CHN",
+   "latitude": "34.4",
+   "longitude": "113.4",
+   "growth_habitate": "Winter"
+  },
+  "1631B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Trego",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1632B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "PuYu 1",
+   "country": "CHN",
+   "latitude": "35.5",
+   "longitude": "115",
+   "growth_habitate": "Winter"
+  },
+  "1633B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 70697",
+   "country": "IRQ",
+   "latitude": "33.2",
+   "longitude": "43.7",
+   "growth_habitate": "Spring"
+  },
+  "1634B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Ok101",
+   "country": "USA",
+   "latitude": "35.4",
+   "longitude": "-97.17",
+   "growth_habitate": "Winter"
+  },
+  "1635B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 70696",
+   "country": "IRQ",
+   "latitude": "33.2",
+   "longitude": "43.7",
+   "growth_habitate": "Spring"
+  },
+  "1636B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "WenMai 8",
+   "country": "CHN",
+   "latitude": "27.6",
+   "longitude": "120.4",
+   "growth_habitate": "Winter"
+  },
+  "1637B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Shavano",
+   "country": "USA",
+   "latitude": "45.7",
+   "longitude": "-111.2",
+   "growth_habitate": "Winter"
+  },
+  "1638B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Yumusak B",
+   "country": "TUR",
+   "latitude": "40.6",
+   "longitude": "43.1",
+   "growth_habitate": "Spring"
+  },
+  "1639B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Z39-DaLiLengJiao",
+   "country": "CHN",
+   "latitude": "39.5",
+   "longitude": "116.2",
+   "growth_habitate": "Winter"
+  },
+  "1640B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Tirmai",
+   "country": "AFG",
+   "latitude": "35.6",
+   "longitude": "69.5",
+   "growth_habitate": "Winter"
+  },
+  "1641B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuMai 5",
+   "country": "CHN",
+   "latitude": "36.1",
+   "longitude": "117.1",
+   "growth_habitate": "Winter"
+  },
+  "1642B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 182756",
+   "country": "TUR",
+   "latitude": "38.2",
+   "longitude": "37.2",
+   "growth_habitate": "Spring"
+  },
+  "1643B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "TAM 112",
+   "country": "USA",
+   "latitude": "31.39",
+   "longitude": "-98.5",
+   "growth_habitate": "Winter"
+  },
+  "1644B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JiMai 19",
+   "country": "CHN",
+   "latitude": "36.4",
+   "longitude": "117",
+   "growth_habitate": "Winter"
+  },
+  "1645B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PNE 226-2",
+   "country": "PAK",
+   "latitude": "30.9",
+   "longitude": "67",
+   "growth_habitate": "Spring"
+  },
+  "1646B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Oro Blanco",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1647B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "79TK098-516",
+   "country": "TUR",
+   "latitude": "40.8",
+   "longitude": "43.3",
+   "growth_habitate": "Spring"
+  },
+  "1649B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Xinyang 75256",
+   "country": "CHN",
+   "latitude": "32.1",
+   "longitude": "114.1",
+   "growth_habitate": "Winter"
+  },
+  "1650B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Stanton",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1651B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Harding",
+   "country": "USA",
+   "latitude": "44.33",
+   "longitude": "-100.27",
+   "growth_habitate": "Winter"
+  },
+  "1652B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 72768",
+   "country": "CHN",
+   "latitude": "45.2",
+   "longitude": "124.8",
+   "growth_habitate": "Spring"
+  },
+  "1653B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Tomahauk",
+   "country": "USA",
+   "latitude": "42.5",
+   "longitude": "-93.3",
+   "growth_habitate": "Winter"
+  },
+  "1654B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuoMai 6",
+   "country": "CHN",
+   "latitude": "33.3",
+   "longitude": "114",
+   "growth_habitate": "Winter"
+  },
+  "1655B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiNong 2208",
+   "country": "CHN",
+   "latitude": "34.2",
+   "longitude": "108",
+   "growth_habitate": "Spring"
+  },
+  "1656B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Jagger",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1657B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YuMai 18",
+   "country": "CHN",
+   "latitude": "34.6",
+   "longitude": "113",
+   "growth_habitate": "Winter"
+  },
+  "1658B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "2137",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1659B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Nekota",
+   "country": "USA",
+   "latitude": "44.33",
+   "longitude": "-100.27",
+   "growth_habitate": "Winter"
+  },
+  "1661B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Type No. 14",
+   "country": "PAK",
+   "latitude": "31",
+   "longitude": "72",
+   "growth_habitate": "Spring"
+  },
+  "1662B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Wendy",
+   "country": "USA",
+   "latitude": "44.33",
+   "longitude": "-100.27",
+   "growth_habitate": "-"
+  },
+  "1663B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "79TK100-531A-2",
+   "country": "TUR",
+   "latitude": "41",
+   "longitude": "43.3",
+   "growth_habitate": "Spring"
+  },
+  "1664B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Ponderosa",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1665B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuoHan 8",
+   "country": "CHN",
+   "latitude": "34.4",
+   "longitude": "112.3",
+   "growth_habitate": "Winter"
+  },
+  "1666B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Shan 229",
+   "country": "CHN",
+   "latitude": "33.3",
+   "longitude": "107.25",
+   "growth_habitate": "Winter"
+  },
+  "1667B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 171028",
+   "country": "TUR",
+   "latitude": "37.9",
+   "longitude": "40.2",
+   "growth_habitate": "Spring"
+  },
+  "1668B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Guang Siu Zi",
+   "country": "CHN",
+   "latitude": "32",
+   "longitude": "118.8",
+   "growth_habitate": "Winter"
+  },
+  "1669B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "IWA8608636",
+   "country": "IRN",
+   "latitude": "34.8",
+   "longitude": "48.6",
+   "growth_habitate": "Winter"
+  },
+  "1670B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Hatcher",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1671B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Harry",
+   "country": "USA",
+   "latitude": "41.58",
+   "longitude": "-99.6",
+   "growth_habitate": "Winter"
+  },
+  "1672B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Kendiharia",
+   "country": "IRQ",
+   "latitude": "33.2",
+   "longitude": "43.7",
+   "growth_habitate": "Spring"
+  },
+  "1674B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Aleppo 32",
+   "country": "SYR",
+   "latitude": "34.8",
+   "longitude": "39",
+   "growth_habitate": "Spring"
+  },
+  "1675B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Type No. 7",
+   "country": "PAK",
+   "latitude": "31",
+   "longitude": "72",
+   "growth_habitate": "Spring"
+  },
+  "1676B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YuBao 1",
+   "country": "CHN",
+   "latitude": "32.13",
+   "longitude": "114.07",
+   "growth_habitate": "Winter"
+  },
+  "1677B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JinNong 207",
+   "country": "CHN",
+   "latitude": "37.5",
+   "longitude": "112.3",
+   "growth_habitate": "Winter"
+  },
+  "1678B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "IWA8607807",
+   "country": "IRN",
+   "latitude": "34.3",
+   "longitude": "47.1",
+   "growth_habitate": "Winter"
+  },
+  "1679B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XinMai 208",
+   "country": "CHN",
+   "latitude": "35.2",
+   "longitude": "113.6",
+   "growth_habitate": "Spring"
+  },
+  "1680B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "AiZao 8",
+   "country": "CHN",
+   "latitude": "34",
+   "longitude": "114",
+   "growth_habitate": "Winter"
+  },
+  "1681B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 366575",
+   "country": "AFG",
+   "latitude": "32.4",
+   "longitude": "62",
+   "growth_habitate": "Winter"
+  },
+  "1682B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Above",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1683B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "KeNong 199",
+   "country": "CHN",
+   "latitude": "38",
+   "longitude": "114.3",
+   "growth_habitate": "Spring"
+  },
+  "1684B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "IWA8604735",
+   "country": "IRN",
+   "latitude": "30.3",
+   "longitude": "57.1",
+   "growth_habitate": "Winter"
+  },
+  "1685B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "IWA8604731",
+   "country": "IRN",
+   "latitude": "30.3",
+   "longitude": "57.1",
+   "growth_habitate": "Spring"
+  },
+  "1686B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "HuLuTou",
+   "country": "CHN",
+   "latitude": "39.56",
+   "longitude": "116.06",
+   "growth_habitate": "Winter"
+  },
+  "1687B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "HuaPei 6",
+   "country": "CHN",
+   "latitude": "32.13",
+   "longitude": "114.07",
+   "growth_habitate": "Winter"
+  },
+  "1688B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "KeNong 2009",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.48",
+   "growth_habitate": "-"
+  },
+  "1689B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "ok Bullet",
+   "country": "USA",
+   "latitude": "35.4",
+   "longitude": "-97.17",
+   "growth_habitate": "Winter"
+  },
+  "1690B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "L3B",
+   "country": "CHN",
+   "latitude": "31.8",
+   "longitude": "120.3",
+   "growth_habitate": "Winter"
+  },
+  "1691B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 366577",
+   "country": "AFG",
+   "latitude": "32.8",
+   "longitude": "62.7",
+   "growth_habitate": "Spring"
+  },
+  "1693B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 119342",
+   "country": "TUR",
+   "latitude": "38.6",
+   "longitude": "38.3",
+   "growth_habitate": "Spring"
+  },
+  "1694B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Sadabozu 1",
+   "country": "JPN",
+   "latitude": "31.9",
+   "longitude": "131.4",
+   "growth_habitate": "Winter"
+  },
+  "1695B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiaoYan 55",
+   "country": "CHN",
+   "latitude": "34.2",
+   "longitude": "108.6",
+   "growth_habitate": "Winter"
+  },
+  "1696B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Alliance",
+   "country": "USA",
+   "latitude": "41.58",
+   "longitude": "-99.6",
+   "growth_habitate": "Winter"
+  },
+  "1697B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Jagalene",
+   "country": "USA",
+   "latitude": "31.39",
+   "longitude": "-98.5",
+   "growth_habitate": "Winter"
+  },
+  "1698B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ChuanMai 7201",
+   "country": "CHN",
+   "latitude": "30.3",
+   "longitude": "104",
+   "growth_habitate": "Spring"
+  },
+  "1699B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 94488",
+   "country": "UZB",
+   "latitude": "39.3",
+   "longitude": "66.6",
+   "growth_habitate": "Winter"
+  },
+  "1700B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "79TK098-519A",
+   "country": "TUR",
+   "latitude": "40.8",
+   "longitude": "43.3",
+   "growth_habitate": "Spring"
+  },
+  "1701B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Cossack",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1702B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ChangHe 24",
+   "country": "CHN",
+   "latitude": "36.3",
+   "longitude": "113.1",
+   "growth_habitate": "Winter"
+  },
+  "1703B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LanKao 86 (79) 1-2-8-1",
+   "country": "CHN",
+   "latitude": "34.5",
+   "longitude": "114.5",
+   "growth_habitate": "Winter"
+  },
+  "1704B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PNE 226-1",
+   "country": "PAK",
+   "latitude": "30.9",
+   "longitude": "67",
+   "growth_habitate": "Spring"
+  },
+  "1706B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Gandom-i-Safadek",
+   "country": "AFG",
+   "latitude": "34.5",
+   "longitude": "65.5",
+   "growth_habitate": "Spring"
+  },
+  "1707B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 125385",
+   "country": "AFG",
+   "latitude": "31.6",
+   "longitude": "64.8",
+   "growth_habitate": "Winter"
+  },
+  "1709B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Normal Yumusak",
+   "country": "TUR",
+   "latitude": "39.8",
+   "longitude": "39.5",
+   "growth_habitate": "Spring"
+  },
+  "1711B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiaoYan 4",
+   "country": "CHN",
+   "latitude": "34.2",
+   "longitude": "108.6",
+   "growth_habitate": "Winter"
+  },
+  "1712B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "IWA8612682",
+   "country": "IRN",
+   "latitude": "36.3",
+   "longitude": "59.6",
+   "growth_habitate": "Winter"
+  },
+  "1713B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Longhorn",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1714B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Jules",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1715A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 537974",
+   "country": "TUR",
+   "latitude": "37.5",
+   "longitude": "38.4",
+   "growth_habitate": "Spring"
+  },
+  "1716B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "W128",
+   "country": "IND",
+   "latitude": "34.5",
+   "longitude": "76.5",
+   "growth_habitate": "Spring"
+  },
+  "1717B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhengZhou 6903",
+   "country": "CHN",
+   "latitude": "34.4",
+   "longitude": "113.4",
+   "growth_habitate": "Winter"
+  },
+  "1718A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 289817",
+   "country": "IRN",
+   "latitude": "31.2",
+   "longitude": "48.2",
+   "growth_habitate": "Spring"
+  },
+  "1719B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "W168",
+   "country": "IND",
+   "latitude": "33.4",
+   "longitude": "75.8",
+   "growth_habitate": "Winter"
+  },
+  "1720B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Kunduru Menceki",
+   "country": "TUR",
+   "latitude": "38.8",
+   "longitude": "38.7",
+   "growth_habitate": "Winter"
+  },
+  "1721B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "SD97538",
+   "country": "USA",
+   "latitude": "44.33",
+   "longitude": "-100.27",
+   "growth_habitate": "Winter"
+  },
+  "1722B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "HuaiMai 22",
+   "country": "CHN",
+   "latitude": "33.4",
+   "longitude": "119",
+   "growth_habitate": "Winter"
+  },
+  "1723B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Yuma",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1725B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 119341",
+   "country": "TUR",
+   "latitude": "38.7",
+   "longitude": "38.3",
+   "growth_habitate": "Winter"
+  },
+  "1726A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TJK03-295",
+   "country": "TJK",
+   "latitude": "38",
+   "longitude": "71.7",
+   "growth_habitate": "Winter"
+  },
+  "1727B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TJK2006:291",
+   "country": "TJK",
+   "latitude": "39.4",
+   "longitude": "68.7",
+   "growth_habitate": "Spring"
+  },
+  "1728B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "IWA8604628",
+   "country": "IRN",
+   "latitude": "36.8",
+   "longitude": "54.5",
+   "growth_habitate": "Winter"
+  },
+  "1730B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "IWA8604010",
+   "country": "IRN",
+   "latitude": "31",
+   "longitude": "61.5",
+   "growth_habitate": "Spring"
+  },
+  "1731A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 366570",
+   "country": "AFG",
+   "latitude": "33.8",
+   "longitude": "62.2",
+   "growth_habitate": "Spring"
+  },
+  "1732A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Kamchtka",
+   "country": "ARM",
+   "latitude": "40.1",
+   "longitude": "44.3",
+   "growth_habitate": "Spring"
+  },
+  "1733A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 70617",
+   "country": "CHN",
+   "latitude": "43",
+   "longitude": "126",
+   "growth_habitate": "Spring"
+  },
+  "1734B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "WanYuanBai 1",
+   "country": "CHN",
+   "latitude": "33",
+   "longitude": "112.52",
+   "growth_habitate": "Winter"
+  },
+  "1735B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "79TK109-595",
+   "country": "TUR",
+   "latitude": "40.3",
+   "longitude": "41.5",
+   "growth_habitate": "Winter"
+  },
+  "1736B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Cutter",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1737A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 167841",
+   "country": "TUR",
+   "latitude": "39.3",
+   "longitude": "38.5",
+   "growth_habitate": "Spring"
+  },
+  "1738B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 36501",
+   "country": "UZB",
+   "latitude": "41.4",
+   "longitude": "64.6",
+   "growth_habitate": "Spring"
+  },
+  "1739B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Nyu Bai",
+   "country": "JPN",
+   "latitude": "36.5",
+   "longitude": "140.5",
+   "growth_habitate": "Spring"
+  },
+  "1740B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Shan 253",
+   "country": "CHN",
+   "latitude": "34.16",
+   "longitude": "108.04",
+   "growth_habitate": "Winter"
+  },
+  "1741B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "09J40",
+   "country": "CHN",
+   "latitude": "32",
+   "longitude": "114",
+   "growth_habitate": "Winter"
+  },
+  "1743B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 219752",
+   "country": "PAK",
+   "latitude": "34.2",
+   "longitude": "72",
+   "growth_habitate": "Spring"
+  },
+  "1744B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhengMai 005",
+   "country": "CHN",
+   "latitude": "34.4",
+   "longitude": "113.4",
+   "growth_habitate": "Winter"
+  },
+  "1745B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Kilcikiz",
+   "country": "TUR",
+   "latitude": "37.2",
+   "longitude": "36.9",
+   "growth_habitate": "Winter"
+  },
+  "1746B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "K2003-108",
+   "country": "KAZ",
+   "latitude": "49.2",
+   "longitude": "84.7",
+   "growth_habitate": "Spring"
+  },
+  "1747B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Xinong 881",
+   "country": "CHN",
+   "latitude": "34.2",
+   "longitude": "108",
+   "growth_habitate": "Winter"
+  },
+  "1748B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Xinong 2611",
+   "country": "CHN",
+   "latitude": "34.2",
+   "longitude": "108",
+   "growth_habitate": "Winter"
+  },
+  "1750B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Type No. 23-1",
+   "country": "PAK",
+   "latitude": "30.3",
+   "longitude": "71.1",
+   "growth_habitate": "Spring"
+  },
+  "1751B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Sanshukomugi",
+   "country": "JPN",
+   "latitude": "34.5",
+   "longitude": "136.5",
+   "growth_habitate": "Winter"
+  },
+  "1752B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 367065",
+   "country": "AFG",
+   "latitude": "32.2",
+   "longitude": "65.6",
+   "growth_habitate": "Winter"
+  },
+  "1754B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "MianYang 26",
+   "country": "CHN",
+   "latitude": "31.3",
+   "longitude": "104.4",
+   "growth_habitate": "Winter"
+  },
+  "1755B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Tandem",
+   "country": "USA",
+   "latitude": "44.33",
+   "longitude": "-100.27",
+   "growth_habitate": "Winter"
+  },
+  "1756B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 167689",
+   "country": "TUR",
+   "latitude": "39.8",
+   "longitude": "39.5",
+   "growth_habitate": "Spring"
+  },
+  "1757B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiaoYan 503",
+   "country": "CHN",
+   "latitude": "34.2",
+   "longitude": "108.6",
+   "growth_habitate": "Spring"
+  },
+  "1758B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Overley",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1759B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "C-1",
+   "country": "SYR",
+   "latitude": "34.7",
+   "longitude": "36.7",
+   "growth_habitate": "Spring"
+  },
+  "1760B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "KeNong 1006",
+   "country": "CHN",
+   "latitude": "38",
+   "longitude": "114.3",
+   "growth_habitate": "Winter"
+  },
+  "1761B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TJK2006:298",
+   "country": "TJK",
+   "latitude": "39.4",
+   "longitude": "68.7",
+   "growth_habitate": "Winter"
+  },
+  "1762B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JinMai 49",
+   "country": "CHN",
+   "latitude": "37.5",
+   "longitude": "112.3",
+   "growth_habitate": "Winter"
+  },
+  "1763B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "IWA8608766",
+   "country": "IRN",
+   "latitude": "35.3",
+   "longitude": "47",
+   "growth_habitate": "Winter"
+  },
+  "1764B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Red Kamsereti",
+   "country": "PAK",
+   "latitude": "35.9",
+   "longitude": "74.3",
+   "growth_habitate": "Spring"
+  },
+  "1765B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "QinMai 11",
+   "country": "CHN",
+   "latitude": "34.38",
+   "longitude": "107.15",
+   "growth_habitate": "Winter"
+  },
+  "1766B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "2174",
+   "country": "USA",
+   "latitude": "35.4",
+   "longitude": "-97.17",
+   "growth_habitate": "Winter"
+  },
+  "1767B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 367066",
+   "country": "AFG",
+   "latitude": "32.2",
+   "longitude": "65.6",
+   "growth_habitate": "Winter"
+  },
+  "1768B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TJK03-296",
+   "country": "TJK",
+   "latitude": "38",
+   "longitude": "71.7",
+   "growth_habitate": "Winter"
+  },
+  "1769B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "IWA8604006",
+   "country": "IRN",
+   "latitude": "31",
+   "longitude": "61.5",
+   "growth_habitate": "Spring"
+  },
+  "1770B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "K18",
+   "country": "CHN",
+   "latitude": "31.8",
+   "longitude": "120.3",
+   "growth_habitate": "Winter"
+  },
+  "1771A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TJK2006:354",
+   "country": "TJK",
+   "latitude": "39.2",
+   "longitude": "69.1",
+   "growth_habitate": "Spring"
+  },
+  "1772B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "79TK104-548B",
+   "country": "TUR",
+   "latitude": "40.8",
+   "longitude": "43.1",
+   "growth_habitate": "Winter"
+  },
+  "1773B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "W125",
+   "country": "IND",
+   "latitude": "34.4",
+   "longitude": "76.3",
+   "growth_habitate": "Spring"
+  },
+  "1774B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 70625",
+   "country": "CHN",
+   "latitude": "44",
+   "longitude": "123.9",
+   "growth_habitate": "Spring"
+  },
+  "1775B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Endurance",
+   "country": "USA",
+   "latitude": "35.4",
+   "longitude": "-97.17",
+   "growth_habitate": "Winter"
+  },
+  "1776B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "YangBaiMai",
+   "country": "CHN",
+   "latitude": "47.36",
+   "longitude": "126.09",
+   "growth_habitate": "Spring"
+  },
+  "1777B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 65109",
+   "country": "CHN",
+   "latitude": "42.3",
+   "longitude": "123.8",
+   "growth_habitate": "Spring"
+  },
+  "1778B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhengMai 366",
+   "country": "CHN",
+   "latitude": "34.4",
+   "longitude": "113.4",
+   "growth_habitate": "Winter"
+  },
+  "1779B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YanZhan 4110",
+   "country": "CHN",
+   "latitude": "34.62",
+   "longitude": "112.45",
+   "growth_habitate": "Winter"
+  },
+  "1780B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuoHan 11",
+   "country": "CHN",
+   "latitude": "34.4",
+   "longitude": "112.3",
+   "growth_habitate": "Winter"
+  },
+  "1781A": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiaoYan 926",
+   "country": "CHN",
+   "latitude": "34.2",
+   "longitude": "108.6",
+   "growth_habitate": "Winter"
+  },
+  "1782B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "B-941",
+   "country": "TUR",
+   "latitude": "40",
+   "longitude": "41.5",
+   "growth_habitate": "Spring"
+  },
+  "1783B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ChangWu 131",
+   "country": "CHN",
+   "latitude": "35.1",
+   "longitude": "107.5",
+   "growth_habitate": "Winter"
+  },
+  "1784A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Karmir",
+   "country": "ARM",
+   "latitude": "40.1",
+   "longitude": "44.3",
+   "growth_habitate": "Spring"
+  },
+  "1785B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "K2003-8",
+   "country": "KAZ",
+   "latitude": "43.2",
+   "longitude": "76.7",
+   "growth_habitate": "Winter"
+  },
+  "1786B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "HeNong 825",
+   "country": "CHN",
+   "latitude": "38.5",
+   "longitude": "115.3",
+   "growth_habitate": "Winter"
+  },
+  "1787B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YuMai 14",
+   "country": "CHN",
+   "latitude": "34.6",
+   "longitude": "113",
+   "growth_habitate": "Winter"
+  },
+  "1788B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 80741",
+   "country": "AFG",
+   "latitude": "36.7",
+   "longitude": "67.1",
+   "growth_habitate": "Winter"
+  },
+  "1789B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 268312",
+   "country": "IRN",
+   "latitude": "34.3",
+   "longitude": "47.7",
+   "growth_habitate": "Winter"
+  },
+  "1790B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "W120",
+   "country": "IND",
+   "latitude": "34.22",
+   "longitude": "76.15",
+   "growth_habitate": "-"
+  },
+  "1791B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuoMai 21",
+   "country": "CHN",
+   "latitude": "34.4",
+   "longitude": "112.3",
+   "growth_habitate": "Winter"
+  },
+  "1792B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YuanFeng 175",
+   "country": "CHN",
+   "latitude": "34.2",
+   "longitude": "108.6",
+   "growth_habitate": "Spring"
+  },
+  "1793B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 94590",
+   "country": "UZB",
+   "latitude": "41.4",
+   "longitude": "64.6",
+   "growth_habitate": "Spring"
+  },
+  "1794B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "86PK1305-001.00",
+   "country": "PAK",
+   "latitude": "36",
+   "longitude": "74.3",
+   "growth_habitate": "Spring"
+  },
+  "1795B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Type No. 13",
+   "country": "PAK",
+   "latitude": "31.4",
+   "longitude": "73.1",
+   "growth_habitate": "Spring"
+  },
+  "1796B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "D-2",
+   "country": "SYR",
+   "latitude": "35.1",
+   "longitude": "36.8",
+   "growth_habitate": "Spring"
+  },
+  "1797B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Cisco",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1798B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TU86-13-07",
+   "country": "TUR",
+   "latitude": "38",
+   "longitude": "42.1",
+   "growth_habitate": "Winter"
+  },
+  "1800B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 72372",
+   "country": "CHN",
+   "latitude": "42.98",
+   "longitude": "130.13",
+   "growth_habitate": "-"
+  },
+  "1801B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "84TK056-140.1",
+   "country": "TUR",
+   "latitude": "36.2",
+   "longitude": "36.1",
+   "growth_habitate": "Spring"
+  },
+  "1802B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Wahoo",
+   "country": "USA",
+   "latitude": "41.58",
+   "longitude": "-99.6",
+   "growth_habitate": "Winter"
+  },
+  "1803B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "NongDa 1193",
+   "country": "CHN",
+   "latitude": "39.5",
+   "longitude": "116.2",
+   "growth_habitate": "Winter"
+  },
+  "1804B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhengMai 9405",
+   "country": "CHN",
+   "latitude": "34.4",
+   "longitude": "113.4",
+   "growth_habitate": "Winter"
+  },
+  "1805B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Yu Hua Zi",
+   "country": "CHN",
+   "latitude": "33.5",
+   "longitude": "119.8",
+   "growth_habitate": "Winter"
+  },
+  "1806B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Hallam",
+   "country": "USA",
+   "latitude": "41.58",
+   "longitude": "-99.6",
+   "growth_habitate": "Winter"
+  },
+  "1807B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "XiaoBaiMang",
+   "country": "CHN",
+   "latitude": "39.52",
+   "longitude": "116.7",
+   "growth_habitate": "Winter"
+  },
+  "1809B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Floransa C",
+   "country": "TUR",
+   "latitude": "37.3",
+   "longitude": "35.6",
+   "growth_habitate": "Spring"
+  },
+  "1810B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Shan 150",
+   "country": "CHN",
+   "latitude": "34.5",
+   "longitude": "109",
+   "growth_habitate": "Winter"
+  },
+  "1811B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 219743",
+   "country": "PAK",
+   "latitude": "34",
+   "longitude": "71.6",
+   "growth_habitate": "Spring"
+  },
+  "1812B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 94532",
+   "country": "UZB",
+   "latitude": "39.3",
+   "longitude": "66.6",
+   "growth_habitate": "Spring"
+  },
+  "1813B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Kamrakhat",
+   "country": "ARM",
+   "latitude": "40.1",
+   "longitude": "44.3",
+   "growth_habitate": "Spring"
+  },
+  "1814B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhaoMin 1006-08X3",
+   "country": "CHN",
+   "latitude": "32",
+   "longitude": "114",
+   "growth_habitate": "Winter"
+  },
+  "1815B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "KeNong 2007",
+   "country": "CHN",
+   "latitude": "38.05",
+   "longitude": "114.52",
+   "growth_habitate": "-"
+  },
+  "1816B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Prowers",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1817B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LiangFeng 998",
+   "country": "CHN",
+   "latitude": "32",
+   "longitude": "114",
+   "growth_habitate": "Winter"
+  },
+  "1818B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "86PK1287-001.14",
+   "country": "PAK",
+   "latitude": "35.3",
+   "longitude": "75.5",
+   "growth_habitate": "Spring"
+  },
+  "1820B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "KeNong 9204 Derived Line",
+   "country": "CHN",
+   "latitude": "38.05",
+   "longitude": "114.52",
+   "growth_habitate": "-"
+  },
+  "1821B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhengMai 1066",
+   "country": "CHN",
+   "latitude": "34.4",
+   "longitude": "113.4",
+   "growth_habitate": "Winter"
+  },
+  "1823B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "NC08-2",
+   "country": "CHN",
+   "latitude": "32",
+   "longitude": "114",
+   "growth_habitate": "Winter"
+  },
+  "1824B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Okfield",
+   "country": "USA",
+   "latitude": "35.4",
+   "longitude": "-97.17",
+   "growth_habitate": "Winter"
+  },
+  "1825A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "B-938",
+   "country": "TUR",
+   "latitude": "40",
+   "longitude": "41.5",
+   "growth_habitate": "Spring"
+  },
+  "1826B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Aleppo 1",
+   "country": "SYR",
+   "latitude": "34.8",
+   "longitude": "39",
+   "growth_habitate": "Spring"
+  },
+  "1827B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TJK04-420",
+   "country": "TJK",
+   "latitude": "39",
+   "longitude": "68.8",
+   "growth_habitate": "Spring"
+  },
+  "1829B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "AiKang58",
+   "country": "CHN",
+   "latitude": "35.3",
+   "longitude": "113.9",
+   "growth_habitate": "Winter"
+  },
+  "1832B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Pronghorn",
+   "country": "USA",
+   "latitude": "41.58",
+   "longitude": "-99.6",
+   "growth_habitate": "Winter"
+  },
+  "1833B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhengMai 0856",
+   "country": "CHN",
+   "latitude": "34.4",
+   "longitude": "113.4",
+   "growth_habitate": "Winter"
+  },
+  "1834B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "S-10",
+   "country": "AFG",
+   "latitude": "32.4",
+   "longitude": "62.1",
+   "growth_habitate": "Spring"
+  },
+  "1835B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Hondo",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1836B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YuNong 416",
+   "country": "CHN",
+   "latitude": "34.76",
+   "longitude": "113.65",
+   "growth_habitate": "Winter"
+  },
+  "1837B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Intrada",
+   "country": "USA",
+   "latitude": "35.4",
+   "longitude": "-97.17",
+   "growth_habitate": "Winter"
+  },
+  "1838B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 70628",
+   "country": "CHN",
+   "latitude": "42.8",
+   "longitude": "127.7",
+   "growth_habitate": "Spring"
+  },
+  "1839B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "86PK1307-001.00",
+   "country": "PAK",
+   "latitude": "36.2",
+   "longitude": "74.4",
+   "growth_habitate": "Spring"
+  },
+  "1840B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Floransa B",
+   "country": "TUR",
+   "latitude": "37.3",
+   "longitude": "35.6",
+   "growth_habitate": "Spring"
+  },
+  "1841B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "BaiGeDa",
+   "country": "CHN",
+   "latitude": "32",
+   "longitude": "114",
+   "growth_habitate": "Winter"
+  },
+  "1842B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LunXuan 987",
+   "country": "CHN",
+   "latitude": "39.5",
+   "longitude": "116.2",
+   "growth_habitate": "Winter"
+  },
+  "1843B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "RonL",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1844B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "WuHuaTou",
+   "country": "CHN",
+   "latitude": "31",
+   "longitude": "120",
+   "growth_habitate": "Winter"
+  },
+  "1845B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "TU85-082-01",
+   "country": "TUR",
+   "latitude": "39.1",
+   "longitude": "41.5",
+   "growth_habitate": "Spring"
+  },
+  "1846B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShiXin 828",
+   "country": "CHN",
+   "latitude": "38",
+   "longitude": "114.3",
+   "growth_habitate": "Winter"
+  },
+  "1847B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Gandum",
+   "country": "AFG",
+   "latitude": "32.5",
+   "longitude": "62.2",
+   "growth_habitate": "Winter"
+  },
+  "1848B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Zhengnong17",
+   "country": "CHN",
+   "latitude": "34.4",
+   "longitude": "113.4",
+   "growth_habitate": "Winter"
+  },
+  "1849B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Keota",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1850B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Shirokawa Shiro",
+   "country": "JPN",
+   "latitude": "39.5",
+   "longitude": "141.5",
+   "growth_habitate": "Spring"
+  },
+  "1851B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "K2003-65",
+   "country": "KAZ",
+   "latitude": "48",
+   "longitude": "80.8",
+   "growth_habitate": "Spring"
+  },
+  "1852B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "IWA8604850",
+   "country": "IRN",
+   "latitude": "33.6",
+   "longitude": "46.5",
+   "growth_habitate": "Winter"
+  },
+  "1853A": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JiShi 42",
+   "country": "CHN",
+   "latitude": "36.4",
+   "longitude": "117",
+   "growth_habitate": "Winter"
+  },
+  "1855B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "84TK105-056.0",
+   "country": "TUR",
+   "latitude": "38.4",
+   "longitude": "40",
+   "growth_habitate": "Winter"
+  },
+  "1856B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "W167",
+   "country": "IND",
+   "latitude": "33.4",
+   "longitude": "75.8",
+   "growth_habitate": "Winter"
+  },
+  "1857B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuoHan 13",
+   "country": "CHN",
+   "latitude": "34.4",
+   "longitude": "112.3",
+   "growth_habitate": "Winter"
+  },
+  "1858B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiaoYan 39",
+   "country": "CHN",
+   "latitude": "34.2",
+   "longitude": "108.6",
+   "growth_habitate": "Winter"
+  },
+  "1859B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 57995",
+   "country": "IND",
+   "latitude": "34.2",
+   "longitude": "75",
+   "growth_habitate": "Winter"
+  },
+  "1860B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 80819",
+   "country": "JPN",
+   "latitude": "36.6",
+   "longitude": "138.1",
+   "growth_habitate": "Winter"
+  },
+  "1862B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Ankor",
+   "country": "USA",
+   "latitude": "38.93",
+   "longitude": "-105.53",
+   "growth_habitate": "Winter"
+  },
+  "1863B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "IWA8604165",
+   "country": "IRN",
+   "latitude": "36.7",
+   "longitude": "51.5",
+   "growth_habitate": "Winter"
+  },
+  "1865B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "DaLi 1",
+   "country": "CHN",
+   "latitude": "32",
+   "longitude": "114",
+   "growth_habitate": "Winter"
+  },
+  "1866B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "YouZiMai",
+   "country": "CHN",
+   "latitude": "35.89",
+   "longitude": "115.1",
+   "growth_habitate": "Winter"
+  },
+  "1867A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "FAO 33.214",
+   "country": "PAK",
+   "latitude": "33.6",
+   "longitude": "73.1",
+   "growth_habitate": "Spring"
+  },
+  "1868A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 178161",
+   "country": "TUR",
+   "latitude": "37.2",
+   "longitude": "43.6",
+   "growth_habitate": "Spring"
+  },
+  "1869B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Arlin",
+   "country": "USA",
+   "latitude": "38.41",
+   "longitude": "-98.43",
+   "growth_habitate": "Winter"
+  },
+  "1870B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "HuaiMai 25",
+   "country": "CHN",
+   "latitude": "33.4",
+   "longitude": "119",
+   "growth_habitate": "Winter"
+  },
+  "1871B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "ErMangMai",
+   "country": "CHN",
+   "latitude": "32",
+   "longitude": "114",
+   "growth_habitate": "Winter"
+  },
+  "1872A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "86PK1308-001.11",
+   "country": "PAK",
+   "latitude": "36.3",
+   "longitude": "74.5",
+   "growth_habitate": "Winter"
+  },
+  "1873B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "TAM 111",
+   "country": "USA",
+   "latitude": "31.39",
+   "longitude": "-98.5",
+   "growth_habitate": "Winter"
+  },
+  "1874B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShiXin 733",
+   "country": "CHN",
+   "latitude": "38",
+   "longitude": "114.3",
+   "growth_habitate": "Winter"
+  },
+  "1875B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhouMai 22",
+   "country": "CHN",
+   "latitude": "33.4",
+   "longitude": "114.4",
+   "growth_habitate": "Winter"
+  },
+  "1876A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Sari",
+   "country": "TUR",
+   "latitude": "37.9",
+   "longitude": "40.7",
+   "growth_habitate": "Spring"
+  },
+  "1877B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 165695",
+   "country": "AFG",
+   "latitude": "36.7",
+   "longitude": "67.1",
+   "growth_habitate": "Winter"
+  },
+  "1878B": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "PI 178050",
+   "country": "TUR",
+   "latitude": "36.7",
+   "longitude": "39",
+   "growth_habitate": "Spring"
+  },
+  "1879A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "K397",
+   "country": "PAK",
+   "latitude": "32.6",
+   "longitude": "74",
+   "growth_habitate": "Spring"
+  },
+  "1880B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Niobrara",
+   "country": "USA",
+   "latitude": "41.58",
+   "longitude": "-99.6",
+   "growth_habitate": "Winter"
+  },
+  "1881B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Zhao 08-29",
+   "country": "CHN",
+   "latitude": "32",
+   "longitude": "114",
+   "growth_habitate": "Winter"
+  },
+  "1882B": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "TAM 400",
+   "country": "USA",
+   "latitude": "31.39",
+   "longitude": "-98.5",
+   "growth_habitate": "Winter"
+  },
+  "1883B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Chang 6359",
+   "country": "CHN",
+   "latitude": "36.1",
+   "longitude": "113.1",
+   "growth_habitate": "Winter"
+  },
+  "1884B": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Han 4589",
+   "country": "CHN",
+   "latitude": "36.4",
+   "longitude": "114.3",
+   "growth_habitate": "Winter"
+  },
+  "1885A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Tir",
+   "country": "TUR",
+   "latitude": "39.1",
+   "longitude": "43.2",
+   "growth_habitate": "Spring"
+  },
+  "1886A": {
+   "group": "LR",
+   "species": "Triticum aestivum",
+   "name": "Type No. 19H",
+   "country": "PAK",
+   "latitude": "31.9",
+   "longitude": "72.2",
+   "growth_habitate": "Spring"
+  },
+  "S0008": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "NeiMai 8",
+   "country": "CHN",
+   "latitude": "26.41",
+   "longitude": "106.26",
+   "growth_habitate": "Spring"
+  },
+  "S0009": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ChuanYu 20",
+   "country": "CHN",
+   "latitude": "30.67",
+   "longitude": "104.07",
+   "growth_habitate": "Spring"
+  },
+  "S0010": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "MianMai 367",
+   "country": "CHN",
+   "latitude": "31.47",
+   "longitude": "104.73",
+   "growth_habitate": "Spring"
+  },
+  "S0011": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiKeMai 4",
+   "country": "CHN",
+   "latitude": "30.67",
+   "longitude": "104.07",
+   "growth_habitate": "Spring"
+  },
+  "S0012": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhenMai 168",
+   "country": "CHN",
+   "latitude": "32.2",
+   "longitude": "119.45",
+   "growth_habitate": "Spring"
+  },
+  "S0013": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XuZhou 21",
+   "country": "CHN",
+   "latitude": "34.27",
+   "longitude": "117.18",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0014": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XuZhou 24",
+   "country": "CHN",
+   "latitude": "34.27",
+   "longitude": "117.18",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0015": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XuZhou 35",
+   "country": "CHN",
+   "latitude": "34.27",
+   "longitude": "117.18",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0016": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "HuaiMai 11",
+   "country": "CHN",
+   "latitude": "33.62",
+   "longitude": "119.02",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0017": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "HuaiMai 20",
+   "country": "CHN",
+   "latitude": "33.62",
+   "longitude": "119.02",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0018": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "HuaiMai 29",
+   "country": "CHN",
+   "latitude": "33.62",
+   "longitude": "119.02",
+   "growth_habitate": "Winter"
+  },
+  "S0019": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "NingMai 3",
+   "country": "CHN",
+   "latitude": "32.07",
+   "longitude": "118.78",
+   "growth_habitate": "Spring"
+  },
+  "S0020": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "NingMai 9",
+   "country": "CHN",
+   "latitude": "32.07",
+   "longitude": "118.78",
+   "growth_habitate": "Winter"
+  },
+  "S0021": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YangMai 4",
+   "country": "CHN",
+   "latitude": "32.07",
+   "longitude": "118.78",
+   "growth_habitate": "Winter"
+  },
+  "S0022": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YangMai 5",
+   "country": "CHN",
+   "latitude": "33.35",
+   "longitude": "120.15",
+   "growth_habitate": "Spring"
+  },
+  "S0023": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YangMai 13",
+   "country": "CHN",
+   "latitude": "33.35",
+   "longitude": "120.15",
+   "growth_habitate": "Spring"
+  },
+  "S0025": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JiMai 31",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.48",
+   "growth_habitate": "Winter"
+  },
+  "S0026": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShiJiaZhuang 8",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.48",
+   "growth_habitate": "Winter"
+  },
+  "S0027": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShiJiaZhuang 54",
+   "country": "CHN",
+   "latitude": "38",
+   "longitude": "114",
+   "growth_habitate": "-"
+  },
+  "S0028": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JiNan 16",
+   "country": "CHN",
+   "latitude": "36.4",
+   "longitude": "117",
+   "growth_habitate": "Winter"
+  },
+  "S0029": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "KeNong 2011",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.48",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0030": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "NongDa 3214",
+   "country": "CHN",
+   "latitude": "40",
+   "longitude": "116",
+   "growth_habitate": "Winter"
+  },
+  "S0031": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XuMai 856",
+   "country": "CHN",
+   "latitude": "34.27",
+   "longitude": "117.18",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0032": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Heng 7228",
+   "country": "CHN",
+   "latitude": "37.62",
+   "longitude": "115.8",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0033": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Nanda 2419",
+   "country": "CHN",
+   "latitude": "29.53",
+   "longitude": "106.45",
+   "growth_habitate": "Winter"
+  },
+  "S0034": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XuMai 30",
+   "country": "CHN",
+   "latitude": "33.55",
+   "longitude": "116.25",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0035": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Abbondanza",
+   "country": "ITA",
+   "latitude": "36",
+   "longitude": "10",
+   "growth_habitate": "Winter"
+  },
+  "S0036": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShanNong 17",
+   "country": "CHN",
+   "latitude": "36.11",
+   "longitude": "117.6",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0037": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "WeiMai 8",
+   "country": "CHN",
+   "latitude": "36.7",
+   "longitude": "119.15",
+   "growth_habitate": "Winter"
+  },
+  "S0038": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShiYou 20",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.43",
+   "growth_habitate": "Winter"
+  },
+  "S0039": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuMai 2",
+   "country": "CHN",
+   "latitude": "36.4",
+   "longitude": "117",
+   "growth_habitate": "Winter"
+  },
+  "S0040": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShiLuan 02-1",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.48",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0041": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "HengGuan 35",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.48",
+   "growth_habitate": "Winter"
+  },
+  "S0042": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuMai 21",
+   "country": "CHN",
+   "latitude": "34.27",
+   "longitude": "108.95",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0043": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "HengGuan 26",
+   "country": "CHN",
+   "latitude": "36.62",
+   "longitude": "114.48",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0044": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "TaiShan 1",
+   "country": "CHN",
+   "latitude": "36.18",
+   "longitude": "117.13",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0045": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XinMai 21",
+   "country": "CHN",
+   "latitude": "33",
+   "longitude": "112.52",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0046": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LinHan 6",
+   "country": "CHN",
+   "latitude": "36.08",
+   "longitude": "111.52",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0047": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XinMai 26",
+   "country": "CHN",
+   "latitude": "32.98",
+   "longitude": "114.02",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0048": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiNong 928",
+   "country": "CHN",
+   "latitude": "35.02",
+   "longitude": "110.98",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0049": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "GaoYou 9415",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.84",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0050": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "KeYi 6070",
+   "country": "CHN",
+   "latitude": "40",
+   "longitude": "116",
+   "growth_habitate": "Winter"
+  },
+  "S0051": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiNong 889",
+   "country": "CHN",
+   "latitude": "34.16",
+   "longitude": "108.4",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0052": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JiNan 17",
+   "country": "CHN",
+   "latitude": "36.65",
+   "longitude": "117",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0053": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JiMai 32",
+   "country": "CHN",
+   "latitude": "38.3",
+   "longitude": "116.83",
+   "growth_habitate": "Winter"
+  },
+  "S0054": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Shan 160",
+   "country": "CHN",
+   "latitude": "34.27",
+   "longitude": "108.95",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0055": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LaiZhou 953",
+   "country": "CHN",
+   "latitude": "37.18",
+   "longitude": "119.94",
+   "growth_habitate": "Winter"
+  },
+  "S0056": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LiGao 6",
+   "country": "CHN",
+   "latitude": "34.27",
+   "longitude": "108.95",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0057": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JinMai 15",
+   "country": "CHN",
+   "latitude": "35.02",
+   "longitude": "110.98",
+   "growth_habitate": "Winter"
+  },
+  "S0058": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LinFen 7410",
+   "country": "CHN",
+   "latitude": "36.08",
+   "longitude": "111.52",
+   "growth_habitate": "-"
+  },
+  "S0059": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Early Premium",
+   "country": "USA",
+   "latitude": "45.7",
+   "longitude": "-111.2",
+   "growth_habitate": "Winter"
+  },
+  "S0060": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LiangXing 66",
+   "country": "CHN",
+   "latitude": "37.45",
+   "longitude": "116.26",
+   "growth_habitate": "Winter"
+  },
+  "S0061": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XinDong 26",
+   "country": "CHN",
+   "latitude": "44.3",
+   "longitude": "86.03",
+   "growth_habitate": "Winter"
+  },
+  "S0062": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhongMai 175",
+   "country": "CHN",
+   "latitude": "39.9",
+   "longitude": "116.4",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0063": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Heng 136",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.48",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0064": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JinMai 8",
+   "country": "CHN",
+   "latitude": "36",
+   "longitude": "111",
+   "growth_habitate": "Winter"
+  },
+  "S0065": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuMai 1",
+   "country": "CHN",
+   "latitude": "36.11",
+   "longitude": "117.07",
+   "growth_habitate": "Winter"
+  },
+  "S0066": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShanNong 7859",
+   "country": "CHN",
+   "latitude": "33.5",
+   "longitude": "116.23",
+   "growth_habitate": "Winter"
+  },
+  "S0067": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XinMai 19",
+   "country": "CHN",
+   "latitude": "35.31",
+   "longitude": "113.85",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0068": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JiMai 22",
+   "country": "CHN",
+   "latitude": "36.65",
+   "longitude": "117",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0069": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "TaiNong 18",
+   "country": "CHN",
+   "latitude": "36.18",
+   "longitude": "117.13",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0070": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhouYuan 9369",
+   "country": "CHN",
+   "latitude": "37.52",
+   "longitude": "121.39",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0071": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Wen 12",
+   "country": "CHN",
+   "latitude": "27.6",
+   "longitude": "120.4",
+   "growth_habitate": "Winter"
+  },
+  "S0072": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JinMai 54",
+   "country": "CHN",
+   "latitude": "35.02",
+   "longitude": "110.98",
+   "growth_habitate": "Winter"
+  },
+  "S0075": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "AiFeng 3",
+   "country": "CHN",
+   "latitude": "34.27",
+   "longitude": "108.95",
+   "growth_habitate": "Winter"
+  },
+  "S0076": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuYuan 502",
+   "country": "CHN",
+   "latitude": "36.65",
+   "longitude": "117",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0077": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Heng 5229",
+   "country": "CHN",
+   "latitude": "37.58",
+   "longitude": "115.5",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0078": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhengMai 7698",
+   "country": "CHN",
+   "latitude": "34.76",
+   "longitude": "113.65",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0079": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LinMai 2",
+   "country": "CHN",
+   "latitude": "35.05",
+   "longitude": "118.35",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0080": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShanRong 3",
+   "country": "CHN",
+   "latitude": "36.65",
+   "longitude": "117",
+   "growth_habitate": "Winter"
+  },
+  "S0081": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JinMai 79",
+   "country": "CHN",
+   "latitude": "37.5",
+   "longitude": "113.3",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0082": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YanMai 98",
+   "country": "CHN",
+   "latitude": "34.61",
+   "longitude": "118.37",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0083": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XingMai 7",
+   "country": "CHN",
+   "latitude": "37.05",
+   "longitude": "114.48",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0084": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "NongDa 399",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.48",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0085": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShanNong 12",
+   "country": "CHN",
+   "latitude": "36.65",
+   "longitude": "117",
+   "growth_habitate": "Winter"
+  },
+  "S0087": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YanNong 24",
+   "country": "CHN",
+   "latitude": "37.52",
+   "longitude": "121.39",
+   "growth_habitate": "Winter"
+  },
+  "S0088": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiaoYan 6",
+   "country": "CHN",
+   "latitude": "34.27",
+   "longitude": "108.95",
+   "growth_habitate": "Winter"
+  },
+  "S0089": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YanNong 15",
+   "country": "CHN",
+   "latitude": "37.52",
+   "longitude": "121.39",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0090": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YaoMai 16",
+   "country": "CHN",
+   "latitude": "35",
+   "longitude": "111.5",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0091": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JinMai 47",
+   "country": "CHN",
+   "latitude": "35",
+   "longitude": "111.5",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0092": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShiYou 17",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.48",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0093": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "HanYou 3475",
+   "country": "CHN",
+   "latitude": "36.6",
+   "longitude": "114.47",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0094": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LiangXing 99",
+   "country": "CHN",
+   "latitude": "37.45",
+   "longitude": "116.29",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0095": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuMai 15",
+   "country": "CHN",
+   "latitude": "36.65",
+   "longitude": "117",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0096": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShanNong 664",
+   "country": "CHN",
+   "latitude": "36.65",
+   "longitude": "117",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0097": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhouMai 32",
+   "country": "CHN",
+   "latitude": "33.63",
+   "longitude": "114.63",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0098": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "GaoYou 503",
+   "country": "CHN",
+   "latitude": "34.27",
+   "longitude": "108.95",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0099": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YuNong 949",
+   "country": "CHN",
+   "latitude": "34.76",
+   "longitude": "113.65",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0100": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShanNong 15",
+   "country": "CHN",
+   "latitude": "36.18",
+   "longitude": "117.13",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0101": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuMai 13",
+   "country": "CHN",
+   "latitude": "37.52",
+   "longitude": "121.39",
+   "growth_habitate": "Winter"
+  },
+  "S0102": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JingDong 8",
+   "country": "CHN",
+   "latitude": "39.9",
+   "longitude": "116.4",
+   "growth_habitate": "Winter"
+  },
+  "S0104": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LinYuan 8",
+   "country": "CHN",
+   "latitude": "35",
+   "longitude": "111.5",
+   "growth_habitate": "Winter"
+  },
+  "S0105": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XuKe 1",
+   "country": "CHN",
+   "latitude": "34.03",
+   "longitude": "113.85",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0106": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YunHan 22-33",
+   "country": "CHN",
+   "latitude": "35",
+   "longitude": "111.5",
+   "growth_habitate": "Winter"
+  },
+  "S0107": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShanNongYouMai 3",
+   "country": "CHN",
+   "latitude": "36.18",
+   "longitude": "117.13",
+   "growth_habitate": "Winter"
+  },
+  "S0108": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "TaiShan 23",
+   "country": "CHN",
+   "latitude": "36.18",
+   "longitude": "117.13",
+   "growth_habitate": "Winter"
+  },
+  "S0109": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhengMai 98",
+   "country": "CHN",
+   "latitude": "34.76",
+   "longitude": "113.65",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0110": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuMai 14",
+   "country": "CHN",
+   "latitude": "37.52",
+   "longitude": "121.39",
+   "growth_habitate": "Winter"
+  },
+  "S0111": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "BeiJing 841",
+   "country": "CHN",
+   "latitude": "39.9",
+   "longitude": "116.4",
+   "growth_habitate": "Winter"
+  },
+  "S0112": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YuMai 17",
+   "country": "CHN",
+   "latitude": "33.05",
+   "longitude": "111.85",
+   "growth_habitate": "Spring"
+  },
+  "S0113": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShanNong 8355",
+   "country": "CHN",
+   "latitude": "36.18",
+   "longitude": "117.13",
+   "growth_habitate": "Winter"
+  },
+  "S0114": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "PuMai 9",
+   "country": "CHN",
+   "latitude": "35.77",
+   "longitude": "115.03",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0115": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LaiZhou 95021",
+   "country": "CHN",
+   "latitude": "37.18",
+   "longitude": "119.94",
+   "growth_habitate": "Winter"
+  },
+  "S0116": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiaoYan 22",
+   "country": "CHN",
+   "latitude": "34.27",
+   "longitude": "108.95",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0117": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "BiMa 4",
+   "country": "CHN",
+   "latitude": "38",
+   "longitude": "114",
+   "growth_habitate": "-"
+  },
+  "S0118": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "WenNong 14",
+   "country": "CHN",
+   "latitude": "36.18",
+   "longitude": "117.13",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0119": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuoHan 6",
+   "country": "CHN",
+   "latitude": "34.7",
+   "longitude": "112.44",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0120": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "NongDa 211",
+   "country": "CHN",
+   "latitude": "39.9",
+   "longitude": "116.4",
+   "growth_habitate": "Winter"
+  },
+  "S0121": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JinHe 9123",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.48",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0122": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "DongFangHong 3",
+   "country": "CHN",
+   "latitude": "40.13",
+   "longitude": "116.13",
+   "growth_habitate": "Winter"
+  },
+  "S0123": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "WanMai 6",
+   "country": "CHN",
+   "latitude": "32",
+   "longitude": "114",
+   "growth_habitate": "Winter"
+  },
+  "S0124": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Han 00-7086",
+   "country": "CHN",
+   "latitude": "36.6",
+   "longitude": "114.47",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0125": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LuMai 23",
+   "country": "CHN",
+   "latitude": "37.36",
+   "longitude": "118.03",
+   "growth_habitate": "Winter"
+  },
+  "S0126": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JinTai 170",
+   "country": "CHN",
+   "latitude": "36.08",
+   "longitude": "111.5",
+   "growth_habitate": "Winter"
+  },
+  "S0127": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LinYuan 3158",
+   "country": "CHN",
+   "latitude": "35",
+   "longitude": "111.5",
+   "growth_habitate": "Winter"
+  },
+  "S0128": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LunXuan 103",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.48",
+   "growth_habitate": "Winter"
+  },
+  "S0129": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JiNan 9",
+   "country": "CHN",
+   "latitude": "36.4",
+   "longitude": "117",
+   "growth_habitate": "Winter"
+  },
+  "S0130": {
+   "group": "UC",
+   "species": "Triticum aestivum",
+   "name": "Triumph",
+   "country": "USA",
+   "latitude": "45.7",
+   "longitude": "-111.2",
+   "growth_habitate": "Winter"
+  },
+  "S0131": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhengYin 4",
+   "country": "ITA",
+   "latitude": "36",
+   "longitude": "10",
+   "growth_habitate": "Winter"
+  },
+  "S0132": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Han 6172",
+   "country": "CHN",
+   "latitude": "36.6",
+   "longitude": "114.47",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0133": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "LinYou 145",
+   "country": "CHN",
+   "latitude": "36.08",
+   "longitude": "111.5",
+   "growth_habitate": "Winter"
+  },
+  "S0134": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhouMai 18",
+   "country": "CHN",
+   "latitude": "33.63",
+   "longitude": "114.63",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0135": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Lovlin 10",
+   "country": "RO",
+   "latitude": "45",
+   "longitude": "25",
+   "growth_habitate": "Winter"
+  },
+  "S0136": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "AnNong 1",
+   "country": "CHN",
+   "latitude": "31",
+   "longitude": "117",
+   "growth_habitate": "Winter"
+  },
+  "S0137": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "HeNong 6049",
+   "country": "CHN",
+   "latitude": "38.87",
+   "longitude": "115.47",
+   "growth_habitate": "Winter"
+  },
+  "S0138": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YuMai 35",
+   "country": "CHN",
+   "latitude": "33.05",
+   "longitude": "111.85",
+   "growth_habitate": "Winter"
+  },
+  "S0139": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ChuanNong 12",
+   "country": "CHN",
+   "latitude": "30.47",
+   "longitude": "104.06",
+   "growth_habitate": "Spring"
+  },
+  "S0140": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhengMai 9023",
+   "country": "CHN",
+   "latitude": "34.76",
+   "longitude": "113.65",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0141": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "GaoYou 9618",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.84",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0142": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "JiMai 38",
+   "country": "CHN",
+   "latitude": "38.03",
+   "longitude": "114.48",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0143": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "TaiShan 21",
+   "country": "CHN",
+   "latitude": "36.18",
+   "longitude": "117.13",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0144": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "XiNong 509",
+   "country": "CHN",
+   "latitude": "34.27",
+   "longitude": "108.95",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0145": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Beijing 8",
+   "country": "CHN",
+   "latitude": "40.13",
+   "longitude": "116.13",
+   "growth_habitate": "Spring"
+  },
+  "S0146": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Funo",
+   "country": "ITA",
+   "latitude": "36",
+   "longitude": "10",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0147": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ShanNong 20",
+   "country": "CHN",
+   "latitude": "34.76",
+   "longitude": "113.65",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0148": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ZhouMai 27",
+   "country": "CHN",
+   "latitude": "36.63",
+   "longitude": "114.63",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0149": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "Heng 4399",
+   "country": "CHN",
+   "latitude": "37.73",
+   "longitude": "115.68",
+   "growth_habitate": "Semi-winter"
+  },
+  "S0150": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "YanNong 19",
+   "country": "CHN",
+   "latitude": "37.52",
+   "longitude": "121.39",
+   "growth_habitate": "Winter"
+  },
+  "S0103": {
+   "group": "CC",
+   "species": "Triticum aestivum",
+   "name": "ChuanMai 42",
+   "country": "CHN",
+   "latitude": "30",
+   "longitude": "104",
+   "growth_habitate": "Winter"
+  }
+ }
+}
