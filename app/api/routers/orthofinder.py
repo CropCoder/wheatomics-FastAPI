@@ -701,6 +701,10 @@ def search_php(
             og_id = q
         else:
             cand_ids = [q]
+            # gene_to_og stores protein IDs with a version suffix (.1), so a
+            # bare gene ID (TraesCS1A01G000100) needs the .1 variant tried too.
+            if not re.search(r"\.\d+$", q):
+                cand_ids.append(q + ".1")
             if species:
                 cand_ids.append(f"{species}_{q}")
             row = None
