@@ -1115,7 +1115,8 @@ def download_file(
                             tree = pruned
             else:
                 tree = _prune_tree_to_cluster(og, tree, cluster)
-        label = type_tree.upper() if type_tree else ("cluster" + str(cluster) if cluster else "")
+        type_label = {"type1": "Triticum_aestivum", "type2": "Triticeae"}.get(type_tree, type_tree.upper() if type_tree else "")
+        label = type_label or ("cluster" + str(cluster) if cluster else "")
         suffix = f".HomoeologousGroup{label}.tree.txt" if label else ".tree.txt"
         return PlainTextResponse(
             tree, media_type="text/plain",
@@ -1166,7 +1167,8 @@ def download_file(
                 out_lines.append(">" + _label_for(sid, meta))
                 out_lines.append(_NL.join(records[sid]))
 
-        label = type_tree.upper() if type_tree else ("cluster" + str(cluster) if cluster else "")
+        type_label = {"type1": "Triticum_aestivum", "type2": "Triticeae"}.get(type_tree, type_tree.upper() if type_tree else "")
+        label = type_label or ("cluster" + str(cluster) if cluster else "")
         suffix = f".HomoeologousGroup{label}" if label else ""
         body = _NL.join(out_lines) + _NL
         return PlainTextResponse(
