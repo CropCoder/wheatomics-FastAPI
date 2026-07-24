@@ -180,7 +180,7 @@ VARIANTHUB_DATASETS: dict[str, dict[str, str]] = {
         "reference": "Chinese_Spring2.1",
     },
     "all491_cnv_snp_indel": {
-        "label": "all491 CNV+SNP+InDel",
+        "label": "Triticum_aestivum.AABBDD.491.WGS",
         "filename": "all491.cnv.snp.indel.missingrate0.25.maf0.01.abd.vcf.gz",
         "source": "491 份材料 CNV/SNP/InDel 整合（missing rate<0.25, MAF>0.01, A/B/D 亚基因组）",
         "reference": "Chinese_Spring1.0",
