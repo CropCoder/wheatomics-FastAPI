@@ -1145,7 +1145,6 @@ function clearSvg(svg) {
 function setTreeMode(mode) {
   treeMode = mode;
   // Re-render all visible tree SVGs
-  renderTree();
   if (document.getElementById("type1Panel").style.display !== "none") {
     renderTypeTree(type1TreeData, "type1");
   }
