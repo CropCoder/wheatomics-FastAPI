@@ -121,9 +121,6 @@
     <h1>OrthoFinder Orthogroup Browser</h1>
     <p class="subtitle">Search a protein ID to view its orthogroup, homoeologous gene tree and downloadable files.</p>
     <form id="searchForm" class="search-box">
-      <select id="speciesSelect" class="species-select">
-        <option value="">-- Select species (optional) --</option>
-      </select>
       <input id="proteinInput" name="q" placeholder="Example: TraesAK58CH1A01G123400.1">
       <button type="submit">Search</button>
     </form>
@@ -132,8 +129,10 @@
       <div class="summary-card">
         <div><div class="label">Orthogroup</div><div id="ogTitle" class="og-title"></div><span id="clusterBadge" class="cluster-badge" style="display:none;"></span></div>
         <div class="download-links">
-          <div class="download-row"><a id="downloadOG" href="#" onclick="downloadBundle(event, 'og')">Download OG tree and protein alignment</a></div>
-          <div class="download-row" id="downloadClusterRow" style="display:none;"><a id="downloadCluster" href="#" onclick="downloadBundle(event, 'cluster')">Download homoeologous tree and protein alignment</a></div>
+          <div class="download-link-item"><a id="downloadTree" target="_blank">Download OG tree</a></div>
+          <div class="download-link-item"><a id="downloadClusterTree" target="_blank" style="display:none;">Download homoeologous tree</a></div>
+          <div class="download-link-item"><a id="downloadAlignment" target="_blank">Download OG alignment</a></div>
+          <div class="download-link-item"><a id="downloadClusterAlignment" target="_blank" style="display:none;">Download homoeologous alignment</a></div>
         </div>
       </div>
 
@@ -178,6 +177,6 @@
   </center>
 </div>
 
-<script src="app.js?v=28"></script>
+<script src="app.js?v=32"></script>
 </body>
 </html>
