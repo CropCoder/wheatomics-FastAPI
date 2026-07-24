@@ -140,19 +140,32 @@
 
       <h2 id="treeHeading">Gene Tree</h2>
       <div id="treeClusterLabel" style="display:none; margin-bottom:6px; color:#26734d; font-weight:bold; font-size:15px;"></div>
-      <div id="typeTreeTabs" style="display:none; margin-bottom:20px;">
-        <button class="type-tree-tab active" onclick="switchTypeTree('type1')">Triticum aestivum</button>
-        <button class="type-tree-tab" onclick="switchTypeTree('type2')">Triticeae</button>
-        <div id="typeTreeLabel" style="margin-top:6px; color:#26734d; font-weight:bold; font-size:14px;"></div>
+      <!-- type1 tree — Triticum aestivum -->
+      <div id="type1Panel" style="display:none;">
+        <h3 style="font-size:17px; color:#1f4e3d; margin:10px 0 4px;">Triticum aestivum</h3>
+        <div id="type1TreeLabel" style="margin-bottom:6px; color:#26734d; font-weight:bold; font-size:14px;"></div>
+        <div class="tree-toolbar"><button type="button" onclick="setTreeMode('circular')">Circular tree</button><button type="button" onclick="setTreeMode('rectangular')">Rectangular tree</button><button type="button" onclick="zoomTree(1.2)">Zoom in</button><button type="button" onclick="zoomTree(0.8)">Zoom out</button><button type="button" onclick="resetTreeZoom()">Reset</button></div>
+        <div id="treeLegend" class="tree-legend" aria-label="Subgenome color legend">
+          <span><i class="legend-line legend-A"></i>A_subgenome</span>
+          <span><i class="legend-line legend-B"></i>B_subgenome</span>
+          <span><i class="legend-line legend-D"></i>D_subgenome</span>
+          <span><i class="legend-line legend-Other"></i>Other</span>
+        </div>
+        <div id="treeBox1" style="height:760px; overflow:auto; border:1px solid #d7dde3; border-radius:8px; background:#fff; margin-bottom:24px;"><svg id="treeSvg1"></svg></div>
       </div>
-      <div class="tree-toolbar"><button type="button" onclick="setTreeMode('circular')">Circular tree</button><button type="button" onclick="setTreeMode('rectangular')">Rectangular tree</button><button type="button" onclick="zoomTree(1.2)">Zoom in</button><button type="button" onclick="zoomTree(0.8)">Zoom out</button><button type="button" onclick="resetTreeZoom()">Reset</button></div>
-      <div id="treeLegend" class="tree-legend" aria-label="Subgenome color legend">
-        <span><i class="legend-line legend-A"></i>A_subgenome</span>
-        <span><i class="legend-line legend-B"></i>B_subgenome</span>
-        <span><i class="legend-line legend-D"></i>D_subgenome</span>
-        <span><i class="legend-line legend-Other"></i>Other</span>
+      <!-- type2 tree — Triticeae -->
+      <div id="type2Panel" style="display:none;">
+        <h3 style="font-size:17px; color:#1f4e3d; margin:10px 0 4px;">Triticeae</h3>
+        <div id="type2TreeLabel" style="margin-bottom:6px; color:#26734d; font-weight:bold; font-size:14px;"></div>
+        <div class="tree-toolbar"><button type="button" onclick="setTreeMode('circular')">Circular tree</button><button type="button" onclick="setTreeMode('rectangular')">Rectangular tree</button><button type="button" onclick="zoomTree(1.2)">Zoom in</button><button type="button" onclick="zoomTree(0.8)">Zoom out</button><button type="button" onclick="resetTreeZoom()">Reset</button></div>
+        <div id="treeLegend2" class="tree-legend" aria-label="Subgenome color legend">
+          <span><i class="legend-line legend-A"></i>A_subgenome</span>
+          <span><i class="legend-line legend-B"></i>B_subgenome</span>
+          <span><i class="legend-line legend-D"></i>D_subgenome</span>
+          <span><i class="legend-line legend-Other"></i>Other</span>
+        </div>
+        <div id="treeBox2" style="height:760px; overflow:auto; border:1px solid #d7dde3; border-radius:8px; background:#fff;"><svg id="treeSvg2"></svg></div>
       </div>
-      <div id="treeBox"><svg id="treeSvg"></svg></div>
     </div>
   </section>
 </div>
