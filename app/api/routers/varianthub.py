@@ -182,7 +182,7 @@ VARIANTHUB_DATASETS: dict[str, dict[str, str]] = {
     "all491_cnv_snp_indel": {
         "label": "Triticum_aestivum.AABBDD.491.WGS",
         "filename": "all491.cnv.snp.indel.missingrate0.25.maf0.01.abd.vcf.gz",
-        "source": "491 accessions, CNV/SNP/InDel integrated (missing rate<0.25, MAF>0.01, A/B/D subgenomes)",
+        "source": "Ma et al. 2025, Plant Communications — CNV map of 491 common wheat genomes (doi:10.1016/j.xplc.2024.101226)",
         "reference": "Chinese_Spring1.0",
     },
 }
