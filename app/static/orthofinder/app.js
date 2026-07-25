@@ -167,36 +167,42 @@ async function searchProtein(q) {
     document.getElementById("ogTitle").textContent =
       `${data.orthogroup} | Query: ${data.query} | OG members: ${data.gene_count}`;
 
-    document.getElementById("downloadTree").href =
-      `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-      `&type=tree`;
+    // ---- bundle download links (tree + alignment in one click) ----
+    downloadUrls = {
+      og: {
+        tree:
+          `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+          `&type=tree`,
+        alignment:
+          `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+          `&type=alignment`
+      },
+      type1: null,
+      type2: null
+    };
 
-    document.getElementById("downloadAlignment").href =
-      `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-      `&type=alignment`;
-
-    // ---- type1/type2 homoeologous download links ----
     if (currentCluster !== null && currentCluster > 0 && data.query) {
-      document.getElementById("downloadType1Tree").href =
-        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-        `&type=tree&cluster=${currentCluster}&type_tree=type1`;
-      document.getElementById("downloadType1Tree").style.display = "";
-      document.getElementById("downloadType2Tree").href =
-        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-        `&type=tree&cluster=${currentCluster}&type_tree=type2`;
-      document.getElementById("downloadType2Tree").style.display = "";
-      document.getElementById("downloadType1Alignment").href =
-        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-        `&type=alignment&cluster=${currentCluster}&type_tree=type1`;
-      document.getElementById("downloadType1Alignment").style.display = "";
-      document.getElementById("downloadType2Alignment").href =
-        `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
-        `&type=alignment&cluster=${currentCluster}&type_tree=type2`;
-      document.getElementById("downloadType2Alignment").style.display = "";
+      downloadUrls.type1 = {
+        tree:
+          `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+          `&type=tree&cluster=${currentCluster}&type_tree=type1`,
+        alignment:
+          `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+          `&type=alignment&cluster=${currentCluster}&type_tree=type1`
+      };
+      downloadUrls.type2 = {
+        tree:
+          `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+          `&type=tree&cluster=${currentCluster}&type_tree=type2`,
+        alignment:
+          `/api/orthofinder/download?og=${encodeURIComponent(data.orthogroup)}` +
+          `&type=alignment&cluster=${currentCluster}&type_tree=type2`
+      };
+      document.getElementById("downloadType1").style.display = "";
+      document.getElementById("downloadType2").style.display = "";
     } else {
-      ["downloadType1Tree","downloadType2Tree","downloadType1Alignment","downloadType2Alignment"].forEach(function(id) {
-        document.getElementById(id).style.display = "none";
-      });
+      document.getElementById("downloadType1").style.display = "none";
+      document.getElementById("downloadType2").style.display = "none";
     }
 
     // Badge - show "Homoeologous group N (chrA/B/D)"
@@ -1991,4 +1997,20 @@ function renderCircularToSvg(svg, prepared) {
 }
 
 var dataRef = null;  // reference to raw API response for renderTypeTree
+
+function downloadBundle(event, kind) {
+  event.preventDefault();
+  var urls = downloadUrls[kind];
+  if (!urls) return;
+  [urls.tree, urls.alignment].forEach(function(url, i) {
+    setTimeout(function() {
+      var a = document.createElement('a');
+      a.href = url;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }, i * 400);
+  });
+}
 
