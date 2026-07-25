@@ -65,11 +65,21 @@ def _load_cluster_map() -> tuple[dict, dict]:
     prefix_map: dict[str, int] = {}
     chrom_map: dict[str, int] = {}
     _type_map: dict = {}
+    _species_type_map: dict = {}  # species_name → (type1, type2)
     if CLUSTER_FILE.exists():
         for line in CLUSTER_FILE.read_text(encoding="utf-8").splitlines()[1:]:
             cols = line.split(_TAB)
             if len(cols) < 8:
                 continue
+            # Parse type1/type2 for this row (apply to all species in this row)
+            t1 = (cols[8].strip().lower() if len(cols) > 8 else "no")
+            t2 = (cols[9].strip().lower() if len(cols) > 9 else "no")
+            # Parse species from column 0 (e.g. "0: AK58_A.pep" or "0 AK58_A.pep")
+            raw_species = re.sub(r"^\d+\s*:\s*", "", cols[0].strip())
+            raw_species = re.sub(r"\.pep$", "", raw_species, flags=re.I)
+            species_name = _clean(raw_species)
+            if species_name:
+                _species_type_map[species_name] = (t1, t2)
             for c in range(1, 8):
                 val = cols[c].strip()
                 if not val:
@@ -78,9 +88,6 @@ def _load_cluster_map() -> tuple[dict, dict]:
                     chrom_map[val.lower()] = c
                 else:
                     prefix_map[val] = c
-                    # collect type1/type2 classification for this prefix row
-                    t1 = (cols[8].strip().lower() if len(cols) > 8 else "no")
-                    t2 = (cols[9].strip().lower() if len(cols) > 9 else "no")
                     _type_map[val] = (t1, t2)
     _cluster_cache = (prefix_map, chrom_map)
     global _type_map_cache
@@ -98,9 +105,21 @@ def _get_type_for_gene(gene_id: str) -> tuple[str, str]:
     """Return (type1, type2) for a gene_id — 'yes' or 'no' per column."""
     gene_id = _clean(gene_id)
     type_map = _load_type_map()
+
+    # 1) Try cluster prefix match
     for pfx in _get_sorted_prefixes():
         if pfx in type_map and gene_id.lower().startswith(pfx.lower()):
             return type_map[pfx][0], type_map[pfx][1]
+
+    # 2) Try species name match from gene_id prefix + subgenome
+    #    e.g. TrtraKHA1A01G047310.1 → prefix=TrtraKHA, sub=A → species_key=TrtraKHA_A
+    sp = _split_prefixed_gene(gene_id)
+    if sp["genome_type"]:
+        # Extract species+subgenome key from genome_type (e.g. TrtraKHA_A_subgenome → TrtraKHA_A)
+        species_key = re.sub(r"_subgenome$", "", sp["genome_type"], flags=re.I)
+        if species_key in _species_type_map:
+            return _species_type_map[species_key][0], _species_type_map[species_key][1]
+
     return "no", "no"
 
 def _get_sorted_prefixes() -> list:
@@ -456,8 +475,8 @@ def _make_info(short: str, gene: str, genome_type: str, sub: str) -> dict:
     gn = short.split("_", 1)[0] if short else ""
     gt_info = _load_genome_type_map().get(gn)
     if gt_info:
-        if not genome_type or genome_type == "Unknown":
-            genome_type = gt_info["genome_type"]
+        # Always override with genome_type.txt — it's the authoritative source
+        genome_type = gt_info["genome_type"]
         sub = gt_info["subgenome"]
         # Keep the exact species name from genome_type.txt (not the
         # assembled x_A_subgenome form) so labels read correctly:
