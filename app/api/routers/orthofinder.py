@@ -389,14 +389,17 @@ def _load_genome_type_map() -> dict:
             gn = cols[0].strip()
             species = cols[1].strip()
             gtype = cols[2].strip()
-            # Determine subgenome from the final character of the type
-            sub = _norm_sub(gtype[0] if gtype else "")
+            # Determine subgenome from the genome_type string:
+            #   AK58_A_subgenome      → regex match _A_ → A
+            #   RM271_N_subgenome     → no regex match  → Other
+            #   Barley3_H_subgenome   → no regex match  → Other
+            sub = "Other"
             if gtype:
                 m_sub = re.search(r"_([ABD])_subgenome$", gtype, re.I)
                 if m_sub:
                     sub = m_sub.group(1).upper()
                 else:
-                    # Try to extract from species name (e.g. RM271_N → N)
+                    # Try to extract from species name (e.g. RM271_N → find _[ABD] suffix)
                     m_sub2 = re.search(r"_([ABD])$", species, re.I)
                     if m_sub2:
                         sub = m_sub2.group(1).upper()
