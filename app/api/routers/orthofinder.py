@@ -1001,18 +1001,24 @@ def search_orthogroup(
     cluster_genes_type1 = [g for g in cluster_genes if _get_type_for_gene(g)[0] == "yes"]
     cluster_genes_type2 = [g for g in cluster_genes if _get_type_for_gene(g)[1] == "yes"]
 
-    def _prune_typed_tree(type_genes):
+    def _prune_typed_tree(type_genes, tag=""):
         """Prune the full OG tree to a subset of cluster genes (type1 or type2)."""
         if not type_genes or not tree:
+            print(f"[DEBUG _prune_typed_tree {tag}] type_genes is empty or tree is empty")
             return ""
-        keep = _build_prune_keep_set(type_genes, meta, _parse_newick_leaves(tree))
+        tree_leaves = _parse_newick_leaves(tree)
+        print(f"[DEBUG _prune_typed_tree {tag}] type_genes n={len(type_genes)}, tree_leaves n={len(tree_leaves)}, "
+              f"meta keys n={len(meta)}, first 3 type_genes={type_genes[:3]}, first 3 leaves={tree_leaves[:3]}")
+        keep = _build_prune_keep_set(type_genes, meta, tree_leaves)
+        print(f"[DEBUG _prune_typed_tree {tag}] keep n={len(keep)}")
         if keep:
             pruned = _prune_newick(tree, keep)
-            return pruned if pruned else ""
+            if pruned:
+                return pruned
         return ""
 
-    cluster_tree_type1 = _prune_typed_tree(cluster_genes_type1)
-    cluster_tree_type2 = _prune_typed_tree(cluster_genes_type2)
+    cluster_tree_type1 = _prune_typed_tree(cluster_genes_type1, tag="type1")
+    cluster_tree_type2 = _prune_typed_tree(cluster_genes_type2, tag="type2")
 
     # Build cluster tree (original — all cluster genes)
     cluster_tree = ""
