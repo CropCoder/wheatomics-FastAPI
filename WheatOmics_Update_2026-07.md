@@ -74,6 +74,77 @@
 
 ---
 
+## 二（续）、多组学模块概览
+
+除上述两大重点升级模块外，WheatOmics 平台还持续维护着完整的多组学数据分析工具链：
+
+### 2.3 基因表达查询（GeneExpression）
+
+**访问地址**：[https://wheatomics.sdau.edu.cn/expression/](https://wheatomics.sdau.edu.cn/expression/)
+
+- 支持 **多项目 RNA-seq 表达谱检索**，覆盖不同组织、发育时期、胁迫处理的转录组数据。
+- 提供基因在不同项目中的表达量（FPKM/RPKM）可视化，支持单个基因快速查询和批量比较。
+- API 端点：`/api/expression/projects`（项目列表）、`/api/expression/query`（按基因 ID 查询）。
+
+### 2.4 共表达网络分析（Co-expression）
+
+**访问地址**：[https://wheatomics.sdau.edu.cn/coexpression/](https://wheatomics.sdau.edu.cn/coexpression/)
+
+- 基于多个独立 RNA-seq 项目构建的 **基因共表达网络数据库**。
+- 输入一个基因 ID，检索与之共表达的相关基因及其相关系数。
+- 支持选择不同项目/数据库进行查询，适配不同生物学场景。
+- API 端点：`/api/coexpression/databases`、`/api/coexpression/query`、`/api/coexpression/projects`。
+
+### 2.5 蛋白质互作网络（WheatPPI）
+
+**访问地址**：[https://wheatomics.sdau.edu.cn/wheatPPI/](https://wheatomics.sdau.edu.cn/wheatPPI/)
+
+- 麦族（Triticeae）**蛋白质-蛋白质相互作用（PPI）数据库**，整合实验验证和预测的互作对。
+- 支持按基因 ID 检索其互作伙伴，以网络图或列表形式展示。
+- API 端点：`/api/ppi/query`。
+
+### 2.6 GO/KEGG 富集分析
+
+**访问地址**：[https://wheatomics.sdau.edu.cn/GO_KEGG/](https://wheatomics.sdau.edu.cn/GO_KEGG/)
+
+- 基于 **超几何检验 + Benjamini-Hochberg 多重检验校正** 的经典富集分析方法。
+- 支持 **GO（Gene Ontology）** 和 **KEGG 通路** 两种富集模式。
+- 用户提交基因列表，系统返回显著富集的 GO 条目或 KEGG 通路及对应 p 值。
+- 提供反向查询：从 GO 条目或 KEGG 通路查找已在数据库中注释的基因。
+- API 端点：`/api/go-kegg/go-enrichment`、`/api/go-kegg/kegg-enrichment`、`/api/go-kegg/go-genes`、`/api/go-kegg/kegg-genes`。
+
+### 2.7 文献检索（Triticeae Papers）
+
+**访问地址**：[https://wheatomics.sdau.edu.cn/papers](https://wheatomics.sdau.edu.cn/papers)
+
+- 收录 **数万条麦族（Triticeae）相关科研文献**，覆盖基因组学、功能基因、表达调控、遗传育种等方向。
+- 支持按关键词、PMID、物种名等进行多维检索。
+- 每篇文献提供摘要信息展示、PMID 链接，以及用户标注（annotation）功能。
+- 支持文献统计数据查询（年度发表趋势、物种分布等）。
+- API 端点：`/api/triticeae/papers`、`/api/triticeae/papers/{pmid}/annotation`、`/api/triticeae/papers/stats`。
+
+### 2.8 多库同源比对（BLAST / preBLAST / HomologFinder / IDConvert）
+
+- **BLAST 比对**（[https://wheatomics.sdau.edu.cn/blast/blast.html](https://wheatomics.sdau.edu.cn/blast/blast.html)）：
+  支持 blastp/blastn/blastx/tblastn/tblastx 五种程序，可对 **蛋白库**（aggregated / 六倍体小麦 / 四倍体小麦 / 二倍体 / 大麦 / 山羊草等分类）和 **核酸库**（全基因组 CDS / 基因组序列库）进行在线比对，返回传统表格+可视化双格式结果。
+  API 端点：`/api/blast/search`、`/api/blast/databases`、`/api/blast/status`。
+
+- **preBLAST 预先比对数据库**（[https://wheatomics.sdau.edu.cn/preblast/](https://wheatomics.sdau.edu.cn/preblast/)）：
+  针对常用物种预先计算的 BLAST 结果数据库，检索速度远快于实时 BLAST。
+
+- **HomologFinder 同源基因搜索**：基于小麦-水稻-拟南芥直系同源关系表的快速同源基因查询。
+  API 端点：`/api/comparative/homologs/wheat-rice-arabidopsis`。
+
+- **IDConvert 基因 ID 转换**（[https://wheatomics.sdau.edu.cn/idConvert/](https://wheatomics.sdau.edu.cn/idConvert/)）：
+  支持不同小麦基因组版本和不同命名体系之间的基因 ID 互转。
+  API 端点：`/api/comparative/id-conversion`。
+
+- **FASTA 序列获取（GetSequence）**（[https://wheatomics.sdau.edu.cn/getfasta/](https://wheatomics.sdau.edu.cn/getfasta/)）：
+  支持基因 ID、批量 ID 和染色体区间三种模式的 CDS / 蛋白序列快速提取。
+  API 端点：`/api/sequence/by-gene`、`/api/sequence/by-interval`、`/api/sequence/batch`。
+
+---
+
 ## 三、已知问题与免责声明
 
 本次升级涉及大量底层数据的迁移和模块重构，部分功能和数据集仍处于测试阶段：
