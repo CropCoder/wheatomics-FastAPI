@@ -16,3 +16,4 @@ from .triticeae import router as triticeae
 from .track import router as track
 from .go_kegg import router as go_kegg
 from .varianthub import router as varianthub
+from .syntenyview import router as syntenyview
