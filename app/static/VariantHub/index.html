@@ -205,8 +205,8 @@ var _hmt = _hmt || [];
         </div>
         <div class="form-group" id="region-group">
           <label for="region-input"><strong>Region</strong></label>
-          <input type="text" id="region-input" class="form-control" placeholder="e.g. chr1A:1000-50000 or 1A:1000-50000">
-          <small class="text-muted">Format: chr:start-end or chr:start..end (max 5 Mb). Kronos uses 1A-7D (no chr prefix).</small>
+          <input type="text" id="region-input" class="form-control" placeholder="e.g. chr1A:1000-50000">
+          <small class="text-muted" id="region-hint">Format: chr:start-end (max 5 Mb)</small>
         </div>
         <div class="form-group" id="variant-id-group" style="display:none;">
           <label for="variant-id-input"><strong>Variant ID</strong></label>
@@ -343,6 +343,19 @@ function fillDatasetSelect() {
   (ref ? ref.datasets : []).forEach(function(ds) {
     dsSel.append($('<option>').val(ds.key).text(ds.label));
   });
+  // Update region hint per reference genome
+  var regionHint = $('#region-hint');
+  var regionInput = $('#region-input');
+  if (refName === 'Kronos') {
+    regionHint.text('Format: chr:start-end (max 5 Mb). Kronos chromosomes: 1A-7D (no chr prefix).');
+    regionInput.attr('placeholder', 'e.g. 1A:1000-50000');
+  } else if (refName && refName.startsWith('Chinese_Spring')) {
+    regionHint.text('Format: chr:start-end (max 5 Mb).');
+    regionInput.attr('placeholder', 'e.g. chr1A:1000-50000');
+  } else {
+    regionHint.text('Format: chr:start-end (max 5 Mb).');
+    regionInput.attr('placeholder', 'e.g. chr1A:1000-50000');
+  }
 }
 
 function currentDatasetMeta() {
