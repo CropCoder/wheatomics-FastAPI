@@ -21,5 +21,5158 @@
       "label": "Seed Source"
     }
   ],
-  "samples": {}
+  "samples": {
+    "PI470991": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI538702": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Lebanon",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI538630": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI466987": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI466980": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI428071": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI487260": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Syria",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI470998": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "TRI11505": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Lebanon",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI428127": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Lebanon",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI428041": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI428098": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI428138": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Lebanon",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI466943": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Syria",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI428107": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI466959": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI487254": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Syria",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI471062": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI466970": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI466933": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Syria",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI428016": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI466941": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Syria",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI428020": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI466934": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Syria",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI471012": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI466986": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI428082": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI428029": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "CItr3686": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "USA",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "CItr7966": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI266842": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "United Kingdom",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI197484": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI196905": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI254192": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Serbia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "CItr14916": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI534275": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI197488": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI532306": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "CItr14824": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI197492": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI355484": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Spain",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI479958": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI624904": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI499973": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Armenia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI624908": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI58788": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI254191": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Russian",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI349045": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Russian",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI94668": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Russian",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI480465": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI626391": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI94656": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Serbia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI479968": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI374659": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Macedonia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI378473": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Macedonia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI272587": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Hungary",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "CItr7798": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI272592": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Hungary",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI341300": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI620972": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI41029": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Georgia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI166484": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI60715": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Egypt",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI341611": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI191903": {
+      "type": "Polish wheat",
+      "subspecies": "Triticum polonicum",
+      "country": "Portugal",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI167622": {
+      "type": "Polish wheat",
+      "subspecies": "Triticum polonicum",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI272568": {
+      "type": "Polish wheat",
+      "subspecies": "Triticum polonicum",
+      "country": "Hungary",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI384342": {
+      "type": "Polish wheat",
+      "subspecies": "Triticum polonicum",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI254214": {
+      "type": "Polish wheat",
+      "subspecies": "Triticum polonicum",
+      "country": "India",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI384344": {
+      "type": "Polish wheat",
+      "subspecies": "Triticum polonicum",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "CItr14892": {
+      "type": "Polish wheat",
+      "subspecies": "Triticum polonicum",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI272572": {
+      "type": "Polish wheat",
+      "subspecies": "Triticum polonicum",
+      "country": "Hungary",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI191823": {
+      "type": "Polish wheat",
+      "subspecies": "Triticum polonicum",
+      "country": "Portugal",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI384337": {
+      "type": "Polish wheat",
+      "subspecies": "Triticum polonicum",
+      "country": "Ethiopia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI537992": {
+      "type": "Khorasan wheat",
+      "subspecies": "Triticum turanicum",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI166450": {
+      "type": "Khorasan wheat",
+      "subspecies": "Triticum turanicum",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI166959": {
+      "type": "Khorasan wheat",
+      "subspecies": "Triticum turanicum",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI624892": {
+      "type": "Khorasan wheat",
+      "subspecies": "Triticum turanicum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI624421": {
+      "type": "Khorasan wheat",
+      "subspecies": "Triticum turanicum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI624422": {
+      "type": "Khorasan wheat",
+      "subspecies": "Triticum turanicum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI347132": {
+      "type": "Khorasan wheat",
+      "subspecies": "Triticum turanicum",
+      "country": "Afghanistan",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI184543": {
+      "type": "Khorasan wheat",
+      "subspecies": "Triticum turanicum",
+      "country": "Portugal",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI272602": {
+      "type": "Khorasan wheat",
+      "subspecies": "Triticum turanicum",
+      "country": "Hungary",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI317492": {
+      "type": "Khorasan wheat",
+      "subspecies": "Triticum turanicum",
+      "country": "Afghanistan",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI192051": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI166327": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI624388": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI32877": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Kazakhstan",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI627942": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI626483": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI624129": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI627996": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI625273": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI627514": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI623461": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI24493": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkmenistan",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI178143": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "TRI12750": {
+      "type": "Georgian wheat",
+      "subspecies": "Triticum karamyschevii",
+      "country": "Georgia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "TRI11946": {
+      "type": "Georgian wheat",
+      "subspecies": "Triticum karamyschevii",
+      "country": "Georgia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "TRI4568": {
+      "type": "Georgian wheat",
+      "subspecies": "Triticum karamyschevii",
+      "country": "Georgia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "TRI6177": {
+      "type": "Ispahanicum",
+      "subspecies": "Triticum ispahanicum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "KU-145": {
+      "type": "Ispahanicum",
+      "subspecies": "Triticum ispahanicum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI352493": {
+      "type": "Ispahanicum",
+      "subspecies": "Triticum ispahanicum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI294477": {
+      "type": "Ispahanicum",
+      "subspecies": "Triticum ispahanicum",
+      "country": "France",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "KU-4580": {
+      "type": "Ispahanicum",
+      "subspecies": "Triticum ispahanicum",
+      "country": "Iran",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI585017": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "Georgia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI532486": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI94748": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "Georgia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI470731": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI94751": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "Georgia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI94752": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "Georgia",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI470733": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI272521": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "Hungary",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI168672": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "China",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "PI245751": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Turkey",
+      "publication_doi": "10.1038/s41588-020-00722-w",
+      "seed_source": "-"
+    },
+    "NU01890": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01897": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01901": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01905": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://germplasm.cgris.net/)"
+    },
+    "NU01907": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Iran",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01910": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Iran",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01911": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Iran",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01912": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Iran",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01913": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Iran",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01915": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Iran",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01918": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Iran",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01920": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01922": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01924": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01927": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01928": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01931": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01932": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01933": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01934": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01937": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01938": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01939": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01940": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01943": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01945": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01946": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01947": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01948": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01949": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01951": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01952": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01954": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://germplasm.cgris.net/)"
+    },
+    "NU01955": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01956": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01957": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01958": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01960": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01961": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01962": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01965": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01966": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01968": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01969": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01971": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01973": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01974": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01976": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01977": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01978": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01981": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01983": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01984": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01985": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01987": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01988": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01996": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01997": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01998": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45527": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG46025": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG46191": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG46250": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG46253": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG46280": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG46282": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG46285": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG46286": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG46308": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG46450": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG46472": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG46517": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG115800": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG115809": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG116179": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02022": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG119412": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG119428": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG139189": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG139362": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02027": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG144174": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02030": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02031": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02032": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02033": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02035": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02036": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02037": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02039": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02042": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02043": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02045": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02047": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02048": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02049": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02050": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02052": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02053": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02054": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02055": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02056": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02058": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02059": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02061": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02062": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02063": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02064": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02065": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02066": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU02067": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG115803": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Jordan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG115807": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Jordan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG115810": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Jordan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG116171": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG116182": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG116183": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG116187": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG119408": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Syria",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG119430": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Syria",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG119437": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Syria",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG139118": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Jordan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG139122": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Jordan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG139123": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Jordan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG139129": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Jordan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG139137": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Jordan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG139138": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Jordan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG139293": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Syria",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG139330": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Syria",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG139358": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Syria",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG139956": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Syria",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG139970": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Syria",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI560877": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "Svevo": {
+      "type": "Durum",
+      "subspecies": "Triticum dicoccoides",
+      "country": "-",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU01975": {
+      "type": "Wild emmer wheat",
+      "subspecies": "Triticum dicoccoides",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI74108": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Georgia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI94615": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI94616": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI94624": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Iran",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI94631": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI94666": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI94674": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Georgia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI94675": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Georgia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI94738": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ukraine",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI168673": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI197481": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI197495": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI217637": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI217639": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI217640": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI244341": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI254147": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI254165": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Iran",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI254189": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Georgia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI254190": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI272533": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Hungary",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI273980": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI273981": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI298582": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI298586": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI319869": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI324076": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI355477": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI355507": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI362696": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Montenegro",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI377656": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Serbia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI377657": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Serbia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI384332": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI480460": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI532305": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Oman",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "XM000010": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Yemen",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000012": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000013": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Yemen",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000014": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000016": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000017": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000018": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000019": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000020": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000022": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000023": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000024": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000025": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000026": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000028": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000029": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000030": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000031": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000550": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000006": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Yemen",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000008": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Yemen",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000007": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Yemen",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000087": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000089": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000009": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Yemen",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000090": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000949": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000950": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "IG80909": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG88762": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Peru",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG88764": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45087": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45237": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45254": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Jordan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45322": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Georgia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45326": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Montenegro",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45329": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Iran",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45363": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Palestine",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45371": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Croatia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45375": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Bosnia and Herzegovina",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45394": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45439": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Georgia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45440": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Hungary",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45444": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Palestine",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45483": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Iran",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG46512": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG126318": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Armenia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG127687": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Azerbaijan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG88750": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Afghanistan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG88761": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG88763": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG88765": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG88869": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG91674": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG99236": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Yemen",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45068": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Oman",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45094": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Armenia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45118": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "United Kingdom",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45309": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Czech",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45311": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45325": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45352": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "China",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45362": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45364": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Swiss Confederation",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45374": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Montenegro",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45379": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Belarus",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45393": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Eritrea",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45408": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ukraine",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45280": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Slovakia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "CItr12213": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "CItr12214": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "CItr14135": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "CItr14919": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "-",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "CItr14970": {
+      "type": "Domesticated emmer wheat",
+      "subspecies": "Triticum dicoccon",
+      "country": "-",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "XM000103": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Syria",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM001034": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM001035": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000104": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Algeria",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000105": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Algeria",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM001053": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM001072": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM001074": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000108": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM001082": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000109": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000111": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000121": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000122": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000124": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000125": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000126": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000127": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000129": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Tunisia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000131": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Argentina",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000141": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000142": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000147": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000153": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Zambia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000160": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Bulgaria",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000163": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000165": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000177": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000182": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000183": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000209": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000210": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000220": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Cyprus",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000221": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Cyprus",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000222": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Cyprus",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000237": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Romania",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000238": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Romania",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000239": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000240": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000244": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000255": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000259": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000265": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000275": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000282": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000286": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000293": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000294": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000296": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000297": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000298": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Greece",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000299": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Greece",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000300": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Greece",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000301": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Greece",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000311": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000313": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000314": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000318": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000323": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000328": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000332": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000335": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000343": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000344": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iraq",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000345": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iraq",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000346": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iraq",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000347": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000354": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000355": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000359": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000360": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000361": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000368": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000372": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000374": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Hungary",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000377": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000382": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Palestine",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000385": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000387": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000395": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000406": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000408": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000416": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000417": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000418": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000423": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Greece",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000425": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000426": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000427": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000432": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Morocco",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000433": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Morocco",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000434": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Morocco",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000437": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Kenya",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000439": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000440": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000441": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000446": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000447": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000449": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000451": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000452": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000458": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Greece",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000488": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000505": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000508": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000509": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000510": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000512": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000515": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Chile",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000517": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000518": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000520": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000524": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000526": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000530": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000545": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000551": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000552": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000555": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000556": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000561": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000564": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Morocco",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000568": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Egypt",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000576": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000580": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000590": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "South Africa",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000592": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000594": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000595": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000596": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000597": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000598": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000599": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000600": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000601": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000602": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000603": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000604": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000605": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000607": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000608": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Egypt",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000609": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "South Africa",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000611": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000617": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000618": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000620": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Syria",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000622": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Syria",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000623": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Peru",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000626": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000627": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000628": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Argentina",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000638": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000642": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000647": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Morocco",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000648": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000653": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Tunisia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000654": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Tunisia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000665": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000666": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000667": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000668": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000670": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000671": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000672": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000673": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000674": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000675": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000676": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000677": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000678": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000679": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000068": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000680": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000681": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000683": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000684": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000686": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000687": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Albania",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000689": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Monaco",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000691": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000692": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000695": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000094": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000096": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Afghanistan",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000960": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000097": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Afghanistan",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000976": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000977": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000081": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000072": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "IG42707": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Morocco",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG42786": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG43280": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Oman",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG43291": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Oman",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG43305": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Oman",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG43316": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Oman",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG43322": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Oman",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG43330": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Oman",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG45090": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG81972": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82011": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Uzbekistan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82027": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Kazakhstan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82029": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Kazakhstan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82036": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82037": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82053": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Argentina",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82058": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "South Africa",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82071": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82110": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Azerbaijan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82114": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Georgia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82115": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Georgia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82116": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Azerbaijan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82123": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Georgia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82129": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Ukraine",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82182": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkmenistan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82187": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82197": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82210": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Kazakhstan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82233": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Uzbekistan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82280": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Egypt",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82281": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Egypt",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82288": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Egypt",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82355": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82377": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82438": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iraq",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82491": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Uzbekistan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82510": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "China",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82539": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82541": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Armenia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82574": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82578": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Afghanistan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82580": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Afghanistan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82631": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82681": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82712": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82719": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82755": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82777": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82789": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82791": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82828": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82835": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82837": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82875": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82895": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82920": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG82945": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83069": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Ukraine",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83085": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83095": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83103": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Georgia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83198": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83201": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Argentina",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83203": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Uzbekistan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83208": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Uzbekistan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83210": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkmenistan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83224": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Algeria",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83231": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Algeria",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83273": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Greece",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83287": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83295": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Tanzania",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83296": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Lebanon",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83367": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Egypt",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83369": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83391": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83392": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83408": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Ukraine",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83432": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83483": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Egypt",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83585": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83616": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "China",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83621": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iraq",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83627": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iraq",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83673": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Ukraine",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83687": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "China",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83693": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83758": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG83917": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG84129": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86308": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Argentina",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86415": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86440": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86451": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86457": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86607": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86620": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Ukraine",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86622": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86653": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86685": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Mexico",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86705": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "India",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86707": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Pakistan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86708": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86848": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86901": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86910": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG86939": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG87120": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Greece",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG87365": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "China",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG87455": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Peru",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG87498": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Peru",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG87499": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Peru",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG87566": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG87760": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Syria",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG87809": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG87816": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG87879": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG88293": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Montenegro",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG88316": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iran",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG88380": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Hungary",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG88381": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Hungary",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG88585": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Greece",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG88605": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Italy",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG89009": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Eritrea",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG89088": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "France",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG89089": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "France",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG89091": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "France",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG89092": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "France",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG89094": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "France",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG89113": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG89115": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG89118": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG89136": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Afghanistan",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG93430": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Algeria",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG99029": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03410": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03411": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03412": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03413": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03415": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Israel",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03416": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03417": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Russian",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03418": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03419": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03420": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03421": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Cyprus",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03422": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03423": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03424": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03425": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03426": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Syria",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03427": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Iraq",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03428": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Abyssinia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03430": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Ukraine",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03431": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03432": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "South Africa",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03433": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03434": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Canada",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03435": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Algeria",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03436": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "NU03437": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "Argentina",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "Cltr13165": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "Zavitan": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "-",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.germplasm.net/)"
+    },
+    "CS19A146": {
+      "type": "Durum",
+      "subspecies": "Triticum durum",
+      "country": "-",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "IG77365": {
+      "type": "Ethiopian wheat",
+      "subspecies": "Triticum aethiopicum",
+      "country": "Ethiopia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI330553": {
+      "type": "Georgian wheat",
+      "subspecies": "Triticum karamyschevii",
+      "country": "United Kingdom",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI349050": {
+      "type": "Georgian wheat",
+      "subspecies": "Triticum karamyschevii",
+      "country": "Georgia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI418586": {
+      "type": "Georgian wheat",
+      "subspecies": "Triticum karamyschevii",
+      "country": "Georgia",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI330548": {
+      "type": "Ispahanicum",
+      "subspecies": "Triticum ispahanicum",
+      "country": "Iran",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "PI294478": {
+      "type": "Ispahanicum",
+      "subspecies": "Triticum ispahanicum",
+      "country": "France",
+      "publication_doi": "-",
+      "seed_source": "The Peking University Institute of Advanced Agricultural Sciences"
+    },
+    "XM001097": {
+      "type": "Khorasan wheat",
+      "subspecies": "Triticum turanicum",
+      "country": "-",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000719": {
+      "type": "Polish wheat",
+      "subspecies": "Triticum polonicum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "NU00021": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://germplasm.cgris.net/)"
+    },
+    "XM001098": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM001099": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000709": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000710": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000711": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000712": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000714": {
+      "type": "Persian wheat",
+      "subspecies": "Triticum carthlicum",
+      "country": "Germany",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000119": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Turkey",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000824": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000827": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Portugal",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000830": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000831": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000832": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Spain",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000834": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "USA",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    },
+    "XM000835": {
+      "type": "Rivet wheat",
+      "subspecies": "Triticum turgidum",
+      "country": "Australia",
+      "publication_doi": "-",
+      "seed_source": "Chinese Crop Germplasm Resources Information System (https://www.cgris.net/)"
+    }
+  }
 }
