@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gene Neighborhood Synteny Viewer - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<style>
+  body { background: #f8f9fa; margin:0; padding:0; font-family: Arial, sans-serif; }
+  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+  #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
+  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; }
+  #header-tabs ul { margin:0; padding:0; list-style:none; }
+  #header-tabs li { display:inline-block; width:190px; }
+  #header-tabs a { background:#0077b6; font-size:13pt; color:#fff; display:block; padding:8px; font-weight:bold; text-decoration:none; border-radius:5px 5px 0 0; }
+  #header-tabs a:hover { background:#98c1d9; color:#000; }
+  #header-tabs ul li ul { display:none; position:absolute; }
+  #header-tabs ul li:hover ul { display:block; }
+  #header-tabs ul li ul a { border-radius:0; }
+  #home_content { max-width: 1400px; margin: 26px auto 36px auto; padding: 0 15px; }
+  .tool-card { background:#fff; border-radius:10px; padding:28px 32px; box-shadow:0 3px 16px rgba(0,0,0,0.10); }
+  h1 { text-align:center; margin:0; color:#1f4e3d; font-size:30px; }
+  .subtitle { text-align:center; color:#667; margin:12px 0 26px 0; }
+  .search-box { display:flex; gap:10px; max-width:600px; margin:0 auto 18px auto; }
+  .search-box input { flex:1; padding:12px 14px; font-size:15px; border:1px solid #bcc7d1; border-radius:6px; }
+  .search-box button { background:#26734d; color:#fff; border:none; border-radius:6px; padding:11px 22px; cursor:pointer; font-size:15px; }
+  #message { max-width:600px; margin:12px auto; color:#b00020; font-weight:bold; text-align:center; }
+  #result { display:none; }
+  .summary-card { margin-top:24px; padding:18px 20px; background:#eef7f1; border-left:5px solid #26734d; border-radius:8px; }
+  .summary-card .label { color:#687685; font-size:13px; margin-bottom:6px; }
+  .query-title { font-size:18px; font-weight:bold; color:#18392b; }
+  .cluster-badge { display:inline-block; padding:2px 10px; border-radius:12px; font-weight:bold; font-size:13px; margin-left:10px; vertical-align:middle; }
+  .cluster-badge-1 { background:#e3f2fd; color:#1565c0; }
+  .cluster-badge-2 { background:#fce4ec; color:#c62828; }
+  .cluster-badge-3 { background:#e8f5e9; color:#2e7d32; }
+  .cluster-badge-4 { background:#fff3e0; color:#e65100; }
+  .cluster-badge-5 { background:#f3e5f5; color:#7b1fa2; }
+  .cluster-badge-6 { background:#e0f7fa; color:#00695c; }
+  .cluster-badge-7 { background:#fbe9e7; color:#4e342e; }
+  .cluster-badge-none { background:#f1f5f9; color:#94a3b8; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; margin:12px 0; padding:8px 12px; background:#fff; border:1px solid #d7dde3; border-radius:6px; }
+  .legend-item { display:flex; align-items:center; gap:6px; font-size:13px; }
+  .legend-dot { width:14px; height:14px; border-radius:50%; display:inline-block; }
+  .gene-table { margin-top:16px; }
+  .gene-table table { width:100%; border-collapse:collapse; font-size:13px; }
+  .gene-table th { background:#f1f5f9; padding:8px 10px; text-align:left; border-bottom:2px solid #d7dde3; }
+  .gene-table td { padding:6px 10px; border-bottom:1px solid #e2e8f0; }
+  .gene-table tr.query-row { background:#fef3c7; font-weight:bold; }
+  .gene-table tr.query-row td:first-child::before { content:"★ "; }
+  .gene-row { display:flex; align-items:center; gap:6px; padding:4px 8px; border-bottom:1px solid #e2e8f0; min-height:30px; }
+  .gene-row.query-row { background:#fef3c7; }
+  .gene-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; cursor:pointer; }
+  .gene-dot.query-dot { width:16px; height:16px; border:2px solid #b45309; }
+  .gene-label { font-family:Consolas,monospace; font-size:12px; }
+  .cluster-line-row { display:flex; gap:4px; padding:4px 8px; }
+  .cluster-color-strip { height:3px; border-radius:2px; flex:1; }
+</style>
+</head>
+<body>
+<div id="home_header">
+  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span>
+</div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/index.html">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/snprimer">CAPS/KASP(Beta)</a></li>
+        <li><a href="/PfamSearch/">PfamSearch</a></li>
+        <li><a href="/idConvert/">IDConvert</a></li>
+        <li><a href="/HomologFinder/">HomologFinder</a></li>
+        <li><a href="/interval/">IntervalTool</a></li>
+        <li><a href="/expression/">GeneExpression</a></li>
+        <li><a href="/coexpression/index.html">Co-expression</a></li>
+        <li><a href="/wheatPPI/">WheatPPI</a></li>
+        <li><a href="/genes/">KnownGene</a></li>
+        <li><a href="/symap/index.html">SyntenySearch</a></li>
+        <li><a href="/preblast/">preBLAST</a></li>
+        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+        <li><a href="/orthofinder/">OrthoFinder</a></li>
+        <li><a href="/VariantHub/">VariantHub</a></li>
+        <li><a href="/neighborhood/">Neighborhood</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href="#"><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div id="home_content">
+  <div class="tool-card">
+    <h1>Gene Neighborhood Synteny Viewer</h1>
+    <p class="subtitle">Search a gene ID to view its chromosomal neighbors (±5 genes) across all genomes with homoeologous cluster connections.</p>
+    <form id="searchForm" class="search-box">
+      <input id="geneInput" name="q" placeholder="Example: TraesCS1A02G219700.1">
+      <button type="submit">Search</button>
+    </form>
+    <div id="message"></div>
+    <div id="result" style="display:none;">
+      <div class="summary-card">
+        <div class="label">Query Gene</div>
+        <div class="query-title" id="queryTitle"></div>
+        <div id="clusterInfo" style="margin-top:6px;"></div>
+      </div>
+      <div class="legend" id="legend"></div>
+      <h3>Neighborhood Genes on <span id="chromLabel"></span></h3>
+      <div class="gene-table" id="geneTable"></div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
