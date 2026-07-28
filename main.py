@@ -15,7 +15,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 from app.primerserver2.dependencies import verify_api_key
@@ -131,6 +131,7 @@ app.mount("/papers", StaticFiles(directory=Path(__file__).parent / "app" / "stat
 app.mount("/genes", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "genes", html=True), name="genes")
 app.mount("/GO_KEGG", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "GO_KEGG", html=True), name="GO_KEGG")
 app.mount("/VariantHub", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "VariantHub", html=True), name="VariantHub")
+app.mount("/syntenyview", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "syntenyview", html=True), name="syntenyview")
 
 
 @app.middleware("http")
@@ -186,6 +187,7 @@ for router in [
     track,
     go_kegg,
     varianthub,
+    syntenyview,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)
 
