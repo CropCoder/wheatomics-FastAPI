@@ -1,0 +1,25 @@
+{
+  "fields": [
+    {
+      "key": "type",
+      "label": "Type"
+    },
+    {
+      "key": "subspecies",
+      "label": "Subspecies"
+    },
+    {
+      "key": "country",
+      "label": "Country"
+    },
+    {
+      "key": "publication_doi",
+      "label": "Publication doi"
+    },
+    {
+      "key": "seed_source",
+      "label": "Seed Source"
+    }
+  ],
+  "samples": {}
+}

@@ -25,6 +25,7 @@ router = APIRouter(tags=["VariantHub"])
 VARIANTHUB_REFERENCES: dict[str, str] = {
     "Chinese_Spring1.0": "Chinese Spring (IWGSCv1.0)",
     "Chinese_Spring2.1": "Chinese Spring (IWGSCv2.1)",
+    "Kronos": "Kronos (Tetraploid)",
 }
 
 # Dataset key -> {label, filename, source, reference}
@@ -184,6 +185,24 @@ VARIANTHUB_DATASETS: dict[str, dict[str, str]] = {
         "filename": "all491.cnv.snp.indel.missingrate0.25.maf0.01.abd.vcf.gz",
         "source": "Ma et al. 2025, Plant Communications — CNV map of 491 common wheat genomes (doi:10.1016/j.xplc.2024.101226)",
         "reference": "Chinese_Spring1.0",
+    },
+    "Tetra_wheat_sample736_InDel": {
+        "label": "Tetraploid_wheat.sample736.InDel",
+        "filename": "Tetraploid_wheat.sample736.InDel.vcf.gz",
+        "source": "Tetraploid wheat 736-sample InDel variants",
+        "reference": "Kronos",
+    },
+    "Tetra_wheat_sample736_SNP": {
+        "label": "Tetraploid_wheat.sample736.SNP",
+        "filename": "Tetraploid_wheat.sample736.SNP.vcf.gz",
+        "source": "Tetraploid wheat 736-sample SNP variants",
+        "reference": "Kronos",
+    },
+    "Tetra_wheat_sample736_SV": {
+        "label": "Tetraploid_wheat.sample736.SV",
+        "filename": "Tetraploid_wheat.sample736.SV.vcf.gz",
+        "source": "Tetraploid wheat 736-sample SV variants",
+        "reference": "Kronos",
     },
 }
 
