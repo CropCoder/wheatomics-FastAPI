@@ -130,26 +130,31 @@ def _get_sorted_prefixes() -> list:
     _sorted_prefixes = sorted(prefix_map.keys(), key=lambda x: -len(x))
     return _sorted_prefixes
 
-#: gene_id → chromosome, lazily populated from BED files
+#: gene_id → dict from BED files
 _bed_chromosome_cache: dict | None = None
+
+#: (genome, subgenome, chrom) → [(start, gene_id), ...] sorted by start
+_chrom_gene_lists: dict | None = None
 
 #: type classification cache — per row(gene_prefix → type1/type2)
 _type_map_cache: dict | None = None
 
 def _load_bed_chromosome_map() -> dict:
-    """Build gene_id → chromosome dict from *.filter.bed files (lazy + cached).
+    """Build gene_id → dict from *.filter.bed files (lazy + cached).
 
-    Only scans BED files that correspond to genomes listed in
-    SpeciesIDs_cluster.txt.  Each BED line is tab-separated:
-        chromosome  start  end  gene_id
+    Each dict value: {"chrom": str, "start": int, "end": int, "genome": str, "subgenome": str}
+    Also populates a secondary index _chrom_gene_lists: key=(genome,subgenome,chrom)
+    → list of (start, gene_id) sorted by start for fast chromosome-neighbor lookup.
     """
     global _bed_chromosome_cache
     if _bed_chromosome_cache is not None:
         return _bed_chromosome_cache
 
     mp: dict = {}
+    cl: dict = {}  # chrom gene lists
     if not BED_DIR.exists():
         _bed_chromosome_cache = mp
+        _chrom_gene_lists = cl
         return mp
 
     # --- determine which genomes are in the analysis ---
@@ -172,7 +177,6 @@ def _load_bed_chromosome_map() -> dict:
                 return g
             if fname.lower() == g.lower():
                 return g
-            # prefix match (e.g. Chinese_Spring2.1_A.filter.bed  vs  Chinese_Spring2.1)
             if fname.startswith(g + "_") or fname.startswith(g + "."):
                 return g
         return None
@@ -182,9 +186,8 @@ def _load_bed_chromosome_map() -> dict:
         fname = entry.name
         if not fname.endswith(".filter.bed"):
             continue
-        # strip subgenome suffix and .filter.bed
-        base = os.path.splitext(fname)[0]           # Chinese_Spring2.1_A.filter
-        base = re.sub(r"\.filter$", "", base)        # Chinese_Spring2.1_A
+        base = os.path.splitext(fname)[0]
+        base = re.sub(r"\.filter$", "", base)
         parts = base.rsplit("_", 1)
         genome_name = parts[0] if len(parts) == 2 else base
         sub = parts[1] if len(parts) == 2 and parts[1] in ("A", "B", "D") else ""
@@ -202,12 +205,27 @@ def _load_bed_chromosome_map() -> dict:
                     continue
                 gid = _clean(cols[3])
                 chrom = _clean(cols[0])
-                if gid and chrom:
-                    mp[gid] = chrom
+                if not (gid and chrom):
+                    continue
+                try:
+                    start = int(cols[1])
+                    end = int(cols[2])
+                except ValueError:
+                    start = end = 0
+                mp[gid] = {"chrom": chrom, "start": start, "end": end,
+                           "genome": genome_name, "subgenome": sub}
+                key = (genome_name, sub, chrom)
+                cl.setdefault(key, []).append((start, gid))
         except Exception:
             continue
 
+    # Sort each chromosome gene list by start position
+    for k in cl:
+        cl[k].sort(key=lambda x: x[0])
+
+    global _chrom_gene_lists
     _bed_chromosome_cache = mp
+    _chrom_gene_lists = cl
     return mp
 
 def _resolve_cluster(gene_id: str) -> int | None:
@@ -224,9 +242,11 @@ def _resolve_cluster(gene_id: str) -> int | None:
 
     # 2) chromosome fallback via BED files
     if chrom_map:
-        chrom = _load_bed_chromosome_map().get(gene_id)
-        if chrom and chrom.lower() in chrom_map:
-            return chrom_map[chrom.lower()]
+        entry = _load_bed_chromosome_map().get(gene_id)
+        if entry:
+            chrom = entry["chrom"] if isinstance(entry, dict) else entry
+            if chrom and chrom.lower() in chrom_map:
+                return chrom_map[chrom.lower()]
 
     return None
 
@@ -914,12 +934,16 @@ def search_orthogroup(
                 continue
             if cluster > 0 and _resolve_cluster(g) != cluster:
                 continue
-            chrom = bc_map.get(g, "")
-            info = _make_info("", g, "", "")
+            entry = bc_map.get(g)
+            chrom = entry["chrom"] if isinstance(entry, dict) else (entry if isinstance(entry, str) else "")
+            start = entry["start"] if isinstance(entry, dict) else 0
+            end = entry["end"] if isinstance(entry, dict) else 0
+            genome = entry["genome"] if isinstance(entry, dict) else ""
+            subg = entry["subgenome"] if isinstance(entry, dict) else info.get("subgenome", "Other")
             result.append({
                 "gene_id": g, "chromosome": chrom,
-                "start": 0, "end": 0,
-                "genome": "", "subgenome": info.get("subgenome", "Other"),
+                "start": start, "end": end,
+                "genome": genome, "subgenome": subg,
                 "label": info["full_label"],
             })
         chromosomes = sorted(set(r["chromosome"] for r in result if r["chromosome"]))
@@ -1204,3 +1228,87 @@ def download_file(
             headers={"Content-Disposition": f'attachment; filename="{og}{suffix}.alignment.fa"'})
 
     raise HTTPException(400, "Invalid type")
+
+
+# ---------------------------------------------------------------------------
+# Gene neighborhood synteny viewer
+# ---------------------------------------------------------------------------
+
+@router.get(
+    "/neighborhood",
+    summary="Get chromosomal neighbors of a gene with homoeologous cluster info",
+)
+def neighborhood(
+    q: str = Query(..., description="Gene ID, e.g. TraesCS1A02G219700.1"),
+):
+    """Return the query gene + 5 upstream/downstream neighbors (11 genes total)
+    across all genomes in the OrthoFinder analysis, with cluster assignments.
+
+    Backend:
+      1. Look up gene in BED index → (chrom, pos, genome, subgenome)
+      2. Get per-chromosome sorted gene list
+      3. Extract ±5 neighbors
+      4. _resolve_cluster for each
+    """
+    gene_id = _clean(q)
+    if not gene_id:
+        return {"error": "Please provide a gene ID"}
+
+    # 1) Find the query gene in the BED index
+    bc_map = _load_bed_chromosome_map()
+    entry = bc_map.get(gene_id)
+    if not entry:
+        return {"error": f"Gene '{gene_id}' not found in BED files"}
+
+    gchrom = entry["chrom"]
+    ggenome = entry["genome"]
+    gsub = entry["subgenome"]
+    gstart = entry["start"]
+
+    # 2) Get the chromosome gene list for this genome+subgenome+chrom
+    chrom_key = (ggenome, gsub, gchrom)
+    if chrom_key not in _chrom_gene_lists:
+        return {"error": f"No gene list found for {ggenome}_{gsub} chr{gchrom}"}
+
+    gene_list = _chrom_gene_lists[chrom_key]  # [(start, gene_id), ...] sorted
+
+    # 3) Find query index and extract ±5
+    q_idx = None
+    for i, (_, gid) in enumerate(gene_list):
+        if gid == gene_id:
+            q_idx = i
+            break
+    if q_idx is None:
+        return {"error": f"Gene '{gene_id}' not found in chromosome gene list"}
+
+    lo = max(0, q_idx - 5)
+    hi = min(len(gene_list), q_idx + 6)
+    window = gene_list[lo:hi]  # 11 genes (or fewer at edges)
+
+    # 4) Resolve cluster for all genes in the window
+    neighborhood_genes = []
+    for start_pos, gid in window:
+        cluster = _resolve_cluster(gid)
+        info = _make_info("", gid, "", "")
+        neighborhood_genes.append({
+            "gene_id": gid,
+            "cluster": cluster,
+            "label": info["full_label"],
+            "genome": ggenome,
+            "subgenome": gsub,
+            "chrom": gchrom,
+            "start": start_pos,
+            "end": entry["end"] if gid == gene_id else 0,  # approximate
+        })
+
+    query_cluster = _resolve_cluster(gene_id)
+
+    return {
+        "query": gene_id,
+        "query_cluster": query_cluster,
+        "query_genome": ggenome,
+        "query_subgenome": gsub,
+        "query_chrom": gchrom,
+        "neighborhood": neighborhood_genes,
+        "total_on_chromosome": len(gene_list),
+    }
