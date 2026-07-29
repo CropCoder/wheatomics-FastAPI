@@ -2002,24 +2002,18 @@ function downloadBundle(event, kind) {
   event.preventDefault();
   var urls = downloadUrls[kind];
   if (!urls) return;
-  // Download tree first, then alignment with a longer stagger.
-  // Some browsers drop the second download when both fire in the same tick.
-  var link = document.createElement('a');
-  link.href = urls.tree;
-  link.download = '';
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+  // Download both tree and alignment using two synchronous clicks.
+  // setTimeout was unreliable across browsers.
+  triggerDownload(urls.tree);
+  triggerDownload(urls.alignment);
+}
 
-  setTimeout(function() {
-    var link2 = document.createElement('a');
-    link2.href = urls.alignment;
-    link2.download = '';
-    link2.style.display = 'none';
-    document.body.appendChild(link2);
-    link2.click();
-    link2.remove();
-  }, 1200);
+function triggerDownload(url) {
+  var a = document.createElement('a');
+  a.href = url;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
