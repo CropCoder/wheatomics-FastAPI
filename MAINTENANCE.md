@@ -260,6 +260,71 @@ GAATTC" --max-time 30 -o /dev/null -w "%{http_code} %{time_total}\n"
 # 若 TIME=30.000 整 → curl 自己超时；若 TIME 接近 ProxyTimeout 默认值（60/75/300）→ 是 Apache 掐的
 ```
 
+#### ✅ 生产推荐：gunicorn 8 workers（替代单 uvicorn）
+
+**为什么**：单 uvicorn worker 跑 `/api/blast/search` 聚合库（`AABBDD.all.denovo` 等）能跑 10~18 分钟，峰值内存 2GB+。两个长 BLAST 接连跑会触发 Linux OOM Killer，把整个 uvicorn 进程杀掉——**整个 API 站都死**。
+
+gunicorn 8 workers 把长查询的影响限制到 1/8：
+- 1 个 worker 卡死，其他 7 个继续服务 health / databases / 其他查询
+- worker 崩溃（OOM、segfault）gunicorn 自动重启它
+- `max_requests` 让 worker 跑 100 个请求后自循环，避免内存累积
+
+**部署步骤**（一次性）：
+
+```bash
+# 1) 装 gunicorn（如果还没）
+/home/fei/mambaforge/envs/zjw/bin/pip install gunicorn
+
+# 2) 杀现有 uvicorn
+pkill -f 'uvicorn main:app'
+sleep 2
+
+# 3) 切到项目根，启动 gunicorn（gunicorn.conf.py 已随代码进仓库）
+cd /var/www/FastAPI_backend_Port8000
+nohup /home/fei/mambaforge/envs/zjw/bin/gunicorn main:app -c gunicorn.conf.py > api.log 2>&1 &
+
+# 4) 验证：1 master + 8 workers
+ps -ef | grep -E 'gunicorn' | grep -v grep
+# 期望: 1 个 "gunicorn: master" + 8 个 "gunicorn: worker"
+ss -tlnp | grep ':8000'
+curl -s http://127.0.0.1:8000/api/health -w " HTTP=%{http_code}\n"
+```
+
+**systemd 单元**（推荐，比 nohup 可靠，OOM 杀掉自动重启）：
+
+```ini
+# /etc/systemd/system/wheatomics-api.service
+[Unit]
+Description=WheatOmics FastAPI backend (gunicorn 8 workers)
+After=network.target
+
+[Service]
+Type=simple
+User=fei
+Group=fei
+WorkingDirectory=/var/www/FastAPI_backend_Port8000
+Environment="PATH=/home/fei/mambaforge/envs/zjw/bin:/usr/bin:/bin"
+ExecStart=/home/fei/mambaforge/envs/zjw/bin/gunicorn main:app -c gunicorn.conf.py
+Restart=always
+RestartSec=3
+MemoryMax=3G
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable wheatomics-api    # 开机自启
+sudo systemctl start wheatomics-api
+sudo systemctl status wheatomics-api
+```
+
+**确认 Apache 仍反代 `127.0.0.1:8000`**（如果之前是 `0.0.0.0:8000` 也行，但建议改回 127.0.0.1 限制本地）。Apache 配置不动。
+
+**worker 数选择**：8 worker 是 16 核物理机的默认值。如果服务器内存 < 16GB，把 `workers` 调到 `(可用内存 GB) - 4`（如 12GB 内存 → 8 个 worker，每个峰值 1GB 是上限）。
+
 ---
 
 ## 五、部署快速参考
