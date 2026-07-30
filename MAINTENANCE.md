@@ -4,6 +4,8 @@
 
 ---
 
+服务器地址：https://wheatomics.sdau.edu.cn
+
 ## 一、新增前端页面的标准流程
 
 以新增 `orthofinder`、`wheatPPI` 等前端模块为例：
@@ -223,6 +225,40 @@ nohup /home/fei/mambaforge/envs/zjw/bin/uvicorn main:app --host 0.0.0.0 --port 8
 | `/coexpression/` | 共表达基因查询 |
 | `/getfasta/` | FASTA 序列提取 |
 | `/assets` | FastAPI 静态资源 |
+
+#### ⚠️ 长响应端点必须给 `ProxyPass` 加 `timeout=` 参数
+
+**症状**：`POST /api/blast/search`（以及任何跑 BLAST、外部工具、超过几十秒的端点）在客户端表现为：
+- curl / urllib 报告 `HTTP 000`（TCP 半开连接）
+- `URLError: timed out` 或 `Remote end closed connection without response`
+- `/api/health` 等 GET 端点**仍正常**，只有长 POST 触发
+
+**根因**：Apache `ProxyTimeout`（多数发行版默认 60~75s）会把超过该阈值的反代响应在客户端一侧掐断。服务端 BLAST 仍在跑、跑完也没人接收，连接僵死。
+
+**修复**：把 `ProxyPass /api http://127.0.0.1:8000/` 这一行的 `timeout` 调大，与 Python 端最长 timeout 对齐（`subprocess.run(..., timeout=600)` → `timeout=600`）。**两文件都要改**：
+
+```apache
+ProxyPass        /api http://127.0.0.1:8000/ timeout=600
+ProxyPassReverse /api http://127.0.0.1:8000/ timeout=600
+```
+
+或全局设（在 `/etc/apache2/conf-enabled/proxy.conf` 加一行；该文件默认不存在则新建）：
+
+```apache
+ProxyTimeout 600
+```
+
+**应用**：`sudo apachectl graceful`（无需重启 uvicorn，Apache 平滑重载生效）。
+
+**诊断命令**（快速定位是不是这个原因）：
+```bash
+# 客户端看 timeout 是不是卡在某个固定秒数
+time curl -sX POST https://wheatomics.sdau.edu.cn/api/blast/search \
+  -d "program=blastn" -d "database=CS-IAAS_T2T.genome_Chr4A" \
+  -d "query=>test
+GAATTC" --max-time 30 -o /dev/null -w "%{http_code} %{time_total}\n"
+# 若 TIME=30.000 整 → curl 自己超时；若 TIME 接近 ProxyTimeout 默认值（60/75/300）→ 是 Apache 掐的
+```
 
 ---
 
