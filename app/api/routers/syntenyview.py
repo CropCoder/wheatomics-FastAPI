@@ -5,11 +5,10 @@ membership via SpeciesIDs_cluster.txt, and returns neighborhood + same-cluster
 gene connections for a JCVI-style frontend visualization.
 """
 
-from __future__ import annotations
-
 import os
 import re
 from pathlib import Path
+from typing import Optional, Tuple
 
 from fastapi import APIRouter, Query
 
@@ -30,8 +29,8 @@ def _clean(s: str) -> str:
 # Cluster map (shared logic with orthofinder — copied standalone for isolation)
 # ---------------------------------------------------------------------------
 
-_cluster_cache: tuple | None = None
-_sorted_prefixes: list | None = None
+_cluster_cache: Optional[tuple] = None
+_sorted_prefixes: Optional[list] = None
 
 def _load_cluster_map() -> tuple[dict, dict]:
     global _cluster_cache
@@ -63,7 +62,7 @@ def _get_sorted_prefixes() -> list:
     _sorted_prefixes = sorted(prefix_map.keys(), key=lambda x: -len(x))
     return _sorted_prefixes
 
-def _resolve_cluster(gene_id: str) -> int | None:
+def _resolve_cluster(gene_id: str) -> Optional[int]:
     gene_id = _clean(gene_id)
     prefix_map, chrom_map = _load_cluster_map()
     # 1) prefix match
@@ -84,8 +83,8 @@ def _resolve_cluster(gene_id: str) -> int | None:
 # BED map (full position data)
 # ---------------------------------------------------------------------------
 
-_bed_cache: dict | None = None
-_chrom_lists: dict | None = None  # (genome, subgenome, chrom) -> [(start, gene_id), ...]
+_bed_cache: Optional[dict] = None
+_chrom_lists: Optional[dict] = None  # (genome, subgenome, chrom) -> [(start, gene_id), ...]
 
 def _load_bed_map() -> dict:
     """Build gene_id -> {chrom, start, end, genome, subgenome} from BED_DIR."""
