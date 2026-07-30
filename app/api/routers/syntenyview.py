@@ -140,14 +140,40 @@ def _load_bed_map() -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Genomes listing
+# ---------------------------------------------------------------------------
+
+@router.get("/genomes")
+def list_genomes():
+    """Return all unique genome names from BED files."""
+    genomes: list[str] = []
+    if BED_DIR.exists():
+        seen = set()
+        for entry in sorted(BED_DIR.iterdir()):
+            fname = entry.name
+            if not fname.endswith(".bed"):
+                continue
+            base = os.path.splitext(fname)[0]
+            base = re.sub(r"\.filter$", "", base)
+            parts = base.rsplit("_", 1)
+            gn = parts[0] if len(parts) == 2 else base
+            if gn not in seen:
+                seen.add(gn)
+                genomes.append(gn)
+    return {"genomes": genomes}
+
+
+# ---------------------------------------------------------------------------
 # API
 # ---------------------------------------------------------------------------
 
 @router.get("/neighborhood")
 def neighborhood(
     q: str = Query(..., description="Gene ID, e.g. TraesCS1A02G219700.1"),
-    upstream: int = Query(5, ge=0, le=20),
-    downstream: int = Query(5, ge=0, le=20),
+    upstream: int = Query(20, ge=0, le=50),
+    downstream: int = Query(20, ge=0, le=50),
+    genome: str = Query("", description="Optional: genome name to disambiguate"),
+    subgenome: str = Query("", description="Optional: subgenome (A/B/D) to disambiguate"),
 ):
     """Return chromosomal neighborhood with homoeologous cluster assignments
     across ALL genomes, styled for a JCVI synteny plot."""
@@ -156,9 +182,24 @@ def neighborhood(
         return {"error": "Please provide a gene ID"}
 
     bc_map = _load_bed_map()
-    entry = bc_map.get(gene_id)
-    if not entry:
-        return {"error": f"Gene '{gene_id}' not found in BED files"}
+
+    # If genome+subgenome specified, search only within that genome
+    if genome and subgenome:
+        # Try the exact chromosome first
+        for (gn, sg, ch), glist in _chrom_lists.items():
+            if gn == genome and sg == subgenome:
+                for _, gid in glist:
+                    if gid == gene_id:
+                        entry = bc_map.get(gid)
+                        break
+                if entry:
+                    break
+        if not (entry := bc_map.get(gene_id)):
+            return {"error": f"Gene '{gene_id}' not found in {genome}_{subgenome}"}
+    else:
+        entry = bc_map.get(gene_id)
+        if not entry:
+            return {"error": f"Gene '{gene_id}' not found in BED files"}
 
     query_cluster = _resolve_cluster(gene_id)
     if query_cluster is None:
