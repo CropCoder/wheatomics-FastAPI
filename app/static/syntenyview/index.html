@@ -26,7 +26,7 @@
   .search-box button { background:#26734d; color:#fff; border:none; border-radius:6px; padding:11px 22px; cursor:pointer; font-size:15px; }
   #message { max-width:600px; margin:12px auto; color:#b00020; font-weight:bold; }
   #result { display:none; margin-top:16px; }
-  .svg-container { overflow:auto; border:1px solid #d7dde3; border-radius:8px; background:#fff; max-height:80vh; }
+  .svg-container { overflow:auto; border:1px solid #d7dde3; border-radius:8px; background:#fff; max-height:85vh; }
   .legend { margin-top:10px; display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:#475569; align-items:center; }
   .legend span.litem { display:inline-flex; align-items:center; gap:4px; }
   .legend .swatch { display:inline-block; width:12px; height:12px; border-radius:2px; border:1px solid rgba(0,0,0,0.1); }
@@ -116,134 +116,145 @@ function draw(data) {
   var tracks=data.tracks||[], conns=data.connections||[], qc=data.query_cluster;
   if (!tracks.length) { document.getElementById("svgCanvas").innerHTML=""; document.getElementById("legend").innerHTML=""; return; }
 
-  // ── Layout constants ──
-  var ROW_H=26, GAP=10, TOP=50, LABEL_W=220, RIGHT=300, BOTTOM=20;
-  var n=tracks.length;
-  var svgH=TOP + n*ROW_H + (n-1)*GAP + BOTTOM;
+  // ── Compact JCVI-style layout ──
+  var ROW_H=20, GAP=8, TOP=80, LABEL_W=210, RIGHT=50, BOTTOM=30;
+  // Group separator between different genomes
+  var SEP=12; // extra gap between genome groups
 
-  // ── Global X range (aligned across all tracks) ──
-  var gmin=Infinity, gmax=-Infinity;
+  // Compute group boundaries (rows where genome changes)
+  var prevGenome=null;
+  var groupBreaks=[]; // indices where genome changes
+  tracks.forEach(function(t,i){
+    if(prevGenome!==null && t.genome!==prevGenome){
+      groupBreaks.push(i);
+    }
+    prevGenome=t.genome;
+  });
+
+  var n=tracks.length;
+  var extraGaps=groupBreaks.length*SEP;
+  var svgH=TOP + n*ROW_H + (n-1)*GAP + extraGaps + BOTTOM;
+
+  // ── Global X range ──
+  var gmin=Infinity,gmax=-Infinity;
   tracks.forEach(function(t){
-    t.genes.forEach(function(g){
-      if(g.start<gmin)gmin=g.start; if(g.start>gmax)gmax=g.start;
-    });
+    t.genes.forEach(function(g){ if(g.start<gmin)gmin=g.start; if(g.start>gmax)gmax=g.start; });
   });
   conns.forEach(function(c){
     if(c.from_start<gmin)gmin=c.from_start; if(c.from_start>gmax)gmax=c.from_start;
     if(c.to_start<gmin)gmin=c.to_start; if(c.to_start>gmax)gmax=c.to_start;
   });
-  if(gmax===gmin){gmax=gmin+500000; gmin=0;}
-  var pad=(gmax-gmin)*0.02;
+  if(gmax===gmin){gmax=gmin+500000;gmin=0;}
+  var pad=(gmax-gmin)*0.03;
   gmin-=pad; gmax+=pad;
   var range=gmax-gmin;
-  var drawW=1800;
-  var svgW=LABEL_W+drawW+RIGHT;
-  var startX=LABEL_W;
-  function toX(pos){return startX + ((pos-gmin)/range)*drawW;}
 
-  // ── Index gene positions for connections ──
-  var geneMap={};
-  tracks.forEach(function(t, ti){
-    var trackY=TOP + ti*(ROW_H+GAP);
+  var drawW=Math.max(800, range*0.000015+200); // scale based on genomic range
+  drawW=Math.min(drawW, 2500);
+  var svgW=LABEL_W+drawW+RIGHT;
+
+  function toX(pos){return LABEL_W+((pos-gmin)/range)*drawW;}
+
+  // ── Map gene screen positions ──
+  var genePos={};
+  tracks.forEach(function(t,ti){
+    var y=rowY(ti);
     t.genes.forEach(function(g){
-      geneMap[g.gene_id]={trackIdx:ti, x:toX(g.start), y:trackY+ROW_H/2, start:g.start};
+      genePos[g.gene_id]={x:toX(g.start), y:y, ti:ti};
     });
   });
 
-  // ── SVG setup ──
+  function rowY(ti){
+    var y=TOP;
+    for(var i=0;i<ti;i++){
+      y+=ROW_H+GAP;
+      if(groupBreaks.indexOf(i+1)>=0) y+=SEP;
+    }
+    return y+ROW_H/2;
+  }
+
   var svg=document.getElementById("svgCanvas");
   svg.setAttribute("width",svgW); svg.setAttribute("height",svgH);
   svg.setAttribute("viewBox","0 0 "+svgW+" "+svgH);
 
   var html='<rect x="0" y="0" width="'+svgW+'" height="'+svgH+'" fill="#fff"/>';
 
-  // ── Grid lines (light vertical guides every 500kb) ──
-  var gridStep=500000;
-  if(range>2000000)gridStep=1000000;
-  if(range>10000000)gridStep=5000000;
-  for(var gx=gmin - (gmin % gridStep) + gridStep; gx < gmax; gx += gridStep){
-    var gpx=toX(gx);
-    html+='<line x1="'+gpx.toFixed(1)+'" y1="'+TOP+'" x2="'+gpx.toFixed(1)+'" y2="'+(svgH-BOTTOM)+'" stroke="#f1f5f9" stroke-width="1"/>';
-  }
+  // ── Title ──
+  var qClusterGenes=tracks[0].genes.filter(function(g){return g.cluster===qc;}).length;
+  html+='<text x="'+(svgW/2)+'" y="25" text-anchor="middle" font-size="15" fill="#0f172a" font-weight="bold">'+
+    'Gene: '+esc(data.query)+'  |  '+CL_LABEL[qc]+'  |  '+
+    tracks.length+' genomes / chromosomes,  '+conns.length+' connections</text>';
+  html+='<text x="'+(svgW/2)+'" y="48" text-anchor="middle" font-size="12" fill="#64748b">'+
+    'Query: '+data.query_genome+'_'+data.query_subgenome+'  chr'+data.query_chrom+
+    '  ('+qClusterGenes+' of '+tracks[0].genes.length+' neighborhood genes in '+CL_LABEL[qc]+')</text>';
 
-  // ── Draw connections (behind tracks) ──
+  // ── Draw connections FIRST (behind blocks) ──
   conns.forEach(function(cn){
     if(cn.cluster!==qc)return;
-    var fp=geneMap[cn.from_gene], tp=geneMap[cn.to_gene];
+    var fp=genePos[cn.from_gene], tp=genePos[cn.to_gene];
     if(!fp||!tp)return;
     var lc=CL[cn.cluster]||CL.none;
-    var midX=(fp.x+tp.x)/2;
-    var cy=Math.min(fp.y,tp.y);
-    var ch=Math.abs(tp.y-fp.y);
-    var ctrlY=ch*0.35;
+    var midY=(fp.y+tp.y)/2;
+    var cpOff=Math.abs(tp.y-fp.y)*0.4;
     html+='<path d="M'+fp.x.toFixed(1)+' '+fp.y.toFixed(1)+
-      ' C'+fp.x.toFixed(1)+' '+(fp.y+ctrlY).toFixed(1)+','+
-      tp.x.toFixed(1)+' '+(tp.y-ctrlY).toFixed(1)+','+
+      ' C'+fp.x.toFixed(1)+' '+(fp.y+cpOff).toFixed(1)+','+
+      tp.x.toFixed(1)+' '+(tp.y-cpOff).toFixed(1)+','+
       tp.x.toFixed(1)+' '+tp.y.toFixed(1)+
-      '" fill="none" stroke="'+lc+'" stroke-width="2" opacity="0.38" stroke-linecap="round"/>';
+      '" fill="none" stroke="'+lc+'" stroke-width="1.8" opacity="0.35" stroke-linecap="round"/>';
   });
 
   // ── Draw tracks ──
-  tracks.forEach(function(t, ti){
-    var y=TOP + ti*(ROW_H+GAP);
-    var lineY=y+ROW_H/2;
-    var lbl=t.genome+"_"+t.subgenome;
-    var lblX=LABEL_W-10, lblY=lineY+4;
+  var lastGenomeDrawn="";
+  tracks.forEach(function(t,ti){
+    var y=rowY(ti);
+    var isQueryTrack=t.is_query_genome;
+    var clusterColor=CL[qc];
 
-    // Alternating row background
-    html+='<rect x="0" y="'+(y-2)+'" width="'+svgW+'" height="'+(ROW_H+2)+'" fill="'+(ti%2===0?'#ffffff':'#fafbfc')+'"/>';
+    // Genome group separator label
+    if(t.genome!==lastGenomeDrawn){
+      var sepY=y-ROW_H/2-SEP/2;
+      if(lastGenomeDrawn!==""){
+        html+='<line x1="'+LABEL_W+'" y1="'+(sepY+2)+'" x2="'+(LABEL_W+drawW)+'" y2="'+(sepY+2)+'" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="6,3"/>';
+        html+='<text x="'+(LABEL_W-10)+'" y="'+(sepY+8)+'" text-anchor="end" font-size="10" fill="#94a3b8" font-style="italic">'+esc(t.genome)+'</text>';
+      }
+      lastGenomeDrawn=t.genome;
+    }
 
-    // Left label — genome_subgenome bold, chromosome small below
-    html+='<text x="'+lblX+'" y="'+(lineY-1)+'" text-anchor="end" font-size="11" fill="#1e293b" font-weight="bold">'+esc(lbl)+'</text>';
-    html+='<text x="'+lblX+'" y="'+(lineY+11)+'" text-anchor="end" font-size="9" fill="#94a3b8">'+esc(t.chrom)+'</text>';
+    // Chromosome label
+    var lbl=t.genome+'_'+t.subgenome+'  chr'+t.chrom;
+    html+='<text x="'+(LABEL_W-10)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="'+(isQueryTrack?'#0f172a':'#475569')+'" font-weight="'+(isQueryTrack?'bold':'normal')+'">'+esc(lbl)+'</text>';
 
     // Chromosome backbone line
-    var isQueryTrack=t.is_query_genome;
-    html+='<line x1="'+startX+'" y1="'+lineY+'" x2="'+(startX+drawW)+'" y2="'+lineY+'" stroke="'+(isQueryTrack?'#cbd5e1':'#e2e8f0')+'" stroke-width="'+(isQueryTrack?2:1)+'" stroke-linecap="round"/>';
+    html+='<line x1="'+LABEL_W+'" y1="'+y+'" x2="'+(LABEL_W+drawW)+'" y2="'+y+'" stroke="#e2e8f0" stroke-width="1"/>';
 
-    // Gene blocks as arrowhead triangles (JCVI-style)
+    // Gene blocks
     t.genes.forEach(function(g){
       var gx=toX(g.start);
       var isQ=(g.gene_id===data.query);
-      var isCluster=(g.cluster===qc);
-      var fill=isQ?"#ef4444":(isCluster?(CL[g.cluster]||CL.none):CL.none);
-      var opacity=isQ?1:(isCluster?0.88:0.4);
-      var triH=isQ?ROW_H*0.65:(isCluster?ROW_H*0.55:ROW_H*0.35);
-      var triW=isQ?12:(isCluster?8:6);
+      var isC=(g.cluster===qc);
 
-      // Triangle pointing right (→)
-      var topY=lineY-triH/2, botY=lineY+triH/2, tipX=gx+triW/2;
-      html+='<polygon points="'+
-        (gx-triW/2).toFixed(1)+','+topY.toFixed(1)+' '+
-        (gx-triW/2).toFixed(1)+','+botY.toFixed(1)+' '+
-        tipX.toFixed(1)+','+lineY.toFixed(1)+
-        '" fill="'+fill+'" opacity="'+opacity+'" stroke="'+(isQ?'#b91c1c':fill)+'" stroke-width="'+(isQ?1.5:0.5)+'">'+
-        '<title>'+esc(g.gene_id)+' ('+(g.cluster?CL_LABEL[g.cluster]:CL_LABEL.none)+')</title></polygon>';
-
-      // Query gene label
       if(isQ){
-        html+='<text x="'+(tipX+10)+'" y="'+(lineY+4)+'" font-size="10" fill="#ef4444" font-weight="bold">'+esc(g.gene_id)+'</text>';
-      }
-    });
-
-    // Cluster-gene tick marks (small vertical ticks at ortholog positions)
-    t.genes.forEach(function(g){
-      if(g.cluster===qc && g.gene_id!==data.query){
-        var gx=toX(g.start);
-        html+='<line x1="'+gx.toFixed(1)+'" y1="'+(lineY-6)+'" x2="'+gx.toFixed(1)+'" y2="'+(lineY+6)+'" stroke="'+CL[qc]+'" stroke-width="0.8" opacity="0.3"/>';
+        // Red big block for query gene
+        html+='<rect x="'+(gx-7).toFixed(1)+'" y="'+(y-8)+'" width="14" height="16" fill="#ef4444" rx="3" stroke="#b91c1c" stroke-width="1">'+
+          '<title>'+esc(g.gene_id)+' (Query, '+CL_LABEL[qc]+')</title></rect>';
+        html+='<text x="'+(gx+10)+'" y="'+(y-10)+'" font-size="9" fill="#b91c1c" font-weight="bold">'+esc(g.gene_id)+'</text>';
+      } else if(isC){
+        // Cluster gene - colored block
+        html+='<rect x="'+(gx-4).toFixed(1)+'" y="'+(y-5)+'" width="8" height="10" fill="'+clusterColor+'" rx="2" opacity="0.85">'+
+          '<title>'+esc(g.gene_id)+' ('+CL_LABEL[qc]+')</title></rect>';
+      } else {
+        // Non-cluster gene - gray dot
+        html+='<rect x="'+(gx-2).toFixed(1)+'" y="'+(y-3)+'" width="4" height="6" fill="#94a3b8" rx="1" opacity="0.5">'+
+          '<title>'+esc(g.gene_id)+' (other cluster)</title></rect>';
       }
     });
   });
 
-  // ── Top title bar ──
-  html+='<rect x="0" y="0" width="'+svgW+'" height="32" fill="#f1f5f9" opacity="0.7"/>';
-  html+='<text x="14" y="22" font-size="13" fill="#334155" font-weight="bold">'+
-    esc(data.query)+'  —  '+CL_LABEL[qc]+'  ('+conns.length+' connections, '+tracks.length+' tracks)</text>';
-
   // ── Legend ──
-  var leg='<span class="litem"><span class="swatch" style="background:#ef4444;"></span> Query</span>';
-  leg+='<span class="litem"><span class="swatch" style="background:'+CL[qc]+';"></span> '+CL_LABEL[qc]+' orthologs</span>';
-  leg+='<span class="litem"><span class="swatch" style="background:'+CL.none+';"></span> Other groups</span>';
+  var leg='<span class="litem"><span class="swatch" style="background:#ef4444;"></span> Query gene</span>';
+  leg+='<span class="litem"><span class="swatch" style="background:'+CL[qc]+';"></span> '+CL_LABEL[qc]+' genes</span>';
+  leg+='<span class="litem"><span class="swatch" style="background:#94a3b8;"></span> Other clusters</span>';
+  leg+='<span class="litem" style="margin-left:8px;color:#64748b;">| <b>'+tracks.length+'</b> tracks, <b>'+conns.length+'</b> connections, gene window &plusmn;5</span>';
   document.getElementById("legend").innerHTML=leg;
 
   svg.innerHTML=html;
