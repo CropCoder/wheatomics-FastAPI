@@ -8,7 +8,7 @@ gene connections for a JCVI-style frontend visualization.
 import os
 import re
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 from fastapi import APIRouter, Query
 
@@ -102,7 +102,6 @@ def _load_bed_map() -> dict:
         fname = entry.name
         if not fname.endswith(".bed"):
             continue
-        # Parse file name: Genome_A.filter.bed or Genome_A.bed
         base = os.path.splitext(fname)[0]
         base = re.sub(r"\.filter$", "", base)
         parts = base.rsplit("_", 1)
@@ -150,7 +149,8 @@ def neighborhood(
     upstream: int = Query(5, ge=0, le=20),
     downstream: int = Query(5, ge=0, le=20),
 ):
-    """Return chromosomal neighborhood with homoeologous cluster assignments."""
+    """Return chromosomal neighborhood with homoeologous cluster assignments
+    across ALL genomes, styled for a JCVI synteny plot."""
     gene_id = _clean(q)
     if not gene_id:
         return {"error": "Please provide a gene ID"}
@@ -160,72 +160,82 @@ def neighborhood(
     if not entry:
         return {"error": f"Gene '{gene_id}' not found in BED files"}
 
-    gchrom, ggenome, gsub = entry["chrom"], entry["genome"], entry["subgenome"]
+    query_cluster = _resolve_cluster(gene_id)
+    if query_cluster is None:
+        return {"error": f"Gene '{gene_id}' could not be assigned to a homoeologous cluster"}
+
+    ggenome, gsub, gchrom = entry["genome"], entry["subgenome"], entry["chrom"]
     gpos = entry["start"]
 
-    # Get current chromosome gene window
-    chrom_key = (ggenome, gsub, gchrom)
-    if chrom_key not in _chrom_lists:
-        return {"error": f"No gene list for {ggenome}_{gsub} chr{gchrom}"}
-
-    gene_list = _chrom_lists[chrom_key]
-    q_idx = next((i for i, (_, gid) in enumerate(gene_list) if gid == gene_id), None)
-    if q_idx is None:
-        return {"error": f"Gene '{gene_id}' not found on chromosome"}
-
-    lo, hi = max(0, q_idx - upstream), min(len(gene_list), q_idx + downstream + 1)
-    query_window = gene_list[lo:hi]
-
-    # Build per-chromosome lists for ALL genomes (same cluster)
-    query_cluster = _resolve_cluster(gene_id)
-
-    # For the synteny view, we want: same genes on the query chromosome,
-    # PLUS their same-cluster counterparts on OTHER chromosomes/genomes.
+    # ---- Step 1: build ONE row per (genome, subgenome, chrom) where we find
+    #      genes with the SAME cluster as the query gene ----
     rows: list[dict] = []
-    cluster_connections: list[dict] = []  # {from_gene, to_gene, cluster}
+    seen_keys: set = set()
 
-    # Group all genes by (genome, subgenome, chrom) for the query window
-    query_genes_by_pos: dict[str, list] = {}
-    for pos, gid in query_window:
-        c = _resolve_cluster(gid)
-        query_genes_by_pos[gid] = c
+    # Always include the query genome as the first row
+    q_key = (ggenome, gsub, gchrom)
+    if q_key in _chrom_lists:
+        seen_keys.add(q_key)
+        rows.append({"genome": ggenome, "subgenome": gsub, "chrom": gchrom,
+                     "genes": [], "is_query_genome": True})
 
-    # Per-chromosome rows: one row per unique (genome, subgenome, chrom)
-    seen_chroms: set = set()
-    for pos, gid in query_window:
-        info = bc_map.get(gid, {})
-        ch = info.get("chrom", "?")
-        gn = info.get("genome", "?")
-        sg = info.get("subgenome", "?")
-        sid = f"{gn}_{sg}_{ch}"
-        if sid not in seen_chroms:
-            seen_chroms.add(sid)
-            rows.append({
-                "genome": gn, "subgenome": sg, "chrom": ch,
-                "genes": []  # will be filled from chrom gene list
-            })
+    # Scan ALL chromosome gene lists and find ones that contain any gene
+    # in the same cluster as the query
+    for key, glist in _chrom_lists.items():
+        gn, sg, ch = key
+        if key in seen_keys:
+            continue
+        # Check if this chromosome has ANY gene in query_cluster
+        has_cluster_gene = False
+        for _, gid in glist:
+            if _resolve_cluster(gid) == query_cluster:
+                has_cluster_gene = True
+                break
+        if has_cluster_gene:
+            seen_keys.add(key)
+            rows.append({"genome": gn, "subgenome": sg, "chrom": ch,
+                         "genes": [], "is_query_genome": False})
 
-    # For each row, get all genes near the query position on that chrom
+    # ---- Step 2: fill the gene lists for each row ----
     for row in rows:
         rkey = (row["genome"], row["subgenome"], row["chrom"])
-        if rkey in _chrom_lists:
-            all_genes = _chrom_lists[rkey]
-            # find nearest index to query position
-            ri = min(range(len(all_genes)), key=lambda i: abs(all_genes[i][0] - gpos))
-            rlo, rhi = max(0, ri - upstream), min(len(all_genes), ri + downstream + 1)
-            for pos, gid in all_genes[rlo:rhi]:
-                c = _resolve_cluster(gid)
-                row["genes"].append({"gene_id": gid, "cluster": c, "start": pos})
+        glist = _chrom_lists.get(rkey, [])
+        if not glist:
+            continue
 
-    # Build cluster connections: for each query_cluster gene, find same-cluster
-    # genes on other chromosomes
-    for row_a in rows:
-        for ga in row_a["genes"]:
-            if ga["cluster"] != query_cluster or query_cluster is None:
+        if row["is_query_genome"]:
+            # For the query genome: show the neighborhood window around q
+            q_idx = next((i for i, (_, gid) in enumerate(glist) if gid == gene_id), 0)
+            lo, hi = max(0, q_idx - upstream), min(len(glist), q_idx + downstream + 1)
+            for pos, gid in glist[lo:hi]:
+                c = _resolve_cluster(gid)
+                row["genes"].append({"gene_id": gid, "cluster": c, "start": pos,
+                                     "is_query": gid == gene_id})
+        else:
+            # For other genomes: find the gene(s) in the same cluster nearest
+            # to the position of the query gene, then show their neighborhood
+            candidates = [(pos, gid) for pos, gid in glist
+                          if _resolve_cluster(gid) == query_cluster]
+            if not candidates:
                 continue
-            for row_b in rows:
-                if row_b["chrom"] == row_a["chrom"] and row_b["genome"] == row_a["genome"]:
-                    continue  # same chromosome — skip self-connections (not synteny)
+            # pick the candidate closest to the query gene position
+            best = min(candidates, key=lambda x: abs(x[0] - gpos))
+            c_idx = next(i for i, (p, _) in enumerate(glist) if p == best[0])
+            clo, chi = max(0, c_idx - upstream), min(len(glist), c_idx + downstream + 1)
+            for pos, gid in glist[clo:chi]:
+                c = _resolve_cluster(gid)
+                row["genes"].append({"gene_id": gid, "cluster": c, "start": pos,
+                                     "is_query": False})
+
+    # ---- Step 3: build same-cluster connections across rows ----
+    cluster_connections: list[dict] = []
+    for i, row_a in enumerate(rows):
+        for ga in row_a["genes"]:
+            if ga["cluster"] != query_cluster:
+                continue
+            for j, row_b in enumerate(rows):
+                if j <= i:
+                    continue  # only forward connections
                 for gb in row_b["genes"]:
                     if gb["cluster"] == query_cluster:
                         cluster_connections.append({

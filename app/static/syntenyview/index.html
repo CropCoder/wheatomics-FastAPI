@@ -17,7 +17,7 @@
   #header-tabs a:hover { background:#98c1d9; color:#000; }
   #header-tabs ul li ul { display:none; position:absolute; }
   #header-tabs ul li:hover ul { display:block; }
-  #home_content { max-width:1400px; margin:26px auto 36px auto; padding:0 15px; }
+  #home_content { max-width:1600px; margin:26px auto 36px auto; padding:0 15px; }
   .tool-card { background:#fff; border-radius:10px; padding:28px 32px; box-shadow:0 3px 16px rgba(0,0,0,0.10); }
   h5.card-title { margin-top:0; }
   .search-box { display:flex; gap:10px; max-width:600px; margin:0 auto 18px auto; }
@@ -56,7 +56,7 @@
 
 <div id="home_content"><div class="tool-card">
 <h5 class="card-title">SynTeny Viewer — Homoeologous Neighborhood Synteny</h5>
-<p class="text-muted">Search a gene ID to view its chromosomal neighborhood (±20 genes across all genomes) with same-cluster synteny connections.</p>
+<p class="text-muted">Search a gene ID to view its chromosomal neighborhood across all genomes with homoeologous cluster synteny connections.</p>
 <form id="searchForm" class="search-box">
   <input id="geneInput" name="q" placeholder="Example: TraesCS1A02G219700.1">
   <button type="submit">Search</button>
@@ -89,101 +89,67 @@ async function search(q){
   }catch(e){m.textContent="Error: "+e.message;}
 }
 
-function draw(data){
+function draw(data) {
   var rows=data.rows||[], conns=data.cluster_connections||[], qc=data.query_cluster;
-  if(!rows.length){document.getElementById("svgCanvas").innerHTML="";return}
+  if (!rows.length) { document.getElementById("svgCanvas").innerHTML=""; return; }
 
-  // Layout
-  var rowH=80, topPad=20, labelW=160, startX=labelW+10;
+  var rowH=22, topPad=50, labelW=200, startX=labelW+10;
+  var svgW=1800, drawW=svgW-startX-40;
   var totalH=rows.length*rowH+topPad*2;
-  var svgW=1500, drawW=svgW-startX-30;
-
-  // Find global min/max position across all rows
-  var gmin=Infinity,gmax=-Infinity;
-  rows.forEach(function(r){r.genes.forEach(function(g){if(g.start<gmin)gmin=g.start;if(g.start>gmax)gmax=g.start;});});
-  if(gmax===gmin){gmax=gmin+500000;gmin=0;}
-  var range=gmax-gmin;
-  function toX(pos){return startX+((pos-gmin)/range)*drawW;}
-
-  // Draw query marker (red dashed vertical line at query position)
-  var qPos=null, qGene=data.query;
-  rows.forEach(function(r){r.genes.forEach(function(g){if(g.gene_id===qGene)qPos=g.start;});});
-
   var svg=document.getElementById("svgCanvas");
   svg.setAttribute("width",svgW); svg.setAttribute("height",totalH);
   svg.setAttribute("viewBox","0 0 "+svgW+" "+totalH);
+
+  // Find global min/max
+  var gmin=Infinity,gmax=-Infinity;
+  rows.forEach(function(r){ r.genes.forEach(function(g){ if(g.start<gmin)gmin=g.start; if(g.start>gmax)gmax=g.start; }); });
+  if (gmax===gmin) { gmax=gmin+500000; gmin=0; }
+  var range=gmax-gmin;
+  function toX(pos) { return startX+((pos-gmin)/range)*drawW; }
+
   var html="";
+  // Background
+  html+='<rect x="0" y="0" width="'+svgW+'" height="'+totalH+'" fill="#fafbfc"/>';
 
-  // Grid lines
-  html+='<rect x="'+startX+'" y="'+topPad+'" width="'+drawW+'" height="'+(totalH-topPad*2)+'" fill="#fafafa" stroke="#d1d5db" stroke-width="1"/>';
-
-  // Query position dashed vertical line
-  if(qPos!==null){
-    var qx=toX(qPos);
-    html+='<line x1="'+qx+'" y1="'+topPad+'" x2="'+qx+'" y2="'+(totalH-topPad)+'" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.6"/>';
-  }
-
-  // Map: gene_id -> {x, y, rowIdx}
+  // Gene position map for connections
   var genePos={};
-  rows.forEach(function(r,ri){
-    r.genes.forEach(function(g){
-      genePos[g.gene_id]={x:toX(g.start), y:topPad+ri*rowH+rowH/2, ri:ri};
-    });
-  });
 
-  // Draw cluster connections (behind gene tracks)
-  conns.forEach(function(cn){
-    if(cn.cluster!==qc)return;
-    var fp=genePos[cn.from_gene], tp=genePos[cn.to_gene];
-    if(!fp||!tp)return;
-    var lc=CL[cn.cluster]||CL.none;
-    // Bezier curve for nicer connections
-    var cy1=fp.y, cy2=tp.y, midY=(cy1+cy2)/2;
-    html+='<path d="M'+fp.x+' '+cy1+' C'+fp.x+' '+midY+','+tp.x+' '+midY+','+tp.x+' '+cy2+
-      '" fill="none" stroke="'+lc+'" stroke-width="1.5" opacity="0.5"/>';
-  });
-
-  // Draw chromosome tracks
-  rows.forEach(function(r,ri){
+  // Draw each row
+  rows.forEach(function(row, ri) {
     var y=topPad+ri*rowH;
-    // Chromosome label
-    html+='<text x="'+(startX-8)+'" y="'+(y+rowH/2+5)+'" text-anchor="end" font-size="12" fill="#1e293b" font-weight="bold">'+
-      esc(r.genome+"_"+r.subgenome)+'</text>';
-    html+='<text x="'+(startX-8)+'" y="'+(y+rowH/2+20)+'" text-anchor="end" font-size="10" fill="#64748b">'+
-      esc("chr"+r.chrom)+'</text>';
-
+    // Label
+    var lbl=row.genome+"_"+row.subgenome+" chr"+row.chrom;
+    html+='<text x="'+(startX-8)+'" y="'+(y+rowH-6)+'" text-anchor="end" font-size="11" fill="#334155">'+esc(lbl)+'</text>';
     // Chromosome bar
-    var barY=y+rowH/2-1;
-    html+='<rect x="'+startX+'" y="'+barY+'" width="'+drawW+'" height="2" fill="#94a3b8" rx="1"/>';
-
-    // Gene markers
-    r.genes.forEach(function(g){
-      var gx=toX(g.start);
+    html+='<rect x="'+startX+'" y="'+(y+rowH/2-2)+'" width="'+drawW+'" height="4" fill="#e2e8f0" rx="2"/>';
+    // Gene rectangles
+    row.genes.forEach(function(g) {
+      var gx=toX(g.start), gw=Math.max(6,range*0.001);
       var isQ=(g.gene_id===data.query);
-      var c=isQ?"#ef4444":((CL[g.cluster]||CL.none));
-      var radius=isQ?6:3;
-      // Small triangle/arrow pointing down for genes
-      var triH=isQ?10:6, triW=isQ?8:5;
-      var gy=barY;
-      html+='<polygon points="'+(gx-triW/2)+','+gy+','+gx+','+(gy+triH)+','+(gx+triW/2)+','+gy+
-        '" fill="'+c+'" stroke="'+c+'" stroke-width="0.5">'+
-        '<title>'+esc(g.gene_id)+' (Group '+(g.cluster||'none')+')</title></polygon>';
-
-      // Gene label (only for query and connected genes)
-      if(isQ||(g.cluster===qc&&g.gene_id!==data.query)){
-        html+='<text x="'+gx+'" y="'+(gy-6)+'" text-anchor="middle" font-size="9" fill="'+(isQ?'#b91c1c':'#475569')+'" font-weight="'+(isQ?'bold':'normal')+'">'+
-          esc(g.gene_id)+'</text>';
-      }
+      var cfill=isQ?"#ef4444":(CL[g.cluster]||CL.none);
+      html+='<rect x="'+(gx-gw/2)+'" y="'+(y+2)+'" width="'+gw+'" height="'+(rowH-4)+'" fill="'+cfill+'" rx="2" opacity="0.85">'+
+        '<title>'+esc(g.gene_id)+' (Group '+g.cluster+')</title></rect>';
+      genePos[g.gene_id]={x:gx, y:y+rowH/2, row:ri};
     });
   });
 
-  // Legend at bottom
-  var legY=totalH-12;
-  html+='<text x="10" y="'+legY+'" font-size="11" fill="#64748b">● Query gene &nbsp;';
-  for(var c=1;c<=7;c++){
-    html+='<tspan fill="'+CL[c]+'">● Group '+c+' &nbsp;</tspan>';
+  // Draw connections (bezier curves between same-cluster genes)
+  conns.forEach(function(cn) {
+    if (cn.cluster!==qc) return;
+    var fp=genePos[cn.from_gene], tp=genePos[cn.to_gene];
+    if (!fp||!tp) return;
+    var lc=CL[cn.cluster]||CL.none;
+    var midY=(fp.y+tp.y)/2;
+    html+='<path d="M'+fp.x+' '+fp.y+' C'+fp.x+' '+midY+','+tp.x+' '+midY+','+tp.x+' '+tp.y+
+      '" fill="none" stroke="'+lc+'" stroke-width="2" opacity="0.35"/>';
+  });
+
+  // Redraw query gene on top (red circle)
+  var qg=genePos[data.query];
+  if (qg) {
+    html+='<circle cx="'+qg.x+'" cy="'+qg.y+'" r="8" fill="#ef4444" stroke="#fff" stroke-width="2"/>';
+    html+='<text x="'+(qg.x+12)+'" y="'+(qg.y+4)+'" font-size="11" fill="#b91c1c" font-weight="bold">'+esc(data.query)+'</text>';
   }
-  html+='</text>';
 
   svg.innerHTML=html;
 }
