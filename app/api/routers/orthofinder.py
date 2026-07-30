@@ -147,6 +147,7 @@ def _load_bed_chromosome_map() -> dict:
     → list of (start, gene_id) sorted by start for fast chromosome-neighbor lookup.
     """
     global _bed_chromosome_cache
+    global _chrom_gene_lists
     if _bed_chromosome_cache is not None:
         return _bed_chromosome_cache
 
@@ -223,7 +224,6 @@ def _load_bed_chromosome_map() -> dict:
     for k in cl:
         cl[k].sort(key=lambda x: x[0])
 
-    global _chrom_gene_lists
     _bed_chromosome_cache = mp
     _chrom_gene_lists = cl
     return mp
