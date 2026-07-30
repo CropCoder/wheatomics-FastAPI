@@ -199,6 +199,26 @@ def _load_bed_map() -> Dict:
 
 
 # ---------------------------------------------------------------------------
+# Eager cache warm-up — avoids first-request timeout
+# ---------------------------------------------------------------------------
+
+import threading
+
+
+def _warm_bed_cache():
+    """Build the BED + cluster cache in a background thread so the first
+    real request doesn't hit the Apache 60s ProxyTimeout."""
+    try:
+        _load_bed_map()
+    except Exception:
+        pass  # will retry on first request
+
+
+_warm_thread = threading.Thread(target=_warm_bed_cache, daemon=True)
+_warm_thread.start()
+
+
+# ---------------------------------------------------------------------------
 # Genomes listing
 # ---------------------------------------------------------------------------
 
