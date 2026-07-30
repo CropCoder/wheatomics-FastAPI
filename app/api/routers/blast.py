@@ -16,6 +16,7 @@ WheatOmics BLAST API 端点
     query=>seq\\nMSSSTG...
 """
 
+import asyncio
 import os
 import subprocess
 from datetime import datetime
@@ -306,7 +307,14 @@ async def blast_search(
             cmd += ["-matrix", matrix]
 
         try:
-            r = subprocess.run(cmd, input=query, capture_output=True, text=True, timeout=600)
+            # Run BLAST in a thread so the event loop is not blocked for the
+            # full 600s timeout — long queries would otherwise freeze the
+            # entire single-worker uvicorn process and hang every other
+            # request (health, databases, other blast calls) until timeout.
+            r = await asyncio.to_thread(
+                subprocess.run, cmd, input=query,
+                capture_output=True, text=True, timeout=600,
+            )
         except subprocess.TimeoutExpired:
             raise HTTPException(504, "BLAST 超时（>10分钟）")
         except FileNotFoundError:
@@ -318,10 +326,11 @@ async def blast_search(
 
         for name, (oflag, ext) in fmt_defs.items():
             out_path = result_dir / (job_id + ext)
-            subprocess.run(
+            await asyncio.to_thread(
+                subprocess.run,
                 [BLAST_FORMATTER, "-archive", str(archive_path),
                  "-outfmt", oflag, "-out", str(out_path)],
-                timeout=120
+                timeout=120,
             )
             download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}{ext}"
 
@@ -343,7 +352,10 @@ async def blast_search(
                 cmd += ["-matrix", matrix]
 
             try:
-                r = subprocess.run(cmd, input=query, capture_output=True, text=True, timeout=600)
+                r = await asyncio.to_thread(
+                    subprocess.run, cmd, input=query,
+                    capture_output=True, text=True, timeout=600,
+                )
             except subprocess.TimeoutExpired:
                 raise HTTPException(504, "BLAST 超时（>10分钟）")
             except FileNotFoundError:
@@ -415,14 +427,18 @@ async def blast_status():
                 ver = "?"
         return {"exists": exists, "path": path, "version": ver}
 
+    # Run all 7 version probes concurrently in the thread pool — sequential
+    # subprocess.run would block the event loop for up to 35s on a hung binary.
+    paths = [BLASTP, BLASTN, BLASTX, TBLASTN, TBLASTX, BLASTDBCMD]
+    results = await asyncio.gather(*(asyncio.to_thread(check, p) for p in paths))
     return {
         "success": True,
-        "blastp": check(BLASTP),
-        "blastn": check(BLASTN),
-        "blastx": check(BLASTX),
-        "tblastn": check(TBLASTN),
-        "tblastx": check(TBLASTX),
-        "blastdbcmd": check(BLASTDBCMD),
+        **{("blastp" if p == BLASTP else
+            "blastn" if p == BLASTN else
+            "blastx" if p == BLASTX else
+            "tblastn" if p == TBLASTN else
+            "tblastx" if p == TBLASTX else
+            "blastdbcmd"): r for p, r in zip(paths, results)},
         "db_dir": {"path": DB_DIR, "exists": os.path.isdir(DB_DIR)},
         "protein_dbs": list_dbs("blastp"),
         "nucleotide_dbs": list_dbs("blastn"),
