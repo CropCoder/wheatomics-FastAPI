@@ -18,7 +18,7 @@ subsequent requests are sub-second.
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional, Set, Tuple
 
 from fastapi import APIRouter, Query
 
@@ -39,15 +39,15 @@ def _clean(s: str) -> str:
 # Cluster map
 # ---------------------------------------------------------------------------
 
-_cluster_cache: Optional[tuple] = None
-_sorted_prefixes: Optional[list] = None
+_cluster_cache: Optional[Tuple] = None
+_sorted_prefixes: Optional[List] = None
 
-def _load_cluster_map() -> tuple[dict, dict]:
+def _load_cluster_map() -> Tuple[Dict, Dict]:
     global _cluster_cache
     if _cluster_cache is not None:
         return _cluster_cache
-    prefix_map: dict[str, int] = {}
-    chrom_map: dict[str, int] = {}
+    prefix_map: Dict[str, int] = {}
+    chrom_map: Dict[str, int] = {}
     if CLUSTER_FILE.exists():
         for line in CLUSTER_FILE.read_text(encoding="utf-8").splitlines()[1:]:
             cols = line.split("\t")
@@ -64,7 +64,7 @@ def _load_cluster_map() -> tuple[dict, dict]:
     _cluster_cache = (prefix_map, chrom_map)
     return _cluster_cache
 
-def _get_sorted_prefixes() -> list:
+def _get_sorted_prefixes() -> List:
     global _sorted_prefixes
     if _sorted_prefixes is not None:
         return _sorted_prefixes
@@ -77,7 +77,7 @@ def _get_sorted_prefixes() -> list:
 # Cached cluster resolution
 # ---------------------------------------------------------------------------
 
-_cluster_gene_cache: Optional[dict] = None   # gene_id -> cluster (or None)
+_cluster_gene_cache: Optional[Dict] = None   # gene_id -> cluster (or None)
 
 def _resolve_cluster(gene_id: str) -> Optional[int]:
     """Cached cluster resolution. First call builds cache via prefix-only match."""
@@ -114,10 +114,10 @@ def _resolve_cluster(gene_id: str) -> Optional[int]:
 # BED map
 # ---------------------------------------------------------------------------
 
-_bed_cache: Optional[dict] = None
-_chrom_lists: Optional[dict] = None
+_bed_cache: Optional[Dict] = None
+_chrom_lists: Optional[Dict] = None
 
-def _load_bed_map() -> dict:
+def _load_bed_map() -> Dict:
     global _bed_cache, _chrom_lists
     if _bed_cache is not None:
         return _bed_cache
@@ -188,7 +188,7 @@ def _load_bed_map() -> dict:
 
 @router.get("/genomes")
 def list_genomes():
-    genomes: list[str] = []
+    genomes: List[str] = []
     if BED_DIR.exists():
         seen = set()
         for entry in sorted(BED_DIR.iterdir()):
@@ -241,7 +241,7 @@ def neighborhood(
     lo = max(0, q_idx - upstream)
     hi = min(len(glist), q_idx + downstream + 1)
 
-    neighborhood_genes: list[dict] = []
+    neighborhood_genes: List[Dict] = []
     for pos, gid in glist[lo:hi]:
         c = _cluster_gene_cache.get(gid)
         neighborhood_genes.append({
@@ -255,7 +255,7 @@ def neighborhood(
     # Build: { (genome, subgenome, chrom): [(ortholog_gene, pos), ...] }
 
     query_cluster_genes = [ng for ng in neighborhood_genes if ng["cluster"] == query_cluster]
-    ortholog_map: dict[tuple, list] = {}  # (genome, subgenome, chrom) -> [(gid, pos), ...]
+    ortholog_map: Dict[Tuple, List] = {}  # (genome, subgenome, chrom) -> [(gid, pos), ...]
 
     for key, gl in _chrom_lists.items():
         gn, sg, ch = key
@@ -276,7 +276,7 @@ def neighborhood(
 
     # ---- Step 3: Build tracks ----
     # Query track: shows the 11 neighborhood genes
-    tracks: list[dict] = []
+    tracks: List[Dict] = []
 
     # Query genome track
     query_genes = []
@@ -320,7 +320,7 @@ def neighborhood(
         })
 
     # Other genomes: add one track per distinct genome (pick first subgenome+chrom found)
-    other_genomes: dict[str, list] = {}  # genome_name -> list of (key, og_list)
+    other_genomes: Dict[str, List] = {}  # genome_name -> list of (key, og_list)
     for key in sorted(ortholog_map.keys()):
         gn = key[0]
         if gn == ggenome:
@@ -363,10 +363,10 @@ def neighborhood(
     # ---- Step 4: Build connections ----
     # Connect each query-cluster gene in the query track to its nearest
     # same-cluster ortholog on each other track
-    connections: list[dict] = []
+    connections: List[Dict] = []
 
     # Index gene positions across all tracks for connection lookup
-    track_gene_map: dict[str, dict] = {}  # gene_id -> {track_idx, pos, ...}
+    track_gene_map: Dict[str, Dict] = {}  # gene_id -> {track_idx, pos, ...}
     for ti, t in enumerate(tracks):
         for g in t["genes"]:
             track_gene_map[g["gene_id"]] = {
@@ -376,7 +376,7 @@ def neighborhood(
             }
 
     # Build per-track list of query-cluster genes for fast lookup
-    track_cluster_genes: dict[int, list] = {}
+    track_cluster_genes: Dict[int, List] = {}
     for ti, t in enumerate(tracks):
         track_cluster_genes[ti] = [
             g for g in t["genes"] if g["cluster"] == query_cluster
