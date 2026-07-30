@@ -319,30 +319,24 @@ def neighborhood(
             "genes": genes,
         })
 
-    # Other genomes: add one track per distinct genome (pick first subgenome+chrom found)
-    other_genomes: Dict[str, List] = {}  # genome_name -> list of (key, og_list)
-    for key in sorted(ortholog_map.keys()):
+    # Other genomes: add at most 3 tracks from different genomes, picking
+    # the ones with orthologs closest to the query position for diversity
+    other_candidates: List[Tuple] = []  # (dist, key, best_og)
+    for key, og_list in ortholog_map.items():
         gn = key[0]
         if gn == ggenome:
             continue
-        if gn not in other_genomes:
-            other_genomes[gn] = []
-        other_genomes[gn].append((key, ortholog_map[key]))
+        best_og = min(og_list, key=lambda x: abs(x[0] - gpos))
+        dist = abs(best_og[0] - gpos)
+        other_candidates.append((dist, key, best_og))
+    other_candidates.sort(key=lambda x: x[0])  # closest first
 
-    for gn, entries in other_genomes.items():
-        # Pick the entry with the closest ortholog to gpos
-        best_entry = None
-        best_dist = float("inf")
-        for key, og_list in entries:
-            best_og = min(og_list, key=lambda x: abs(x[0] - gpos))
-            dist = abs(best_og[0] - gpos)
-            if dist < best_dist:
-                best_dist = dist
-                best_entry = (key, og_list, best_og)
-        if best_entry is None:
-            continue
-        key, og_list, best_og = best_entry
+    shown_genomes: Set[str] = set()
+    for dist, key, best_og in other_candidates:
         gn, sg, ch = key
+        if gn in shown_genomes:
+            continue
+        shown_genomes.add(gn)
         gl = _chrom_lists.get(key, [])
         if not gl:
             continue
