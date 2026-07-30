@@ -1,8 +1,14 @@
 """SynTeny Viewer — JCVI-style gene neighborhood synteny across homoeologous groups.
 
 Reads BED files from /var/www/html/col_bed, resolves homoeologous cluster
-membership via SpeciesIDs_cluster.txt, and returns neighborhood + same-cluster
-gene connections for a JCVI-style frontend visualization.
+membership via SpeciesIDs_cluster.txt.
+
+Design:
+  1. Query gene + 5 upstream + 5 downstream = 11 genes on the query chromosome.
+  2. Resolve cluster for each of the 11 genes.
+  3. For the query gene's cluster, find same-cluster orthologs across genomes.
+  4. Frontend draws chromosome tracks with gene blocks and Bezier connections
+     between same-cluster orthologs, focused on the query gene's cluster group.
 
 PERFORMANCE: Cluster resolution is cached globally (_cluster_gene_cache).
 First request builds the cache by scanning all BED genes once (~5-10s),
@@ -66,8 +72,9 @@ def _get_sorted_prefixes() -> list:
     _sorted_prefixes = sorted(prefix_map.keys(), key=lambda x: -len(x))
     return _sorted_prefixes
 
+
 # ---------------------------------------------------------------------------
-# Cached cluster resolution — avoids repeated O(N) scans
+# Cached cluster resolution
 # ---------------------------------------------------------------------------
 
 _cluster_gene_cache: Optional[dict] = None   # gene_id -> cluster (or None)
@@ -81,7 +88,6 @@ def _resolve_cluster(gene_id: str) -> Optional[int]:
     gene_id = _clean(gene_id)
     prefix_map, chrom_map = _load_cluster_map()
 
-    # prefix match (no BED fallback — fast)
     for pfx in _get_sorted_prefixes():
         if gene_id.lower().startswith(pfx.lower()):
             c = prefix_map[pfx]
@@ -89,7 +95,6 @@ def _resolve_cluster(gene_id: str) -> Optional[int]:
                 _cluster_gene_cache[gene_id] = c
             return c
 
-    # chromosome fallback
     if chrom_map:
         entry = _load_bed_map().get(gene_id)
         if entry:
@@ -162,7 +167,7 @@ def _load_bed_map() -> dict:
     _bed_cache = mp
     _chrom_lists = cl
 
-    # ---- Pre-build cluster cache for all genes (prefix-only, fast) ----
+    # ---- Pre-build cluster cache for all genes ----
     global _cluster_gene_cache
     if _cluster_gene_cache is None:
         _cluster_gene_cache = {}
@@ -201,27 +206,25 @@ def list_genomes():
 
 
 # ---------------------------------------------------------------------------
-# API
+# Neighborhood API
 # ---------------------------------------------------------------------------
 
 @router.get("/neighborhood")
 def neighborhood(
     q: str = Query(..., description="Gene ID"),
-    upstream: int = Query(10, ge=0, le=50),
-    downstream: int = Query(10, ge=0, le=50),
-    genome: str = Query("", description="Optional genome"),
-    subgenome: str = Query("", description="Optional subgenome (A/B/D)"),
+    upstream: int = Query(5, ge=1, le=50),
+    downstream: int = Query(5, ge=1, le=50),
+    genome: str = Query("", description="Optional genome filter"),
+    subgenome: str = Query("", description="Optional subgenome filter (A/B/D)"),
 ):
     gene_id = _clean(q)
     if not gene_id:
         return {"error": "Please provide a gene ID"}
 
-    bc_map = _load_bed_map()  # triggers cache build on first call
+    bc_map = _load_bed_map()
 
     entry = bc_map.get(gene_id)
     if not entry:
-        if genome and subgenome:
-            return {"error": f"Gene '{gene_id}' not found in {genome}_{subgenome}"}
         return {"error": f"Gene '{gene_id}' not found in BED files"}
 
     query_cluster = _resolve_cluster(gene_id)
@@ -231,68 +234,178 @@ def neighborhood(
     ggenome, gsub, gchrom = entry["genome"], entry["subgenome"], entry["chrom"]
     gpos = entry["start"]
 
-    # ---- Build rows using cached cluster lookup (FAST, O(chrom_count)) ----
-    rows: list[dict] = []
-    cluster_chroms: set = set()  # (genome, subgenome, chrom) that contain query_cluster genes
-
-    # First pass: find all chromosomes that have any gene in this cluster
-    for key, glist in _chrom_lists.items():
-        for _, gid in glist:  # check first few genes only for speed
-            if _cluster_gene_cache.get(gid) == query_cluster:
-                cluster_chroms.add(key)
-                break
-
-    # Ensure query chromosome is included
+    # ---- Step 1: 11 neighborhood genes on the query chromosome ----
     q_key = (ggenome, gsub, gchrom)
-    cluster_chroms.add(q_key)
+    glist = _chrom_lists.get(q_key, [])
+    q_idx = next((i for i, (_, gid) in enumerate(glist) if gid == gene_id), 0)
+    lo = max(0, q_idx - upstream)
+    hi = min(len(glist), q_idx + downstream + 1)
 
-    # Build rows (limit to top 30 for performance)
-    for key in sorted(cluster_chroms)[:30]:
+    neighborhood_genes: list[dict] = []
+    for pos, gid in glist[lo:hi]:
+        c = _cluster_gene_cache.get(gid)
+        neighborhood_genes.append({
+            "gene_id": gid, "cluster": c, "start": pos,
+            "is_query": gid == gene_id,
+        })
+
+    # ---- Step 2: find same-cluster orthologs in OTHER genomes ----
+    # For each neighborhood gene in the query cluster, find its orthologs
+    # in other genome+subgenome combinations.
+    # Build: { (genome, subgenome, chrom): [(ortholog_gene, pos), ...] }
+
+    query_cluster_genes = [ng for ng in neighborhood_genes if ng["cluster"] == query_cluster]
+    ortholog_map: dict[tuple, list] = {}  # (genome, subgenome, chrom) -> [(gid, pos), ...]
+
+    for key, gl in _chrom_lists.items():
         gn, sg, ch = key
-        glist = _chrom_lists.get(key)
-        if not glist:
+        if (gn, sg) == (ggenome, gsub) and ch == gchrom:
+            continue  # skip query chromosome itself
+        # Check if this chromosome has any query_cluster genes
+        has_cluster = False
+        for _, gid in gl:
+            if _cluster_gene_cache.get(gid) == query_cluster:
+                has_cluster = True
+                break
+        if not has_cluster:
             continue
-        is_query = (key == q_key)
-        row = {"genome": gn, "subgenome": sg, "chrom": ch,
-               "genes": [], "is_query_genome": is_query}
+        # Collect all query_cluster genes on this chromosome
+        cluster_genes_on_chrom = [(pos, gid) for pos, gid in gl
+                                   if _cluster_gene_cache.get(gid) == query_cluster]
+        ortholog_map[key] = cluster_genes_on_chrom
 
-        if is_query:
-            q_idx = next((i for i, (_, gid) in enumerate(glist) if gid == gene_id), 0)
-            lo, hi = max(0, q_idx - upstream), min(len(glist), q_idx + downstream + 1)
-        else:
-            # Find cluster gene nearest to query position
-            candidates = [(pos, gid) for pos, gid in glist
-                          if _cluster_gene_cache.get(gid) == query_cluster]
-            if not candidates:
-                continue
-            best = min(candidates, key=lambda x: abs(x[0] - gpos))
-            c_idx = next(i for i, (p, _) in enumerate(glist) if p == best[0])
-            lo, hi = max(0, c_idx - upstream), min(len(glist), c_idx + downstream + 1)
+    # ---- Step 3: Build tracks ----
+    # Query track: shows the 11 neighborhood genes
+    tracks: list[dict] = []
 
-        for pos, gid in glist[lo:hi]:
+    # Query genome track
+    query_genes = []
+    for ng in neighborhood_genes:
+        query_genes.append({
+            "gene_id": ng["gene_id"], "cluster": ng["cluster"],
+            "start": ng["start"], "is_query": ng["is_query"],
+        })
+    tracks.append({
+        "genome": ggenome, "subgenome": gsub, "chrom": gchrom,
+        "is_query_genome": True,
+        "genes": query_genes,
+    })
+
+    # Same-genome other subgenomes: show orthologous chromosome regions
+    # e.g., for AK58_A chr1A, also show AK58_B chr1B and AK58_D chr1D
+    same_genome_keys = sorted(
+        [k for k in ortholog_map if k[0] == ggenome],
+        key=lambda k: k[2]  # sort by chrom
+    )
+    for key in same_genome_keys:
+        gn, sg, ch = key
+        og_list = ortholog_map[key]
+        gl = _chrom_lists.get(key, [])
+        if not gl or not og_list:
+            continue
+        # Show region around the best-match ortholog (closest position to query gene)
+        best = min(og_list, key=lambda x: abs(x[0] - gpos))
+        best_idx = next((i for i, (p, _) in enumerate(gl) if p == best[0]), 0)
+        rlo = max(0, best_idx - upstream)
+        rhi = min(len(gl), best_idx + downstream + 1)
+        genes = []
+        for pos, gid in gl[rlo:rhi]:
             c = _cluster_gene_cache.get(gid)
-            row["genes"].append({"gene_id": gid, "cluster": c, "start": pos,
-                                 "is_query": gid == gene_id})
-        rows.append(row)
+            genes.append({"gene_id": gid, "cluster": c, "start": pos,
+                          "is_query": False})
+        tracks.append({
+            "genome": gn, "subgenome": sg, "chrom": ch,
+            "is_query_genome": False,
+            "genes": genes,
+        })
 
-    # ---- Connections ----
-    cluster_connections: list[dict] = []
-    for i, ra in enumerate(rows):
-        for ga in ra["genes"]:
-            if ga["cluster"] != query_cluster:
-                continue
-            for j, rb in enumerate(rows):
-                if j <= i:
-                    continue
-                for gb in rb["genes"]:
-                    if gb["cluster"] == query_cluster:
-                        cluster_connections.append({
-                            "from_gene": ga["gene_id"], "from_chrom": ra["chrom"],
-                            "from_genome": ra["genome"],
-                            "to_gene": gb["gene_id"], "to_chrom": rb["chrom"],
-                            "to_genome": rb["genome"],
-                            "cluster": query_cluster,
-                        })
+    # Other genomes: add one track per distinct genome (pick first subgenome+chrom found)
+    other_genomes: dict[str, list] = {}  # genome_name -> list of (key, og_list)
+    for key in sorted(ortholog_map.keys()):
+        gn = key[0]
+        if gn == ggenome:
+            continue
+        if gn not in other_genomes:
+            other_genomes[gn] = []
+        other_genomes[gn].append((key, ortholog_map[key]))
+
+    for gn, entries in other_genomes.items():
+        # Pick the entry with the closest ortholog to gpos
+        best_entry = None
+        best_dist = float("inf")
+        for key, og_list in entries:
+            best_og = min(og_list, key=lambda x: abs(x[0] - gpos))
+            dist = abs(best_og[0] - gpos)
+            if dist < best_dist:
+                best_dist = dist
+                best_entry = (key, og_list, best_og)
+        if best_entry is None:
+            continue
+        key, og_list, best_og = best_entry
+        gn, sg, ch = key
+        gl = _chrom_lists.get(key, [])
+        if not gl:
+            continue
+        best_idx = next((i for i, (p, _) in enumerate(gl) if p == best_og[0]), 0)
+        rlo = max(0, best_idx - upstream)
+        rhi = min(len(gl), best_idx + downstream + 1)
+        genes = []
+        for pos, gid in gl[rlo:rhi]:
+            c = _cluster_gene_cache.get(gid)
+            genes.append({"gene_id": gid, "cluster": c, "start": pos,
+                          "is_query": False})
+        tracks.append({
+            "genome": gn, "subgenome": sg, "chrom": ch,
+            "is_query_genome": False,
+            "genes": genes,
+        })
+
+    # ---- Step 4: Build connections ----
+    # Connect each query-cluster gene in the query track to its nearest
+    # same-cluster ortholog on each other track
+    connections: list[dict] = []
+
+    # Index gene positions across all tracks for connection lookup
+    track_gene_map: dict[str, dict] = {}  # gene_id -> {track_idx, pos, ...}
+    for ti, t in enumerate(tracks):
+        for g in t["genes"]:
+            track_gene_map[g["gene_id"]] = {
+                "track_idx": ti, "pos": g["start"],
+                "genome": t["genome"], "subgenome": t["subgenome"],
+                "chrom": t["chrom"],
+            }
+
+    # Build per-track list of query-cluster genes for fast lookup
+    track_cluster_genes: dict[int, list] = {}
+    for ti, t in enumerate(tracks):
+        track_cluster_genes[ti] = [
+            g for g in t["genes"] if g["cluster"] == query_cluster
+        ]
+
+    # For each query-cluster gene in the query track, connect to best matches
+    query_cluster_in_track0 = track_cluster_genes.get(0, [])
+    for other_ti in range(1, len(tracks)):
+        other_cluster_genes = track_cluster_genes.get(other_ti, [])
+        if not other_cluster_genes:
+            continue
+        t = tracks[other_ti]
+        # For each query-track cluster gene, find nearest ortholog on this other track
+        for qg in query_cluster_in_track0:
+            qpos = qg["start"]
+            best_og = min(other_cluster_genes, key=lambda og: abs(og["start"] - qpos))
+            connections.append({
+                "from_gene": qg["gene_id"],
+                "from_genome": ggenome,
+                "from_subgenome": gsub,
+                "from_chrom": gchrom,
+                "from_start": qpos,
+                "to_gene": best_og["gene_id"],
+                "to_genome": t["genome"],
+                "to_subgenome": t["subgenome"],
+                "to_chrom": t["chrom"],
+                "to_start": best_og["start"],
+                "cluster": query_cluster,
+            })
 
     return {
         "query": gene_id,
@@ -300,6 +413,6 @@ def neighborhood(
         "query_genome": ggenome,
         "query_subgenome": gsub,
         "query_chrom": gchrom,
-        "rows": rows,
-        "cluster_connections": cluster_connections,
+        "tracks": tracks,
+        "connections": connections,
     }
