@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import hashlib
 import os
+import pickle
 import re
+import time
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query
@@ -25,6 +27,15 @@ CLUSTER_FILE = settings.ORTHOFINDER_CLUSTER_FILE
 BED_DIR = Path("/var/www/html/jcvi_col/db")  # where *.filter.bed files live
 
 router = APIRouter(prefix="/orthofinder", tags=["OrthoFinder"])
+
+# Pickle cache lives in /dev/shm (tmpfs) so all 8 gunicorn workers share the
+# same parsed dict without re-reading the 200 MB Orthogroups.txt on first hit.
+# Fall back to /tmp if /dev/shm is unavailable.
+def _pickle_cache_path() -> Path:
+    base = Path("/dev/shm")
+    if not base.is_dir():
+        base = Path("/tmp")
+    return base / "wheatomics_orthogroups.pkl"
 
 # Escape sequences for whitespace — prevents raw NL/TAB in source from
 # breaking the parser.
@@ -277,34 +288,74 @@ def _orthogroups_file() -> Path:
             return p
     return base / "Orthogroups" / "Orthogroups.txt"
 
-def _load_orthogroups() -> dict:
-    """Parse Orthogroups.txt ONCE.
 
-    Returns: {og_id: {"genes": [gene_id, ...], "gene_count": int}}
-    Also populates _gene_to_og_cache: {gene_id: og_id}.
+def _load_orthogroups() -> dict:
+    """Parse Orthogroups.txt once, cache to disk, never re-parse.
+
+    Hot path: load ~2 MB pickle from /dev/shm (mmap'd, all workers share).
+    Cold path (first request after restart, or cache mtime stale): parse the
+    raw 200 MB Orthogroups.txt ONCE per worker, then write pickle so the
+    other 7 workers and subsequent restarts skip the parse entirely.
+
+    The pickle cache invalidates when the source file's mtime or size changes,
+    so a fresh OrthoFinder run replaces the cache automatically.
     """
     global _orthogroups_cache, _gene_to_og_cache
     if _orthogroups_cache is not None:
         return _orthogroups_cache
 
-    mp: dict = {}
-    g2og: dict = {}
-    f = _orthogroups_file()
-    if f.exists():
-        for line in f.read_text(encoding="utf-8", errors="ignore").splitlines():
-            line = line.strip()
-            if not line or ":" not in line:
-                continue
-            og_id, genes_str = line.split(":", 1)
-            og_id = _clean(og_id)
-            genes = [_clean(g) for g in genes_str.strip().split() if _clean(g)]
-            mp[og_id] = {"genes": genes, "gene_count": len(genes)}
-            for g in genes:
-                if g not in g2og:            # first OG wins (same as INSERT IGNORE)
-                    g2og[g] = og_id
-    _orthogroups_cache = mp
-    _gene_to_og_cache = g2og
-    return mp
+    src = _orthogroups_file()
+    cache = _pickle_cache_path()
+
+    # Try disk cache first — shared across workers, ~2000× faster than
+    # re-parsing the 200 MB source file.
+    cache_valid = False
+    if cache.exists() and src.exists():
+        try:
+            src_stat = src.stat()
+            cache_stat = cache.stat()
+            if cache_stat.st_mtime >= src_stat.st_mtime and cache_stat.st_size > 0:
+                with cache.open("rb") as f:
+                    payload = pickle.load(f)
+                if payload.get("_source") == str(src) and payload.get("_src_size") == src_stat.st_size:
+                    _orthogroups_cache = payload["og"]
+                    _gene_to_og_cache = payload["g2og"]
+                    cache_valid = True
+        except (OSError, pickle.UnpicklingError, KeyError, EOFError):
+            cache_valid = False
+
+    if not cache_valid:
+        # Cold parse — happens at most once per worker per source-file mtime.
+        mp: dict = {}
+        g2og: dict = {}
+        if src.exists():
+            for line in src.read_text(encoding="utf-8", errors="ignore").splitlines():
+                line = line.strip()
+                if not line or ":" not in line:
+                    continue
+                og_id, genes_str = line.split(":", 1)
+                og_id = _clean(og_id)
+                genes = [_clean(g) for g in genes_str.strip().split() if _clean(g)]
+                mp[og_id] = {"genes": genes, "gene_count": len(genes)}
+                for g in genes:
+                    if g not in g2og:
+                        g2og[g] = og_id
+        _orthogroups_cache = mp
+        _gene_to_og_cache = g2og
+        # Write pickle so other workers + next restart skip the parse.
+        # Best-effort: a failure here just means we re-parse next worker.
+        try:
+            with cache.open("wb") as f:
+                pickle.dump({
+                    "_source": str(src),
+                    "_src_size": src.stat().st_size if src.exists() else 0,
+                    "_built_at": time.time(),
+                    "og": mp,
+                    "g2og": g2og,
+                }, f, protocol=pickle.HIGHEST_PROTOCOL)
+        except OSError:
+            pass
+    return _orthogroups_cache
 
 def _find_og_for_gene(gene_id: str) -> str | None:
     _load_orthogroups()
@@ -885,6 +936,7 @@ def search_orthogroup(
     sub: str = Query("", description="Subgenome filter (A/B/D), used with action=members"),
     cluster: int = Query(0, description="Cluster filter (1-7), used with action=positions"),
     species: str = Query("", description="Species filter for gene search (optional)"),
+    include: str = Query("", description="Optional raw fields to include (comma-separated): 'raw_tree', 'raw_alignment'. Default: omit to keep responses small."),
     _: int = Query(0, description="Cache-buster (optional)"),
 ):
     if action == "species_catalog":
@@ -972,20 +1024,10 @@ def search_orthogroup(
                 break
         if not og_id and species:
             og_id = _find_og_for_gene(f"{species}_{q}")
-        if not og_id:
-            # Try hash-based fallback via Orthogroups.txt
-            for cid in cand_ids:
-                qh = hashlib.md5(cid.encode()).hexdigest()
-                for oid, odata in _load_orthogroups().items():
-                    for g in odata["genes"]:
-                        if g == cid or hashlib.md5(g.encode()).hexdigest() == qh:
-                            og_id = oid
-                            break
-                    if og_id:
-                        break
-                if og_id:
-                    q = cid
-                    break
+        # No hash fallback: _gene_to_og_cache is already a perfect hash (built
+        # from the same genes list). If a gene isn't in the cache, it isn't in
+        # any OG — re-scanning + md5 hashing the entire file was O(N×M) dead
+        # code that could take 30+ s on the 132k-line file.
 
     og_data = _load_orthogroups().get(og_id)
     if not og_data:
@@ -994,10 +1036,14 @@ def search_orthogroup(
     genes = og_data["genes"]
     gene_count = og_data["gene_count"]
 
+    include_set = {s.strip() for s in include.split(",") if s.strip()}
+    return_raw_tree = "raw_tree" in include_set
+    return_raw_alignment = "raw_alignment" in include_set
+
     tree_file = ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Trees_ids" / f"{og_id}.txt"
     aln_file = _find_alignment_file(og_id)
-    tree = tree_file.read_text(encoding="utf-8") if tree_file.exists() else ""
-    alignment = aln_file.read_text(encoding="utf-8") if aln_file else ""
+    tree = tree_file.read_text(encoding="utf-8") if (return_raw_tree and tree_file.exists()) else ""
+    alignment = aln_file.read_text(encoding="utf-8") if (return_raw_alignment and aln_file) else ""
 
     leaf_order = _parse_newick_leaves(tree) if tree else []
     records, record_order = _parse_alignment(alignment) if alignment else ({}, [])
