@@ -336,9 +336,11 @@ def neighborhood(
     for pos, gid in glist[lo:hi]:
         neighbors.append(gid)
 
-    # ---- Step 2: Parallel OG lookup for all 11 neighbors ---------------
-    with ThreadPoolExecutor(max_workers=min(11, max(1, len(neighbors)))) as ex:
-        og_results = dict(ex.map(_find_og_for_gene, neighbors))
+    # ---- Step 2: OG lookup for all 11 neighbors (sequential, not parallel) --
+    # ThreadPoolExecutor caused issues on some Python 3.8 installs.
+    og_results: Dict[str, Optional[str]] = {}
+    for ng in neighbors:
+        og_results[ng] = _find_og_for_gene(ng)
 
     # ---- Step 3: Build tracks from OG orthologs ------------------------
     # tracks: {genome_subgenome: {label, chrom, genes: [...]}}
