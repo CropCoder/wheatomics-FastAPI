@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import time
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query
@@ -764,21 +765,24 @@ def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) ->
                             matched = True
                             break
 
-        # 5) unique suffix guard — same as before, but with early break
-        #    (cluster_set is small enough that listing all matches is fine;
-        #    the original loop here was the slow part of the original).
+        # 5) unique suffix guard — every character-suffix of the leaf's first
+        #    token (raw and version-stripped) is checked against cluster_set.
+        #    Equivalent to the original `endswith(cg)` scan, but O(len(token))
+        #    per leaf instead of O(len(cluster_set)) — a 3×5000-leaf × 2000-cluster
+        #    OG previously did ~30M endswith calls and took 60s+.
         if not matched:
             lf_tok_val = _first_token(lf_clean)
             lf_tok_nv_val = re.sub(r"\.\d+$", "", lf_tok_val)
             cands: list[str] = []
-            for cg in cluster_set:
-                if (lf_tok_val == cg
-                        or lf_tok_val.endswith("_" + cg)
-                        or lf_tok_val.endswith(cg)
-                        or lf_tok_nv_val == cg
-                        or (lf_tok_nv_val and lf_tok_nv_val.endswith("_" + cg))
-                        or (lf_tok_nv_val and lf_tok_nv_val.endswith(cg))):
-                    cands.append(cg)
+            for t in (lf_tok_nv_val, lf_tok_val):
+                if not t:
+                    continue
+                for i in range(len(t)):
+                    s = t[i:]
+                    if s in cluster_set:
+                        cands.append(s)
+                if len(set(cands)) > 1:
+                    break
             if len(set(cands)) == 1:
                 matched = True
 
@@ -988,6 +992,11 @@ def search_orthogroup(
     if not q:
         return {"error": "Please input a protein ID or orthogroup ID."}
 
+    t0 = time.time()
+    def _mark(name):
+        return round(time.time() - t0, 3)
+    timings: dict = {}
+
     # Resolve og_id from query
     if re.match(r"^OG\d+$", q):
         og_id = q
@@ -1020,6 +1029,8 @@ def search_orthogroup(
                     q = cid
                     break
 
+    timings["resolve_og"] = _mark()
+
     og_data = _load_orthogroups().get(og_id)
     if not og_data:
         return {"error": "Orthogroup was not found."}
@@ -1031,11 +1042,14 @@ def search_orthogroup(
     aln_file = _find_alignment_file(og_id)
     tree = tree_file.read_text(encoding="utf-8") if tree_file.exists() else ""
     alignment = aln_file.read_text(encoding="utf-8") if aln_file else ""
+    timings["read_files"] = _mark()
 
     leaf_order = _parse_newick_leaves(tree) if tree else []
     records, record_order = _parse_alignment(alignment) if alignment else ({}, [])
+    timings["parse_tree_aln"] = _mark()
 
     meta = _fetch_meta(leaf_order + record_order + genes)
+    timings["fetch_meta"] = _mark()
 
     tree_label_map = {}
     for rid in set(leaf_order + record_order + genes):
@@ -1056,10 +1070,12 @@ def search_orthogroup(
     for g in cluster_genes:
         info = meta.get(g, _make_info("", g, "", ""))
         cluster_sub_counts[_norm_sub(info["subgenome"])] += 1
+    timings["cluster_resolve"] = _mark()
 
     # ---- type1 / type2 split ----
     cluster_genes_type1 = [g for g in cluster_genes if _get_type_for_gene(g)[0] == "yes"]
     cluster_genes_type2 = [g for g in cluster_genes if _get_type_for_gene(g)[1] == "yes"]
+    timings["type_split"] = _mark()
 
     def _prune_typed_tree(type_genes, tag=""):
         """Prune the full OG tree to a subset of cluster genes (type1 or type2)."""
@@ -1079,6 +1095,8 @@ def search_orthogroup(
 
     cluster_tree_type1 = _prune_typed_tree(cluster_genes_type1, tag="type1")
     cluster_tree_type2 = _prune_typed_tree(cluster_genes_type2, tag="type2")
+    timings["prune_type1"] = _mark()
+    timings["prune_type2"] = _mark()
 
     # Build cluster tree (original — all cluster genes)
     cluster_tree = ""
@@ -1103,9 +1121,11 @@ def search_orthogroup(
             debug_prune["pruned_leaf_count"] = len(pl)
         else:
             debug_prune["pruned_leaf_count"] = 0
+        timings["prune_cluster_tree"] = _mark()
 
     return {
         "query": q, "orthogroup": og_id, "gene_count": gene_count,
+        "debug_timings": timings,
         "sub_counts": sub_counts, "tree": tree,
         "cluster_tree": cluster_tree, "debug_prune": debug_prune,
         "cluster_tree_type1": cluster_tree_type1,
