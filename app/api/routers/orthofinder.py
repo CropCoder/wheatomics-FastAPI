@@ -10,7 +10,9 @@ filesystem — no MySQL dependency.
 
 from __future__ import annotations
 
+import faulthandler
 import hashlib
+import logging
 import os
 import re
 import time
@@ -26,6 +28,11 @@ CLUSTER_FILE = settings.ORTHOFINDER_CLUSTER_FILE
 BED_DIR = Path("/var/www/html/jcvi_col/db")  # where *.filter.bed files live
 
 router = APIRouter(prefix="/orthofinder", tags=["OrthoFinder"])
+logger = logging.getLogger(__name__)
+
+def _step_log(prefix: str, *parts) -> None:
+    """Emit a flusing step-timing line that survives a hanging request."""
+    print(f"[orthofinder-step] {prefix} " + " ".join(str(p) for p in parts), flush=True)
 
 # Escape sequences for whitespace — prevents raw NL/TAB in source from
 # breaking the parser.
@@ -429,9 +436,18 @@ def _load_genome_type_map() -> dict:
     return mp
 
 _seq_id_full_cache: dict | None = None
+_SEQ_LINE_RE = re.compile(r"^([^:\s]+)\s*:\s*(\S+)|^(\S+)\s+(\S+)")
 
 def _load_all_sequence_ids() -> dict:
-    """Parse SequenceIDs.txt ONCE and cache. Keyed by short_id/gene_id/raw_id."""
+    """Parse SequenceIDs.txt ONCE and cache.
+
+    Lean storage — values are 6-tuples (short_id, gene_id, genome_type,
+    subgenome, raw_id, sp_gene). The display dicts (with labels) are
+    materialized on demand in _load_sequence_id_map for only the few hundred
+    IDs a request actually shows. On the multi-million-row production dataset
+    this makes the cold parse roughly twice as fast and several GB lighter
+    than the old per-row dicts.
+    """
     global _seq_id_full_cache
     if _seq_id_full_cache is not None:
         return _seq_id_full_cache
@@ -442,19 +458,18 @@ def _load_all_sequence_ids() -> dict:
         try:
             with f.open("r", encoding="utf-8", errors="ignore") as fh:
                 for line in fh:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    m = re.match(r"^([^:\s]+)\s*:\s*(\S+)", line)
-                    if not m:
-                        m = re.match(r"^(\S+)\s+(\S+)", line)
+                    m = _SEQ_LINE_RE.match(line)
                     if not m:
                         continue
-                    short = _clean(m.group(1)); full = _clean(m.group(2))
+                    short = _clean(m.group(1) or m.group(3))
+                    full = _clean(m.group(2) or m.group(4))
                     if not short or not full:
                         continue
                     sp = _split_prefixed_gene(full)
-                    _add_info(mp, _make_info(short, full, sp["genome_type"], sp["sub"]))
+                    fields = _meta_fields(short, full, sp["genome_type"], sp["sub"], sp=sp)
+                    for key in (fields[0], fields[1], fields[4]):
+                        if key:
+                            mp[key] = fields
         except Exception:
             continue
         if mp:
@@ -477,20 +492,27 @@ def _load_sequence_id_map(wanted) -> dict:
         return {}
     out: dict = {}
     for key in want:
-        info = full.get(key)
-        if info:
-            _add_info(out, info)
+        fields = full.get(key)
+        if fields:
+            _add_info(out, _info_from_fields(*fields))
     return out
 
 def _fetch_meta(names) -> dict:
     """Build metadata dictionary from SequenceIDs.txt (file-only, no DB)."""
     return _load_sequence_id_map(names)
 
-def _make_info(short: str, gene: str, genome_type: str, sub: str) -> dict:
+def _meta_fields(short, gene, genome_type, sub, sp=None) -> tuple:
+    """Resolve final metadata fields — same semantics as _make_info.
+
+    Returns (short_id, gene_id, genome_type, subgenome, raw_id, sp_gene).
+    ``sp`` is an existing _split_prefixed_gene result; passing it avoids a
+    duplicate regex split in the hot SequenceIDs.txt loop. Labels are NOT
+    built here so the multi-million-row cache build stays lean.
+    """
     short = _clean(short); gene = _clean(gene); genome_type = _clean(genome_type)
     sub = _norm_sub(sub)
     src = gene if gene else short
-    sp = _split_prefixed_gene(src)
+    sp = sp if sp is not None else _split_prefixed_gene(src)
 
     # ---- Resolve genome_type + subgenome from genome_type.txt ----
     # This is the authoritative source that maps every genome_number to its
@@ -522,11 +544,18 @@ def _make_info(short: str, gene: str, genome_type: str, sub: str) -> dict:
         gene = sp["gene"]
     if not genome_type:
         genome_type = sp.get("genome_type") or ("Unknown" if sub == "Other" else f"{sub}_subgenome")
-    label_gene = gene if gene else (sp["gene"] if sp["gene"] else short)
+    return short, gene, genome_type, sub, src, sp["gene"]
+
+def _info_from_fields(short, gene, genome_type, sub, raw_id, sp_gene) -> dict:
+    """Materialize the display dict for one ID (labels included)."""
+    label_gene = gene if gene else (sp_gene if sp_gene else short)
     label = f"{label_gene} {genome_type}".strip()
-    return {"short_id": short, "gene_id": gene, "raw_id": src,
+    return {"short_id": short, "gene_id": gene, "raw_id": raw_id,
             "genome_type": genome_type, "subgenome": sub,
             "label": label, "full_label": label}
+
+def _make_info(short: str, gene: str, genome_type: str, sub: str) -> dict:
+    return _info_from_fields(*_meta_fields(short, gene, genome_type, sub))
 
 def _add_info(mp: dict, info: dict):
     for k in ("short_id", "gene_id", "raw_id"):
@@ -993,9 +1022,11 @@ def search_orthogroup(
         return {"error": "Please input a protein ID or orthogroup ID."}
 
     t0 = time.time()
-    def _mark(name):
+    def _mark():
         return round(time.time() - t0, 3)
     timings: dict = {}
+    faulthandler.dump_traceback_later(120, exit=False)  # stack dump if hung
+    _step_log("start", "q=", q)
 
     # Resolve og_id from query
     if re.match(r"^OG\d+$", q):
@@ -1015,6 +1046,7 @@ def search_orthogroup(
         if not og_id and species:
             og_id = _find_og_for_gene(f"{species}_{q}")
         if not og_id:
+            _step_log("md5_fallback_start", "cand_ids=", cand_ids)
             # Try hash-based fallback via Orthogroups.txt
             for cid in cand_ids:
                 qh = hashlib.md5(cid.encode()).hexdigest()
@@ -1028,28 +1060,35 @@ def search_orthogroup(
                 if og_id:
                     q = cid
                     break
+            _step_log("md5_fallback_end", "og_id=", og_id, "t=", _mark())
 
     timings["resolve_og"] = _mark()
+    _step_log("resolve_og", "og_id=", og_id, "t=", timings["resolve_og"])
 
     og_data = _load_orthogroups().get(og_id)
     if not og_data:
+        faulthandler.cancel_dump_traceback_later()
         return {"error": "Orthogroup was not found."}
 
     genes = og_data["genes"]
     gene_count = og_data["gene_count"]
+    _step_log("og_found", "og_id=", og_id, "genes=", gene_count)
 
     tree_file = ORTHOFINDER_BASE_DIR / "WorkingDirectory" / "Trees_ids" / f"{og_id}.txt"
     aln_file = _find_alignment_file(og_id)
     tree = tree_file.read_text(encoding="utf-8") if tree_file.exists() else ""
     alignment = aln_file.read_text(encoding="utf-8") if aln_file else ""
     timings["read_files"] = _mark()
+    _step_log("read_files", "tree_bytes=", len(tree), "aln_bytes=", len(alignment), "t=", timings["read_files"])
 
     leaf_order = _parse_newick_leaves(tree) if tree else []
     records, record_order = _parse_alignment(alignment) if alignment else ({}, [])
     timings["parse_tree_aln"] = _mark()
+    _step_log("parse_tree_aln", "leaves=", len(leaf_order), "records=", len(record_order), "t=", timings["parse_tree_aln"])
 
     meta = _fetch_meta(leaf_order + record_order + genes)
     timings["fetch_meta"] = _mark()
+    _step_log("fetch_meta", "meta_keys=", len(meta), "t=", timings["fetch_meta"])
 
     tree_label_map = {}
     for rid in set(leaf_order + record_order + genes):
@@ -1071,11 +1110,13 @@ def search_orthogroup(
         info = meta.get(g, _make_info("", g, "", ""))
         cluster_sub_counts[_norm_sub(info["subgenome"])] += 1
     timings["cluster_resolve"] = _mark()
+    _step_log("cluster_resolve", "query_cluster=", query_cluster, "cluster_genes=", len(cluster_genes), "t=", timings["cluster_resolve"])
 
     # ---- type1 / type2 split ----
     cluster_genes_type1 = [g for g in cluster_genes if _get_type_for_gene(g)[0] == "yes"]
     cluster_genes_type2 = [g for g in cluster_genes if _get_type_for_gene(g)[1] == "yes"]
     timings["type_split"] = _mark()
+    _step_log("type_split", "t1=", len(cluster_genes_type1), "t2=", len(cluster_genes_type2), "t=", timings["type_split"])
 
     def _prune_typed_tree(type_genes, tag=""):
         """Prune the full OG tree to a subset of cluster genes (type1 or type2)."""
@@ -1097,6 +1138,7 @@ def search_orthogroup(
     cluster_tree_type2 = _prune_typed_tree(cluster_genes_type2, tag="type2")
     timings["prune_type1"] = _mark()
     timings["prune_type2"] = _mark()
+    _step_log("prune_type1_type2", "t1=", timings["prune_type1"], "t2=", timings["prune_type2"])
 
     # Build cluster tree (original — all cluster genes)
     cluster_tree = ""
@@ -1122,6 +1164,10 @@ def search_orthogroup(
         else:
             debug_prune["pruned_leaf_count"] = 0
         timings["prune_cluster_tree"] = _mark()
+        _step_log("prune_cluster_tree", "keep=", debug_prune.get("keep_count"), "pruned_leaves=", debug_prune.get("pruned_leaf_count"), "t=", timings["prune_cluster_tree"])
+
+    _step_log("done", "total=", round(time.time() - t0, 3))
+    faulthandler.cancel_dump_traceback_later()
 
     return {
         "query": q, "orthogroup": og_id, "gene_count": gene_count,
@@ -1365,3 +1411,34 @@ def neighborhood(
         "neighborhood": neighborhood_genes,
         "total_on_chromosome": len(gene_list),
     }
+
+
+# ---------------------------------------------------------------------------
+# startup preload
+# ---------------------------------------------------------------------------
+
+def _warm_orthofinder_caches() -> None:
+    """Build the big lazy caches at import time instead of on first request.
+
+    With gunicorn ``preload_app=True`` the module is imported once in the
+    master process; every forked worker inherits these dicts through
+    copy-on-write, so the multi-minute / multi-GB parse of SequenceIDs.txt
+    and Orthogroups.txt happens exactly once instead of once per worker.
+    Dev machines without the data directory degrade to no-ops.
+    """
+    for fn in (
+        _load_genome_type_map,
+        _load_species_id_map,
+        _load_cluster_map,
+        _load_orthogroups,
+        _load_all_sequence_ids,
+    ):
+        try:
+            fn()
+        except Exception:
+            # Never let a data-file problem prevent the app from booting;
+            # the lazy paths below still degrade gracefully per request.
+            continue
+
+
+_warm_orthofinder_caches()
