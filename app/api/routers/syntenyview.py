@@ -1,20 +1,26 @@
-"""SynTeny Viewer — OG-based neighborhood synteny across homoeologous groups.
+"""SynTeny Viewer — JCVI-style gene neighborhood synteny across homoeologous groups.
 
-Based on the col_orthe/app.py architecture:
-  1. Query gene + 5 upstream + 5 downstream = 11 neighborhood genes.
-  2. Parallel OG lookup (ThreadPoolExecutor) for all 11 genes.
-  3. For each OG, filter members by query cluster + BED presence.
-  4. Build tracks grouped by (genome_subgenome), with region Mb labels.
-  5. Build link_groups for pairwise connections between adjacent tracks
-     sharing the same (order, OG) pair.
+Reads BED files from /var/www/html/col_bed, resolves homoeologous cluster
+membership via SpeciesIDs_cluster.txt, and finds orthologs via Orthogroups.txt.
 
-The frontend index.html renders a JCVI-style plot entirely client-side
-from the JSON returned here.
+Design:
+  1. Query gene + 5 upstream + 5 downstream = 11 genes on the query chromosome.
+  2. Resolve cluster (1-7) for each of the 11 genes.
+  3. For the 11 neighborhood genes, look up their OrthoFinder OG (O(1) dict
+     lookup per gene), then collect all OG members that are in the query cluster.
+     Same speed as searching 1 gene — ~100ms after caches are warm.
+  4. Return one track per (genome, subgenome, chrom) that has query-cluster
+     orthologs, each showing the syntenic region (~11 genes).
+  5. Frontend draws JCVI-style tracks with Bezier connections.
+
+PERFORMANCE:
+  - BED index, cluster cache, and OrthoFinder OG cache are built once.
+  - Per-request: 11 dict lookups → union OG members → BED lookup.
+  - No chromosome scanning; no cross-product of 94 genomes.
 """
 
 import os
 import re
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -35,13 +41,6 @@ def _clean(s: str) -> str:
     return str(s).strip(_WS)
 
 
-def _mb_label(start, end):
-    try:
-        return "%.2f-%.2f Mb" % (float(start) / 1_000_000.0, float(end) / 1_000_000.0)
-    except Exception:
-        return ""
-
-
 # =========================================================================
 # Cluster map  (SpeciesIDs_cluster.txt)
 # =========================================================================
@@ -51,6 +50,8 @@ _sorted_prefixes: Optional[List] = None
 
 
 def _load_cluster_map() -> Tuple[Dict, Dict]:
+    """Return (prefix_map, chrom_map) mapping gene prefixes / chromosomes
+    to homoeologous clusters 1-7."""
     global _cluster_cache
     if _cluster_cache is not None:
         return _cluster_cache
@@ -86,10 +87,11 @@ def _get_sorted_prefixes() -> List:
 # Cached cluster resolution
 # =========================================================================
 
-_cluster_gene_cache: Optional[Dict] = None
+_cluster_gene_cache: Optional[Dict] = None  # gene_id -> cluster (or None)
 
 
 def _resolve_cluster(gene_id: str) -> Optional[int]:
+    """Map a gene_id to its homoeologous cluster (1-7), cached."""
     global _cluster_gene_cache
     if _cluster_gene_cache is not None and gene_id in _cluster_gene_cache:
         return _cluster_gene_cache[gene_id]
@@ -128,6 +130,8 @@ _chrom_lists: Optional[Dict] = None
 
 
 def _load_bed_map() -> Dict:
+    """Load all *.bed files into gene_id -> {chrom, start, end, genome, subgenome}
+    plus _chrom_lists: (genome, subgenome, chrom) -> [(start, gene_id), ...]."""
     global _bed_cache, _chrom_lists
     if _bed_cache is not None:
         return _bed_cache
@@ -169,9 +173,7 @@ def _load_bed_map() -> Dict:
                 mp[gid] = {"chrom": chrom, "start": s, "end": e,
                            "genome": genome_name, "subgenome": sub}
                 key = (genome_name, sub, chrom)
-                if key not in cl:
-                    cl[key] = []
-                cl[key].append((s, gid))
+                cl.setdefault(key, []).append((s, gid))
         except Exception:
             continue
 
@@ -180,6 +182,7 @@ def _load_bed_map() -> Dict:
     _bed_cache = mp
     _chrom_lists = cl
 
+    # Pre-build per-gene cluster cache
     global _cluster_gene_cache
     if _cluster_gene_cache is None:
         _cluster_gene_cache = {}
@@ -195,11 +198,11 @@ def _load_bed_map() -> Dict:
 
 
 # =========================================================================
-# OrthoGroups.txt
+# OrthoGroups.txt — cached dict: {gene_id: og_id}, {og_id: [gene_id, ...]}
 # =========================================================================
 
-_orthogroups_cache: Optional[Dict] = None
-_gene_to_og_cache: Optional[Dict] = None
+_orthogroups_cache: Optional[Dict] = None   # {og_id: [gene_id, ...]}
+_gene_to_og_cache: Optional[Dict] = None    # {gene_id: og_id}
 
 
 def _orthogroups_file() -> Path:
@@ -213,6 +216,7 @@ def _orthogroups_file() -> Path:
 
 
 def _load_orthogroups() -> Dict:
+    """Parse Orthogroups.txt. Builds gene->OG and OG->genes indices."""
     global _orthogroups_cache, _gene_to_og_cache
     if _orthogroups_cache is not None:
         return _orthogroups_cache
@@ -238,33 +242,27 @@ def _load_orthogroups() -> Dict:
 
 
 def _find_og_for_gene(gene_id: str) -> Optional[str]:
+    """O(1) dict lookup — sub-millisecond."""
     _load_orthogroups()
-    og_id = _gene_to_og_cache.get(gene_id)
-    if og_id:
-        return og_id
-    # Try version-suffixed/unsuffixed variants
-    if not re.search(r"\.\d+$", gene_id):
-        return _gene_to_og_cache.get(gene_id + ".1")
-    else:
-        return _gene_to_og_cache.get(re.sub(r"\.\d+$", "", gene_id))
+    return _gene_to_og_cache.get(gene_id)
 
 
 # =========================================================================
-# Eager cache warm-up
+# Eager cache warm-up — avoid first-request timeout
 # =========================================================================
 
 import threading
 
 
-def _warm():
+def _warm_bed_cache():
     try:
         _load_bed_map()
     except Exception:
         pass
 
 
-_thread = threading.Thread(target=_warm, daemon=True)
-_thread.start()
+_warm_thread = threading.Thread(target=_warm_bed_cache, daemon=True)
+_warm_thread.start()
 
 
 # =========================================================================
@@ -273,8 +271,7 @@ _thread.start()
 
 @router.get("/genomes")
 def list_genomes():
-    """Return genome labels from BED filenames (fast, no file content read)."""
-    labels: List[str] = []
+    genomes: List[str] = []
     if BED_DIR.exists():
         seen: Set[str] = set()
         for entry in sorted(BED_DIR.iterdir()):
@@ -285,17 +282,25 @@ def list_genomes():
             base = re.sub(r"\.filter$", "", base)
             parts = base.rsplit("_", 1)
             gn = parts[0] if len(parts) == 2 else base
-            sub = parts[1] if len(parts) == 2 and parts[1] in ("A", "B", "D") else ""
-            label = f"{gn}_{sub}" if sub else gn
-            if label not in seen:
-                seen.add(label)
-                labels.append(label)
-    return {"genomes": sorted(labels)}
+            if gn not in seen:
+                seen.add(gn)
+                genomes.append(gn)
+    return {"genomes": genomes}
 
 
 # =========================================================================
-# Neighborhood API
+# Neighborhood API — the core synteny endpoint
 # =========================================================================
+
+_SUBGENOME_ORDER = {"A": 0, "B": 1, "D": 2}
+
+
+def _sort_key(key: Tuple[str, str, str], qgenome: str) -> Tuple:
+    gn, sg, ch = key
+    if gn == qgenome:
+        return (0, _SUBGENOME_ORDER.get(sg, 99), gn, sg, ch)
+    return (1, 0, gn.lower(), _SUBGENOME_ORDER.get(sg, 99), ch)
+
 
 @router.get("/neighborhood")
 def neighborhood(
@@ -310,7 +315,7 @@ def neighborhood(
         return {"error": "Please provide a gene ID"}
 
     bc_map = _load_bed_map()
-    _load_orthogroups()
+    _load_orthogroups()  # ensure OG cache is warm
 
     entry = bc_map.get(gene_id)
     if not entry:
@@ -318,153 +323,143 @@ def neighborhood(
 
     query_cluster = _resolve_cluster(gene_id)
     if query_cluster is None:
-        return {"error": f"Gene '{gene_id}' not assigned to a homoeologous cluster"}
+        return {"error": f"Gene '{gene_id}' could not be assigned to a homoeologous cluster"}
 
     ggenome = entry["genome"]
     gsub = entry["subgenome"]
     gchrom = entry["chrom"]
     gpos = entry["start"]
 
-    # ---- Step 1: 11 neighborhood genes ---------------------------------
+    # ---- Step 1: 11 neighborhood genes on the query chromosome ----------
     q_key = (ggenome, gsub, gchrom)
     glist = _chrom_lists.get(q_key, [])
     q_idx = next((i for i, (_, gid) in enumerate(glist) if gid == gene_id), 0)
     lo = max(0, q_idx - upstream)
     hi = min(len(glist), q_idx + downstream + 1)
 
-    neighbors: List[str] = []
+    neighborhood_genes: List[Dict] = []
     for pos, gid in glist[lo:hi]:
-        neighbors.append(gid)
-
-    # ---- Step 2: OG lookup for all 11 neighbors (sequential, not parallel) --
-    # ThreadPoolExecutor caused issues on some Python 3.8 installs.
-    og_results: Dict[str, Optional[str]] = {}
-    for ng in neighbors:
-        og_results[ng] = _find_og_for_gene(ng)
-
-    # ---- Step 3: Build tracks from OG orthologs ------------------------
-    # tracks: {genome_subgenome: {label, chrom, genes: [...]}}
-    tracks: Dict[str, dict] = {}
-    qlabel = f"{ggenome}_{gsub}" if gsub else ggenome
-
-    # 3a. Query track: the EXACT BED ±5 neighborhood, including genes with/without OGs
-    query_track = {
-        "label": qlabel,
-        "chrom": gchrom,
-        "genes": [],
-        "is_query_track": True,
-    }
-    for order, ng in enumerate(neighbors):
-        ninfo = bc_map.get(ng)
-        if not ninfo:
-            continue
-        og_id = og_results.get(ng)
-        query_track["genes"].append({
-            "gene": ng,
-            "start": ninfo["start"],
-            "end": ninfo["end"],
-            "og": og_id,
-            "order": order,
-            "neighbor": ng,
-            "is_query": ng == gene_id,
-            "has_orthogroup": bool(og_id),
+        c = _cluster_gene_cache.get(gid)
+        neighborhood_genes.append({
+            "gene_id": gid, "cluster": c, "start": pos,
+            "is_query": gid == gene_id,
         })
-    tracks[qlabel] = query_track
 
-    # 3b. Other genomes: only genes from OGs of the 11 neighborhood genes,
-    #     filtered by query cluster.  Do NOT add genes on the query genome
-    #     that are outside the BED neighborhood.
-    for order, ng in enumerate(neighbors):
-        og_id = og_results.get(ng)
-        if not og_id or og_id not in _orthogroups_cache:
+    # ---- Step 2: OG-based ortholog lookup — O(1) per gene, fast! ----
+    # For each neighborhood gene, look up its OG, collect all OG members.
+    # Filter to only genes that: (a) are in the BED index,
+    # (b) belong to the query cluster.
+
+    og_genes: Set[str] = set()
+    for ng in neighborhood_genes:
+        gid = ng["gene_id"]
+        og_id = _find_og_for_gene(gid)
+        if og_id and og_id in _orthogroups_cache:
+            og_genes.update(_orthogroups_cache[og_id])
+        # Also try version-suffixed form (e.g. "gene" -> "gene.1")
+        if not re.search(r"\.\d+$", gid):
+            og_id_v = _find_og_for_gene(gid + ".1")
+            if og_id_v and og_id_v in _orthogroups_cache:
+                og_genes.update(_orthogroups_cache[og_id_v])
+
+    # Filter to only genes in BED + same cluster
+    ortholog_genes: List[str] = []
+    for og_gid in og_genes:
+        if og_gid in bc_map and _cluster_gene_cache.get(og_gid) == query_cluster:
+            ortholog_genes.append(og_gid)
+
+    # ---- Step 3: Group orthologs by (genome, subgenome, chrom) ---------
+    ortholog_map: Dict[Tuple, List] = {}
+
+    for og_gid in ortholog_genes:
+        be = bc_map[og_gid]
+        key = (be["genome"], be["subgenome"], be["chrom"])
+        if (be["genome"], be["subgenome"]) == (ggenome, gsub) and be["chrom"] == gchrom:
+            continue
+        ortholog_map.setdefault(key, []).append((be["start"], og_gid))
+
+    for key in ortholog_map:
+        ortholog_map[key].sort(key=lambda x: x[0])
+
+    # ---- Step 4: Build tracks -------------------------------------------
+    tracks: List[Dict] = []
+
+    # 4a. Query genome track
+    query_genes = []
+    for ng in neighborhood_genes:
+        query_genes.append({
+            "gene_id": ng["gene_id"], "cluster": ng["cluster"],
+            "start": ng["start"], "is_query": ng["is_query"],
+        })
+    tracks.append({
+        "genome": ggenome, "subgenome": gsub, "chrom": gchrom,
+        "is_query_genome": True,
+        "genes": query_genes,
+    })
+
+    # 4b. All other tracks
+    sorted_keys = sorted(ortholog_map.keys(), key=lambda k: _sort_key(k, ggenome))
+
+    for key in sorted_keys:
+        gn, sg, ch = key
+        og_list = ortholog_map[key]
+        gl = _chrom_lists.get(key, [])
+        if not gl or not og_list:
             continue
 
-        for hom in _orthogroups_cache[og_id]:
-            if hom not in bc_map:
-                continue
-            if _cluster_gene_cache.get(hom) != query_cluster:
-                continue
+        best = min(og_list, key=lambda x: abs(x[0] - gpos))
+        best_idx = next((i for i, (p, _) in enumerate(gl) if p == best[0]), 0)
+        rlo = max(0, best_idx - upstream)
+        rhi = min(len(gl), best_idx + downstream + 1)
 
-            bi = bc_map[hom]
-            tk = f"{bi['genome']}_{bi['subgenome']}" if bi["subgenome"] else bi["genome"]
+        genes = []
+        for pos, gid in gl[rlo:rhi]:
+            c = _cluster_gene_cache.get(gid)
+            genes.append({"gene_id": gid, "cluster": c, "start": pos,
+                          "is_query": False})
+        tracks.append({
+            "genome": gn, "subgenome": sg, "chrom": ch,
+            "is_query_genome": False,
+            "genes": genes,
+        })
 
-            if tk == qlabel:
-                continue  # query genome already built from BED
+    # ---- Step 5: Build connections --------------------------------------
+    connections: List[Dict] = []
 
-            if tk not in tracks:
-                tracks[tk] = {
-                    "label": tk,
-                    "chrom": bi["chrom"],
-                    "genes": [],
-                    "is_query_track": False,
-                }
-            tracks[tk]["genes"].append({
-                "gene": hom,
-                "start": bi["start"],
-                "end": bi["end"],
-                "og": og_id,
-                "order": order,
-                "neighbor": ng,
-                "is_query": False,
-                "has_orthogroup": True,
-            })
+    query_cluster_genes = [g for g in tracks[0]["genes"]
+                           if g["cluster"] == query_cluster]
 
-    # Sort genes per track + compute region stats
-    for tr in tracks.values():
-        tr["genes"].sort(key=lambda x: (x["start"], x["end"], x["gene"]))
-        starts = [g["start"] for g in tr["genes"]]
-        ends = [g["end"] for g in tr["genes"]]
-        if starts and ends:
-            tr["region_start"] = min(starts)
-            tr["region_end"] = max(ends)
-            tr["region_label"] = _mb_label(tr["region_start"], tr["region_end"])
-        else:
-            tr["region_start"] = None
-            tr["region_end"] = None
-            tr["region_label"] = ""
+    for other_ti in range(1, len(tracks)):
+        t = tracks[other_ti]
+        other_cluster_genes = [g for g in t["genes"]
+                               if g["cluster"] == query_cluster]
+        if not other_cluster_genes:
+            continue
 
-    # Sort tracks: query genome first, then alphabetically
-    qlabel = f"{ggenome}_{gsub}" if gsub else ggenome
-    ordered = sorted(tracks.values(), key=lambda t: (0 if t["label"] == qlabel else 1, t["label"]))
-    for ti, tr in enumerate(ordered):
-        tr["track_index"] = ti
-
-    # ---- Step 4: Build link_groups (pairwise connections) ---------------
-    # Group by (order, og) — genes that share the same neighborhood gene and OG.
-    # Skip genes without OGs (visual-only BED neighbor blocks).
-    link_groups: Dict[str, dict] = {}
-    for ti, tr in enumerate(ordered):
-        for g in tr["genes"]:
-            if not g.get("og"):
-                continue
-            key = "%s|%s" % (g["order"], g["og"])
-            if key not in link_groups:
-                link_groups[key] = {
-                    "order": g["order"],
-                    "og": g["og"],
-                    "neighbor": g.get("neighbor", ""),
-                    "points": [],
-                }
-            link_groups[key]["points"].append({
-                "track_index": ti,
-                "track_label": tr["label"],
-                "chrom": tr["chrom"],
-                "gene": g["gene"],
-                "start": g["start"],
-                "end": g["end"],
+        for qg in query_cluster_genes:
+            qpos = qg["start"]
+            best_og = min(other_cluster_genes,
+                          key=lambda og: abs(og["start"] - qpos))
+            connections.append({
+                "from_gene": qg["gene_id"],
+                "from_genome": ggenome,
+                "from_subgenome": gsub,
+                "from_chrom": gchrom,
+                "from_start": qpos,
+                "to_gene": best_og["gene_id"],
+                "to_genome": t["genome"],
+                "to_subgenome": t["subgenome"],
+                "to_chrom": t["chrom"],
+                "to_start": best_og["start"],
+                "cluster": query_cluster,
             })
 
     return {
         "query": gene_id,
-        "request_genome": genome,
-        "query_genome": qlabel,
-        "query_chrom": gchrom,
-        "query_start": gpos,
-        "query_end": entry["end"],
-        "query_region_label": _mb_label(gpos, entry["end"]),
         "query_cluster": query_cluster,
-        "neighbors": neighbors,
-        "og_map": og_results,
-        "tracks": ordered,
-        "link_groups": list(link_groups.values()),
+        "query_genome": ggenome,
+        "query_subgenome": gsub,
+        "query_chrom": gchrom,
+        "tracks": tracks,
+        "connections": connections,
     }
