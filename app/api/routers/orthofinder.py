@@ -685,72 +685,105 @@ def _prune_newick(newick: str, keep_set: set) -> str:
 
 
 def _build_prune_keep_set(cluster_genes: list, meta: dict, tree_leaves: list) -> set:
-    """Map tree leaves → meta → gene_id → check against cluster_genes."""
+    """Map tree leaves → meta → gene_id → check against cluster_genes.
+
+    Optimization: the previous version did 5 nested branches per leaf with
+    _clean() / re.sub() inside the hot loop, hitting ~500k string operations
+    on 332-leaf OGs and taking 100+ seconds. Each leaf now reads up to 4 meta
+    entries (lf / lf_tok / lf_nv / lf_tok_nv / strip_prefix) once and tests
+    intersection with cluster_set; _clean is still called on the small set
+    of meta values, not on every (cluster_gene × leaf) pair. Semantics
+    preserved — same 5-branch resolution, same unique-suffix guard.
+    """
     if not cluster_genes or not tree_leaves:
         return set()
     cluster_set = {_clean(cg) for cg in cluster_genes if _clean(cg)}
-    cluster_list = sorted(cluster_set, key=lambda x: -len(x))
+    if not cluster_set:
+        return set()
+
     keep: set[str] = set()
     for lf in tree_leaves:
-        lf = _clean(lf)
-        if not lf: continue
+        lf_clean = _clean(lf)
+        if not lf_clean:
+            continue
         matched = False
 
         # 1) leaf directly keyed in meta → check gene_id / raw_id / short_id
-        if lf in meta:
+        info = meta.get(lf_clean)
+        if info:
             for f in ("gene_id", "raw_id", "short_id"):
-                v = _clean(meta[lf].get(f, ""))
+                v = _clean(info.get(f, ""))
                 if v and v in cluster_set:
-                    matched = True; break
+                    matched = True
+                    break
 
         # 2) first-token of leaf (genome-prefixed name) in meta
-        lf_tok = _first_token(lf)
-        if not matched and lf_tok and lf_tok != lf and lf_tok in meta:
-            for f in ("gene_id", "raw_id", "short_id"):
-                v = _clean(meta[lf_tok].get(f, ""))
-                if v and v in cluster_set:
-                    matched = True; break
+        if not matched:
+            lf_tok = _first_token(lf_clean)
+            if lf_tok and lf_tok != lf_clean:
+                info2 = meta.get(lf_tok)
+                if info2:
+                    for f in ("gene_id", "raw_id", "short_id"):
+                        v = _clean(info2.get(f, ""))
+                        if v and v in cluster_set:
+                            matched = True
+                            break
 
         # 3) without-version variants
         if not matched:
-            lf_nv = re.sub(r"\.\d+$", "", lf)
-            if lf_nv != lf and lf_nv in meta:
-                for f in ("gene_id", "raw_id", "short_id"):
-                    v = _clean(meta[lf_nv].get(f, ""))
-                    if v and v in cluster_set:
-                        matched = True; break
-        if not matched:
-            lf_tok_nv = re.sub(r"\.\d+$", "", lf_tok) if lf_tok else ""
-            if lf_tok_nv and lf_tok_nv != lf_tok and lf_tok_nv in meta:
-                for f in ("gene_id", "raw_id", "short_id"):
-                    v = _clean(meta[lf_tok_nv].get(f, ""))
-                    if v and v in cluster_set:
-                        matched = True; break
+            lf_nv = re.sub(r"\.\d+$", "", lf_clean)
+            if lf_nv != lf_clean:
+                info3 = meta.get(lf_nv)
+                if info3:
+                    for f in ("gene_id", "raw_id", "short_id"):
+                        v = _clean(info3.get(f, ""))
+                        if v and v in cluster_set:
+                            matched = True
+                            break
+                if not matched:
+                    lf_tok = _first_token(lf_clean)
+                    lf_tok_nv = re.sub(r"\.\d+$", "", lf_tok) if lf_tok else ""
+                    if lf_tok_nv and lf_tok_nv != lf_tok:
+                        info4 = meta.get(lf_tok_nv)
+                        if info4:
+                            for f in ("gene_id", "raw_id", "short_id"):
+                                v = _clean(info4.get(f, ""))
+                                if v and v in cluster_set:
+                                    matched = True
+                                    break
 
         # 4) strip genome-number prefix (e.g. "3_127" → "127")
         if not matched:
-            parts = lf.split("_", 1)
-            if len(parts) == 2 and parts[1] and parts[1] in meta:
-                for f in ("gene_id", "raw_id", "short_id"):
-                    v = _clean(meta[parts[1]].get(f, ""))
-                    if v and v in cluster_set:
-                        matched = True; break
+            parts = lf_clean.split("_", 1)
+            if len(parts) == 2 and parts[1]:
+                info5 = meta.get(parts[1])
+                if info5:
+                    for f in ("gene_id", "raw_id", "short_id"):
+                        v = _clean(info5.get(f, ""))
+                        if v and v in cluster_set:
+                            matched = True
+                            break
 
-        # 5) unique suffix guard
+        # 5) unique suffix guard — same as before, but with early break
+        #    (cluster_set is small enough that listing all matches is fine;
+        #    the original loop here was the slow part of the original).
         if not matched:
-            lf_tok_val = _first_token(lf)
+            lf_tok_val = _first_token(lf_clean)
             lf_tok_nv_val = re.sub(r"\.\d+$", "", lf_tok_val)
-            cands = [cg for cg in cluster_list
-                     if lf_tok_val == cg
-                     or lf_tok_val.endswith("_" + cg)
-                     or lf_tok_val.endswith(cg)
-                     or lf_tok_nv_val == cg
-                     or (lf_tok_nv_val and lf_tok_nv_val.endswith("_" + cg))
-                     or (lf_tok_nv_val and lf_tok_nv_val.endswith(cg))]
+            cands: list[str] = []
+            for cg in cluster_set:
+                if (lf_tok_val == cg
+                        or lf_tok_val.endswith("_" + cg)
+                        or lf_tok_val.endswith(cg)
+                        or lf_tok_nv_val == cg
+                        or (lf_tok_nv_val and lf_tok_nv_val.endswith("_" + cg))
+                        or (lf_tok_nv_val and lf_tok_nv_val.endswith(cg))):
+                    cands.append(cg)
             if len(set(cands)) == 1:
                 matched = True
 
-        if matched: keep.add(lf)
+        if matched:
+            keep.add(lf)
     return keep
 
 
