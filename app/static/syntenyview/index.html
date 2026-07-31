@@ -34,6 +34,7 @@ h5.card-title{margin-top:0}
 .query-track-gene-label.search-gene{fill:#dc2626;font-weight:700}
 .gene{cursor:pointer}
 .gene.query{stroke:#c026d3;stroke-width:2.5px}
+.gene.no-og{stroke:#777;stroke-width:1px;stroke-dasharray:3 2}
 .link{fill:none;stroke-opacity:.34;stroke-width:1.2}
 #tip{position:fixed;background:#111;color:#fff;padding:6px 9px;border-radius:5px;font-size:12px;pointer-events:none;display:none;z-index:9}
 .legend{padding:10px 0 0 0;font-size:12px;color:#555}
@@ -74,7 +75,7 @@ h5.card-title{margin-top:0}
 </div></div>
 
 <script>
-var API_BASE="/api/syntenyview";
+var API_BASE="/col_orthe/api";
 var SVG="http://www.w3.org/2000/svg";
 var colors=["#e6194b","#3cb44b","#4363d8","#f58231","#911eb4","#00b3b3","#f032e6","#9ac800","#e6a1a1","#800000","#9a6324"];
 var lastData=null,lastSvgFileName="syntenyview.svg";
@@ -85,58 +86,33 @@ var initGenome=qs.get("genome")||"";
 function status(t){document.getElementById("status").textContent=t;}
 function safeFileName(s){return String(s||"query").replace(/[^\w.\-]+/g,"_").slice(0,120);}
 function fmtMb(v){if(v===undefined||v===null||isNaN(Number(v)))return"";return(Number(v)/1e6).toFixed(2);}
-
-function regionLabel(tr){
-  if(tr.region_label)return tr.region_label;
-  if(!tr.genes||!tr.genes.length)return"";
-  var ss=tr.genes.map(function(g){return Number(g.start);}).filter(function(v){return !isNaN(v);});
-  var es=tr.genes.map(function(g){return Number(g.end);}).filter(function(v){return !isNaN(v);});
-  if(!ss.length||!es.length)return"";
-  return fmtMb(Math.min.apply(null,ss))+"-"+fmtMb(Math.max.apply(null,es))+" Mb";
-}
+function regionLabel(tr){if(tr.region_label)return tr.region_label;if(!tr.genes||!tr.genes.length)return"";var ss=tr.genes.map(function(g){return Number(g.start);}).filter(function(v){return !isNaN(v);});var es=tr.genes.map(function(g){return Number(g.end);}).filter(function(v){return !isNaN(v);});if(!ss.length||!es.length)return"";return fmtMb(Math.min.apply(null,ss))+"-"+fmtMb(Math.max.apply(null,es))+" Mb";}
 function labelLine(tr){return tr.label+" ("+tr.chrom+")";}
-
-function median(arr){
-  if(!arr.length)return 0;
-  var a=arr.slice().sort(function(x,y){return x-y;});
-  var mid=Math.floor(a.length/2);
-  return a.length%2?a[mid]:(a[mid-1]+a[mid])/2;
-}
+function median(arr){if(!arr.length)return 0;var a=arr.slice().sort(function(x,y){return x-y;});var mid=Math.floor(a.length/2);return a.length%2?a[mid]:(a[mid-1]+a[mid])/2;}
 
 function compressedFractions(genes){
-  var vals=genes.map(function(g,i){return {i:i,v:Number(g.start)};})
-    .filter(function(o){return !isNaN(o.v);})
-    .sort(function(a,b){return a.v-b.v||a.i-b.i;});
+  var vals=genes.map(function(g,i){return {i:i,v:Number(g.start)};}).filter(function(o){return !isNaN(o.v);}).sort(function(a,b){return a.v-b.v||a.i-b.i;});
   if(vals.length<=1){var r=[];for(var j=0;j<genes.length;j++)r.push(0.5);return r;}
-  var gaps=[],i;
-  for(i=1;i<vals.length;i++){var gap=vals[i].v-vals[i-1].v;if(gap>0)gaps.push(gap);}
-  var med=median(gaps)||1,cap=med*6;
-  var trans=[];for(i=0;i<vals.length;i++)trans.push(0);
+  var gaps=[],i;for(i=1;i<vals.length;i++){var gap=vals[i].v-vals[i-1].v;if(gap>0)gaps.push(gap);}
+  var med=median(gaps)||1,cap=med*6;var trans=[];for(i=0;i<vals.length;i++)trans.push(0);
   for(i=1;i<vals.length;i++){trans[i]=trans[i-1]+Math.min(Math.max(0,vals[i].v-vals[i-1].v),cap);}
-  var total=trans[trans.length-1]||1;
-  var res=[];for(i=0;i<genes.length;i++)res.push(0.5);
-  vals.forEach(function(o,idx){res[o.i]=trans[idx]/total;});
-  return res;
+  var total=trans[trans.length-1]||1;var res=[];for(i=0;i<genes.length;i++)res.push(0.5);
+  vals.forEach(function(o,idx){res[o.i]=trans[idx]/total;});return res;
 }
 
 function avoidOverlap(rawXs,left,right,minGap){
-  var n=rawXs.length;
-  if(n===0)return[];if(n===1)return[Math.max(left,Math.min(right,rawXs[0]))];
+  var n=rawXs.length;if(n===0)return[];if(n===1)return[Math.max(left,Math.min(right,rawXs[0]))];
   var pts=rawXs.map(function(x,i){return {x:x,i:i};}).sort(function(a,b){return a.x-b.x||a.i-b.i;});
-  pts[0].x=Math.max(left,Math.min(right,pts[0].x));
-  for(var i=1;i<n;i++)pts[i].x=Math.max(pts[i].x,pts[i-1].x+minGap);
-  var overflow=pts[n-1].x-right;
-  if(overflow>0)for(i=0;i<n;i++)pts[i].x-=overflow;
+  pts[0].x=Math.max(left,Math.min(right,pts[0].x));for(var i=1;i<n;i++)pts[i].x=Math.max(pts[i].x,pts[i-1].x+minGap);
+  var overflow=pts[n-1].x-right;if(overflow>0)for(i=0;i<n;i++)pts[i].x-=overflow;
   if(pts[0].x<left){var under=left-pts[0].x;for(i=0;i<n;i++)pts[i].x+=under;}
   if(pts[n-1].x>right||pts[0].x<left){for(i=0;i<n;i++)pts[i].x=left+(right-left)*(n===1?0.5:i/(n-1));}
   var out=Array(n);pts.forEach(function(p){out[p.i]=p.x;});return out;
 }
 
 function updateGeneSoftLink(gene,genome){
-  var share=document.getElementById("share");
-  if(!gene){share.innerHTML="";return;}
-  var u=new URL(location.href);
-  u.searchParams.set("q",gene);
+  var share=document.getElementById("share");if(!gene){share.innerHTML="";return;}
+  var u=new URL(location.href);u.searchParams.set("q",gene);
   if(genome)u.searchParams.set("genome",genome);else u.searchParams.delete("genome");
   history.replaceState(null,"",u.pathname+u.search+u.hash);
   share.innerHTML='Current gene: <a href="'+u.href+'" title="'+u.href+'">'+gene+'</a>';
@@ -144,11 +120,8 @@ function updateGeneSoftLink(gene,genome){
 
 // ---- Init ----
 fetch(API_BASE+"/genomes").then(function(r){return r.json();}).then(function(gs){
-  var sel=document.getElementById("genome");
-  sel.innerHTML='<option value="">-- Select genome --</option>';
-  (gs.genomes||gs||[]).forEach(function(g){
-    var o=document.createElement("option");o.value=g;o.textContent=g;sel.appendChild(o);
-  });
+  var sel=document.getElementById("genome");sel.innerHTML='<option value="">-- Select genome --</option>';
+  (gs||[]).forEach(function(g){var o=document.createElement("option");o.value=g;o.textContent=g;sel.appendChild(o);});
   if(initGenome)sel.value=initGenome;
   if(initGene){document.getElementById("gene").value=initGene;run(false);}
 }).catch(function(e){status("Failed to load genome list: "+e);});
@@ -161,175 +134,75 @@ function run(updateUrl){
   var gene=document.getElementById("gene").value.trim();
   var gn=document.getElementById("genome").value.trim();
   if(!gene){alert("Please enter a gene ID.");return;}
-  status("Searching… first query may be slow while caches warm up.");
+  status("Searching… If the backend is still warming up BED/Orthogroups, the first query may take longer.");
   document.getElementById("downloadSvg").disabled=true;
-
-  var url=API_BASE+"/neighborhood?q="+encodeURIComponent(gene)+"&upstream=5&downstream=5";
-  if(gn)url+="&genome="+encodeURIComponent(gn);
-  fetch(url).then(function(r){return r.json();}).then(function(data){
-    draw(data);
-    if(!data.error)updateGeneSoftLink(data.query||gene,data.query_genome||gn);
-  }).catch(function(e){status("Query failed: "+e);});
+  fetch(API_BASE+"/synteny?genome="+encodeURIComponent(gn)+"&gene="+encodeURIComponent(gene))
+    .then(function(r){return r.json();}).then(function(data){
+      draw(data);if(!data.error)updateGeneSoftLink(data.query||gene,data.query_genome||gn);
+    }).catch(function(e){status("Query failed: "+e);});
 }
 
 function draw(data){
-  var svg=document.getElementById("svg"),canvas=document.getElementById("canvas");
-  svg.innerHTML="";lastData=null;
-
+  var svg=document.getElementById("svg"),canvas=document.getElementById("canvas");svg.innerHTML="";lastData=null;
   if(data.error){status("Error: "+data.error);document.getElementById("legend").innerHTML="";document.getElementById("downloadSvg").disabled=true;return;}
-
-  lastData=data;
-  lastSvgFileName="syntenyview_"+safeFileName(data.query)+".svg";
-  document.getElementById("downloadSvg").disabled=false;
-
-  var neighbors=data.neighbors||[];
-  var ogMap=data.og_map||{};
-  status("Query="+data.query+" | BED neighbors: "+neighbors.length+" genes | Cluster "+data.query_cluster+" | Matched genomes: "+(data.tracks||[]).length);
-
+  lastData=data;lastSvgFileName="syntenyview_"+safeFileName(data.query)+".svg";document.getElementById("downloadSvg").disabled=false;
+  var neighbors=data.neighbors||[],ogMap=data.og_map||{};
+  status("Query="+data.query+" | BED neighbors: "+neighbors.length+" genes | Cluster "+data.query_cluster+" | Matched genomes: "+data.tracks.length);
   document.getElementById("legend").innerHTML=neighbors.map(function(g,i){
-    var note=ogMap[g]?"":" (no OG)";
-    return '<span><i style="background:'+colors[i%11]+'"></i>'+g+(g===data.query?" (query)":"")+note+'</span>';
+    var note=ogMap[g]?"":" (no OG)";return '<span><i style="background:'+colors[i%11]+'"></i>'+g+(g===data.query?" (query)":"")+note+'</span>';
   }).join("");
-
-  var tracks=data.tracks||[];
-  if(!tracks.length){status(document.getElementById("status").textContent+" (No genes to draw.)");return;}
-
-  var maxLabelLen=Math.max.apply(null,tracks.map(function(tr){
-    return Math.max(labelLine(tr).length,("Region: "+regionLabel(tr)).length);
-  }));
-  var left=Math.max(390,Math.min(820,maxLabelLen*7+50));
-  var svgW=Math.max(1650,canvas.clientWidth-20,left+1050);
-  var right=svgW-60;
-
-  var rowH=82,labelTopPad=132;
-  var maxGenes=Math.max.apply(null,tracks.map(function(tr){return(tr.genes||[]).length;}),1);
-  var plotW=right-left;
-  var boxW=Math.max(9,Math.min(26,Math.floor(plotW/(maxGenes*1.65))));
-  var boxH=16,minGap=boxW+8;
-
-  svg.setAttribute("height",labelTopPad+tracks.length*rowH+55);
-  svg.setAttribute("width",svgW);
-  svg.setAttribute("xmlns",SVG);
-
-  var baseLayer=document.createElementNS(SVG,"g");
-  var linkLayer=document.createElementNS(SVG,"g");
-  var geneLayer=document.createElementNS(SVG,"g");
-  var labelLayer=document.createElementNS(SVG,"g");
-  svg.appendChild(baseLayer);
-  svg.appendChild(linkLayer);
-  svg.appendChild(geneLayer);
-  svg.appendChild(labelLayer);
-
-  var allPoints=[],geneElements=[];
-  var queryTrackIndex=tracks.findIndex(function(tr){return tr.label===data.query_genome;});
+  var tracks=data.tracks||[];if(!tracks.length){status(document.getElementById("status").textContent+" (No genes to draw.)");return;}
+  var maxLabelLen=Math.max.apply(null,tracks.map(function(tr){return Math.max(labelLine(tr).length,("Region: "+regionLabel(tr)).length);}));
+  var left=Math.max(390,Math.min(820,maxLabelLen*7+50));var svgW=Math.max(1650,canvas.clientWidth-20,left+1050);var right=svgW-60;
+  var rowH=82,labelTopPad=132;var maxGenes=Math.max.apply(null,tracks.map(function(tr){return(tr.genes||[]).length;}),1);
+  var plotW=right-left;var boxW=Math.max(9,Math.min(26,Math.floor(plotW/(maxGenes*1.65))));var boxH=16,minGap=boxW+8;
+  svg.setAttribute("height",labelTopPad+tracks.length*rowH+55);svg.setAttribute("width",svgW);svg.setAttribute("xmlns",SVG);
+  var baseLayer=document.createElementNS(SVG,"g"),linkLayer=document.createElementNS(SVG,"g"),geneLayer=document.createElementNS(SVG,"g"),labelLayer=document.createElementNS(SVG,"g");
+  svg.appendChild(baseLayer);svg.appendChild(linkLayer);svg.appendChild(geneLayer);svg.appendChild(labelLayer);
+  var allPoints=[],geneElements=[],queryTrackIndex=tracks.findIndex(function(tr){return tr.label===data.query_genome;});
 
   tracks.forEach(function(tr,ti){
-    var yMid=labelTopPad+ti*rowH;
-    var genes=tr.genes||[];
-    var fractions=compressedFractions(genes);
-    var rawXs=fractions.map(function(fr){return left+plotW*fr;});
-    var xs=avoidOverlap(rawXs,left,right,minGap);
-
-    var lab=document.createElementNS(SVG,"text");
-    lab.setAttribute("x",10);lab.setAttribute("y",yMid-5);
-    lab.setAttribute("class","track-label");lab.textContent=labelLine(tr);
-    var title=document.createElementNS(SVG,"title");title.textContent=labelLine(tr)+" | Region: "+regionLabel(tr);
-    lab.appendChild(title);labelLayer.appendChild(lab);
-
-    var reg=document.createElementNS(SVG,"text");
-    reg.setAttribute("x",10);reg.setAttribute("y",yMid+13);
-    reg.setAttribute("class","track-region");reg.textContent="Region: "+regionLabel(tr);
-    labelLayer.appendChild(reg);
-
-    var base=document.createElementNS(SVG,"line");
-    base.setAttribute("x1",left);base.setAttribute("x2",right);
-    base.setAttribute("y1",yMid);base.setAttribute("y2",yMid);
-    base.setAttribute("stroke","#ddd");baseLayer.appendChild(base);
-
+    var yMid=labelTopPad+ti*rowH,genes=tr.genes||[];
+    var fractions=compressedFractions(genes),rawXs=fractions.map(function(fr){return left+plotW*fr;}),xs=avoidOverlap(rawXs,left,right,minGap);
+    var lab=document.createElementNS(SVG,"text");lab.setAttribute("x",10);lab.setAttribute("y",yMid-5);lab.setAttribute("class","track-label");lab.textContent=labelLine(tr);
+    var title=document.createElementNS(SVG,"title");title.textContent=labelLine(tr)+" | Region: "+regionLabel(tr);lab.appendChild(title);labelLayer.appendChild(lab);
+    var reg=document.createElementNS(SVG,"text");reg.setAttribute("x",10);reg.setAttribute("y",yMid+13);reg.setAttribute("class","track-region");reg.textContent="Region: "+regionLabel(tr);labelLayer.appendChild(reg);
+    var base=document.createElementNS(SVG,"line");base.setAttribute("x1",left);base.setAttribute("x2",right);base.setAttribute("y1",yMid);base.setAttribute("y2",yMid);base.setAttribute("stroke","#ddd");baseLayer.appendChild(base);
     genes.forEach(function(g,gi){
-      var x=xs[gi];
-      var pt={ti:ti,yMid:yMid,x:x,order:g.order,og:g.og,gene:g.gene,start:g.start,end:g.end};
-      allPoints.push(pt);
-
-      var rect=document.createElementNS(SVG,"rect");
-      rect.setAttribute("x",x-boxW/2);rect.setAttribute("y",yMid-boxH/2);
-      rect.setAttribute("width",boxW);rect.setAttribute("height",boxH);
-      rect.setAttribute("rx",3);rect.setAttribute("fill",colors[g.order%11]);
-      rect.setAttribute("class","gene"+(g.gene===data.query?" query":""));
-
-      var ogText=g.og||"No Orthogroup";
-      rect.addEventListener("mousemove",function(e){tip(e,g.gene+"<br>OG: "+ogText+"<br>Position: "+g.start+"-"+g.end+"<br>Region: "+regionLabel(tr));});
-      rect.addEventListener("mouseout",function(){document.getElementById("tip").style.display="none";});
-      geneElements.push(rect);
-
+      var x=xs[gi];var pt={ti:ti,yMid:yMid,x:x,order:g.order,og:g.og,gene:g.gene,start:g.start,end:g.end};allPoints.push(pt);
+      var rect=document.createElementNS(SVG,"rect");rect.setAttribute("x",x-boxW/2);rect.setAttribute("y",yMid-boxH/2);rect.setAttribute("width",boxW);rect.setAttribute("height",boxH);rect.setAttribute("rx",3);
+      rect.setAttribute("fill",colors[g.order%11]);rect.setAttribute("class","gene"+(g.gene===data.query?" query":"")+(g.og?"":" no-og"));
+      var ogText=g.og||"No Orthogroup";rect.addEventListener("mousemove",function(e){tip(e,g.gene+"<br>OG: "+ogText+"<br>Position: "+g.start+"-"+g.end+"<br>Region: "+regionLabel(tr));});
+      rect.addEventListener("mouseout",function(){document.getElementById("tip").style.display="none";});geneElements.push(rect);
       if(ti===queryTrackIndex||(queryTrackIndex<0&&ti===0)){
-        var txt=document.createElementNS(SVG,"text");
-        var tx=x+3,ty=yMid-boxH/2-8;
-        txt.setAttribute("x",tx);txt.setAttribute("y",ty);
-        txt.setAttribute("class","query-track-gene-label"+(g.gene===data.query?" search-gene":""));
-        txt.setAttribute("text-anchor","start");txt.setAttribute("dominant-baseline","middle");
-        txt.setAttribute("transform","rotate(-90 "+tx+" "+ty+")");
-        txt.textContent=g.gene;labelLayer.appendChild(txt);
+        var txt=document.createElementNS(SVG,"text"),tx=x+3,ty=yMid-boxH/2-8;
+        txt.setAttribute("x",tx);txt.setAttribute("y",ty);txt.setAttribute("class","query-track-gene-label"+(g.gene===data.query?" search-gene":""));
+        txt.setAttribute("text-anchor","start");txt.setAttribute("dominant-baseline","middle");txt.setAttribute("transform","rotate(-90 "+tx+" "+ty+")");txt.textContent=g.gene;labelLayer.appendChild(txt);
       }
     });
   });
 
-  // Connect neighboring tracks that contain the same OG/order.
-  var groups={};
-  allPoints.forEach(function(p){
-    if(!p.og)return;
-    var key=p.order+"|"+p.og;
-    if(!groups[key])groups[key]=[];
-    groups[key].push(p);
-  });
-
+  var groups={};allPoints.forEach(function(p){if(!p.og)return;var key=p.order+"|"+p.og;if(!groups[key])groups[key]=[];groups[key].push(p);});
   Object.keys(groups).forEach(function(key){
-    var points=groups[key];
-    var byTrack={};
-    points.forEach(function(p){if(!byTrack[p.ti])byTrack[p.ti]=[];byTrack[p.ti].push(p);});
+    var points=groups[key],byTrack={};points.forEach(function(p){if(!byTrack[p.ti])byTrack[p.ti]=[];byTrack[p.ti].push(p);});
     var trackIds=Object.keys(byTrack).map(Number).sort(function(a,b){return a-b;});
-
-    for(var i=0;i<trackIds.length-1;i++){
-      var A=byTrack[trackIds[i]],B=byTrack[trackIds[i+1]];
-      A.forEach(function(a){
-        B.forEach(function(b){
-          var p=document.createElementNS(SVG,"path");
-          var y1=a.yMid+boxH/2,y2=b.yMid-boxH/2,my=(y1+y2)/2;
-          p.setAttribute("d","M"+a.x+","+y1+" C"+a.x+","+my+" "+b.x+","+my+" "+b.x+","+y2);
-          p.setAttribute("class","link");
-          p.setAttribute("stroke",colors[a.order%11]);
-          linkLayer.appendChild(p);
-        });
-      });
+    for(var i=0;i<trackIds.length-1;i++){var A=byTrack[trackIds[i]],B=byTrack[trackIds[i+1]];
+      A.forEach(function(a){B.forEach(function(b){
+        var p=document.createElementNS(SVG,"path"),y1=a.yMid+boxH/2,y2=b.yMid-boxH/2,my=(y1+y2)/2;
+        p.setAttribute("d","M"+a.x+","+y1+" C"+a.x+","+my+" "+b.x+","+my+" "+b.x+","+y2);p.setAttribute("class","link");p.setAttribute("stroke",colors[a.order%11]);linkLayer.appendChild(p);
+      });});
     }
   });
-
   geneElements.forEach(function(el){geneLayer.appendChild(el);});
 }
 
-function svgStyleText(){
-  return ".track-label{font-size:12px;fill:#222;font-weight:600;font-family:-apple-system,Segoe UI,Arial} "+
-    ".track-region{font-size:11px;fill:#666;font-weight:400;font-family:-apple-system,Segoe UI,Arial} "+
-    ".query-track-gene-label{font-size:10px;fill:#111;font-weight:500;font-family:-apple-system,Segoe UI,Arial} "+
-    ".query-track-gene-label.search-gene{fill:#dc2626;font-weight:700} "+
-    ".gene{cursor:pointer}.gene.query{stroke:#c026d3;stroke-width:2.5px} "+
-    ".link{fill:none;stroke-opacity:.34;stroke-width:1.2}";
-}
+function svgStyleText(){return ".track-label{font-size:12px;fill:#222;font-weight:600;font-family:-apple-system,Segoe UI,Arial} .track-region{font-size:11px;fill:#666;font-weight:400;font-family:-apple-system,Segoe UI,Arial} .query-track-gene-label{font-size:10px;fill:#111;font-weight:500;font-family:-apple-system,Segoe UI,Arial} .query-track-gene-label.search-gene{fill:#dc2626;font-weight:700} .gene{cursor:pointer}.gene.query{stroke:#c026d3;stroke-width:2.5px}.gene.no-og{stroke:#777;stroke-width:1px;stroke-dasharray:3 2}.link{fill:none;stroke-opacity:.34;stroke-width:1.2}";}
 function downloadSvg(){
-  var svg=document.getElementById("svg");
-  if(!lastData||!svg||!svg.childNodes.length){alert("Please draw a synteny plot first.");return;}
-  var clone=svg.cloneNode(true);
-  clone.setAttribute("xmlns",SVG);clone.setAttribute("version","1.1");
-  var style=document.createElementNS(SVG,"style");style.textContent=svgStyleText();
-  clone.insertBefore(style,clone.firstChild);
-  var xml='<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone);
-  var blob=new Blob([xml],{type:"image/svg+xml;charset=utf-8"});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement("a");a.href=url;a.download=lastSvgFileName;
-  document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  var svg=document.getElementById("svg");if(!lastData||!svg||!svg.childNodes.length){alert("Please draw a synteny plot first.");return;}
+  var clone=svg.cloneNode(true);clone.setAttribute("xmlns",SVG);clone.setAttribute("version","1.1");
+  var style=document.createElementNS(SVG,"style");style.textContent=svgStyleText();clone.insertBefore(style,clone.firstChild);
+  var xml='<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone);var blob=new Blob([xml],{type:"image/svg+xml;charset=utf-8"});
+  var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download=lastSvgFileName;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 }
-function tip(e,html){
-  var t=document.getElementById("tip");t.innerHTML=html;t.style.display="block";
-  t.style.left=(e.clientX+12)+"px";t.style.top=(e.clientY+12)+"px";
-}
+function tip(e,html){var t=document.getElementById("tip");t.innerHTML=html;t.style.display="block";t.style.left=(e.clientX+12)+"px";t.style.top=(e.clientY+12)+"px";}
 </script></body></html>
