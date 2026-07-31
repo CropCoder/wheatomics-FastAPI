@@ -136,7 +136,9 @@ function run(updateUrl){
   if(!gene){alert("Please enter a gene ID.");return;}
   status("Searching… If the backend is still warming up BED/Orthogroups, the first query may take longer.");
   document.getElementById("downloadSvg").disabled=true;
-  fetch(API_BASE+"/synteny?genome="+encodeURIComponent(gn)+"&gene="+encodeURIComponent(gene))
+  var url=API_BASE+"/neighborhood?q="+encodeURIComponent(gene)+"&upstream=5&downstream=5";
+  if(gn) url+="&genome="+encodeURIComponent(gn);
+  fetch(url)
     .then(function(r){return r.json();}).then(function(data){
       draw(data);if(!data.error)updateGeneSoftLink(data.query||gene,data.query_genome||gn);
     }).catch(function(e){status("Query failed: "+e);});
