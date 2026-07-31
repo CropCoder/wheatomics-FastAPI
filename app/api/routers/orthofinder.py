@@ -190,7 +190,8 @@ def _load_bed_chromosome_map() -> dict:
                 return g
         return None
 
-    # --- scan BED files ---
+    # --- scan BED files (streamed line-by-line; never load whole files) ---
+    files_read = 0
     for entry in sorted(BED_DIR.iterdir()):
         fname = entry.name
         if not fname.endswith(".filter.bed"):
@@ -205,28 +206,30 @@ def _load_bed_chromosome_map() -> dict:
         if not _bed_matches(genome_name):
             continue
         try:
-            for line in entry.read_text(encoding="utf-8", errors="ignore").splitlines():
-                line = line.strip()
-                if not line or line.startswith("#") or line.startswith("track"):
-                    continue
-                cols = line.split("\t")
-                if len(cols) < 4:
-                    continue
-                gid = _clean(cols[3])
-                chrom = _clean(cols[0])
-                if not (gid and chrom):
-                    continue
-                try:
-                    start = int(cols[1])
-                    end = int(cols[2])
-                except ValueError:
-                    start = end = 0
-                mp[gid] = {"chrom": chrom, "start": start, "end": end,
-                           "genome": genome_name, "subgenome": sub}
-                key = (genome_name, sub, chrom)
-                cl.setdefault(key, []).append((start, gid))
+            with entry.open("r", encoding="utf-8", errors="ignore") as fh:
+                for line in fh:
+                    line = line.strip()
+                    if not line or line.startswith("#") or line.startswith("track"):
+                        continue
+                    cols = line.split("\t")
+                    if len(cols) < 4:
+                        continue
+                    gid = _clean(cols[3])
+                    chrom = _clean(cols[0])
+                    if not (gid and chrom):
+                        continue
+                    try:
+                        start = int(cols[1])
+                        end = int(cols[2])
+                    except ValueError:
+                        start = end = 0
+                    mp[gid] = {"chrom": chrom, "start": start, "end": end,
+                               "genome": genome_name, "subgenome": sub}
+                    key = (genome_name, sub, chrom)
+                    cl.setdefault(key, []).append((start, gid))
         except Exception:
             continue
+        files_read += 1
 
     # Sort each chromosome gene list by start position
     for k in cl:
@@ -234,6 +237,8 @@ def _load_bed_chromosome_map() -> dict:
 
     _bed_chromosome_cache = mp
     _chrom_gene_lists = cl
+    if files_read:
+        _step_log("bed_map_loaded", "files=", files_read, "genes=", len(mp))
     return mp
 
 def _resolve_cluster(gene_id: str) -> int | None:
@@ -1432,6 +1437,7 @@ def _warm_orthofinder_caches() -> None:
         _load_cluster_map,
         _load_orthogroups,
         _load_all_sequence_ids,
+        _load_bed_chromosome_map,
     ):
         try:
             fn()
