@@ -21,6 +21,7 @@ import os
 import subprocess
 from datetime import datetime
 import re
+import time as _time
 from fastapi import APIRouter, Form, HTTPException, Query
 from typing import Optional, List
 
@@ -162,6 +163,16 @@ def _classify_db(db_name: str) -> str:
 
 DB_DIR = "/var/www/html/getfasta/blastdb/"  # 和 CGI 的 DbPath 一致
 
+# Disk-cached DB directory listing. Without this, list_dbs("blastn") takes
+# 90+ seconds on /var/www/html/getfasta/blastdb/ (thousands of multi-volume
+# index files across hundreds of genome databases), which starves the
+# threadpool and makes every other FastAPI request time out.
+#
+# Cache TTL: 1 hour. BLAST DB layout changes only when an admin runs
+# makeblastdb, so 1h is safe and avoids re-scanning the directory per request.
+_DB_LIST_CACHE: dict[str, tuple[float, list[str]]] = {}
+_DB_LIST_TTL_SECONDS = 3600.0
+
 # blast 输出格式（outfmt 6 的列）
 def _program_db_type(program: str) -> str:
     """返回程序对应的数据库类型: prot（蛋白）或 nuc（核酸）"""
@@ -174,7 +185,18 @@ def _strip_volume(name: str) -> str:
 
 
 def list_dbs(program: str) -> List[str]:
-    """列出可用的 BLAST 数据库"""
+    """列出可用的 BLAST 数据库（disk-cached，TTL 1h）
+
+    /var/www/html/getfasta/blastdb/ has thousands of multi-volume index
+    files across hundreds of genomes; scanning it per request takes 90+
+    seconds and starves the worker threadpool. Cache for 1 hour.
+    """
+    cached = _DB_LIST_CACHE.get(program)
+    if cached is not None:
+        ts, names = cached
+        if (_time.time() - ts) < _DB_LIST_TTL_SECONDS:
+            return names
+
     if not os.path.isdir(DB_DIR):
         return []
     # 蛋白库索引: .pin .phr/.phd .psq/.psd | 核酸库索引: .nin .nhr .nsq
@@ -197,7 +219,9 @@ def list_dbs(program: str) -> List[str]:
     # A real BLAST DB is valid with as few as ONE index file (e.g. a
     # single .nal alias file pointing at a multi-volume .00/.01 split,
     # or a fresh makeblastdb that's only produced .nsq + .nto so far).
-    return sorted(dbs.keys())
+    names = sorted(dbs.keys())
+    _DB_LIST_CACHE[program] = (_time.time(), names)
+    return names
 
 
 def check_db_exists(db_name: str, program: str) -> bool:
