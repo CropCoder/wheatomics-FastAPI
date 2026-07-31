@@ -8,6 +8,7 @@ import time
 from datetime import datetime, timezone
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -151,7 +152,7 @@ async def request_validation_error(_: Request, exc: RequestValidationError) -> J
 
     return JSONResponse(
         status_code=422,
-        content={"success": False, "error": "Validation error", "detail": exc.errors()},
+        content={"success": False, "error": "Validation error", "detail": jsonable_encoder(exc.errors())},
     )
 
 
