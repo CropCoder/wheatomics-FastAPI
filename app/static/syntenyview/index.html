@@ -97,21 +97,31 @@ var initGene=qs.get("q")||qs.get("gene")||"";
 var initGenome=qs.get("genome")||"";
 
 function status(t){ document.getElementById("message").textContent=t; }
-
 function safeFileName(s){ return String(s||"query").replace(/[^\w.\-]+/g,"_").slice(0,120); }
-
 function fmtMb(v){ if(v===undefined||v===null||isNaN(Number(v)))return""; return (Number(v)/1e6).toFixed(2); }
 
+// Try to get region label from track data (new API) or compute from genes (old API)
 function regionLabel(tr){
   if(tr.region_label)return tr.region_label;
-  if(!tr.genes||!tr.genes.length)return"";
-  var ss=tr.genes.map(function(g){return Number(g.start);}).filter(function(v){return !isNaN(v);});
-  var es=tr.genes.map(function(g){return Number(g.end);}).filter(function(v){return !isNaN(v);});
+  var genesToUse = getGenes(tr);
+  if(!genesToUse.length)return"";
+  var ss=genesToUse.map(function(g){return Number(getGeneStart(g));}).filter(function(v){return !isNaN(v);});
+  var es=genesToUse.map(function(g){return Number(getGeneEnd(g));}).filter(function(v){return !isNaN(v);});
   if(!ss.length||!es.length)return"";
   return fmtMb(Math.min.apply(null,ss))+"-"+fmtMb(Math.max.apply(null,es))+" Mb";
 }
 
-function labelLine(tr){ return tr.label+" ("+tr.chrom+")"; }
+// Unified gene accessors: work with both old API (gene_id/start/cluster) and new API (gene/start/end/order/og)
+function getGeneId(g){ return g.gene || g.gene_id || ""; }
+function getGeneStart(g){ return Number(g.start); }
+function getGeneEnd(g){ return Number(g.end || g.start); }
+function getGeneOrder(g){ return g.order !== undefined ? g.order : -1; }
+function getGeneOg(g){ return g.og || ""; }
+function getGenes(tr){ return tr.genes || []; }
+function getTrackLabel(tr){ return tr.label || (tr.genome+"_"+tr.subgenome); }
+function getTrackChrom(tr){ return tr.chrom || ""; }
+
+function labelLine(tr){ return getTrackLabel(tr)+" ("+getTrackChrom(tr)+")"; }
 
 function median(arr){
   if(!arr.length)return 0;
@@ -121,17 +131,19 @@ function median(arr){
 }
 
 function compressedFractions(genes){
-  var vals=genes.map(function(g,i){return {i:i,v:Number(g.start)};})
+  var vals=genes.map(function(g,i){return {i:i,v:getGeneStart(g)};})
     .filter(function(o){return !isNaN(o.v);})
     .sort(function(a,b){return a.v-b.v||a.i-b.i;});
-  if(vals.length<=1){ var r=Array(genes.length).fill(0.5); return r; }
+  if(vals.length<=1){ var r=[]; for(var j=0;j<genes.length;j++)r.push(0.5); return r; }
   var gaps=[];
   for(var i=1;i<vals.length;i++){ var gap=vals[i].v-vals[i-1].v; if(gap>0)gaps.push(gap); }
   var med=median(gaps)||1, cap=med*6;
-  var trans=Array(vals.length).fill(0);
+  var trans=[];
+  for(var i=0;i<vals.length;i++)trans.push(0);
   for(var i=1;i<vals.length;i++){ var raw=Math.max(0,vals[i].v-vals[i-1].v); trans[i]=trans[i-1]+Math.min(raw,cap); }
   var total=trans[trans.length-1]||1;
-  var res=Array(genes.length).fill(0.5);
+  var res=[];
+  for(var j=0;j<genes.length;j++)res.push(0.5);
   vals.forEach(function(o,idx){res[o.i]=trans[idx]/total;});
   return res;
 }
@@ -200,9 +212,15 @@ function draw(data){
   document.getElementById("result").style.display="block";
 
   status("Query="+data.query+" | Cluster "+data.query_cluster+" | Matched genomes: "+(data.tracks||[]).length);
+
+  // Legend: use neighbors from new API, or build from query track genes (old API)
   var neighbors=data.neighbors||[];
+  if(!neighbors.length){
+    var qt=(data.tracks||[]).find(function(tr){return tr.is_query_genome;}) || (data.tracks||[])[0];
+    if(qt) neighbors=getGenes(qt).map(function(g){return getGeneId(g);});
+  }
   var leg=neighbors.map(function(g,i){
-    return '<span class="litem"><span class="swatch" style="background:'+COLORS[i%11]+';"></span>'+esc(g)+'</span>';
+    return '<span class="litem"><span class="swatch" style="background:'+COLORS[i%11]+';"></span>'+esc(String(g))+'</span>';
   }).join("");
   document.getElementById("legend").innerHTML=leg;
 
@@ -218,7 +236,8 @@ function draw(data){
   var right=svgW-60;
 
   var rowH=82, labelTopPad=132;
-  var maxGenes=Math.max.apply(null,tracks.map(function(tr){return (tr.genes||[]).length;}),1);
+  var geneLists=tracks.map(function(tr){return getGenes(tr);});
+  var maxGenes=Math.max.apply(null,geneLists.map(function(gs){return gs.length;}),1);
   var plotW=right-left;
   var boxW=Math.max(9,Math.min(26,Math.floor(plotW/(maxGenes*1.65))));
   var boxH=16, minGap=boxW+8;
@@ -227,7 +246,6 @@ function draw(data){
   svg.setAttribute("width",svgW);
   svg.setAttribute("xmlns",SVG_NS);
 
-  // DOM-based SVG construction
   var baseLayer=document.createElementNS(SVG_NS,"g");
   var linkLayer=document.createElementNS(SVG_NS,"g");
   var geneLayer=document.createElementNS(SVG_NS,"g");
@@ -238,11 +256,17 @@ function draw(data){
   svg.appendChild(labelLayer);
 
   var allPoints=[], geneElements=[];
-  var queryTrackIndex=tracks.findIndex(function(tr){return tr.label===data.query_genome;});
+  var queryTrackIndex=tracks.findIndex(function(tr){return getTrackLabel(tr)===data.query_genome;});
+  if(queryTrackIndex<0) queryTrackIndex=tracks.findIndex(function(tr){return tr.is_query_genome;});
+
+  // Build link_groups for connections: use new API link_groups, or fallback to old API connections
+  var linkGroups=data.link_groups||[];
+  var oldConns=data.connections||[];
+  var useNewLinks=linkGroups.length>0;
 
   tracks.forEach(function(tr,ti){
     var yMid=labelTopPad+ti*rowH;
-    var genes=tr.genes||[];
+    var genes=getGenes(tr);
     var fractions=compressedFractions(genes);
     var rawXs=fractions.map(function(fr){return left+plotW*fr;});
     var xs=avoidOverlap(rawXs,left,right,minGap);
@@ -268,16 +292,18 @@ function draw(data){
 
     genes.forEach(function(g,gi){
       var x=xs[gi];
-      var pt={ti:ti,yMid:yMid,x:x,order:g.order,og:g.og,gene:g.gene,start:g.start,end:g.end};
+      var geneId=getGeneId(g), order=getGeneOrder(g), og=getGeneOg(g);
+      var pt={ti:ti,yMid:yMid,x:x,order:order>=0?order:gi,og:og||geneId,gene:geneId,start:getGeneStart(g),end:getGeneEnd(g)};
       allPoints.push(pt);
 
+      var colorIdx=order>=0?order%11:gi%11;
       var rect=document.createElementNS(SVG_NS,"rect");
       rect.setAttribute("x",x-boxW/2); rect.setAttribute("y",yMid-boxH/2);
       rect.setAttribute("width",boxW); rect.setAttribute("height",boxH);
-      rect.setAttribute("rx",3); rect.setAttribute("fill",COLORS[g.order%11]);
-      rect.setAttribute("class","gene"+(g.gene===data.query?" query":""));
+      rect.setAttribute("rx",3); rect.setAttribute("fill",COLORS[colorIdx]);
+      rect.setAttribute("class","gene"+(geneId===data.query?" query":""));
       rect.addEventListener("mousemove",function(e){
-        tip(e,g.gene+"<br>OG: "+g.og+"<br>Position: "+g.start+"-"+g.end+"<br>Region: "+regionLabel(tr));
+        tip(e,geneId+"<br>OG: "+(og||"N/A")+"<br>Position: "+getGeneStart(g)+"-"+getGeneEnd(g)+"<br>Region: "+regionLabel(tr));
       });
       rect.addEventListener("mouseout",function(){document.getElementById("tip").style.display="none";});
       geneElements.push(rect);
@@ -287,33 +313,68 @@ function draw(data){
         var txt=document.createElementNS(SVG_NS,"text");
         var tx=x+3, ty=yMid-boxH/2-8;
         txt.setAttribute("x",tx); txt.setAttribute("y",ty);
-        txt.setAttribute("class","query-track-gene-label"+(g.gene===data.query?" search-gene":""));
+        txt.setAttribute("class","query-track-gene-label"+(geneId===data.query?" search-gene":""));
         txt.setAttribute("text-anchor","start"); txt.setAttribute("dominant-baseline","middle");
         txt.setAttribute("transform","rotate(-90 "+tx+" "+ty+")");
-        txt.textContent=g.gene; labelLayer.appendChild(txt);
+        txt.textContent=geneId; labelLayer.appendChild(txt);
       }
     });
   });
 
-  // --- Draw connections: link_groups ---
-  (data.link_groups||[]).forEach(function(lg){
-    var points=lg.points||[];
-    var byTrack={};
-    points.forEach(function(p){ (byTrack[p.track_index]=byTrack[p.track_index]||[]).push(p); });
-    var trackIds=Object.keys(byTrack).map(Number).sort(function(a,b){return a-b;});
-    for(var i=0;i<trackIds.length-1;i++){
-      var A=byTrack[trackIds[i]], B=byTrack[trackIds[i+1]];
-      A.forEach(function(a){
-        B.forEach(function(b){
-          var p=document.createElementNS(SVG_NS,"path");
-          var y1=a.yMid+boxH/2, y2=b.yMid-boxH/2, my=(y1+y2)/2;
-          p.setAttribute("d","M"+a.x+","+y1+" C"+a.x+","+my+" "+b.x+","+my+" "+b.x+","+y2);
-          p.setAttribute("class","link"); p.setAttribute("stroke",COLORS[a.order%11]);
-          linkLayer.appendChild(p);
+  // --- Draw connections ---
+  if(useNewLinks){
+    // New API: link_groups
+    linkGroups.forEach(function(lg){
+      var points=lg.points||[];
+      var byTrack={};
+      points.forEach(function(p){ (byTrack[p.track_index]=byTrack[p.track_index]||[]).push(p); });
+      var trackIds=Object.keys(byTrack).map(Number).sort(function(a,b){return a-b;});
+      for(var i=0;i<trackIds.length-1;i++){
+        var A=byTrack[trackIds[i]], B=byTrack[trackIds[i+1]];
+        A.forEach(function(a){
+          B.forEach(function(b){
+            var p=document.createElementNS(SVG_NS,"path");
+            var y1=a.yMid+boxH/2, y2=b.yMid-boxH/2, my=(y1+y2)/2;
+            p.setAttribute("d","M"+a.x+","+y1+" C"+a.x+","+my+" "+b.x+","+my+" "+b.x+","+y2);
+            p.setAttribute("class","link"); p.setAttribute("stroke",COLORS[a.order%11]);
+            linkLayer.appendChild(p);
+          });
         });
+      }
+    });
+  } else {
+    // Old API: connections — link each query-track gene to nearest on target track
+    var trackGeneIndex={};
+    tracks.forEach(function(tr,ti){
+      getGenes(tr).forEach(function(g){
+        trackGeneIndex[getGeneId(g)]={ti:ti, x:0, y:0};
       });
-    }
-  });
+    });
+    // Recompute positions for connection mapping
+    var trackPoints=[];
+    tracks.forEach(function(tr,ti){
+      var genes=getGenes(tr);
+      var fractions=compressedFractions(genes);
+      var rawXs=fractions.map(function(fr){return left+plotW*fr;});
+      var xs=avoidOverlap(rawXs,left,right,minGap);
+      var yMid=labelTopPad+ti*rowH;
+      genes.forEach(function(g,gi){
+        var geneId=getGeneId(g), order=getGeneOrder(g);
+        trackPoints.push({ti:ti, yMid:yMid, x:xs[gi], order:order>=0?order:gi, gene:geneId});
+        if(trackGeneIndex[geneId]){ trackGeneIndex[geneId].x=xs[gi]; trackGeneIndex[geneId].y=yMid; }
+      });
+    });
+
+    oldConns.forEach(function(cn){
+      var from=trackGeneIndex[cn.from_gene], to=trackGeneIndex[cn.to_gene];
+      if(!from||!to||from.ti===to.ti)return;
+      var p=document.createElementNS(SVG_NS,"path");
+      var y1=from.y+boxH/2, y2=to.y-boxH/2, my=(y1+y2)/2;
+      p.setAttribute("d","M"+from.x+","+y1+" C"+from.x+","+my+" "+to.x+","+my+" "+to.x+","+y2);
+      p.setAttribute("class","link"); p.setAttribute("stroke",COLORS[(cn.cluster||1)%11]);
+      linkLayer.appendChild(p);
+    });
+  }
 
   geneElements.forEach(function(el){geneLayer.appendChild(el);});
 }
