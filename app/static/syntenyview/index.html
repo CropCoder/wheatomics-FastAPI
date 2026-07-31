@@ -121,7 +121,7 @@ function updateGeneSoftLink(gene,genome){
 // ---- Init ----
 fetch(API_BASE+"/genomes").then(function(r){return r.json();}).then(function(gs){
   var sel=document.getElementById("genome");sel.innerHTML='<option value="">-- Select genome --</option>';
-  (gs||[]).forEach(function(g){var o=document.createElement("option");o.value=g;o.textContent=g;sel.appendChild(o);});
+  (gs.genomes||gs||[]).forEach(function(g){var o=document.createElement("option");o.value=g;o.textContent=g;sel.appendChild(o);});
   if(initGenome)sel.value=initGenome;
   if(initGene){document.getElementById("gene").value=initGene;run(false);}
 }).catch(function(e){status("Failed to load genome list: "+e);});
