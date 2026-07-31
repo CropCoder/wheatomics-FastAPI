@@ -6,7 +6,7 @@
 <title>SynTeny Viewer - WheatOmics</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <style>
-  body { background:#f8f9fa; margin:0; padding:0; font-family:Arial,sans-serif; }
+  body { background:#f8f9fa; margin:0; padding:0; font-family:-apple-system,Segoe UI,Arial,sans-serif; }
   #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
   #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
   #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
@@ -17,17 +17,30 @@
   #header-tabs a:hover { background:#98c1d9; color:#000; }
   #header-tabs ul li ul { display:none; position:absolute; }
   #header-tabs ul li:hover ul { display:block; }
-  #home_content { max-width:100%; margin:26px 15px 36px 15px; padding:0; }
+  #home_content { max-width:96%; margin:26px auto 36px auto; padding:0; }
   .tool-card { background:#fff; border-radius:10px; padding:22px 24px; box-shadow:0 3px 16px rgba(0,0,0,0.10); }
   h5.card-title { margin-top:0; }
-  .search-box { display:flex; gap:8px; max-width:900px; margin:0 auto 18px auto; align-items:center; flex-wrap:wrap; }
-  .search-box select { padding:10px 8px; font-size:14px; border:1px solid #bcc7d1; border-radius:6px; background:#fff; }
-  .search-box input { flex:1; min-width:200px; padding:12px 14px; font-size:15px; border:1px solid #bcc7d1; border-radius:6px; }
-  .search-box button { background:#26734d; color:#fff; border:none; border-radius:6px; padding:11px 22px; cursor:pointer; font-size:15px; }
-  #message { max-width:600px; margin:12px auto; color:#b00020; font-weight:bold; }
-  #result { display:none; margin-top:16px; }
-  .svg-container { overflow:auto; border:1px solid #d7dde3; border-radius:8px; background:#fff; max-height:85vh; }
-  .legend { margin-top:10px; display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:#475569; align-items:center; }
+  .search-bar { display:flex; gap:10px; padding:0 0 16px 0; align-items:center; flex-wrap:wrap; }
+  .search-bar select { padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; }
+  .search-bar input { padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; min-width:240px; }
+  .search-bar button { padding:8px 18px; border:0; border-radius:6px; background:#26734d; color:#fff; cursor:pointer; font-size:14px; }
+  .search-bar button.secondary { background:#64748b; }
+  .search-bar button:disabled { background:#94a3b8; cursor:not-allowed; }
+  #message { padding:4px 0; color:#b00020; font-weight:bold; font-size:13px; min-height:22px; }
+  #share { padding:4px 0 12px 0; color:#555; font-size:13px; }
+  #share a { color:#2563eb; text-decoration:none; font-weight:600; }
+  #share a:hover { text-decoration:underline; }
+  #result { display:none; }
+  .svg-container { overflow:auto; border:1px solid #d7dde3; border-radius:8px; background:#fff; max-height:80vh; }
+  .track-label { font-size:12px; fill:#222; font-weight:600; font-family:-apple-system,Segoe UI,Arial; }
+  .track-region { font-size:11px; fill:#666; font-weight:400; font-family:-apple-system,Segoe UI,Arial; }
+  .query-track-gene-label { font-size:10px; fill:#111; font-weight:500; font-family:-apple-system,Segoe UI,Arial; }
+  .query-track-gene-label.search-gene { fill:#dc2626; font-weight:700; }
+  .gene { cursor:pointer; }
+  .gene.query { stroke:#c026d3; stroke-width:2.5px; }
+  .link { fill:none; stroke-opacity:.34; stroke-width:1.2; }
+  #tip { position:fixed; background:#111; color:#fff; padding:6px 9px; border-radius:5px; font-size:12px; pointer-events:none; display:none; z-index:99; }
+  .legend { padding:12px 0 0 0; display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:#475569; align-items:center; }
   .legend span.litem { display:inline-flex; align-items:center; gap:4px; }
   .legend .swatch { display:inline-block; width:12px; height:12px; border-radius:2px; border:1px solid rgba(0,0,0,0.1); }
 </style>
@@ -60,206 +73,278 @@
 
 <div id="home_content"><div class="tool-card">
 <h5 class="card-title">SynTeny Viewer — Homoeologous Neighborhood Synteny</h5>
-<p class="text-muted">Search a gene ID to see its chromosomal neighborhood (&plusmn;5 genes) and homoeologous synteny connections across genomes.</p>
-<form id="searchForm" class="search-box">
-  <select id="genomeSelect" style="min-width:200px;"><option value="">-- Select genome --</option></select>
-  <select id="subgenomeSelect"><option value="">sub</option><option value="A">A</option><option value="B">B</option><option value="D">D</option></select>
-  <input id="geneInput" name="q" placeholder="Example: TraesAK58CH1A01G000600.1">
-  <button type="submit">Search</button>
-</form>
+<p class="text-muted">Search a gene ID to see its chromosomal neighborhood (&plusmn;5 genes) and orthogroup synteny connections across homoeologous genomes.</p>
+<div class="search-bar">
+  <select id="genomeSelect" style="width:220px"><option value="">-- Select genome --</option></select>
+  <input id="geneInput" placeholder="Gene ID, e.g. Abo1A000100.1" style="width:280px">
+  <button id="searchBtn">Draw Synteny</button>
+  <button id="downloadBtn" class="secondary" disabled>Download SVG</button>
+</div>
 <div id="message"></div>
+<div id="share"></div>
 <div id="result"><div class="svg-container"><svg id="svgCanvas"></svg></div></div>
 <div class="legend" id="legend"></div>
 </div></div>
+<div id="tip"></div>
 
 <script>
-var CL = {1:"#1565c0",2:"#c62828",3:"#2e7d32",4:"#e65100",5:"#7b1fa2",6:"#00695c",7:"#4e342e",none:"#94a3b8"};
-var CL_LABEL = {1:"Group 1",2:"Group 2",3:"Group 3",4:"Group 4",5:"Group 5",6:"Group 6",7:"Group 7",none:"Other"};
+var SVG_NS="http://www.w3.org/2000/svg";
+var COLORS=["#e6194b","#3cb44b","#4363d8","#f58231","#911eb4","#00b3b3","#f032e6","#9ac800","#e6a1a1","#800000","#9a6324"];
+var lastData=null, lastSvgFileName="syntenyview.svg";
 
-document.addEventListener("DOMContentLoaded",function(){
-  fetch("/api/syntenyview/genomes").then(function(r){return r.json();}).then(function(d){
-    if(d.genomes){ d.genomes.forEach(function(g){ document.getElementById("genomeSelect").appendChild(new Option(g,g)); }); }
-    var gp=new URLSearchParams(window.location.search);
-    if(gp.get("genome")) document.getElementById("genomeSelect").value=gp.get("genome");
-    if(gp.get("subgenome")) document.getElementById("subgenomeSelect").value=gp.get("subgenome");
-  });
-  document.getElementById("searchForm").addEventListener("submit",function(e){
-    e.preventDefault();
-    var gn=document.getElementById("genomeSelect").value.trim();
-    var sg=document.getElementById("subgenomeSelect").value.trim();
-    var q=document.getElementById("geneInput").value.trim();
-    if(!q)return;
-    var u=new URL(window.location.href);
-    u.searchParams.set("q",q); if(gn)u.searchParams.set("genome",gn); if(sg)u.searchParams.set("subgenome",sg);
-    window.history.pushState({},"",u.toString()); search(gn,sg,q);
-  });
-  var gp=new URLSearchParams(window.location.search);
-  var q=gp.get("q");
-  if(q){document.getElementById("geneInput").value=q;search(gp.get("genome")||"",gp.get("subgenome")||"",q);}
-});
+var qs=new URLSearchParams(location.search);
+var initGene=qs.get("q")||qs.get("gene")||"";
+var initGenome=qs.get("genome")||"";
 
-async function search(genome,subgenome,q){
-  var m=document.getElementById("message"),r=document.getElementById("result");
-  m.textContent="Loading..."; r.style.display="none";
-  try{
-    var url="/api/syntenyview/neighborhood?q="+encodeURIComponent(q)+"&upstream=5&downstream=5";
-    if(genome) url+="&genome="+encodeURIComponent(genome);
-    if(subgenome) url+="&subgenome="+encodeURIComponent(subgenome);
-    var resp=await fetch(url);
-    var d=await resp.json();
-    if(!resp.ok||d.error){m.textContent=d.detail||d.error||"Server error";return}
-    m.textContent=""; r.style.display="block"; draw(d);
-  }catch(e){m.textContent="Error: "+e.message;}
+function status(t){ document.getElementById("message").textContent=t; }
+
+function safeFileName(s){ return String(s||"query").replace(/[^\w.\-]+/g,"_").slice(0,120); }
+
+function fmtMb(v){ if(v===undefined||v===null||isNaN(Number(v)))return""; return (Number(v)/1e6).toFixed(2); }
+
+function regionLabel(tr){
+  if(tr.region_label)return tr.region_label;
+  if(!tr.genes||!tr.genes.length)return"";
+  var ss=tr.genes.map(function(g){return Number(g.start);}).filter(function(v){return !isNaN(v);});
+  var es=tr.genes.map(function(g){return Number(g.end);}).filter(function(v){return !isNaN(v);});
+  if(!ss.length||!es.length)return"";
+  return fmtMb(Math.min.apply(null,ss))+"-"+fmtMb(Math.max.apply(null,es))+" Mb";
 }
 
-function draw(data) {
-  var tracks=data.tracks||[], conns=data.connections||[], qc=data.query_cluster;
-  if (!tracks.length) { document.getElementById("svgCanvas").innerHTML=""; document.getElementById("legend").innerHTML=""; return; }
+function labelLine(tr){ return tr.label+" ("+tr.chrom+")"; }
 
-  // ── Compact JCVI-style layout ──
-  var ROW_H=20, GAP=8, TOP=80, LABEL_W=210, RIGHT=50, BOTTOM=30;
-  // Group separator between different genomes
-  var SEP=12; // extra gap between genome groups
+function median(arr){
+  if(!arr.length)return 0;
+  var a=arr.slice().sort(function(x,y){return x-y;});
+  var mid=Math.floor(a.length/2);
+  return a.length%2?a[mid]:(a[mid-1]+a[mid])/2;
+}
 
-  // Compute group boundaries (rows where genome changes)
-  var prevGenome=null;
-  var groupBreaks=[]; // indices where genome changes
-  tracks.forEach(function(t,i){
-    if(prevGenome!==null && t.genome!==prevGenome){
-      groupBreaks.push(i);
-    }
-    prevGenome=t.genome;
+function compressedFractions(genes){
+  var vals=genes.map(function(g,i){return {i:i,v:Number(g.start)};})
+    .filter(function(o){return !isNaN(o.v);})
+    .sort(function(a,b){return a.v-b.v||a.i-b.i;});
+  if(vals.length<=1){ var r=Array(genes.length).fill(0.5); return r; }
+  var gaps=[];
+  for(var i=1;i<vals.length;i++){ var gap=vals[i].v-vals[i-1].v; if(gap>0)gaps.push(gap); }
+  var med=median(gaps)||1, cap=med*6;
+  var trans=Array(vals.length).fill(0);
+  for(var i=1;i<vals.length;i++){ var raw=Math.max(0,vals[i].v-vals[i-1].v); trans[i]=trans[i-1]+Math.min(raw,cap); }
+  var total=trans[trans.length-1]||1;
+  var res=Array(genes.length).fill(0.5);
+  vals.forEach(function(o,idx){res[o.i]=trans[idx]/total;});
+  return res;
+}
+
+function avoidOverlap(rawXs,left,right,minGap){
+  var n=rawXs.length;
+  if(n===0)return[]; if(n===1)return[Math.max(left,Math.min(right,rawXs[0]))];
+  var pts=rawXs.map(function(x,i){return {x:x,i:i};}).sort(function(a,b){return a.x-b.x||a.i-b.i;});
+  pts[0].x=Math.max(left,Math.min(right,pts[0].x));
+  for(var i=1;i<n;i++) pts[i].x=Math.max(pts[i].x,pts[i-1].x+minGap);
+  var overflow=pts[n-1].x-right;
+  if(overflow>0) for(var i=0;i<n;i++) pts[i].x-=overflow;
+  if(pts[0].x<left){ var under=left-pts[0].x; for(var i=0;i<n;i++) pts[i].x+=under; }
+  if(pts[n-1].x>right||pts[0].x<left){ for(var i=0;i<n;i++) pts[i].x=left+(right-left)*(n===1?0.5:i/(n-1)); }
+  var out=Array(n); pts.forEach(function(p){out[p.i]=p.x;}); return out;
+}
+
+function updateShare(gene,genome){
+  var u=new URL(location.href);
+  u.searchParams.set("q",gene);
+  if(genome) u.searchParams.set("genome",genome); else u.searchParams.delete("genome");
+  history.replaceState(null,"",u.pathname+u.search+u.hash);
+  document.getElementById("share").innerHTML='Current gene: <a href="'+u.href+'" title="'+u.href+'">'+gene+'</a>';
+}
+
+// -------- Init --------
+fetch("/api/syntenyview/genomes").then(function(r){return r.json();}).then(function(d){
+  var sel=document.getElementById("genomeSelect");
+  sel.innerHTML='<option value="">-- Select genome --</option>';
+  (d.genomes||[]).forEach(function(g){
+    var o=document.createElement("option"); o.value=g; o.textContent=g; sel.appendChild(o);
   });
+  if(initGenome) sel.value=initGenome;
+  if(initGene){ document.getElementById("geneInput").value=initGene; run(false); }
+}).catch(function(e){ status("Failed to load genome list: "+e); });
 
-  var n=tracks.length;
-  var extraGaps=groupBreaks.length*SEP;
-  var svgH=TOP + n*ROW_H + (n-1)*GAP + extraGaps + BOTTOM;
+document.getElementById("searchBtn").onclick=function(){run(true);};
+document.getElementById("downloadBtn").onclick=downloadSvg;
+document.getElementById("geneInput").addEventListener("keydown",function(e){if(e.key==="Enter")run(true);});
 
-  // ── Global X range ──
-  var gmin=Infinity,gmax=-Infinity;
-  tracks.forEach(function(t){
-    t.genes.forEach(function(g){ if(g.start<gmin)gmin=g.start; if(g.start>gmax)gmax=g.start; });
-  });
-  conns.forEach(function(c){
-    if(c.from_start<gmin)gmin=c.from_start; if(c.from_start>gmax)gmax=c.from_start;
-    if(c.to_start<gmin)gmin=c.to_start; if(c.to_start>gmax)gmax=c.to_start;
-  });
-  if(gmax===gmin){gmax=gmin+500000;gmin=0;}
-  var pad=(gmax-gmin)*0.03;
-  gmin-=pad; gmax+=pad;
-  var range=gmax-gmin;
+function run(updateUrl){
+  var gene=document.getElementById("geneInput").value.trim();
+  var gn=document.getElementById("genomeSelect").value.trim();
+  if(!gene){alert("Please enter a gene ID.");return;}
+  status("Searching… first query may be slow while caches warm up.");
+  document.getElementById("downloadBtn").disabled=true;
+  document.getElementById("result").style.display="none";
 
-  var drawW=Math.max(800, range*0.000015+200); // scale based on genomic range
-  drawW=Math.min(drawW, 2500);
-  var svgW=LABEL_W+drawW+RIGHT;
+  var url="/api/syntenyview/neighborhood?q="+encodeURIComponent(gene)+"&upstream=5&downstream=5";
+  if(gn) url+="&genome="+encodeURIComponent(gn);
+  fetch(url).then(function(r){return r.json();}).then(function(data){
+    draw(data);
+    if(!data.error) updateShare(data.query||gene, data.query_genome||gn);
+  }).catch(function(e){ status("Query failed: "+e); });
+}
 
-  function toX(pos){return LABEL_W+((pos-gmin)/range)*drawW;}
+function draw(data){
+  var svg=document.getElementById("svgCanvas"), canvas=document.getElementById("result");
+  svg.innerHTML=""; lastData=null;
 
-  // ── Map gene screen positions ──
-  var genePos={};
-  tracks.forEach(function(t,ti){
-    var y=rowY(ti);
-    t.genes.forEach(function(g){
-      genePos[g.gene_id]={x:toX(g.start), y:y, ti:ti};
-    });
-  });
+  if(data.error){ status("Error: "+data.error); document.getElementById("legend").innerHTML=""; return; }
 
-  function rowY(ti){
-    var y=TOP;
-    for(var i=0;i<ti;i++){
-      y+=ROW_H+GAP;
-      if(groupBreaks.indexOf(i+1)>=0) y+=SEP;
-    }
-    return y+ROW_H/2;
-  }
+  lastData=data;
+  lastSvgFileName="syntenyview_"+safeFileName(data.query)+".svg";
+  document.getElementById("downloadBtn").disabled=false;
+  document.getElementById("result").style.display="block";
 
-  var svg=document.getElementById("svgCanvas");
-  svg.setAttribute("width",svgW); svg.setAttribute("height",svgH);
-  svg.setAttribute("viewBox","0 0 "+svgW+" "+svgH);
-
-  var html='<rect x="0" y="0" width="'+svgW+'" height="'+svgH+'" fill="#fff"/>';
-
-  // ── Title ──
-  var qClusterGenes=tracks[0].genes.filter(function(g){return g.cluster===qc;}).length;
-  html+='<text x="'+(svgW/2)+'" y="25" text-anchor="middle" font-size="15" fill="#0f172a" font-weight="bold">'+
-    'Gene: '+esc(data.query)+'  |  '+CL_LABEL[qc]+'  |  '+
-    tracks.length+' genomes / chromosomes,  '+conns.length+' connections</text>';
-  html+='<text x="'+(svgW/2)+'" y="48" text-anchor="middle" font-size="12" fill="#64748b">'+
-    'Query: '+data.query_genome+'_'+data.query_subgenome+'  chr'+data.query_chrom+
-    '  ('+qClusterGenes+' of '+tracks[0].genes.length+' neighborhood genes in '+CL_LABEL[qc]+')</text>';
-
-  // ── Draw connections FIRST (behind blocks) ──
-  conns.forEach(function(cn){
-    if(cn.cluster!==qc)return;
-    var fp=genePos[cn.from_gene], tp=genePos[cn.to_gene];
-    if(!fp||!tp)return;
-    var lc=CL[cn.cluster]||CL.none;
-    var midY=(fp.y+tp.y)/2;
-    var cpOff=Math.abs(tp.y-fp.y)*0.4;
-    html+='<path d="M'+fp.x.toFixed(1)+' '+fp.y.toFixed(1)+
-      ' C'+fp.x.toFixed(1)+' '+(fp.y+cpOff).toFixed(1)+','+
-      tp.x.toFixed(1)+' '+(tp.y-cpOff).toFixed(1)+','+
-      tp.x.toFixed(1)+' '+tp.y.toFixed(1)+
-      '" fill="none" stroke="'+lc+'" stroke-width="1.8" opacity="0.35" stroke-linecap="round"/>';
-  });
-
-  // ── Draw tracks ──
-  var lastGenomeDrawn="";
-  tracks.forEach(function(t,ti){
-    var y=rowY(ti);
-    var isQueryTrack=t.is_query_genome;
-    var clusterColor=CL[qc];
-
-    // Genome group separator label
-    if(t.genome!==lastGenomeDrawn){
-      var sepY=y-ROW_H/2-SEP/2;
-      if(lastGenomeDrawn!==""){
-        html+='<line x1="'+LABEL_W+'" y1="'+(sepY+2)+'" x2="'+(LABEL_W+drawW)+'" y2="'+(sepY+2)+'" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="6,3"/>';
-        html+='<text x="'+(LABEL_W-10)+'" y="'+(sepY+8)+'" text-anchor="end" font-size="10" fill="#94a3b8" font-style="italic">'+esc(t.genome)+'</text>';
-      }
-      lastGenomeDrawn=t.genome;
-    }
-
-    // Chromosome label
-    var lbl=t.genome+'_'+t.subgenome+'  chr'+t.chrom;
-    html+='<text x="'+(LABEL_W-10)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="'+(isQueryTrack?'#0f172a':'#475569')+'" font-weight="'+(isQueryTrack?'bold':'normal')+'">'+esc(lbl)+'</text>';
-
-    // Chromosome backbone line
-    html+='<line x1="'+LABEL_W+'" y1="'+y+'" x2="'+(LABEL_W+drawW)+'" y2="'+y+'" stroke="#e2e8f0" stroke-width="1"/>';
-
-    // Gene blocks
-    t.genes.forEach(function(g){
-      var gx=toX(g.start);
-      var isQ=(g.gene_id===data.query);
-      var isC=(g.cluster===qc);
-
-      if(isQ){
-        // Red big block for query gene
-        html+='<rect x="'+(gx-7).toFixed(1)+'" y="'+(y-8)+'" width="14" height="16" fill="#ef4444" rx="3" stroke="#b91c1c" stroke-width="1">'+
-          '<title>'+esc(g.gene_id)+' (Query, '+CL_LABEL[qc]+')</title></rect>';
-        html+='<text x="'+(gx+10)+'" y="'+(y-10)+'" font-size="9" fill="#b91c1c" font-weight="bold">'+esc(g.gene_id)+'</text>';
-      } else if(isC){
-        // Cluster gene - colored block
-        html+='<rect x="'+(gx-4).toFixed(1)+'" y="'+(y-5)+'" width="8" height="10" fill="'+clusterColor+'" rx="2" opacity="0.85">'+
-          '<title>'+esc(g.gene_id)+' ('+CL_LABEL[qc]+')</title></rect>';
-      } else {
-        // Non-cluster gene - gray dot
-        html+='<rect x="'+(gx-2).toFixed(1)+'" y="'+(y-3)+'" width="4" height="6" fill="#94a3b8" rx="1" opacity="0.5">'+
-          '<title>'+esc(g.gene_id)+' (other cluster)</title></rect>';
-      }
-    });
-  });
-
-  // ── Legend ──
-  var leg='<span class="litem"><span class="swatch" style="background:#ef4444;"></span> Query gene</span>';
-  leg+='<span class="litem"><span class="swatch" style="background:'+CL[qc]+';"></span> '+CL_LABEL[qc]+' genes</span>';
-  leg+='<span class="litem"><span class="swatch" style="background:#94a3b8;"></span> Other clusters</span>';
-  leg+='<span class="litem" style="margin-left:8px;color:#64748b;">| <b>'+tracks.length+'</b> tracks, <b>'+conns.length+'</b> connections, gene window &plusmn;5</span>';
+  status("Query="+data.query+" | Cluster "+data.query_cluster+" | Matched genomes: "+(data.tracks||[]).length);
+  var neighbors=data.neighbors||[];
+  var leg=neighbors.map(function(g,i){
+    return '<span class="litem"><span class="swatch" style="background:'+COLORS[i%11]+';"></span>'+esc(g)+'</span>';
+  }).join("");
   document.getElementById("legend").innerHTML=leg;
 
-  svg.innerHTML=html;
+  var tracks=data.tracks||[];
+  if(!tracks.length){ status(document.getElementById("message").textContent+" (No orthologous genes to display.)"); return; }
+
+  // --- Layout ---
+  var maxLabelLen=Math.max.apply(null,tracks.map(function(tr){
+    return Math.max(labelLine(tr).length, ("Region: "+regionLabel(tr)).length);
+  }));
+  var left=Math.max(390,Math.min(820,maxLabelLen*7+50));
+  var svgW=Math.max(1650, canvas.clientWidth-20||1600, left+1050);
+  var right=svgW-60;
+
+  var rowH=82, labelTopPad=132;
+  var maxGenes=Math.max.apply(null,tracks.map(function(tr){return (tr.genes||[]).length;}),1);
+  var plotW=right-left;
+  var boxW=Math.max(9,Math.min(26,Math.floor(plotW/(maxGenes*1.65))));
+  var boxH=16, minGap=boxW+8;
+
+  svg.setAttribute("height",labelTopPad+tracks.length*rowH+55);
+  svg.setAttribute("width",svgW);
+  svg.setAttribute("xmlns",SVG_NS);
+
+  // DOM-based SVG construction
+  var baseLayer=document.createElementNS(SVG_NS,"g");
+  var linkLayer=document.createElementNS(SVG_NS,"g");
+  var geneLayer=document.createElementNS(SVG_NS,"g");
+  var labelLayer=document.createElementNS(SVG_NS,"g");
+  svg.appendChild(baseLayer);
+  svg.appendChild(linkLayer);
+  svg.appendChild(geneLayer);
+  svg.appendChild(labelLayer);
+
+  var allPoints=[], geneElements=[];
+  var queryTrackIndex=tracks.findIndex(function(tr){return tr.label===data.query_genome;});
+
+  tracks.forEach(function(tr,ti){
+    var yMid=labelTopPad+ti*rowH;
+    var genes=tr.genes||[];
+    var fractions=compressedFractions(genes);
+    var rawXs=fractions.map(function(fr){return left+plotW*fr;});
+    var xs=avoidOverlap(rawXs,left,right,minGap);
+
+    // Track label
+    var lab=document.createElementNS(SVG_NS,"text");
+    lab.setAttribute("x",10); lab.setAttribute("y",yMid-5);
+    lab.setAttribute("class","track-label"); lab.textContent=labelLine(tr);
+    var tt=document.createElementNS(SVG_NS,"title"); tt.textContent=labelLine(tr)+" | Region: "+regionLabel(tr);
+    lab.appendChild(tt); labelLayer.appendChild(lab);
+
+    // Region label
+    var reg=document.createElementNS(SVG_NS,"text");
+    reg.setAttribute("x",10); reg.setAttribute("y",yMid+13);
+    reg.setAttribute("class","track-region"); reg.textContent="Region: "+regionLabel(tr);
+    labelLayer.appendChild(reg);
+
+    // Backbone line
+    var base=document.createElementNS(SVG_NS,"line");
+    base.setAttribute("x1",left); base.setAttribute("x2",right);
+    base.setAttribute("y1",yMid); base.setAttribute("y2",yMid);
+    base.setAttribute("stroke","#ddd"); baseLayer.appendChild(base);
+
+    genes.forEach(function(g,gi){
+      var x=xs[gi];
+      var pt={ti:ti,yMid:yMid,x:x,order:g.order,og:g.og,gene:g.gene,start:g.start,end:g.end};
+      allPoints.push(pt);
+
+      var rect=document.createElementNS(SVG_NS,"rect");
+      rect.setAttribute("x",x-boxW/2); rect.setAttribute("y",yMid-boxH/2);
+      rect.setAttribute("width",boxW); rect.setAttribute("height",boxH);
+      rect.setAttribute("rx",3); rect.setAttribute("fill",COLORS[g.order%11]);
+      rect.setAttribute("class","gene"+(g.gene===data.query?" query":""));
+      rect.addEventListener("mousemove",function(e){
+        tip(e,g.gene+"<br>OG: "+g.og+"<br>Position: "+g.start+"-"+g.end+"<br>Region: "+regionLabel(tr));
+      });
+      rect.addEventListener("mouseout",function(){document.getElementById("tip").style.display="none";});
+      geneElements.push(rect);
+
+      // Vertical gene labels on query track
+      if(ti===queryTrackIndex||(queryTrackIndex<0&&ti===0)){
+        var txt=document.createElementNS(SVG_NS,"text");
+        var tx=x+3, ty=yMid-boxH/2-8;
+        txt.setAttribute("x",tx); txt.setAttribute("y",ty);
+        txt.setAttribute("class","query-track-gene-label"+(g.gene===data.query?" search-gene":""));
+        txt.setAttribute("text-anchor","start"); txt.setAttribute("dominant-baseline","middle");
+        txt.setAttribute("transform","rotate(-90 "+tx+" "+ty+")");
+        txt.textContent=g.gene; labelLayer.appendChild(txt);
+      }
+    });
+  });
+
+  // --- Draw connections: link_groups ---
+  (data.link_groups||[]).forEach(function(lg){
+    var points=lg.points||[];
+    var byTrack={};
+    points.forEach(function(p){ (byTrack[p.track_index]=byTrack[p.track_index]||[]).push(p); });
+    var trackIds=Object.keys(byTrack).map(Number).sort(function(a,b){return a-b;});
+    for(var i=0;i<trackIds.length-1;i++){
+      var A=byTrack[trackIds[i]], B=byTrack[trackIds[i+1]];
+      A.forEach(function(a){
+        B.forEach(function(b){
+          var p=document.createElementNS(SVG_NS,"path");
+          var y1=a.yMid+boxH/2, y2=b.yMid-boxH/2, my=(y1+y2)/2;
+          p.setAttribute("d","M"+a.x+","+y1+" C"+a.x+","+my+" "+b.x+","+my+" "+b.x+","+y2);
+          p.setAttribute("class","link"); p.setAttribute("stroke",COLORS[a.order%11]);
+          linkLayer.appendChild(p);
+        });
+      });
+    }
+  });
+
+  geneElements.forEach(function(el){geneLayer.appendChild(el);});
 }
 
+function svgStyleText(){
+  return ".track-label{font-size:12px;fill:#222;font-weight:600;font-family:-apple-system,Segoe UI,Arial} "+
+    ".track-region{font-size:11px;fill:#666;font-weight:400;font-family:-apple-system,Segoe UI,Arial} "+
+    ".query-track-gene-label{font-size:10px;fill:#111;font-weight:500;font-family:-apple-system,Segoe UI,Arial} "+
+    ".query-track-gene-label.search-gene{fill:#dc2626;font-weight:700} "+
+    ".gene{cursor:pointer} .gene.query{stroke:#c026d3;stroke-width:2.5px} "+
+    ".link{fill:none;stroke-opacity:.34;stroke-width:1.2}";
+}
+
+function downloadSvg(){
+  var svg=document.getElementById("svgCanvas");
+  if(!lastData||!svg||!svg.childNodes.length){alert("Please draw a synteny plot first.");return;}
+  var clone=svg.cloneNode(true);
+  clone.setAttribute("xmlns",SVG_NS); clone.setAttribute("version","1.1");
+  var style=document.createElementNS(SVG_NS,"style"); style.textContent=svgStyleText();
+  clone.insertBefore(style,clone.firstChild);
+  var xml='<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone);
+  var blob=new Blob([xml],{type:"image/svg+xml;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download=lastSvgFileName;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+function tip(e,html){
+  var t=document.getElementById("tip"); t.innerHTML=html; t.style.display="block";
+  t.style.left=(e.clientX+12)+"px"; t.style.top=(e.clientY+12)+"px";
+}
 function esc(s){return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");}
 </script>
 </body>
