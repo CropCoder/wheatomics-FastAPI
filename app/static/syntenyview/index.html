@@ -1,121 +1,101 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SynTeny Viewer - WheatOmics</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <style>
-  body { background:#f8f9fa; margin:0; padding:0; font-family:-apple-system,Segoe UI,Arial,sans-serif; }
-  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
-  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
-  #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
-  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; }
-  #header-tabs ul { margin:0; padding:0; list-style:none; }
-  #header-tabs li { display:inline-block; width:190px; }
-  #header-tabs a { background:#0077b6; font-size:13pt; color:#fff; display:block; padding:8px; font-weight:bold; text-decoration:none; border-radius:5px 5px 0 0; }
-  #header-tabs a:hover { background:#98c1d9; color:#000; }
-  #header-tabs ul li ul { display:none; position:absolute; }
-  #header-tabs ul li:hover ul { display:block; }
-  #home_content { max-width:96%; margin:26px auto 36px auto; padding:0; }
-  .tool-card { background:#fff; border-radius:10px; padding:22px 24px; box-shadow:0 3px 16px rgba(0,0,0,0.10); }
-  h5.card-title { margin-top:0; }
-  .search-bar { display:flex; gap:10px; padding:0 0 16px 0; align-items:center; flex-wrap:wrap; }
-  .search-bar select { padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; }
-  .search-bar input { padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; min-width:240px; }
-  .search-bar button { padding:8px 18px; border:0; border-radius:6px; background:#26734d; color:#fff; cursor:pointer; font-size:14px; }
-  .search-bar button.secondary { background:#64748b; }
-  .search-bar button:disabled { background:#94a3b8; cursor:not-allowed; }
-  #message { padding:4px 0; color:#b00020; font-weight:bold; font-size:13px; min-height:22px; }
-  #share { padding:4px 0 12px 0; color:#555; font-size:13px; }
-  #share a { color:#2563eb; text-decoration:none; font-weight:600; }
-  #share a:hover { text-decoration:underline; }
-  #result { display:none; }
-  .svg-container { overflow:auto; border:1px solid #d7dde3; border-radius:8px; background:#fff; max-height:80vh; }
-  .track-label { font-size:12px; fill:#222; font-weight:600; font-family:-apple-system,Segoe UI,Arial; }
-  .track-region { font-size:11px; fill:#666; font-weight:400; font-family:-apple-system,Segoe UI,Arial; }
-  .query-track-gene-label { font-size:10px; fill:#111; font-weight:500; font-family:-apple-system,Segoe UI,Arial; }
-  .query-track-gene-label.search-gene { fill:#dc2626; font-weight:700; }
-  .gene { cursor:pointer; }
-  .gene.query { stroke:#c026d3; stroke-width:2.5px; }
-  .link { fill:none; stroke-opacity:.34; stroke-width:1.2; }
-  #tip { position:fixed; background:#111; color:#fff; padding:6px 9px; border-radius:5px; font-size:12px; pointer-events:none; display:none; z-index:99; }
-  .legend { padding:12px 0 0 0; display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:#475569; align-items:center; }
-  .legend span.litem { display:inline-flex; align-items:center; gap:4px; }
-  .legend .swatch { display:inline-block; width:12px; height:12px; border-radius:2px; border:1px solid rgba(0,0,0,0.1); }
-</style>
-</head>
-<body>
+body{font-family:-apple-system,Segoe UI,Arial;margin:0;background:#f7f8fa;color:#222}
+#home_header{height:100px;line-height:100px;vertical-align:middle;margin:0 auto;padding:0;background:#0077b6;text-align:center}
+#logo_style{width:80px;height:80px;vertical-align:middle;margin-right:10px}
+#home_header span{font-size:28px;font-weight:bold;color:#FFF}
+#header-tabs{background-color:#007DBC;text-align:center;padding-top:10px}
+#header-tabs ul{margin:0;padding:0;list-style:none}
+#header-tabs li{display:inline-block;width:190px}
+#header-tabs a{background:#0077b6;font-size:13pt;color:#fff;display:block;padding:8px;font-weight:bold;text-decoration:none;border-radius:5px 5px 0 0}
+#header-tabs a:hover{background:#98c1d9;color:#000}
+#header-tabs ul li ul{display:none;position:absolute}
+#header-tabs ul li:hover ul{display:block}
+#home_content{max-width:98%;margin:20px auto 30px auto;padding:0 10px}
+.tool-card{background:#fff;border-radius:10px;padding:18px 22px;box-shadow:0 3px 16px rgba(0,0,0,.10)}
+h5.card-title{margin-top:0}
+.bar{display:flex;gap:10px;padding:8px 0 16px 0;align-items:center;flex-wrap:wrap}
+.bar input,.bar select{padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px}
+.bar button{padding:8px 18px;border:0;border-radius:6px;background:#26734d;color:#fff;cursor:pointer;font-size:14px}
+.bar button.secondary{background:#475569}
+.bar button:disabled{background:#94a3b8;cursor:not-allowed}
+#status{padding:4px 0;color:#666;font-size:13px}
+#share{padding:0 0 8px 0;color:#555;font-size:13px}
+#share a{color:#2563eb;text-decoration:none;font-weight:600}
+#share a:hover{text-decoration:underline}
+#canvas{overflow:auto;padding:6px 0}
+.track-label{font-size:12px;fill:#222;font-weight:600}
+.track-region{font-size:11px;fill:#666;font-weight:400}
+.query-track-gene-label{font-size:10px;fill:#111;font-weight:500}
+.query-track-gene-label.search-gene{fill:#dc2626;font-weight:700}
+.gene{cursor:pointer}
+.gene.query{stroke:#c026d3;stroke-width:2.5px}
+.link{fill:none;stroke-opacity:.34;stroke-width:1.2}
+#tip{position:fixed;background:#111;color:#fff;padding:6px 9px;border-radius:5px;font-size:12px;pointer-events:none;display:none;z-index:9}
+.legend{padding:10px 0 0 0;font-size:12px;color:#555}
+.legend span{display:inline-block;margin-right:10px;margin-bottom:4px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:middle;margin-right:3px}
+</style></head><body>
 <div id="home_header"><span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span></div>
-<div id="header-tabs">
-  <ul>
-    <li><a href="/"><span>Home</span></a></li>
-    <li><a href="#"><span>Tools/Browse</span></a><ul>
-      <li><a href="/getfasta/index.html">GetSequence</a></li><li><a href="/blast/blast.html">BLAST</a></li><li><a href="/PrimerServer">PrimerServer</a></li>
-      <li><a href="/snprimer">CAPS/KASP(Beta)</a></li><li><a href="/PfamSearch/">PfamSearch</a></li><li><a href="/idConvert/">IDConvert</a></li>
-      <li><a href="/HomologFinder/">HomologFinder</a></li><li><a href="/interval/">IntervalTool</a></li><li><a href="/expression/">GeneExpression</a></li>
-      <li><a href="/coexpression/index.html">Co-expression</a></li><li><a href="/wheatPPI/">WheatPPI</a></li><li><a href="/genes/">KnownGene</a></li>
-      <li><a href="/symap/index.html">SyntenySearch</a></li><li><a href="/preblast/">preBLAST</a></li><li><a href="/sms2/index.html">SequenceToolkit</a></li>
-      <li><a href="/orthofinder/">OrthoFinder</a></li><li><a href="/VariantHub/">VariantHub</a></li>
-      <li><a href="/syntenyview/">SynTenyView</a></li>
-    </ul></li>
-    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li><li><a href="/download.html"><span>Download Data</span></a></li>
-    <li><a href="/outsitelink.html"><span>External Links</span></a></li><li><a href="#"><span>About</span></a><ul>
-      <li><a href="/help/contact.html">Contact</a></li><li><a href="/help/news.html">News</a></li></ul></li>
-  </ul>
-</div>
+<div id="header-tabs"><ul>
+<li><a href="/"><span>Home</span></a></li>
+<li><a href="#"><span>Tools/Browse</span></a><ul>
+<li><a href="/getfasta/index.html">GetSequence</a></li><li><a href="/blast/blast.html">BLAST</a></li><li><a href="/PrimerServer">PrimerServer</a></li>
+<li><a href="/snprimer">CAPS/KASP(Beta)</a></li><li><a href="/PfamSearch/">PfamSearch</a></li><li><a href="/idConvert/">IDConvert</a></li>
+<li><a href="/HomologFinder/">HomologFinder</a></li><li><a href="/interval/">IntervalTool</a></li><li><a href="/expression/">GeneExpression</a></li>
+<li><a href="/coexpression/index.html">Co-expression</a></li><li><a href="/wheatPPI/">WheatPPI</a></li><li><a href="/genes/">KnownGene</a></li>
+<li><a href="/symap/index.html">SyntenySearch</a></li><li><a href="/preblast/">preBLAST</a></li><li><a href="/sms2/index.html">SequenceToolkit</a></li>
+<li><a href="/orthofinder/">OrthoFinder</a></li><li><a href="/VariantHub/">VariantHub</a></li>
+<li><a href="/syntenyview/">SynTenyView</a></li>
+</ul></li>
+<li><a href="/jbrowse.html"><span>JBrowse</span></a></li><li><a href="/download.html"><span>Download Data</span></a></li>
+<li><a href="/outsitelink.html"><span>External Links</span></a></li><li><a href="#"><span>About</span></a><ul>
+<li><a href="/help/contact.html">Contact</a></li><li><a href="/help/news.html">News</a></li></ul></li>
+</ul></div>
 
 <div id="home_content"><div class="tool-card">
 <h5 class="card-title">SynTeny Viewer — Homoeologous Neighborhood Synteny</h5>
 <p class="text-muted">Search a gene ID to see its chromosomal neighborhood (&plusmn;5 genes) and orthogroup synteny connections across homoeologous genomes.</p>
-<div class="search-bar">
-  <select id="genomeSelect" style="width:220px"><option value="">-- Select genome --</option></select>
-  <input id="geneInput" placeholder="Gene ID, e.g. Abo1A000100.1" style="width:280px">
-  <button id="searchBtn">Draw Synteny</button>
-  <button id="downloadBtn" class="secondary" disabled>Download SVG</button>
+<div class="bar">
+  <select id="genome" style="width:220px"><option value="">Loading genomes…</option></select>
+  <input id="gene" placeholder="Gene ID, e.g. Abo1A000100.1" style="width:280px">
+  <button id="go">Draw Synteny</button>
+  <button id="downloadSvg" class="secondary" disabled>Download SVG</button>
 </div>
-<div id="message"></div>
+<div id="status"></div>
 <div id="share"></div>
-<div id="result"><div class="svg-container"><svg id="svgCanvas"></svg></div></div>
 <div class="legend" id="legend"></div>
-</div></div>
+<div id="canvas"><svg id="svg" width="1600" height="200"></svg></div>
 <div id="tip"></div>
+</div></div>
 
 <script>
-var SVG_NS="http://www.w3.org/2000/svg";
-var COLORS=["#e6194b","#3cb44b","#4363d8","#f58231","#911eb4","#00b3b3","#f032e6","#9ac800","#e6a1a1","#800000","#9a6324"];
-var lastData=null, lastSvgFileName="syntenyview.svg";
-
+var API_BASE="/api/syntenyview";
+var SVG="http://www.w3.org/2000/svg";
+var colors=["#e6194b","#3cb44b","#4363d8","#f58231","#911eb4","#00b3b3","#f032e6","#9ac800","#e6a1a1","#800000","#9a6324"];
+var lastData=null,lastSvgFileName="syntenyview.svg";
 var qs=new URLSearchParams(location.search);
 var initGene=qs.get("q")||qs.get("gene")||"";
 var initGenome=qs.get("genome")||"";
 
-function status(t){ document.getElementById("message").textContent=t; }
-function safeFileName(s){ return String(s||"query").replace(/[^\w.\-]+/g,"_").slice(0,120); }
-function fmtMb(v){ if(v===undefined||v===null||isNaN(Number(v)))return""; return (Number(v)/1e6).toFixed(2); }
-
-// ── Unified accessors: work with new API (gene/start/end/order/og/label) ──
-function getGeneId(g){ return g.gene || g.gene_id || ""; }
-function getGeneStart(g){ return Number(g.start); }
-function getGeneEnd(g){ return Number(g.end || g.start); }
-function getGeneOrder(g){ return g.order !== undefined ? g.order : -1; }
-function getGeneOg(g){ return g.og || ""; }
-function getGenes(tr){ return tr.genes || []; }
-function getTrackLabel(tr){ return tr.label || (tr.genome+"_"+tr.subgenome); }
-function getTrackChrom(tr){ return tr.chrom || ""; }
+function status(t){document.getElementById("status").textContent=t;}
+function safeFileName(s){return String(s||"query").replace(/[^\w.\-]+/g,"_").slice(0,120);}
+function fmtMb(v){if(v===undefined||v===null||isNaN(Number(v)))return"";return(Number(v)/1e6).toFixed(2);}
 
 function regionLabel(tr){
   if(tr.region_label)return tr.region_label;
-  var gs=getGenes(tr); if(!gs.length)return"";
-  var ss=gs.map(getGeneStart).filter(function(v){return !isNaN(v);});
-  var es=gs.map(getGeneEnd).filter(function(v){return !isNaN(v);});
+  if(!tr.genes||!tr.genes.length)return"";
+  var ss=tr.genes.map(function(g){return Number(g.start);}).filter(function(v){return !isNaN(v);});
+  var es=tr.genes.map(function(g){return Number(g.end);}).filter(function(v){return !isNaN(v);});
   if(!ss.length||!es.length)return"";
   return fmtMb(Math.min.apply(null,ss))+"-"+fmtMb(Math.max.apply(null,es))+" Mb";
 }
+function labelLine(tr){return tr.label+" ("+tr.chrom+")";}
 
-function labelLine(tr){ return getTrackLabel(tr)+" ("+getTrackChrom(tr)+")"; }
-
-// ── Algorithms from col_orthe for gene spacing ──
 function median(arr){
   if(!arr.length)return 0;
   var a=arr.slice().sort(function(x,y){return x-y;});
@@ -124,242 +104,205 @@ function median(arr){
 }
 
 function compressedFractions(genes){
-  var vals=genes.map(function(g,i){return {i:i,v:getGeneStart(g)};})
+  var vals=genes.map(function(g,i){return {i:i,v:Number(g.start)};})
     .filter(function(o){return !isNaN(o.v);})
     .sort(function(a,b){return a.v-b.v||a.i-b.i;});
-  if(vals.length<=1){ var r=[]; for(var j=0;j<genes.length;j++)r.push(0.5); return r; }
-  var gaps=[], i;
-  for(i=1;i<vals.length;i++){ var gap=vals[i].v-vals[i-1].v; if(gap>0)gaps.push(gap); }
-  var med=median(gaps)||1, cap=med*6;
-  var trans=[]; for(i=0;i<vals.length;i++)trans.push(0);
-  for(i=1;i<vals.length;i++){ trans[i]=trans[i-1]+Math.min(Math.max(0,vals[i].v-vals[i-1].v),cap); }
+  if(vals.length<=1){var r=[];for(var j=0;j<genes.length;j++)r.push(0.5);return r;}
+  var gaps=[],i;
+  for(i=1;i<vals.length;i++){var gap=vals[i].v-vals[i-1].v;if(gap>0)gaps.push(gap);}
+  var med=median(gaps)||1,cap=med*6;
+  var trans=[];for(i=0;i<vals.length;i++)trans.push(0);
+  for(i=1;i<vals.length;i++){trans[i]=trans[i-1]+Math.min(Math.max(0,vals[i].v-vals[i-1].v),cap);}
   var total=trans[trans.length-1]||1;
-  var res=[]; for(i=0;i<genes.length;i++)res.push(0.5);
+  var res=[];for(i=0;i<genes.length;i++)res.push(0.5);
   vals.forEach(function(o,idx){res[o.i]=trans[idx]/total;});
   return res;
 }
 
 function avoidOverlap(rawXs,left,right,minGap){
   var n=rawXs.length;
-  if(n===0)return[]; if(n===1)return[Math.max(left,Math.min(right,rawXs[0]))];
+  if(n===0)return[];if(n===1)return[Math.max(left,Math.min(right,rawXs[0]))];
   var pts=rawXs.map(function(x,i){return {x:x,i:i};}).sort(function(a,b){return a.x-b.x||a.i-b.i;});
   pts[0].x=Math.max(left,Math.min(right,pts[0].x));
-  for(var i=1;i<n;i++) pts[i].x=Math.max(pts[i].x,pts[i-1].x+minGap);
+  for(var i=1;i<n;i++)pts[i].x=Math.max(pts[i].x,pts[i-1].x+minGap);
   var overflow=pts[n-1].x-right;
-  if(overflow>0) for(i=0;i<n;i++) pts[i].x-=overflow;
-  if(pts[0].x<left){ var under=left-pts[0].x; for(i=0;i<n;i++) pts[i].x+=under; }
-  if(pts[n-1].x>right||pts[0].x<left){ for(i=0;i<n;i++) pts[i].x=left+(right-left)*(n===1?0.5:i/(n-1)); }
-  var out=Array(n); pts.forEach(function(p){out[p.i]=p.x;}); return out;
+  if(overflow>0)for(i=0;i<n;i++)pts[i].x-=overflow;
+  if(pts[0].x<left){var under=left-pts[0].x;for(i=0;i<n;i++)pts[i].x+=under;}
+  if(pts[n-1].x>right||pts[0].x<left){for(i=0;i<n;i++)pts[i].x=left+(right-left)*(n===1?0.5:i/(n-1));}
+  var out=Array(n);pts.forEach(function(p){out[p.i]=p.x;});return out;
 }
 
-function updateShare(gene,genome){
+function updateGeneSoftLink(gene,genome){
+  var share=document.getElementById("share");
+  if(!gene){share.innerHTML="";return;}
   var u=new URL(location.href);
   u.searchParams.set("q",gene);
-  if(genome) u.searchParams.set("genome",genome); else u.searchParams.delete("genome");
+  if(genome)u.searchParams.set("genome",genome);else u.searchParams.delete("genome");
   history.replaceState(null,"",u.pathname+u.search+u.hash);
-  document.getElementById("share").innerHTML='Current gene: <a href="'+u.href+'" title="'+u.href+'">'+gene+'</a>';
+  share.innerHTML='Current gene: <a href="'+u.href+'" title="'+u.href+'">'+gene+'</a>';
 }
 
-// -------- Init --------
-fetch("/api/syntenyview/genomes").then(function(r){return r.json();}).then(function(d){
-  var sel=document.getElementById("genomeSelect");
+// ---- Init ----
+fetch(API_BASE+"/genomes").then(function(r){return r.json();}).then(function(gs){
+  var sel=document.getElementById("genome");
   sel.innerHTML='<option value="">-- Select genome --</option>';
-  (d.genomes||[]).forEach(function(g){
-    var o=document.createElement("option"); o.value=g; o.textContent=g; sel.appendChild(o);
+  (gs.genomes||gs||[]).forEach(function(g){
+    var o=document.createElement("option");o.value=g;o.textContent=g;sel.appendChild(o);
   });
-  if(initGenome) sel.value=initGenome;
-  if(initGene){ document.getElementById("geneInput").value=initGene; run(false); }
-}).catch(function(e){ status("Failed to load genome list: "+e); });
+  if(initGenome)sel.value=initGenome;
+  if(initGene){document.getElementById("gene").value=initGene;run(false);}
+}).catch(function(e){status("Failed to load genome list: "+e);});
 
-document.getElementById("searchBtn").onclick=function(){run(true);};
-document.getElementById("downloadBtn").onclick=downloadSvg;
-document.getElementById("geneInput").addEventListener("keydown",function(e){if(e.key==="Enter")run(true);});
+document.getElementById("go").onclick=function(){run(true);};
+document.getElementById("downloadSvg").onclick=downloadSvg;
+document.getElementById("gene").addEventListener("keydown",function(e){if(e.key==="Enter")run(true);});
 
 function run(updateUrl){
-  var gene=document.getElementById("geneInput").value.trim();
-  var gn=document.getElementById("genomeSelect").value.trim();
+  var gene=document.getElementById("gene").value.trim();
+  var gn=document.getElementById("genome").value.trim();
   if(!gene){alert("Please enter a gene ID.");return;}
   status("Searching… first query may be slow while caches warm up.");
-  document.getElementById("downloadBtn").disabled=true;
-  document.getElementById("result").style.display="none";
+  document.getElementById("downloadSvg").disabled=true;
 
-  var url="/api/syntenyview/neighborhood?q="+encodeURIComponent(gene)+"&upstream=5&downstream=5";
-  if(gn) url+="&genome="+encodeURIComponent(gn);
+  var url=API_BASE+"/neighborhood?q="+encodeURIComponent(gene)+"&upstream=5&downstream=5";
+  if(gn)url+="&genome="+encodeURIComponent(gn);
   fetch(url).then(function(r){return r.json();}).then(function(data){
     draw(data);
-    if(!data.error) updateShare(data.query||gene, data.query_genome||gn);
-  }).catch(function(e){ status("Query failed: "+e); });
+    if(!data.error)updateGeneSoftLink(data.query||gene,data.query_genome||gn);
+  }).catch(function(e){status("Query failed: "+e);});
 }
 
 function draw(data){
-  var svg=document.getElementById("svgCanvas"), canvas=document.getElementById("result");
-  svg.innerHTML=""; lastData=null;
+  var svg=document.getElementById("svg"),canvas=document.getElementById("canvas");
+  svg.innerHTML="";lastData=null;
 
-  if(data.error){ status("Error: "+data.error); document.getElementById("legend").innerHTML=""; return; }
+  if(data.error){status("Error: "+data.error);document.getElementById("legend").innerHTML="";document.getElementById("downloadSvg").disabled=true;return;}
 
   lastData=data;
   lastSvgFileName="syntenyview_"+safeFileName(data.query)+".svg";
-  document.getElementById("downloadBtn").disabled=false;
-  document.getElementById("result").style.display="block";
+  document.getElementById("downloadSvg").disabled=false;
 
   var neighbors=data.neighbors||[];
-  if(!neighbors.length){
-    var qt=(data.tracks||[]).find(function(tr){return tr.is_query_genome;}) || (data.tracks||[])[0];
-    if(qt) neighbors=getGenes(qt).map(getGeneId);
-  }
-
   var ogMap=data.og_map||{};
-  status("Query="+data.query+" | BED neighbors: "+neighbors.length+" genes | Cluster "+data.query_cluster+" | Matched genomes: "+data.tracks.length);
+  status("Query="+data.query+" | BED neighbors: "+neighbors.length+" genes | Cluster "+data.query_cluster+" | Matched genomes: "+(data.tracks||[]).length);
 
   document.getElementById("legend").innerHTML=neighbors.map(function(g,i){
     var note=ogMap[g]?"":" (no OG)";
-    return '<span class="litem"><span class="swatch" style="background:'+COLORS[i%11]+';"></span>'+esc(g)+(g===data.query?" (query)":"")+note+'</span>';
+    return '<span><i style="background:'+colors[i%11]+'"></i>'+g+(g===data.query?" (query)":"")+note+'</span>';
   }).join("");
 
   var tracks=data.tracks||[];
-  if(!tracks.length){ status(document.getElementById("message").textContent+" (No genes to draw.)"); return; }
+  if(!tracks.length){status(document.getElementById("status").textContent+" (No genes to draw.)");return;}
 
-  // --- Layout ---
   var maxLabelLen=Math.max.apply(null,tracks.map(function(tr){
-    return Math.max(labelLine(tr).length, ("Region: "+regionLabel(tr)).length);
+    return Math.max(labelLine(tr).length,("Region: "+regionLabel(tr)).length);
   }));
   var left=Math.max(390,Math.min(820,maxLabelLen*7+50));
-  var svgW=Math.max(1650, canvas.clientWidth-20||1600, left+1050);
+  var svgW=Math.max(1650,canvas.clientWidth-20,left+1050);
   var right=svgW-60;
 
-  var rowH=82, labelTopPad=132;
-  var geneLists=tracks.map(getGenes);
-  var maxGenes=Math.max.apply(null,geneLists.map(function(gs){return gs.length;}),1);
+  var rowH=82,labelTopPad=132;
+  var maxGenes=Math.max.apply(null,tracks.map(function(tr){return(tr.genes||[]).length;}),1);
   var plotW=right-left;
   var boxW=Math.max(9,Math.min(26,Math.floor(plotW/(maxGenes*1.65))));
-  var boxH=16, minGap=boxW+8;
+  var boxH=16,minGap=boxW+8;
 
   svg.setAttribute("height",labelTopPad+tracks.length*rowH+55);
   svg.setAttribute("width",svgW);
-  svg.setAttribute("xmlns",SVG_NS);
+  svg.setAttribute("xmlns",SVG);
 
-  var baseLayer=document.createElementNS(SVG_NS,"g");
-  var linkLayer=document.createElementNS(SVG_NS,"g");
-  var geneLayer=document.createElementNS(SVG_NS,"g");
-  var labelLayer=document.createElementNS(SVG_NS,"g");
+  var baseLayer=document.createElementNS(SVG,"g");
+  var linkLayer=document.createElementNS(SVG,"g");
+  var geneLayer=document.createElementNS(SVG,"g");
+  var labelLayer=document.createElementNS(SVG,"g");
   svg.appendChild(baseLayer);
   svg.appendChild(linkLayer);
   svg.appendChild(geneLayer);
   svg.appendChild(labelLayer);
 
-  var allPoints=[], geneElements=[];
-  var queryTrackIndex=tracks.findIndex(function(tr){return getTrackLabel(tr)===data.query_genome;});
-  if(queryTrackIndex<0) queryTrackIndex=tracks.findIndex(function(tr){return tr.is_query_genome||tr.is_query_track;});
+  var allPoints=[],geneElements=[];
+  var queryTrackIndex=tracks.findIndex(function(tr){return tr.label===data.query_genome;});
 
-  // --- Draw tracks ---
   tracks.forEach(function(tr,ti){
     var yMid=labelTopPad+ti*rowH;
-    var genes=getGenes(tr);
+    var genes=tr.genes||[];
     var fractions=compressedFractions(genes);
     var rawXs=fractions.map(function(fr){return left+plotW*fr;});
     var xs=avoidOverlap(rawXs,left,right,minGap);
 
-    // Track label
-    var lab=document.createElementNS(SVG_NS,"text");
-    lab.setAttribute("x",10); lab.setAttribute("y",yMid-5);
-    lab.setAttribute("class","track-label"); lab.textContent=labelLine(tr);
-    var tt=document.createElementNS(SVG_NS,"title"); tt.textContent=labelLine(tr)+" | Region: "+regionLabel(tr);
-    lab.appendChild(tt); labelLayer.appendChild(lab);
+    var lab=document.createElementNS(SVG,"text");
+    lab.setAttribute("x",10);lab.setAttribute("y",yMid-5);
+    lab.setAttribute("class","track-label");lab.textContent=labelLine(tr);
+    var title=document.createElementNS(SVG,"title");title.textContent=labelLine(tr)+" | Region: "+regionLabel(tr);
+    lab.appendChild(title);labelLayer.appendChild(lab);
 
-    // Region label
-    var reg=document.createElementNS(SVG_NS,"text");
-    reg.setAttribute("x",10); reg.setAttribute("y",yMid+13);
-    reg.setAttribute("class","track-region"); reg.textContent="Region: "+regionLabel(tr);
+    var reg=document.createElementNS(SVG,"text");
+    reg.setAttribute("x",10);reg.setAttribute("y",yMid+13);
+    reg.setAttribute("class","track-region");reg.textContent="Region: "+regionLabel(tr);
     labelLayer.appendChild(reg);
 
-    // Backbone line
-    var base=document.createElementNS(SVG_NS,"line");
-    base.setAttribute("x1",left); base.setAttribute("x2",right);
-    base.setAttribute("y1",yMid); base.setAttribute("y2",yMid);
-    base.setAttribute("stroke","#ddd"); baseLayer.appendChild(base);
+    var base=document.createElementNS(SVG,"line");
+    base.setAttribute("x1",left);base.setAttribute("x2",right);
+    base.setAttribute("y1",yMid);base.setAttribute("y2",yMid);
+    base.setAttribute("stroke","#ddd");baseLayer.appendChild(base);
 
     genes.forEach(function(g,gi){
-      var x=xs[gi], order=getGeneOrder(g);
-      var pt={ti:ti, yMid:yMid, x:x, order:order>=0?order:gi, og:getGeneOg(g), gene:getGeneId(g), start:getGeneStart(g), end:getGeneEnd(g)};
+      var x=xs[gi];
+      var pt={ti:ti,yMid:yMid,x:x,order:g.order,og:g.og,gene:g.gene,start:g.start,end:g.end};
       allPoints.push(pt);
 
-      var rect=document.createElementNS(SVG_NS,"rect");
-      rect.setAttribute("x",x-boxW/2); rect.setAttribute("y",yMid-boxH/2);
-      rect.setAttribute("width",boxW); rect.setAttribute("height",boxH);
-      rect.setAttribute("rx",3);
-      rect.setAttribute("fill",COLORS[(order>=0?order:gi)%11]);
-      rect.setAttribute("class","gene"+(pt.gene===data.query?" query":""));
-      var ogText=pt.og||"No Orthogroup";
-      rect.addEventListener("mousemove",function(e){tip(e,pt.gene+"<br>OG: "+ogText+"<br>Position: "+pt.start+"-"+pt.end+"<br>Region: "+regionLabel(tr));});
+      var rect=document.createElementNS(SVG,"rect");
+      rect.setAttribute("x",x-boxW/2);rect.setAttribute("y",yMid-boxH/2);
+      rect.setAttribute("width",boxW);rect.setAttribute("height",boxH);
+      rect.setAttribute("rx",3);rect.setAttribute("fill",colors[g.order%11]);
+      rect.setAttribute("class","gene"+(g.gene===data.query?" query":""));
+
+      var ogText=g.og||"No Orthogroup";
+      rect.addEventListener("mousemove",function(e){tip(e,g.gene+"<br>OG: "+ogText+"<br>Position: "+g.start+"-"+g.end+"<br>Region: "+regionLabel(tr));});
       rect.addEventListener("mouseout",function(){document.getElementById("tip").style.display="none";});
       geneElements.push(rect);
 
-      // Vertical labels on query track
       if(ti===queryTrackIndex||(queryTrackIndex<0&&ti===0)){
-        var txt=document.createElementNS(SVG_NS,"text");
-        var tx=x+3, ty=yMid-boxH/2-8;
-        txt.setAttribute("x",tx); txt.setAttribute("y",ty);
-        txt.setAttribute("class","query-track-gene-label"+(pt.gene===data.query?" search-gene":""));
-        txt.setAttribute("text-anchor","start"); txt.setAttribute("dominant-baseline","middle");
+        var txt=document.createElementNS(SVG,"text");
+        var tx=x+3,ty=yMid-boxH/2-8;
+        txt.setAttribute("x",tx);txt.setAttribute("y",ty);
+        txt.setAttribute("class","query-track-gene-label"+(g.gene===data.query?" search-gene":""));
+        txt.setAttribute("text-anchor","start");txt.setAttribute("dominant-baseline","middle");
         txt.setAttribute("transform","rotate(-90 "+tx+" "+ty+")");
-        txt.textContent=pt.gene; labelLayer.appendChild(txt);
+        txt.textContent=g.gene;labelLayer.appendChild(txt);
       }
     });
   });
 
-  // --- Draw connections: PAIRWISE between adjacent tracks, per (order, OG) ---
-  // This is the key fix: group allPoints by (order, og), then connect
-  // adjacent tracks within each group with same-colored Bezier curves.
-  // Genes without OG (order=-1 or empty) are skipped.
+  // Connect neighboring tracks that contain the same OG/order.
   var groups={};
   allPoints.forEach(function(p){
-    if(!p.og) return;
+    if(!p.og)return;
     var key=p.order+"|"+p.og;
-    if(!groups[key]) groups[key]=[];
+    if(!groups[key])groups[key]=[];
     groups[key].push(p);
   });
 
   Object.keys(groups).forEach(function(key){
     var points=groups[key];
-    // Group by track index
     var byTrack={};
-    points.forEach(function(p){ if(!byTrack[p.ti]) byTrack[p.ti]=[]; byTrack[p.ti].push(p); });
+    points.forEach(function(p){if(!byTrack[p.ti])byTrack[p.ti]=[];byTrack[p.ti].push(p);});
     var trackIds=Object.keys(byTrack).map(Number).sort(function(a,b){return a-b;});
 
-    // Connect adjacent tracks: for every pair of consecutive tracks
-    // that both have this (order,OG), draw Bezier curves
     for(var i=0;i<trackIds.length-1;i++){
-      var A=byTrack[trackIds[i]], B=byTrack[trackIds[i+1]];
+      var A=byTrack[trackIds[i]],B=byTrack[trackIds[i+1]];
       A.forEach(function(a){
         B.forEach(function(b){
-          var path=document.createElementNS(SVG_NS,"path");
-          var y1=a.yMid+boxH/2, y2=b.yMid-boxH/2, my=(y1+y2)/2;
-          path.setAttribute("d","M"+a.x+","+y1+" C"+a.x+","+my+" "+b.x+","+my+" "+b.x+","+y2);
-          path.setAttribute("class","link");
-          path.setAttribute("stroke",COLORS[a.order%11]);
-          linkLayer.appendChild(path);
+          var p=document.createElementNS(SVG,"path");
+          var y1=a.yMid+boxH/2,y2=b.yMid-boxH/2,my=(y1+y2)/2;
+          p.setAttribute("d","M"+a.x+","+y1+" C"+a.x+","+my+" "+b.x+","+my+" "+b.x+","+y2);
+          p.setAttribute("class","link");
+          p.setAttribute("stroke",colors[a.order%11]);
+          linkLayer.appendChild(p);
         });
       });
     }
   });
-
-  // Fallback: if no link_groups and no OG data on allPoints, use old connections
-  if(!allPoints.some(function(p){return p.og;}) && (data.connections||[]).length>0){
-    var trackGeneIndex={};
-    allPoints.forEach(function(p){
-      trackGeneIndex[p.gene]={x:p.x, y:p.yMid, ti:p.ti};
-    });
-    (data.connections||[]).forEach(function(cn){
-      var from=trackGeneIndex[cn.from_gene], to=trackGeneIndex[cn.to_gene];
-      if(!from||!to||from.ti===to.ti)return;
-      var path=document.createElementNS(SVG_NS,"path");
-      var y1=from.y+boxH/2, y2=to.y-boxH/2, my=(y1+y2)/2;
-      path.setAttribute("d","M"+from.x+","+y1+" C"+from.x+","+my+" "+to.x+","+my+" "+to.x+","+y2);
-      path.setAttribute("class","link");
-      path.setAttribute("stroke",COLORS[(cn.cluster||1)%11]);
-      linkLayer.appendChild(path);
-    });
-  }
 
   geneElements.forEach(function(el){geneLayer.appendChild(el);});
 }
@@ -369,29 +312,24 @@ function svgStyleText(){
     ".track-region{font-size:11px;fill:#666;font-weight:400;font-family:-apple-system,Segoe UI,Arial} "+
     ".query-track-gene-label{font-size:10px;fill:#111;font-weight:500;font-family:-apple-system,Segoe UI,Arial} "+
     ".query-track-gene-label.search-gene{fill:#dc2626;font-weight:700} "+
-    ".gene{cursor:pointer} .gene.query{stroke:#c026d3;stroke-width:2.5px} "+
+    ".gene{cursor:pointer}.gene.query{stroke:#c026d3;stroke-width:2.5px} "+
     ".link{fill:none;stroke-opacity:.34;stroke-width:1.2}";
 }
-
 function downloadSvg(){
-  var svg=document.getElementById("svgCanvas");
+  var svg=document.getElementById("svg");
   if(!lastData||!svg||!svg.childNodes.length){alert("Please draw a synteny plot first.");return;}
   var clone=svg.cloneNode(true);
-  clone.setAttribute("xmlns",SVG_NS); clone.setAttribute("version","1.1");
-  var style=document.createElementNS(SVG_NS,"style"); style.textContent=svgStyleText();
+  clone.setAttribute("xmlns",SVG);clone.setAttribute("version","1.1");
+  var style=document.createElementNS(SVG,"style");style.textContent=svgStyleText();
   clone.insertBefore(style,clone.firstChild);
   var xml='<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone);
   var blob=new Blob([xml],{type:"image/svg+xml;charset=utf-8"});
   var url=URL.createObjectURL(blob);
-  var a=document.createElement("a"); a.href=url; a.download=lastSvgFileName;
-  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  var a=document.createElement("a");a.href=url;a.download=lastSvgFileName;
+  document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 }
-
 function tip(e,html){
-  var t=document.getElementById("tip"); t.innerHTML=html; t.style.display="block";
-  t.style.left=(e.clientX+12)+"px"; t.style.top=(e.clientY+12)+"px";
+  var t=document.getElementById("tip");t.innerHTML=html;t.style.display="block";
+  t.style.left=(e.clientX+12)+"px";t.style.top=(e.clientY+12)+"px";
 }
-function esc(s){return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");}
-</script>
-</body>
-</html>
+</script></body></html>

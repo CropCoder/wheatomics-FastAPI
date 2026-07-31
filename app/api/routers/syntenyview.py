@@ -343,7 +343,35 @@ def neighborhood(
     # ---- Step 3: Build tracks from OG orthologs ------------------------
     # tracks: {genome_subgenome: {label, chrom, genes: [...]}}
     tracks: Dict[str, dict] = {}
+    qlabel = f"{ggenome}_{gsub}" if gsub else ggenome
 
+    # 3a. Query track: the EXACT BED ±5 neighborhood, including genes with/without OGs
+    query_track = {
+        "label": qlabel,
+        "chrom": gchrom,
+        "genes": [],
+        "is_query_track": True,
+    }
+    for order, ng in enumerate(neighbors):
+        ninfo = bc_map.get(ng)
+        if not ninfo:
+            continue
+        og_id = og_results.get(ng)
+        query_track["genes"].append({
+            "gene": ng,
+            "start": ninfo["start"],
+            "end": ninfo["end"],
+            "og": og_id,
+            "order": order,
+            "neighbor": ng,
+            "is_query": ng == gene_id,
+            "has_orthogroup": bool(og_id),
+        })
+    tracks[qlabel] = query_track
+
+    # 3b. Other genomes: only genes from OGs of the 11 neighborhood genes,
+    #     filtered by query cluster.  Do NOT add genes on the query genome
+    #     that are outside the BED neighborhood.
     for order, ng in enumerate(neighbors):
         og_id = og_results.get(ng)
         if not og_id or og_id not in _orthogroups_cache:
@@ -358,11 +386,15 @@ def neighborhood(
             bi = bc_map[hom]
             tk = f"{bi['genome']}_{bi['subgenome']}" if bi["subgenome"] else bi["genome"]
 
+            if tk == qlabel:
+                continue  # query genome already built from BED
+
             if tk not in tracks:
                 tracks[tk] = {
                     "label": tk,
                     "chrom": bi["chrom"],
                     "genes": [],
+                    "is_query_track": False,
                 }
             tracks[tk]["genes"].append({
                 "gene": hom,
@@ -371,7 +403,8 @@ def neighborhood(
                 "og": og_id,
                 "order": order,
                 "neighbor": ng,
-                "is_query": hom == gene_id,
+                "is_query": False,
+                "has_orthogroup": True,
             })
 
     # Sort genes per track + compute region stats
@@ -395,10 +428,13 @@ def neighborhood(
         tr["track_index"] = ti
 
     # ---- Step 4: Build link_groups (pairwise connections) ---------------
-    # Group by (order, og) — genes that share the same neighborhood gene and OG
+    # Group by (order, og) — genes that share the same neighborhood gene and OG.
+    # Skip genes without OGs (visual-only BED neighbor blocks).
     link_groups: Dict[str, dict] = {}
     for ti, tr in enumerate(ordered):
         for g in tr["genes"]:
+            if not g.get("og"):
+                continue
             key = "%s|%s" % (g["order"], g["og"])
             if key not in link_groups:
                 link_groups[key] = {
