@@ -65,9 +65,10 @@ def _norm_sub(s: str) -> str:
 
 _cluster_cache: tuple | None = None
 _sorted_prefixes: list | None = None
+_species_type_map_cache: dict | None = None
 
 def _load_cluster_map() -> tuple[dict, dict]:
-    global _cluster_cache
+    global _cluster_cache, _species_type_map_cache
     if _cluster_cache is not None:
         return _cluster_cache
     prefix_map: dict[str, int] = {}
@@ -101,6 +102,8 @@ def _load_cluster_map() -> tuple[dict, dict]:
     global _type_map_cache
     if _type_map_cache is None:
         _type_map_cache = _type_map
+    if _species_type_map_cache is None:
+        _species_type_map_cache = _species_type_map or None
     return _cluster_cache
 
 def _load_type_map() -> dict:
@@ -125,8 +128,9 @@ def _get_type_for_gene(gene_id: str) -> tuple[str, str]:
     if sp["genome_type"]:
         # Extract species+subgenome key from genome_type (e.g. TrtraKHA_A_subgenome → TrtraKHA_A)
         species_key = re.sub(r"_subgenome$", "", sp["genome_type"], flags=re.I)
-        if species_key in _species_type_map:
-            return _species_type_map[species_key][0], _species_type_map[species_key][1]
+        stm = _species_type_map_cache or {}
+        if species_key in stm:
+            return stm[species_key][0], stm[species_key][1]
 
     return "no", "no"
 
