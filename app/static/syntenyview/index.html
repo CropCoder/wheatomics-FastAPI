@@ -388,7 +388,7 @@ function draw(data){
   svg.setAttribute("height",labelTopPad+tracks.length*rowH+55);svg.setAttribute("width",svgW);svg.setAttribute("xmlns",SVG);
   var baseLayer=document.createElementNS(SVG,"g"),linkLayer=document.createElementNS(SVG,"g"),geneLayer=document.createElementNS(SVG,"g"),labelLayer=document.createElementNS(SVG,"g");
   svg.appendChild(baseLayer);svg.appendChild(linkLayer);svg.appendChild(geneLayer);svg.appendChild(labelLayer);
-  var allPoints=[],geneElements=[],queryTrackIndex=tracks.findIndex(function(tr){return tr.is_query_track||tr.label===data.query_genome;});
+  var allPoints=[],geneElements=[],queryTrackIndex=tracks.findIndex(function(tr){return tr.is_query_track||tr.label===data.query_genome;}),queryOrder=(data.tracks[queryTrackIndex]?.genes||[]).find(function(g){return g.is_query||g.gene===data.query;})?.order;
 
   tracks.forEach(function(tr,ti){
     var yMid=labelTopPad+ti*rowH,genes=tr.genes||[];
@@ -400,7 +400,7 @@ function draw(data){
     genes.forEach(function(g,gi){
       var x=xs[gi];var pt={ti:ti,yMid:yMid,x:x,order:g.order,og:g.og,gene:g.gene,start:g.start,end:g.end};allPoints.push(pt);
       var rect=document.createElementNS(SVG,"rect");rect.setAttribute("x",x-boxW/2);rect.setAttribute("y",yMid-boxH/2);rect.setAttribute("width",boxW);rect.setAttribute("height",boxH);rect.setAttribute("rx",3);
-      rect.setAttribute("fill",colors[g.order%11]);rect.setAttribute("class","gene"+(g.gene===data.query?" query":"")+(g.og?"":" no-og"));
+      rect.setAttribute("fill",g.gene===data.query?"#2563eb":"#16a34a");rect.setAttribute("class","gene"+(g.gene===data.query?" query":"")+(g.og?"":" no-og"));
       var ogText=g.og||"No Orthogroup",clusterText=g.cluster?"<br>Cluster: "+g.cluster:"";
       rect.addEventListener("mousemove",function(e){tip(e,escapeHtml(g.gene)+"<br>OG: "+escapeHtml(ogText)+clusterText+"<br>Position: "+escapeHtml(g.start)+"-"+escapeHtml(g.end)+"<br>Region: "+escapeHtml(regionLabel(tr)));});
       rect.addEventListener("mouseout",function(){document.getElementById("tip").style.display="none";});geneElements.push(rect);
@@ -419,7 +419,7 @@ function draw(data){
     for(var i=0;i<trackIds.length-1;i++){var A=byTrack[trackIds[i]],B=byTrack[trackIds[i+1]];
       A.forEach(function(a){B.forEach(function(b){
         var p=document.createElementNS(SVG,"path"),y1=a.yMid+boxH/2,y2=b.yMid-boxH/2,my=(y1+y2)/2;
-        p.setAttribute("d","M"+a.x+","+y1+" C"+a.x+","+my+" "+b.x+","+my+" "+b.x+","+y2);p.setAttribute("class","link");p.setAttribute("stroke",colors[a.order%11]);linkLayer.appendChild(p);
+        p.setAttribute("d","M"+a.x+","+y1+" C"+a.x+","+my+" "+b.x+","+my+" "+b.x+","+y2);p.setAttribute("class","link");p.setAttribute("stroke",a.order===queryOrder?"#dc2626":"#111");linkLayer.appendChild(p);
       });});
     }
   });
