@@ -76,6 +76,25 @@ def _split_genome_sub(base):
     return (m.group(1), m.group(2)) if m else (base, "")
 
 
+def _chrom_sub(chrom: str) -> str:
+    """Extract subgenome letter from a chromosome name (e.g. chr4A → A, chr4D → D)."""
+    if not chrom:
+        return ""
+    # Match trailing single uppercase letter from a chrom like chr4A, chr4D, 4A, 4AL, scaffold_123A
+    m = re.search(r"(?i)([ABD])(?:\d|[A-Z])?$", chrom)
+    return m.group(1).upper() if m else ""
+
+
+def _genome_key(info: dict) -> str:
+    """Build genome key like 'BJ8_A'. Uses the chromosome subgenome as the authoritative
+    sub value, falling back to the BED-filename-derived sub."""
+    chrom_sub = _chrom_sub(info.get("chrom", ""))
+    effective_sub = chrom_sub or info.get("sub", "")
+    if effective_sub:
+        return f"{info['genome']}_{effective_sub}"
+    return info["genome"]
+
+
 def _genome_label_from_bed_path(path):
     base = re.sub(r"\.filter\.bed$|\.bed$", "", os.path.basename(path))
     genome, sub = _split_genome_sub(base)
@@ -316,7 +335,7 @@ def api_synteny(
         og_results = dict(ex.map(_find_og, neighbors))
 
     query_cluster = _resolve_cluster(gene_id)
-    qkey = f"{info['genome']}_{info['sub']}" if info["sub"] else info["genome"]
+    qkey = _genome_key(info)
 
     tracks = {}
 
@@ -355,7 +374,7 @@ def api_synteny(
             if _resolve_cluster(hom) != query_cluster:
                 continue
             bi = _bed_gene[hom]
-            gk = f"{bi['genome']}_{bi['sub']}" if bi["sub"] else bi["genome"]
+            gk = _genome_key(bi)
             if gk == qkey:
                 continue
             # Skip non-selected genomes when target filter is active
