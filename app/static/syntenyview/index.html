@@ -18,11 +18,26 @@ body{font-family:-apple-system,Segoe UI,Arial;margin:0;background:#f7f8fa;color:
 #home_content{max-width:98%;margin:20px auto 30px auto;padding:0 10px}
 .tool-card{background:#fff;border-radius:10px;padding:18px 22px;box-shadow:0 3px 16px rgba(0,0,0,.10)}
 h5.card-title{margin-top:0}
-.bar{display:flex;gap:10px;padding:8px 0 16px 0;align-items:center;flex-wrap:wrap}
-.bar input,.bar select{padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px}
+.bar{display:flex;gap:12px;padding:8px 0 16px 0;align-items:flex-end;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12px;color:#475569;font-weight:600}
+.bar input,.bar select{padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;background:#fff}
 .bar button{padding:8px 18px;border:0;border-radius:6px;background:#26734d;color:#fff;cursor:pointer;font-size:14px}
 .bar button.secondary{background:#475569}
+.bar button.small{padding:6px 10px;font-size:12px;background:#64748b}
 .bar button:disabled{background:#94a3b8;cursor:not-allowed}
+.target-panel{display:grid;grid-template-columns:minmax(320px,1fr) minmax(320px,1fr) 230px;gap:12px;align-items:start;width:100%;padding-top:4px}
+.target-box{border:1px solid #cbd5e1;border-radius:8px;background:#fff;min-height:174px;max-height:220px;overflow:auto;padding:6px}
+.target-filter{width:100%;box-sizing:border-box;margin-bottom:7px}
+.bar button.genome-item{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;box-sizing:border-box;padding:7px 9px;margin:1px 0;border:0;border-radius:0;background:transparent !important;color:#000 !important;cursor:pointer;text-align:left;font-size:13px;font-weight:700;box-shadow:none}
+.bar button.genome-item:hover{background:transparent !important;color:#000 !important;text-decoration:underline}
+.bar button.genome-item.selected{background:transparent !important;color:#000 !important}
+.bar button.genome-item:focus{outline:1px dashed #94a3b8;outline-offset:1px;background:transparent !important;color:#000 !important}
+.bar button.genome-item .remove{font-weight:700;color:#000;font-size:15px;line-height:1}
+.empty{padding:18px 10px;color:#94a3b8;font-size:13px;text-align:center}
+.target-actions{display:flex;flex-direction:column;gap:7px;min-width:170px}
+.help{font-size:12px;color:#64748b;line-height:1.45;max-width:520px}
+@media (max-width:980px){.target-panel{grid-template-columns:1fr}.target-actions{flex-direction:row;flex-wrap:wrap}}
 #status{padding:4px 0;color:#666;font-size:13px}
 #share{padding:0 0 8px 0;color:#555;font-size:13px}
 #share a{color:#2563eb;text-decoration:none;font-weight:600}
@@ -60,12 +75,38 @@ h5.card-title{margin-top:0}
 
 <div id="home_content"><div class="tool-card">
 <h5 class="card-title">SynTeny Viewer — Homoeologous Neighborhood Synteny</h5>
-<p class="text-muted">Search a gene ID to see its chromosomal neighborhood (&plusmn;5 genes) and orthogroup synteny connections across homoeologous genomes.</p>
+<p class="text-muted">Search a gene ID to see its chromosomal neighborhood (&plusmn;5 genes) and orthogroup synteny connections. Select target genomes by clicking them in the left panel, or use the subgenome buttons to batch-select genomes ending with _A, _B, or _D.</p>
 <div class="bar">
-  <select id="genome" style="width:220px"><option value="">Loading genomes…</option></select>
-  <input id="gene" placeholder="Gene ID, e.g. Abo1A000100.1" style="width:280px">
-  <button id="go">Draw Synteny</button>
+  <div class="field">
+    <label for="genome">Reference genome</label>
+    <select id="genome" style="width:240px"><option value="">Loading genomes…</option></select>
+  </div>
+  <div class="field">
+    <label for="gene">Reference gene ID</label>
+    <input id="gene" placeholder="Gene ID, e.g. Abo1A000100.1" style="width:300px">
+  </div>
+  <button id="go">Draw selected synteny</button>
   <button id="downloadSvg" class="secondary" disabled>Download SVG</button>
+
+  <div class="target-panel">
+    <div class="field">
+      <label for="targetFilter">Available target genomes (click to add)</label>
+      <input id="targetFilter" class="target-filter" placeholder="Filter target genomes…">
+      <div id="availableTargets" class="target-box"><div class="empty">Loading target genomes…</div></div>
+    </div>
+    <div class="field">
+      <label for="selectedTargets">Selected target genomes (click × or row to remove)</label>
+      <div id="selectedTargets" class="target-box"><div class="empty">No target genome selected.</div></div>
+    </div>
+    <div class="target-actions">
+      <button id="selectATargets" type="button" class="small">Select all A subgenomes</button>
+      <button id="selectBTargets" type="button" class="small">Select all B subgenomes</button>
+      <button id="selectDTargets" type="button" class="small">Select all D subgenomes</button>
+      <button id="selectAllTargets" type="button" class="small">Select all targets</button>
+      <button id="clearTargets" type="button" class="small">Clear targets</button>
+      <div class="help" id="targetHelp">Click a genome on the left to move it into the selected list on the right. Use "Select all A/B/D subgenomes" to add target genomes ending with _A, _B, or _D. Click a selected genome to remove it.</div>
+    </div>
+  </div>
 </div>
 <div id="status"></div>
 <div id="share"></div>
@@ -78,17 +119,107 @@ h5.card-title{margin-top:0}
 var API_BASE="/api/syntenyview";
 var SVG="http://www.w3.org/2000/svg";
 var colors=["#e6194b","#3cb44b","#4363d8","#f58231","#911eb4","#00b3b3","#f032e6","#9ac800","#e6a1a1","#800000","#9a6324"];
+
+var allGenomes=[];
+var selectedTargetSet=new Set();
 var lastData=null,lastSvgFileName="syntenyview.svg";
+
 var qs=new URLSearchParams(location.search);
 var initGene=qs.get("q")||qs.get("gene")||"";
 var initGenome=qs.get("genome")||"";
+var initTargets=parseTargetString(qs.get("targets")||qs.get("target_genomes")||"");
 
 function status(t){document.getElementById("status").textContent=t;}
 function safeFileName(s){return String(s||"query").replace(/[^\w.\-]+/g,"_").slice(0,120);}
+function escapeHtml(s){return String(s).replace(/[&<>'"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[c];});}
 function fmtMb(v){if(v===undefined||v===null||isNaN(Number(v)))return"";return(Number(v)/1e6).toFixed(2);}
-function regionLabel(tr){if(tr.region_label)return tr.region_label;if(!tr.genes||!tr.genes.length)return"";var ss=tr.genes.map(function(g){return Number(g.start);}).filter(function(v){return !isNaN(v);});var es=tr.genes.map(function(g){return Number(g.end);}).filter(function(v){return !isNaN(v);});if(!ss.length||!es.length)return"";return fmtMb(Math.min.apply(null,ss))+"-"+fmtMb(Math.max.apply(null,es))+" Mb";}
+
+function parseTargetString(s){return String(s||"").split(/[;,|,]/).map(function(x){return x.trim();}).filter(Boolean);}
+
+function selectedTargets(){
+  var ref=document.getElementById("genome").value.trim();
+  return Array.from(selectedTargetSet).filter(function(g){return g&&g!==ref&&allGenomes.indexOf(g)!==-1;});
+}
+
+function updateTargetHelp(){
+  var n=selectedTargets().length;
+  var ref=document.getElementById("genome").value.trim();
+  document.getElementById("targetHelp").textContent="Selected target genomes: "+n+". Reference genome "+(ref?"'"+ref+"'":"not selected")+" is drawn on top and excluded from the target list.";
+}
+
+function markSelectionChanged(){
+  var gene=document.getElementById("gene").value.trim();
+  var genome=document.getElementById("genome").value.trim();
+  if(gene&&genome){
+    status("Target selection changed. Click Draw selected synteny to update the plot.");
+  }
+}
+
+function makeGenomeItem(g,mode){
+  var btn=document.createElement("button");
+  btn.type="button";
+  btn.className="genome-item"+(mode==="selected"?" selected":"");
+  btn.title=mode==="selected"?"Remove "+g:"Add "+g;
+  var name=document.createElement("span");name.textContent=g;btn.appendChild(name);
+  if(mode==="selected"){
+    var rm=document.createElement("span");rm.className="remove";rm.textContent="×";btn.appendChild(rm);
+    btn.addEventListener("click",function(){removeTarget(g);});
+  }else{
+    btn.addEventListener("click",function(){addTarget(g);});
+  }
+  return btn;
+}
+
+function renderTargetPicker(){
+  var ref=document.getElementById("genome").value.trim();
+  var filter=(document.getElementById("targetFilter")?.value||"").trim().toLowerCase();
+  var availableBox=document.getElementById("availableTargets");
+  var selectedBox=document.getElementById("selectedTargets");
+  if(ref&&selectedTargetSet.has(ref))selectedTargetSet.delete(ref);
+  var selected=selectedTargets();
+  var available=allGenomes.filter(function(g){return g!==ref&&!selectedTargetSet.has(g);}).filter(function(g){return !filter||g.toLowerCase().indexOf(filter)!==-1;});
+  availableBox.innerHTML="";
+  if(!available.length){
+    var empty=document.createElement("div");empty.className="empty";
+    empty.textContent=allGenomes.length?"No available target genome matches the current filter.":"Loading target genomes…";
+    availableBox.appendChild(empty);
+  }else{
+    available.forEach(function(g){availableBox.appendChild(makeGenomeItem(g,"available"));});
+  }
+  selectedBox.innerHTML="";
+  if(!selected.length){
+    var empty2=document.createElement("div");empty2.className="empty";empty2.textContent="No target genome selected.";selectedBox.appendChild(empty2);
+  }else{
+    selected.forEach(function(g){selectedBox.appendChild(makeGenomeItem(g,"selected"));});
+  }
+  updateTargetHelp();
+}
+
+function addTarget(g){
+  var ref=document.getElementById("genome").value.trim();
+  if(!g||g===ref)return;
+  selectedTargetSet.add(g);renderTargetPicker();markSelectionChanged();
+}
+
+function removeTarget(g){
+  selectedTargetSet.delete(g);renderTargetPicker();markSelectionChanged();
+}
+
+function populateReferenceGenomes(gs){
+  var sel=document.getElementById("genome");sel.innerHTML='<option value="">-- Select reference genome --</option>';
+  gs.forEach(function(g){var o=document.createElement("option");o.value=g;o.textContent=g;sel.appendChild(o);});
+  if(initGenome)sel.value=initGenome;
+}
+
+function populateTargetGenomes(preferredTargets){
+  selectedTargetSet=new Set((preferredTargets||selectedTargets()).filter(function(g){return allGenomes.indexOf(g)!==-1;}));
+  renderTargetPicker();
+}
+
+function regionLabel(tr){if(tr.region_label)return tr.region_label;if(!tr.genes||!tr.genes.length)return"";var ss=tr.genes.map(function(g){return Number(g.start);}).filter(function(v){return !isNaN(v);}),es=tr.genes.map(function(g){return Number(g.end);}).filter(function(v){return !isNaN(v);});if(!ss.length||!es.length)return"";return fmtMb(Math.min.apply(null,ss))+"-"+fmtMb(Math.max.apply(null,es))+" Mb";}
 function labelLine(tr){return tr.label+" ("+tr.chrom+")";}
-function median(arr){if(!arr.length)return 0;var a=arr.slice().sort(function(x,y){return x-y;});var mid=Math.floor(a.length/2);return a.length%2?a[mid]:(a[mid-1]+a[mid])/2;}
+function median(arr){if(!arr.length)return 0;var a=arr.slice().sort(function(x,y){return x-y;}),mid=Math.floor(a.length/2);return a.length%2?a[mid]:(a[mid-1]+a[mid])/2;}
+
 function compressedFractions(genes){
   var vals=genes.map(function(g,i){return {i:i,v:Number(g.start)};}).filter(function(o){return !isNaN(o.v);}).sort(function(a,b){return a.v-b.v||a.i-b.i;});
   if(vals.length<=1){var r=[];for(var j=0;j<genes.length;j++)r.push(0.5);return r;}
@@ -98,6 +229,7 @@ function compressedFractions(genes){
   var total=trans[trans.length-1]||1;var res=[];for(i=0;i<genes.length;i++)res.push(0.5);
   vals.forEach(function(o,idx){res[o.i]=trans[idx]/total;});return res;
 }
+
 function avoidOverlap(rawXs,left,right,minGap){
   var n=rawXs.length;if(n===0)return[];if(n===1)return[Math.max(left,Math.min(right,rawXs[0]))];
   var pts=rawXs.map(function(x,i){return {x:x,i:i};}).sort(function(a,b){return a.x-b.x||a.i-b.i;});
@@ -107,54 +239,106 @@ function avoidOverlap(rawXs,left,right,minGap){
   if(pts[n-1].x>right||pts[0].x<left){for(i=0;i<n;i++)pts[i].x=left+(right-left)*(n===1?0.5:i/(n-1));}
   var out=Array(n);pts.forEach(function(p){out[p.i]=p.x;});return out;
 }
-function updateGeneSoftLink(gene,genome){
+
+function updateGeneSoftLink(gene,genome,targets){
   var share=document.getElementById("share");if(!gene){share.innerHTML="";return;}
   var u=new URL(location.href);u.searchParams.set("q",gene);
   if(genome)u.searchParams.set("genome",genome);else u.searchParams.delete("genome");
+  if(targets&&targets.length)u.searchParams.set("targets",targets.join(","));else u.searchParams.delete("targets");
   history.replaceState(null,"",u.pathname+u.search+u.hash);
-  share.innerHTML='Current gene: <a href="'+u.href+'" title="'+u.href+'">'+gene+'</a>';
+  share.innerHTML='Current view link: <a href="'+escapeHtml(u.href)+'" title="'+escapeHtml(u.href)+'">'+escapeHtml(gene)+' | '+escapeHtml(genome||"auto")+' | targets='+(targets?targets.length:0)+'</a>';
 }
-fetch(API_BASE+"/genomes").then(function(r){return r.json();}).then(function(gs){
-  var sel=document.getElementById("genome");sel.innerHTML='<option value="">-- Select genome --</option>';
-  (gs.genomes||gs||[]).forEach(function(g){var o=document.createElement("option");o.value=g;o.textContent=g;sel.appendChild(o);});
-  if(initGenome)sel.value=initGenome;
-  if(initGene){document.getElementById("gene").value=initGene;run(false);}
-}).catch(function(e){status("Failed to load genome list: "+e);});
+
+// Load genome list
+fetch(API_BASE+"/genomes").then(function(r){
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  return r.json();
+}).then(function(gs){
+  allGenomes=Array.isArray(gs)?gs:(gs.genomes||[]);
+  populateReferenceGenomes(allGenomes);
+  populateTargetGenomes(initTargets);
+  if(initGene){document.getElementById("gene").value=initGene;}
+  if(initGene&&initGenome&&initTargets.length){
+    status("Genome selections loaded from the link. Click Draw selected synteny to draw the plot.");
+  }
+}).catch(function(e){
+  document.getElementById("genome").innerHTML='<option>Loading failed</option>';
+  document.getElementById("availableTargets").innerHTML='<div class="empty">Loading failed</div>';
+  document.getElementById("selectedTargets").innerHTML='<div class="empty">No target genome selected.</div>';
+  status("Failed to load genome list: "+e);
+});
+
+// Event bindings
 document.getElementById("go").onclick=function(){run(true);};
 document.getElementById("downloadSvg").onclick=downloadSvg;
 document.getElementById("gene").addEventListener("keydown",function(e){if(e.key==="Enter")run(true);});
+document.getElementById("genome").addEventListener("change",function(){renderTargetPicker();markSelectionChanged();});
+document.getElementById("targetFilter").addEventListener("input",renderTargetPicker);
+
+function selectTargetsBySuffixes(suffixes,label){
+  var ref=document.getElementById("genome").value.trim();
+  var added=0;
+  allGenomes.filter(function(g){return g!==ref&&suffixes.some(function(suf){return g.indexOf(suf,g.length-suf.length)!==-1;});}).forEach(function(g){
+    if(!selectedTargetSet.has(g))added+=1;selectedTargetSet.add(g);
+  });
+  renderTargetPicker();markSelectionChanged();
+  var suffixText=suffixes.join("/"),subText=label?label+" subgenomes":"genomes ending with "+suffixText;
+  status("Selected all "+subText+". Added "+added+"; selected target genomes: "+selectedTargets().length+". Click Draw selected synteny to update the plot.");
+}
+
+document.getElementById("selectATargets").addEventListener("click",function(){selectTargetsBySuffixes(["_A"],"A");});
+document.getElementById("selectBTargets").addEventListener("click",function(){selectTargetsBySuffixes(["_B"],"B");});
+document.getElementById("selectDTargets").addEventListener("click",function(){selectTargetsBySuffixes(["_D"],"D");});
+document.getElementById("selectAllTargets").addEventListener("click",function(){
+  var ref=document.getElementById("genome").value.trim();
+  allGenomes.filter(function(g){return g!==ref;}).forEach(function(g){selectedTargetSet.add(g);});
+  renderTargetPicker();markSelectionChanged();
+});
+document.getElementById("clearTargets").addEventListener("click",function(){
+  selectedTargetSet.clear();renderTargetPicker();markSelectionChanged();
+});
 
 function run(updateUrl){
   var gene=document.getElementById("gene").value.trim();
-  var gn=document.getElementById("genome").value.trim();
-  if(!gene){alert("Please enter a gene ID.");return;}
-  status("Searching…");
+  var genome=document.getElementById("genome").value.trim();
+  var targets=selectedTargets();
+  if(!genome){alert("Please select a reference genome.");return;}
+  if(!gene){alert("Please enter a reference gene ID.");return;}
+  if(!targets.length){alert("Please select at least one target genome.");return;}
+  status("Searching selected genomes… If the backend is still warming up BED/Orthogroups, the first query may take longer.");
   document.getElementById("downloadSvg").disabled=true;
   var url=API_BASE+"/neighborhood?q="+encodeURIComponent(gene)+"&upstream=5&downstream=5";
-  if(gn)url+="&genome="+encodeURIComponent(gn);
+  if(genome)url+="&genome="+encodeURIComponent(genome);
+  if(targets.length)url+="&targets="+encodeURIComponent(targets.join(","));
   fetch(url).then(function(r){return r.json();}).then(function(data){
-    draw(data);if(!data.error)updateGeneSoftLink(data.query||gene,data.query_genome||gn);
+    draw(data);if(!data.error)updateGeneSoftLink(data.query||gene,data.query_genome||genome,targets);
   }).catch(function(e){status("Query failed: "+e);});
 }
 
 function draw(data){
   var svg=document.getElementById("svg"),canvas=document.getElementById("canvas");svg.innerHTML="";lastData=null;
   if(data.error){status("Error: "+data.error);document.getElementById("legend").innerHTML="";document.getElementById("downloadSvg").disabled=true;return;}
-  lastData=data;lastSvgFileName="syntenyview_"+safeFileName(data.query)+".svg";document.getElementById("downloadSvg").disabled=false;
+  lastData=data;
+  var targetCount=(data.target_genomes_requested||selectedTargets()).length;
+  lastSvgFileName="syntenyview_"+safeFileName(data.query)+"_"+safeFileName(data.query_genome)+"_targets"+targetCount+".svg";
+  document.getElementById("downloadSvg").disabled=false;
   var neighbors=data.neighbors||[],ogMap=data.og_map||{};
-  status("Query="+data.query+" | BED neighbors: "+neighbors.length+" genes | Cluster "+data.query_cluster+" | Matched genomes: "+data.tracks.length);
+  var tracks=data.tracks||[];
+  var shownTargets=tracks.filter(function(tr){return tr.label!==data.query_genome;}).length;
+  var requestedTargets=(data.target_genomes_requested||selectedTargets()).length;
+  status("Query="+data.query+" | Reference="+data.query_genome+" | BED neighbors: "+neighbors.length+" genes | Cluster "+data.query_cluster+" | Selected targets: "+requestedTargets+" | Matched target tracks drawn: "+shownTargets);
   document.getElementById("legend").innerHTML=neighbors.map(function(g,i){
-    var note=ogMap[g]?"":" (no OG)";return '<span><i style="background:'+colors[i%11]+'"></i>'+g+(g===data.query?" (query)":"")+note+'</span>';
+    var note=ogMap[g]?"":" (no OG)";return '<span><i style="background:'+colors[i%11]+'"></i>'+escapeHtml(g)+(g===data.query?" (query)":"")+note+'</span>';
   }).join("");
-  var tracks=data.tracks||[];if(!tracks.length){status(document.getElementById("status").textContent+" (No genes to draw.)");return;}
+  if(!tracks.length){status(document.getElementById("status").textContent+" (No genes to draw.)");return;}
   var maxLabelLen=Math.max.apply(null,tracks.map(function(tr){return Math.max(labelLine(tr).length,("Region: "+regionLabel(tr)).length);}));
-  var left=Math.max(390,Math.min(820,maxLabelLen*7+50));var svgW=Math.max(1650,canvas.clientWidth-20,left+1050);var right=svgW-60;
+  var left=Math.max(390,Math.min(820,maxLabelLen*7+50)),svgW=Math.max(1650,canvas.clientWidth-20,left+1050),right=svgW-60;
   var rowH=82,labelTopPad=132;var maxGenes=Math.max.apply(null,tracks.map(function(tr){return(tr.genes||[]).length;}),1);
-  var plotW=right-left;var boxW=Math.max(9,Math.min(26,Math.floor(plotW/(maxGenes*1.65))));var boxH=16,minGap=boxW+8;
+  var plotW=right-left;var boxW=Math.max(9,Math.min(26,Math.floor(plotW/(maxGenes*1.65)))),boxH=16,minGap=boxW+8;
   svg.setAttribute("height",labelTopPad+tracks.length*rowH+55);svg.setAttribute("width",svgW);svg.setAttribute("xmlns",SVG);
   var baseLayer=document.createElementNS(SVG,"g"),linkLayer=document.createElementNS(SVG,"g"),geneLayer=document.createElementNS(SVG,"g"),labelLayer=document.createElementNS(SVG,"g");
   svg.appendChild(baseLayer);svg.appendChild(linkLayer);svg.appendChild(geneLayer);svg.appendChild(labelLayer);
-  var allPoints=[],geneElements=[],queryTrackIndex=tracks.findIndex(function(tr){return tr.label===data.query_genome;});
+  var allPoints=[],geneElements=[],queryTrackIndex=tracks.findIndex(function(tr){return tr.is_query_track||tr.label===data.query_genome;});
 
   tracks.forEach(function(tr,ti){
     var yMid=labelTopPad+ti*rowH,genes=tr.genes||[];
@@ -167,7 +351,7 @@ function draw(data){
       var x=xs[gi];var pt={ti:ti,yMid:yMid,x:x,order:g.order,og:g.og,gene:g.gene,start:g.start,end:g.end};allPoints.push(pt);
       var rect=document.createElementNS(SVG,"rect");rect.setAttribute("x",x-boxW/2);rect.setAttribute("y",yMid-boxH/2);rect.setAttribute("width",boxW);rect.setAttribute("height",boxH);rect.setAttribute("rx",3);
       rect.setAttribute("fill",colors[g.order%11]);rect.setAttribute("class","gene"+(g.gene===data.query?" query":"")+(g.og?"":" no-og"));
-      var ogText=g.og||"No Orthogroup";rect.addEventListener("mousemove",function(e){tip(e,g.gene+"<br>OG: "+ogText+"<br>Position: "+g.start+"-"+g.end+"<br>Region: "+regionLabel(tr));});
+      var ogText=g.og||"No Orthogroup";rect.addEventListener("mousemove",function(e){tip(e,escapeHtml(g.gene)+"<br>OG: "+escapeHtml(ogText)+"<br>Position: "+escapeHtml(g.start)+"-"+escapeHtml(g.end)+"<br>Region: "+escapeHtml(regionLabel(tr)));});
       rect.addEventListener("mouseout",function(){document.getElementById("tip").style.display="none";});geneElements.push(rect);
       if(ti===queryTrackIndex||(queryTrackIndex<0&&ti===0)){
         var txt=document.createElementNS(SVG,"text"),tx=x+3,ty=yMid-boxH/2-8;
@@ -192,6 +376,7 @@ function draw(data){
 }
 
 function svgStyleText(){return ".track-label{font-size:12px;fill:#222;font-weight:600;font-family:-apple-system,Segoe UI,Arial} .track-region{font-size:11px;fill:#666;font-weight:400;font-family:-apple-system,Segoe UI,Arial} .query-track-gene-label{font-size:10px;fill:#111;font-weight:500;font-family:-apple-system,Segoe UI,Arial} .query-track-gene-label.search-gene{fill:#dc2626;font-weight:700} .gene{cursor:pointer}.gene.query{stroke:#c026d3;stroke-width:2.5px}.gene.no-og{stroke:#777;stroke-width:1px;stroke-dasharray:3 2}.link{fill:none;stroke-opacity:.34;stroke-width:1.2}";}
+
 function downloadSvg(){
   var svg=document.getElementById("svg");if(!lastData||!svg||!svg.childNodes.length){alert("Please draw a synteny plot first.");return;}
   var clone=svg.cloneNode(true);clone.setAttribute("xmlns",SVG);clone.setAttribute("version","1.1");
@@ -199,5 +384,6 @@ function downloadSvg(){
   var xml='<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone);var blob=new Blob([xml],{type:"image/svg+xml;charset=utf-8"});
   var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download=lastSvgFileName;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 }
+
 function tip(e,html){var t=document.getElementById("tip");t.innerHTML=html;t.style.display="block";t.style.left=(e.clientX+12)+"px";t.style.top=(e.clientY+12)+"px";}
 </script></body></html>

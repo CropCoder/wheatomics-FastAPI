@@ -263,6 +263,23 @@ def api_status():
     }
 
 
+def _parse_target_genomes(targets_str: str) -> List[str]:
+    """Parse target genome filters from CSV or repeated query parameters.
+
+    Supported forms:
+      /api/syntenyview/neighborhood?q=G&genome=Ref&targets=A,B,C
+      /api/syntenyview/neighborhood?q=G&genome=Ref&targets=A&targets=B
+    """
+    if not targets_str:
+        return []
+    out = []
+    for item in re.split(r"[,;|]", targets_str or ""):
+        item = item.strip()
+        if item:
+            out.append(item)
+    return list(dict.fromkeys(out))
+
+
 @router.get("/neighborhood")
 def api_synteny(
     q: str = Query(..., description="Gene ID"),
@@ -270,6 +287,7 @@ def api_synteny(
     downstream: int = Query(5, ge=1, le=50),
     genome: str = Query("", description="Optional genome filter"),
     subgenome: str = Query("", description="Optional subgenome filter"),
+    targets: str = Query("", description="Comma-separated target genome filter"),
 ):
     _ensure_loaded()
 
@@ -280,6 +298,10 @@ def api_synteny(
     info = (_bed_gene or {}).get(gene_id)
     if not info:
         return {"error": "Gene was not found in BED: " + gene_id}
+
+    target_genomes = _parse_target_genomes(targets)
+    target_filter_applied = bool(target_genomes)
+    target_set = set(target_genomes) if target_filter_applied else None
 
     key = (info["genome"], info["sub"], info["chrom"])
     gene_list = (_chrom_lists or {}).get(key, [])
@@ -336,6 +358,9 @@ def api_synteny(
             gk = f"{bi['genome']}_{bi['sub']}" if bi["sub"] else bi["genome"]
             if gk == qkey:
                 continue
+            # Skip non-selected genomes when target filter is active
+            if target_set is not None and gk not in target_set:
+                continue
             if gk not in tracks:
                 tracks[gk] = {
                     "label": gk,
@@ -368,6 +393,7 @@ def api_synteny(
             tr["region_label"] = ""
 
     ordered = sorted(tracks.values(), key=lambda t: (0 if t["label"] == qkey else 1, t["label"]))
+    matched_target_genomes = [t["label"] for t in ordered if t["label"] != qkey]
 
     link_groups = {}
     for ti, tr in enumerate(ordered):
@@ -401,6 +427,9 @@ def api_synteny(
         "query_end": info["end"],
         "query_region_label": _mb_label(info["start"], info["end"]),
         "query_cluster": query_cluster,
+        "target_filter_applied": target_filter_applied,
+        "target_genomes_requested": target_genomes,
+        "target_genomes_matched": matched_target_genomes,
         "neighbors": neighbors,
         "og_map": og_results,
         "tracks": ordered,
