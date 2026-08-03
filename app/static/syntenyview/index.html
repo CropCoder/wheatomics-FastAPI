@@ -18,26 +18,14 @@ body{font-family:-apple-system,Segoe UI,Arial;margin:0;background:#f7f8fa;color:
 #home_content{max-width:98%;margin:20px auto 30px auto;padding:0 10px}
 .tool-card{background:#fff;border-radius:10px;padding:18px 22px;box-shadow:0 3px 16px rgba(0,0,0,.10)}
 h5.card-title{margin-top:0}
-.bar{display:flex;gap:12px;padding:8px 0 16px 0;align-items:flex-end;flex-wrap:wrap}
+.bar{display:flex;gap:10px;padding:8px 0 16px 0;align-items:center;flex-wrap:wrap}
 .field{display:flex;flex-direction:column;gap:5px}
-.field label{font-size:12px;color:#475569;font-weight:600}
-.bar input,.bar select{padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;background:#fff}
+.field label{font-size:12px;color:#334155;font-weight:700}
+.bar input,.bar select{padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;background:#fff;color:#111827}
 .bar button{padding:8px 18px;border:0;border-radius:6px;background:#26734d;color:#fff;cursor:pointer;font-size:14px}
 .bar button.secondary{background:#475569}
-.bar button.small{padding:6px 10px;font-size:12px;background:#64748b}
+.bar button.small{padding:7px 10px;font-size:12px}
 .bar button:disabled{background:#94a3b8;cursor:not-allowed}
-.target-panel{display:grid;grid-template-columns:minmax(320px,1fr) minmax(320px,1fr) 230px;gap:12px;align-items:start;width:100%;padding-top:4px}
-.target-box{border:1px solid #cbd5e1;border-radius:8px;background:#fff;min-height:174px;max-height:220px;overflow:auto;padding:6px}
-.target-filter{width:100%;box-sizing:border-box;margin-bottom:7px}
-.bar button.genome-item{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;box-sizing:border-box;padding:7px 9px;margin:1px 0;border:0;border-radius:0;background:transparent !important;color:#000 !important;cursor:pointer;text-align:left;font-size:13px;font-weight:700;box-shadow:none}
-.bar button.genome-item:hover{background:transparent !important;color:#000 !important;text-decoration:underline}
-.bar button.genome-item.selected{background:transparent !important;color:#000 !important}
-.bar button.genome-item:focus{outline:1px dashed #94a3b8;outline-offset:1px;background:transparent !important;color:#000 !important}
-.bar button.genome-item .remove{font-weight:700;color:#000;font-size:15px;line-height:1}
-.empty{padding:18px 10px;color:#94a3b8;font-size:13px;text-align:center}
-.target-actions{display:flex;flex-direction:column;gap:7px;min-width:170px}
-.help{font-size:12px;color:#64748b;line-height:1.45;max-width:520px}
-@media (max-width:980px){.target-panel{grid-template-columns:1fr}.target-actions{flex-direction:row;flex-wrap:wrap}}
 #status{padding:4px 0;color:#666;font-size:13px}
 #share{padding:0 0 8px 0;color:#555;font-size:13px}
 #share a{color:#2563eb;text-decoration:none;font-weight:600}
@@ -55,6 +43,44 @@ h5.card-title{margin-top:0}
 .legend{padding:10px 0 0 0;font-size:12px;color:#555}
 .legend span{display:inline-block;margin-right:10px;margin-bottom:4px}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:middle;margin-right:3px}
+.target-panel{display:grid;grid-template-columns:minmax(320px,1fr) minmax(320px,1fr) 190px;gap:12px;align-items:start;width:100%;padding-top:4px}
+.target-box{border:1px solid #cbd5e1;border-radius:8px;background:#fff;min-height:174px;max-height:240px;overflow:auto;padding:6px}
+.target-filter{width:100%;box-sizing:border-box;margin-bottom:7px}
+.bar button.genome-item{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;box-sizing:border-box;padding:7px 9px;margin:1px 0;border:0;border-radius:0;background:transparent !important;color:#000 !important;cursor:pointer;text-align:left;font-size:13px;font-weight:700;box-shadow:none}
+.bar button.genome-item:hover{background:transparent !important;color:#000 !important;text-decoration:underline}
+.bar button.genome-item.selected{background:transparent !important;color:#000 !important}
+.bar button.genome-item:focus{outline:1px dashed #94a3b8;outline-offset:1px;background:transparent !important;color:#000 !important}
+.bar button.genome-item .remove{font-weight:700;color:#000;font-size:15px;line-height:1}
+.empty{padding:18px 10px;color:#94a3b8;font-size:13px;text-align:center}
+.target-actions{display:flex;flex-direction:column;gap:7px;min-width:170px}
+.help{font-size:12px;color:#64748b;line-height:1.45;max-width:520px}
+.heatmap-panel{margin:6px 0 0 0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden}
+.heatmap-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid #e5e7eb;background:#f8fafc;flex-wrap:wrap}
+.heatmap-title{font-size:14px;font-weight:700;color:#111827}
+.heatmap-note{font-size:12px;color:#64748b;font-weight:400;margin-left:8px}
+.heatmap-wrap{overflow:auto;max-height:360px;padding:8px 10px}
+#heatmapTable{border-collapse:separate;border-spacing:2px;width:max-content;min-width:100%}
+#heatmapTable th,#heatmapTable td{text-align:center;vertical-align:middle}
+#heatmapTable th.corner{min-width:200px;background:#fff;position:sticky;left:0;z-index:3}
+#heatmapTable th.x-label{font-size:11px;color:#111827;font-weight:700;background:#fff;padding:4px 6px;min-width:120px;white-space:nowrap;border-bottom:1px solid #e5e7eb}
+#heatmapTable th.y-label{position:sticky;left:0;background:#fff;padding:6px 8px;text-align:left;font-size:12px;color:#111827;font-weight:700;white-space:nowrap;z-index:2;border-right:1px solid #e5e7eb}
+#heatmapTable td.heat-cell{min-width:120px;height:34px;border-radius:4px;font-size:12px;font-weight:700;color:#111827;border:1px solid rgba(148,163,184,.35)}
+#heatmapEmpty{padding:18px 12px;color:#94a3b8;font-size:13px;text-align:center}
+.table-panel{margin:6px 0 26px 0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden}
+.table-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid #e5e7eb;background:#f8fafc;flex-wrap:wrap}
+.table-title{font-size:14px;font-weight:700;color:#111827}
+.table-note{font-size:12px;color:#64748b;font-weight:400;margin-left:8px}
+.table-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.table-actions button{padding:7px 12px;border:0;border-radius:6px;background:#475569;color:#fff;cursor:pointer;font-size:12px}
+.table-actions button:disabled{background:#94a3b8;cursor:not-allowed}
+.table-wrap{overflow:auto;max-height:460px}
+#syntenyTable{border-collapse:collapse;width:100%;min-width:1080px;font-size:12px}
+#syntenyTable th,#syntenyTable td{border-bottom:1px solid #e5e7eb;padding:7px 9px;text-align:left;white-space:nowrap;vertical-align:top}
+#syntenyTable th{position:sticky;top:0;background:#f1f5f9;color:#111827;font-weight:700;z-index:1}
+#syntenyTable tr.query-row{background:#fff7ed}
+#syntenyTable tr.no-og-row{color:#64748b}
+#tableEmpty{padding:18px 12px;color:#94a3b8;font-size:13px;text-align:center}
+@media (max-width:980px){.target-panel{grid-template-columns:1fr}.target-actions{flex-direction:row;flex-wrap:wrap}}
 </style></head><body>
 <div id="home_header"><span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span></div>
 <div id="header-tabs"><ul>
@@ -104,7 +130,7 @@ h5.card-title{margin-top:0}
       <button id="selectDTargets" type="button" class="small">Select all D subgenomes</button>
       <button id="selectAllTargets" type="button" class="small">Select all targets</button>
       <button id="clearTargets" type="button" class="small">Clear targets</button>
-      <div class="help" id="targetHelp">Click a genome on the left to move it into the selected list on the right. Use "Select all A/B/D subgenomes" to add target genomes ending with _A, _B, or _D. Click a selected genome to remove it.</div>
+      <div class="help" id="targetHelp">Click a genome on the left to move it into the selected list on the right. Subgenome buttons add targets ending with _A, _B, or _D. Click a selected genome to remove it.</div>
     </div>
   </div>
 </div>
@@ -112,6 +138,48 @@ h5.card-title{margin-top:0}
 <div id="share"></div>
 <div class="legend" id="legend"></div>
 <div id="canvas"><svg id="svg" width="1600" height="200"></svg></div>
+<div class="heatmap-panel" id="heatmapPanel">
+  <div class="heatmap-head">
+    <div>
+      <span class="heatmap-title">Homolog count heatmap</span>
+      <span class="heatmap-note" id="heatmapSummary">No synteny query drawn.</span>
+    </div>
+  </div>
+  <div class="heatmap-wrap" id="heatmapWrap">
+    <div id="heatmapEmpty">Draw a synteny plot to show homolog counts across the selected subgenomes.</div>
+    <table id="heatmapTable" style="display:none"></table>
+  </div>
+</div>
+<div class="table-panel" id="tablePanel">
+  <div class="table-head">
+    <div>
+      <span class="table-title">Drawn OG / gene table</span>
+      <span class="table-note" id="tableSummary">No synteny query drawn.</span>
+    </div>
+    <div class="table-actions">
+      <button id="downloadTable" type="button" disabled>Download table TSV</button>
+    </div>
+  </div>
+  <div class="table-wrap" id="tableWrap">
+    <div id="tableEmpty">Draw a synteny plot to show the selected genomes, OGs, and corresponding gene IDs.</div>
+    <table id="syntenyTable" style="display:none">
+      <thead>
+        <tr>
+          <th>Neighbor order</th>
+          <th>Query neighbor gene</th>
+          <th>OG</th>
+          <th>Track / genome</th>
+          <th>Chromosome</th>
+          <th>Gene ID</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Region</th>
+        </tr>
+      </thead>
+      <tbody id="syntenyTableBody"></tbody>
+    </table>
+  </div>
+</div>
 <div id="tip"></div>
 </div></div>
 
@@ -123,6 +191,8 @@ var colors=["#e6194b","#3cb44b","#4363d8","#f58231","#911eb4","#00b3b3","#f032e6
 var allGenomes=[];
 var selectedTargetSet=new Set();
 var lastData=null,lastSvgFileName="syntenyview.svg";
+var lastTableRows=[],lastTableFileName="syntenyview_table.tsv";
+var selectionChangedSinceDraw=false;
 
 var qs=new URLSearchParams(location.search);
 var initGene=qs.get("q")||qs.get("gene")||"";
@@ -144,29 +214,22 @@ function selectedTargets(){
 function updateTargetHelp(){
   var n=selectedTargets().length;
   var ref=document.getElementById("genome").value.trim();
-  document.getElementById("targetHelp").textContent="Selected target genomes: "+n+". Reference genome "+(ref?"'"+ref+"'":"not selected")+" is drawn on top and excluded from the target list.";
+  document.getElementById("targetHelp").textContent="Selected target genomes: "+n+". Reference genome "+(ref?"'"+ref+"'":"not selected")+" is drawn on top and excluded from the target list. Click Draw selected synteny to update the plot.";
 }
 
 function markSelectionChanged(){
-  var gene=document.getElementById("gene").value.trim();
-  var genome=document.getElementById("genome").value.trim();
-  if(gene&&genome){
-    status("Target selection changed. Click Draw selected synteny to update the plot.");
-  }
+  selectionChangedSinceDraw=true;
 }
 
 function makeGenomeItem(g,mode){
-  var btn=document.createElement("button");
-  btn.type="button";
+  var btn=document.createElement("button");btn.type="button";
   btn.className="genome-item"+(mode==="selected"?" selected":"");
   btn.title=mode==="selected"?"Remove "+g:"Add "+g;
   var name=document.createElement("span");name.textContent=g;btn.appendChild(name);
   if(mode==="selected"){
     var rm=document.createElement("span");rm.className="remove";rm.textContent="×";btn.appendChild(rm);
     btn.addEventListener("click",function(){removeTarget(g);});
-  }else{
-    btn.addEventListener("click",function(){addTarget(g);});
-  }
+  }else{btn.addEventListener("click",function(){addTarget(g);});}
   return btn;
 }
 
@@ -183,27 +246,16 @@ function renderTargetPicker(){
     var empty=document.createElement("div");empty.className="empty";
     empty.textContent=allGenomes.length?"No available target genome matches the current filter.":"Loading target genomes…";
     availableBox.appendChild(empty);
-  }else{
-    available.forEach(function(g){availableBox.appendChild(makeGenomeItem(g,"available"));});
-  }
+  }else{available.forEach(function(g){availableBox.appendChild(makeGenomeItem(g,"available"));});}
   selectedBox.innerHTML="";
   if(!selected.length){
     var empty2=document.createElement("div");empty2.className="empty";empty2.textContent="No target genome selected.";selectedBox.appendChild(empty2);
-  }else{
-    selected.forEach(function(g){selectedBox.appendChild(makeGenomeItem(g,"selected"));});
-  }
+  }else{selected.forEach(function(g){selectedBox.appendChild(makeGenomeItem(g,"selected"));});}
   updateTargetHelp();
 }
 
-function addTarget(g){
-  var ref=document.getElementById("genome").value.trim();
-  if(!g||g===ref)return;
-  selectedTargetSet.add(g);renderTargetPicker();markSelectionChanged();
-}
-
-function removeTarget(g){
-  selectedTargetSet.delete(g);renderTargetPicker();markSelectionChanged();
-}
+function addTarget(g){var ref=document.getElementById("genome").value.trim();if(!g||g===ref)return;selectedTargetSet.add(g);renderTargetPicker();markSelectionChanged();}
+function removeTarget(g){selectedTargetSet.delete(g);renderTargetPicker();markSelectionChanged();}
 
 function populateReferenceGenomes(gs){
   var sel=document.getElementById("genome");sel.innerHTML='<option value="">-- Select reference genome --</option>';
@@ -257,10 +309,7 @@ fetch(API_BASE+"/genomes").then(function(r){
   allGenomes=Array.isArray(gs)?gs:(gs.genomes||[]);
   populateReferenceGenomes(allGenomes);
   populateTargetGenomes(initTargets);
-  if(initGene){document.getElementById("gene").value=initGene;}
-  if(initGene&&initGenome&&initTargets.length){
-    status("Genome selections loaded from the link. Click Draw selected synteny to draw the plot.");
-  }
+  if(initGene){document.getElementById("gene").value=initGene;if(selectedTargets().length||initTargets.length){run(false);}}
 }).catch(function(e){
   document.getElementById("genome").innerHTML='<option>Loading failed</option>';
   document.getElementById("availableTargets").innerHTML='<div class="empty">Loading failed</div>';
@@ -271,32 +320,24 @@ fetch(API_BASE+"/genomes").then(function(r){
 // Event bindings
 document.getElementById("go").onclick=function(){run(true);};
 document.getElementById("downloadSvg").onclick=downloadSvg;
+document.getElementById("downloadTable").onclick=downloadTableTsv;
 document.getElementById("gene").addEventListener("keydown",function(e){if(e.key==="Enter")run(true);});
 document.getElementById("genome").addEventListener("change",function(){renderTargetPicker();markSelectionChanged();});
 document.getElementById("targetFilter").addEventListener("input",renderTargetPicker);
 
-function selectTargetsBySuffixes(suffixes,label){
+function selectTargetsBySuffix(suffix,label){
   var ref=document.getElementById("genome").value.trim();
   var added=0;
-  allGenomes.filter(function(g){return g!==ref&&suffixes.some(function(suf){return g.indexOf(suf,g.length-suf.length)!==-1;});}).forEach(function(g){
-    if(!selectedTargetSet.has(g))added+=1;selectedTargetSet.add(g);
-  });
+  allGenomes.filter(function(g){return g!==ref&&g.indexOf(suffix,g.length-suffix.length)!==-1;}).forEach(function(g){if(!selectedTargetSet.has(g))added+=1;selectedTargetSet.add(g);});
   renderTargetPicker();markSelectionChanged();
-  var suffixText=suffixes.join("/"),subText=label?label+" subgenomes":"genomes ending with "+suffixText;
-  status("Selected all "+subText+". Added "+added+"; selected target genomes: "+selectedTargets().length+". Click Draw selected synteny to update the plot.");
+  status(label+": added "+added+"; selected target genomes: "+selectedTargets().length+". Click Draw selected synteny to update the plot.");
 }
 
-document.getElementById("selectATargets").addEventListener("click",function(){selectTargetsBySuffixes(["_A"],"A");});
-document.getElementById("selectBTargets").addEventListener("click",function(){selectTargetsBySuffixes(["_B"],"B");});
-document.getElementById("selectDTargets").addEventListener("click",function(){selectTargetsBySuffixes(["_D"],"D");});
-document.getElementById("selectAllTargets").addEventListener("click",function(){
-  var ref=document.getElementById("genome").value.trim();
-  allGenomes.filter(function(g){return g!==ref;}).forEach(function(g){selectedTargetSet.add(g);});
-  renderTargetPicker();markSelectionChanged();
-});
-document.getElementById("clearTargets").addEventListener("click",function(){
-  selectedTargetSet.clear();renderTargetPicker();markSelectionChanged();
-});
+document.getElementById("selectATargets").addEventListener("click",function(){selectTargetsBySuffix("_A","Selected all A subgenomes");});
+document.getElementById("selectBTargets").addEventListener("click",function(){selectTargetsBySuffix("_B","Selected all B subgenomes");});
+document.getElementById("selectDTargets").addEventListener("click",function(){selectTargetsBySuffix("_D","Selected all D subgenomes");});
+document.getElementById("selectAllTargets").addEventListener("click",function(){var ref=document.getElementById("genome").value.trim();allGenomes.filter(function(g){return g!==ref;}).forEach(function(g){selectedTargetSet.add(g);});renderTargetPicker();markSelectionChanged();});
+document.getElementById("clearTargets").addEventListener("click",function(){selectedTargetSet.clear();renderTargetPicker();markSelectionChanged();});
 
 function run(updateUrl){
   var gene=document.getElementById("gene").value.trim();
@@ -305,32 +346,41 @@ function run(updateUrl){
   if(!genome){alert("Please select a reference genome.");return;}
   if(!gene){alert("Please enter a reference gene ID.");return;}
   if(!targets.length){alert("Please select at least one target genome.");return;}
-  status("Searching selected genomes… If the backend is still warming up BED/Orthogroups, the first query may take longer.");
+  status("Searching selected target genomes… If the backend is still warming up BED/Orthogroups, the first query may take longer.");
   document.getElementById("downloadSvg").disabled=true;
+  document.getElementById("downloadTable").disabled=true;
+  clearSyntenyTable("Searching selected target genomes…");
   var url=API_BASE+"/neighborhood?q="+encodeURIComponent(gene)+"&upstream=5&downstream=5";
   if(genome)url+="&genome="+encodeURIComponent(genome);
   if(targets.length)url+="&targets="+encodeURIComponent(targets.join(","));
   fetch(url).then(function(r){return r.json();}).then(function(data){
-    draw(data);if(!data.error)updateGeneSoftLink(data.query||gene,data.query_genome||genome,targets);
+    draw(data);
+    if(!data.error){selectionChangedSinceDraw=false;updateGeneSoftLink(data.query||gene,data.query_genome||genome,targets);}
   }).catch(function(e){status("Query failed: "+e);});
 }
 
 function draw(data){
   var svg=document.getElementById("svg"),canvas=document.getElementById("canvas");svg.innerHTML="";lastData=null;
-  if(data.error){status("Error: "+data.error);document.getElementById("legend").innerHTML="";document.getElementById("downloadSvg").disabled=true;return;}
+  if(data.error){
+    status("Error: "+data.error);document.getElementById("legend").innerHTML="";
+    document.getElementById("downloadSvg").disabled=true;document.getElementById("downloadTable").disabled=true;
+    clearSyntenyTable("No table available because the query failed.");return;
+  }
   lastData=data;
-  var targetCount=(data.target_genomes_requested||selectedTargets()).length;
-  lastSvgFileName="syntenyview_"+safeFileName(data.query)+"_"+safeFileName(data.query_genome)+"_targets"+targetCount+".svg";
+  var targetCount=(data.requested_targets||selectedTargets()).length;
+  lastSvgFileName="syntenyview_"+safeFileName(data.query_genome)+"_"+safeFileName(data.query)+"_"+targetCount+"targets.svg";
+  lastTableFileName="syntenyview_"+safeFileName(data.query_genome)+"_"+safeFileName(data.query)+"_"+targetCount+"targets_table.tsv";
   document.getElementById("downloadSvg").disabled=false;
-  var neighbors=data.neighbors||[],ogMap=data.og_map||{};
+  var neighbors=data.neighbors||[];
+  var sub=data.query_gene_subgenome?" | Query subgenome "+data.query_gene_subgenome:"";
+  var skippedCounts=data.skipped_counts||{};
+  var skippedTotal=Object.values(skippedCounts).reduce(function(a,b){return a+Number(b||0);},0);
+  var skippedText=skippedTotal?" | Strict-filtered homolog records: "+skippedTotal:"";
+  status("Query="+data.query+" | Genome="+data.query_genome+" | Chrom="+data.query_chrom+sub+" | BED neighbors: "+neighbors.length+" genes | Cluster "+data.query_cluster+" | Drawn tracks: "+data.tracks.length+skippedText);
+  var ogMap=data.og_map||{};
+  document.getElementById("legend").innerHTML=neighbors.map(function(g,i){var note=ogMap[g]?"":" (no OG)";return '<span><i style="background:'+colors[i%11]+'"></i>'+escapeHtml(g)+(g===data.query?" (query)":"")+note+'</span>';}).join("");
   var tracks=data.tracks||[];
-  var shownTargets=tracks.filter(function(tr){return tr.label!==data.query_genome;}).length;
-  var requestedTargets=(data.target_genomes_requested||selectedTargets()).length;
-  status("Query="+data.query+" | Reference="+data.query_genome+" | BED neighbors: "+neighbors.length+" genes | Cluster "+data.query_cluster+" | Selected targets: "+requestedTargets+" | Matched target tracks drawn: "+shownTargets);
-  document.getElementById("legend").innerHTML=neighbors.map(function(g,i){
-    var note=ogMap[g]?"":" (no OG)";return '<span><i style="background:'+colors[i%11]+'"></i>'+escapeHtml(g)+(g===data.query?" (query)":"")+note+'</span>';
-  }).join("");
-  if(!tracks.length){status(document.getElementById("status").textContent+" (No genes to draw.)");return;}
+  if(!tracks.length){status(document.getElementById("status").textContent+" (No genes to draw.)");clearSyntenyTable("No genes to list because no tracks were returned.");return;}
   var maxLabelLen=Math.max.apply(null,tracks.map(function(tr){return Math.max(labelLine(tr).length,("Region: "+regionLabel(tr)).length);}));
   var left=Math.max(390,Math.min(820,maxLabelLen*7+50)),svgW=Math.max(1650,canvas.clientWidth-20,left+1050),right=svgW-60;
   var rowH=82,labelTopPad=132;var maxGenes=Math.max.apply(null,tracks.map(function(tr){return(tr.genes||[]).length;}),1);
@@ -351,7 +401,8 @@ function draw(data){
       var x=xs[gi];var pt={ti:ti,yMid:yMid,x:x,order:g.order,og:g.og,gene:g.gene,start:g.start,end:g.end};allPoints.push(pt);
       var rect=document.createElementNS(SVG,"rect");rect.setAttribute("x",x-boxW/2);rect.setAttribute("y",yMid-boxH/2);rect.setAttribute("width",boxW);rect.setAttribute("height",boxH);rect.setAttribute("rx",3);
       rect.setAttribute("fill",colors[g.order%11]);rect.setAttribute("class","gene"+(g.gene===data.query?" query":"")+(g.og?"":" no-og"));
-      var ogText=g.og||"No Orthogroup";rect.addEventListener("mousemove",function(e){tip(e,escapeHtml(g.gene)+"<br>OG: "+escapeHtml(ogText)+"<br>Position: "+escapeHtml(g.start)+"-"+escapeHtml(g.end)+"<br>Region: "+escapeHtml(regionLabel(tr)));});
+      var ogText=g.og||"No Orthogroup",clusterText=g.cluster?"<br>Cluster: "+g.cluster:"";
+      rect.addEventListener("mousemove",function(e){tip(e,escapeHtml(g.gene)+"<br>OG: "+escapeHtml(ogText)+clusterText+"<br>Position: "+escapeHtml(g.start)+"-"+escapeHtml(g.end)+"<br>Region: "+escapeHtml(regionLabel(tr)));});
       rect.addEventListener("mouseout",function(){document.getElementById("tip").style.display="none";});geneElements.push(rect);
       if(ti===queryTrackIndex||(queryTrackIndex<0&&ti===0)){
         var txt=document.createElementNS(SVG,"text"),tx=x+3,ty=yMid-boxH/2-8;
@@ -373,6 +424,138 @@ function draw(data){
     }
   });
   geneElements.forEach(function(el){geneLayer.appendChild(el);});
+  renderHeatmap(data);
+  renderSyntenyTable(data);
+}
+
+// ---- Heatmap ----
+
+function textOrBlank(v){return(v===undefined||v===null)?"":String(v);}
+
+function interpolateColor(lowHex,highHex,ratio){
+  var clamp=Math.max(0,Math.min(1,Number(ratio)||0));
+  var low=lowHex.replace("#",""),high=highHex.replace("#","");
+  var out=[0,1,2].map(function(i){var a=parseInt(low.slice(i*2,i*2+2),16),b=parseInt(high.slice(i*2,i*2+2),16);return Math.round(a+(b-a)*clamp).toString(16).padStart(2,"0");});
+  return "#"+out.join("");
+}
+
+function heatmapColor(value,maxValue){if(!maxValue||value<=0)return"#f8fafc";return interpolateColor("#f8fafc","#2c7a3f",value/maxValue);}
+
+function clearHeatmap(message){
+  var table=document.getElementById("heatmapTable"),empty=document.getElementById("heatmapEmpty"),summary=document.getElementById("heatmapSummary");
+  if(table){table.innerHTML="";table.style.display="none";}
+  if(empty){empty.textContent=message||"Draw a synteny plot to show homolog counts across the selected subgenomes.";empty.style.display="block";}
+  if(summary)summary.textContent="No synteny query drawn.";
+}
+
+function buildHeatmapMatrix(data){
+  var tracks=data.tracks||[];
+  var queryTrack=tracks.find(function(tr){return tr.is_query_track;})||tracks[0];
+  if(!queryTrack)return null;
+  var queryGenes=(queryTrack.genes||[]).map(function(g){return {id:g.gene||"",order:g.order,og:g.og||""};});
+  var targetTracks=tracks.filter(function(tr){return !tr.is_query_track;});
+  if(!queryGenes.length||!targetTracks.length)return {queryGenes:queryGenes,targetTracks:targetTracks,matrix:[],maxValue:0};
+  var matrix=targetTracks.map(function(tr){return queryGenes.map(function(qg){return(tr.genes||[]).filter(function(g){return String(g.neighbor||"")===String(qg.id);}).length;});});
+  var flat=matrix.flat(),maxValue=flat.length?Math.max.apply(null,flat):0;
+  return {queryGenes:queryGenes,targetTracks:targetTracks,matrix:matrix,maxValue:maxValue};
+}
+
+function renderHeatmap(data){
+  var table=document.getElementById("heatmapTable"),empty=document.getElementById("heatmapEmpty"),summary=document.getElementById("heatmapSummary");
+  var matrixData=buildHeatmapMatrix(data);
+  if(!matrixData||!matrixData.queryGenes.length){clearHeatmap("No heatmap can be generated from the current drawing data.");return;}
+  var queryGenes=matrixData.queryGenes,targetTracks=matrixData.targetTracks,matrix=matrixData.matrix,maxValue=matrixData.maxValue;
+  if(!targetTracks.length){clearHeatmap("No selected target subgenomes are available for the heatmap.");return;}
+  table.innerHTML="";
+  var thead=document.createElement("thead"),headRow=document.createElement("tr");
+  var corner=document.createElement("th");corner.className="corner";corner.textContent="Subgenome / Gene ID";headRow.appendChild(corner);
+  queryGenes.forEach(function(g){
+    var th=document.createElement("th");th.className="x-label";th.textContent=g.id;headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);table.appendChild(thead);
+  var tbody=document.createElement("tbody");
+  targetTracks.forEach(function(tr,rowIdx){
+    var trEl=document.createElement("tr");
+    var yl=document.createElement("th");yl.className="y-label";yl.textContent=tr.label||"";trEl.appendChild(yl);
+    queryGenes.forEach(function(g,colIdx){
+      var value=Number(matrix[rowIdx]?.[colIdx]||0);
+      var td=document.createElement("td");td.className="heat-cell";
+      td.style.background=heatmapColor(value,maxValue);td.textContent=String(value);
+      td.title=tr.label+" | "+g.id+" | homolog count: "+value;trEl.appendChild(td);
+    });
+    tbody.appendChild(trEl);
+  });
+  table.appendChild(tbody);table.style.display="table";empty.style.display="none";
+  var totalCounts=matrix.flat().reduce(function(a,b){return a+Number(b||0);},0);
+  summary.textContent=targetTracks.length+" selected subgenomes × "+queryGenes.length+" query-track genes | max homolog count per cell: "+maxValue+" | total homolog records: "+totalCounts;
+}
+
+// ---- Table ----
+
+function makeTableRows(data){
+  var rows=[],tracks=data.tracks||[];
+  tracks.forEach(function(tr,ti){
+    var genes=tr.genes||[];
+    genes.forEach(function(g){
+      rows.push({
+        neighbor_order:Number.isFinite(Number(g.order))?Number(g.order)+1:"",
+        query_neighbor_gene:g.neighbor||"",
+        og:g.og||"No Orthogroup",
+        track_genome:tr.label||"",
+        chromosome:tr.chrom||"",
+        gene_id:g.gene||"",
+        start:textOrBlank(g.start),
+        end:textOrBlank(g.end),
+        region:regionLabel(tr),
+        is_query_track:tr.is_query_track?"yes":"no",
+        is_query_gene:g.is_query||g.gene===data.query?"yes":"no",
+        has_orthogroup:g.og?"yes":"no",
+        track_index:ti,
+        raw_order:Number.isFinite(Number(g.order))?Number(g.order):999999
+      });
+    });
+  });
+  rows.sort(function(a,b){return(Number(a.raw_order)-Number(b.raw_order))||(Number(a.track_index)-Number(b.track_index))||String(a.gene_id).localeCompare(String(b.gene_id));});
+  return rows;
+}
+
+function clearSyntenyTable(message){
+  lastTableRows=[];
+  var table=document.getElementById("syntenyTable"),body=document.getElementById("syntenyTableBody"),empty=document.getElementById("tableEmpty"),summary=document.getElementById("tableSummary");
+  if(body)body.innerHTML="";
+  if(table)table.style.display="none";
+  if(empty){empty.textContent=message||"Draw a synteny plot to show the selected genomes, OGs, and corresponding gene IDs.";empty.style.display="block";}
+  if(summary)summary.textContent="No synteny query drawn.";
+  var btn=document.getElementById("downloadTable");if(btn)btn.disabled=true;
+  clearHeatmap(message||"Draw a synteny plot to show homolog counts across the selected subgenomes.");
+}
+
+function renderSyntenyTable(data){
+  var rows=makeTableRows(data);lastTableRows=rows;
+  var table=document.getElementById("syntenyTable"),body=document.getElementById("syntenyTableBody"),empty=document.getElementById("tableEmpty"),summary=document.getElementById("tableSummary"),btn=document.getElementById("downloadTable");
+  body.innerHTML="";
+  if(!rows.length){clearSyntenyTable("No table rows were generated from the current drawing data.");return;}
+  rows.forEach(function(row){
+    var tr=document.createElement("tr");
+    if(row.is_query_gene==="yes")tr.classList.add("query-row");
+    if(row.has_orthogroup!=="yes")tr.classList.add("no-og-row");
+    [row.neighbor_order,row.query_neighbor_gene,row.og,row.track_genome,row.chromosome,row.gene_id,row.start,row.end,row.region].forEach(function(v){var td=document.createElement("td");td.textContent=textOrBlank(v);tr.appendChild(td);});
+    body.appendChild(tr);
+  });
+  table.style.display="table";empty.style.display="none";
+  var trackCount=(data.tracks||[]).length,ogCount=new Set(rows.filter(function(r){return r.has_orthogroup==="yes";}).map(function(r){return r.og;})).size;
+  summary.textContent=rows.length+" gene records | "+ogCount+" OGs | "+trackCount+" drawn tracks";btn.disabled=false;
+}
+
+function tsvEscape(v){var s=textOrBlank(v);if(/[\t\n\r"]/.test(s))return'"'+s.replace(/"/g,'""')+'"';return s;}
+
+function downloadTableTsv(){
+  if(!lastTableRows.length){alert("Please draw a synteny plot first.");return;}
+  var headers=["neighbor_order","query_neighbor_gene","orthogroup","track_genome","chromosome","gene_id","start","end","region"];
+  var lines=[headers.join("\t")];
+  lastTableRows.forEach(function(r){lines.push([r.neighbor_order,r.query_neighbor_gene,r.og,r.track_genome,r.chromosome,r.gene_id,r.start,r.end,r.region].map(tsvEscape).join("\t"));});
+  var blob=new Blob([lines.join("\n")+"\n"],{type:"text/tab-separated-values;charset=utf-8"});
+  var url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=lastTableFileName;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 }
 
 function svgStyleText(){return ".track-label{font-size:12px;fill:#222;font-weight:600;font-family:-apple-system,Segoe UI,Arial} .track-region{font-size:11px;fill:#666;font-weight:400;font-family:-apple-system,Segoe UI,Arial} .query-track-gene-label{font-size:10px;fill:#111;font-weight:500;font-family:-apple-system,Segoe UI,Arial} .query-track-gene-label.search-gene{fill:#dc2626;font-weight:700} .gene{cursor:pointer}.gene.query{stroke:#c026d3;stroke-width:2.5px}.gene.no-og{stroke:#777;stroke-width:1px;stroke-dasharray:3 2}.link{fill:none;stroke-opacity:.34;stroke-width:1.2}";}
