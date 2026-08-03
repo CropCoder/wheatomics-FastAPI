@@ -85,11 +85,28 @@ def _chrom_sub(chrom: str) -> str:
     return m.group(1).upper() if m else ""
 
 
-def _genome_key(info: dict) -> str:
-    """Build genome key like 'BJ8_A'. Uses the chromosome subgenome as the authoritative
-    sub value, falling back to the BED-filename-derived sub."""
+def _gene_sub(gene_id: str) -> str:
+    """Extract subgenome letter from a wheat gene ID.
+
+    Pattern: digit + A/B/D + digit, e.g. Abo1A000100.1 → A, BJ81D040500.1 → D.
+    """
+    if not gene_id:
+        return ""
+    m = re.search(r"\d([ABD])\d", gene_id)
+    return m.group(1).upper() if m else ""
+
+
+def _genome_key(info: dict, gene_id: str = "") -> str:
+    """Build genome key like 'BJ8_A'.
+
+    Priority for subgenome letter (most → least authoritative):
+      1. gene ID  (e.g. BJ81D040500.1 → D) — intrinsic to the gene
+      2. chromosome name (e.g. chr4A → A)
+      3. BED filename   (fallback)
+    """
+    gene_sub = _gene_sub(gene_id) if gene_id else ""
     chrom_sub = _chrom_sub(info.get("chrom", ""))
-    effective_sub = chrom_sub or info.get("sub", "")
+    effective_sub = gene_sub or chrom_sub or info.get("sub", "")
     if effective_sub:
         return f"{info['genome']}_{effective_sub}"
     return info["genome"]
@@ -335,7 +352,7 @@ def api_synteny(
         og_results = dict(ex.map(_find_og, neighbors))
 
     query_cluster = _resolve_cluster(gene_id)
-    qkey = _genome_key(info)
+    qkey = _genome_key(info, gene_id)
 
     tracks = {}
 
@@ -374,7 +391,7 @@ def api_synteny(
             if _resolve_cluster(hom) != query_cluster:
                 continue
             bi = _bed_gene[hom]
-            gk = _genome_key(bi)
+            gk = _genome_key(bi, hom)
             if gk == qkey:
                 continue
             # Skip non-selected genomes when target filter is active
