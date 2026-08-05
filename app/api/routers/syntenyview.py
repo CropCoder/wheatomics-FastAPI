@@ -17,6 +17,7 @@ import glob
 import time
 import threading
 from pathlib import Path
+from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Optional
 
@@ -36,22 +37,19 @@ OG_FILE      = os.path.join(RESULTS_DIR, "Orthogroups", "Orthogroups.txt")
 TAB = chr(9)
 NL  = chr(10)
 
-BACKGROUND_WARMUP = True
-
 _prefix_map = None
 _chrom_map = None
 _bed_gene = None                 # Legacy canonical map: gene_id -> first observed BED record.
 _bed_gene_entries = None         # Robust map: gene_id -> [BED records from all files].
-_bed_gene_by_genome = None       # Robust map: genome_label -> {gene_id -> BED record}.
 _chrom_lists = None              # (genome, sub, chrom) -> [(start, gene_id)].
 _gene2og = None
 _og2genes = None
-_cluster_cache = {}
+_cluster_cache = OrderedDict()   # Bounded LRU: (gene_id, label, chrom) -> cluster.
+_CLUSTER_CACHE_MAX = 5000
 _sorted_prefixes = None
 _genomes_cache = None
 
 _load_lock = threading.RLock()
-_warmup_started = False
 _load_status = {
     "state": "not_started",
     "message": "Full data have not been loaded.",
@@ -134,7 +132,7 @@ def _load_cluster_map():
 
 
 def _load_bed():
-    global _bed_gene, _bed_gene_entries, _bed_gene_by_genome, _chrom_lists
+    global _bed_gene, _bed_gene_entries, _chrom_lists
     with _load_lock:
         if _bed_gene is not None:
             return
@@ -143,7 +141,7 @@ def _load_bed():
         bed_files = glob.glob(os.path.join(COL_BED_DIR, "*.bed"))
         if not bed_files:
             return
-        bed_gene, entries, by_genome, tmp = {}, {}, {}, {}
+        bed_gene, entries, tmp = {}, {}, {}
         for path in sorted(bed_files):
             base = re.sub(r"\.filter\.bed$|\.bed$", "", os.path.basename(path))
             genome, sub = _split_genome_sub(base)
@@ -164,12 +162,9 @@ def _load_bed():
                     }
                     bed_gene.setdefault(gid, rec)
                     entries.setdefault(gid, []).append(rec)
-                    by_genome.setdefault(label, {})[gid] = rec
-                    by_genome.setdefault(genome, {})[gid] = rec
                     tmp.setdefault((genome, sub, chrom), []).append((start, gid))
         _bed_gene = bed_gene
         _bed_gene_entries = entries
-        _bed_gene_by_genome = by_genome
         _chrom_lists = {k: sorted(v) for k, v in tmp.items()}
 
 
@@ -213,22 +208,6 @@ def _ensure_loaded():
                  len(_og2genes or {}), len(_prefix_map or {})))
         except Exception as e:
             _set_load_status("error", "Data loading failed.", repr(e))
-
-
-def _warmup_full_data():
-    try:
-        _ensure_loaded()
-    except Exception:
-        pass
-
-
-def _start_warmup_once():
-    global _warmup_started
-    if _warmup_started or not BACKGROUND_WARMUP:
-        return
-    _warmup_started = True
-    th = threading.Thread(target=_warmup_full_data, name="synteny_warmup", daemon=True)
-    th.start()
 
 
 def _find_og(gid):
@@ -341,6 +320,7 @@ def _record_matches_query_and_target(hom_gene, rec, query_cluster, target_label)
 def _resolve_cluster(gene_id, info=None):
     cache_key = (gene_id, (info or {}).get("label", ""), (info or {}).get("chrom", ""))
     if cache_key in _cluster_cache:
+        _cluster_cache.move_to_end(cache_key)
         return _cluster_cache[cache_key]
 
     cl = _gene_id_cluster(gene_id)
@@ -364,6 +344,8 @@ def _resolve_cluster(gene_id, info=None):
                 break
 
     _cluster_cache[cache_key] = cl
+    if len(_cluster_cache) > _CLUSTER_CACHE_MAX:
+        _cluster_cache.popitem(last=False)
     return cl
 
 
@@ -447,7 +429,14 @@ def _choose_gene_record(gene_id, requested_genome):
 
 
 # ---- Eager warm-up ----
-_start_warmup_once()
+# Synchronous preload at import time. With gunicorn `preload_app=True` the
+# module is imported once in the master; workers inherit the fully-built
+# caches through copy-on-write, so the multi-GB BED/Orthogroups parse happens
+# once instead of once per worker. A background thread must NOT be used here:
+# fork would race the thread, leaving each worker to re-load all data on the
+# first request (the 50G memory blowup). _ensure_loaded is idempotent, so
+# dev machines without the data dirs degrade to a no-op.
+_ensure_loaded()
 
 
 # ---- FastAPI endpoints ----
@@ -461,7 +450,6 @@ def api_genomes():
 def api_status():
     return {
         "status": _load_status,
-        "background_warmup": BACKGROUND_WARMUP,
         "genomes_cached": _genomes_cache is not None,
         "bed_loaded": _bed_gene is not None,
         "orthogroups_loaded": _gene2og is not None,
