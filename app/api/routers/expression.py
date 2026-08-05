@@ -112,36 +112,50 @@ def query_expression(
     genes_converted: dict[str, str] = {}
 
     # --- Auto-convert non-v2 (non-02G) gene IDs to IWGSC v2.1 ---
+    # Batched: a single SQL query to Genehub_DB.GenePageIWGSCv1_table resolves
+    # every v1/v3 ID at once. Previously this issued one localhost HTTP
+    # self-call per gene to /api/genes/detail/{g} — a self-inflicted deadlock
+    # (sync urllib held a threadpool worker waiting for another request that
+    # also needed a worker) plus an N+1 of DB round-trips.
+    v1_to_v2: dict[str, str] = {}
+    v3_to_v2: dict[str, str] = {}
+    need_lookup = [
+        g for g in requested_genes
+        if re.search(r"(\d{2})G", g) and not g.__contains__("02G")
+    ]
+    if need_lookup:
+        with mysql_cursor(settings.DB_GENEHUB) as cursor:
+            placeholders = ",".join(["%s"] * len(need_lookup))
+            cursor.execute(
+                f"SELECT GeneIDv1, GeneIDv2, GeneIDv3 FROM GenePageIWGSCv1_table "
+                f"WHERE GeneIDv1 IN ({placeholders}) OR GeneIDv3 IN ({placeholders})",
+                (*need_lookup, *need_lookup),
+            )
+            for row in cursor.fetchall():
+                v2 = row.get("GeneIDv2")
+                if not v2:
+                    continue
+                if row.get("GeneIDv1"):
+                    v1_to_v2[str(row["GeneIDv1"])] = str(v2)
+                if row.get("GeneIDv3"):
+                    v3_to_v2[str(row["GeneIDv3"])] = str(v2)
+
     for g in requested_genes:
         m = re.search(r"(\d{2})G", g)
         ver = m.group(1) if m else ""
         if ver == "02":
             continue
         if ver == "01":
-            # 01G → 02G: 字符串替换，IWGSC v1 到 v2 基因 ID 前缀规则一致
-            v2_id = g.replace("01G", "02G", 1)
+            # 01G → 02G: 优先查 GenePageIWGSCv1_table 拿真实映射；
+            # 未命中则按 ID 前缀规则字符串替换（IWGSC v1→v2 前缀一致）。
+            v2_id = v1_to_v2.get(g) or g.replace("01G", "02G", 1)
             if v2_id != g:
                 genes_converted[g] = v2_id
         elif ver == "03":
-            # 03G → 02G: 通过 GeneHub detail API 查询
-            import urllib.request, json as _json
-            try:
-                req = urllib.request.Request(
-                    f"http://localhost:8000/api/genes/detail/{g}",
-                    headers={"Accept": "application/json"}
-                )
-                with urllib.request.urlopen(req, timeout=5) as resp:
-                    gh_data = _json.loads(resp.read().decode())
-                if gh_data.get("success") and gh_data.get("data", {}).get("gene_ids"):
-                    # gene_ids[0] = v2, gene_ids[1] = v1, 取前两个
-                    v2_id = gh_data["data"]["gene_ids"][0]
-                    if v2_id != g:
-                        genes_converted[g] = v2_id
-            except Exception:
-                # 兜底：字符串替换
-                v2_id = g.replace("03G", "02G", 1)
-                if v2_id != g:
-                    genes_converted[g] = v2_id
+            # 03G → 02G: 优先查表，未命中则字符串替换兜底。
+            v2_id = v3_to_v2.get(g) or g.replace("03G", "02G", 1)
+            if v2_id != g:
+                genes_converted[g] = v2_id
 
     with mysql_cursor(settings.DB_GENE_EXPRESSION) as cursor:
         # 探测表结构：找基因 ID 列名和数据列
