@@ -25,7 +25,6 @@ import glob
 import time
 import threading
 from collections import OrderedDict
-from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Query
@@ -326,10 +325,16 @@ def _t_pfams(rec):
 
 
 def _find_og(gid):
+    """Return the orthogroup name for *gid*, or None.
+
+    The returned value is the og name string (not a (gid, og) tuple). It feeds
+    ``_og2genes`` lookups, track ``og`` fields, and the ``og_map`` the frontend
+    compares against ``data.og_map[query]`` — all of which expect the og name.
+    """
     if gid in _gene2og:
-        return (gid, _gene2og[gid])
+        return _gene2og[gid]
     alt = re.sub(r"\.\d+$", "", gid) if re.search(r"\.\d+$", gid) else gid + ".1"
-    return (gid, _gene2og.get(alt))
+    return _gene2og.get(alt)
 
 
 # ==================== Gene ID / chromosome analysis ====================
@@ -665,8 +670,10 @@ def api_synteny(
     neighbors = [g for _, g in gene_list[lo:hi]]
     query_order = neighbors.index(resolved_gene_id) if resolved_gene_id in neighbors else None
 
-    with ThreadPoolExecutor(max_workers=min(max(1, len(neighbors)), max(1, 2 * win + 1))) as ex:
-        og_results = dict(ex.map(_find_og, neighbors))
+    # _find_og is two dict lookups + one re.sub — a threadpool's setup/teardown
+    # overhead dwarfs the work for at most ~41 lookups. A comprehension is
+    # faster and avoids holding a threadpool worker.
+    og_results = {ng: _find_og(ng) for ng in neighbors}
 
     query_cluster = _resolve_cluster(resolved_gene_id, info)
     qkey = _t_label(info) or _genome_label(_t_genome(info), _t_sub(info))
@@ -712,11 +719,17 @@ def api_synteny(
         })
     tracks[qkey] = query_track
 
-    # Target tracks: subgenome-strict
+    # Target tracks: subgenome-strict. Multiple neighbors frequently share the
+    # same orthogroup; build a neighbor→order map once and iterate each unique
+    # OG's genes once, instead of re-walking the same OG (and its 5-regex
+    # _record_matches_query_and_target check) once per neighbor.
+    og_to_orders: dict[str, list[int]] = {}
     for order, ng in enumerate(neighbors):
         og = og_results.get(ng)
-        if not og:
-            continue
+        if og:
+            og_to_orders.setdefault(og, []).append(order)
+
+    for og, orders in og_to_orders.items():
         for hom in _og2genes.get(og, []):
             for bi in (_bed_gene_entries or {}).get(hom, []):
                 gk = _t_label(bi) or _genome_label(_t_genome(bi), _t_sub(bi))
@@ -738,22 +751,26 @@ def api_synteny(
                     "genes": [],
                     "is_query_track": False,
                 })
-                tr["genes"].append({
-                    "gene": hom,
-                    "start": _t_start(bi),
-                    "end": _t_end(bi),
-                    "description": _t_desc(bi),
-                    "pfams": _t_pfams(bi),
-                    "og": og,
-                    "order": order,
-                    "query_order": query_order,
-                    "neighbor": ng,
-                    "is_query": False,
-                    "has_orthogroup": True,
-                    "cluster": _resolve_cluster(hom, bi),
-                    "gene_subgenome": _gene_id_subgenome(hom),
-                    "chrom_subgenome": _chrom_subgenome(_t_chrom(bi)),
-                })
+                # Emit one entry per neighbor that references this OG, so the
+                # downstream "order" semantics are unchanged (neighbors[order]
+                # is the neighbor that maps to this OG).
+                for order in orders:
+                    tr["genes"].append({
+                        "gene": hom,
+                        "start": _t_start(bi),
+                        "end": _t_end(bi),
+                        "description": _t_desc(bi),
+                        "pfams": _t_pfams(bi),
+                        "og": og,
+                        "order": order,
+                        "query_order": query_order,
+                        "neighbor": neighbors[order],
+                        "is_query": False,
+                        "has_orthogroup": True,
+                        "cluster": _resolve_cluster(hom, bi),
+                        "gene_subgenome": _gene_id_subgenome(hom),
+                        "chrom_subgenome": _chrom_subgenome(_t_chrom(bi)),
+                    })
 
     # Deduplicate and sort
     for tr in tracks.values():
