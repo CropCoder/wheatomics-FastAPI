@@ -266,7 +266,7 @@ def _ensure_loaded():
 # Warmup disabled — data loads lazily on the first /neighborhood call so
 # workers that never serve a synteny query never allocate the BED/OG data.
 BACKGROUND_WARMUP = False
-_UNLOAD_IDLE_SECONDS = 120  # Free data if no /neighborhood call for N seconds
+_UNLOAD_IDLE_SECONDS = 0
 
 
 def _start_warmup_once():
@@ -281,9 +281,8 @@ def _start_warmup_once():
 def _unload_data():
     """Release all loaded BED/OG data to free memory back to the OS.
 
-    Called at the end of each /neighborhood request when the idle timeout
-    has elapsed.  gunicorn max_requests=10 handles the fallback case
-    where a single worker gets pinned by frequent synteny queries.
+    Called immediately after every /neighborhood response so worker RAM
+    does not accumulate between queries.
     """
     global _bed_gene, _bed_gene_entries, _chrom_lists, _gene2og, _og2genes
     global _prefix_map, _chrom_map, _cluster_cache, _sorted_prefixes, _last_access_time
@@ -295,23 +294,11 @@ def _unload_data():
     _cluster_cache = OrderedDict()
     _sorted_prefixes = None
     _last_access_time = None
-    _set_load_status("not_started", "Data unloaded after idle period.")
+    _set_load_status("not_started", "Data unloaded after query.")
     gc.collect()
 
 
 def _maybe_unload():
-    """Check idle timeout and unload if exceeded."""
-    global _last_access_time
-    if _bed_gene is None or _gene2og is None:
-        return
-    now = time.monotonic()
-    if _last_access_time is not None and (now - _last_access_time) > _UNLOAD_IDLE_SECONDS:
-        _unload_data()
-        return
-    _warmup_started = True
-    th = threading.Thread(target=_ensure_loaded, name="synteny_warmup", daemon=True)
-    th.start()
-
 
 # ==================== BED tuple accessors ====================
 
@@ -642,9 +629,7 @@ def api_synteny(
     window: int = Query(DEFAULT_WINDOW, ge=1, le=MAX_WINDOW),
 ):
     global _last_access_time
-    _maybe_unload()
     _ensure_loaded()
-    _last_access_time = time.monotonic()
 
     gene_id = q.strip()
     if not gene_id:
@@ -820,7 +805,7 @@ def api_synteny(
                 "end": g["end"],
             })
 
-    return {
+    result = {
         "query": resolved_gene_id,
         "submitted_query": gene_id,
         "request_genome": requested_genome,
@@ -843,3 +828,5 @@ def api_synteny(
         "tracks": ordered,
         "link_groups": list(link_groups.values()),
     }
+    _unload_data()
+    return result

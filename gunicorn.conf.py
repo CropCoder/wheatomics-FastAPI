@@ -47,8 +47,8 @@ workers = 8
 
 # Recycle each worker after ~100 requests (with ±20 jitter) so BLAST
 # subprocess memory doesn't accumulate indefinitely within a single worker.
-max_requests = 10
-max_requests_jitter = 3
+max_requests = 5
+max_requests_jitter = 2
 
 # --- Timeouts ---
 # Worker silent timeout: must exceed the longest subprocess.run call inside
