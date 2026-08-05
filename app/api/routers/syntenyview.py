@@ -2,13 +2,13 @@
 
 Path: /api/syntenyview/
 
-Runs inside the existing FastAPI process (no separate Flask process needed).
-All data files are loaded once at module import time in a background thread.
-
-Key features:
-- Reference-genome-aware query gene resolution (handles duplicated gene IDs across BED files).
+Features:
+- Reference-genome-aware query gene resolution (handles duplicated gene IDs).
 - Gene ID cluster extraction (BJ81D040500.1 → group 1) with strict subgenome validation.
-- Target tracks are subgenome-strict: a target ending with _A/_B/_D only accepts matching homologs.
+- Target tracks are subgenome-strict: _A/_B/_D suffix enforces matching subgenome.
+- BED columns 5 and 6 as Description and PFAMs.
+- window=1..20 selectable upstream/downstream neighborhood.
+- /api/syntenyview/triticeae loads preset targets from triticeae.txt.
 """
 
 import os
@@ -16,7 +16,6 @@ import re
 import glob
 import time
 import threading
-from pathlib import Path
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Optional
@@ -28,19 +27,25 @@ from app.core.config import settings
 router = APIRouter(prefix="/syntenyview", tags=["SynTeny Viewer"])
 
 # ==================== Path configuration ====================
-COL_BED_DIR  = "/var/www/html/col_bed"
-RESULTS_DIR  = "/var/www/html/orthefind/Results_Jul24"
-WD           = os.path.join(RESULTS_DIR, "WorkingDirectory")
-CLUSTER_FILE = os.path.join(WD, "SpeciesIDs_cluster.txt")
-OG_FILE      = os.path.join(RESULTS_DIR, "Orthogroups", "Orthogroups.txt")
+COL_BED_DIR     = "/var/www/html/col_bed"
+TRITICEAE_FILE  = os.path.join(COL_BED_DIR, "triticeae.txt")
+RESULTS_DIR     = "/var/www/html/orthefind/Results_Jul24"
+WD              = os.path.join(RESULTS_DIR, "WorkingDirectory")
+CLUSTER_FILE    = os.path.join(WD, "SpeciesIDs_cluster.txt")
+OG_FILE         = os.path.join(RESULTS_DIR, "Orthogroups", "Orthogroups.txt")
 
 TAB = chr(9)
 NL  = chr(10)
 
+BACKGROUND_WARMUP = True
+MAX_WINDOW        = 20
+DEFAULT_WINDOW    = 5
+
 _prefix_map = None
 _chrom_map = None
-_bed_gene = None                 # Legacy canonical map: gene_id -> first observed BED record.
-_bed_gene_entries = None         # Robust map: gene_id -> [BED records from all files].
+_bed_gene = None                 # gene_id -> first observed BED record.
+_bed_gene_entries = None         # gene_id -> [BED records from all files].
+_bed_gene_by_genome = None       # genome_label -> {gene_id -> BED record}.
 _chrom_lists = None              # (genome, sub, chrom) -> [(start, gene_id)].
 _gene2og = None
 _og2genes = None
@@ -50,6 +55,7 @@ _sorted_prefixes = None
 _genomes_cache = None
 
 _load_lock = threading.RLock()
+_warmup_started = False
 _load_status = {
     "state": "not_started",
     "message": "Full data have not been loaded.",
@@ -58,6 +64,8 @@ _load_status = {
     "error": None,
 }
 
+
+# ==================== Helpers ====================
 
 def _set_load_status(state, message="", error=None):
     _load_status["state"] = state
@@ -91,8 +99,26 @@ def _genome_label_from_bed_path(path):
     return _genome_label(genome, sub)
 
 
+def _clean_annot_value(v):
+    v = (v or "").strip()
+    return v if v else "-"
+
+
+def _parse_window(raw):
+    try:
+        w = int(str(raw or DEFAULT_WINDOW).strip())
+    except Exception:
+        w = DEFAULT_WINDOW
+    if w < 0:
+        w = 0
+    if w > MAX_WINDOW:
+        w = MAX_WINDOW
+    return w
+
+
+# ==================== Data loading ====================
+
 def _list_genomes_fast():
-    """Build the genome list from BED filenames only."""
     global _genomes_cache
     if _genomes_cache is not None:
         return _genomes_cache
@@ -132,7 +158,7 @@ def _load_cluster_map():
 
 
 def _load_bed():
-    global _bed_gene, _bed_gene_entries, _chrom_lists
+    global _bed_gene, _bed_gene_entries, _bed_gene_by_genome, _chrom_lists
     with _load_lock:
         if _bed_gene is not None:
             return
@@ -141,7 +167,7 @@ def _load_bed():
         bed_files = glob.glob(os.path.join(COL_BED_DIR, "*.bed"))
         if not bed_files:
             return
-        bed_gene, entries, tmp = {}, {}, {}
+        bed_gene, entries, by_genome, tmp = {}, {}, {}, {}
         for path in sorted(bed_files):
             base = re.sub(r"\.filter\.bed$|\.bed$", "", os.path.basename(path))
             genome, sub = _split_genome_sub(base)
@@ -159,12 +185,17 @@ def _load_bed():
                         "chrom": chrom, "start": start, "end": end,
                         "genome": genome, "sub": sub, "label": label,
                         "bed_file": os.path.basename(path),
+                        "description": _clean_annot_value(p[4] if len(p) > 4 else "-"),
+                        "pfams": _clean_annot_value(p[5] if len(p) > 5 else "-"),
                     }
                     bed_gene.setdefault(gid, rec)
                     entries.setdefault(gid, []).append(rec)
+                    by_genome.setdefault(label, {})[gid] = rec
+                    by_genome.setdefault(genome, {})[gid] = rec
                     tmp.setdefault((genome, sub, chrom), []).append((start, gid))
         _bed_gene = bed_gene
         _bed_gene_entries = entries
+        _bed_gene_by_genome = by_genome
         _chrom_lists = {k: sorted(v) for k, v in tmp.items()}
 
 
@@ -210,6 +241,22 @@ def _ensure_loaded():
             _set_load_status("error", "Data loading failed.", repr(e))
 
 
+def _warmup_full_data():
+    try:
+        _ensure_loaded()
+    except Exception:
+        pass
+
+
+def _start_warmup_once():
+    global _warmup_started
+    if _warmup_started or not BACKGROUND_WARMUP:
+        return
+    _warmup_started = True
+    th = threading.Thread(target=_warmup_full_data, name="synteny_warmup", daemon=True)
+    th.start()
+
+
 def _find_og(gid):
     if gid in _gene2og:
         return (gid, _gene2og[gid])
@@ -224,10 +271,6 @@ def _strip_version(gid):
 
 
 def _gene_id_cluster(gid):
-    """Extract the chromosome group from wheat gene IDs.
-
-    Examples: BJ81D040500.1 -> 1, Abo1A000100.1 -> 1, XXX4A012340 -> 4.
-    """
     g = _strip_version(gid)
     m = re.search(r"(?i)([1-7])([abd])(?=\d{3,})", g)
     if m:
@@ -239,7 +282,6 @@ def _gene_id_cluster(gid):
 
 
 def _gene_id_subgenome(gid):
-    """Extract A/B/D subgenome from a wheat gene ID."""
     g = _strip_version(gid)
     m = re.search(r"(?i)([1-7])([abd])(?=\d{3,})", g)
     if m:
@@ -266,7 +308,6 @@ def _chrom_cluster(chrom):
 
 
 def _chrom_subgenome(chrom):
-    """Return A/B/D from chromosome names such as chr1A, 1D, chr4B."""
     if not chrom:
         return None
     m = re.search(r"(?i)(?:chr)?[1-7]\s*([abd])\b", str(chrom).strip())
@@ -274,7 +315,6 @@ def _chrom_subgenome(chrom):
 
 
 def _label_subgenome(label):
-    """Return A/B/D/H/etc. from a genome label suffix such as BJ8_A."""
     if not label or "_" not in str(label):
         return None
     sub = str(label).rsplit("_", 1)[1].strip().upper()
@@ -286,11 +326,6 @@ def _is_abd_subgenome(sub):
 
 
 def _record_matches_query_and_target(hom_gene, rec, query_cluster, target_label):
-    """Strict homolog validation for target track placement.
-
-    Ensures that a target track ending with _A does not receive D-subgenome genes.
-    Gene ID subgenome is treated as the strongest clue.
-    """
     gene_cl = _gene_id_cluster(hom_gene)
     gene_sub = _gene_id_subgenome(hom_gene)
     chrom_cl = _chrom_cluster((rec or {}).get("chrom"))
@@ -320,6 +355,7 @@ def _record_matches_query_and_target(hom_gene, rec, query_cluster, target_label)
 def _resolve_cluster(gene_id, info=None):
     cache_key = (gene_id, (info or {}).get("label", ""), (info or {}).get("chrom", ""))
     if cache_key in _cluster_cache:
+        # Move to end for LRU
         _cluster_cache.move_to_end(cache_key)
         return _cluster_cache[cache_key]
 
@@ -344,7 +380,8 @@ def _resolve_cluster(gene_id, info=None):
                 break
 
     _cluster_cache[cache_key] = cl
-    if len(_cluster_cache) > _CLUSTER_CACHE_MAX:
+    # Evict oldest if over limit
+    while len(_cluster_cache) > _CLUSTER_CACHE_MAX:
         _cluster_cache.popitem(last=False)
     return cl
 
@@ -363,7 +400,6 @@ def _candidate_gene_ids(gid):
 
 
 def _choose_gene_record(gene_id, requested_genome):
-    """Resolve a query gene to the BED record inside the selected reference genome."""
     wanted = (requested_genome or "").strip()
     wanted_sub = None
     wanted_base = wanted
@@ -428,18 +464,36 @@ def _choose_gene_record(gene_id, requested_genome):
     return chosen_rec, chosen_gid, [rec for _, rec in all_hits]
 
 
-# ---- Eager warm-up ----
-# Synchronous preload at import time. With gunicorn `preload_app=True` the
-# module is imported once in the master; workers inherit the fully-built
-# caches through copy-on-write, so the multi-GB BED/Orthogroups parse happens
-# once instead of once per worker. A background thread must NOT be used here:
-# fork would race the thread, leaving each worker to re-load all data on the
-# first request (the 50G memory blowup). _ensure_loaded is idempotent, so
-# dev machines without the data dirs degrade to a no-op.
-_ensure_loaded()
+def _read_triticeae_targets():
+    if os.path.exists(TRITICEAE_FILE):
+        source = TRITICEAE_FILE
+    else:
+        return [], None
+
+    labels = []
+    seen = set()
+    with open(source, encoding="utf-8", errors="ignore") as f:
+        for raw_line in f:
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            for item in re.split(r"\s+", line):
+                item = item.strip()
+                if not item or item.startswith("#"):
+                    continue
+                item = re.sub(r"\.filter\.bed$|\.bed$", "", item)
+                if item not in seen:
+                    seen.add(item)
+                    labels.append(item)
+    return labels, source
 
 
-# ---- FastAPI endpoints ----
+# ==================== Startup ====================
+
+_start_warmup_once()
+
+
+# ==================== FastAPI endpoints ====================
 
 @router.get("/genomes")
 def api_genomes():
@@ -448,8 +502,10 @@ def api_genomes():
 
 @router.get("/status")
 def api_status():
+    triticeae_labels, triticeae_source = _read_triticeae_targets()
     return {
         "status": _load_status,
+        "background_warmup": BACKGROUND_WARMUP,
         "genomes_cached": _genomes_cache is not None,
         "bed_loaded": _bed_gene is not None,
         "orthogroups_loaded": _gene2og is not None,
@@ -459,7 +515,31 @@ def api_status():
         "orthogroups": len(_og2genes) if _og2genes else 0,
         "prefixes": len(_prefix_map) if _prefix_map else 0,
         "og_file": OG_FILE,
+        "max_window": MAX_WINDOW,
+        "triticeae_file": TRITICEAE_FILE,
+        "triticeae_source": triticeae_source,
+        "triticeae_count": len(triticeae_labels),
     }
+
+
+@router.get("/triticeae")
+def api_triticeae():
+    try:
+        labels, source = _read_triticeae_targets()
+        genomes = set(_list_genomes_fast())
+        matched = [g for g in labels if g in genomes]
+        missing = [g for g in labels if g not in genomes]
+        return {
+            "source": source,
+            "targets": labels,
+            "matched_targets": matched,
+            "missing_targets": missing,
+            "matched_count": len(matched),
+            "missing_count": len(missing),
+            "error": None if source else "triticeae.txt was not found.",
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 
 def _parse_target_genomes(targets_str: str) -> set:
@@ -476,6 +556,7 @@ def api_synteny(
     genome: str = Query("", description="Reference genome filter"),
     subgenome: str = Query("", description="Optional subgenome filter"),
     targets: str = Query("", description="Comma-separated target genome filter"),
+    window: int = Query(DEFAULT_WINDOW, ge=1, le=MAX_WINDOW),
 ):
     _ensure_loaded()
 
@@ -485,6 +566,7 @@ def api_synteny(
 
     requested_genome = genome.strip()
     target_labels = _parse_target_genomes(targets)
+    win = _parse_window(window)
 
     info, resolved_gene_id, candidate_records = _choose_gene_record(gene_id, requested_genome)
     if not info:
@@ -510,10 +592,11 @@ def api_synteny(
             "query_chrom": info.get("chrom"),
         }
 
-    lo, hi = max(0, idx - 5), min(len(gene_list), idx + 6)
+    lo, hi = max(0, idx - win), min(len(gene_list), idx + win + 1)
     neighbors = [g for _, g in gene_list[lo:hi]]
+    query_order = neighbors.index(resolved_gene_id) if resolved_gene_id in neighbors else None
 
-    with ThreadPoolExecutor(max_workers=min(11, max(1, len(neighbors)))) as ex:
+    with ThreadPoolExecutor(max_workers=min(max(1, len(neighbors)), max(1, 2 * win + 1))) as ex:
         og_results = dict(ex.map(_find_og, neighbors))
 
     query_cluster = _resolve_cluster(resolved_gene_id, info)
@@ -522,7 +605,7 @@ def api_synteny(
     tracks = {}
     skipped_counts = {}
 
-    # Query track: exact BED neighborhood (±5 genes)
+    # Query track
     query_track = {
         "label": qkey,
         "chrom": info["chrom"],
@@ -532,7 +615,9 @@ def api_synteny(
     for order, ng in enumerate(neighbors):
         ninfo = None
         for rec in (_bed_gene_entries or {}).get(ng, []):
-            if rec.get("genome") == info.get("genome") and rec.get("sub") == info.get("sub") and rec.get("chrom") == info.get("chrom"):
+            if (rec.get("genome") == info.get("genome")
+                    and rec.get("sub") == info.get("sub")
+                    and rec.get("chrom") == info.get("chrom")):
                 ninfo = rec
                 break
         if not ninfo:
@@ -544,16 +629,21 @@ def api_synteny(
             "gene": ng,
             "start": ninfo["start"],
             "end": ninfo["end"],
+            "description": ninfo.get("description", "-"),
+            "pfams": ninfo.get("pfams", "-"),
             "og": og,
             "order": order,
+            "query_order": query_order,
             "neighbor": ng,
             "is_query": ng == resolved_gene_id,
             "has_orthogroup": bool(og),
             "cluster": _resolve_cluster(ng, ninfo),
+            "gene_subgenome": _gene_id_subgenome(ng),
+            "chrom_subgenome": _chrom_subgenome(ninfo.get("chrom")),
         })
     tracks[qkey] = query_track
 
-    # Other genomes: only OG orthologs in the same cluster, subgenome-strict
+    # Target tracks: subgenome-strict
     for order, ng in enumerate(neighbors):
         og = og_results.get(ng)
         if not og:
@@ -583,8 +673,11 @@ def api_synteny(
                     "gene": hom,
                     "start": bi["start"],
                     "end": bi["end"],
+                    "description": bi.get("description", "-"),
+                    "pfams": bi.get("pfams", "-"),
                     "og": og,
                     "order": order,
+                    "query_order": query_order,
                     "neighbor": ng,
                     "is_query": False,
                     "has_orthogroup": True,
@@ -593,6 +686,7 @@ def api_synteny(
                     "chrom_subgenome": _chrom_subgenome(bi.get("chrom")),
                 })
 
+    # Deduplicate and sort
     for tr in tracks.values():
         seen = set()
         unique = []
@@ -615,8 +709,7 @@ def api_synteny(
             tr["region_end"] = None
             tr["region_label"] = ""
 
-    ordered = sorted(tracks.values(), key=lambda t: (0 if t["label"] == qkey else 1, t["label"]))
-    matched_target_genomes = [t["label"] for t in ordered if t["label"] != qkey]
+    ordered = sorted(tracks.values(), key=lambda t: t["label"])
 
     link_groups = {}
     for ti, tr in enumerate(ordered):
@@ -646,16 +739,19 @@ def api_synteny(
         "submitted_query": gene_id,
         "request_genome": requested_genome,
         "requested_targets": sorted(target_labels),
+        "window": win,
+        "max_window": MAX_WINDOW,
         "query_genome": qkey,
         "query_chrom": info["chrom"],
         "query_start": info["start"],
         "query_end": info["end"],
+        "query_description": info.get("description", "-"),
+        "query_pfams": info.get("pfams", "-"),
         "query_region_label": _mb_label(info["start"], info["end"]),
         "query_cluster": query_cluster,
         "query_gene_subgenome": _gene_id_subgenome(resolved_gene_id),
+        "query_order": query_order,
         "skipped_counts": skipped_counts,
-        "target_genomes_requested": sorted(target_labels),
-        "target_genomes_matched": matched_target_genomes,
         "neighbors": neighbors,
         "og_map": og_results,
         "tracks": ordered,
