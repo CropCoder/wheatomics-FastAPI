@@ -45,7 +45,6 @@ _prefix_map = None
 _chrom_map = None
 _bed_gene = None                 # gene_id -> first observed BED record.
 _bed_gene_entries = None         # gene_id -> [BED records from all files].
-_bed_gene_by_genome = None       # genome_label -> {gene_id -> BED record}.
 _chrom_lists = None              # (genome, sub, chrom) -> [(start, gene_id)].
 _gene2og = None
 _og2genes = None
@@ -158,7 +157,7 @@ def _load_cluster_map():
 
 
 def _load_bed():
-    global _bed_gene, _bed_gene_entries, _bed_gene_by_genome, _chrom_lists
+    global _bed_gene, _bed_gene_entries, _chrom_lists
     with _load_lock:
         if _bed_gene is not None:
             return
@@ -167,7 +166,7 @@ def _load_bed():
         bed_files = glob.glob(os.path.join(COL_BED_DIR, "*.bed"))
         if not bed_files:
             return
-        bed_gene, entries, by_genome, tmp = {}, {}, {}, {}
+        bed_gene, entries, tmp = {}, {}, {}
         for path in sorted(bed_files):
             base = re.sub(r"\.filter\.bed$|\.bed$", "", os.path.basename(path))
             genome, sub = _split_genome_sub(base)
@@ -190,12 +189,9 @@ def _load_bed():
                     }
                     bed_gene.setdefault(gid, rec)
                     entries.setdefault(gid, []).append(rec)
-                    by_genome.setdefault(label, {})[gid] = rec
-                    by_genome.setdefault(genome, {})[gid] = rec
                     tmp.setdefault((genome, sub, chrom), []).append((start, gid))
         _bed_gene = bed_gene
         _bed_gene_entries = entries
-        _bed_gene_by_genome = by_genome
         _chrom_lists = {k: sorted(v) for k, v in tmp.items()}
 
 
