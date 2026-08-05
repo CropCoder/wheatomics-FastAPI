@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import subprocess
 from pathlib import Path
 
 from fastapi import APIRouter, Query, Request
@@ -207,6 +208,14 @@ VARIANTHUB_DATASETS: dict[str, dict[str, str]] = {
 }
 
 _MAX_REGION_BP = 5_000_000
+#: Hard cap on records collected per query, regardless of pagination. Guards
+#: against a huge region or a runaway full-file scan materializing millions of
+#: genotype-bearing dicts in worker memory (the same shape as the 50G incident).
+_MAX_RECORDS = 500_000
+#: Hard cap on lines scanned during a full-file variant_id lookup on a
+#: duplicated-sample VCF (which cannot use bcftools and falls back to streaming
+#: the whole file). Stops unbounded scanning of a multi-GB VCF for a miss.
+_MAX_SCAN_LINES = 5_000_000
 
 
 def _bcftools_path() -> str:
@@ -390,18 +399,6 @@ def _dedupe_samples(samples: list[str]) -> list[str]:
     return result
 
 
-def _tabix_records(vcf: Path, region: str) -> str:
-    """Fetch raw VCF lines for a region via tabix (tolerant, uses the .tbi index)."""
-    result = run_command([_tabix_path(), str(vcf), region])
-    return result.stdout
-
-
-def _zcat_records(vcf: Path) -> str:
-    """Dump the full VCF via gzip -dc (tolerant fallback for full-file ID scans)."""
-    result = run_command(["gzip", "-dc", str(vcf)])
-    return result.stdout
-
-
 def _tabix_path() -> str:
     """Locate tabix binary (used only for files whose headers bcftools rejects)."""
     candidates = [
@@ -414,6 +411,118 @@ def _tabix_path() -> str:
         if c.exists():
             return str(c)
     return str(candidates[0])
+
+
+def _stream_lines(cmd: list[str], *, timeout: int | None = None):
+    """Yield stdout lines of a subprocess without buffering the whole output.
+
+    Unlike ``run_command`` (which captures the entire stdout into one string),
+    this streams so a multi-GB VCF never lands in worker memory. A daemon
+    watchdog thread kills the process if it runs past ``timeout`` (default
+    ``REQUEST_TIMEOUT_SECONDS``), covering the case where a producer hangs
+    without emitting any output. The caller MUST iterate fully or break and
+    then close the generator so the finally reaps the process.
+    """
+    import threading
+
+    wall = timeout or settings.REQUEST_TIMEOUT_SECONDS
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        bufsize=1,
+    )
+
+    def _watchdog():
+        try:
+            proc.wait(timeout=wall)
+        except subprocess.TimeoutExpired:
+            # Only kill if still running; the generator's finally may have
+            # already reaped it after an early break.
+            if proc.poll() is None:
+                proc.kill()
+
+    threading.Thread(target=_watchdog, daemon=True).start()
+
+    try:
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            yield line
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
+        if proc.stdout:
+            proc.stdout.close()
+        stderr = proc.stderr.read() if proc.stderr else ""
+        if proc.stderr:
+            proc.stderr.close()
+        # A negative returncode means we killed it (early break or watchdog);
+        # only surface genuine tool failures.
+        if proc.returncode not in (0, -9, None) and stderr.strip():
+            raise ExternalToolFailure(stderr.strip())
+
+
+def _collect_streamed_records(
+    cmd: list[str],
+    *,
+    samples: list[str] | None,
+    variant_id: str | None = None,
+    max_records: int = _MAX_RECORDS,
+    max_scan_lines: int = _MAX_SCAN_LINES,
+) -> tuple[list[str], list[dict]]:
+    """Stream a VCF-producing command and collect records with hard caps.
+
+    ``samples`` is the pre-resolved sample list (from the header) when the
+    command emits no header (tabix/gzip); ``None`` means parse the #CHROM line
+    from the stream. If ``variant_id`` is given, only matching records are kept
+    (full-file ID scan, bounded by ``max_scan_lines``). Otherwise every data
+    record is kept up to ``max_records``.
+    """
+    resolved_samples: list[str] = list(samples) if samples is not None else []
+    records: list[dict] = []
+    lines_scanned = 0
+    for line in _stream_lines(cmd):
+        if line.startswith("#"):
+            if line.startswith("#CHROM") and samples is None:
+                fields = line.rstrip("\n").split("\t")
+                resolved_samples = fields[9:] if len(fields) > 9 else []
+            continue
+        lines_scanned += 1
+        if variant_id is not None:
+            # Cheapest filter first: check the ID column before parsing the row.
+            fields = line.split("\t", 3)
+            if len(fields) < 3 or fields[2] != variant_id:
+                if lines_scanned >= max_scan_lines:
+                    break
+                continue
+            if lines_scanned >= max_scan_lines:
+                break
+        fields = line.rstrip("\n").split("\t")
+        if len(fields) < 8:
+            continue
+        record = {
+            "chrom": fields[0],
+            "pos": int(fields[1]),
+            "id": fields[2],
+            "ref": fields[3],
+            "alt": fields[4],
+            "qual": fields[5],
+            "filter": fields[6],
+            "info": _parse_info(fields[7]),
+            "info_raw": fields[7],
+        }
+        if len(fields) > 8:
+            record["format"] = fields[8]
+            record["genotypes"] = fields[9:]
+        records.append(record)
+        if len(records) >= max_records:
+            break
+    return resolved_samples, records
 
 
 def _parse_info(info_raw: str) -> dict[str, object]:
@@ -433,6 +542,8 @@ def _parse_info(info_raw: str) -> dict[str, object]:
 def _parse_vcf_records(text: str, samples: list[str] | None = None) -> tuple[list[str], list[dict]]:
     """Parse VCF text into (samples, records).
 
+    NOTE: kept for header/short-text parsing only. The query path uses
+    ``_collect_streamed_records`` so a multi-GB VCF is never captured whole.
     Samples come from the #CHROM line unless `samples` is passed explicitly
     (used by the tabix fallback, which outputs no header). Each record
     carries raw genotype strings in the same order as the returned samples.
@@ -611,27 +722,38 @@ def varianthub_query(
 
     if has_duplicates:
         # bcftools aborts on duplicated sample names. Fall back to tolerant
-        # tools: tabix for region slices, zcat for full-file ID scans, and
-        # column-based sample selection. Sample names in the response are
-        # deduplicated (Wumangchunmai, Wumangchunmai_2, ...).
+        # tools: tabix for region slices, gzip -dc streamed for full-file ID
+        # scans, and column-based sample selection. Sample names in the
+        # response are deduplicated (Wumangchunmai, Wumangchunmai_2, ...).
+        # All paths STREAM the VCF — never capture the whole file into memory
+        # (the population VCFs are multi-GB; capturing them OOMs the worker).
         all_samples = _dedupe_samples(available_samples)
         if region is not None:
-            text = ""
+            records: list[dict] = []
             for candidate in _parse_region(region):
                 try:
-                    text = _tabix_records(vcf, candidate)
+                    all_samples, records = _collect_streamed_records(
+                        [_tabix_path(), str(vcf), candidate],
+                        samples=all_samples,
+                        max_records=_MAX_RECORDS,
+                    )
                 except ExternalToolFailure:
                     continue
-                if text.strip():
+                if records:
                     break
         else:
             assert variant_id is not None
             if not GENE_ID_PATTERN.match(variant_id):
                 raise ValidationFailure(f"Invalid variant_id: {variant_id!r}")
-            text = _zcat_records(vcf)
-        _, records = _parse_vcf_records(text, all_samples)
-        if variant_id is not None:
-            records = [r for r in records if r["id"] == variant_id]
+            # Stream the whole file but keep only the matching ID(s); bounded
+            # by _MAX_SCAN_LINES so a miss on a multi-GB VCF returns quickly.
+            all_samples, records = _collect_streamed_records(
+                ["gzip", "-dc", str(vcf)],
+                samples=all_samples,
+                variant_id=variant_id,
+                max_records=_MAX_RECORDS,
+                max_scan_lines=_MAX_SCAN_LINES,
+            )
         if requested is not None:
             keep = [all_samples.index(s) for s in requested]
             all_samples = requested
@@ -647,26 +769,32 @@ def varianthub_query(
         if region is not None:
             # Try the chromosome name as given, then the chr/Chr casing
             # variant if the tool errors or the slice comes back empty.
-            result = None
             records = []
             candidates = _parse_region(region)
             for i, candidate in enumerate(candidates):
                 last = i == len(candidates) - 1
                 try:
-                    result = run_command(cmd + ["-r", candidate])
+                    all_samples, records = _collect_streamed_records(
+                        cmd + ["-r", candidate],
+                        samples=None,
+                        max_records=_MAX_RECORDS,
+                    )
                 except ExternalToolFailure:
                     if last:
                         raise
                     continue
-                all_samples, records = _parse_vcf_records(result.stdout)
                 if records or last:
                     break
         else:
             assert variant_id is not None
             if not GENE_ID_PATTERN.match(variant_id):
                 raise ValidationFailure(f"Invalid variant_id: {variant_id!r}")
-            result = run_command(cmd + ["-i", f'ID="{variant_id}"'])
-            all_samples, records = _parse_vcf_records(result.stdout)
+            # bcftools -i only emits matching rows, so the stream stays small.
+            all_samples, records = _collect_streamed_records(
+                cmd + ["-i", f'ID="{variant_id}"'],
+                samples=None,
+                max_records=_MAX_RECORDS,
+            )
 
     page = records[offset:offset + limit]
     meta = VARIANTHUB_DATASETS[dataset]
