@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Query
 
 from app.core.config import settings
-from app.core.exceptions import ResourceNotFound
+from app.core.exceptions import ResourceNotFound, ValidationFailure
 from app.core.response import ok
 from app.core.security import COEXPRESSION_TABLES, ensure_allowed_table, ensure_gene_like
 from app.db.mysql import mysql_cursor
@@ -85,6 +85,10 @@ def query_coexpression(
 
     database = ensure_allowed_table(database, COEXPRESSION_TABLES, "coexpression table")
     genes = [ensure_gene_like(gene.strip()) for gene in gene_ids.split(",") if gene.strip()]
+    if not genes:
+        raise ValidationFailure("No valid gene IDs provided")
+    if len(genes) > 200:
+        raise ValidationFailure(f"Too many gene IDs ({len(genes)}); maximum is 200 per query")
     pairs: list[CoexpressionPair] = []
     seen: set[tuple[str, str]] = set()
     gene_present = False
@@ -99,45 +103,48 @@ def query_coexpression(
     # which table is queried.
     select_cols = "Gene1 AS gene1, Gene2 AS gene2, PCC AS pcc, MR AS mr"
 
+    # Batched: one query for all genes (previously N queries, one per gene).
+    # `(Gene1 IN (...) OR Gene2 IN (...))` keeps any pair touching a requested
+    # gene; the per-row dedup below collapses the same pair seen from both ends.
+    placeholders = ",".join(["%s"] * len(genes))
     with mysql_cursor(settings.DB_COEXPRESSION) as cursor:
-        for gene in genes:
-            if "." in str(filter_value):
-                cursor.execute(
-                    f"""
-                    SELECT {select_cols}
-                    FROM `{database}`
-                    WHERE (Gene1 = %s OR Gene2 = %s)
-                    AND (CAST(PCC AS DECIMAL(10,4)) >= %s OR CAST(PCC AS DECIMAL(10,4)) <= %s)
-                    ORDER BY CAST(PCC AS DECIMAL(10,4)) DESC
-                    """,
-                    (gene, gene, filter_value, -filter_value),
+        if "." in str(filter_value):
+            cursor.execute(
+                f"""
+                SELECT {select_cols}
+                FROM `{database}`
+                WHERE (Gene1 IN ({placeholders}) OR Gene2 IN ({placeholders}))
+                AND (CAST(PCC AS DECIMAL(10,4)) >= %s OR CAST(PCC AS DECIMAL(10,4)) <= %s)
+                ORDER BY CAST(PCC AS DECIMAL(10,4)) DESC
+                """,
+                (*genes, *genes, filter_value, -filter_value),
+            )
+        else:
+            cursor.execute(
+                f"""
+                SELECT {select_cols}
+                FROM `{database}`
+                WHERE (Gene1 IN ({placeholders}) OR Gene2 IN ({placeholders}))
+                AND CAST(MR AS UNSIGNED) <= %s
+                ORDER BY CAST(MR AS UNSIGNED) ASC
+                """,
+                (*genes, *genes, int(filter_value)),
+            )
+        for row in cursor.fetchall():
+            gene1 = str(row["gene1"]).strip()
+            gene2 = str(row["gene2"]).strip()
+            key = tuple(sorted((gene1, gene2)))
+            if key in seen:
+                continue
+            seen.add(key)
+            pairs.append(
+                CoexpressionPair(
+                    gene1=gene1,
+                    gene2=gene2,
+                    pcc=float(row["pcc"]),
+                    mr=int(str(row["mr"]).split(".")[0]),
                 )
-            else:
-                cursor.execute(
-                    f"""
-                    SELECT {select_cols}
-                    FROM `{database}`
-                    WHERE (Gene1 = %s OR Gene2 = %s)
-                    AND CAST(MR AS UNSIGNED) <= %s
-                    ORDER BY CAST(MR AS UNSIGNED) ASC
-                    """,
-                    (gene, gene, int(filter_value)),
-                )
-            for row in cursor.fetchall():
-                gene1 = str(row["gene1"]).strip()
-                gene2 = str(row["gene2"]).strip()
-                key = tuple(sorted((gene1, gene2)))
-                if key in seen:
-                    continue
-                seen.add(key)
-                pairs.append(
-                    CoexpressionPair(
-                        gene1=gene1,
-                        gene2=gene2,
-                        pcc=float(row["pcc"]),
-                        mr=int(str(row["mr"]).split(".")[0]),
-                    )
-                )
+            )
 
     # If we found no pairs at all, probe whether the genes actually exist
     # in the chosen database so the caller can distinguish "no partners
@@ -146,15 +153,14 @@ def query_coexpression(
     # least one gene exists — that's a real "no partners" answer.
     if not pairs and genes:
         with mysql_cursor(settings.DB_COEXPRESSION) as cursor:
-            # Probe one gene at a time; if any is found, gene_present=True.
-            for gene in genes:
-                cursor.execute(
-                    f"SELECT 1 FROM `{database}` WHERE Gene1 = %s OR Gene2 = %s LIMIT 1",
-                    (gene, gene),
-                )
-                if cursor.fetchone():
-                    gene_present = True
-                    break
+            # Batched existence probe (previously one query per gene).
+            cursor.execute(
+                f"SELECT 1 FROM `{database}` "
+                f"WHERE Gene1 IN ({placeholders}) OR Gene2 IN ({placeholders}) LIMIT 1",
+                (*genes, *genes),
+            )
+            if cursor.fetchone():
+                gene_present = True
 
     return ok({
         "database": database,

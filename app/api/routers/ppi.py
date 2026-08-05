@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import re
+
 from fastapi import APIRouter, Query
 
 from app.core.config import settings
+from app.core.exceptions import ValidationFailure
 from app.core.response import ok
 from app.core.security import PPI_TABLES, ensure_allowed_table, ensure_gene_like
 from app.db.mysql import mysql_cursor
@@ -69,42 +72,52 @@ def query_ppi(
 
     table = ensure_allowed_table(table, PPI_TABLES, "ppi table")
     genes = [ensure_gene_like(gene.strip()) for gene in gene_ids.split(",") if gene.strip()]
+    if not genes:
+        raise ValidationFailure("No valid gene IDs provided")
+    if len(genes) > 200:
+        raise ValidationFailure(f"Too many gene IDs ({len(genes)}); maximum is 200 per query")
     interactions: list[PPIInteraction] = []
 
+    # Batched: one query for all genes (previously N queries, one per gene).
+    # REGEXP can't use an index, so we still scan once per table, but now it's
+    # one scan matching any of the requested genes via alternation, not N scans.
+    # Each gene is anchored (^...$) so a prefix doesn't match unrelated IDs.
+    patterns = [f"^{re.escape(g)}$" for g in genes]
+    # MySQL REGEXP supports alternation; join into one pattern so a single scan
+    # matches any requested gene in either WheatID column.
+    combined = "|".join(patterns)
     with mysql_cursor(settings.DB_PPI) as cursor:
-        for gene in genes:
-            cursor.execute(
-                f"""
-                SELECT * FROM `{table}`
-                WHERE (WheatID1 REGEXP %s OR WheatID2 REGEXP %s) AND Score >= %s
-                """,
-                (gene, gene, min_score),
-            )
-            # Discover actual column names from cursor.description (positional, like CGI)
-            col_map = {}
-            if cursor.description:
-                cnames = [d[0] for d in cursor.description]
-                # Map by position to match CGI select * order
-                col_map = {
-                    "WheatID1":     cnames[1] if len(cnames) > 1 else "WheatID1",
-                    "WheatID2":     cnames[2] if len(cnames) > 2 else "WheatID2",
-                    "eggNOGID1":    cnames[3] if len(cnames) > 3 else "eggNOGID1",
-                    "eggNOGID2":    cnames[4] if len(cnames) > 4 else "eggNOGID2",
-                    "Score":        cnames[5] if len(cnames) > 5 else "Score",
-                    "Annotation1":  cnames[6] if len(cnames) > 6 else "Annotation1",
-                    "Annotation2":  cnames[7] if len(cnames) > 7 else "Annotation2",
-                }
-            for row in cursor.fetchall():
-                interactions.append(
-                    PPIInteraction(
-                        wheat_id1=[item.strip() for item in str(row[col_map["WheatID1"]]).split("#") if item.strip()],
-                        wheat_id2=[item.strip() for item in str(row[col_map["WheatID2"]]).split("#") if item.strip()],
-                        eggnog_id1=str(row[col_map["eggNOGID1"]]),
-                        eggnog_id2=str(row[col_map["eggNOGID2"]]),
-                        score=float(row[col_map["Score"]]),
-                        annotation1=normalize_text(str(row[col_map["Annotation1"]])),
-                        annotation2=normalize_text(str(row[col_map["Annotation2"]])),
-                    )
+        cursor.execute(
+            f"""
+            SELECT * FROM `{table}`
+            WHERE (WheatID1 REGEXP %s OR WheatID2 REGEXP %s) AND Score >= %s
+            """,
+            (combined, combined, min_score),
+        )
+        # Discover actual column names from cursor.description (positional, like CGI)
+        col_map = {}
+        if cursor.description:
+            cnames = [d[0] for d in cursor.description]
+            col_map = {
+                "WheatID1":     cnames[1] if len(cnames) > 1 else "WheatID1",
+                "WheatID2":     cnames[2] if len(cnames) > 2 else "WheatID2",
+                "eggNOGID1":    cnames[3] if len(cnames) > 3 else "eggNOGID1",
+                "eggNOGID2":    cnames[4] if len(cnames) > 4 else "eggNOGID2",
+                "Score":        cnames[5] if len(cnames) > 5 else "Score",
+                "Annotation1":  cnames[6] if len(cnames) > 6 else "Annotation1",
+                "Annotation2":  cnames[7] if len(cnames) > 7 else "Annotation2",
+            }
+        for row in cursor.fetchall():
+            interactions.append(
+                PPIInteraction(
+                    wheat_id1=[item.strip() for item in str(row[col_map["WheatID1"]]).split("#") if item.strip()],
+                    wheat_id2=[item.strip() for item in str(row[col_map["WheatID2"]]).split("#") if item.strip()],
+                    eggnog_id1=str(row[col_map["eggNOGID1"]]),
+                    eggnog_id2=str(row[col_map["eggNOGID2"]]),
+                    score=float(row[col_map["Score"]]),
+                    annotation1=normalize_text(str(row[col_map["Annotation1"]])),
+                    annotation2=normalize_text(str(row[col_map["Annotation2"]])),
                 )
+            )
 
     return ok({"interactions": [interaction.model_dump() for interaction in interactions]})

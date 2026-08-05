@@ -12,6 +12,22 @@ from app.db.mysql import mysql_cursor
 from app.schemas.comparative import HomologHit, IDMapping, SyntenyRecord
 from app.services.legacy_parsers import normalize_text, pick_first
 
+
+def _synteny_row_to_record(row: dict) -> SyntenyRecord:
+    """Build a SyntenyRecord from a raw DB row (shared by interval + gene paths)."""
+    return SyntenyRecord(
+        chromosome=str(row["Chrom"]),
+        start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
+        end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
+        strand=str(row["Strand"]),
+        gene=str(row["Gene"]),
+        chinese_spring=normalize_text(pick_first(row, "Chinese_spring", "ChineseSpring", "Chinese spring")) or None,
+        durum_wheat=normalize_text(pick_first(row, "Durum_wheat", "Durum wheat")) or None,
+        wild_emmer=normalize_text(pick_first(row, "Wild_emmer", "Wild emmer")) or None,
+        triticum_urartu=normalize_text(pick_first(row, "Triticum_urartu", "Triticum urartu")) or None,
+        aegilops_tauschii=normalize_text(pick_first(row, "Aegilops_tauschii", "Aegilops tauschii")) or None,
+    )
+
 router = APIRouter(tags=["Comparative genomics"])
 
 
@@ -146,39 +162,41 @@ def search_synteny(
     tokens = [item.strip() for item in query.split() if item.strip()]
     records: list[SyntenyRecord] = []
 
-    with mysql_cursor(settings.DB_SYMAP) as cursor:
-        for token in tokens:
-            if ":" in token:
-                ensure_interval_like(token)
-                chrom = token.split(":")[0]
-                interval = token.split(":")[1].replace("..", "-")
-                start_text, end_text = interval.split("-")
-                start, end = int(start_text), int(end_text)
-                if end <= start or end - start > 30_000_000:
-                    raise ValidationFailure("Region should be <= 30Mb and end > start")
-                cursor.execute(
-                    f"SELECT * FROM `{table}` WHERE Chrom=%s AND Start1 >= %s AND End1 <= %s",
-                    (chrom, start, end),
-                )
-            else:
-                ensure_gene_like(token)
-                cursor.execute(f"SELECT * FROM `{table}` WHERE Gene = %s", (token,))
+    # Split tokens by type: gene-ID tokens are batched into one IN(...) query;
+    # interval tokens each need their own chrom/range query, so they stay
+    # per-token (previously every token was a separate query — an N+1 for the
+    # gene-ID case).
+    interval_tokens: list[str] = []
+    gene_tokens: list[str] = []
+    for token in tokens:
+        if ":" in token:
+            interval_tokens.append(token)
+        else:
+            gene_tokens.append(token)
 
+    with mysql_cursor(settings.DB_SYMAP) as cursor:
+        for token in interval_tokens:
+            ensure_interval_like(token)
+            chrom = token.split(":")[0]
+            interval = token.split(":")[1].replace("..", "-")
+            start_text, end_text = interval.split("-")
+            start, end = int(start_text), int(end_text)
+            if end <= start or end - start > 30_000_000:
+                raise ValidationFailure("Region should be <= 30Mb and end > start")
+            cursor.execute(
+                f"SELECT * FROM `{table}` WHERE Chrom=%s AND Start1 >= %s AND End1 <= %s",
+                (chrom, start, end),
+            )
             for row in cursor.fetchall():
-                records.append(
-                    SyntenyRecord(
-                        chromosome=str(row["Chrom"]),
-                        start_mb=round(float(row["Start1"]) / 1_000_000.0, 6),
-                        end_mb=round(float(row["End1"]) / 1_000_000.0, 6),
-                        strand=str(row["Strand"]),
-                        gene=str(row["Gene"]),
-                        chinese_spring=normalize_text(pick_first(row, "Chinese_spring", "ChineseSpring", "Chinese spring")) or None,
-                        durum_wheat=normalize_text(pick_first(row, "Durum_wheat", "Durum wheat")) or None,
-                        wild_emmer=normalize_text(pick_first(row, "Wild_emmer", "Wild emmer")) or None,
-                        triticum_urartu=normalize_text(pick_first(row, "Triticum_urartu", "Triticum urartu")) or None,
-                        aegilops_tauschii=normalize_text(pick_first(row, "Aegilops_tauschii", "Aegilops tauschii")) or None,
-                    )
-                )
+                records.append(_synteny_row_to_record(row))
+
+        if gene_tokens:
+            for token in gene_tokens:
+                ensure_gene_like(token)
+            placeholders = ",".join(["%s"] * len(gene_tokens))
+            cursor.execute(f"SELECT * FROM `{table}` WHERE Gene IN ({placeholders})", tuple(gene_tokens))
+            for row in cursor.fetchall():
+                records.append(_synteny_row_to_record(row))
 
     return ok({"count": len(records), "records": [record.model_dump() for record in records]})
 
@@ -240,26 +258,37 @@ def convert_gene_ids(
     # + in query string is treated as space by web frameworks, but handle literally too
     gene_ids = gene_ids.replace("+", " ")
     genes = [ensure_gene_like(g.strip()) for g in gene_ids.split() if g.strip()]
+    if not genes:
+        raise ValidationFailure("No valid gene IDs provided")
+    if len(genes) > 200:
+        raise ValidationFailure(f"Too many gene IDs ({len(genes)}); maximum is 200 per query")
     mappings: list[IDMapping] = []
     not_found: list[str] = []
 
+    # Batched: one query for all genes (previously N queries, one per gene).
+    # Column discovery is done once from the first row's description.
+    placeholders = ",".join(["%s"] * len(genes))
     with mysql_cursor(settings.DB_CONVERT_GENE_ID) as cursor:
+        cursor.execute(f"SELECT * FROM `{version}` WHERE MIPS IN ({placeholders})", tuple(genes))
+        col_map: dict[str, str] = {}
+        rows_by_gene: dict[str, dict] = {}
+        for row in cursor.fetchall():
+            mips = str(row.get("MIPS", ""))
+            if mips and mips not in rows_by_gene:
+                rows_by_gene[mips] = row
+        if cursor.description:
+            cnames = [d[0] for d in cursor.description]
+            col_map = {
+                "query_gene":    cnames[1] if len(cnames) > 1 else "MIPS",
+                "reference_gene": cnames[2] if len(cnames) > 2 else "ReferenceGene",
+                "code":          cnames[3] if len(cnames) > 3 else "Code",
+                "length":        cnames[4] if len(cnames) > 4 else "Length",
+            }
         for gene in genes:
-            cursor.execute(f"SELECT * FROM `{version}` WHERE MIPS = %s", (gene,))
-            row = cursor.fetchone()
+            row = rows_by_gene.get(gene)
             if not row:
                 not_found.append(gene)
                 continue
-            # Discover actual column names from cursor.description (positional, matching CGI)
-            col_map = {}
-            if cursor.description:
-                cnames = [d[0] for d in cursor.description]
-                col_map = {
-                    "query_gene":    cnames[1] if len(cnames) > 1 else "MIPS",
-                    "reference_gene": cnames[2] if len(cnames) > 2 else "ReferenceGene",
-                    "code":          cnames[3] if len(cnames) > 3 else "Code",
-                    "length":        cnames[4] if len(cnames) > 4 else "Length",
-                }
             mappings.append(
                 IDMapping(
                     query_gene=str(row.get(col_map.get("query_gene", "MIPS"), gene)),

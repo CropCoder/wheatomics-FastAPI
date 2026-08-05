@@ -769,21 +769,25 @@ def search_gene_interval(
         gene_ids = [g for g in re.split(r"[\s,;]+", region.strip()) if g]
         if not gene_ids:
             raise ValidationFailure("No gene ID provided")
+        if len(gene_ids) > 200:
+            raise ValidationFailure(f"Too many gene IDs ({len(gene_ids)}); maximum is 200 per query")
         with mysql_cursor(settings.DB_GENEFUNC) as cursor:
             # 根据表类型动态选择基因列
             if table in ("Genefunc_IWGSC03G_table", "Genefunc_CS_IWGSC03G_table"):
                 gene_cols = ["Gene03G", "Gene02G"]
             else:
                 gene_cols = ["Gene"]
-            for gene_id in gene_ids:
-                base_id = re.sub(r"\.\d+$", "", gene_id)
-                where_clause = " OR ".join(f"`{col}`=%s" for col in gene_cols)
-                cursor.execute(
-                    f"SELECT * FROM `{table}` WHERE {where_clause}",
-                    tuple(base_id for _ in gene_cols),
-                )
-                for row in cursor.fetchall():
-                    records.append(_make_function_record(row, table))
+            # Batched: strip version suffixes, then one IN(...) query per gene
+            # column (previously N queries, one per gene ID).
+            base_ids = [re.sub(r"\.\d+$", "", gid) for gid in gene_ids]
+            placeholders = ",".join(["%s"] * len(base_ids))
+            where_clause = " OR ".join(f"`{col}` IN ({placeholders})" for col in gene_cols)
+            cursor.execute(
+                f"SELECT * FROM `{table}` WHERE {where_clause}",
+                tuple(base_ids for _ in gene_cols),
+            )
+            for row in cursor.fetchall():
+                records.append(_make_function_record(row, table))
         return ok({"table": table, "region": region, "count": len(records), "records": [record.model_dump() for record in records]})
 
     ensure_interval_like(region)

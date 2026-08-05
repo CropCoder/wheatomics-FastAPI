@@ -7,29 +7,21 @@ and KEGG pathways against the wheat_function database.
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import pymysql
-import pymysql.cursors
-from app.core.config import settings
-from typing import Optional, List
 import math
+from typing import Optional, List
+
+from app.core.config import settings
+from app.db.mysql import mysql_cursor
 
 router = APIRouter(prefix="/go-kegg", tags=["GO/KEGG Enrichment"])
 
 
 # ============================================================
-# Database helper
+# Database access
 # ============================================================
-def get_wf_db():
-    """Connect to wheat_function database."""
-    return pymysql.connect(
-        host=settings.DB_HOST,
-        port=settings.DB_PORT,
-        user=settings.DB_USER,
-        password=settings.DB_PASSWORD,
-        database="wheat_function",
-        charset="utf8mb4",
-        cursorclass=pymysql.cursors.DictCursor,
-    )
+# wheat_function is the 15th database, surfaced as settings.DB_WHEAT_FUNCTION
+# so it goes through the shared pooled mysql_cursor helper (previously this
+# module opened its own raw pymysql.connect per request, bypassing the pool).
 
 
 # ============================================================
@@ -173,48 +165,49 @@ def go_enrichment(req: EnrichmentRequest):
     genes = list(set(req.genes))
     if not genes:
         return JSONResponse({"error": "No genes provided"}, status_code=400)
+    if len(genes) > 2000:
+        return JSONResponse(
+            {"error": f"Too many genes ({len(genes)}); maximum is 2000 per enrichment request"},
+            status_code=400,
+        )
 
-    db = get_wf_db()
-    try:
-        with db.cursor() as cur:
-            cur.execute("SELECT COUNT(DISTINCT gene_id) AS cnt FROM gene_go")
-            N = int(cur.fetchone()["cnt"])
+    with mysql_cursor(settings.DB_WHEAT_FUNCTION) as cur:
+        cur.execute("SELECT COUNT(DISTINCT gene_id) AS cnt FROM gene_go")
+        N = int(cur.fetchone()["cnt"])
 
-            ph = ",".join(["%s"] * len(genes))
-            cur.execute(
-                f"SELECT DISTINCT gene_id FROM gene_go WHERE gene_id IN ({ph})", genes
-            )
-            valid = [r["gene_id"] for r in cur.fetchall()]
-            n = len(valid)
-            if n == 0:
-                return {"N": N, "n": 0, "results": [], "gene_count": len(genes)}
+        ph = ",".join(["%s"] * len(genes))
+        cur.execute(
+            f"SELECT DISTINCT gene_id FROM gene_go WHERE gene_id IN ({ph})", genes
+        )
+        valid = [r["gene_id"] for r in cur.fetchall()]
+        n = len(valid)
+        if n == 0:
+            return {"N": N, "n": 0, "results": [], "gene_count": len(genes)}
 
-            # Overlap counts
-            ph = ",".join(["%s"] * len(valid))
-            cur.execute(
-                f"SELECT go_id, COUNT(DISTINCT gene_id) AS k FROM gene_go WHERE gene_id IN ({ph}) GROUP BY go_id",
-                valid,
-            )
-            overlap_rows = cur.fetchall()
-            go_ids = [r["go_id"] for r in overlap_rows]
-            overlap_map = {r["go_id"]: int(r["k"]) for r in overlap_rows}
+        # Overlap counts
+        ph = ",".join(["%s"] * len(valid))
+        cur.execute(
+            f"SELECT go_id, COUNT(DISTINCT gene_id) AS k FROM gene_go WHERE gene_id IN ({ph}) GROUP BY go_id",
+            valid,
+        )
+        overlap_rows = cur.fetchall()
+        go_ids = [r["go_id"] for r in overlap_rows]
+        overlap_map = {r["go_id"]: int(r["k"]) for r in overlap_rows}
 
-            # Background counts
-            go_ph = ",".join(["%s"] * len(go_ids))
-            cur.execute(
-                f"SELECT go_id, COUNT(DISTINCT gene_id) AS K FROM gene_go WHERE go_id IN ({go_ph}) GROUP BY go_id",
-                go_ids,
-            )
-            bg_map = {r["go_id"]: int(r["K"]) for r in cur.fetchall()}
+        # Background counts
+        go_ph = ",".join(["%s"] * len(go_ids))
+        cur.execute(
+            f"SELECT go_id, COUNT(DISTINCT gene_id) AS K FROM gene_go WHERE go_id IN ({go_ph}) GROUP BY go_id",
+            go_ids,
+        )
+        bg_map = {r["go_id"]: int(r["K"]) for r in cur.fetchall()}
 
-            # Term names
-            cur.execute(
-                f"SELECT go_id, term, ontology FROM go_term WHERE go_id IN ({go_ph})",
-                go_ids,
-            )
-            term_map = {r["go_id"]: r for r in cur.fetchall()}
-    finally:
-        db.close()
+        # Term names
+        cur.execute(
+            f"SELECT go_id, term, ontology FROM go_term WHERE go_id IN ({go_ph})",
+            go_ids,
+        )
+        term_map = {r["go_id"]: r for r in cur.fetchall()}
 
     results = []
     for go_id in go_ids:
@@ -261,58 +254,59 @@ def kegg_enrichment(req: EnrichmentRequest):
     genes = list(set(req.genes))
     if not genes:
         return JSONResponse({"error": "No genes provided"}, status_code=400)
+    if len(genes) > 2000:
+        return JSONResponse(
+            {"error": f"Too many genes ({len(genes)}); maximum is 2000 per enrichment request"},
+            status_code=400,
+        )
 
-    db = get_wf_db()
-    try:
-        with db.cursor() as cur:
-            cur.execute("SELECT COUNT(DISTINCT gene_id) AS cnt FROM gene_kegg")
-            N = int(cur.fetchone()["cnt"])
+    with mysql_cursor(settings.DB_WHEAT_FUNCTION) as cur:
+        cur.execute("SELECT COUNT(DISTINCT gene_id) AS cnt FROM gene_kegg")
+        N = int(cur.fetchone()["cnt"])
 
-            ph = ",".join(["%s"] * len(genes))
-            cur.execute(
-                f"SELECT DISTINCT gene_id FROM gene_kegg WHERE gene_id IN ({ph})", genes
-            )
-            valid = [r["gene_id"] for r in cur.fetchall()]
-            n = len(valid)
-            if n == 0:
-                return {"N": N, "n": 0, "results": [], "gene_count": len(genes)}
+        ph = ",".join(["%s"] * len(genes))
+        cur.execute(
+            f"SELECT DISTINCT gene_id FROM gene_kegg WHERE gene_id IN ({ph})", genes
+        )
+        valid = [r["gene_id"] for r in cur.fetchall()]
+        n = len(valid)
+        if n == 0:
+            return {"N": N, "n": 0, "results": [], "gene_count": len(genes)}
 
-            # Overlap via gene_kegg -> ko_pathway
-            ph = ",".join(["%s"] * len(valid))
-            cur.execute(
-                f"""
-                SELECT kp.pathway, COUNT(DISTINCT gk.gene_id) AS k
-                FROM gene_kegg gk
-                JOIN ko_pathway kp ON gk.ko = kp.ko
-                WHERE gk.gene_id IN ({ph})
-                GROUP BY kp.pathway
-                """,
-                valid,
-            )
-            overlap_rows = cur.fetchall()
-            pw_ids = [r["pathway"] for r in overlap_rows]
-            overlap_map = {r["pathway"]: int(r["k"]) for r in overlap_rows}
+        # Overlap via gene_kegg -> ko_pathway
+        ph = ",".join(["%s"] * len(valid))
+        cur.execute(
+            f"""
+            SELECT kp.pathway, COUNT(DISTINCT gk.gene_id) AS k
+            FROM gene_kegg gk
+            JOIN ko_pathway kp ON gk.ko = kp.ko
+            WHERE gk.gene_id IN ({ph})
+            GROUP BY kp.pathway
+            """,
+            valid,
+        )
+        overlap_rows = cur.fetchall()
+        pw_ids = [r["pathway"] for r in overlap_rows]
+        overlap_map = {r["pathway"]: int(r["k"]) for r in overlap_rows}
 
-            pw_ph = ",".join(["%s"] * len(pw_ids))
-            cur.execute(
-                f"""
-                SELECT kp.pathway, COUNT(DISTINCT gk.gene_id) AS K
-                FROM gene_kegg gk
-                JOIN ko_pathway kp ON gk.ko = kp.ko
-                WHERE kp.pathway IN ({pw_ph})
-                GROUP BY kp.pathway
-                """,
-                pw_ids,
-            )
-            bg_map = {r["pathway"]: int(r["K"]) for r in cur.fetchall()}
+        pw_ph = ",".join(["%s"] * len(pw_ids))
+        cur.execute(
+            f"""
+            SELECT kp.pathway, COUNT(DISTINCT gk.gene_id) AS K
+            FROM gene_kegg gk
+            JOIN ko_pathway kp ON gk.ko = kp.ko
+            WHERE kp.pathway IN ({pw_ph})
+            GROUP BY kp.pathway
+            """,
+            pw_ids,
+        )
+        bg_map = {r["pathway"]: int(r["K"]) for r in cur.fetchall()}
 
-            cur.execute(
-                f"SELECT pathway_id, pathway_name FROM kegg_pathway WHERE pathway_id IN ({pw_ph})",
-                pw_ids,
-            )
-            name_map = {r["pathway_id"]: r["pathway_name"] for r in cur.fetchall()}
-    finally:
-        db.close()
+        cur.execute(
+            f"SELECT pathway_id, pathway_name FROM kegg_pathway WHERE pathway_id IN ({pw_ph})",
+            pw_ids,
+        )
+        name_map = {r["pathway_id"]: r["pathway_name"] for r in cur.fetchall()}
 
     results = []
     for pw_id in pw_ids:
@@ -350,17 +344,13 @@ def go_genes(go_id: str = Query(...), genes: str = Query("")):
     if not gene_list:
         return {"go_id": go_id, "genes": []}
 
-    db = get_wf_db()
-    try:
-        with db.cursor() as cur:
-            ph = ",".join(["%s"] * len(gene_list))
-            cur.execute(
-                f"SELECT DISTINCT gene_id FROM gene_go WHERE go_id=%s AND gene_id IN ({ph}) ORDER BY gene_id",
-                [go_id] + gene_list,
-            )
-            hits = [r["gene_id"] for r in cur.fetchall()]
-    finally:
-        db.close()
+    with mysql_cursor(settings.DB_WHEAT_FUNCTION) as cur:
+        ph = ",".join(["%s"] * len(gene_list))
+        cur.execute(
+            f"SELECT DISTINCT gene_id FROM gene_go WHERE go_id=%s AND gene_id IN ({ph}) ORDER BY gene_id",
+            [go_id] + gene_list,
+        )
+        hits = [r["gene_id"] for r in cur.fetchall()]
     return {"go_id": go_id, "genes": hits}
 
 
@@ -371,21 +361,17 @@ def kegg_genes(pathway: str = Query(...), genes: str = Query("")):
     if not gene_list:
         return {"pathway": pathway, "genes": []}
 
-    db = get_wf_db()
-    try:
-        with db.cursor() as cur:
-            ph = ",".join(["%s"] * len(gene_list))
-            cur.execute(
-                f"""
-                SELECT DISTINCT gk.gene_id
-                FROM gene_kegg gk
-                JOIN ko_pathway kp ON gk.ko = kp.ko
-                WHERE kp.pathway=%s AND gk.gene_id IN ({ph})
-                ORDER BY gk.gene_id
-                """,
-                [pathway] + gene_list,
-            )
-            hits = [r["gene_id"] for r in cur.fetchall()]
-    finally:
-        db.close()
+    with mysql_cursor(settings.DB_WHEAT_FUNCTION) as cur:
+        ph = ",".join(["%s"] * len(gene_list))
+        cur.execute(
+            f"""
+            SELECT DISTINCT gk.gene_id
+            FROM gene_kegg gk
+            JOIN ko_pathway kp ON gk.ko = kp.ko
+            WHERE kp.pathway=%s AND gk.gene_id IN ({ph})
+            ORDER BY gk.gene_id
+            """,
+            [pathway] + gene_list,
+        )
+        hits = [r["gene_id"] for r in cur.fetchall()]
     return {"pathway": pathway, "genes": hits}
