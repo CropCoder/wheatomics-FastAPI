@@ -298,8 +298,6 @@ def _unload_data():
     gc.collect()
 
 
-def _maybe_unload():
-
 # ==================== BED tuple accessors ====================
 
 def _t_chrom(rec):
