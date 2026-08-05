@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import subprocess
+import threading
 import time
 from datetime import datetime, timezone
 
@@ -158,7 +159,14 @@ async def request_validation_error(_: Request, exc: RequestValidationError) -> J
 
 @app.exception_handler(Exception)
 async def unhandled_exception(_: Request, exc: Exception) -> JSONResponse:
-    """Return normalized unhandled errors."""
+    """Return normalized unhandled errors.
+
+    ValidationFailure / ResourceNotFound / ExternalToolFailure are HTTPException
+    subclasses and are handled by FastAPI's own HTTPException handler (higher
+    MRO priority), so they keep their 400/404/502 status. This catch-all only
+    sees genuinely unexpected errors. With DEBUG=False (default) the message
+    is generic to avoid leaking DB/table/SQL fragments from pymysql errors.
+    """
 
     logger.exception("Unhandled exception")
     return JSONResponse(
@@ -291,19 +299,35 @@ async def health() -> dict:
     return {"status": "Wheatomics API running, powered by Server.(Connect Email:zhaojiwen@yzwlab.cn)"}
 
 
-def run_git_pull():
-    """在后台执行 auto_pull.sh 脚本，拉取最新代码。"""
+_git_pull_lock = threading.Lock()
 
+
+def run_git_pull():
+    """在后台执行 auto_pull.sh 脚本，拉取最新代码。
+
+    串行化（两个 webhook 紧接到达时并发 git fetch + reset --hard 会损坏
+    .git），并加 120s 超时（git fetch 挂住时后台任务不会永久占 worker 线程）。
+    注意：脚本只 git pull，不重启服务——Python 改动仍需手动重启。
+    """
+
+    if not _git_pull_lock.acquire(blocking=False):
+        logger.info("Git Pull 跳过：上一次拉取仍在进行中")
+        return
     try:
         result = subprocess.run(
             ["/bin/bash", str(settings.AUTO_PULL_SCRIPT)],
             capture_output=True,
             text=True,
             check=True,
+            timeout=120,
         )
         logger.info("Git Pull 成功: %s", result.stdout)
+    except subprocess.TimeoutExpired:
+        logger.error("Git Pull 超时（120s），已终止")
     except subprocess.CalledProcessError as e:
         logger.error("Git Pull 失败: %s", e.stderr)
+    finally:
+        _git_pull_lock.release()
 
 
 @app.post("/api/webhook/gitee")
