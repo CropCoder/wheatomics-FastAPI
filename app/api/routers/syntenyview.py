@@ -20,6 +20,7 @@ Memory optimisation (Aug 2026):
 
 import os
 import re
+import gc
 import glob
 import time
 import threading
@@ -67,6 +68,7 @@ _cluster_cache = OrderedDict()   # Bounded LRU
 _CLUSTER_CACHE_MAX = 5000
 _sorted_prefixes = None
 _genomes_cache = None
+_last_access_time = None           # monotonic timestamp of last /neighborhood call
 
 _load_lock = threading.RLock()
 _warmup_started = False
@@ -264,11 +266,47 @@ def _ensure_loaded():
 # Warmup disabled — data loads lazily on the first /neighborhood call so
 # workers that never serve a synteny query never allocate the BED/OG data.
 BACKGROUND_WARMUP = False
+_UNLOAD_IDLE_SECONDS = 120  # Free data if no /neighborhood call for N seconds
 
 
 def _start_warmup_once():
     global _warmup_started
     if _warmup_started or not BACKGROUND_WARMUP:
+        return
+    _warmup_started = True
+    th = threading.Thread(target=_ensure_loaded, name="synteny_warmup", daemon=True)
+    th.start()
+
+
+def _unload_data():
+    """Release all loaded BED/OG data to free memory back to the OS.
+
+    Called at the end of each /neighborhood request when the idle timeout
+    has elapsed.  gunicorn max_requests=10 handles the fallback case
+    where a single worker gets pinned by frequent synteny queries.
+    """
+    global _bed_gene, _bed_gene_entries, _chrom_lists, _gene2og, _og2genes
+    global _prefix_map, _chrom_map, _cluster_cache, _sorted_prefixes, _last_access_time
+    if _bed_gene is None:
+        return
+    _bed_gene = _bed_gene_entries = _chrom_lists = None
+    _gene2og = _og2genes = None
+    _prefix_map = _chrom_map = None
+    _cluster_cache = OrderedDict()
+    _sorted_prefixes = None
+    _last_access_time = None
+    _set_load_status("not_started", "Data unloaded after idle period.")
+    gc.collect()
+
+
+def _maybe_unload():
+    """Check idle timeout and unload if exceeded."""
+    global _last_access_time
+    if _bed_gene is None or _gene2og is None:
+        return
+    now = time.monotonic()
+    if _last_access_time is not None and (now - _last_access_time) > _UNLOAD_IDLE_SECONDS:
+        _unload_data()
         return
     _warmup_started = True
     th = threading.Thread(target=_ensure_loaded, name="synteny_warmup", daemon=True)
@@ -603,7 +641,10 @@ def api_synteny(
     targets: str = Query("", description="Comma-separated target genome filter"),
     window: int = Query(DEFAULT_WINDOW, ge=1, le=MAX_WINDOW),
 ):
+    global _last_access_time
+    _maybe_unload()
     _ensure_loaded()
+    _last_access_time = time.monotonic()
 
     gene_id = q.strip()
     if not gene_id:
