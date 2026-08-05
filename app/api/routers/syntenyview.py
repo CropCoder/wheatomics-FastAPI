@@ -117,6 +117,18 @@ def _parse_window(raw):
 
 # ==================== Data loading ====================
 
+def _genome_sort_key(label):
+    """Sort genomes by the last _suffix first, then alphabetically within each group.
+    e.g. all _A genomes grouped together, then _B, then _D, then no-suffix.
+    """
+    if "_" in label:
+        prefix, suffix = label.rsplit("_", 1)
+        # Known subgenome suffixes get ordered: A, B, D, then others alphabetically
+        sub_order = {"A": 0, "B": 1, "D": 2}
+        return (sub_order.get(suffix.upper(), 3 + ord(suffix[0].upper()) if suffix else 999), suffix.upper(), prefix)
+    return (999, "", label)
+
+
 def _list_genomes_fast():
     global _genomes_cache
     if _genomes_cache is not None:
@@ -126,7 +138,7 @@ def _list_genomes_fast():
     labels = []
     for path in glob.glob(os.path.join(COL_BED_DIR, "*.bed")):
         labels.append(_genome_label_from_bed_path(path))
-    _genomes_cache = sorted(set(labels))
+    _genomes_cache = sorted(set(labels), key=_genome_sort_key)
     return _genomes_cache
 
 
