@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "WheatOmics API for Ai Agent - FastAPI"
     APP_VERSION: str = "2.0"
     API_PREFIX: str = "/api"
-    DEBUG: bool = True
+    DEBUG: bool = False
 
     DB_HOST: str = "localhost"
     DB_PORT: int = 3306
@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     DB_SYMAP: str = "symapdb"
     DB_LITERATURE: str = "wheatomics_db"
     DB_TRITICEAE: str = "Triticeae_Research_filter"
+    DB_WHEAT_FUNCTION: str = "wheat_function"
 
     BLAST_DB_PATH: Path = Path("/var/www/html/getfasta/blastdb")
     BLAST_BIN_DIR: Path = Path("/var/www/html/blast/blast+/bin")
