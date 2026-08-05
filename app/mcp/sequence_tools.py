@@ -1,3 +1,4 @@
+import asyncio
 import json
 from mcp.server import Server
 import mcp.types as types
@@ -12,6 +13,12 @@ from app.api.routers.sequence import (
 
 # 1. 初始化 MCP Server
 sequence_mcp_server = Server("wheatomics")
+
+# Cap concurrent MCP tool executions so a burst of agent calls can't fork
+# unbounded blastdbcmd subprocesses across the worker. 4 is a safe ceiling
+# given 8 gunicorn workers each running their own event loop.
+_MCP_SEMAPHORE = asyncio.Semaphore(4)
+
 
 # 2. 注册大模型可以使用的工具列表
 @sequence_mcp_server.list_tools()
@@ -69,55 +76,65 @@ async def handle_list_tools() -> list[types.Tool]:
         )
     ]
 
+
 # 3. 处理大模型的工具调用请求
 @sequence_mcp_server.call_tool()
 async def handle_call_tool(name: str, arguments: dict) -> list[types.TextContent]:
+    # The route functions below are sync `def` handlers that run blocking
+    # subprocesses (blastdbcmd, up to 120s). Calling them inline in this
+    # async coroutine would freeze the worker's event loop for the whole
+    # duration — every other request/session on this worker hangs. Offload
+    # to a thread via asyncio.to_thread, and cap concurrency so a burst of
+    # MCP calls can't exhaust BLAST DB file handles / processes.
     try:
-        # 工具 1: 按基因 ID 查询
-        if name == "get_sequence_by_gene":
-            gene_id = arguments["gene_id"]
-            gene_db = arguments.get("gene_db", "all_gene")
-            protein_db = arguments.get("protein_db", "all_protein")
-            
-            # 直接调用现有的 FastAPI 函数，Python 会忽略 Query() 默认对象并使用我们传入的值
-            result = sequence_by_gene(gene_id=gene_id, gene_db=gene_db, protein_db=protein_db)
-            
-            # 由于返回的是 Pydantic 模型 SequenceBundle，我们使用 model_dump_json() 序列化
-            return [types.TextContent(type="text", text=result.model_dump_json())]
+        async with _MCP_SEMAPHORE:
+            if name == "get_sequence_by_gene":
+                gene_id = arguments["gene_id"]
+                gene_db = arguments.get("gene_db", "all_gene")
+                protein_db = arguments.get("protein_db", "all_protein")
+                # 直接调用现有的 FastAPI 函数，Python 会忽略 Query() 默认对象并使用我们传入的值
+                result = await asyncio.to_thread(
+                    sequence_by_gene, gene_id=gene_id, gene_db=gene_db, protein_db=protein_db
+                )
+                # 由于返回的是 Pydantic 模型 SequenceBundle，我们使用 model_dump_json() 序列化
+                return [types.TextContent(type="text", text=result.model_dump_json())]
 
-        # 工具 2: 按区间查询
-        elif name == "get_sequence_by_interval":
-            result = sequence_by_interval(
-                region=arguments["region"],
-                database=arguments["database"]
-            )
-            return [types.TextContent(type="text", text=json.dumps(result))]
+            # 工具 2: 按区间查询
+            elif name == "get_sequence_by_interval":
+                result = await asyncio.to_thread(
+                    sequence_by_interval,
+                    region=arguments["region"],
+                    database=arguments["database"],
+                )
+                return [types.TextContent(type="text", text=json.dumps(result))]
 
-        # 工具 3: 批量查询
-        elif name == "batch_sequence":
-            result = batch_sequence(
-                database=arguments["database"],
-                ids=arguments["ids"]
-            )
-            return [types.TextContent(type="text", text=json.dumps(result))]
+            # 工具 3: 批量查询
+            elif name == "batch_sequence":
+                result = await asyncio.to_thread(
+                    batch_sequence,
+                    database=arguments["database"],
+                    ids=arguments["ids"],
+                )
+                return [types.TextContent(type="text", text=json.dumps(result))]
 
-        elif name == "run_novabrowse":
-            result = novabrowse_run(
-                chrom=arguments["chrom"],
-                start=arguments["start"],
-                end=arguments["end"]
-            )
-            return [types.TextContent(type="text", text=json.dumps(result))]
+            elif name == "run_novabrowse":
+                result = await asyncio.to_thread(
+                    novabrowse_run,
+                    chrom=arguments["chrom"],
+                    start=arguments["start"],
+                    end=arguments["end"],
+                )
+                return [types.TextContent(type="text", text=json.dumps(result))]
 
-        else:
-            raise ValueError(f"Unknown tool: {name}")
+            else:
+                raise ValueError(f"Unknown tool: {name}")
 
     except Exception as e:
         # 捕获你代码中的 ResourceNotFound, ValidationFailure 或其他异常
         # 将异常信息作为正常文本返回给大模型，以便大模型根据错误信息自行调整重试
         return [
             types.TextContent(
-                type="text", 
+                type="text",
                 text=json.dumps({"error": str(e), "status": "failed"})
             )
         ]
