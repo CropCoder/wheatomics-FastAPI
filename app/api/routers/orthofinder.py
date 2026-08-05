@@ -11,7 +11,6 @@ filesystem — no MySQL dependency.
 from __future__ import annotations
 
 import faulthandler
-import hashlib
 import logging
 import os
 import re
@@ -1054,22 +1053,6 @@ def search_orthogroup(
                 break
         if not og_id and species:
             og_id = _find_og_for_gene(f"{species}_{q}")
-        if not og_id:
-            _step_log("md5_fallback_start", "cand_ids=", cand_ids)
-            # Try hash-based fallback via Orthogroups.txt
-            for cid in cand_ids:
-                qh = hashlib.md5(cid.encode()).hexdigest()
-                for oid, odata in _load_orthogroups().items():
-                    for g in odata["genes"]:
-                        if g == cid or hashlib.md5(g.encode()).hexdigest() == qh:
-                            og_id = oid
-                            break
-                    if og_id:
-                        break
-                if og_id:
-                    q = cid
-                    break
-            _step_log("md5_fallback_end", "og_id=", og_id, "t=", _mark())
 
     timings["resolve_og"] = _mark()
     _step_log("resolve_og", "og_id=", og_id, "t=", timings["resolve_og"])
