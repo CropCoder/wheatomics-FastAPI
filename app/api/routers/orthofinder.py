@@ -10,7 +10,7 @@ filesystem — no MySQL dependency.
 
 from __future__ import annotations
 
-import faulthandler
+import functools
 import logging
 import os
 import re
@@ -30,8 +30,12 @@ router = APIRouter(prefix="/orthofinder", tags=["OrthoFinder"])
 logger = logging.getLogger(__name__)
 
 def _step_log(prefix: str, *parts) -> None:
-    """Emit a flusing step-timing line that survives a hanging request."""
-    print(f"[orthofinder-step] {prefix} " + " ".join(str(p) for p in parts), flush=True)
+    """Emit a step-timing line that survives a hanging request.
+
+    Routed through the module logger (INFO) so it respects logging config and
+    doesn't compete for the GIL with synchronous stdout writes under load.
+    """
+    logger.info("[orthofinder-step] %s %s", prefix, " ".join(str(p) for p in parts))
 
 # Escape sequences for whitespace — prevents raw NL/TAB in source from
 # breaking the parser.
@@ -114,11 +118,14 @@ def _load_type_map() -> dict:
 def _get_type_for_gene(gene_id: str) -> tuple[str, str]:
     """Return (type1, type2) for a gene_id — 'yes' or 'no' per column."""
     gene_id = _clean(gene_id)
+    gene_lower = gene_id.lower()
     type_map = _load_type_map()
 
-    # 1) Try cluster prefix match
-    for pfx in _get_sorted_prefixes():
-        if pfx in type_map and gene_id.lower().startswith(pfx.lower()):
+    # 1) Try cluster prefix match — prefixes are pre-lowercased in
+    #    _get_sorted_prefixes so each iteration is a startswith on a cached
+    #    string, not two fresh .lower() allocations per gene × per prefix.
+    for pfx_lower, pfx in _get_sorted_prefixes():
+        if pfx in type_map and gene_lower.startswith(pfx_lower):
             return type_map[pfx][0], type_map[pfx][1]
 
     # 2) Try species name match from gene_id prefix + subgenome
@@ -134,11 +141,18 @@ def _get_type_for_gene(gene_id: str) -> tuple[str, str]:
     return "no", "no"
 
 def _get_sorted_prefixes() -> list:
+    """Return prefixes sorted longest-first as (pfx_lower, pfx) tuples.
+
+    The lowercase form is precomputed once so the per-gene prefix loop in
+    _get_type_for_gene / _resolve_cluster doesn't allocate a fresh
+    ``pfx.lower()`` string on every iteration.
+    """
     global _sorted_prefixes
     if _sorted_prefixes is not None:
         return _sorted_prefixes
     prefix_map, _ = _load_cluster_map()
-    _sorted_prefixes = sorted(prefix_map.keys(), key=lambda x: -len(x))
+    raw = sorted(prefix_map.keys(), key=lambda x: -len(x))
+    _sorted_prefixes = [(p.lower(), p) for p in raw]
     return _sorted_prefixes
 
 #: gene_id → dict from BED files
@@ -247,13 +261,14 @@ def _load_bed_chromosome_map() -> dict:
 def _resolve_cluster(gene_id: str) -> int | None:
     """Map a gene_id to its homoeologous cluster (1-7)."""
     gene_id = _clean(gene_id)
+    gene_lower = gene_id.lower()
     prefix_map, chrom_map = _load_cluster_map()
     if not prefix_map and not chrom_map:
         return None
 
-    # 1) prefix match
-    for pfx in _get_sorted_prefixes():
-        if gene_id.lower().startswith(pfx.lower()):
+    # 1) prefix match — prefixes pre-lowercased in _get_sorted_prefixes.
+    for pfx_lower, pfx in _get_sorted_prefixes():
+        if gene_lower.startswith(pfx_lower):
             return prefix_map[pfx]
 
     # 2) chromosome fallback via BED files
@@ -844,12 +859,15 @@ def _parse_alignment(aln: str) -> tuple[dict, list]:
             records[cur].append(line.rstrip())
     return records, order
 
-_aln_path_cache: dict = {}
-
+@functools.lru_cache(maxsize=2048)
 def _find_alignment_file(og_id: str) -> Path | None:
-    """Fast existence check; cache per OG."""
-    if og_id in _aln_path_cache:
-        return _aln_path_cache[og_id]
+    """Fast existence check; bounded LRU cache per OG (max 2048 entries).
+
+    Previously an unbounded module-level dict that grew per request with no
+    cap; with ~132K orthogroups each worker could accumulate its own multi-MB
+    copy. lru_cache bounds it and is safe under gunicorn fork (each worker's
+    cache is independent).
+    """
     base = ORTHOFINDER_BASE_DIR
     candidates = [
         base / "WorkingDirectory" / "MultipleSequenceAlignments" / f"{og_id}.fa",
@@ -863,9 +881,7 @@ def _find_alignment_file(og_id: str) -> Path | None:
         base / "Alignments_ids" / f"{og_id}.fa",
         base / "Alignments" / f"{og_id}.fa",
     ]
-    found = next((p for p in candidates if p.exists()), None)
-    _aln_path_cache[og_id] = found
-    return found
+    return next((p for p in candidates if p.exists()), None)
 
 def _chunk_list(lst, size):
     return [lst[i:i+size] for i in range(0, len(lst), size)]
@@ -950,27 +966,31 @@ def _label_for(id, meta):
 
 @router.get(
     "/search",
-    summary="Search by protein ID / orthogroup ID / species catalog / members / positions",
+    summary="Search by protein ID / orthogroup ID / species catalog / members",
 )
 def search_orthogroup(
     q: str = Query("", description="Protein/gene ID or orthogroup ID. Used when action=search."),
-    action: str = Query("search", description="Action: 'search' (default) | 'species_catalog' | 'members' | 'positions'"),
-    og: str = Query("", description="Orthogroup ID, required for action=members and action=positions"),
+    action: str = Query("search", description="Action: 'search' (default) | 'species_catalog' | 'members'"),
+    og: str = Query("", description="Orthogroup ID, required for action=members"),
     sub: str = Query("", description="Subgenome filter (A/B/D), used with action=members"),
-    cluster: int = Query(0, description="Cluster filter (1-7), used with action=positions"),
     species: str = Query("", description="Species filter for gene search (optional)"),
     _: int = Query(0, description="Cache-buster (optional)"),
 ):
     if action == "species_catalog":
-        species = []
-        if CLUSTER_FILE.exists():
-            for line in CLUSTER_FILE.read_text(encoding="utf-8").splitlines()[1:]:
-                cols = line.split(_TAB)
-                if len(cols) >= 8:
-                    raw = re.sub(r"^\d+:\s*", "", cols[0].strip())
-                    raw = re.sub(r"_[ABD]\.pep$", "", raw, flags=re.I)
-                    if raw and raw not in species:
-                        species.append(raw)
+        # Derive from the preloaded _species_type_map_cache (populated by
+        # _load_cluster_map at warm-up) instead of re-reading + re-parsing
+        # CLUSTER_FILE from disk on every call. Cache keys carry the
+        # subgenome suffix (e.g. "AK58_A"); strip it to match the legacy
+        # output format and dedup preserving first-seen order.
+        _load_cluster_map()
+        stm = _species_type_map_cache or {}
+        species: list[str] = []
+        seen: set[str] = set()
+        for key in stm.keys():
+            raw = re.sub(r"_[ABD]$", "", key, flags=re.I)
+            if raw and raw not in seen:
+                seen.add(raw)
+                species.append(raw)
         return {"species": species}
 
     if action == "members":
@@ -993,37 +1013,6 @@ def search_orthogroup(
             arr.sort()
         return {"items": dict(sorted(items.items()))}
 
-    if action == "positions":
-        if not re.match(r"^OG\d+$", og):
-            return {"error": "Invalid orthogroup"}
-        og_data = _load_orthogroups().get(og)
-        if not og_data:
-            return {"error": "Orthogroup not found"}
-        genes = og_data["genes"]
-        bc_map = _load_bed_chromosome_map()
-        result = []
-        for g in genes:
-            g = _clean(g)
-            if not g:
-                continue
-            if cluster > 0 and _resolve_cluster(g) != cluster:
-                continue
-            entry = bc_map.get(g)
-            chrom = entry["chrom"] if isinstance(entry, dict) else (entry if isinstance(entry, str) else "")
-            start = entry["start"] if isinstance(entry, dict) else 0
-            end = entry["end"] if isinstance(entry, dict) else 0
-            genome = entry["genome"] if isinstance(entry, dict) else ""
-            subg = entry["subgenome"] if isinstance(entry, dict) else info.get("subgenome", "Other")
-            result.append({
-                "gene_id": g, "chromosome": chrom,
-                "start": start, "end": end,
-                "genome": genome, "subgenome": subg,
-                "label": info["full_label"],
-            })
-        chromosomes = sorted(set(r["chromosome"] for r in result if r["chromosome"]))
-        genomes = sorted(set(r["genome"] for r in result if r["genome"]))
-        return {"positions": result, "chromosomes": chromosomes, "genomes": genomes}
-
     # -- main search --
     q = q.strip()
     if not q:
@@ -1033,7 +1022,10 @@ def search_orthogroup(
     def _mark():
         return round(time.time() - t0, 3)
     timings: dict = {}
-    faulthandler.dump_traceback_later(120, exit=False)  # stack dump if hung
+    # faulthandler.dump_traceback_later uses a single global timer; calling it
+    # per-request means concurrent searches overwrite each other's timers and a
+    # finishing request cancels another's. The step log above already pinpoints
+    # where a hang is stuck, so the global timer is dropped here.
     _step_log("start", "q=", q)
 
     # Resolve og_id from query
@@ -1059,7 +1051,6 @@ def search_orthogroup(
 
     og_data = _load_orthogroups().get(og_id)
     if not og_data:
-        faulthandler.cancel_dump_traceback_later()
         return {"error": "Orthogroup was not found."}
 
     genes = og_data["genes"]
@@ -1105,21 +1096,27 @@ def search_orthogroup(
     _step_log("cluster_resolve", "query_cluster=", query_cluster, "cluster_genes=", len(cluster_genes), "t=", timings["cluster_resolve"])
 
     # ---- type1 / type2 split ----
-    cluster_genes_type1 = [g for g in cluster_genes if _get_type_for_gene(g)[0] == "yes"]
-    cluster_genes_type2 = [g for g in cluster_genes if _get_type_for_gene(g)[1] == "yes"]
+    # ---- type1 / type2 split (single prefix scan per gene) ----
+    # Previously _get_type_for_gene was called twice per gene (once for type1,
+    # once for type2), each scanning the full sorted-prefix list. One pass
+    # returns both values.
+    cluster_genes_type1: list[str] = []
+    cluster_genes_type2: list[str] = []
+    for g in cluster_genes:
+        t1, t2 = _get_type_for_gene(g)
+        if t1 == "yes":
+            cluster_genes_type1.append(g)
+        if t2 == "yes":
+            cluster_genes_type2.append(g)
     timings["type_split"] = _mark()
     _step_log("type_split", "t1=", len(cluster_genes_type1), "t2=", len(cluster_genes_type2), "t=", timings["type_split"])
 
     def _prune_typed_tree(type_genes, tag=""):
         """Prune the full OG tree to a subset of cluster genes (type1 or type2)."""
         if not type_genes or not tree:
-            print(f"[DEBUG _prune_typed_tree {tag}] type_genes is empty or tree is empty")
             return ""
         tree_leaves = _parse_newick_leaves(tree)
-        print(f"[DEBUG _prune_typed_tree {tag}] type_genes n={len(type_genes)}, tree_leaves n={len(tree_leaves)}, "
-              f"meta keys n={len(meta)}, first 3 type_genes={type_genes[:3]}, first 3 leaves={tree_leaves[:3]}")
         keep = _build_prune_keep_set(type_genes, meta, tree_leaves)
-        print(f"[DEBUG _prune_typed_tree {tag}] keep n={len(keep)}")
         if keep:
             pruned = _prune_newick(tree, keep)
             if pruned:
@@ -1159,7 +1156,6 @@ def search_orthogroup(
         _step_log("prune_cluster_tree", "keep=", debug_prune.get("keep_count"), "pruned_leaves=", debug_prune.get("pruned_leaf_count"), "t=", timings["prune_cluster_tree"])
 
     _step_log("done", "total=", round(time.time() - t0, 3))
-    faulthandler.cancel_dump_traceback_later()
 
     return {
         "query": q, "orthogroup": og_id, "gene_count": gene_count,
@@ -1286,14 +1282,16 @@ def download_file(
                 else:
                     c_genes_for_meta = c_genes_all
 
+            # _fetch_meta with the same argument list was called twice here;
+            # compute once and reuse. (Same subset-dict construction each time.)
+            meta = _fetch_meta(tree_leaves_full + list(records.keys()) + c_genes_for_meta)
             if c_genes_for_meta:
-                keep = _build_prune_keep_set(c_genes_for_meta, _fetch_meta(tree_leaves_full + list(records.keys()) + c_genes_for_meta), tree_leaves_full)
+                keep = _build_prune_keep_set(c_genes_for_meta, meta, tree_leaves_full)
                 pruned = _prune_newick(tree, keep) if keep else ""
             else:
                 pruned = _prune_tree_to_cluster(og, tree, cluster)
             leaf_order = _parse_newick_leaves(pruned) if pruned else []
             include_unmatched = False
-            meta = _fetch_meta(tree_leaves_full + list(records.keys()) + c_genes_for_meta)
         else:
             leaf_order = tree_leaves_full
             include_unmatched = True
