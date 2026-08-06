@@ -257,6 +257,10 @@ $(function(){
 
 var projectCitations = {};
 
+function escapeHtml(s) {
+  return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+}
+
 function loadProjects() {
   $('#project-list').html('<span style="color:#999;">Loading...</span>');
   $.getJSON('/api/expression/projects')
