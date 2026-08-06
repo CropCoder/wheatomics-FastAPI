@@ -14,7 +14,7 @@ def _fetch_all_projects() -> list[dict[str, Any]]:
     try:
         with mysql_cursor(settings.DB_GENE_EXPRESSION) as cursor:
             cursor.execute(
-                "SELECT table_name, display_name, labels, citation, group_name FROM project_meta"
+                "SELECT table_name, display_name, labels, citation, group_name, subgroup FROM project_meta"
             )
             for row in cursor.fetchall():
                 labels_raw = row.get("labels")
@@ -29,6 +29,7 @@ def _fetch_all_projects() -> list[dict[str, Any]]:
                     "categories": labels_raw or [],
                     "citation": row.get("citation") or "",
                     "group": row.get("group_name") or "Others",
+                    "subgroup": row.get("subgroup") or "",
                 })
     except Exception:
         pass
@@ -36,11 +37,26 @@ def _fetch_all_projects() -> list[dict[str, Any]]:
 
 
 def list_projects() -> dict:
-    """Build project list and groups from project_meta table."""
+    """Build project list and groups from project_meta table.
+
+    Returns a 3-level tree: group_name → subgroup → display_name / table_name.
+    """
 
     all_projects = _fetch_all_projects()
 
-    # 构建分组结构
+    # Build tree: {group_name: {subgroup: [project_dict, ...]}}
+    tree: dict[str, dict[str, list[dict]]] = {}
+    for p in all_projects:
+        gname = p["group"]
+        sgname = p.get("subgroup") or ""
+        tree.setdefault(gname, {}).setdefault(sgname, []).append({
+            "id": p["id"],
+            "description": p["description"],
+            "categories": p["categories"],
+            "citation": p["citation"],
+        })
+
+    # Build ordered list of groups
     group_order = [
         "wheat developmental tissues",
         "wheat biotic stresses",
@@ -48,31 +64,46 @@ def list_projects() -> dict:
         "wheat population",
         "Others",
     ]
-    groups: list[dict] = []
-    seen_groups: dict[str, list[str]] = {}
-    for p in all_projects:
-        gname = p["group"]
-        if gname not in seen_groups:
-            seen_groups[gname] = []
-        seen_groups[gname].append(p["id"])
+    groups_out: list[dict] = []
+    seen: set[str] = set()
 
-    # 按固定顺序输出
     for gname in group_order:
-        if gname in seen_groups:
-            groups.append({"name": gname, "projects": seen_groups[gname]})
+        if gname in tree and gname not in seen:
+            seen.add(gname)
+            subgroups = []
+            for sgname, projects in tree[gname].items():
+                # Sort projects within each subgroup by description
+                projects.sort(key=lambda p: p["description"])
+                subgroups.append({
+                    "name": sgname,
+                    "projects": projects,
+                })
+            # Sort subgroups by name
+            subgroups.sort(key=lambda s: s["name"])
+            groups_out.append({
+                "name": gname,
+                "subgroups": subgroups,
+            })
 
-    # 不在固定顺序中的归到最后
-    for gname, pids in seen_groups.items():
-        if gname not in group_order:
-            groups.append({"name": gname, "projects": pids})
+    # Remaining groups not in the fixed order
+    for gname in sorted(tree):
+        if gname not in seen:
+            subgroups = []
+            for sgname, projects in tree[gname].items():
+                projects.sort(key=lambda p: p["description"])
+                subgroups.append({"name": sgname, "projects": projects})
+            subgroups.sort(key=lambda s: s["name"])
+            groups_out.append({"name": gname, "subgroups": subgroups})
 
+    # Flat project list for backwards compatibility
     flat = [
         {"id": p["id"], "description": p["description"],
-         "categories": p["categories"], "citation": p["citation"]}
+         "categories": p["categories"], "citation": p["citation"],
+         "group": p["group"], "subgroup": p.get("subgroup", "")}
         for p in all_projects
     ]
 
-    return {"projects": flat, "groups": groups}
+    return {"projects": flat, "groups": groups_out}
 
 
 def get_project_labels(project_name: str) -> list[str]:
