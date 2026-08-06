@@ -319,24 +319,30 @@ function loadProjects() {
       // ---- Accordion toggle (click label → expand/collapse) ----
       $('#project-list').on('click', '.checkbox-group-label', function(e) {
         var tgt = $($(this).data('target'));
-        tgt.slideToggle(150);
         var arrow = $(this).find('.arrow');
-        arrow.toggleClass('open', tgt.is(':visible'));
-        if (!tgt.is(':visible')) {
-          arrow.text('▸');
+        var closing = tgt.is(':visible');
+        if (closing) {
+          tgt.slideUp(150, function() {
+            arrow.text('▸').removeClass('open');
+          });
         } else {
-          arrow.text('▾');
+          tgt.slideDown(150, function() {
+            arrow.text('▾').addClass('open');
+          });
         }
       });
       $('#project-list').on('click', '.checkbox-subgroup-label', function(e) {
         var tgt = $($(this).data('target'));
-        tgt.slideToggle(150);
         var arrow = $(this).find('.arrow');
-        arrow.toggleClass('open', tgt.is(':visible'));
-        if (!tgt.is(':visible')) {
-          arrow.text('▸');
+        var closing = tgt.is(':visible');
+        if (closing) {
+          tgt.slideUp(150, function() {
+            arrow.text('▸').removeClass('open');
+          });
         } else {
-          arrow.text('▾');
+          tgt.slideDown(150, function() {
+            arrow.text('▾').addClass('open');
+          });
         }
       });
 
