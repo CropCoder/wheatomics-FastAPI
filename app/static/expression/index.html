@@ -90,18 +90,16 @@
   #error-msg { display: none; margin-top: 10px; }
   .checkbox-list { max-height: 520px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px; padding: 6px 10px; background: #fff; }
   .checkbox-group { margin-bottom: 2px; }
-  .checkbox-group-label { font-weight: bold; font-size: 13px; color: #495057; padding: 6px 0 2px; cursor: pointer; user-select: none; }
+  .checkbox-group-label { font-weight: bold; font-size: 13px; color: #495057; padding: 8px 0 4px; cursor: pointer; user-select: none; }
   .checkbox-group-label:hover { color: #007bff; }
-  .checkbox-group-label .arrow { display: inline-block; width: 14px; font-size: 11px; transition: transform 0.15s; }
+  .checkbox-group-label .arrow { display: inline-block; width: 16px; font-size: 14px; transition: transform 0.15s; }
   .checkbox-group-label .arrow.open { transform: rotate(90deg); }
-  .checkbox-group-label input[type="checkbox"] { margin-right: 6px; cursor: pointer; }
-  .checkbox-subgroup { padding-left: 20px; }
-  .checkbox-subgroup-label { font-weight: 600; font-size: 12px; color: #555; padding: 4px 0 2px; cursor: pointer; user-select: none; }
+  .checkbox-subgroup { padding-left: 24px; }
+  .checkbox-subgroup-label { font-weight: 600; font-size: 13px; color: #555; padding: 6px 0 3px; cursor: pointer; user-select: none; }
   .checkbox-subgroup-label:hover { color: #007bff; }
-  .checkbox-subgroup-label .arrow { display: inline-block; width: 12px; font-size: 10px; transition: transform 0.15s; }
+  .checkbox-subgroup-label .arrow { display: inline-block; width: 16px; font-size: 14px; transition: transform 0.15s; }
   .checkbox-subgroup-label .arrow.open { transform: rotate(90deg); }
-  .checkbox-subgroup-label input[type="checkbox"] { margin-right: 6px; cursor: pointer; }
-  .checkbox-item { padding: 2px 0 2px 36px; font-size: 13px; cursor: pointer; display: flex; align-items: center; }
+  .checkbox-item { padding: 3px 0 3px 48px; font-size: 13px; cursor: pointer; display: flex; align-items: center; }
   .checkbox-item input { margin-right: 6px; cursor: pointer; }
   .checkbox-item:hover { background: #f0f4ff; border-radius: 3px; }
   .checkbox-controls { margin-bottom: 6px; }
@@ -280,11 +278,10 @@ function loadProjects() {
           var gId = 'grp-' + group.name.replace(/[^a-z0-9]/gi, '_');
           var hasSubgroups = group.subgroups && group.subgroups.length > 0;
 
-          // Group-level check + label
+          // Group-level label (no checkbox, arrow only)
           container.append(
             '<div class="checkbox-group-label" data-target="#' + gId + '-body">' +
             '<span class="arrow">▸</span> ' +
-            '<input type="checkbox" class="grp-check" data-group="' + gId + '"> ' +
             escapeHtml(group.name) +
             '</div>'
           );
@@ -295,10 +292,10 @@ function loadProjects() {
             group.subgroups.forEach(function(subgroup) {
               var sgId = gId + '-sg-' + (subgroup.name || '__none').replace(/[^a-z0-9]/gi, '_');
               var sgName = subgroup.name || '—';
+              // Subgroup label (no checkbox, arrow + count)
               $body.append(
                 '<div class="checkbox-subgroup-label" data-target="#' + sgId + '-body">' +
                 '<span class="arrow">▸</span> ' +
-                '<input type="checkbox" class="sg-check" data-subgroup="' + sgId + '"> ' +
                 escapeHtml(sgName) + ' (' + subgroup.projects.length + ')' +
                 '</div>'
               );
@@ -321,28 +318,19 @@ function loadProjects() {
 
       // ---- Accordion toggle (click label → expand/collapse) ----
       $('#project-list').on('click', '.checkbox-group-label', function(e) {
-        if ($(e.target).is('input')) return;
         var tgt = $($(this).data('target'));
-        tgt.slideToggle(120);
+        tgt.slideToggle(150);
         $(this).find('.arrow').toggleClass('open', tgt.is(':visible'));
       });
       $('#project-list').on('click', '.checkbox-subgroup-label', function(e) {
-        if ($(e.target).is('input')) return;
         var tgt = $($(this).data('target'));
-        tgt.slideToggle(120);
+        tgt.slideToggle(150);
         $(this).find('.arrow').toggleClass('open', tgt.is(':visible'));
       });
 
       // ---- Parent → children propagation ----
-      $('#project-list').on('change', '.grp-check', function() {
-        var checked = this.checked;
-        $(this).closest('.checkbox-group-label').siblings()
-          .find('.sg-check, .proj-check').prop('checked', checked);
-      });
-      $('#project-list').on('change', '.sg-check', function() {
-        var checked = this.checked;
-        var $sgBody = $($(this).closest('.checkbox-subgroup-label').data('target'));
-        $sgBody.find('.proj-check').prop('checked', checked);
+      $('#project-list').on('change', '.proj-check', function() {
+        // When all projects in a subgroup become checked/unchecked, nothing extra needed
       });
     })
     .fail(function() {
