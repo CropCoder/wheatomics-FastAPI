@@ -190,19 +190,19 @@ VARIANTHUB_DATASETS: dict[str, dict[str, str]] = {
     "Tetra_wheat_sample736_InDel": {
         "label": "Tetraploid_wheat.sample736.InDel",
         "filename": "Tetraploid_wheat.sample736.InDel.vcf.gz",
-        "source": "Tetraploid wheat 736-sample InDel variants",
+        "source": "Tetraploid wheat 736-sample InDel variants (PMID 42486906)",
         "reference": "Kronos",
     },
     "Tetra_wheat_sample736_SNP": {
         "label": "Tetraploid_wheat.sample736.SNP",
         "filename": "Tetraploid_wheat.sample736.SNP.vcf.gz",
-        "source": "Tetraploid wheat 736-sample SNP variants",
+        "source": "Tetraploid wheat 736-sample SNP variants (PMID 42486906)",
         "reference": "Kronos",
     },
     "Tetra_wheat_sample736_SV": {
         "label": "Tetraploid_wheat.sample736.SV",
         "filename": "Tetraploid_wheat.sample736.SV.vcf.gz",
-        "source": "Tetraploid wheat 736-sample SV variants",
+        "source": "Tetraploid wheat 736-sample SV variants (PMID 42486906)",
         "reference": "Kronos",
     },
 }

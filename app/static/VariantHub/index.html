@@ -347,7 +347,7 @@ function fillDatasetSelect() {
   var regionHint = $('#region-hint');
   var regionInput = $('#region-input');
   if (refName === 'Kronos') {
-    regionHint.text('Format: chr:start-end (max 5 Mb). Kronos chromosomes: 1A-7D (no chr prefix).');
+    regionHint.text('Format: chr:start-end (max 5 Mb).');
     regionInput.attr('placeholder', 'e.g. 1A:1000-50000');
   } else if (refName && refName.startsWith('Chinese_Spring')) {
     regionHint.text('Format: chr:start-end (max 5 Mb).');
@@ -393,6 +393,9 @@ function loadDatasetInfo() {
         '<span class="text-muted">' + linkifySource(d.source) + '</span></p>';
       html += '<p><strong>' + d.n_samples + '</strong> samples</p>';
       if (d.has_sample_meta) {
+        html += '<div class="form-group" style="margin-top:8px;">' +
+          '<button class="btn btn-sm btn-outline-secondary" onclick="downloadSampleMeta()">Download sample metadata</button>' +
+          '</div>';
         html += '<div id="sample-meta-section"></div>';
       }
       if (d.samples && d.samples.length) {
@@ -749,6 +752,32 @@ function linkifySource(text) {
   html = html.replace(/\bPMC\s*(\d+)/gi,
     '<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC$1/" target="_blank" rel="noopener">PMC$1</a>');
   return html;
+}
+
+function downloadSampleMeta() {
+  var ds = $('#dataset-select').val();
+  if (!ds) { alert('Select a dataset first'); return; }
+  $.getJSON('/api/VariantHub/samples', { dataset: ds })
+    .done(function(resp) {
+      if (!resp.success) { alert('Failed to load sample metadata'); return; }
+      var fields = resp.data.fields || [];
+      var samples = resp.data.samples || [];
+      var header = fields.map(function(f) { return f.label || f.key; }).join('\t');
+      var rows = samples.map(function(s) {
+        return fields.map(function(f) { return s[f.key] !== undefined ? String(s[f.key]) : ''; }).join('\t');
+      });
+      var tsv = header + '\n' + rows.join('\n') + '\n';
+      var blob = new Blob([tsv], { type: 'text/tab-separated-values;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = (ds || 'sample_meta') + '_sample_metadata.tsv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    })
+    .fail(function() { alert('Failed to load sample metadata'); });
 }
 </script>
 </body>
