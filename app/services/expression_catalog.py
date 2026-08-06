@@ -48,7 +48,8 @@ def list_projects() -> dict:
     tree: dict[str, dict[str, list[dict]]] = {}
     for p in all_projects:
         gname = p["group"]
-        sgname = p.get("subgroup") or ""
+        # Normalise: empty subgroup maps to ""; strip whitespace
+        sgname = (p.get("subgroup") or "").strip()
         tree.setdefault(gname, {}).setdefault(sgname, []).append({
             "id": p["id"],
             "description": p["description"],
