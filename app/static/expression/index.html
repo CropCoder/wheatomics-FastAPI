@@ -320,12 +320,24 @@ function loadProjects() {
       $('#project-list').on('click', '.checkbox-group-label', function(e) {
         var tgt = $($(this).data('target'));
         tgt.slideToggle(150);
-        $(this).find('.arrow').toggleClass('open', tgt.is(':visible'));
+        var arrow = $(this).find('.arrow');
+        arrow.toggleClass('open', tgt.is(':visible'));
+        if (!tgt.is(':visible')) {
+          arrow.text('▸');
+        } else {
+          arrow.text('▾');
+        }
       });
       $('#project-list').on('click', '.checkbox-subgroup-label', function(e) {
         var tgt = $($(this).data('target'));
         tgt.slideToggle(150);
-        $(this).find('.arrow').toggleClass('open', tgt.is(':visible'));
+        var arrow = $(this).find('.arrow');
+        arrow.toggleClass('open', tgt.is(':visible'));
+        if (!tgt.is(':visible')) {
+          arrow.text('▸');
+        } else {
+          arrow.text('▾');
+        }
       });
 
       // ---- Parent → children propagation ----
