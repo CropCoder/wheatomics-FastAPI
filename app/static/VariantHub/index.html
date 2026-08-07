@@ -346,16 +346,8 @@ function fillDatasetSelect() {
   // Update region hint per reference genome
   var regionHint = $('#region-hint');
   var regionInput = $('#region-input');
-  if (refName === 'Kronos') {
-    regionHint.text('Format: chr:start-end (max 5 Mb).');
-    regionInput.attr('placeholder', 'e.g. 1A:1000-50000');
-  } else if (refName && refName.startsWith('Chinese_Spring')) {
-    regionHint.text('Format: chr:start-end (max 5 Mb).');
-    regionInput.attr('placeholder', 'e.g. chr1A:1000-50000');
-  } else {
-    regionHint.text('Format: chr:start-end (max 5 Mb).');
-    regionInput.attr('placeholder', 'e.g. chr1A:1000-50000');
-  }
+  regionHint.text('Format: chr:start-end (max 5 Mb).');
+  regionInput.attr('placeholder', 'e.g. chr1A:1000-50000');
 }
 
 function currentDatasetMeta() {
