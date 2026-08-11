@@ -1,381 +1,101 @@
-"""SynTeny Viewer — port of col_orthe/app.py into FastAPI.
+"""SynTenyView MySQL-backed FastAPI router.
 
-Path: /api/syntenyview/
-
-Features:
-- Reference-genome-aware query gene resolution (handles duplicated gene IDs).
-- Gene ID cluster extraction (BJ81D040500.1 → group 1) with strict subgenome validation.
-- Target tracks are subgenome-strict: _A/_B/_D suffix enforces matching subgenome.
-- BED columns 5 and 6 as Description and PFAMs.
-- window=1..20 selectable upstream/downstream neighborhood.
-- /api/syntenyview/triticeae loads preset targets from triticeae.txt.
-
-Memory optimisation (Aug 2026):
-- BED records stored as tuples (12 fields) instead of dicts → ~60 % less RAM.
-- og2genes stores gene lists as frozenset→set, reducing per―OG overhead.
-- Data is loaded lazily on first /neighborhood request, not at startup, so
-  workers that never serve a synteny query never allocate the BED/OG data.
-# Shared in-memory dataset: loaded once at module import via
-# _start_warmup_once → _ensure_loaded with single-flight semantics
-# (Condition + _load_in_progress).  All concurrent users share the
-# same BED/OG objects after the initial load completes.
+The BED files are imported into MySQL by import_bed_to_mysql.py.  This router
+never loads the 6.3M+ BED records into Python memory.  Gene lookup, genome
+listing, neighborhood extraction and orthogroup lookup are all performed by
+MySQL, while only the small result set for the current query is kept in RAM.
 """
+
+from __future__ import annotations
 
 import os
 import re
-import gc
-import glob
-import time
 import threading
-from collections import OrderedDict
-from typing import Dict, List, Optional
+import time
+from typing import Dict, List, Optional, Tuple
 
+import pymysql
 from fastapi import APIRouter, Query
-
-from app.core.config import settings
 
 router = APIRouter(prefix="/syntenyview", tags=["SynTeny Viewer"])
 
-# ==================== Path configuration ====================
-COL_BED_DIR     = "/var/www/html/col_bed"
-TRITICEAE_FILE  = os.path.join(COL_BED_DIR, "triticeae.txt")
-RESULTS_DIR     = "/var/www/html/orthefind/Results_Jul24"
-WD              = os.path.join(RESULTS_DIR, "WorkingDirectory")
-CLUSTER_FILE    = os.path.join(WD, "SpeciesIDs_cluster.txt")
-OG_FILE         = os.path.join(RESULTS_DIR, "Orthogroups", "Orthogroups.txt")
+# ---------------------------------------------------------------------------
+# MySQL configuration
+# ---------------------------------------------------------------------------
+DB_HOST = os.getenv("SYNTENY_DB_HOST", "127.0.0.1")
+DB_PORT = int(os.getenv("SYNTENY_DB_PORT", "3306"))
+DB_USER = os.getenv("SYNTENY_DB_USER", "root")
+DB_PASSWORD = os.getenv("SYNTENY_DB_PASSWORD", "rosa1212")
+DB_NAME = os.getenv("SYNTENY_DB_NAME", "synteny_mysql")
 
-TAB = chr(9)
-NL  = chr(10)
+COL_BED_DIR = os.getenv("COL_BED_DIR", "/var/www/html/col_bed")
+TRITICEAE_FILE = os.path.join(COL_BED_DIR, "triticeae.txt")
 
-# ---- BED tuple field indices ----
-# (chrom, start, end, genome, sub, label, description, pfams)
-# Access via _FI_* constants so no dict-key lookups are needed.
-_FI_CHROM, _FI_START, _FI_END = 0, 1, 2
-_FI_GENOME, _FI_SUB, _FI_LABEL = 3, 4, 5
-_FI_DESC, _FI_PFAMS = 6, 7
+MAX_WINDOW = 50
+DEFAULT_UPSTREAM = 5
+DEFAULT_DOWNSTREAM = 5
 
-# ---- Maximum window ----
-MAX_WINDOW     = 20
-DEFAULT_WINDOW = 5
-
-# ---- Lazy-load globals ----
-_prefix_map = None
-_chrom_map = None
-_bed_gene = None                 # gene_id -> first-observed BED tuple
-_bed_gene_entries = None         # gene_id -> list of BED tuples
-_chrom_lists = None              # (genome, sub, chrom) -> [(start, gene_id)]
-_gene2og = None
-_og2genes = None                 # og_name -> frozenset of gene-ids
-_cluster_cache = OrderedDict()   # Bounded LRU
-_CLUSTER_CACHE_MAX = 5000
-_sorted_prefixes = None
-_genomes_cache = None
-_last_access_time = None           # monotonic timestamp of last /neighborhood call
-
-_load_lock = threading.RLock()
-_load_condition = threading.Condition(_load_lock)
-_load_in_progress = False
-_load_count = 0
-_warmup_started = False
-_query_semaphore = threading.BoundedSemaphore(8)
-_load_status = {
-    "state": "not_started",
-    "message": "Full data have not been loaded.",
-    "started_at": None,
-    "finished_at": None,
-    "error": None,
-}
+_QUERY_SEMAPHORE = threading.BoundedSemaphore(8)
+_GENOME_CACHE = None
+_GENOME_CACHE_TIME = 0.0
+_GENOME_CACHE_TTL = 300.0
 
 
-# ==================== Helpers ====================
+def get_conn():
+    return pymysql.connect(
+        host=DB_HOST,
+        port=DB_PORT,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        charset="utf8mb4",
+        autocommit=True,
+        cursorclass=pymysql.cursors.DictCursor,
+        connect_timeout=10,
+        read_timeout=60,
+        write_timeout=60,
+    )
 
-def _set_load_status(state, message="", error=None):
-    _load_status["state"] = state
-    _load_status["message"] = message
-    if state == "loading" and _load_status["started_at"] is None:
-        _load_status["started_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
-    if state in ("ready", "error"):
-        _load_status["finished_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
-    _load_status["error"] = error
+
+def _split_label(label: str) -> Tuple[str, str]:
+    """Split genome label like Chinese_Spring2.1_A into base + subgenome."""
+    m = re.match(r"^(.+)_([A-Za-z][A-Za-z0-9]*)$", label or "")
+    return (m.group(1), m.group(2)) if m else (label or "", "")
+
+
+def _label(genome: str, sub: str) -> str:
+    return f"{genome}_{sub}" if sub else genome
+
+
+def _genome_sort_key(label: str):
+    if "_" in label:
+        prefix, suffix = label.rsplit("_", 1)
+        order = {"A": 0, "B": 1, "D": 2}
+        return (order.get(suffix.upper(), 3), suffix.upper(), prefix.lower())
+    return (4, "", label.lower())
 
 
 def _mb_label(start, end):
     try:
-        return "%.2f-%.2f Mb" % (float(start) / 1_000_000.0, float(end) / 1_000_000.0)
+        return "%.2f-%.2f Mb" % (float(start) / 1e6, float(end) / 1e6)
     except Exception:
         return ""
 
 
-def _split_genome_sub(base):
-    m = re.match(r"(.+)_([A-Za-z]\w*)$", base)
-    return (m.group(1), m.group(2)) if m else (base, "")
-
-
-def _genome_label(genome, sub):
-    return f"{genome}_{sub}" if sub else genome
-
-
-def _genome_label_from_bed_path(path):
-    base = re.sub(r"\.filter\.bed$|\.bed$", "", os.path.basename(path))
-    genome, sub = _split_genome_sub(base)
-    return _genome_label(genome, sub)
-
-
-def _clean_annot_value(v):
-    v = (v or "").strip()
-    return v if v else "-"
-
-
-def _parse_window(raw):
-    try:
-        w = int(str(raw or DEFAULT_WINDOW).strip())
-    except Exception:
-        w = DEFAULT_WINDOW
-    if w < 0:
-        w = 0
-    if w > MAX_WINDOW:
-        w = MAX_WINDOW
-    return w
-
-
-# ==================== Data loading ====================
-
-# Warmup enabled — data loads at module import time on every worker.
-# With preload_app=True the master process imports this module once,
-# then forks.  Each worker inherits the BED/OG via copy-on-write so
-# the dataset is loaded exactly once and shared by all requests.
-BACKGROUND_WARMUP = True
-
-def _genome_sort_key(label):
-    if "_" in label:
-        prefix, suffix = label.rsplit("_", 1)
-        sub_order = {"A": 0, "B": 1, "D": 2}
-        return (sub_order.get(suffix.upper(), 3 + ord(suffix[0].upper()) if suffix else 999), suffix.upper(), prefix)
-    return (999, "", label)
-
-
-def _list_genomes_fast():
-    global _genomes_cache
-    if _genomes_cache is not None:
-        return _genomes_cache
-    if not os.path.isdir(COL_BED_DIR):
-        return []
-    labels = []
-    for path in glob.glob(os.path.join(COL_BED_DIR, "*.bed")):
-        labels.append(_genome_label_from_bed_path(path))
-    _genomes_cache = sorted(set(labels), key=_genome_sort_key)
-    return _genomes_cache
-
-
-def _load_cluster_map():
-    global _prefix_map, _chrom_map
-    with _load_lock:
-        if _prefix_map is not None:
-            return
-        if not os.path.exists(CLUSTER_FILE):
-            return
-        prefix_map, chrom_map = {}, {}
-        with open(CLUSTER_FILE, encoding="utf-8", errors="ignore") as f:
-            next(f, None)
-            for line in f:
-                cols = line.rstrip(NL).rstrip(chr(13)).split(TAB)
-                if len(cols) < 8:
-                    continue
-                for i in range(1, 8):
-                    val = cols[i].strip()
-                    if not val:
-                        continue
-                    if re.match(r"(?i)chr\d+[abd]", val) or re.match(r"(?i)^\d+[abd]$", val):
-                        chrom_map[val.lower()] = i
-                        chrom_map[val.lower().replace("chr", "")] = i
-                    else:
-                        prefix_map[val] = i
-        _prefix_map, _chrom_map = prefix_map, chrom_map
-
-
-def _make_bed_tuple(chrom, start, end, genome, sub, label, desc, pfams):
-    """Return a compact 8-tuple for a BED record — ~60 % less memory than a dict."""
-    return (str(chrom), int(start), int(end), str(genome), str(sub), str(label), str(desc), str(pfams))
-
-
-def _load_bed():
-    global _bed_gene, _bed_gene_entries, _chrom_lists
-    with _load_lock:
-        if _bed_gene is not None:
-            return
-        if not os.path.isdir(COL_BED_DIR):
-            return
-        bed_files = glob.glob(os.path.join(COL_BED_DIR, "*.bed"))
-        if not bed_files:
-            return
-        bed_gene, entries, tmp = {}, {}, {}
-        for path in sorted(bed_files):
-            base = re.sub(r"\.filter\.bed$|\.bed$", "", os.path.basename(path))
-            genome, sub = _split_genome_sub(base)
-            label = _genome_label(genome, sub)
-            with open(path, encoding="utf-8", errors="ignore") as f:
-                for line in f:
-                    p = line.rstrip(NL).rstrip(chr(13)).split(TAB)
-                    if len(p) < 4:
-                        continue
-                    try:
-                        chrom, start, end, gid = p[0], int(p[1]), int(p[2]), p[3]
-                    except ValueError:
-                        continue
-                    desc = _clean_annot_value(p[4] if len(p) > 4 else "-")
-                    pfams = _clean_annot_value(p[5] if len(p) > 5 else "-")
-                    rec = _make_bed_tuple(chrom, start, end, genome, sub, label, desc, pfams)
-                    bed_gene.setdefault(gid, rec)
-                    entries.setdefault(gid, []).append(rec)
-                    tmp.setdefault((genome, sub, chrom), []).append((start, gid))
-        _bed_gene = bed_gene
-        _bed_gene_entries = entries
-        _chrom_lists = {k: sorted(v) for k, v in tmp.items()}
-
-
-def _load_orthogroups():
-    global _gene2og, _og2genes
-    with _load_lock:
-        if _gene2og is not None:
-            return
-        if not os.path.exists(OG_FILE):
-            return
-        gene2og, og2genes = {}, {}
-        with open(OG_FILE, encoding="utf-8", errors="ignore") as f:
-            for line in f:
-                if ":" not in line:
-                    continue
-                og, rest = line.split(":", 1)
-                og = og.strip()
-                genes = rest.split()
-                og2genes[og] = frozenset(genes)
-                for g in genes:
-                    if g not in gene2og:
-                        gene2og[g] = og
-        _gene2og, _og2genes = gene2og, og2genes
-
-
-def _ensure_loaded():
-    """Single-flight data loader shared by all request threads.
-
-    With gunicorn preload_app=True the module is imported once in the
-    master process, BED/OG are loaded during warm-up, and each forked
-    worker inherits the ready-to-use dicts through copy-on-write.
-    The Condition prevents racy re-loads in workers that start before
-    the master finishes loading.
-    """
-    global _load_in_progress, _load_count
-
-    if _bed_gene is not None and _gene2og is not None and _prefix_map is not None:
-        return
-
-    with _load_condition:
-        if _bed_gene is not None and _gene2og is not None and _prefix_map is not None:
-            return
-
-        while _load_in_progress:
-            _load_condition.wait()
-            if _bed_gene is not None and _gene2og is not None and _prefix_map is not None:
-                return
-
-        _load_in_progress = True
-        _load_count += 1
-        _set_load_status("loading",
-            "Loading cluster map, BED files, and Orthogroups once for all concurrent users.")
-
-    try:
-        _load_cluster_map()
-        _load_bed()
-        _load_orthogroups()
-
-        with _load_condition:
-            _set_load_status("ready",
-                "BED genes=%d, BED entries=%d, OG=%d, prefixes=%d, shared_load_count=%d" %
-                (len(_bed_gene or {}),
-                 sum(len(v) for v in (_bed_gene_entries or {}).values()),
-                 len(_og2genes or {}), len(_prefix_map or {}),
-                 _load_count))
-            _load_in_progress = False
-            _load_condition.notify_all()
-    except Exception as e:
-        with _load_condition:
-            _set_load_status("error", "Data loading failed.", repr(e))
-            _load_in_progress = False
-            _load_condition.notify_all()
-        raise
-
-
-# Warmup disabled earlier — data now loads eagerly via _start_warmup_once.
-# Remove _BACKGROUND_WARMUP — data is now loaded eagerly.
-_BACKGROUND_WARMUP = True
-
-
-def _start_warmup_once():
-    global _warmup_started
-    if _warmup_started or not _BACKGROUND_WARMUP:
-        return
-    _warmup_started = True
-    _ensure_loaded()
-
-
-# ==================== BED tuple accessors ====================
-
-def _t_chrom(rec):
-    return rec[_FI_CHROM]
-
-def _t_start(rec):
-    return rec[_FI_START]
-
-def _t_end(rec):
-    return rec[_FI_END]
-
-def _t_genome(rec):
-    return rec[_FI_GENOME]
-
-def _t_sub(rec):
-    return rec[_FI_SUB]
-
-def _t_label(rec):
-    return rec[_FI_LABEL]
-
-def _t_desc(rec):
-    return rec[_FI_DESC]
-
-def _t_pfams(rec):
-    return rec[_FI_PFAMS]
-
-
-def _find_og(gid):
-    """Return the orthogroup name for *gid*, or None.
-
-    The returned value is the og name string (not a (gid, og) tuple). It feeds
-    ``_og2genes`` lookups, track ``og`` fields, and the ``og_map`` the frontend
-    compares against ``data.og_map[query]`` — all of which expect the og name.
-    """
-    if gid in _gene2og:
-        return _gene2og[gid]
-    alt = re.sub(r"\.\d+$", "", gid) if re.search(r"\.\d+$", gid) else gid + ".1"
-    return _gene2og.get(alt)
-
-
-# ==================== Gene ID / chromosome analysis ====================
-
-def _strip_version(gid):
+def _strip_version(gid: str) -> str:
     return re.sub(r"\.\d+$", "", gid or "")
 
 
-def _gene_id_cluster(gid):
-    g = _strip_version(gid)
-    m = re.search(r"(?i)([1-7])([abd])(?=\d{3,})", g)
-    if m:
-        return int(m.group(1))
-    m = re.search(r"(?i)(?:^|[^0-9])([1-7])([abd])(?=\d)", g)
-    if m:
-        return int(m.group(1))
-    return None
+def _candidate_gene_ids(gid: str) -> List[str]:
+    ids = [gid]
+    if re.search(r"\.\d+$", gid):
+        ids.append(re.sub(r"\.\d+$", "", gid))
+    else:
+        ids.append(gid + ".1")
+    return list(dict.fromkeys(x for x in ids if x))
 
 
-def _gene_id_subgenome(gid):
+def _gene_subgenome(gid: str) -> Optional[str]:
     g = _strip_version(gid)
     m = re.search(r"(?i)([1-7])([abd])(?=\d{3,})", g)
     if m:
@@ -386,45 +106,205 @@ def _gene_id_subgenome(gid):
     return None
 
 
-def _chrom_cluster(chrom):
-    if not chrom:
-        return None
-    c = str(chrom).strip().lower()
-    if c in (_chrom_map or {}):
-        return (_chrom_map or {}).get(c)
-    c2 = c.replace("chr", "")
-    if c2 in (_chrom_map or {}):
-        return (_chrom_map or {}).get(c2)
-    m = re.search(r"(?i)(?:chr)?([1-7])\s*([abd])\b", str(chrom))
-    if m:
-        return int(m.group(1))
-    return None
-
-
-def _chrom_subgenome(chrom):
-    if not chrom:
-        return None
-    m = re.search(r"(?i)(?:chr)?[1-7]\s*([abd])\b", str(chrom).strip())
+def _chrom_subgenome(chrom: str) -> Optional[str]:
+    m = re.search(r"(?i)(?:chr)?[1-7]\s*([abd])\b", str(chrom or ""))
     return m.group(1).upper() if m else None
 
 
-def _label_subgenome(label):
-    if not label or "_" not in str(label):
+def _gene_cluster(gid: str) -> Optional[int]:
+    g = _strip_version(gid)
+    m = re.search(r"(?i)([1-7])([abd])(?=\d{3,})", g)
+    if m:
+        return int(m.group(1))
+    m = re.search(r"(?i)(?:^|[^0-9])([1-7])([abd])(?=\d)", g)
+    return int(m.group(1)) if m else None
+
+
+def _chrom_cluster(chrom: str) -> Optional[int]:
+    m = re.search(r"(?i)(?:chr)?([1-7])\s*[abd]\b", str(chrom or ""))
+    return int(m.group(1)) if m else None
+
+
+def _query_limit(fn):
+    import functools
+
+    @functools.wraps(fn)
+    def wrapped(*args, **kwargs):
+        if not _QUERY_SEMAPHORE.acquire(timeout=300):
+            return {"error": "Server is busy processing other synteny queries; please retry shortly."}
+        try:
+            return fn(*args, **kwargs)
+        finally:
+            _QUERY_SEMAPHORE.release()
+
+    return wrapped
+
+
+def _normalize_gene_row(row: dict) -> dict:
+    genome = row["genome_name"]
+    sub = row.get("subgenome") or ""
+    return {
+        "id": row["id"],
+        "genome_name": genome,
+        "subgenome": sub,
+        "label": _label(genome, sub),
+        "chromosome": row.get("chromosome") or "",
+        "start_pos": int(row["start_pos"]),
+        "end_pos": int(row["end_pos"]),
+        "gene_id": row["gene_id"],
+        "annotation": row.get("annotation") or "-",
+        "family": row.get("family") or "-",
+    }
+
+
+def _choose_reference_record(rows: List[dict], submitted_gene: str) -> Optional[dict]:
+    if not rows:
         return None
-    sub = str(label).rsplit("_", 1)[1].strip().upper()
-    return sub or None
+
+    wanted_sub = _gene_subgenome(submitted_gene)
+    wanted_cluster = _gene_cluster(submitted_gene)
+
+    def score(row):
+        s = 0
+        if row["gene_id"] == submitted_gene:
+            s += 10000
+        if wanted_sub and (row.get("subgenome") or "").upper() == wanted_sub:
+            s += 1000
+        chrom_sub = _chrom_subgenome(row.get("chromosome"))
+        if wanted_sub and chrom_sub == wanted_sub:
+            s += 500
+        if wanted_cluster is not None and _chrom_cluster(row.get("chromosome")) == wanted_cluster:
+            s += 400
+        # Prefer complete annotation records, then stable database order.
+        if row.get("annotation"):
+            s += 1
+        return s
+
+    return sorted(rows, key=lambda r: (-score(r), r["genome_name"], r["subgenome"], r["chromosome"], r["start_pos"], r["id"]))[0]
 
 
-def _is_abd_subgenome(sub):
-    return str(sub or "").upper() in {"A", "B", "D"}
+def _fetch_gene_candidates(conn, gene_id: str) -> List[dict]:
+    candidates = _candidate_gene_ids(gene_id)
+    placeholders = ",".join(["%s"] * len(candidates))
+    sql = f"""
+        SELECT id, genome_name, subgenome, chromosome, start_pos, end_pos,
+               gene_id, annotation, family
+        FROM gene_position
+        WHERE gene_id IN ({placeholders})
+        ORDER BY id
+    """
+    with conn.cursor() as cur:
+        cur.execute(sql, candidates)
+        return [_normalize_gene_row(r) for r in cur.fetchall()]
 
 
-def _record_matches_query_and_target(hom_gene, rec, query_cluster, target_label):
-    gene_cl = _gene_id_cluster(hom_gene)
-    gene_sub = _gene_id_subgenome(hom_gene)
-    chrom_cl = _chrom_cluster(_t_chrom(rec))
-    chrom_sub = _chrom_subgenome(_t_chrom(rec))
-    target_sub = _label_subgenome(target_label)
+def _fetch_neighbors(conn, ref: dict, upstream: int, downstream: int) -> List[dict]:
+    """Fetch only the requested local neighborhood using indexed LIMITs."""
+    base = """
+        SELECT id, genome_name, subgenome, chromosome, start_pos, end_pos,
+               gene_id, annotation, family
+        FROM gene_position
+        WHERE genome_name = %s
+          AND COALESCE(subgenome, '') = COALESCE(%s, '')
+          AND chromosome = %s
+    """
+
+    with conn.cursor() as cur:
+        cur.execute(
+            base
+            + """
+              AND (start_pos < %s
+                   OR (start_pos = %s AND end_pos < %s)
+                   OR (start_pos = %s AND end_pos = %s AND id < %s))
+              ORDER BY start_pos DESC, end_pos DESC, id DESC
+              LIMIT %s
+            """,
+            (
+                ref["genome_name"], ref["subgenome"], ref["chromosome"],
+                ref["start_pos"], ref["start_pos"], ref["end_pos"],
+                ref["start_pos"], ref["end_pos"], ref["id"], upstream,
+            ),
+        )
+        up = [_normalize_gene_row(r) for r in cur.fetchall()]
+
+        cur.execute(
+            base
+            + """
+              AND (start_pos > %s
+                   OR (start_pos = %s AND end_pos > %s)
+                   OR (start_pos = %s AND end_pos = %s AND id > %s))
+              ORDER BY start_pos ASC, end_pos ASC, id ASC
+              LIMIT %s
+            """,
+            (
+                ref["genome_name"], ref["subgenome"], ref["chromosome"],
+                ref["start_pos"], ref["start_pos"], ref["end_pos"],
+                ref["start_pos"], ref["end_pos"], ref["id"], downstream,
+            ),
+        )
+        down = [_normalize_gene_row(r) for r in cur.fetchall()]
+
+    # Upstream query was intentionally descending for the index; restore
+    # chromosome order for the frontend.
+    up.reverse()
+    return up + [ref] + down
+
+
+def _fetch_orthogroups(conn, gene_ids: List[str]) -> Dict[str, List[str]]:
+    if not gene_ids:
+        return {}
+    placeholders = ",".join(["%s"] * len(gene_ids))
+    sql = f"""
+        SELECT gene_id, orthogroup
+        FROM gene_orthogroup
+        WHERE gene_id IN ({placeholders})
+    """
+    out: Dict[str, List[str]] = {}
+    with conn.cursor() as cur:
+        cur.execute(sql, gene_ids)
+        for row in cur.fetchall():
+            out.setdefault(row["gene_id"], []).append(row["orthogroup"])
+    return out
+
+
+def _fetch_target_records_by_ogs(conn, ogs: List[str], target_labels: set) -> Dict[str, List[dict]]:
+    """Fetch only target-genome records belonging to the relevant OGs."""
+    if not ogs or not target_labels:
+        return {}
+
+    # Split labels into genome_name + subgenome, e.g. foo_A -> (foo, A).
+    pairs = [_split_label(x) for x in target_labels]
+    og_ph = ",".join(["%s"] * len(ogs))
+    pair_sql = ",".join(["(%s,%s)"] * len(pairs))
+    pair_args = [v for pair in pairs for v in pair]
+
+    sql = f"""
+        SELECT og.orthogroup, gp.id, gp.genome_name, gp.subgenome,
+               gp.chromosome, gp.start_pos, gp.end_pos, gp.gene_id,
+               gp.annotation, gp.family
+        FROM gene_orthogroup og
+        INNER JOIN gene_position gp ON gp.gene_id = og.gene_id
+        WHERE og.orthogroup IN ({og_ph})
+          AND (gp.genome_name, COALESCE(gp.subgenome, '')) IN ({pair_sql})
+        ORDER BY gp.genome_name, gp.subgenome, gp.chromosome, gp.start_pos, gp.end_pos, gp.id
+    """
+    args = list(ogs) + pair_args
+    out: Dict[str, List[dict]] = {}
+    with conn.cursor() as cur:
+        cur.execute(sql, args)
+        for row in cur.fetchall():
+            rec = _normalize_gene_row(row)
+            rec["orthogroup"] = row["orthogroup"]
+            out.setdefault(row["orthogroup"], []).append(rec)
+    return out
+
+
+def _record_matches_query_and_target(hom_gene: str, rec: dict, query_cluster: Optional[int], target_label: str):
+    gene_cl = _gene_cluster(hom_gene)
+    gene_sub = _gene_subgenome(hom_gene)
+    chrom_cl = _chrom_cluster(rec["chromosome"])
+    chrom_sub = _chrom_subgenome(rec["chromosome"])
+    target_sub = _split_label(target_label)[1].upper()
 
     if query_cluster is not None:
         if gene_cl is not None and gene_cl != query_cluster:
@@ -435,7 +315,7 @@ def _record_matches_query_and_target(hom_gene, rec, query_cluster, target_label)
     if gene_cl is not None and chrom_cl is not None and gene_cl != chrom_cl:
         return False, "gene_chrom_group_conflict"
 
-    if _is_abd_subgenome(target_sub):
+    if target_sub in {"A", "B", "D"}:
         if gene_sub is not None and gene_sub != target_sub:
             return False, "target_gene_subgenome_mismatch"
         if gene_sub is None and chrom_sub is not None and chrom_sub != target_sub:
@@ -446,447 +326,317 @@ def _record_matches_query_and_target(hom_gene, rec, query_cluster, target_label)
     return True, "ok"
 
 
-def _resolve_cluster(gene_id, info=None):
-    label = _t_label(info) if info else ""
-    chrom = _t_chrom(info) if info else ""
-    cache_key = (gene_id, label, chrom)
-    if cache_key in _cluster_cache:
-        _cluster_cache.move_to_end(cache_key)
-        return _cluster_cache[cache_key]
-
-    cl = _gene_id_cluster(gene_id)
-
-    if cl is None and info:
-        cl = _chrom_cluster(_t_chrom(info))
-
-    if cl is None:
-        for rec in (_bed_gene_entries or {}).get(gene_id, []):
-            cl = _chrom_cluster(_t_chrom(rec))
-            if cl is not None:
-                break
-
-    if cl is None:
-        global _sorted_prefixes
-        if _sorted_prefixes is None:
-            _sorted_prefixes = sorted((_prefix_map or {}).keys(), key=len, reverse=True)
-        for pre in _sorted_prefixes:
-            if gene_id.startswith(pre):
-                cl = _prefix_map[pre]
-                break
-
-    _cluster_cache[cache_key] = cl
-    while len(_cluster_cache) > _CLUSTER_CACHE_MAX:
-        _cluster_cache.popitem(last=False)
-    return cl
-
-
-def _candidate_gene_ids(gid):
-    ids = [gid]
-    if re.search(r"\.\d+$", gid):
-        ids.append(re.sub(r"\.\d+$", "", gid))
-    else:
-        ids.append(gid + ".1")
-    out = []
-    for x in ids:
-        if x and x not in out:
-            out.append(x)
-    return out
-
-
-def _choose_gene_record(gene_id, requested_genome):
-    wanted = (requested_genome or "").strip()
-    wanted_sub = None
-    wanted_base = wanted
-    if "_" in wanted:
-        wanted_base, wanted_sub = wanted.rsplit("_", 1)
-        wanted_sub = wanted_sub.upper()
-
-    gene_sub = _gene_id_subgenome(gene_id)
-
-    all_hits = []
-    for gid in _candidate_gene_ids(gene_id):
-        for rec in (_bed_gene_entries or {}).get(gid, []):
-            all_hits.append((gid, rec))
-
-    if not all_hits:
-        return None, gene_id, []
-
-    def score(item):
-        gid, rec = item
-        rec_label = _t_label(rec)
-        rec_genome = _t_genome(rec)
-        rec_sub = _t_sub(rec).upper()
-        s = 0
-        if gid == gene_id:
-            s += 1000
-        if wanted:
-            if rec_label == wanted:
-                s += 10000
-            if rec_genome == wanted:
-                s += 5000
-            if rec_genome == wanted_base:
-                s += 3000
-            if rec_label.startswith(wanted + "_"):
-                s += 1500
-            if wanted_sub and rec_sub == wanted_sub:
-                s += 800
-        if gene_sub and rec_sub == gene_sub:
-            s += 600
-        gid_cl = _gene_id_cluster(gid)
-        chrom_cl = _chrom_cluster(_t_chrom(rec))
-        if gid_cl is not None and chrom_cl == gid_cl:
-            s += 400
-        return s
-
-    all_hits.sort(key=score, reverse=True)
-    chosen_gid, chosen_rec = all_hits[0]
-
-    if wanted:
-        compatible = [
-            (gid, rec) for gid, rec in all_hits
-            if _t_label(rec) == wanted
-            or _t_genome(rec) == wanted
-            or _t_genome(rec) == wanted_base
-            or _t_label(rec).startswith(wanted + "_")
-        ]
-        if compatible:
-            compatible.sort(key=score, reverse=True)
-            chosen_gid, chosen_rec = compatible[0]
-        else:
-            return None, gene_id, [rec for _, rec in all_hits]
-
-    return chosen_rec, chosen_gid, [rec for _, rec in all_hits]
-
-
-def _read_triticeae_targets():
-    if os.path.exists(TRITICEAE_FILE):
-        source = TRITICEAE_FILE
-    else:
+def _read_triticeae_targets() -> Tuple[List[str], Optional[str]]:
+    if not os.path.exists(TRITICEAE_FILE):
         return [], None
-
     labels = []
     seen = set()
-    with open(source, encoding="utf-8", errors="ignore") as f:
-        for raw_line in f:
-            line = raw_line.strip()
+    with open(TRITICEAE_FILE, encoding="utf-8", errors="ignore") as fh:
+        for raw in fh:
+            line = raw.strip()
             if not line or line.startswith("#"):
                 continue
             for item in re.split(r"\s+", line):
-                item = item.strip()
-                if not item or item.startswith("#"):
-                    continue
-                item = re.sub(r"\.filter\.bed$|\.bed$", "", item)
-                if item not in seen:
+                item = re.sub(r"\.filter\.bed$|\.bed$", "", item.strip())
+                if item and item not in seen:
                     seen.add(item)
                     labels.append(item)
-    return labels, source
+    return labels, TRITICEAE_FILE
 
-
-# ==================== Startup ====================
-
-_start_warmup_once()
-
-
-# ==================== FastAPI endpoints ====================
 
 @router.get("/genomes")
 def api_genomes():
-    return _list_genomes_fast()
+    global _GENOME_CACHE, _GENOME_CACHE_TIME
+    now = time.monotonic()
+    if _GENOME_CACHE is not None and now - _GENOME_CACHE_TIME < _GENOME_CACHE_TTL:
+        return _GENOME_CACHE
+
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT genome_name, bed_file FROM genome_info ORDER BY genome_name")
+            labels = []
+            for row in cur.fetchall():
+                name = row["genome_name"]
+                # The importer stores labels such as Triticum_turgidum_Svevo_A.
+                labels.append(name)
+        _GENOME_CACHE = sorted(set(labels), key=_genome_sort_key)
+        _GENOME_CACHE_TIME = now
+        return _GENOME_CACHE
+    finally:
+        conn.close()
+
+
+@router.get("/gene-search")
+def api_gene_search(
+    q: str = Query(..., min_length=1),
+    limit: int = Query(20, ge=1, le=50),
+):
+    """Autocomplete/search gene IDs directly from MySQL."""
+    term = q.strip()
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            # Prefix search uses idx_gene_id efficiently.  Contains search is
+            # allowed as a fallback for short/irregular identifiers.
+            cur.execute(
+                """
+                SELECT gene_id, MIN(genome_name) AS genome_name,
+                       MIN(subgenome) AS subgenome
+                FROM gene_position
+                WHERE gene_id LIKE %s
+                GROUP BY gene_id
+                ORDER BY gene_id
+                LIMIT %s
+                """,
+                (term + "%", limit),
+            )
+            return [
+                {
+                    "gene_id": r["gene_id"],
+                    "genome": _label(r["genome_name"], r.get("subgenome") or ""),
+                }
+                for r in cur.fetchall()
+            ]
+    finally:
+        conn.close()
 
 
 @router.get("/status")
 def api_status():
-    triticeae_labels, triticeae_source = _read_triticeae_targets()
-    return {
-        "status": _load_status,
-        "background_warmup": BACKGROUND_WARMUP,
-        "genomes_cached": _genomes_cache is not None,
-        "bed_loaded": _bed_gene is not None,
-        "orthogroups_loaded": _gene2og is not None,
-        "cluster_loaded": _prefix_map is not None,
-        "bed_genes": len(_bed_gene) if _bed_gene else 0,
-        "bed_gene_entries": sum(len(v) for v in (_bed_gene_entries or {}).values()),
-        "orthogroups": len(_og2genes) if _og2genes else 0,
-        "prefixes": len(_prefix_map) if _prefix_map else 0,
-        "og_file": OG_FILE,
-        "max_window": MAX_WINDOW,
-        "triticeae_file": TRITICEAE_FILE,
-        "triticeae_source": triticeae_source,
-        "triticeae_count": len(triticeae_labels),
-    }
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) AS n FROM genome_info")
+            genomes = int(cur.fetchone()["n"])
+            cur.execute("SELECT COUNT(*) AS n FROM gene_position")
+            genes = int(cur.fetchone()["n"])
+            cur.execute("SELECT COUNT(*) AS n FROM gene_orthogroup")
+            mappings = int(cur.fetchone()["n"])
+            cur.execute("SELECT COUNT(DISTINCT orthogroup) AS n FROM gene_orthogroup")
+            ogs = int(cur.fetchone()["n"])
+        return {
+            "state": "ready",
+            "database": DB_NAME,
+            "genomes": genomes,
+            "gene_position_rows": genes,
+            "gene_orthogroup_rows": mappings,
+            "orthogroups": ogs,
+            "data_source": "MySQL",
+        }
+    finally:
+        conn.close()
 
 
 @router.get("/triticeae")
 def api_triticeae():
-    try:
-        labels, source = _read_triticeae_targets()
-        genomes = set(_list_genomes_fast())
-        matched = [g for g in labels if g in genomes]
-        missing = [g for g in labels if g not in genomes]
-        return {
-            "source": source,
-            "targets": labels,
-            "matched_targets": matched,
-            "missing_targets": missing,
-            "matched_count": len(matched),
-            "missing_count": len(missing),
-            "error": None if source else "triticeae.txt was not found.",
-        }
-    except Exception as e:
-        return {"error": str(e)}
-
-
-def _parse_target_genomes(targets_str: str) -> set:
-    if not targets_str:
-        return set()
-    return set(x.strip() for x in re.split(r"[,;|]", targets_str or "") if x.strip())
-
-
-def _query_limit(fn):
-    """Allow several users to query concurrently without unbounded bursts."""
-    import functools
-
-    def wrapped(*args, **kwargs):
-        acquired = _query_semaphore.acquire(timeout=300)
-        if not acquired:
-            return {"error": "Server is busy processing other synteny queries; please retry shortly."}
-        try:
-            return fn(*args, **kwargs)
-        finally:
-            _query_semaphore.release()
-
-    functools.update_wrapper(wrapped, fn)
-    return wrapped
+    labels, source = _read_triticeae_targets()
+    genomes = set(api_genomes())
+    matched = [g for g in labels if g in genomes]
+    missing = [g for g in labels if g not in genomes]
+    return {
+        "source": source,
+        "targets": labels,
+        "matched_targets": matched,
+        "missing_targets": missing,
+        "matched_count": len(matched),
+        "missing_count": len(missing),
+        "error": None if source else "triticeae.txt was not found.",
+    }
 
 
 @router.get("/neighborhood")
 @_query_limit
 def api_synteny(
     q: str = Query(..., description="Gene ID"),
-    upstream: int = Query(5, ge=1, le=50),
-    downstream: int = Query(5, ge=1, le=50),
-    genome: str = Query("", description="Reference genome filter"),
-    subgenome: str = Query("", description="Optional subgenome filter"),
-    targets: str = Query("", description="Comma-separated target genome filter"),
-    window: int = Query(DEFAULT_WINDOW, ge=1, le=MAX_WINDOW),
+    upstream: int = Query(DEFAULT_UPSTREAM, ge=0, le=MAX_WINDOW),
+    downstream: int = Query(DEFAULT_DOWNSTREAM, ge=0, le=MAX_WINDOW),
+    targets: str = Query("", description="Comma-separated target genome labels"),
+    window: int = Query(5, ge=0, le=MAX_WINDOW),
 ):
-    _ensure_loaded()
-
     gene_id = q.strip()
     if not gene_id:
         return {"error": "Missing gene parameter."}
 
-    requested_genome = genome.strip()
-    if not requested_genome and gene_id:
-        # Auto-resolve the reference genome from the gene ID.
-        _ensure_loaded()
-        info_hint, _, _ = _choose_gene_record(gene_id, "")
-        if info_hint:
-            requested_genome = _t_label(info_hint) or _genome_label(_t_genome(info_hint), _t_sub(info_hint))
+    # Backward compatibility: if only window is supplied, use it symmetrically.
+    if upstream == DEFAULT_UPSTREAM and downstream == DEFAULT_DOWNSTREAM and window != 5:
+        upstream = downstream = window
 
-    target_labels = _parse_target_genomes(targets)
-    win = _parse_window(window)
+    target_labels = {x.strip() for x in re.split(r"[,;|]", targets or "") if x.strip()}
 
-    info, resolved_gene_id, candidate_records = _choose_gene_record(gene_id, requested_genome)
-    if not info:
-        if candidate_records and requested_genome:
-            available = sorted(set(_t_label(r) for r in candidate_records if _t_label(r)))
-            return {
-                "error": "Gene was found in BED, but not in the selected reference genome.",
-                "query": gene_id,
-                "request_genome": requested_genome,
-                "available_genomes_for_gene": available,
+    conn = get_conn()
+    try:
+        candidates = _fetch_gene_candidates(conn, gene_id)
+        if not candidates:
+            return {"error": "Gene was not found in MySQL BED data: " + gene_id}
+
+        ref = _choose_reference_record(candidates, gene_id)
+        if not ref:
+            return {"error": "Unable to resolve reference record for gene: " + gene_id}
+
+        neighbors = _fetch_neighbors(conn, ref, upstream, downstream)
+        neighbor_ids = [r["gene_id"] for r in neighbors]
+        og_map_multi = _fetch_orthogroups(conn, neighbor_ids)
+        og_results = {gid: (ogs[0] if ogs else None) for gid, ogs in og_map_multi.items()}
+
+        query_cluster = _gene_cluster(ref["gene_id"]) or _chrom_cluster(ref["chromosome"])
+        query_label = ref["label"]
+
+        # Reference track.
+        query_track_genes = []
+        query_order = None
+        for order, rec in enumerate(neighbors):
+            og = og_results.get(rec["gene_id"])
+            is_query = rec["id"] == ref["id"]
+            if is_query:
+                query_order = order
+            query_track_genes.append({
+                "gene": rec["gene_id"],
+                "start": rec["start_pos"],
+                "end": rec["end_pos"],
+                "description": rec["annotation"],
+                "pfams": rec["family"],
+                "og": og,
+                "order": order,
+                "query_order": query_order,
+                "neighbor": rec["gene_id"],
+                "is_query": is_query,
+                "has_orthogroup": bool(og),
+                "cluster": _gene_cluster(rec["gene_id"]) or _chrom_cluster(rec["chromosome"]),
+                "gene_subgenome": _gene_subgenome(rec["gene_id"]),
+                "chrom_subgenome": _chrom_subgenome(rec["chromosome"]),
+            })
+
+        tracks = {
+            query_label: {
+                "label": query_label,
+                "chrom": ref["chromosome"],
+                "genes": query_track_genes,
+                "is_query_track": True,
+                "region_start": min(r["start_pos"] for r in neighbors),
+                "region_end": max(r["end_pos"] for r in neighbors),
             }
-        return {"error": "Gene was not found in BED: " + gene_id}
-
-    key = (_t_genome(info), _t_sub(info), _t_chrom(info))
-    gene_list = _chrom_lists.get(key, [])
-    idx = next((i for i, (_, g) in enumerate(gene_list) if g == resolved_gene_id), None)
-    if idx is None:
-        return {
-            "error": "Gene is not present in the chromosome list.",
-            "query": gene_id,
-            "resolved_gene": resolved_gene_id,
-            "query_genome": _t_label(info),
-            "query_chrom": _t_chrom(info),
         }
+        skipped_counts: Dict[str, int] = {}
 
-    lo, hi = max(0, idx - win), min(len(gene_list), idx + win + 1)
-    neighbors = [g for _, g in gene_list[lo:hi]]
-    query_order = neighbors.index(resolved_gene_id) if resolved_gene_id in neighbors else None
+        # Fetch all genes belonging to the OGs represented by the reference
+        # neighborhood in one bounded SQL query.
+        ogs = sorted({x for x in og_results.values() if x})
+        # Fetch only records in the user-selected target genomes. This is the
+        # critical difference from the old in-memory implementation: the DB
+        # does the filtering before rows reach Python.
+        target_records_by_og = _fetch_target_records_by_ogs(conn, ogs, target_labels)
 
-    # _find_og is two dict lookups + one re.sub — a threadpool's setup/teardown
-    # overhead dwarfs the work for at most ~41 lookups. A comprehension is
-    # faster and avoids holding a threadpool worker.
-    og_results = {ng: _find_og(ng) for ng in neighbors}
-
-    query_cluster = _resolve_cluster(resolved_gene_id, info)
-    qkey = _t_label(info) or _genome_label(_t_genome(info), _t_sub(info))
-
-    tracks = {}
-    skipped_counts = {}
-
-    # Query track
-    query_track = {
-        "label": qkey,
-        "chrom": _t_chrom(info),
-        "genes": [],
-        "is_query_track": True,
-    }
-    for order, ng in enumerate(neighbors):
-        ninfo = None
-        for rec in (_bed_gene_entries or {}).get(ng, []):
-            if (_t_genome(rec) == _t_genome(info)
-                    and _t_sub(rec) == _t_sub(info)
-                    and _t_chrom(rec) == _t_chrom(info)):
-                ninfo = rec
-                break
-        if not ninfo:
-            ninfo = (_bed_gene or {}).get(ng)
-        if not ninfo:
-            continue
-        og = og_results.get(ng)
-        query_track["genes"].append({
-            "gene": ng,
-            "start": _t_start(ninfo),
-            "end": _t_end(ninfo),
-            "description": _t_desc(ninfo),
-            "pfams": _t_pfams(ninfo),
-            "og": og,
-            "order": order,
-            "query_order": query_order,
-            "neighbor": ng,
-            "is_query": ng == resolved_gene_id,
-            "has_orthogroup": bool(og),
-            "cluster": _resolve_cluster(ng, ninfo),
-            "gene_subgenome": _gene_id_subgenome(ng),
-            "chrom_subgenome": _chrom_subgenome(_t_chrom(ninfo)),
-        })
-    tracks[qkey] = query_track
-
-    # Target tracks: subgenome-strict. Multiple neighbors frequently share the
-    # same orthogroup; build a neighbor→order map once and iterate each unique
-    # OG's genes once, instead of re-walking the same OG (and its 5-regex
-    # _record_matches_query_and_target check) once per neighbor.
-    og_to_orders: dict[str, list[int]] = {}
-    for order, ng in enumerate(neighbors):
-        og = og_results.get(ng)
-        if og:
-            og_to_orders.setdefault(og, []).append(order)
-
-    for og, orders in og_to_orders.items():
-        for hom in _og2genes.get(og, []):
-            for bi in (_bed_gene_entries or {}).get(hom, []):
-                gk = _t_label(bi) or _genome_label(_t_genome(bi), _t_sub(bi))
-
-                if gk == qkey:
+        for og in ogs:
+            orders = [i for i, ng in enumerate(neighbor_ids) if og_results.get(ng) == og]
+            for rec in target_records_by_og.get(og, []):
+                hom = rec["gene_id"]
+                gk = rec["label"]
+                if gk == query_label:
                     continue
-
-                if target_labels and gk not in target_labels:
-                    continue
-
-                ok, skip_reason = _record_matches_query_and_target(hom, bi, query_cluster, gk)
+                ok, reason = _record_matches_query_and_target(hom, rec, query_cluster, gk)
                 if not ok:
-                    skipped_counts[skip_reason] = skipped_counts.get(skip_reason, 0) + 1
+                    skipped_counts[reason] = skipped_counts.get(reason, 0) + 1
                     continue
 
                 tr = tracks.setdefault(gk, {
                     "label": gk,
-                    "chrom": _t_chrom(bi),
+                    "chrom": rec["chromosome"],
                     "genes": [],
                     "is_query_track": False,
                 })
-                # Emit one entry per neighbor that references this OG, so the
-                # downstream "order" semantics are unchanged (neighbors[order]
-                # is the neighbor that maps to this OG).
                 for order in orders:
                     tr["genes"].append({
                         "gene": hom,
-                        "start": _t_start(bi),
-                        "end": _t_end(bi),
-                        "description": _t_desc(bi),
-                        "pfams": _t_pfams(bi),
+                        "start": rec["start_pos"],
+                        "end": rec["end_pos"],
+                        "description": rec["annotation"],
+                        "pfams": rec["family"],
                         "og": og,
                         "order": order,
                         "query_order": query_order,
-                        "neighbor": neighbors[order],
+                        "neighbor": neighbor_ids[order],
                         "is_query": False,
                         "has_orthogroup": True,
-                        "cluster": _resolve_cluster(hom, bi),
-                        "gene_subgenome": _gene_id_subgenome(hom),
-                        "chrom_subgenome": _chrom_subgenome(_t_chrom(bi)),
+                        "cluster": _gene_cluster(hom) or _chrom_cluster(rec["chromosome"]),
+                        "gene_subgenome": _gene_subgenome(hom),
+                        "chrom_subgenome": _chrom_subgenome(rec["chromosome"]),
                     })
 
-    # Deduplicate and sort
-    for tr in tracks.values():
-        seen = set()
-        unique = []
-        for g in tr["genes"]:
-            sig = (g.get("gene"), g.get("start"), g.get("end"), g.get("og"), g.get("order"))
-            if sig in seen:
-                continue
-            seen.add(sig)
-            unique.append(g)
-        tr["genes"] = unique
-        tr["genes"].sort(key=lambda x: (x["start"], x["end"], x["gene"]))
-        starts = [g["start"] for g in tr["genes"]]
-        ends = [g["end"] for g in tr["genes"]]
-        if starts and ends:
-            tr["region_start"] = min(starts)
-            tr["region_end"] = max(ends)
-            tr["region_label"] = _mb_label(tr["region_start"], tr["region_end"])
-        else:
-            tr["region_start"] = None
-            tr["region_end"] = None
-            tr["region_label"] = ""
+        # Deduplicate and add region labels.
+        for tr in tracks.values():
+            seen = set()
+            unique = []
+            for g in tr["genes"]:
+                sig = (g["gene"], g["start"], g["end"], g["og"], g["order"])
+                if sig in seen:
+                    continue
+                seen.add(sig)
+                unique.append(g)
+            unique.sort(key=lambda x: (x["start"], x["end"], x["gene"]))
+            tr["genes"] = unique
+            if unique:
+                tr["region_start"] = min(g["start"] for g in unique)
+                tr["region_end"] = max(g["end"] for g in unique)
+                tr["region_label"] = _mb_label(tr["region_start"], tr["region_end"])
+            else:
+                tr["region_start"] = None
+                tr["region_end"] = None
+                tr["region_label"] = ""
 
-    ordered = sorted(tracks.values(), key=lambda t: t["label"])
-
-    link_groups = {}
-    for ti, tr in enumerate(ordered):
-        tr["track_index"] = ti
-        for g in tr["genes"]:
-            if not g.get("og"):
-                continue
-            k = "%s|%s" % (g["order"], g["og"])
-            if k not in link_groups:
-                link_groups[k] = {
+        ordered = [tracks[query_label]] + sorted(
+            [tr for key, tr in tracks.items() if key != query_label],
+            key=lambda t: t["label"].lower(),
+        )
+        link_groups = []
+        for ti, tr in enumerate(ordered):
+            tr["track_index"] = ti
+        grouped = {}
+        for ti, tr in enumerate(ordered):
+            for g in tr["genes"]:
+                if not g.get("og"):
+                    continue
+                key = f'{g["order"]}|{g["og"]}'
+                grouped.setdefault(key, {
                     "order": g["order"],
                     "og": g["og"],
                     "neighbor": g.get("neighbor", ""),
                     "points": [],
-                }
-            link_groups[k]["points"].append({
-                "track_index": ti,
-                "track_label": tr["label"],
-                "chrom": tr["chrom"],
-                "gene": g["gene"],
-                "start": g["start"],
-                "end": g["end"],
-            })
+                })["points"].append({
+                    "track_index": ti,
+                    "track_label": tr["label"],
+                    "chrom": tr["chrom"],
+                    "gene": g["gene"],
+                    "start": g["start"],
+                    "end": g["end"],
+                })
+        link_groups = list(grouped.values())
 
-    result = {
-        "query": resolved_gene_id,
-        "submitted_query": gene_id,
-        "request_genome": requested_genome,
-        "requested_targets": sorted(target_labels),
-        "window": win,
-        "max_window": MAX_WINDOW,
-        "query_genome": qkey,
-        "query_chrom": _t_chrom(info),
-        "query_start": _t_start(info),
-        "query_end": _t_end(info),
-        "query_description": _t_desc(info),
-        "query_pfams": _t_pfams(info),
-        "query_region_label": _mb_label(_t_start(info), _t_end(info)),
-        "query_cluster": query_cluster,
-        "query_gene_subgenome": _gene_id_subgenome(resolved_gene_id),
-        "query_order": query_order,
-        "skipped_counts": skipped_counts,
-        "neighbors": neighbors,
-        "og_map": og_results,
-        "tracks": ordered,
-        "link_groups": list(link_groups.values()),
-    }
-    # Remove _unload_data — data persists for the lifetime of the worker.
-    return result
+        return {
+            "query": ref["gene_id"],
+            "submitted_query": gene_id,
+            "request_genome": query_label,
+            "requested_targets": sorted(target_labels),
+            "upstream": upstream,
+            "downstream": downstream,
+            "window": max(upstream, downstream),
+            "max_window": MAX_WINDOW,
+            "query_genome": query_label,
+            "query_chrom": ref["chromosome"],
+            "query_start": ref["start_pos"],
+            "query_end": ref["end_pos"],
+            "query_description": ref["annotation"],
+            "query_pfams": ref["family"],
+            "query_region_label": _mb_label(ref["start_pos"], ref["end_pos"]),
+            "query_cluster": query_cluster,
+            "query_gene_subgenome": _gene_subgenome(ref["gene_id"]),
+            "query_order": query_order,
+            "skipped_counts": skipped_counts,
+            "neighbors": neighbor_ids,
+            "og_map": og_results,
+            "tracks": ordered,
+            "link_groups": link_groups,
+            "data_source": "MySQL",
+        }
+    finally:
+        conn.close()
