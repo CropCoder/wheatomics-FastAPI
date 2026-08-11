@@ -122,7 +122,7 @@ h5.card-title{margin-top:0}
 <div class="bar">
   <div class="control-row">
     <div class="field">
-      <label for="gene">Reference gene ID</label>
+      <label for="gene">Gene ID</label>
       <input id="gene" placeholder="Gene ID, e.g. TraesCS1B03G1271600.1" style="width:300px">
     </div>
     <div class="field">
@@ -139,13 +139,13 @@ h5.card-title{margin-top:0}
   </div>
   <div class="target-panel">
     <div class="field">
-      <label for="targetFilter">Available target genomes (click to add)</label>
-      <input id="targetFilter" class="target-filter" placeholder="Filter target genomes…">
-      <div id="availableTargets" class="target-box available-box"><div class="empty">Loading target genomes…</div></div>
+      <label for="selectedTargets">Selected target genomes</label>
+      <div id="selectedTargets" class="target-box selected-grid"><div class="empty">No target genome selected.</div></div>
     </div>
     <div class="field">
-      <label for="selectedTargets">Selected target genomes (click × or row to remove)</label>
-      <div id="selectedTargets" class="target-box selected-grid"><div class="empty">No target genome selected.</div></div>
+      <label for="targetFilter">Available target genomes</label>
+      <input id="targetFilter" class="target-filter" placeholder="Search target genomes…">
+      <div id="availableTargets" class="target-box available-box"><div class="empty">Loading target genomes…</div></div>
     </div>
     <div class="target-actions">
       <button id="selectATargets" type="button" class="small">Select all A subgenomes</button>
@@ -154,7 +154,7 @@ h5.card-title{margin-top:0}
       <button id="selectTriticeae" type="button" class="small">Select Triticeae preset</button>
       <button id="selectAllTargets" type="button" class="small">Select all targets</button>
       <button id="clearTargets" type="button" class="small">Clear targets</button>
-      <div class="help" id="targetHelp">Click a genome on the left to add it to the selected list on the right. The reference genome is resolved automatically from the entered gene ID. Subgenome buttons add targets ending with _A, _B, or _D. Click a selected genome to remove it.</div>
+      <div class="help" id="targetHelp">Click an available genome to add it to Selected target genomes. Click × to remove a selected genome. The reference genome is resolved automatically from the entered gene ID. Subgenome buttons add targets ending with _A, _B, or _D.</div>
     </div>
   </div>
 </div>
@@ -264,7 +264,7 @@ function initNeighborSelects(){
   document.getElementById("upstream").value=String(initUpstream);
   document.getElementById("downstream").value=String(initDownstream);
 }
-initNeighborSelects();initWindowSelect();
+initNeighborSelects();
 
 function selectedTargets(){
   return Array.from(selectedTargetSet).filter(function(g){return g&&allGenomes.indexOf(g)!==-1;});
@@ -303,7 +303,7 @@ function renderTargetPicker(){
   availableBox.innerHTML="";
   if(!available.length){
     var empty=document.createElement("div");empty.className="empty";
-    empty.textContent=allGenomes.length?"No available target genome matches the current filter.":"Loading target genomes…";
+    empty.textContent=allGenomes.length?"No available target genome matches the current filter.":"No target genomes loaded.";
     availableBox.appendChild(empty);
   }else{available.forEach(function(g){availableBox.appendChild(makeGenomeItem(g,"available"));});}
   selectedBox.innerHTML="";
@@ -361,17 +361,40 @@ function updateGeneSoftLink(gene,targets,upstream,downstream){
   share.innerHTML='Current view link: <a href="'+u.href+'" title="'+u.href+'">'+gene+'</a>';
 }
 
-// Load genome list from MySQL. These are target genomes only; the reference
-// genome is resolved automatically from the query gene by the backend.
-fetch(API_BASE+"/genomes").then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}).then(function(gs){
-  allGenomes=Array.isArray(gs)?gs:(gs.genomes||[]);
-  populateTargetGenomes(initTargets);
-  if(initGene){document.getElementById("gene").value=initGene;if(selectedTargets().length||initTargets.length)run(false);}
-}).catch(function(e){
-  document.getElementById("availableTargets").innerHTML='<div class="empty">Loading failed</div>';
-  document.getElementById("selectedTargets").innerHTML='<div class="empty">No target genome selected.</div>';
-  status("Failed to load MySQL genome list: "+e);
-});
+// Load genome list from MySQL.
+// The API is served by the FastAPI router at /api/syntenyview/genomes.
+// Use no-store so an old cached HTML/API response cannot leave the picker stuck.
+function loadTargetGenomes(){
+  status("Loading target genomes from MySQL…");
+  var box=document.getElementById("availableTargets");
+  box.innerHTML='<div class="empty">Loading target genomes from MySQL…</div>';
+  var controller=(typeof AbortController!=="undefined")?new AbortController():null;
+  var timer=controller?setTimeout(function(){controller.abort();},15000):null;
+  var options={cache:"no-store",headers:{"Accept":"application/json"}};
+  if(controller)options.signal=controller.signal;
+  fetch(API_BASE+"/genomes?ts="+Date.now(),options).then(function(r){
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(gs){
+    if(timer)clearTimeout(timer);
+    var list=Array.isArray(gs)?gs:(gs&&Array.isArray(gs.genomes)?gs.genomes:[]);
+    allGenomes=list.map(String).filter(Boolean);
+    if(!allGenomes.length)throw new Error("MySQL returned an empty genome list");
+    populateTargetGenomes(initTargets);
+    status("Loaded "+allGenomes.length+" target genomes from MySQL. Select genomes on the right, then draw the synteny.");
+    if(initGene){
+      document.getElementById("gene").value=initGene;
+      if(selectedTargets().length||initTargets.length)run(false);
+    }
+  }).catch(function(e){
+    if(timer)clearTimeout(timer);
+    allGenomes=[];
+    document.getElementById("availableTargets").innerHTML='<div class="empty">Failed to load target genomes.</div>';
+    document.getElementById("selectedTargets").innerHTML='<div class="empty">No target genome selected.</div>';
+    status("Failed to load MySQL genome list: "+(e&&e.message?e.message:e));
+  });
+}
+loadTargetGenomes();
 
 // Event bindings
 document.getElementById("go").onclick=function(){run(true);};
