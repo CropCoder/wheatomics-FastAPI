@@ -302,10 +302,20 @@ function makeGenomeItem(g,mode){
 }
 
 // Build groups by last underscore suffix, e.g. _A, _B, _D, _H, _M, _S, _V, etc.
+// Preserve the original case from the genome name; do NOT uppercasing blindly.
 function _genomeSuffix(g){
   var idx=g.lastIndexOf("_");
-  if(idx>=0&&idx<g.length-1)return g.slice(idx+1).toUpperCase();
+  if(idx>=0&&idx<g.length-1)return g.slice(idx+1);   // keep original casing
   return "__nosuffix__";
+}
+
+// Display-label map — some historical BED files use S for St.
+var _SUFFIX_DISPLAY_OVERRIDES = {"S":"St"};
+
+function _suffixLabel(rawSuffix){
+  var s = rawSuffix.toUpperCase();
+  if (_SUFFIX_DISPLAY_OVERRIDES.hasOwnProperty(s)) return _SUFFIX_DISPLAY_OVERRIDES[s];
+  return rawSuffix;          // return original case for display
 }
 
 function renderTargetPicker(){
@@ -330,16 +340,17 @@ function renderTargetPicker(){
     });
     var suffixOrder=["A","B","D"];
     var groupKeys=Object.keys(groups).sort(function(a,b){
-      var ai=suffixOrder.indexOf(a),bi=suffixOrder.indexOf(b);
+      var ai=suffixOrder.indexOf(a.toUpperCase()),bi=suffixOrder.indexOf(b.toUpperCase());
       if(ai>=0&&bi>=0)return ai-bi;
       if(ai>=0)return -1;if(bi>=0)return 1;
       return a.localeCompare(b);
     });
     groupKeys.forEach(function(suf,gi){
-      var label=suf==="__nosuffix__"?"No suffix":("Subgenome "+suf);
-      var gid="sg-"+gi+"-"+suf.replace(/[^A-Z0-9]/g,"_");
+      var display = _suffixLabel(suf);
+      var label=suf==="__nosuffix__"?"No suffix":(display+" Subgenome");
+      var gid="sg-"+gi+"-"+suf.replace(/[^A-Za-z0-9]/g,"_");
       var items=groups[suf];
-      // Group header (collapsible)
+      // Group header (collapsible — only toggle on user click)
       var hdr=document.createElement("div");
       hdr.className="sg-group-label";
       hdr.setAttribute("data-target","#"+gid);
@@ -352,7 +363,7 @@ function renderTargetPicker(){
       items.forEach(function(g){body.appendChild(makeGenomeItem(g,"available"));});
       availableBox.appendChild(body);
     });
-    // Toggle
+    // Toggle (never close on addTarget — only on header click)
     availableBox.querySelectorAll(".sg-group-label").forEach(function(el){
       el.addEventListener("click",function(e){
         var tgt=document.querySelector(this.getAttribute("data-target"));
