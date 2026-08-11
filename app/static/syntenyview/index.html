@@ -328,6 +328,10 @@ function _groupLabel(rawKey){
   return rawKey==="__nosuffix__"?"No suffix":(rawKey+" Subgenome");
 }
 
+// Persist which subgenome groups are open across re-renders so that
+// selecting a genome inside a group never collapses the group.
+var _openGroups = {};
+
 function renderTargetPicker(){
   var filter=(document.getElementById("targetFilter")?.value||"").trim().toLowerCase();
   var availableBox=document.getElementById("availableTargets");
@@ -355,12 +359,6 @@ function renderTargetPicker(){
       if(ai>=0)return -1;if(bi>=0)return 1;
       return a.localeCompare(b);
     });
-    // Remember which groups were open before re-render, so adding/removing
-    // a genome does NOT collapse the user's open subgroups.
-    var previouslyOpen={};
-    availableBox.querySelectorAll(".sg-group-label.open").forEach(function(el){
-      var t=el.getAttribute("data-target"); if(t)previouslyOpen[t]=true;
-    });
     groupKeys.forEach(function(grp,gi){
       var label=_groupLabel(grp);
       var gid="sg-"+gi+"-"+grp.replace(/[^A-Za-z0-9]/g,"_");
@@ -368,18 +366,23 @@ function renderTargetPicker(){
       var hdr=document.createElement("div");
       hdr.className="sg-group-label";
       hdr.setAttribute("data-target","#"+gid);
+      hdr.setAttribute("data-group",grp);
       hdr.innerHTML='<span class="sg-arrow">▸</span> '+label+' ('+items.length+')';
       availableBox.appendChild(hdr);
       var body=document.createElement("div");
       body.className="sg-group-body";
       body.id=gid;
       items.forEach(function(g){body.appendChild(makeGenomeItem(g,"available"));});
-      if(previouslyOpen["#"+gid]){
+      // Restore persisted open state (default: first group open once)
+      var isOpen = _openGroups[grp];
+      if(isOpen===undefined) isOpen = (gi===0);
+      if(isOpen){
         body.style.display="block";hdr.classList.add("open");hdr.querySelector(".sg-arrow").classList.add("open");
       }
       availableBox.appendChild(body);
     });
-    // Toggle only on header click (addTarget/removeTarget never collapse it)
+    // Toggle ONLY on header click; persist the choice (keyed by group name)
+    // so selecting a genome inside a group never collapses it.
     availableBox.querySelectorAll(".sg-group-label").forEach(function(el){
       el.addEventListener("click",function(e){
         var tgt=document.querySelector(this.getAttribute("data-target"));
@@ -388,6 +391,7 @@ function renderTargetPicker(){
           tgt.style.display=open?"none":"block";
           this.classList.toggle("open",!open);
           this.querySelector(".sg-arrow").classList.toggle("open",!open);
+          _openGroups[this.getAttribute("data-group")] = !open;
         }
       });
     });
