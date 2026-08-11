@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SynTeny Viewer - WheatOmics</title>
+<title>SynTeny Viewer - WheatOmics (MySQL)</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <style>
 :root{--green:#26734d;--green2:#2e8b57;--blue:#2563eb;--soft:#f7f8fa;--line:#e5e7eb;--text:#111827;--muted:#64748b}
@@ -118,20 +118,20 @@ h5.card-title{margin-top:0}
 
 <div id="home_content"><div class="tool-card">
 <h5 class="card-title">SynTeny Viewer — Homoeologous Neighborhood Synteny</h5>
-<p class="text-muted">Search a gene ID to see its chromosomal neighborhood and orthogroup synteny connections across selected target genomes. Uses a selectable window size and a hierarchical result tree.</p>
+<p class="text-muted">Search a gene ID directly from the MySQL BED database, automatically resolve its reference genome, choose upstream/downstream neighbors, and display orthogroup synteny across selected target genomes.</p>
 <div class="bar">
   <div class="control-row">
-    <div class="field">
-      <label for="genome">Reference genome</label>
-      <select id="genome" style="width:220px"><option value="">Loading genomes…</option></select>
-    </div>
     <div class="field">
       <label for="gene">Reference gene ID</label>
       <input id="gene" placeholder="Gene ID, e.g. TraesCS1B03G1271600.1" style="width:300px">
     </div>
     <div class="field">
-      <label for="neighborWindow">Neighbor window</label>
-      <select id="neighborWindow" style="width:145px"></select>
+      <label for="upstream">Upstream genes</label>
+      <select id="upstream" style="width:125px"></select>
+    </div>
+    <div class="field">
+      <label for="downstream">Downstream genes</label>
+      <select id="downstream" style="width:135px"></select>
     </div>
     <button id="go">Draw selected synteny</button>
     <button id="downloadSvg" class="secondary" disabled>Download SVG</button>
@@ -154,7 +154,7 @@ h5.card-title{margin-top:0}
       <button id="selectTriticeae" type="button" class="small">Select Triticeae preset</button>
       <button id="selectAllTargets" type="button" class="small">Select all targets</button>
       <button id="clearTargets" type="button" class="small">Clear targets</button>
-      <div class="help" id="targetHelp">Click a genome on the left to add it to the selected list on the right. Subgenome buttons add targets ending with _A, _B, or _D. Click a selected genome to remove it.</div>
+      <div class="help" id="targetHelp">Click a genome on the left to add it to the selected list on the right. The reference genome is resolved automatically from the entered gene ID. Subgenome buttons add targets ending with _A, _B, or _D. Click a selected genome to remove it.</div>
     </div>
   </div>
 </div>
@@ -241,36 +241,37 @@ var selectionChangedSinceDraw=false;
 
 var qs=new URLSearchParams(location.search);
 var initGene=qs.get("q")||qs.get("gene")||"";
-var initGenome=qs.get("genome")||"";
 var initTargets=parseTargetString(qs.get("targets")||"");
-var initWindow=Math.max(1,Math.min(20,Number(qs.get("window")||5)));
+var initUpstream=Math.max(0,Math.min(50,Number(qs.get("upstream")||5)));
+var initDownstream=Math.max(0,Math.min(50,Number(qs.get("downstream")||5)));
 
 function status(t){document.getElementById("status").textContent=t;}
 function safeFileName(s){return String(s||"query").replace(/[^\w.\-]+/g,"_").slice(0,120);}
 function parseTargetString(s){return String(s||"").split(/[;,|,]/).map(function(x){return x.trim();}).filter(Boolean);}
 function textOrBlank(v){return(v===undefined||v===null)?"":String(v);}
 
-function initWindowSelect(){
-  var sel=document.getElementById("neighborWindow");
-  sel.innerHTML="";
-  for(var i=1;i<=20;i++){
-    var o=document.createElement("option");
-    o.value=String(i);
-    o.textContent="±"+i+(i===1?" gene":" genes");
-    sel.appendChild(o);
-  }
-  sel.value=String(initWindow);
+function initNeighborSelects(){
+  ["upstream","downstream"].forEach(function(id){
+    var sel=document.getElementById(id);
+    sel.innerHTML="";
+    for(var i=0;i<=50;i++){
+      var o=document.createElement("option");
+      o.value=String(i);
+      o.textContent=String(i);
+      sel.appendChild(o);
+    }
+  });
+  document.getElementById("upstream").value=String(initUpstream);
+  document.getElementById("downstream").value=String(initDownstream);
 }
-initWindowSelect();
+initNeighborSelects();initWindowSelect();
 
 function selectedTargets(){
-  var ref=document.getElementById("genome").value.trim();
-  return Array.from(selectedTargetSet).filter(function(g){return g&&g!==ref&&allGenomes.indexOf(g)!==-1;});
+  return Array.from(selectedTargetSet).filter(function(g){return g&&allGenomes.indexOf(g)!==-1;});
 }
 function updateTargetHelp(){
   var n=selectedTargets().length;
-  var ref=document.getElementById("genome").value.trim();
-  document.getElementById("targetHelp").textContent="Selected target genomes: "+n+". Reference genome "+(ref?"'"+ref+"'":"not selected")+" is included in the result tree but excluded from the target list. Click Draw selected synteny to update the plot.";
+  document.getElementById("targetHelp").textContent="Selected target genomes: "+n+". Reference genome is resolved automatically from the gene ID when you draw the synteny.";
 }
 function markSelectionChanged(){selectionChangedSinceDraw=true;}
 
@@ -294,13 +295,11 @@ function makeGenomeItem(g,mode){
 }
 
 function renderTargetPicker(){
-  var ref=document.getElementById("genome").value.trim();
   var filter=(document.getElementById("targetFilter")?.value||"").trim().toLowerCase();
   var availableBox=document.getElementById("availableTargets");
   var selectedBox=document.getElementById("selectedTargets");
-  if(ref&&selectedTargetSet.has(ref))selectedTargetSet.delete(ref);
   var selected=selectedTargets();
-  var available=allGenomes.filter(function(g){return g!==ref&&!selectedTargetSet.has(g);}).filter(function(g){return !filter||g.toLowerCase().indexOf(filter)!==-1;});
+  var available=allGenomes.filter(function(g){return !selectedTargetSet.has(g);}).filter(function(g){return !filter||g.toLowerCase().indexOf(filter)!==-1;});
   availableBox.innerHTML="";
   if(!available.length){
     var empty=document.createElement("div");empty.className="empty";
@@ -314,15 +313,9 @@ function renderTargetPicker(){
   }else{selected.forEach(function(g){selectedBox.appendChild(makeGenomeItem(g,"selected"));});}
   updateTargetHelp();
 }
-function addTarget(g){var ref=document.getElementById("genome").value.trim();if(!g||g===ref)return;selectedTargetSet.add(g);renderTargetPicker();markSelectionChanged();}
+function addTarget(g){if(!g)return;selectedTargetSet.add(g);renderTargetPicker();markSelectionChanged();}
 function removeTarget(g){selectedTargetSet.delete(g);renderTargetPicker();markSelectionChanged();}
 
-function populateReferenceGenomes(gs){
-  var sel=document.getElementById("genome");
-  sel.innerHTML='<option value="">-- Select reference genome --</option>';
-  gs.forEach(function(g){var o=document.createElement("option");o.value=g;o.textContent=g;sel.appendChild(o);});
-  if(initGenome)sel.value=initGenome;
-}
 function populateTargetGenomes(preferredTargets){selectedTargetSet=new Set((preferredTargets||selectedTargets()).filter(function(g){return allGenomes.indexOf(g)!==-1;}));renderTargetPicker();}
 
 function fmtMb(v){if(v===undefined||v===null||isNaN(Number(v)))return"";return(Number(v)/1e6).toFixed(2);}
@@ -356,28 +349,28 @@ function avoidOverlap(rawXs,left,right,minGap){
   var out=Array(n);pts.forEach(function(p){out[p.i]=p.x;});return out;
 }
 
-function updateGeneSoftLink(gene,genome,targets,windowSize){
+function updateGeneSoftLink(gene,targets,upstream,downstream){
   var share=document.getElementById("share");if(!gene){share.innerHTML="";return;}
   var u=new URL(location.href);
   u.searchParams.set("q",gene);
-  if(genome)u.searchParams.set("genome",genome);else u.searchParams.delete("genome");
   if(targets&&targets.length)u.searchParams.set("targets",targets.join(","));else u.searchParams.delete("targets");
-  if(windowSize)u.searchParams.set("window",String(windowSize));
+  u.searchParams.set("upstream",String(upstream));
+  u.searchParams.set("downstream",String(downstream));
+  u.searchParams.delete("genome");
   history.replaceState(null,"",u.pathname+u.search+u.hash);
   share.innerHTML='Current view link: <a href="'+u.href+'" title="'+u.href+'">'+gene+'</a>';
 }
 
-// Load genome list
+// Load genome list from MySQL. These are target genomes only; the reference
+// genome is resolved automatically from the query gene by the backend.
 fetch(API_BASE+"/genomes").then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}).then(function(gs){
   allGenomes=Array.isArray(gs)?gs:(gs.genomes||[]);
-  populateReferenceGenomes(allGenomes);
   populateTargetGenomes(initTargets);
   if(initGene){document.getElementById("gene").value=initGene;if(selectedTargets().length||initTargets.length)run(false);}
 }).catch(function(e){
-  document.getElementById("genome").innerHTML='<option>Loading failed</option>';
   document.getElementById("availableTargets").innerHTML='<div class="empty">Loading failed</div>';
   document.getElementById("selectedTargets").innerHTML='<div class="empty">No target genome selected.</div>';
-  status("Failed to load genome list: "+e);
+  status("Failed to load MySQL genome list: "+e);
 });
 
 // Event bindings
@@ -386,27 +379,26 @@ document.getElementById("downloadSvg").onclick=downloadSvg;
 document.getElementById("downloadPng").onclick=downloadPng;
 document.getElementById("downloadTable").onclick=downloadTableTsv;
 document.getElementById("gene").addEventListener("keydown",function(e){if(e.key==="Enter")run(true);});
-document.getElementById("genome").addEventListener("change",function(){renderTargetPicker();markSelectionChanged();});
 document.getElementById("targetFilter").addEventListener("input",renderTargetPicker);
-document.getElementById("neighborWindow").addEventListener("change",markSelectionChanged);
+document.getElementById("upstream").addEventListener("change",markSelectionChanged);
+document.getElementById("downstream").addEventListener("change",markSelectionChanged);
 
 function selectTargetsBySuffix(suffix,label){
-  var ref=document.getElementById("genome").value.trim();var added=0;
-  allGenomes.filter(function(g){return g!==ref&&g.indexOf(suffix,g.length-suffix.length)!==-1;}).forEach(function(g){if(!selectedTargetSet.has(g))added+=1;selectedTargetSet.add(g);});
+  var added=0;
+  allGenomes.filter(function(g){return g.indexOf(suffix,g.length-suffix.length)!==-1;}).forEach(function(g){if(!selectedTargetSet.has(g))added+=1;selectedTargetSet.add(g);});
   renderTargetPicker();markSelectionChanged();status(label+": added "+added+"; selected target genomes: "+selectedTargets().length+". Click Draw selected synteny to update the plot.");
 }
 document.getElementById("selectATargets").addEventListener("click",function(){selectTargetsBySuffix("_A","Selected all A subgenomes");});
 document.getElementById("selectBTargets").addEventListener("click",function(){selectTargetsBySuffix("_B","Selected all B subgenomes");});
 document.getElementById("selectDTargets").addEventListener("click",function(){selectTargetsBySuffix("_D","Selected all D subgenomes");});
-document.getElementById("selectAllTargets").addEventListener("click",function(){var ref=document.getElementById("genome").value.trim();allGenomes.filter(function(g){return g!==ref;}).forEach(function(g){selectedTargetSet.add(g);});renderTargetPicker();markSelectionChanged();});
+document.getElementById("selectAllTargets").addEventListener("click",function(){allGenomes.forEach(function(g){selectedTargetSet.add(g);});renderTargetPicker();markSelectionChanged();});
 document.getElementById("clearTargets").addEventListener("click",function(){selectedTargetSet.clear();renderTargetPicker();markSelectionChanged();});
 
 document.getElementById("selectTriticeae").addEventListener("click",function(){
-  var ref=document.getElementById("genome").value.trim();
   status("Loading Triticeae preset targets…");
   fetch(API_BASE+"/triticeae").then(function(r){return r.json();}).then(function(data){
     if(data.error&&!(data.matched_targets||data.targets||[]).length)throw new Error(data.error);
-    var targets=(data.matched_targets&&data.matched_targets.length?data.matched_targets:(data.targets||[])).filter(function(g){return allGenomes.indexOf(g)!==-1&&g!==ref;});
+    var targets=(data.matched_targets&&data.matched_targets.length?data.matched_targets:(data.targets||[])).filter(function(g){return allGenomes.indexOf(g)!==-1;});
     targets.forEach(function(g){selectedTargetSet.add(g);});
     renderTargetPicker();markSelectionChanged();
     var missing=data.missing_count?" Missing from current BED genome list: "+data.missing_count+".":"";
@@ -416,21 +408,20 @@ document.getElementById("selectTriticeae").addEventListener("click",function(){
 
 function run(updateUrl){
   var gene=document.getElementById("gene").value.trim();
-  var genome=document.getElementById("genome").value.trim();
   var targets=selectedTargets();
-  var windowSize=Number(document.getElementById("neighborWindow").value||5);
-  if(!genome){alert("Please select a reference genome.");return;}
-  if(!gene){alert("Please enter a reference gene ID.");return;}
+  var upstream=Number(document.getElementById("upstream").value||5);
+  var downstream=Number(document.getElementById("downstream").value||5);
+  if(!gene){alert("Please enter a gene ID.");return;}
   if(!targets.length){alert("Please select at least one target genome.");return;}
-  status("Searching selected target genomes…");
+  status("Searching MySQL BED records and selected target genomes…");
   document.getElementById("downloadSvg").disabled=true;
   document.getElementById("downloadPng").disabled=true;
   document.getElementById("downloadTable").disabled=true;
-  clearSyntenyTable("Searching selected target genomes…");
-  var url=API_BASE+"/neighborhood?q="+encodeURIComponent(gene)+"&genome="+encodeURIComponent(genome)+"&targets="+encodeURIComponent(targets.join(","))+"&window="+encodeURIComponent(windowSize);
+  clearSyntenyTable("Searching MySQL…");
+  var url=API_BASE+"/neighborhood?q="+encodeURIComponent(gene)+"&targets="+encodeURIComponent(targets.join(","))+"&upstream="+encodeURIComponent(upstream)+"&downstream="+encodeURIComponent(downstream);
   fetch(url).then(function(r){return r.json();}).then(function(data){
     draw(data);
-    if(!data.error){selectionChangedSinceDraw=false;updateGeneSoftLink(data.query||gene,data.query_genome||genome,targets,data.window||windowSize);}
+    if(!data.error){selectionChangedSinceDraw=false;updateGeneSoftLink(data.query||gene,targets,data.upstream||upstream,data.downstream||downstream);}
   }).catch(function(e){status("Query failed: "+e);});
 }
 
@@ -530,9 +521,11 @@ function draw(data){
   lastData=data;
   var targets=(data.requested_targets||selectedTargets());
   var targetCount=targets.length;
-  var windowSize=data.window||Number(document.getElementById("neighborWindow").value||5);
-  lastSvgFileName="syntenyview_"+safeFileName(data.query_genome)+"_"+safeFileName(data.query)+"_"+targetCount+"targets_window"+windowSize+".svg";
-  lastTableFileName="syntenyview_"+safeFileName(data.query_genome)+"_"+safeFileName(data.query)+"_"+targetCount+"targets_window"+windowSize+"_table.tsv";
+  var upstream=data.upstream!==undefined?Number(data.upstream):Number(document.getElementById("upstream").value||5);
+  var downstream=data.downstream!==undefined?Number(data.downstream):Number(document.getElementById("downstream").value||5);
+  var windowSize=Math.max(upstream,downstream);
+  lastSvgFileName="syntenyview_"+safeFileName(data.query_genome)+"_"+safeFileName(data.query)+"_"+targetCount+"targets_up"+upstream+"_down"+downstream+".svg";
+  lastTableFileName="syntenyview_"+safeFileName(data.query_genome)+"_"+safeFileName(data.query)+"_"+targetCount+"targets_up"+upstream+"_down"+downstream+"_table.tsv";
   document.getElementById("downloadSvg").disabled=false;
   document.getElementById("downloadPng").disabled=false;
 
@@ -553,7 +546,7 @@ function draw(data){
   var orderedIndices=(tree.order&&tree.order.length)?tree.order:rawTracks.map(function(_,i){return i;});
   var tracks=orderedIndices.map(function(i){return rawTracks[i];});
   tracks.forEach(function(tr,ti){tr.display_track_index=ti;});
-  status("Query="+data.query+" | Genome="+data.query_genome+" | Chrom="+data.query_chrom+sub+" | Window: ±"+windowSize+" genes | BED neighbors: "+neighbors.length+" genes | Cluster "+data.query_cluster+" | Drawn tracks: "+tracks.length+skippedText);
+  status("Query="+data.query+" | Auto reference="+data.query_genome+" | Chrom="+data.query_chrom+sub+" | Upstream="+upstream+" / Downstream="+downstream+" | MySQL neighbors: "+neighbors.length+" genes | Cluster "+data.query_cluster+" | Drawn tracks: "+tracks.length+skippedText);
 
   var svgW=1600;
   var containerW=Math.max(900,canvas.clientWidth||1200);
