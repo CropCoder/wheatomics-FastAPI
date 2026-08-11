@@ -300,29 +300,14 @@ def _fetch_target_records_by_ogs(conn, ogs: List[str], target_labels: set) -> Di
 
 
 def _record_matches_query_and_target(hom_gene: str, rec: dict, query_cluster: Optional[int], target_label: str):
-    gene_cl = _gene_cluster(hom_gene)
-    gene_sub = _gene_subgenome(hom_gene)
-    chrom_cl = _chrom_cluster(rec["chromosome"])
-    chrom_sub = _chrom_subgenome(rec["chromosome"])
-    target_sub = _split_label(target_label)[1].upper()
+    """
+    V3 target matching rule.
 
-    if query_cluster is not None:
-        if gene_cl is not None and gene_cl != query_cluster:
-            return False, "gene_group_mismatch"
-        if gene_cl is None and chrom_cl is not None and chrom_cl != query_cluster:
-            return False, "chrom_group_mismatch"
-
-    if gene_cl is not None and chrom_cl is not None and gene_cl != chrom_cl:
-        return False, "gene_chrom_group_conflict"
-
-    if target_sub in {"A", "B", "D"}:
-        if gene_sub is not None and gene_sub != target_sub:
-            return False, "target_gene_subgenome_mismatch"
-        if gene_sub is None and chrom_sub is not None and chrom_sub != target_sub:
-            return False, "target_chrom_subgenome_mismatch"
-        if gene_sub is not None and chrom_sub is not None and chrom_sub != gene_sub:
-            return False, "gene_chrom_subgenome_conflict"
-
+    Target membership is already constrained by MySQL using the exact
+    genome_name + subgenome label. Orthogroup membership is the homology
+    criterion. Do NOT infer chromosome/subgenome compatibility from gene IDs:
+    the 200-genome collection contains heterogeneous naming conventions.
+    """
     return True, "ok"
 
 
@@ -517,6 +502,21 @@ def api_synteny(
                 "region_end": max(r["end_pos"] for r in neighbors),
             }
         }
+        # V3: every user-selected target gets a track, even when no homolog
+        # is found. This distinguishes "no homologs" from "target missing".
+        for target_label in sorted(target_labels, key=_genome_sort_key):
+            if target_label == query_label:
+                continue
+            tracks[target_label] = {
+                "label": target_label,
+                "chrom": "",
+                "genes": [],
+                "is_query_track": False,
+                "region_start": None,
+                "region_end": None,
+                "region_label": "",
+                "no_homologs": True,
+            }
         skipped_counts: Dict[str, int] = {}
 
         # Fetch all genes belonging to the OGs represented by the reference
@@ -544,7 +544,11 @@ def api_synteny(
                     "chrom": rec["chromosome"],
                     "genes": [],
                     "is_query_track": False,
+                    "no_homologs": False,
                 })
+                if not tr.get("chrom"):
+                    tr["chrom"] = rec["chromosome"]
+                tr["no_homologs"] = False
                 for order in orders:
                     tr["genes"].append({
                         "gene": hom,
@@ -632,6 +636,15 @@ def api_synteny(
             "query_gene_subgenome": _gene_subgenome(ref["gene_id"]),
             "query_order": query_order,
             "skipped_counts": skipped_counts,
+            "target_summary": [
+                {
+                    "label": tr["label"],
+                    "chrom": tr.get("chrom", ""),
+                    "gene_count": len(tr.get("genes", [])),
+                    "no_homologs": bool(tr.get("no_homologs", False)),
+                }
+                for tr in ordered if not tr.get("is_query_track")
+            ],
             "neighbors": neighbor_ids,
             "og_map": og_results,
             "tracks": ordered,
