@@ -15,7 +15,10 @@ Memory optimisation (Aug 2026):
 - og2genes stores gene lists as frozenset→set, reducing per―OG overhead.
 - Data is loaded lazily on first /neighborhood request, not at startup, so
   workers that never serve a synteny query never allocate the BED/OG data.
-- BACKGROUND_WARMUP is disabled by default.
+# Shared in-memory dataset: loaded once at module import via
+# _start_warmup_once → _ensure_loaded with single-flight semantics
+# (Condition + _load_in_progress).  All concurrent users share the
+# same BED/OG objects after the initial load completes.
 """
 
 import os
@@ -70,7 +73,11 @@ _genomes_cache = None
 _last_access_time = None           # monotonic timestamp of last /neighborhood call
 
 _load_lock = threading.RLock()
+_load_condition = threading.Condition(_load_lock)
+_load_in_progress = False
+_load_count = 0
 _warmup_started = False
+_query_semaphore = threading.BoundedSemaphore(8)
 _load_status = {
     "state": "not_started",
     "message": "Full data have not been loaded.",
@@ -132,6 +139,12 @@ def _parse_window(raw):
 
 
 # ==================== Data loading ====================
+
+# Warmup enabled — data loads at module import time on every worker.
+# With preload_app=True the master process imports this module once,
+# then forks.  Each worker inherits the BED/OG via copy-on-write so
+# the dataset is loaded exactly once and shared by all requests.
+BACKGROUND_WARMUP = True
 
 def _genome_sort_key(label):
     if "_" in label:
@@ -243,58 +256,66 @@ def _load_orthogroups():
 
 
 def _ensure_loaded():
+    """Single-flight data loader shared by all request threads.
+
+    With gunicorn preload_app=True the module is imported once in the
+    master process, BED/OG are loaded during warm-up, and each forked
+    worker inherits the ready-to-use dicts through copy-on-write.
+    The Condition prevents racy re-loads in workers that start before
+    the master finishes loading.
+    """
+    global _load_in_progress, _load_count
+
     if _bed_gene is not None and _gene2og is not None and _prefix_map is not None:
         return
-    with _load_lock:
+
+    with _load_condition:
         if _bed_gene is not None and _gene2og is not None and _prefix_map is not None:
             return
-        _set_load_status("loading", "Loading cluster map, BED files, and Orthogroups.")
-        try:
-            _load_cluster_map()
-            _load_bed()
-            _load_orthogroups()
+
+        while _load_in_progress:
+            _load_condition.wait()
+            if _bed_gene is not None and _gene2og is not None and _prefix_map is not None:
+                return
+
+        _load_in_progress = True
+        _load_count += 1
+        _set_load_status("loading",
+            "Loading cluster map, BED files, and Orthogroups once for all concurrent users.")
+
+    try:
+        _load_cluster_map()
+        _load_bed()
+        _load_orthogroups()
+
+        with _load_condition:
             _set_load_status("ready",
-                "BED genes=%d, BED entries=%d, OG=%d, prefixes=%d" %
+                "BED genes=%d, BED entries=%d, OG=%d, prefixes=%d, shared_load_count=%d" %
                 (len(_bed_gene or {}),
                  sum(len(v) for v in (_bed_gene_entries or {}).values()),
-                 len(_og2genes or {}), len(_prefix_map or {})))
-        except Exception as e:
+                 len(_og2genes or {}), len(_prefix_map or {}),
+                 _load_count))
+            _load_in_progress = False
+            _load_condition.notify_all()
+    except Exception as e:
+        with _load_condition:
             _set_load_status("error", "Data loading failed.", repr(e))
+            _load_in_progress = False
+            _load_condition.notify_all()
+        raise
 
 
-# Warmup disabled — data loads lazily on the first /neighborhood call so
-# workers that never serve a synteny query never allocate the BED/OG data.
-BACKGROUND_WARMUP = False
-_UNLOAD_IDLE_SECONDS = 0
+# Warmup disabled earlier — data now loads eagerly via _start_warmup_once.
+# Remove _BACKGROUND_WARMUP — data is now loaded eagerly.
+_BACKGROUND_WARMUP = True
 
 
 def _start_warmup_once():
     global _warmup_started
-    if _warmup_started or not BACKGROUND_WARMUP:
+    if _warmup_started or not _BACKGROUND_WARMUP:
         return
     _warmup_started = True
-    th = threading.Thread(target=_ensure_loaded, name="synteny_warmup", daemon=True)
-    th.start()
-
-
-def _unload_data():
-    """Release all loaded BED/OG data to free memory back to the OS.
-
-    Called immediately after every /neighborhood response so worker RAM
-    does not accumulate between queries.
-    """
-    global _bed_gene, _bed_gene_entries, _chrom_lists, _gene2og, _og2genes
-    global _prefix_map, _chrom_map, _cluster_cache, _sorted_prefixes, _last_access_time
-    if _bed_gene is None:
-        return
-    _bed_gene = _bed_gene_entries = _chrom_lists = None
-    _gene2og = _og2genes = None
-    _prefix_map = _chrom_map = None
-    _cluster_cache = OrderedDict()
-    _sorted_prefixes = None
-    _last_access_time = None
-    _set_load_status("not_started", "Data unloaded after query.")
-    gc.collect()
+    _ensure_loaded()
 
 
 # ==================== BED tuple accessors ====================
@@ -621,7 +642,25 @@ def _parse_target_genomes(targets_str: str) -> set:
     return set(x.strip() for x in re.split(r"[,;|]", targets_str or "") if x.strip())
 
 
+def _query_limit(fn):
+    """Allow several users to query concurrently without unbounded bursts."""
+    import functools
+
+    def wrapped(*args, **kwargs):
+        acquired = _query_semaphore.acquire(timeout=300)
+        if not acquired:
+            return {"error": "Server is busy processing other synteny queries; please retry shortly."}
+        try:
+            return fn(*args, **kwargs)
+        finally:
+            _query_semaphore.release()
+
+    functools.update_wrapper(wrapped, fn)
+    return wrapped
+
+
 @router.get("/neighborhood")
+@_query_limit
 def api_synteny(
     q: str = Query(..., description="Gene ID"),
     upstream: int = Query(5, ge=1, le=50),
@@ -631,7 +670,6 @@ def api_synteny(
     targets: str = Query("", description="Comma-separated target genome filter"),
     window: int = Query(DEFAULT_WINDOW, ge=1, le=MAX_WINDOW),
 ):
-    global _last_access_time
     _ensure_loaded()
 
     gene_id = q.strip()
@@ -639,6 +677,13 @@ def api_synteny(
         return {"error": "Missing gene parameter."}
 
     requested_genome = genome.strip()
+    if not requested_genome and gene_id:
+        # Auto-resolve the reference genome from the gene ID.
+        _ensure_loaded()
+        info_hint, _, _ = _choose_gene_record(gene_id, "")
+        if info_hint:
+            requested_genome = _t_label(info_hint) or _genome_label(_t_genome(info_hint), _t_sub(info_hint))
+
     target_labels = _parse_target_genomes(targets)
     win = _parse_window(window)
 
@@ -843,5 +888,5 @@ def api_synteny(
         "tracks": ordered,
         "link_groups": list(link_groups.values()),
     }
-    _unload_data()
+    # Remove _unload_data — data persists for the lifetime of the worker.
     return result
