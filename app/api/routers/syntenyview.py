@@ -510,6 +510,8 @@ def api_synteny(
 
         # Always create a track for every requested target. A target with no
         # homolog in the current OG set remains visible and is marked empty.
+        # Use labels as keys for the initial placeholder, but overwrite
+        # chromosome / no_homologs once the first real hit comes in below.
         for target_label in sorted(target_labels, key=_genome_sort_key):
             if target_label == query_label:
                 continue
@@ -535,11 +537,15 @@ def api_synteny(
 
                 tr = tracks.setdefault(gk, {
                     "label": gk,
-                    "chrom": rec["chromosome"],
+                    "chrom": rec["chromosome"] or "",
                     "genes": [],
                     "is_query_track": False,
                 })
                 tr["no_homologs"] = False
+                # If we already filled in a chromosome for this track, keep the
+                # first one; otherwise update from the current record.
+                if not tr.get("chrom"):
+                    tr["chrom"] = rec["chromosome"] or ""
                 for order in orders:
                     tr["genes"].append({
                         "gene": hom,
