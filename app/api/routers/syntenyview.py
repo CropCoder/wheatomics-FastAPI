@@ -268,16 +268,19 @@ def _fetch_orthogroups(conn, gene_ids: List[str]) -> Dict[str, List[str]]:
 
 
 def _fetch_target_records_by_ogs(conn, ogs: List[str], target_labels: set) -> Dict[str, List[dict]]:
-    """Fetch only target-genome records belonging to the relevant OGs."""
+    """Fetch target records by exact genome_info labels.
+
+    IMPORTANT: genome_info stores labels such as ``AK58_A`` in genome_name,
+    while gene_position.subgenome may contain values such as ``AABBDD`` from
+    the BED second column. Therefore a target label must NOT be split into
+    ``genome_name=AK58`` + ``subgenome=A``. We match the exact genome_name
+    returned by /genomes.
+    """
     if not ogs or not target_labels:
         return {}
 
-    # Split labels into genome_name + subgenome, e.g. foo_A -> (foo, A).
-    pairs = [_split_label(x) for x in target_labels]
     og_ph = ",".join(["%s"] * len(ogs))
-    pair_sql = ",".join(["(%s,%s)"] * len(pairs))
-    pair_args = [v for pair in pairs for v in pair]
-
+    target_ph = ",".join(["%s"] * len(target_labels))
     sql = f"""
         SELECT og.orthogroup, gp.id, gp.genome_name, gp.subgenome,
                gp.chromosome, gp.start_pos, gp.end_pos, gp.gene_id,
@@ -285,10 +288,10 @@ def _fetch_target_records_by_ogs(conn, ogs: List[str], target_labels: set) -> Di
         FROM gene_orthogroup og
         INNER JOIN gene_position gp ON gp.gene_id = og.gene_id
         WHERE og.orthogroup IN ({og_ph})
-          AND (gp.genome_name, COALESCE(gp.subgenome, '')) IN ({pair_sql})
-        ORDER BY gp.genome_name, gp.subgenome, gp.chromosome, gp.start_pos, gp.end_pos, gp.id
+          AND gp.genome_name IN ({target_ph})
+        ORDER BY gp.genome_name, gp.chromosome, gp.start_pos, gp.end_pos, gp.id
     """
-    args = list(ogs) + pair_args
+    args = list(ogs) + sorted(target_labels)
     out: Dict[str, List[dict]] = {}
     with conn.cursor() as cur:
         cur.execute(sql, args)
@@ -299,17 +302,9 @@ def _fetch_target_records_by_ogs(conn, ogs: List[str], target_labels: set) -> Di
     return out
 
 
-def _record_matches_query_and_target(hom_gene: str, rec: dict, query_cluster: Optional[int], target_label: str):
-    """
-    V3 target matching rule.
-
-    Target membership is already constrained by MySQL using the exact
-    genome_name + subgenome label. Orthogroup membership is the homology
-    criterion. Do NOT infer chromosome/subgenome compatibility from gene IDs:
-    the 200-genome collection contains heterogeneous naming conventions.
-    """
-    return True, "ok"
-
+def _target_label_matches(rec: dict, target_labels: set) -> bool:
+    """Match targets exactly as returned by genome_info."""
+    return rec.get("genome_name", "") in target_labels
 
 def _read_triticeae_targets() -> Tuple[List[str], Optional[str]]:
     if not os.path.exists(TRITICEAE_FILE):
@@ -408,6 +403,7 @@ def api_status():
             "gene_orthogroup_rows": mappings,
             "orthogroups": ogs,
             "data_source": "MySQL",
+            "api_version": "V4",
         }
     finally:
         conn.close()
@@ -502,21 +498,6 @@ def api_synteny(
                 "region_end": max(r["end_pos"] for r in neighbors),
             }
         }
-        # V3: every user-selected target gets a track, even when no homolog
-        # is found. This distinguishes "no homologs" from "target missing".
-        for target_label in sorted(target_labels, key=_genome_sort_key):
-            if target_label == query_label:
-                continue
-            tracks[target_label] = {
-                "label": target_label,
-                "chrom": "",
-                "genes": [],
-                "is_query_track": False,
-                "region_start": None,
-                "region_end": None,
-                "region_label": "",
-                "no_homologs": True,
-            }
         skipped_counts: Dict[str, int] = {}
 
         # Fetch all genes belonging to the OGs represented by the reference
@@ -527,16 +508,29 @@ def api_synteny(
         # does the filtering before rows reach Python.
         target_records_by_og = _fetch_target_records_by_ogs(conn, ogs, target_labels)
 
+        # Always create a track for every requested target. A target with no
+        # homolog in the current OG set remains visible and is marked empty.
+        for target_label in sorted(target_labels, key=_genome_sort_key):
+            if target_label == query_label:
+                continue
+            tracks.setdefault(target_label, {
+                "label": target_label,
+                "chrom": "",
+                "genes": [],
+                "is_query_track": False,
+                "no_homologs": True,
+            })
+
         for og in ogs:
             orders = [i for i, ng in enumerate(neighbor_ids) if og_results.get(ng) == og]
             for rec in target_records_by_og.get(og, []):
                 hom = rec["gene_id"]
-                gk = rec["label"]
-                if gk == query_label:
-                    continue
-                ok, reason = _record_matches_query_and_target(hom, rec, query_cluster, gk)
-                if not ok:
-                    skipped_counts[reason] = skipped_counts.get(reason, 0) + 1
+                # gene_position.genome_name is the canonical target label in
+                # this MySQL schema (e.g. AK58_A, Chinese_Spring2.1_A).
+                # Do not derive it from subgenome, because the BED importer
+                # stores the BED second column independently.
+                gk = rec["genome_name"]
+                if gk == query_label or gk not in target_labels:
                     continue
 
                 tr = tracks.setdefault(gk, {
@@ -544,10 +538,7 @@ def api_synteny(
                     "chrom": rec["chromosome"],
                     "genes": [],
                     "is_query_track": False,
-                    "no_homologs": False,
                 })
-                if not tr.get("chrom"):
-                    tr["chrom"] = rec["chromosome"]
                 tr["no_homologs"] = False
                 for order in orders:
                     tr["genes"].append({
@@ -616,11 +607,23 @@ def api_synteny(
                 })
         link_groups = list(grouped.values())
 
+        target_summary = []
+        for target_label in sorted(target_labels, key=_genome_sort_key):
+            tr = tracks.get(target_label, {})
+            genes = tr.get("genes") or []
+            target_summary.append({
+                "label": target_label,
+                "genes": len(genes),
+                "orthogroups": len({g.get("og") for g in genes if g.get("og")}),
+                "status": "ok" if genes else "no_homologs",
+            })
+
         return {
             "query": ref["gene_id"],
             "submitted_query": gene_id,
             "request_genome": query_label,
-            "requested_targets": sorted(target_labels),
+            "requested_targets": sorted(target_labels, key=_genome_sort_key),
+            "target_summary": target_summary,
             "upstream": upstream,
             "downstream": downstream,
             "window": max(upstream, downstream),
@@ -636,15 +639,6 @@ def api_synteny(
             "query_gene_subgenome": _gene_subgenome(ref["gene_id"]),
             "query_order": query_order,
             "skipped_counts": skipped_counts,
-            "target_summary": [
-                {
-                    "label": tr["label"],
-                    "chrom": tr.get("chrom", ""),
-                    "gene_count": len(tr.get("genes", [])),
-                    "no_homologs": bool(tr.get("no_homologs", False)),
-                }
-                for tr in ordered if not tr.get("is_query_track")
-            ],
             "neighbors": neighbor_ids,
             "og_map": og_results,
             "tracks": ordered,
