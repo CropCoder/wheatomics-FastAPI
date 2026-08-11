@@ -303,7 +303,7 @@ function renderTargetPicker(){
   availableBox.innerHTML="";
   if(!available.length){
     var empty=document.createElement("div");empty.className="empty";
-    empty.textContent=allGenomes.length?"No available target genome matches the current filter.":"Loading target genomes from MySQL…";
+    empty.textContent=allGenomes.length?"No available target genome matches the current filter.":"Loading target genomes…";
     availableBox.appendChild(empty);
   }else{available.forEach(function(g){availableBox.appendChild(makeGenomeItem(g,"available"));});}
   selectedBox.innerHTML="";
@@ -326,7 +326,7 @@ function regionLabel(tr){
   if(!ss.length||!es.length)return"";
   return fmtMb(Math.min.apply(null,ss))+"-"+fmtMb(Math.max.apply(null,es))+" Mb";
 }
-function labelLine(tr){return tr.label+" ("+tr.chrom+")";}
+function labelLine(tr){var base=tr.label+(tr.chrom?" ("+tr.chrom+")":"");return tr.no_homologs?base+" [No homologs]":base;}
 function median(arr){if(!arr.length)return 0;var a=arr.slice().sort(function(x,y){return x-y;}),mid=Math.floor(a.length/2);return a.length%2?a[mid]:(a[mid-1]+a[mid])/2;}
 
 function compressedFractions(genes){
@@ -368,7 +368,7 @@ fetch(API_BASE+"/genomes").then(function(r){if(!r.ok)throw new Error("HTTP "+r.s
   populateTargetGenomes(initTargets);
   if(initGene){document.getElementById("gene").value=initGene;if(selectedTargets().length||initTargets.length)run(false);}
 }).catch(function(e){
-  document.getElementById("availableTargets").innerHTML='<div class="empty">Failed to load target genomes from MySQL.</div>';
+  document.getElementById("availableTargets").innerHTML='<div class="empty">Loading failed</div>';
   document.getElementById("selectedTargets").innerHTML='<div class="empty">No target genome selected.</div>';
   status("Failed to load MySQL genome list: "+e);
 });
@@ -533,7 +533,7 @@ function draw(data){
   var sub=data.query_gene_subgenome?" | Query subgenome "+data.query_gene_subgenome:"";
   var skippedCounts=data.skipped_counts||{};
   var skippedTotal=Object.values(skippedCounts).reduce(function(a,b){return a+Number(b||0);},0);
-  var skippedText=skippedTotal?" | Strict-filtered homolog records: "+skippedTotal:"";
+  var skippedText=skippedTotal?" | Filtered records: "+skippedTotal:"";
 
   var rawTracks=data.tracks||[];
   if(!rawTracks.length){
@@ -546,7 +546,9 @@ function draw(data){
   var orderedIndices=(tree.order&&tree.order.length)?tree.order:rawTracks.map(function(_,i){return i;});
   var tracks=orderedIndices.map(function(i){return rawTracks[i];});
   tracks.forEach(function(tr,ti){tr.display_track_index=ti;});
-  status("Query="+data.query+" | Auto reference="+data.query_genome+" | Chrom="+data.query_chrom+sub+" | Upstream="+upstream+" / Downstream="+downstream+" | MySQL neighbors: "+neighbors.length+" genes | Cluster "+data.query_cluster+" | Drawn tracks: "+tracks.length+skippedText);
+  var targetSummary=data.target_summary||[];
+  var targetSummaryText=targetSummary.length?" | Targets: "+targetSummary.map(function(x){return x.label+"="+x.genes;}).join(", "):"";
+  status("V4 | Query="+data.query+" | Auto reference="+data.query_genome+" | Chrom="+data.query_chrom+sub+" | Upstream="+upstream+" / Downstream="+downstream+" | MySQL neighbors: "+neighbors.length+" genes | Drawn tracks: "+tracks.length+targetSummaryText+skippedText);
 
   var svgW=1600;
   var containerW=Math.max(900,canvas.clientWidth||1200);
