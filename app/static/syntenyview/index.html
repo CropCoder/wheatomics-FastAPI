@@ -161,7 +161,6 @@ h5.card-title{margin-top:0}
       <button id="selectTriticeae" type="button" class="small">Select Triticeae preset</button>
       <button id="selectAllTargets" type="button" class="small">Select all targets</button>
       <button id="clearTargets" type="button" class="small">Clear targets</button>
-      <div class="help" id="targetHelp">Click a genome on the left to add it to the selected list on the right. The reference genome is resolved automatically from the entered gene ID. Subgenome buttons add targets ending with _A, _B, or _D. Click a selected genome to remove it.</div>
     </div>
   </div>
 </div>
@@ -277,8 +276,10 @@ function selectedTargets(){
   return Array.from(selectedTargetSet).filter(function(g){return g&&allGenomes.indexOf(g)!==-1;});
 }
 function updateTargetHelp(){
+  var el=document.getElementById("targetHelp");
+  if(!el)return;   // help text removed from the layout; safe no-op
   var n=selectedTargets().length;
-  document.getElementById("targetHelp").textContent="Selected target genomes: "+n+". Reference genome is resolved automatically from the gene ID when you draw the synteny.";
+  el.textContent="Selected target genomes: "+n+". Reference genome is resolved automatically from the gene ID when you draw the synteny.";
 }
 function markSelectionChanged(){selectionChangedSinceDraw=true;}
 
@@ -302,20 +303,29 @@ function makeGenomeItem(g,mode){
 }
 
 // Build groups by last underscore suffix, e.g. _A, _B, _D, _H, _M, _S, _V, etc.
-// Preserve the original case from the genome name; do NOT uppercasing blindly.
+// Preserve the original case from the genome name.
 function _genomeSuffix(g){
   var idx=g.lastIndexOf("_");
-  if(idx>=0&&idx<g.length-1)return g.slice(idx+1);   // keep original casing
+  if(idx>=0&&idx<g.length-1)return g.slice(idx+1);
   return "__nosuffix__";
 }
 
-// Display-label map — some historical BED files use S for St.
-var _SUFFIX_DISPLAY_OVERRIDES = {"S":"St"};
+// Three specific genomes whose file names end with _S but actually
+// belong to St.  Other _S entries keep S.
+var _ST_GENOMES = {
+  "Elymus_nutans_Griseb_S": true,
+  "Roegneria_kamoji_S": true,
+  "Thinopyrum_intermedium_PI440031_S": true
+};
 
-function _suffixLabel(rawSuffix){
-  var s = rawSuffix.toUpperCase();
-  if (_SUFFIX_DISPLAY_OVERRIDES.hasOwnProperty(s)) return _SUFFIX_DISPLAY_OVERRIDES[s];
-  return rawSuffix;          // return original case for display
+function _genomeGroupKey(g){
+  var suf = _genomeSuffix(g);
+  if (suf === "S" && _ST_GENOMES.hasOwnProperty(g)) return "St";
+  return suf;
+}
+
+function _groupLabel(rawKey){
+  return rawKey==="__nosuffix__"?"No suffix":(rawKey+" Subgenome");
 }
 
 function renderTargetPicker(){
@@ -334,42 +344,49 @@ function renderTargetPicker(){
   }else{
     var groups={};
     available.forEach(function(g){
-      var suf=_genomeSuffix(g);
-      if(!groups[suf])groups[suf]=[];
-      groups[suf].push(g);
+      var grp=_genomeGroupKey(g);
+      if(!groups[grp])groups[grp]=[];
+      groups[grp].push(g);
     });
     var suffixOrder=["A","B","D"];
     var groupKeys=Object.keys(groups).sort(function(a,b){
-      var ai=suffixOrder.indexOf(a.toUpperCase()),bi=suffixOrder.indexOf(b.toUpperCase());
+      var ai=suffixOrder.indexOf(a),bi=suffixOrder.indexOf(b);
       if(ai>=0&&bi>=0)return ai-bi;
       if(ai>=0)return -1;if(bi>=0)return 1;
       return a.localeCompare(b);
     });
-    groupKeys.forEach(function(suf,gi){
-      var display = _suffixLabel(suf);
-      var label=suf==="__nosuffix__"?"No suffix":(display+" Subgenome");
-      var gid="sg-"+gi+"-"+suf.replace(/[^A-Za-z0-9]/g,"_");
-      var items=groups[suf];
-      // Group header (collapsible — only toggle on user click)
+    // Remember which groups were open before re-render, so adding/removing
+    // a genome does NOT collapse the user's open subgroups.
+    var previouslyOpen={};
+    availableBox.querySelectorAll(".sg-group-label.open").forEach(function(el){
+      var t=el.getAttribute("data-target"); if(t)previouslyOpen[t]=true;
+    });
+    groupKeys.forEach(function(grp,gi){
+      var label=_groupLabel(grp);
+      var gid="sg-"+gi+"-"+grp.replace(/[^A-Za-z0-9]/g,"_");
+      var items=groups[grp];
       var hdr=document.createElement("div");
       hdr.className="sg-group-label";
       hdr.setAttribute("data-target","#"+gid);
       hdr.innerHTML='<span class="sg-arrow">▸</span> '+label+' ('+items.length+')';
       availableBox.appendChild(hdr);
-      // Body
       var body=document.createElement("div");
       body.className="sg-group-body";
       body.id=gid;
       items.forEach(function(g){body.appendChild(makeGenomeItem(g,"available"));});
+      if(previouslyOpen["#"+gid]){
+        body.style.display="block";hdr.classList.add("open");hdr.querySelector(".sg-arrow").classList.add("open");
+      }
       availableBox.appendChild(body);
     });
-    // Toggle (never close on addTarget — only on header click)
+    // Toggle only on header click (addTarget/removeTarget never collapse it)
     availableBox.querySelectorAll(".sg-group-label").forEach(function(el){
       el.addEventListener("click",function(e){
         var tgt=document.querySelector(this.getAttribute("data-target"));
         if(tgt){
           var open=tgt.style.display==="block";
           tgt.style.display=open?"none":"block";
+          this.classList.toggle("open",!open);
           this.querySelector(".sg-arrow").classList.toggle("open",!open);
         }
       });
