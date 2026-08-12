@@ -17,120 +17,37 @@ WheatOmics BLAST API 端点
 """
 
 import asyncio
-import json
 import os
 import re
-import shutil
 import subprocess
 import time as _time
 import uuid
-from datetime import datetime
-from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Query
 from typing import Optional, List
 
+from fastapi import APIRouter, Form, HTTPException, Query
+
 from app.core.config import settings
+from app.services.blast_runner import (
+    BLASTDBCMD, BLAST_FORMATTER, BLASTN, BLASTP, BLASTX,
+    BLAST_PROG_MAP, DB_DIR, BlastExecutionError, TBLASTN, TBLASTX,
+    execute_blast_job, read_status, write_params, write_status,
+)
 
 router = APIRouter(prefix="/blast", tags=["BLAST"])
 
-# === 和 CGI 脚本 get_fasta_bedtools.py 完全一致的路径 ===
-# === 路径检测（和 blast2.pl 逻辑一致） ===
-# blast2.pl:
-#   if (-e "/usr/bin/blastall") { $blastPath = "/usr/bin"; }
-#   else { $blastPath = "."; }
-#   push @cmd, "$blastPath/blastp";
-
-BLAST_BIN = "/var/www/html/blast/blast+/bin"  # BLAST+ 程序目录
+# Binary paths, DB dir and the job state files moved to
+# app/services/blast_runner.py — shared with the standalone job daemon.
 
 MAX_QUERY_LENGTH = 100_000  # 查询序列最大字符数
 
-#: Per-worker cap on concurrent BLAST subprocesses. With 8 gunicorn workers the
-#: worst case is 8 * BLAST_MAX_CONCURRENT blasts running at once; each blastn
-#: can hold ~2 GB RSS, so keep this small.
+#: Per-worker cap on synchronous (wait=true) BLAST subprocesses. The daemon
+#: enforces the same cap globally for wait=false jobs (one daemon process);
+#: worst case across 8 workers + daemon is 18 blasts, each up to ~2 GB RSS.
 _BLAST_SLOTS = asyncio.Semaphore(settings.BLAST_MAX_CONCURRENT)
-
-#: A blast subprocess may run up to 600s; after this long in "running" the job
-#: is declared stale (worker recycled / killed mid-run). Pollers then see a
-#: terminal state instead of a forever-running job.
-_BLAST_STALE_SECONDS = 610
 
 #: uuid4 job id — accepted shape for /status/{job_id} (also guards the path
 #: join against traversal).
 _JOB_ID_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
-
-def _job_dir(job_id: str) -> "Path":
-    return settings.BLAST_RESULT_DIR / job_id
-
-
-def _job_status_path(job_id: str) -> "Path":
-    return _job_dir(job_id) / "status.json"
-
-
-def _write_status(job_id: str, **fields) -> None:
-    """Atomically write job status.json (tmp + os.replace)."""
-    job_dir = _job_dir(job_id)
-    job_dir.mkdir(parents=True, exist_ok=True)
-    payload = {"job_id": job_id, **fields}
-    tmp = job_dir / "status.json.tmp"
-    with open(tmp, "w", encoding="utf-8") as fh:
-        json.dump(payload, fh, ensure_ascii=False)
-    os.replace(tmp, job_dir / "status.json")
-
-
-def _read_status(job_id: str) -> dict | None:
-    """Read a job's status.json; None if the job doesn't exist.
-
-    A job left in "running" past _BLAST_STALE_SECONDS is rewritten as "stale"
-    so pollers always reach a terminal state (worker recycling or a deploy can
-    kill the background task mid-run).
-    """
-    path = _job_status_path(job_id)
-    if not path.is_file():
-        return None
-    with open(path, "r", encoding="utf-8") as fh:
-        data = json.load(fh)
-    if data.get("status") == "running":
-        started = data.get("started_at") or 0
-        if _time.time() - float(started) > _BLAST_STALE_SECONDS:
-            _write_status(job_id, status="stale",
-                          message="Job interrupted (worker recycled or server restarted); please resubmit.",
-                          created_at=data.get("created_at"),
-                          started_at=data.get("started_at"),
-                          finished_at=_time.time())
-            data["status"] = "stale"
-    return data
-
-
-def _find_blast_prog(name: str) -> str:
-    """查找可用的 BLAST 程序"""
-    exe = os.path.join(BLAST_BIN, name)
-    if os.path.exists(exe):
-        return exe
-    # 兜底：可能在别的路径
-    for p in ["/usr/bin", "/usr/local/bin"]:
-        exe = os.path.join(p, name)
-        if os.path.exists(exe):
-            return exe
-    return f"{BLAST_BIN}/{name}"  # 默认
-
-
-BLAST_PROGRAMS = {
-    p: _find_blast_prog(p)
-    for p in ["blastp", "blastn", "blastx", "tblastn", "tblastx"]
-}
-BLASTP = BLAST_PROGRAMS["blastp"]
-BLASTN = BLAST_PROGRAMS["blastn"]
-BLASTX = BLAST_PROGRAMS["blastx"]
-TBLASTN = BLAST_PROGRAMS["tblastn"]
-TBLASTX = BLAST_PROGRAMS["tblastx"]
-BLASTDBCMD = _find_blast_prog("blastdbcmd")
-BLAST_FORMATTER = _find_blast_prog("blast_formatter")
-
-#: program name -> executable path, used by the validation + job runner.
-BLAST_PROG_MAP = {
-    "blastp": BLASTP, "blastn": BLASTN, "blastx": BLASTX,
-    "tblastn": TBLASTN, "tblastx": TBLASTX,
-}
 
 # === BLAST 数据库分类体系 ===
 # 与 wheatomics.sdau.edu.cn 前端页面一致，按基因组倍性/物种分类
@@ -227,8 +144,6 @@ def _classify_db(db_name: str) -> str:
             return cat["id"]
     return "other"
 
-DB_DIR = "/var/www/html/getfasta/blastdb/"  # 和 CGI 的 DbPath 一致
-
 # Disk-cached DB directory listing. Without this, list_dbs("blastn") takes
 # 90+ seconds on /var/www/html/getfasta/blastdb/ (thousands of multi-volume
 # index files across hundreds of genome databases), which starves the
@@ -300,153 +215,6 @@ def check_db_exists(db_name: str, program: str) -> bool:
 
 
 
-def _cleanup_old_results():
-    """清理过期的 BLAST 结果（job 目录 + legacy 平铺文件）。
-
-    两阶段: 先按年龄删（超过 EXPIRE_DAYS 的），若删除后条目数仍超过
-    MAX_FILES，再按最老的删到上限以内。每个 job 是一个目录（含结果文件
-    + status.json），整体删除；旧版平铺的 blast_*.tsv/.txt 也兼容清理。
-    """
-    result_dir = settings.BLAST_RESULT_DIR
-    if not result_dir.is_dir():
-        return
-    cutoff = datetime.now().timestamp() - settings.BLAST_RESULT_EXPIRE_DAYS * 86400
-
-    def _mtime(p):
-        try:
-            return p.stat().st_mtime
-        except OSError:
-            return 0.0
-
-    # 条目 = job 目录 + legacy 平铺文件。
-    entries = [p for p in result_dir.iterdir() if p.is_dir() or p.is_file()]
-    expired = [p for p in entries if _mtime(p) < cutoff]
-    for p in expired:
-        try:
-            if p.is_dir():
-                shutil.rmtree(p, ignore_errors=True)
-            else:
-                p.unlink()
-        except OSError:
-            pass
-
-    remaining = [p for p in entries if p not in expired]
-    over = len(remaining) - settings.BLAST_RESULT_MAX_FILES
-    if over > 0:
-        remaining.sort(key=_mtime)
-        for p in remaining[:over]:
-            try:
-                if p.is_dir():
-                    shutil.rmtree(p, ignore_errors=True)
-                else:
-                    p.unlink()
-            except OSError:
-                pass
-
-
-def _run_blast_job(
-    job_id: str,
-    dbs: list[str],
-    program: str,
-    query: str,
-    evalue: float,
-    max_targets: int,
-    word_size: Optional[int],
-    matrix: Optional[str],
-) -> dict:
-    """Run one BLAST job synchronously (blocking) and return download_urls.
-
-    Shared by the wait=true (synchronous) and wait=false (background) paths.
-    Raises HTTPException on failure, mirroring the previous inline behaviour.
-    """
-    blast_path = BLAST_PROG_MAP.get(program, BLASTP)
-    job_dir = _job_dir(job_id)
-    job_dir.mkdir(parents=True, exist_ok=True)
-
-    # ---- 构造结果格式映射 ----
-    fmt_defs = {
-        "tabular": ("6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle", ".tsv"),
-        "traditional": ("0", ".txt"),
-    }
-
-    # ---- 优先 blast_formatter（ASN.1 archive + 转换，BLAST 只跑一次）----
-    download_urls = {}
-    if os.path.exists(BLAST_FORMATTER):
-        archive_path = job_dir / "result.asn1"
-        cmd = [
-            blast_path, "-task", program,
-            "-db", " ".join(os.path.join(DB_DIR, d) for d in dbs),
-            "-outfmt", "11",
-            "-out", str(archive_path),
-            "-evalue", str(evalue),
-            "-max_target_seqs", str(max_targets),
-            "-num_threads", "4",
-        ]
-        if word_size is not None:
-            cmd += ["-word_size", str(word_size)]
-        if matrix is not None:
-            cmd += ["-matrix", matrix]
-
-        try:
-            r = subprocess.run(cmd, input=query,
-                               stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                               text=True, timeout=600)
-        except subprocess.TimeoutExpired:
-            raise HTTPException(504, "BLAST 超时（>10分钟）")
-        except FileNotFoundError:
-            raise HTTPException(500, f"BLAST 可执行文件未找到: {blast_path}")
-
-        if r.returncode != 0:
-            archive_path.unlink(missing_ok=True)
-            raise HTTPException(500, f"BLAST 执行错误: {r.stderr.strip()}")
-
-        for name, (oflag, ext) in fmt_defs.items():
-            out_path = job_dir / f"result{ext}"
-            subprocess.run(
-                [BLAST_FORMATTER, "-archive", str(archive_path),
-                 "-outfmt", oflag, "-out", str(out_path)],
-                timeout=120,
-            )
-            download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}/result{ext}"
-
-        archive_path.unlink(missing_ok=True)
-    else:
-        # ---- 降级：BLAST 跑两次 ----
-        for name, (oflag, ext) in fmt_defs.items():
-            fname = f"result{ext}"
-            filepath = job_dir / fname
-            cmd = [
-                blast_path, "-task", program,
-                "-db", " ".join(os.path.join(DB_DIR, d) for d in dbs),
-                "-outfmt", oflag,
-                "-out", str(filepath),
-                "-evalue", str(evalue),
-                "-max_target_seqs", str(max_targets),
-                "-num_threads", "4",
-            ]
-            if word_size is not None:
-                cmd += ["-word_size", str(word_size)]
-            if matrix is not None:
-                cmd += ["-matrix", matrix]
-
-            try:
-                r = subprocess.run(cmd, input=query,
-                                   stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                                   text=True, timeout=600)
-            except subprocess.TimeoutExpired:
-                raise HTTPException(504, "BLAST 超时（>10分钟）")
-            except FileNotFoundError:
-                raise HTTPException(500, f"BLAST 可执行文件未找到: {blast_path}")
-
-            if r.returncode != 0:
-                filepath.unlink(missing_ok=True)
-                raise HTTPException(500, f"BLAST 执行错误: {r.stderr.strip()}")
-
-            download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}/{fname}"
-
-    return download_urls
-
-
 def _validate_and_normalize_query(program: str, query: str) -> str:
     """Common validation shared by both wait modes."""
     VALID_PROGRAMS = {"blastp", "blastn", "blastx", "tblastn", "tblastx"}
@@ -463,42 +231,8 @@ def _validate_and_normalize_query(program: str, query: str) -> str:
     return query
 
 
-async def _run_job_background(job_id: str, dbs: list[str], program: str, query: str,
-                              evalue: float, max_targets: int,
-                              word_size: Optional[int], matrix: Optional[str]) -> None:
-    """Background worker for wait=false jobs.
-
-    Known limitation: gunicorn worker recycling (max_requests=100) or a deploy
-    can interrupt an in-flight job; _read_status then marks it stale after
-    _BLAST_STALE_SECONDS so pollers reach a terminal state and clients resubmit.
-    """
-    _write_status(job_id, status="running", created_at=_time.time(),
-                  started_at=_time.time())
-    # Preserve the original created_at written when the job was queued, so
-    # terminal states carry the real submission time (not the finish time).
-    created_at = (_read_status(job_id) or {}).get("created_at") or _time.time()
-    try:
-        async with _BLAST_SLOTS:
-            urls = await asyncio.to_thread(
-                _run_blast_job, job_id, dbs, program, query,
-                evalue, max_targets, word_size, matrix,
-            )
-        _write_status(job_id, status="done", download_urls=urls,
-                      created_at=created_at, started_at=_time.time(),
-                      finished_at=_time.time(), message="")
-    except HTTPException as exc:
-        _write_status(job_id, status="error", message=str(exc.detail),
-                      created_at=created_at, started_at=_time.time(),
-                      finished_at=_time.time())
-    except Exception as exc:  # pragma: no cover - defensive
-        _write_status(job_id, status="error", message=str(exc),
-                      created_at=_time.time(), started_at=_time.time(),
-                      finished_at=_time.time())
-
-
 @router.post("/search")
 async def blast_search(
-    background_tasks: BackgroundTasks,
     program: str = Form(default="blastp",
         description="blastp（蛋白→蛋白库）/ blastn（核酸→核酸库）/ blastx（核酸翻译→蛋白库）/ tblastn（蛋白→核酸库翻译）/ tblastx（核酸翻译→蛋白库翻译）"),
     database: str = Form(default=...,
@@ -519,7 +253,9 @@ async def blast_search(
     """执行 BLAST 搜索，结果保存为文件返回下载链接。
 
     wait=true（默认）: 同步跑完，返回 download_url（现有 agent/脚本零改动）。
-    wait=false: 立即返回 202 + job_id，后台跑，用 GET /api/blast/status/{job_id} 轮询。
+    wait=false: 立即返回 job_id；由独立的 blast daemon（wheatomics-blastd.service）
+    异步执行，GET /api/blast/status/{job_id} 轮询。daemon 不受 API worker
+    回收/重启影响，job 不会中途被杀。
 
     调用示例:
       curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \\n        -d "program=blastp" \\n        -d "database=Fielder_protein" \\n        --data-urlencode "query=>test\\nMSSSTG..."
@@ -543,16 +279,22 @@ async def blast_search(
     result_dir = settings.BLAST_RESULT_DIR
     result_dir.mkdir(parents=True, exist_ok=True)
     job_id = str(uuid.uuid4())
+    params = {
+        "dbs": dbs, "program": program, "query": query,
+        "evalue": evalue, "max_targets": max_targets,
+        "word_size": word_size, "matrix": matrix,
+    }
 
     if wait:
-        # Synchronous path (default) — same contract as before, now gated by
-        # the concurrency semaphore and writing into a per-job directory.
-        async with _BLAST_SLOTS:
-            download_urls = await asyncio.to_thread(
-                _run_blast_job, job_id, dbs, program, query,
-                evalue, max_targets, word_size, matrix,
-            )
-        _cleanup_old_results()
+        # Synchronous path (default) — same contract as before; the execution
+        # core is shared with the daemon via blast_runner.execute_blast_job.
+        try:
+            async with _BLAST_SLOTS:
+                download_urls = await asyncio.to_thread(
+                    execute_blast_job, job_id, params,
+                )
+        except BlastExecutionError as exc:
+            raise HTTPException(exc.status_code, exc.message)
         return {
             "success": True,
             "program": program,
@@ -563,14 +305,12 @@ async def blast_search(
             "download_url": download_urls,
         }
 
-    # Async path — return immediately; the frontend polls /status/{job_id}.
-    _write_status(job_id, status="pending", created_at=_time.time(),
-                  message="Queued for BLAST.")
-    background_tasks.add_task(
-        _run_job_background, job_id, dbs, program, query,
-        evalue, max_targets, word_size, matrix,
-    )
-    _cleanup_old_results()
+    # Async path — enqueue for the blast daemon and return immediately. The
+    # daemon survives worker recycling / API deploys, unlike BackgroundTasks;
+    # the frontend polls /status/{job_id}.
+    write_params(job_id, **params)
+    write_status(job_id, status="pending", created_at=_time.time(),
+                 message="Queued for BLAST.")
     return {
         "success": True,
         "job_id": job_id,
@@ -590,7 +330,7 @@ async def blast_job_status(job_id: str):
     """
     if not _JOB_ID_RE.match(job_id):
         raise HTTPException(404, "Invalid job id")
-    data = _read_status(job_id)
+    data = read_status(job_id)
     if data is None:
         raise HTTPException(404, "Job not found")
     return {

@@ -64,8 +64,11 @@ class Settings(BaseSettings):
     BLAST_RESULT_BASE_URL: str = "/blast_results"
     BLAST_RESULT_EXPIRE_DAYS: int = 7
     BLAST_RESULT_MAX_FILES: int = 3000
-    # Per-worker limit on concurrent BLAST subprocesses (8 workers → worst case
-    # 16 concurrent blasts globally; each blastn can hold ~2GB RSS).
+    # Concurrency cap on BLAST subprocesses. The blast daemon
+    # (wheatomics-blastd.service, one process) applies it globally to
+    # wait=false jobs; the API applies it per worker to synchronous
+    # wait=true runs (8 workers → worst case 8*2 + 2 = 18 blasts total,
+    # each blastn can hold ~2GB RSS).
     BLAST_MAX_CONCURRENT: int = 2
     BLAST_SITE_BASE_URL: str = "https://wheatomics.sdau.edu.cn"
     PRIMERSERVER2_CONFIG_PATH: Path = Path("/var/www/html/PrimerServer2/config.ini")
