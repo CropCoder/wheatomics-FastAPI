@@ -17,12 +17,15 @@ WheatOmics BLAST API 端点
 """
 
 import asyncio
+import json
 import os
-import subprocess
-from datetime import datetime
 import re
+import shutil
+import subprocess
 import time as _time
-from fastapi import APIRouter, Form, HTTPException, Query
+import uuid
+from datetime import datetime
+from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Query
 from typing import Optional, List
 
 from app.core.config import settings
@@ -39,6 +42,63 @@ router = APIRouter(prefix="/blast", tags=["BLAST"])
 BLAST_BIN = "/var/www/html/blast/blast+/bin"  # BLAST+ 程序目录
 
 MAX_QUERY_LENGTH = 100_000  # 查询序列最大字符数
+
+#: Per-worker cap on concurrent BLAST subprocesses. With 8 gunicorn workers the
+#: worst case is 8 * BLAST_MAX_CONCURRENT blasts running at once; each blastn
+#: can hold ~2 GB RSS, so keep this small.
+_BLAST_SLOTS = asyncio.Semaphore(settings.BLAST_MAX_CONCURRENT)
+
+#: A blast subprocess may run up to 600s; after this long in "running" the job
+#: is declared stale (worker recycled / killed mid-run). Pollers then see a
+#: terminal state instead of a forever-running job.
+_BLAST_STALE_SECONDS = 610
+
+#: uuid4 job id — accepted shape for /status/{job_id} (also guards the path
+#: join against traversal).
+_JOB_ID_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
+
+def _job_dir(job_id: str) -> "Path":
+    return settings.BLAST_RESULT_DIR / job_id
+
+
+def _job_status_path(job_id: str) -> "Path":
+    return _job_dir(job_id) / "status.json"
+
+
+def _write_status(job_id: str, **fields) -> None:
+    """Atomically write job status.json (tmp + os.replace)."""
+    job_dir = _job_dir(job_id)
+    job_dir.mkdir(parents=True, exist_ok=True)
+    payload = {"job_id": job_id, **fields}
+    tmp = job_dir / "status.json.tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, ensure_ascii=False)
+    os.replace(tmp, job_dir / "status.json")
+
+
+def _read_status(job_id: str) -> dict | None:
+    """Read a job's status.json; None if the job doesn't exist.
+
+    A job left in "running" past _BLAST_STALE_SECONDS is rewritten as "stale"
+    so pollers always reach a terminal state (worker recycling or a deploy can
+    kill the background task mid-run).
+    """
+    path = _job_status_path(job_id)
+    if not path.is_file():
+        return None
+    with open(path, "r", encoding="utf-8") as fh:
+        data = json.load(fh)
+    if data.get("status") == "running":
+        started = data.get("started_at") or 0
+        if _time.time() - float(started) > _BLAST_STALE_SECONDS:
+            _write_status(job_id, status="stale",
+                          message="Job interrupted (worker recycled or server restarted); please resubmit.",
+                          created_at=data.get("created_at"),
+                          started_at=data.get("started_at"),
+                          finished_at=_time.time())
+            data["status"] = "stale"
+    return data
 
 
 def _find_blast_prog(name: str) -> str:
@@ -65,6 +125,12 @@ TBLASTN = BLAST_PROGRAMS["tblastn"]
 TBLASTX = BLAST_PROGRAMS["tblastx"]
 BLASTDBCMD = _find_blast_prog("blastdbcmd")
 BLAST_FORMATTER = _find_blast_prog("blast_formatter")
+
+#: program name -> executable path, used by the validation + job runner.
+BLAST_PROG_MAP = {
+    "blastp": BLASTP, "blastn": BLASTN, "blastx": BLASTX,
+    "tblastn": TBLASTN, "tblastx": TBLASTX,
+}
 
 # === BLAST 数据库分类体系 ===
 # 与 wheatomics.sdau.edu.cn 前端页面一致，按基因组倍性/物种分类
@@ -235,94 +301,67 @@ def check_db_exists(db_name: str, program: str) -> bool:
 
 
 def _cleanup_old_results():
-    """清理过期的 BLAST 结果文件。
+    """清理过期的 BLAST 结果（job 目录 + legacy 平铺文件）。
 
-    两阶段: 先按年龄删（超过 EXPIRE_DAYS 的），若删除后文件数仍超过
-    MAX_FILES，再按最老的删到上限以内。防止高流量下 7 天内文件无限膨胀。
+    两阶段: 先按年龄删（超过 EXPIRE_DAYS 的），若删除后条目数仍超过
+    MAX_FILES，再按最老的删到上限以内。每个 job 是一个目录（含结果文件
+    + status.json），整体删除；旧版平铺的 blast_*.tsv/.txt 也兼容清理。
     """
     result_dir = settings.BLAST_RESULT_DIR
     if not result_dir.is_dir():
         return
     cutoff = datetime.now().timestamp() - settings.BLAST_RESULT_EXPIRE_DAYS * 86400
 
-    files = [f for f in result_dir.iterdir() if f.is_file()]
-    expired = []
-    for f in files:
+    def _mtime(p):
         try:
-            if f.stat().st_mtime < cutoff:
-                expired.append(f)
+            return p.stat().st_mtime
         except OSError:
-            continue
-    for f in expired:
+            return 0.0
+
+    # 条目 = job 目录 + legacy 平铺文件。
+    entries = [p for p in result_dir.iterdir() if p.is_dir() or p.is_file()]
+    expired = [p for p in entries if _mtime(p) < cutoff]
+    for p in expired:
         try:
-            f.unlink()
+            if p.is_dir():
+                shutil.rmtree(p, ignore_errors=True)
+            else:
+                p.unlink()
         except OSError:
             pass
 
-    remaining = [f for f in files if f not in expired]
+    remaining = [p for p in entries if p not in expired]
     over = len(remaining) - settings.BLAST_RESULT_MAX_FILES
     if over > 0:
-        # 按最老的排序，删掉超出的部分。
-        remaining.sort(key=lambda f: f.stat().st_mtime)
-        for f in remaining[:over]:
+        remaining.sort(key=_mtime)
+        for p in remaining[:over]:
             try:
-                f.unlink()
+                if p.is_dir():
+                    shutil.rmtree(p, ignore_errors=True)
+                else:
+                    p.unlink()
             except OSError:
                 pass
 
 
-@router.post("/search")
-async def blast_search(
-    program: str = Form(default="blastp",
-        description="blastp（蛋白→蛋白库）/ blastn（核酸→核酸库）/ blastx（核酸翻译→蛋白库）/ tblastn（蛋白→核酸库翻译）/ tblastx（核酸翻译→蛋白库翻译）"),
-    database: str = Form(default=...,
-        description="数据库名，多个用逗号分隔，如 Fielder_protein,AK58_protein.fasta"),
-    query: str = Form(default=...,
-        description="FASTA 格式的查询序列"),
-    evalue: float = Form(default=10.0,
-        description="E-value 阈值"),
-    max_targets: int = Form(default=1000, alias="max_target_seqs",
-        description="最多返回的匹配数"),
-    word_size: Optional[int] = Form(default=None),
-    matrix: Optional[str] = Form(default=None),
-    outfmt: str = Form(default="tabular",
-        description="结果格式: tabular (outfmt 6) / traditional (outfmt 0, 带比对) / both (同时生成两种)")
-):
-    """执行 BLAST 搜索，结果保存为文件返回下载链接。
+def _run_blast_job(
+    job_id: str,
+    dbs: list[str],
+    program: str,
+    query: str,
+    evalue: float,
+    max_targets: int,
+    word_size: Optional[int],
+    matrix: Optional[str],
+) -> dict:
+    """Run one BLAST job synchronously (blocking) and return download_urls.
 
-    tabular (outfmt 6, 制表符分隔) 和 traditional (outfmt 0, 含比对信息)
-    两种格式同时生成，通过 download_url 字段获取下载地址。
-
-    调用示例:
-      curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \n        -d "program=blastp" \n        -d "database=Fielder_protein" \n        --data-urlencode "query=>test\nMSSSTG..."
+    Shared by the wait=true (synchronous) and wait=false (background) paths.
+    Raises HTTPException on failure, mirroring the previous inline behaviour.
     """
-    # ---- 校验 ----
-    VALID_PROGRAMS = {"blastp", "blastn", "blastx", "tblastn", "tblastx"}
-    if program not in VALID_PROGRAMS:
-        raise HTTPException(400, f"不支持的 BLAST 程序: {program}，可选: {sorted(VALID_PROGRAMS)}")
-    query = query.strip()
-    if not query:
-        raise HTTPException(400, "查询序列不能为空")
-    if len(query) > MAX_QUERY_LENGTH:
-        raise HTTPException(400,
-            f"查询序列过长（{len(query)} 字符），最大允许 {MAX_QUERY_LENGTH} 字符")
-    if not query.startswith(">"):
-        query = ">query\n" + query
-
-    BLAST_PROG_MAP = {"blastp": BLASTP, "blastn": BLASTN, "blastx": BLASTX, "tblastn": TBLASTN, "tblastx": TBLASTX}
     blast_path = BLAST_PROG_MAP.get(program, BLASTP)
-    if not os.path.exists(blast_path):
-        raise HTTPException(500, f"BLAST 程序不存在: {blast_path}")
-
-    # ---- 检查数据库 ----
-    dbs = [d.strip() for d in database.split(",") if d.strip()]
-    if not dbs:
-        raise HTTPException(400, "请指定至少一个数据库")
-
-    missing = [d for d in dbs if not check_db_exists(d, program)]
-    if missing:
-        raise HTTPException(404,
-            f"以下数据库在 {DB_DIR} 中找不到索引: {missing}")
+    job_dir = _job_dir(job_id)
+    job_dir.mkdir(parents=True, exist_ok=True)
 
     # ---- 构造结果格式映射 ----
     fmt_defs = {
@@ -330,14 +369,10 @@ async def blast_search(
         "traditional": ("0", ".txt"),
     }
 
-    result_dir = settings.BLAST_RESULT_DIR
-    result_dir.mkdir(parents=True, exist_ok=True)
-    job_id = datetime.now().strftime("blast_%Y%m%d_%H%M%S_%f")
-
     # ---- 优先 blast_formatter（ASN.1 archive + 转换，BLAST 只跑一次）----
     download_urls = {}
     if os.path.exists(BLAST_FORMATTER):
-        archive_path = result_dir / f"{job_id}.asn1"
+        archive_path = job_dir / "result.asn1"
         cmd = [
             blast_path, "-task", program,
             "-db", " ".join(os.path.join(DB_DIR, d) for d in dbs),
@@ -353,18 +388,9 @@ async def blast_search(
             cmd += ["-matrix", matrix]
 
         try:
-            # Run BLAST in a thread so the event loop is not blocked for the
-            # full 600s timeout — long queries would otherwise freeze the
-            # entire single-worker uvicorn process and hang every other
-            # request (health, databases, other blast calls) until timeout.
-            # blast writes the archive to -out, so stdout is discarded and
-            # only stderr is captured — a multi-GB result never lands in
-            # Python memory.
-            r = await asyncio.to_thread(
-                subprocess.run, cmd, input=query,
-                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                text=True, timeout=600,
-            )
+            r = subprocess.run(cmd, input=query,
+                               stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                               text=True, timeout=600)
         except subprocess.TimeoutExpired:
             raise HTTPException(504, "BLAST 超时（>10分钟）")
         except FileNotFoundError:
@@ -375,21 +401,20 @@ async def blast_search(
             raise HTTPException(500, f"BLAST 执行错误: {r.stderr.strip()}")
 
         for name, (oflag, ext) in fmt_defs.items():
-            out_path = result_dir / (job_id + ext)
-            await asyncio.to_thread(
-                subprocess.run,
+            out_path = job_dir / f"result{ext}"
+            subprocess.run(
                 [BLAST_FORMATTER, "-archive", str(archive_path),
                  "-outfmt", oflag, "-out", str(out_path)],
                 timeout=120,
             )
-            download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}{ext}"
+            download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}/result{ext}"
 
         archive_path.unlink(missing_ok=True)
     else:
         # ---- 降级：BLAST 跑两次 ----
         for name, (oflag, ext) in fmt_defs.items():
-            fname = f"{job_id}_{name}{ext}"
-            filepath = result_dir / fname
+            fname = f"result{ext}"
+            filepath = job_dir / fname
             cmd = [
                 blast_path, "-task", program,
                 "-db", " ".join(os.path.join(DB_DIR, d) for d in dbs),
@@ -405,13 +430,9 @@ async def blast_search(
                 cmd += ["-matrix", matrix]
 
             try:
-                # blast writes directly to -out; only stderr is captured so a
-                # multi-GB result never lands in Python memory.
-                r = await asyncio.to_thread(
-                    subprocess.run, cmd, input=query,
-                    stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                    text=True, timeout=600,
-                )
+                r = subprocess.run(cmd, input=query,
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                                   text=True, timeout=600)
             except subprocess.TimeoutExpired:
                 raise HTTPException(504, "BLAST 超时（>10分钟）")
             except FileNotFoundError:
@@ -421,17 +442,163 @@ async def blast_search(
                 filepath.unlink(missing_ok=True)
                 raise HTTPException(500, f"BLAST 执行错误: {r.stderr.strip()}")
 
-            download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{fname}"
+            download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}/{fname}"
 
+    return download_urls
+
+
+def _validate_and_normalize_query(program: str, query: str) -> str:
+    """Common validation shared by both wait modes."""
+    VALID_PROGRAMS = {"blastp", "blastn", "blastx", "tblastn", "tblastx"}
+    if program not in VALID_PROGRAMS:
+        raise HTTPException(400, f"不支持的 BLAST 程序: {program}，可选: {sorted(VALID_PROGRAMS)}")
+    query = query.strip()
+    if not query:
+        raise HTTPException(400, "查询序列不能为空")
+    if len(query) > MAX_QUERY_LENGTH:
+        raise HTTPException(400,
+            f"查询序列过长（{len(query)} 字符），最大允许 {MAX_QUERY_LENGTH} 字符")
+    if not query.startswith(">"):
+        query = ">query\n" + query
+    return query
+
+
+async def _run_job_background(job_id: str, dbs: list[str], program: str, query: str,
+                              evalue: float, max_targets: int,
+                              word_size: Optional[int], matrix: Optional[str]) -> None:
+    """Background worker for wait=false jobs.
+
+    Known limitation: gunicorn worker recycling (max_requests=100) or a deploy
+    can interrupt an in-flight job; _read_status then marks it stale after
+    _BLAST_STALE_SECONDS so pollers reach a terminal state and clients resubmit.
+    """
+    _write_status(job_id, status="running", created_at=_time.time(),
+                  started_at=_time.time())
+    # Preserve the original created_at written when the job was queued, so
+    # terminal states carry the real submission time (not the finish time).
+    created_at = (_read_status(job_id) or {}).get("created_at") or _time.time()
+    try:
+        async with _BLAST_SLOTS:
+            urls = await asyncio.to_thread(
+                _run_blast_job, job_id, dbs, program, query,
+                evalue, max_targets, word_size, matrix,
+            )
+        _write_status(job_id, status="done", download_urls=urls,
+                      created_at=created_at, started_at=_time.time(),
+                      finished_at=_time.time(), message="")
+    except HTTPException as exc:
+        _write_status(job_id, status="error", message=str(exc.detail),
+                      created_at=created_at, started_at=_time.time(),
+                      finished_at=_time.time())
+    except Exception as exc:  # pragma: no cover - defensive
+        _write_status(job_id, status="error", message=str(exc),
+                      created_at=_time.time(), started_at=_time.time(),
+                      finished_at=_time.time())
+
+
+@router.post("/search")
+async def blast_search(
+    background_tasks: BackgroundTasks,
+    program: str = Form(default="blastp",
+        description="blastp（蛋白→蛋白库）/ blastn（核酸→核酸库）/ blastx（核酸翻译→蛋白库）/ tblastn（蛋白→核酸库翻译）/ tblastx（核酸翻译→蛋白库翻译）"),
+    database: str = Form(default=...,
+        description="数据库名，多个用逗号分隔，如 Fielder_protein,AK58_protein.fasta"),
+    query: str = Form(default=...,
+        description="FASTA 格式的查询序列"),
+    evalue: float = Form(default=10.0,
+        description="E-value 阈值"),
+    max_targets: int = Form(default=1000, alias="max_target_seqs",
+        description="最多返回的匹配数"),
+    word_size: Optional[int] = Form(default=None),
+    matrix: Optional[str] = Form(default=None),
+    outfmt: str = Form(default="tabular",
+        description="结果格式: tabular (outfmt 6) / traditional (outfmt 0, 带比对) / both (同时生成两种)"),
+    wait: bool = Form(default=True,
+        description="true=同步等待结果（默认，兼容现有调用方）；false=立即返回 job_id，轮询 /api/blast/status/{job_id}"),
+):
+    """执行 BLAST 搜索，结果保存为文件返回下载链接。
+
+    wait=true（默认）: 同步跑完，返回 download_url（现有 agent/脚本零改动）。
+    wait=false: 立即返回 202 + job_id，后台跑，用 GET /api/blast/status/{job_id} 轮询。
+
+    调用示例:
+      curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \\n        -d "program=blastp" \\n        -d "database=Fielder_protein" \\n        --data-urlencode "query=>test\\nMSSSTG..."
+    """
+    query = _validate_and_normalize_query(program, query)
+
+    blast_path = BLAST_PROG_MAP.get(program, BLASTP)
+    if not os.path.exists(blast_path):
+        raise HTTPException(500, f"BLAST 程序不存在: {blast_path}")
+
+    # ---- 检查数据库 ----
+    dbs = [d.strip() for d in database.split(",") if d.strip()]
+    if not dbs:
+        raise HTTPException(400, "请指定至少一个数据库")
+
+    missing = [d for d in dbs if not check_db_exists(d, program)]
+    if missing:
+        raise HTTPException(404,
+            f"以下数据库在 {DB_DIR} 中找不到索引: {missing}")
+
+    result_dir = settings.BLAST_RESULT_DIR
+    result_dir.mkdir(parents=True, exist_ok=True)
+    job_id = str(uuid.uuid4())
+
+    if wait:
+        # Synchronous path (default) — same contract as before, now gated by
+        # the concurrency semaphore and writing into a per-job directory.
+        async with _BLAST_SLOTS:
+            download_urls = await asyncio.to_thread(
+                _run_blast_job, job_id, dbs, program, query,
+                evalue, max_targets, word_size, matrix,
+            )
+        _cleanup_old_results()
+        return {
+            "success": True,
+            "program": program,
+            "database": dbs,
+            "parameters": {"evalue": evalue, "max_target_seqs": max_targets},
+            "query_header": query.strip().split("\n")[0],
+            "outfmt": ["tabular", "traditional"],
+            "download_url": download_urls,
+        }
+
+    # Async path — return immediately; the frontend polls /status/{job_id}.
+    _write_status(job_id, status="pending", created_at=_time.time(),
+                  message="Queued for BLAST.")
+    background_tasks.add_task(
+        _run_job_background, job_id, dbs, program, query,
+        evalue, max_targets, word_size, matrix,
+    )
     _cleanup_old_results()
     return {
         "success": True,
-        "program": program,
-        "database": dbs,
-        "parameters": {"evalue": evalue, "max_target_seqs": max_targets},
-        "query_header": query.strip().split("\n")[0],
-        "outfmt": ["tabular", "traditional"],
-        "download_url": download_urls,
+        "job_id": job_id,
+        "status": "pending",
+        "status_url": f"/api/blast/status/{job_id}",
+        "message": "BLAST job submitted; poll the status_url for completion.",
+    }
+
+
+@router.get("/status/{job_id}")
+async def blast_job_status(job_id: str):
+    """轮询 BLAST job 状态（wait=false 提交的 job）。
+
+    返回 {"success", "job_id", "status": pending|running|done|error|stale,
+    "message", "download_urls"}。done 时 download_urls 填充；error/stale 看
+    message。job_id 必须为 uuid4 格式，否则 404。
+    """
+    if not _JOB_ID_RE.match(job_id):
+        raise HTTPException(404, "Invalid job id")
+    data = _read_status(job_id)
+    if data is None:
+        raise HTTPException(404, "Job not found")
+    return {
+        "success": True,
+        "job_id": job_id,
+        "status": data.get("status"),
+        "message": data.get("message", ""),
+        "download_urls": data.get("download_urls"),
     }
 
 
