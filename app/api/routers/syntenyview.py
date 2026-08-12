@@ -41,8 +41,7 @@ DEFAULT_UPSTREAM = 5
 DEFAULT_DOWNSTREAM = 5
 
 # [COLLINEAR-FIX] Max allowed gap (bp) between two consecutive target hits for
-# them to be considered part of the same local collinear block. Distant
-# paralogs on the same chromosome group are split off and dropped.
+# them to be considered part of the same local collinear block.
 MAX_SYNTENY_GAP = int(os.getenv("SYNTENY_MAX_GAP", "5000000"))  # 5 Mb
 
 _QUERY_SEMAPHORE = threading.BoundedSemaphore(8)
@@ -148,7 +147,7 @@ def _load_cluster_map() -> Dict[str, dict]:
         with open(CLUSTER_FILE, encoding="utf-8", errors="ignore") as fh:
             fh.readline()  # skip header
             for raw in fh:
-                line = raw.rstrip("\n")
+                line = raw.rstrip("\n").rstrip("\r")
                 if not line.strip():
                     continue
                 parts = line.split("\t")
@@ -227,16 +226,10 @@ def _filter_collinear_block(
     max_gap: int = MAX_SYNTENY_GAP,
 ) -> Tuple[List[dict], int]:
     """Keep only target homologs forming ONE contiguous collinear block that is
-    anchored on the query gene's ortholog.
-
-    This removes distant same-chromosome-group paralogs (e.g. Abo1A472200 at
-    544 Mb) so that only genes inside the query's up/downstream syntenic region
-    (~399 Mb block) are drawn and linked.
-    """
+    anchored on the query gene's ortholog."""
     if not genes:
         return [], 0
 
-    # Group by chromosome; a genuine local block lives on a single chromosome.
     by_chrom: Dict[str, List[dict]] = {}
     for g in genes:
         by_chrom.setdefault(g.get("chrom") or "", []).append(g)
@@ -244,8 +237,6 @@ def _filter_collinear_block(
     scored = []
     for _chrom, items in by_chrom.items():
         items = sorted(items, key=_gene_mid)
-        # Split into contiguous clusters where the gap to the previous hit
-        # does not exceed max_gap.
         clusters: List[List[dict]] = []
         cur = [items[0]]
         for prev, g in zip(items, items[1:]):
@@ -261,9 +252,6 @@ def _filter_collinear_block(
                 query_order is not None
                 and any(g["order"] == query_order for g in cl)
             )
-            # Prefer: (1) the cluster containing the query anchor, then
-            # (2) the one covering the most distinct neighbor orders, then
-            # (3) the largest cluster.
             score = (
                 1 if has_anchor else 0,
                 len({g["order"] for g in cl}),
@@ -601,7 +589,7 @@ def api_synteny(
         )
         query_label = ref["label"]
 
-        # Reference track.
+        # Reference (query) track — this is the ROOT track of the plot.
         query_track_genes = []
         query_order = None
         for order, rec in enumerate(neighbors):
@@ -633,6 +621,8 @@ def api_synteny(
                 "chrom": ref["chromosome"],
                 "genes": query_track_genes,
                 "is_query_track": True,
+                # [ROOT-FIX] Explicitly mark this as the root track.
+                "root": True,
                 "region_start": min(r["start_pos"] for r in neighbors),
                 "region_end": max(r["end_pos"] for r in neighbors),
             }
@@ -650,6 +640,7 @@ def api_synteny(
                 "chrom": "",
                 "genes": [],
                 "is_query_track": False,
+                "root": False,
                 "no_homologs": True,
             })
 
@@ -678,6 +669,7 @@ def api_synteny(
                     "chrom": rec["chromosome"] or "",
                     "genes": [],
                     "is_query_track": False,
+                    "root": False,
                 })
                 tr["no_homologs"] = False
                 if not tr.get("chrom"):
@@ -732,21 +724,25 @@ def api_synteny(
                 tr["region_end"] = None
                 tr["region_label"] = ""
 
-        # [COLLINEAR-FIX] A target track fully emptied by filtering is flagged
-        # so the frontend renders the empty state consistently.
+        # [COLLINEAR-FIX] Flag fully emptied target tracks.
         for key, tr in tracks.items():
             if key == query_label:
                 continue
             if not tr.get("genes"):
                 tr["no_homologs"] = True
 
+        # [ROOT-FIX] Root the plot on the query genome: query track is ALWAYS
+        # index 0 (top row); remaining targets follow in a stable order.
         ordered = [tracks[query_label]] + sorted(
             [tr for key, tr in tracks.items() if key != query_label],
-            key=lambda t: t["label"].lower(),
+            key=lambda t: _genome_sort_key(t["label"]),
         )
-        link_groups = []
         for ti, tr in enumerate(ordered):
             tr["track_index"] = ti
+            tr["root"] = (ti == 0)
+            tr["is_query_track"] = (ti == 0)
+
+        link_groups = []
         grouped = {}
         for ti, tr in enumerate(ordered):
             for g in tr["genes"]:
@@ -784,6 +780,8 @@ def api_synteny(
             "query": ref["gene_id"],
             "submitted_query": gene_id,
             "request_genome": query_label,
+            # [ROOT-FIX] Explicit root track label for the frontend to anchor on.
+            "root_track": query_label,
             "requested_targets": sorted(target_labels, key=_genome_sort_key),
             "target_summary": target_summary,
             "upstream": upstream,
