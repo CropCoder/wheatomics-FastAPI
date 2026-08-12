@@ -54,9 +54,10 @@ max_requests = 100
 max_requests_jitter = 20
 
 # --- Timeouts ---
-# Worker silent timeout: must exceed the longest subprocess.run call inside
-# any handler. Currently /api/blast/search uses timeout=600s for blastn +
-# 120s for blast_formatter + buffer. 1200s gives margin.
+# Worker silent timeout: /api/blast/search (wait=true) enqueues its job in
+# the separate blast daemon and polls for up to 1100s
+# (_SYNC_POLL_TIMEOUT_SECONDS in app/api/routers/blast.py). 1200s gives
+# margin; keep the two in sync if either changes.
 timeout = 1200
 graceful_timeout = 60
 keepalive = 5

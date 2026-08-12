@@ -72,7 +72,7 @@ app/
 
 **Webhook**: `POST /api/webhook/gitee` validates `X-Gitee-Token` header, then runs `auto_pull.sh` as a background task. It does **not** restart uvicorn — after a `git pull`, manual restart is required for Python changes to take effect.
 
-**BLAST jobs**: `POST /api/blast/search` with `wait=true` (default) runs synchronously in the worker; `wait=false` writes `params.json` + `status.json` under `BLAST_RESULT_DIR/<uuid4>/` and returns a job_id. The standalone daemon `wheatomics-blastd.service` (app/services/blast_daemon.py, systemd unit in scripts/) claims pending jobs and runs them — jobs survive worker recycling and API deploys. Status polling via `GET /api/blast/status/{job_id}`; stale detection in blast_runner.read_status(). Never move blast execution back into BackgroundTasks.
+**BLAST jobs**: All blast execution lives in the standalone daemon `wheatomics-blastd.service` (app/services/blast_daemon.py, systemd unit in scripts/). `POST /api/blast/search` writes `params.json` + `status.json` under `BLAST_RESULT_DIR/<uuid4>/`; the daemon claims pending jobs and runs them (thread pool = BLAST_MAX_CONCURRENT, a true global cap). `wait=true` (default) enqueues and polls to completion (1100s cap < gunicorn timeout=1200), preserving the old sync contract; `wait=false` returns job_id immediately for `GET /api/blast/status/{job_id}` polling. Jobs survive worker recycling and API deploys; stale detection in blast_runner.read_status(). Never move blast execution back into the API worker / BackgroundTasks.
 
 **No tests or dependency file**: The repo has no `tests/` directory, no `requirements.txt`, and no `pyproject.toml`. Dependencies must be inferred from imports.
 

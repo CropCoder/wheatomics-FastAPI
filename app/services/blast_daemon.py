@@ -1,18 +1,20 @@
-"""WheatOmics BLAST job daemon — runs wait=false blast jobs outside gunicorn.
+"""WheatOmics BLAST job daemon — runs every blast job outside gunicorn.
 
 Why this exists
 ---------------
-Blast jobs submitted with wait=false used to run as BackgroundTasks inside a
-gunicorn worker. Worker recycling (max_requests=100) or `systemctl restart
-wheatomics-api` killed them mid-run and left status.json stuck on "running"
-(pollers hung until the stale check fired). This daemon is a standalone
-process (systemd unit: scripts/wheatomics-blastd.service) that survives API
-worker recycling and API deploys entirely:
+Blast jobs used to run inside gunicorn workers (BackgroundTasks for
+wait=false; direct subprocess for wait=true). Worker recycling
+(max_requests=100) or `systemctl restart wheatomics-api` killed them mid-run
+and left status.json stuck on "running" (pollers hung until the stale check
+fired). This daemon is a standalone process (systemd unit:
+scripts/wheatomics-blastd.service) that survives API worker recycling and
+API deploys entirely, and it is now the single executor for ALL jobs —
+the API router just enqueues and polls:
 
   - scans settings.BLAST_RESULT_DIR for "pending" jobs every second,
   - claims them (pending -> running) and runs them on a small thread pool of
     BLAST_MAX_CONCURRENT workers — a true *global* cap, since there is exactly
-    one daemon (the sync path in the API has its own per-worker cap),
+    one daemon,
   - writes done/error, and on startup reaps jobs left over from a previous
     daemon incarnation: "running" without a blast pid was claimed but never
     started and is requeued as pending; "running" whose blast pid is dead is

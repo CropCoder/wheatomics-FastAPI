@@ -3,14 +3,13 @@ the standalone job daemon (app/services/blast_daemon.py).
 
 Why this module exists
 ----------------------
-BLAST jobs run in two places:
-
-  * ``wait=true`` requests execute in a gunicorn worker (synchronous);
-  * ``wait=false`` jobs are executed by the blastd systemd daemon — a separate
-    process that survives worker recycling (max_requests=100) and API deploys.
-
-Both paths must behave identically, so the execution core, binary/DB path
-resolution and the job-status file format live here in one place.
+All BLAST jobs execute in one place: the blastd systemd daemon
+(app/services/blast_daemon.py, unit in scripts/wheatomics-blastd.service) — a
+separate process that survives worker recycling (max_requests=100) and API
+deploys. The API router (app/api/routers/blast.py) only enqueues jobs and
+polls their status files: wait=true waits for completion, wait=false returns
+the job_id immediately. Daemon and router share the job-state format and the
+execution logic defined here.
 
 Job directory layout (per job, under ``settings.BLAST_RESULT_DIR/<uuid4>/``)::
 
@@ -239,9 +238,10 @@ def execute_blast_job(job_id: str, params: Optional[dict] = None) -> dict:
 
     Writes the status transitions itself: running (+ blast_pid) -> done/error.
     ``params`` supplies the submission parameters; when None (daemon path)
-    they are loaded from the job dir's params.json.
-    Raises BlastExecutionError on failure — the sync endpoint maps it to an
-    HTTPException; the daemon relies on the "error" status already written.
+    they are loaded from the job dir's params.json. The blast daemon is the
+    only caller in production — the API just enqueues jobs and polls.
+    Raises BlastExecutionError on failure; the "error" status (with the
+    matching HTTP status_code) is written first, so pollers always see it.
     """
     if params is None:
         params = read_params(job_id)
@@ -260,8 +260,12 @@ def execute_blast_job(job_id: str, params: Optional[dict] = None) -> dict:
     created_at = (read_status_raw(job_id) or {}).get("created_at") or _time.time()
     started_at = _time.time()
 
-    def _write_error(message: str) -> None:
+    def _write_error(message: str, status_code: int = 500) -> None:
+        # status_code is recorded so the wait=true endpoint can reproduce the
+        # same HTTP status a caller would have gotten from a direct run
+        # (504 for blast timeout, 500 for execution errors).
         write_status(job_id, status="error", message=message,
+                     status_code=status_code,
                      created_at=created_at, started_at=started_at,
                      finished_at=_time.time())
 
@@ -328,7 +332,7 @@ def execute_blast_job(job_id: str, params: Optional[dict] = None) -> dict:
                      created_at=created_at, started_at=started_at,
                      finished_at=_time.time(), message="")
     except BlastExecutionError as exc:
-        _write_error(exc.message)
+        _write_error(exc.message, exc.status_code)
         raise
     except KeyError as exc:  # corrupt params.json (defensive)
         _write_error(f"Job {job_id}: params.json missing field: {exc.args[0]}")
