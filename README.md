@@ -127,7 +127,7 @@ curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \
 | `max_target_seqs` | int | `1000` | 最多返回的匹配数 |
 | `word_size` | int | — | 可选，word 大小 |
 | `matrix` | string | — | 可选，打分矩阵 |
-| `outfmt` | string | `tabular` | 兼容旧调用方保留；当前实现固定同时生成 `tabular`（outfmt 6）与 `traditional`（outfmt 0）两种结果 |
+| `outfmt` | string | `tabular` | 结果格式：`tabular`（默认，outfmt 6 表格，含 `ppos`/`btop` 变异信息列） / `traditional`（outfmt 0 逐位比对，标记行直接显示氨基酸差异） / `both`（两种都生成） |
 | `wait` | bool | `true` | `true`＝同步等待 job 完成（默认，与历史调用契约一致）；`false`＝立即返回 `job_id`，轮询状态接口 |
 
 **同步模式**（`wait=true`，默认）：请求等待 job 完成（轮询上限 1100 秒），返回结果文件下载链接：
@@ -139,13 +139,14 @@ curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \
   "database": ["Fielder_protein"],
   "parameters": {"evalue": 10.0, "max_target_seqs": 20},
   "query_header": ">seq",
-  "outfmt": ["tabular", "traditional"],
+  "outfmt": ["tabular"],
   "download_url": {
-    "tabular": "https://wheatomics.sdau.edu.cn/blast_results/<job_id>/result.tsv",
-    "traditional": "https://wheatomics.sdau.edu.cn/blast_results/<job_id>/result.txt"
+    "tabular": "https://wheatomics.sdau.edu.cn/blast_results/<job_id>/result.tsv"
   }
 }
 ```
+
+`download_url` 与 `outfmt` 只包含提交时选择的格式：`traditional` 时是 `.txt` 逐位比对文件，`both` 时两个键都有。tabular 的 `.tsv` 除标准列外还带 `ppos`（正匹配百分比）与 `btop`（逐位变异编码）两列，不用 traditional 也能看出具体氨基酸差异。
 
 失败时返回对应状态码：400（参数错误）、404（数据库不存在）、500（BLAST 执行失败）、504（执行或轮询超时），错误消息在响应的 `message`/`detail` 字段。
 
@@ -180,13 +181,12 @@ curl "https://wheatomics.sdau.edu.cn/api/blast/status/<job_id>"
   "status": "done",
   "message": "",
   "download_urls": {
-    "tabular": "https://wheatomics.sdau.edu.cn/blast_results/<job_id>/result.tsv",
-    "traditional": "https://wheatomics.sdau.edu.cn/blast_results/<job_id>/result.txt"
+    "tabular": "https://wheatomics.sdau.edu.cn/blast_results/<job_id>/result.tsv"
   }
 }
 ```
 
-`status` 取值：`pending`（排队）→ `running`（执行中）→ `done` / `error` / `stale`（终态）。`done` 时 `download_urls` 填充；`error`/`stale` 时看 `message`——`stale` 表示 job 在 daemon 重启时被中断，需重新提交。`job_id` 必须为 uuid4 格式，非法或不存在返回 404。
+`status` 取值：`pending`（排队）→ `running`（执行中）→ `done` / `error` / `stale`（终态）。`done` 时 `download_urls` 填充（只含提交时 `outfmt` 指定的格式）；`error`/`stale` 时看 `message`——`stale` 表示 job 在 daemon 重启时被中断，需重新提交。`job_id` 必须为 uuid4 格式，非法或不存在返回 404。
 
 ### 列出可用数据库
 
