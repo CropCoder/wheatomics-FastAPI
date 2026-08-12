@@ -29,8 +29,8 @@ from fastapi import APIRouter, Form, HTTPException, Query
 from app.core.config import settings
 from app.services.blast_runner import (
     BLASTDBCMD, BLAST_FORMATTER, BLASTN, BLASTP, BLASTX,
-    BLAST_PROG_MAP, DB_DIR, BlastExecutionError, TBLASTN, TBLASTX,
-    execute_blast_job, read_status, write_params, write_status,
+    BLAST_PROG_MAP, DB_DIR, TBLASTN, TBLASTX,
+    read_status, write_params, write_status,
 )
 
 router = APIRouter(prefix="/blast", tags=["BLAST"])
@@ -40,14 +40,16 @@ router = APIRouter(prefix="/blast", tags=["BLAST"])
 
 MAX_QUERY_LENGTH = 100_000  # 查询序列最大字符数
 
-#: Per-worker cap on synchronous (wait=true) BLAST subprocesses. The daemon
-#: enforces the same cap globally for wait=false jobs (one daemon process);
-#: worst case across 8 workers + daemon is 18 blasts, each up to ~2 GB RSS.
-_BLAST_SLOTS = asyncio.Semaphore(settings.BLAST_MAX_CONCURRENT)
-
 #: uuid4 job id — accepted shape for /status/{job_id} (also guards the path
 #: join against traversal).
 _JOB_ID_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
+#: wait=true poll loop: how often to check the job status file.
+_SYNC_POLL_INTERVAL_SECONDS = 0.5
+#: Total time a wait=true request may wait for its job. Must stay below
+#: gunicorn's worker timeout=1200 (gunicorn.conf.py); jobs queued behind
+#: others legitimately take a while, so this is generous.
+_SYNC_POLL_TIMEOUT_SECONDS = 1100
 
 # === BLAST 数据库分类体系 ===
 # 与 wheatomics.sdau.edu.cn 前端页面一致，按基因组倍性/物种分类
@@ -231,6 +233,41 @@ def _validate_and_normalize_query(program: str, query: str) -> str:
     return query
 
 
+async def _wait_for_job(job_id: str, program: str, dbs: list[str],
+                        query: str, evalue: float, max_targets: int) -> dict:
+    """Poll a job to a terminal state and build the synchronous response.
+
+    The blast daemon executes the job; this just waits (async sleep, no
+    thread held). On error/stale the message recorded by the executor is
+    re-raised with its recorded status code (timeout=504, failure=500).
+    """
+    deadline = _time.time() + _SYNC_POLL_TIMEOUT_SECONDS
+    while True:
+        data = read_status(job_id)  # stale rewrite detects a dead daemon
+        if data is not None:
+            status = data.get("status")
+            if status == "done":
+                return {
+                    "success": True,
+                    "program": program,
+                    "database": dbs,
+                    "parameters": {"evalue": evalue, "max_target_seqs": max_targets},
+                    "query_header": query.strip().split("\n")[0],
+                    "outfmt": ["tabular", "traditional"],
+                    "download_url": data.get("download_urls") or {},
+                }
+            if status in ("error", "stale"):
+                raise HTTPException(data.get("status_code") or 500,
+                                    data.get("message") or "BLAST 执行失败")
+        if _time.time() >= deadline:
+            raise HTTPException(
+                504,
+                f"BLAST 超时（>{_SYNC_POLL_TIMEOUT_SECONDS // 60}分钟未完成）—— "
+                f"job 可能仍在排队，可稍后查询 GET /api/blast/status/{job_id}",
+            )
+        await asyncio.sleep(_SYNC_POLL_INTERVAL_SECONDS)
+
+
 @router.post("/search")
 async def blast_search(
     program: str = Form(default="blastp",
@@ -248,14 +285,14 @@ async def blast_search(
     outfmt: str = Form(default="tabular",
         description="结果格式: tabular (outfmt 6) / traditional (outfmt 0, 带比对) / both (同时生成两种)"),
     wait: bool = Form(default=True,
-        description="true=同步等待结果（默认，兼容现有调用方）；false=立即返回 job_id，轮询 /api/blast/status/{job_id}"),
+        description="true=等待结果完成（默认，兼容现有调用方）；false=立即返回 job_id，轮询 /api/blast/status/{job_id}"),
 ):
     """执行 BLAST 搜索，结果保存为文件返回下载链接。
 
-    wait=true（默认）: 同步跑完，返回 download_url（现有 agent/脚本零改动）。
-    wait=false: 立即返回 job_id；由独立的 blast daemon（wheatomics-blastd.service）
-    异步执行，GET /api/blast/status/{job_id} 轮询。daemon 不受 API worker
-    回收/重启影响，job 不会中途被杀。
+    所有 job 都由独立的 blast daemon（wheatomics-blastd.service）执行，
+    不受 API worker 回收/重启影响。wait=true（默认）: 提交后轮询到完成，
+    返回 download_url（现有 agent/脚本零改动）；wait=false: 立即返回
+    job_id，GET /api/blast/status/{job_id} 轮询。
 
     调用示例:
       curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \\n        -d "program=blastp" \\n        -d "database=Fielder_protein" \\n        --data-urlencode "query=>test\\nMSSSTG..."
@@ -285,32 +322,17 @@ async def blast_search(
         "word_size": word_size, "matrix": matrix,
     }
 
-    if wait:
-        # Synchronous path (default) — same contract as before; the execution
-        # core is shared with the daemon via blast_runner.execute_blast_job.
-        try:
-            async with _BLAST_SLOTS:
-                download_urls = await asyncio.to_thread(
-                    execute_blast_job, job_id, params,
-                )
-        except BlastExecutionError as exc:
-            raise HTTPException(exc.status_code, exc.message)
-        return {
-            "success": True,
-            "program": program,
-            "database": dbs,
-            "parameters": {"evalue": evalue, "max_target_seqs": max_targets},
-            "query_header": query.strip().split("\n")[0],
-            "outfmt": ["tabular", "traditional"],
-            "download_url": download_urls,
-        }
-
-    # Async path — enqueue for the blast daemon and return immediately. The
-    # daemon survives worker recycling / API deploys, unlike BackgroundTasks;
-    # the frontend polls /status/{job_id}.
+    # Single channel: enqueue for the blast daemon in both modes.
     write_params(job_id, **params)
     write_status(job_id, status="pending", created_at=_time.time(),
                  message="Queued for BLAST.")
+
+    if wait:
+        # Synchronous contract (default) — poll the daemon to completion,
+        # preserving the exact response shape callers already rely on.
+        return await _wait_for_job(job_id, program, dbs, query, evalue, max_targets)
+
+    # Async mode — return immediately; the frontend polls /status/{job_id}.
     return {
         "success": True,
         "job_id": job_id,
