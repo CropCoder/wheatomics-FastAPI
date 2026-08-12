@@ -14,19 +14,20 @@ import threading
 import time
 from typing import Dict, List, Optional, Tuple
 
-import pymysql
 from fastapi import APIRouter, Query
+
+from app.core.config import settings
+from app.db.mysql import mysql_connection
 
 router = APIRouter(prefix="/syntenyview", tags=["SynTeny Viewer"])
 
 # ---------------------------------------------------------------------------
-# MySQL configuration
+# Database configuration
 # ---------------------------------------------------------------------------
-DB_HOST = os.getenv("SYNTENY_DB_HOST", "127.0.0.1")
-DB_PORT = int(os.getenv("SYNTENY_DB_PORT", "3306"))
-DB_USER = os.getenv("SYNTENY_DB_USER", "root")
-DB_PASSWORD = os.getenv("SYNTENY_DB_PASSWORD", "rosa1212")
-DB_NAME = os.getenv("SYNTENY_DB_NAME", "synteny_mysql")
+# The synteny dataset lives in the shared MySQL instance (settings.DB_SYNTENY)
+# and is reached through the pooled mysql_connection helper with the app DB
+# user — not a dedicated root connection opened per request.
+DB_NAME = settings.DB_SYNTENY
 
 COL_BED_DIR = os.getenv("COL_BED_DIR", "/var/www/html/col_bed")
 TRITICEAE_FILE = os.path.join(COL_BED_DIR, "triticeae.txt")
@@ -41,20 +42,14 @@ _GENOME_CACHE_TIME = 0.0
 _GENOME_CACHE_TTL = 300.0
 
 
-def get_conn():
-    return pymysql.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_NAME,
-        charset="utf8mb4",
-        autocommit=True,
-        cursorclass=pymysql.cursors.DictCursor,
-        connect_timeout=10,
-        read_timeout=60,
-        write_timeout=60,
-    )
+def _conn_cursor():
+    """Yield a pooled connection for read-only synteny queries.
+
+    mysql_connection borrows from the per-worker pool (shared app DB user, not
+    root) and returns the connection on exit of the with-block. All synteny
+    queries are SELECTs, so no explicit transaction handling is needed.
+    """
+    return mysql_connection(settings.DB_SYNTENY)
 
 
 def _split_label(label: str) -> Tuple[str, str]:
@@ -331,8 +326,7 @@ def api_genomes():
     if _GENOME_CACHE is not None and now - _GENOME_CACHE_TIME < _GENOME_CACHE_TTL:
         return _GENOME_CACHE
 
-    conn = get_conn()
-    try:
+    with _conn_cursor() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT genome_name, bed_file FROM genome_info ORDER BY genome_name")
             labels = []
@@ -340,11 +334,9 @@ def api_genomes():
                 name = row["genome_name"]
                 # The importer stores labels such as Triticum_turgidum_Svevo_A.
                 labels.append(name)
-        _GENOME_CACHE = sorted(set(labels), key=_genome_sort_key)
-        _GENOME_CACHE_TIME = now
-        return _GENOME_CACHE
-    finally:
-        conn.close()
+    _GENOME_CACHE = sorted(set(labels), key=_genome_sort_key)
+    _GENOME_CACHE_TIME = now
+    return _GENOME_CACHE
 
 
 @router.get("/gene-search")
@@ -354,8 +346,7 @@ def api_gene_search(
 ):
     """Autocomplete/search gene IDs directly from MySQL."""
     term = q.strip()
-    conn = get_conn()
-    try:
+    with _conn_cursor() as conn:
         with conn.cursor() as cur:
             # Prefix search uses idx_gene_id efficiently.  Contains search is
             # allowed as a fallback for short/irregular identifiers.
@@ -378,14 +369,11 @@ def api_gene_search(
                 }
                 for r in cur.fetchall()
             ]
-    finally:
-        conn.close()
 
 
 @router.get("/status")
 def api_status():
-    conn = get_conn()
-    try:
+    with _conn_cursor() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) AS n FROM genome_info")
             genomes = int(cur.fetchone()["n"])
@@ -395,18 +383,16 @@ def api_status():
             mappings = int(cur.fetchone()["n"])
             cur.execute("SELECT COUNT(DISTINCT orthogroup) AS n FROM gene_orthogroup")
             ogs = int(cur.fetchone()["n"])
-        return {
-            "state": "ready",
-            "database": DB_NAME,
-            "genomes": genomes,
-            "gene_position_rows": genes,
-            "gene_orthogroup_rows": mappings,
-            "orthogroups": ogs,
-            "data_source": "MySQL",
-            "api_version": "V4",
-        }
-    finally:
-        conn.close()
+    return {
+        "state": "ready",
+        "database": DB_NAME,
+        "genomes": genomes,
+        "gene_position_rows": genes,
+        "gene_orthogroup_rows": mappings,
+        "orthogroups": ogs,
+        "data_source": "MySQL",
+        "api_version": "V4",
+    }
 
 
 @router.get("/triticeae")
@@ -445,8 +431,7 @@ def api_synteny(
 
     target_labels = {x.strip() for x in re.split(r"[,;|]", targets or "") if x.strip()}
 
-    conn = get_conn()
-    try:
+    with _conn_cursor() as conn:
         candidates = _fetch_gene_candidates(conn, gene_id)
         if not candidates:
             return {"error": "Gene was not found in MySQL BED data: " + gene_id}
@@ -651,5 +636,3 @@ def api_synteny(
             "link_groups": link_groups,
             "data_source": "MySQL",
         }
-    finally:
-        conn.close()

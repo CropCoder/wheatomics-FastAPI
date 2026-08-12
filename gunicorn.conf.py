@@ -47,8 +47,11 @@ workers = 8
 
 # Recycle each worker after ~100 requests (with ±20 jitter) so BLAST
 # subprocess memory doesn't accumulate indefinitely within a single worker.
-max_requests = 5
-max_requests_jitter = 2
+# Keep this high: an aggressive value (e.g. 5) makes all 8 workers exit and
+# cold-start within the same window, dropping in-flight requests. SyntenyView
+# memory is handled separately by its MySQL-backed dataset, not by recycling.
+max_requests = 100
+max_requests_jitter = 20
 
 # --- Timeouts ---
 # Worker silent timeout: must exceed the longest subprocess.run call inside
