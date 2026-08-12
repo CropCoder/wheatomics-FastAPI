@@ -24,13 +24,18 @@ router = APIRouter(prefix="/syntenyview", tags=["SynTeny Viewer"])
 # ---------------------------------------------------------------------------
 # Database configuration
 # ---------------------------------------------------------------------------
-# The synteny dataset lives in the shared MySQL instance (settings.DB_SYNTENY)
-# and is reached through the pooled mysql_connection helper with the app DB
-# user — not a dedicated root connection opened per request.
 DB_NAME = settings.DB_SYNTENY
 
 COL_BED_DIR = os.getenv("COL_BED_DIR", "/var/www/html/col_bed")
 TRITICEAE_FILE = os.path.join(COL_BED_DIR, "triticeae.txt")
+
+# [CLUSTER-FIX] Path to the OrthoFinder SpeciesIDs cluster mapping file.
+# It maps each genome (SpeciesID) to its per-chromosome-group prefix tokens
+# (type1 genomes) or chromosome-name tokens (type2 genomes).
+CLUSTER_FILE = os.getenv(
+    "SPECIES_CLUSTER_FILE",
+    "/var/www/html/orthefind/Results_Jul24/WorkingDirectory/SpeciesIDs_cluster.txt",
+)
 
 MAX_WINDOW = 50
 DEFAULT_UPSTREAM = 5
@@ -41,14 +46,14 @@ _GENOME_CACHE = None
 _GENOME_CACHE_TIME = 0.0
 _GENOME_CACHE_TTL = 300.0
 
+# [CLUSTER-FIX] Cache for the parsed cluster map.
+_CLUSTER_CACHE = None
+_CLUSTER_CACHE_TIME = 0.0
+_CLUSTER_CACHE_TTL = 300.0
+
 
 def _conn_cursor():
-    """Yield a pooled connection for read-only synteny queries.
-
-    mysql_connection borrows from the per-worker pool (shared app DB user, not
-    root) and returns the connection on exit of the with-block. All synteny
-    queries are SELECTs, so no explicit transaction handling is needed.
-    """
+    """Yield a pooled connection for read-only synteny queries."""
     return mysql_connection(settings.DB_SYNTENY)
 
 
@@ -118,6 +123,110 @@ def _gene_cluster(gid: str) -> Optional[int]:
 def _chrom_cluster(chrom: str) -> Optional[int]:
     m = re.search(r"(?i)(?:chr)?([1-7])\s*[abd]\b", str(chrom or ""))
     return int(m.group(1)) if m else None
+
+
+# ---------------------------------------------------------------------------
+# [CLUSTER-FIX] Chromosome-group (cluster) resolution from SpeciesIDs_cluster.txt
+# ---------------------------------------------------------------------------
+def _load_cluster_map() -> Dict[str, dict]:
+    """Parse SpeciesIDs_cluster.txt into a genome -> resolver dict.
+
+    Returned structure::
+
+        {
+            "Abo_A": {"mode": "prefix", "tokens": {"Abo1A": 1, ..., "Abo7A": 7}},
+            "Hordeum_erectifolium_H": {"mode": "chrom",
+                                       "tokens": {"chr1": 1, ..., "chr7": 7}},
+            ...
+        }
+
+    * mode == "prefix"  -> gene-ID prefix decides the cluster (type1=yes genomes)
+    * mode == "chrom"   -> BED chromosome decides the cluster (type2=yes genomes)
+
+    Results are cached for _CLUSTER_CACHE_TTL seconds.
+    """
+    global _CLUSTER_CACHE, _CLUSTER_CACHE_TIME
+    now = time.monotonic()
+    if _CLUSTER_CACHE is not None and now - _CLUSTER_CACHE_TIME < _CLUSTER_CACHE_TTL:
+        return _CLUSTER_CACHE
+
+    out: Dict[str, dict] = {}
+    if os.path.exists(CLUSTER_FILE):
+        with open(CLUSTER_FILE, encoding="utf-8", errors="ignore") as fh:
+            fh.readline()  # skip header
+            for raw in fh:
+                line = raw.rstrip("\n")
+                if not line.strip():
+                    continue
+                parts = line.split("\t")
+                if len(parts) < 10:
+                    # Fall back to whitespace splitting for irregular rows.
+                    parts = re.split(r"\s+", line.strip())
+                if len(parts) < 10:
+                    continue
+
+                sp = re.sub(r"^\d+:\s*", "", parts[0]).strip()
+                sp = re.sub(r"\.pep$", "", sp)
+
+                clusters = parts[1:8]
+                type1 = parts[8].strip().lower()
+                type2 = parts[9].strip().lower()
+
+                # type1 genomes: gene-ID prefix carries the group.
+                # type2 genomes: only the BED chromosome carries the group.
+                mode = "chrom" if (type2 == "yes" and type1 != "yes") else "prefix"
+
+                tokens: Dict[str, int] = {}
+                for i, tok in enumerate(clusters, start=1):
+                    tok = (tok or "").strip()
+                    if tok:
+                        tokens[tok] = i
+
+                if sp and tokens:
+                    out[sp] = {"mode": mode, "tokens": tokens}
+
+    _CLUSTER_CACHE = out
+    _CLUSTER_CACHE_TIME = now
+    return out
+
+
+def _resolve_cluster(
+    genome_label: str,
+    gene_id: str,
+    chromosome: str,
+    cluster_map: Dict[str, dict],
+) -> Optional[int]:
+    """Resolve the chromosome group (1-7) for a gene record.
+
+    Uses SpeciesIDs_cluster.txt when the genome is listed; otherwise falls back
+    to the gene-ID / chromosome regex heuristics so behavior degrades safely
+    when the file is missing or a genome is not present.
+    """
+    info = cluster_map.get(genome_label)
+    if not info:
+        return _gene_cluster(gene_id) or _chrom_cluster(chromosome)
+
+    tokens = info["tokens"]
+
+    if info["mode"] == "prefix":
+        g = _strip_version(gene_id)
+        best, best_len = None, -1
+        for tok, cl in tokens.items():
+            if g.startswith(tok) and len(tok) > best_len:
+                best, best_len = cl, len(tok)
+        if best is not None:
+            return best
+        return _gene_cluster(gene_id) or _chrom_cluster(chromosome)
+
+    # mode == "chrom"
+    c = str(chromosome or "")
+    best, best_len = None, -1
+    for tok, cl in tokens.items():
+        if (c == tok or c.startswith(tok)) and len(tok) > best_len:
+            best, best_len = cl, len(tok)
+    if best is not None:
+        return best
+    return _chrom_cluster(chromosome) or _gene_cluster(gene_id)
 
 
 def _query_limit(fn):
@@ -431,6 +540,9 @@ def api_synteny(
 
     target_labels = {x.strip() for x in re.split(r"[,;|]", targets or "") if x.strip()}
 
+    # [CLUSTER-FIX] Load the genome -> cluster resolver once per request.
+    cluster_map = _load_cluster_map()
+
     with _conn_cursor() as conn:
         candidates = _fetch_gene_candidates(conn, gene_id)
         if not candidates:
@@ -445,7 +557,12 @@ def api_synteny(
         og_map_multi = _fetch_orthogroups(conn, neighbor_ids)
         og_results = {gid: (ogs[0] if ogs else None) for gid, ogs in og_map_multi.items()}
 
-        query_cluster = _gene_cluster(ref["gene_id"]) or _chrom_cluster(ref["chromosome"])
+        # [CLUSTER-FIX] Resolve the query's chromosome group via the cluster
+        # map (falls back to regex heuristics). Target homologs whose group
+        # differs from this are excluded from the plot/table.
+        query_cluster = _resolve_cluster(
+            ref["genome_name"], ref["gene_id"], ref["chromosome"], cluster_map
+        )
         query_label = ref["label"]
 
         # Reference track.
@@ -468,7 +585,7 @@ def api_synteny(
                 "neighbor": rec["gene_id"],
                 "is_query": is_query,
                 "has_orthogroup": bool(og),
-                "cluster": _gene_cluster(rec["gene_id"]) or _chrom_cluster(rec["chromosome"]),
+                "cluster": _resolve_cluster(rec["genome_name"], rec["gene_id"], rec["chromosome"], cluster_map),
                 "gene_subgenome": _gene_subgenome(rec["gene_id"]),
                 "chrom_subgenome": _chrom_subgenome(rec["chromosome"]),
             })
@@ -495,8 +612,6 @@ def api_synteny(
 
         # Always create a track for every requested target. A target with no
         # homolog in the current OG set remains visible and is marked empty.
-        # Use labels as keys for the initial placeholder, but overwrite
-        # chromosome / no_homologs once the first real hit comes in below.
         for target_label in sorted(target_labels, key=_genome_sort_key):
             if target_label == query_label:
                 continue
@@ -514,10 +629,22 @@ def api_synteny(
                 hom = rec["gene_id"]
                 # gene_position.genome_name is the canonical target label in
                 # this MySQL schema (e.g. AK58_A, Chinese_Spring2.1_A).
-                # Do not derive it from subgenome, because the BED importer
-                # stores the BED second column independently.
                 gk = rec["genome_name"]
                 if gk == query_label or gk not in target_labels:
+                    continue
+
+                # [CLUSTER-FIX] Drop homologs that do not belong to the query's
+                # chromosome group. This removes cross-group paralogs such as
+                # Abo3A248200.1 / Abo5A713700.1 that are not on chr1A.
+                rec_cluster = _resolve_cluster(
+                    rec["genome_name"], hom, rec["chromosome"], cluster_map
+                )
+                if (
+                    query_cluster is not None
+                    and rec_cluster is not None
+                    and rec_cluster != query_cluster
+                ):
+                    skipped_counts[gk] = skipped_counts.get(gk, 0) + 1
                     continue
 
                 tr = tracks.setdefault(gk, {
@@ -527,8 +654,6 @@ def api_synteny(
                     "is_query_track": False,
                 })
                 tr["no_homologs"] = False
-                # If we already filled in a chromosome for this track, keep the
-                # first one; otherwise update from the current record.
                 if not tr.get("chrom"):
                     tr["chrom"] = rec["chromosome"] or ""
                 for order in orders:
@@ -544,7 +669,7 @@ def api_synteny(
                         "neighbor": neighbor_ids[order],
                         "is_query": False,
                         "has_orthogroup": True,
-                        "cluster": _gene_cluster(hom) or _chrom_cluster(rec["chromosome"]),
+                        "cluster": rec_cluster,
                         "gene_subgenome": _gene_subgenome(hom),
                         "chrom_subgenome": _chrom_subgenome(rec["chromosome"]),
                     })
@@ -569,6 +694,15 @@ def api_synteny(
                 tr["region_start"] = None
                 tr["region_end"] = None
                 tr["region_label"] = ""
+
+        # [CLUSTER-FIX] A target track may have been emptied entirely by the
+        # cluster filter; mark those as no_homologs so the frontend renders the
+        # empty-state consistently.
+        for key, tr in tracks.items():
+            if key == query_label:
+                continue
+            if not tr.get("genes"):
+                tr["no_homologs"] = True
 
         ordered = [tracks[query_label]] + sorted(
             [tr for key, tr in tracks.items() if key != query_label],
@@ -607,6 +741,7 @@ def api_synteny(
                 "genes": len(genes),
                 "orthogroups": len({g.get("og") for g in genes if g.get("og")}),
                 "status": "ok" if genes else "no_homologs",
+                "skipped_other_cluster": skipped_counts.get(target_label, 0),
             })
 
         return {
