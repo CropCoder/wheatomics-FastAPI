@@ -63,6 +63,7 @@ class Settings(BaseSettings):
     BLAST_RESULT_DIR: Path = Path("/var/www/html/blast_results")
     BLAST_RESULT_BASE_URL: str = "/blast_results"
     BLAST_RESULT_EXPIRE_DAYS: int = 7
+    BLAST_RESULT_MAX_FILES: int = 3000
     BLAST_SITE_BASE_URL: str = "https://wheatomics.sdau.edu.cn"
     PRIMERSERVER2_CONFIG_PATH: Path = Path("/var/www/html/PrimerServer2/config.ini")
     PRIMERSERVER2_WORKDIR_BASE: Path = Path("/var/www/html/PrimerServer2/jobs")

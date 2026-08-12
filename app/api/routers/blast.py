@@ -235,14 +235,36 @@ def check_db_exists(db_name: str, program: str) -> bool:
 
 
 def _cleanup_old_results():
-    """清理过期的 BLAST 结果文件"""
-    expire_days = settings.BLAST_RESULT_EXPIRE_DAYS
+    """清理过期的 BLAST 结果文件。
+
+    两阶段: 先按年龄删（超过 EXPIRE_DAYS 的），若删除后文件数仍超过
+    MAX_FILES，再按最老的删到上限以内。防止高流量下 7 天内文件无限膨胀。
+    """
     result_dir = settings.BLAST_RESULT_DIR
     if not result_dir.is_dir():
         return
-    cutoff = datetime.now().timestamp() - expire_days * 86400
-    for f in result_dir.iterdir():
-        if f.is_file() and f.stat().st_mtime < cutoff:
+    cutoff = datetime.now().timestamp() - settings.BLAST_RESULT_EXPIRE_DAYS * 86400
+
+    files = [f for f in result_dir.iterdir() if f.is_file()]
+    expired = []
+    for f in files:
+        try:
+            if f.stat().st_mtime < cutoff:
+                expired.append(f)
+        except OSError:
+            continue
+    for f in expired:
+        try:
+            f.unlink()
+        except OSError:
+            pass
+
+    remaining = [f for f in files if f not in expired]
+    over = len(remaining) - settings.BLAST_RESULT_MAX_FILES
+    if over > 0:
+        # 按最老的排序，删掉超出的部分。
+        remaining.sort(key=lambda f: f.stat().st_mtime)
+        for f in remaining[:over]:
             try:
                 f.unlink()
             except OSError:
@@ -335,9 +357,13 @@ async def blast_search(
             # full 600s timeout — long queries would otherwise freeze the
             # entire single-worker uvicorn process and hang every other
             # request (health, databases, other blast calls) until timeout.
+            # blast writes the archive to -out, so stdout is discarded and
+            # only stderr is captured — a multi-GB result never lands in
+            # Python memory.
             r = await asyncio.to_thread(
                 subprocess.run, cmd, input=query,
-                capture_output=True, text=True, timeout=600,
+                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                text=True, timeout=600,
             )
         except subprocess.TimeoutExpired:
             raise HTTPException(504, "BLAST 超时（>10分钟）")
@@ -362,10 +388,13 @@ async def blast_search(
     else:
         # ---- 降级：BLAST 跑两次 ----
         for name, (oflag, ext) in fmt_defs.items():
+            fname = f"{job_id}_{name}{ext}"
+            filepath = result_dir / fname
             cmd = [
                 blast_path, "-task", program,
                 "-db", " ".join(os.path.join(DB_DIR, d) for d in dbs),
                 "-outfmt", oflag,
+                "-out", str(filepath),
                 "-evalue", str(evalue),
                 "-max_target_seqs", str(max_targets),
                 "-num_threads", "4",
@@ -376,9 +405,12 @@ async def blast_search(
                 cmd += ["-matrix", matrix]
 
             try:
+                # blast writes directly to -out; only stderr is captured so a
+                # multi-GB result never lands in Python memory.
                 r = await asyncio.to_thread(
                     subprocess.run, cmd, input=query,
-                    capture_output=True, text=True, timeout=600,
+                    stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                    text=True, timeout=600,
                 )
             except subprocess.TimeoutExpired:
                 raise HTTPException(504, "BLAST 超时（>10分钟）")
@@ -386,11 +418,9 @@ async def blast_search(
                 raise HTTPException(500, f"BLAST 可执行文件未找到: {blast_path}")
 
             if r.returncode != 0:
+                filepath.unlink(missing_ok=True)
                 raise HTTPException(500, f"BLAST 执行错误: {r.stderr.strip()}")
 
-            fname = f"{job_id}_{name}{ext}"
-            filepath = result_dir / fname
-            filepath.write_text(r.stdout, encoding="utf-8")
             download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{fname}"
 
     _cleanup_old_results()
