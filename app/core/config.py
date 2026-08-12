@@ -66,9 +66,12 @@ class Settings(BaseSettings):
     BLAST_RESULT_MAX_FILES: int = 3000
     # Global cap on concurrent BLAST subprocesses. Every job (wait=true and
     # wait=false) runs in the single blast daemon (wheatomics-blastd.service),
-    # whose thread pool uses this value — at most 2 blasts run at once, each
-    # blastn holding up to ~2GB RSS.
-    BLAST_MAX_CONCURRENT: int = 2
+    # whose thread pool uses this value. 20 → worst case 20 x ~2GB RSS = 40GB
+    # + 80 blast threads on 16 cores; the systemd unit's MemoryMax=32G is the
+    # backstop — under a full storm the daemon cgroup is OOM-killed (systemd
+    # restarts it, queued jobs survive, in-flight ones go stale) instead of
+    # taking the whole box down. Can be tuned live via .env.
+    BLAST_MAX_CONCURRENT: int = 20
     BLAST_SITE_BASE_URL: str = "https://wheatomics.sdau.edu.cn"
     PRIMERSERVER2_CONFIG_PATH: Path = Path("/var/www/html/PrimerServer2/config.ini")
     PRIMERSERVER2_WORKDIR_BASE: Path = Path("/var/www/html/PrimerServer2/jobs")
