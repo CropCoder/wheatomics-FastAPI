@@ -1,0 +1,23 @@
+[Unit]
+Description=WheatOmics BLAST job daemon (runs wait=false async blast jobs)
+After=network.target
+
+[Service]
+# MUST run as the same user as the wheatomics-api gunicorn workers so both can
+# read/write /var/www/html/blast_results/. Check the API service user with:
+#   systemctl cat wheatomics-api | grep ^User=
+User=fei
+WorkingDirectory=/var/www/FastAPI_backend_Port8000
+ExecStart=/home/fei/mambaforge/envs/zjw/bin/python -m app.services.blast_daemon
+Restart=always
+RestartSec=5
+# Longest job: 600s blast + 2x120s formatter + margin. On SIGTERM the daemon
+# stops claiming new jobs and waits for in-flight ones; do not SIGKILL them
+# before they can finish.
+TimeoutStopSec=900
+# Logs go to the journal:  journalctl -u wheatomics-blastd -f
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

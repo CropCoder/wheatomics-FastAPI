@@ -20,6 +20,11 @@ pkill -f 'uvicorn main:app'
 sleep 1
 nohup /home/fei/mambaforge/envs/zjw/bin/uvicorn main:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
 
+# BLAST job daemon (executes wait=false async jobs; survives API restarts)
+sudo systemctl status wheatomics-blastd
+sudo journalctl -u wheatomics-blastd -f
+sudo systemctl restart wheatomics-blastd   # after changing app/services/blast_*.py
+
 # Configure
 cp .env.example .env   # edit DB credentials; see app/core/config.py for all vars
 ```
@@ -43,7 +48,7 @@ app/
 ├── mcp/sequence_tools.py        # MCP Server("wheatomics") — 4 sequence tools via SSE (/api/mcp/sse, /api/mcp/messages)
 ├── primerserver2/               # Standalone FastAPI sub-app for PCR primer design (mounted at /api/PrimerServer2)
 ├── schemas/                     # Pydantic response models (gene, expression, sequence, comparative, etc.)
-├── services/                    # command_runner (safe subprocess), legacy_parsers, expression_catalog, genome_examples
+├── services/                    # command_runner (safe subprocess), blast_runner + blast_daemon (async blast jobs), legacy_parsers, expression_catalog, genome_examples
 └── static/                      # 11 SPA frontends mounted at root paths (genes, expression, orthofinder, etc.)
 ```
 
@@ -66,6 +71,8 @@ app/
 **MCP server**: Wraps 4 sequence-tool route functions as MCP tools. Errors are serialized as JSON text (not raised) so the LLM can adapt. Wired via SSE transport with raw `Route` objects in `main.py`.
 
 **Webhook**: `POST /api/webhook/gitee` validates `X-Gitee-Token` header, then runs `auto_pull.sh` as a background task. It does **not** restart uvicorn — after a `git pull`, manual restart is required for Python changes to take effect.
+
+**BLAST jobs**: `POST /api/blast/search` with `wait=true` (default) runs synchronously in the worker; `wait=false` writes `params.json` + `status.json` under `BLAST_RESULT_DIR/<uuid4>/` and returns a job_id. The standalone daemon `wheatomics-blastd.service` (app/services/blast_daemon.py, systemd unit in scripts/) claims pending jobs and runs them — jobs survive worker recycling and API deploys. Status polling via `GET /api/blast/status/{job_id}`; stale detection in blast_runner.read_status(). Never move blast execution back into BackgroundTasks.
 
 **No tests or dependency file**: The repo has no `tests/` directory, no `requirements.txt`, and no `pyproject.toml`. Dependencies must be inferred from imports.
 
