@@ -88,17 +88,20 @@ nohup gunicorn main:app \
 | Sequences | `/api` | 基因序列获取、预计算 BLAST 结果 |
 | Literature | `/api/literature` | 文献标签统计与检索 |
 | Tasks | `/api/tasks` | 共线性图生成、SNP 引物设计（异步任务模式） |
-| **BLAST** | `/api/blast` | BLAST 同源搜索（蛋白/核酸），全长序列提取，静态结果页面 |
+| **BLAST** | `/api/blast` | BLAST 同源搜索（蛋白/核酸），全长序列提取，异步 job 执行（daemon） |
 
 ## BLAST 搜索
 
 对小麦基因组数据库中已索引的蛋白或核酸序列进行 BLAST 同源搜索。路径配置与原有 CGI 脚本一致，支持多数据库并发搜索。
 
+所有 job 由独立的 **blast job daemon**（systemd 服务 `wheatomics-blastd`）执行，与 API 进程完全解耦：API 只负责入队和查询状态，job 不因 API worker 回收或重启而中断；daemon 崩溃由 systemd 自动拉起，排队中的 job 重新认领、在跑的 job 标记 `stale`。全局并发上限为 `BLAST_MAX_CONCURRENT`（默认 20）。每个 job 一个目录：`BLAST_RESULT_DIR/<job_id>/` 内含 `params.json`、`status.json` 与结果文件，结果由 Apache 在 `/blast_results/` 下直接伺服，7 天后（或目录条目超过 3000 时按最老裁剪）自动清理。
+
 ### 端点
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| `POST` | `/api/blast/search` | 执行 BLAST 搜索 |
+| `POST` | `/api/blast/search` | 执行 BLAST 搜索（`wait` 参数控制同步/异步） |
+| `GET` | `/api/blast/status/{job_id}` | 轮询异步 job 的状态与下载链接 |
 | `GET` | `/api/blast/databases` | 列出可用数据库 |
 | `GET` | `/api/blast/status` | 检查 BLAST 环境 |
 
@@ -110,7 +113,6 @@ curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \
   -d "database=Fielder_protein" \
   -d "evalue=10" \
   -d "max_target_seqs=20" \
-  -d "outfmt=json" \
   --data-urlencode "query=>seq\nMSSSTGAVTSGIKK..."
 ```
 
@@ -120,15 +122,15 @@ curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \
 |------|------|--------|------|
 | `program` | string | `blastp` | `blastp`（蛋白→蛋白库） / `blastn`（核酸→核酸库） / `blastx`（核酸翻译→蛋白库） / `tblastn`（蛋白→核酸库翻译） / `tblastx`（核酸翻译→蛋白库翻译） |
 | `database` | string | **必填** | 数据库名，多个用逗号分隔 |
-| `query` | string | **必填** | FASTA 格式查询序列（最长 100K 字符） |
+| `query` | string | **必填** | FASTA 格式查询序列（最长 100K 字符；不以 `>` 开头时自动补 `>query` 头） |
 | `evalue` | float | `10.0` | E-value 阈值 |
-| `max_target_seqs` | int | `20` | 最多返回的匹配数 |
+| `max_target_seqs` | int | `1000` | 最多返回的匹配数 |
 | `word_size` | int | — | 可选，word 大小 |
 | `matrix` | string | — | 可选，打分矩阵 |
-| `outfmt` | string | `json` | 返回格式：`json`（结构化）或 `tabular`（表格文本） |
-| `save_html` | bool | `false` | 是否生成可访问的静态结果页面 |
+| `outfmt` | string | `tabular` | 兼容旧调用方保留；当前实现固定同时生成 `tabular`（outfmt 6）与 `traditional`（outfmt 0）两种结果 |
+| `wait` | bool | `true` | `true`＝同步等待 job 完成（默认，与历史调用契约一致）；`false`＝立即返回 `job_id`，轮询状态接口 |
 
-**返回结构**（`outfmt=json`）：
+**同步模式**（`wait=true`，默认）：请求等待 job 完成（轮询上限 1100 秒），返回结果文件下载链接：
 
 ```json
 {
@@ -137,52 +139,54 @@ curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \
   "database": ["Fielder_protein"],
   "parameters": {"evalue": 10.0, "max_target_seqs": 20},
   "query_header": ">seq",
-  "total_hits": 15,
-  "hits": [
-    {
-      "query_id": "seq",
-      "subject_id": "TraesCS1A02G123400",
-      "pident": 98.45,
-      "alignment_length": 345,
-      "mismatches": 4,
-      "gap_opens": 1,
-      "q_start": 1,
-      "q_end": 345,
-      "s_start": 23,
-      "s_end": 367,
-      "evalue": 1.23e-45,
-      "bitscore": 678.9,
-      "subject_full_sequence": ">seq\nMSSSTGAVTSGIKK..."
-    }
-  ]
+  "outfmt": ["tabular", "traditional"],
+  "download_url": {
+    "tabular": "https://wheatomics.sdau.edu.cn/blast_results/<job_id>/result.tsv",
+    "traditional": "https://wheatomics.sdau.edu.cn/blast_results/<job_id>/result.txt"
+  }
 }
 ```
 
-每个 hit 的 `subject_full_sequence` 字段通过 `blastdbcmd` 从 BLAST 数据库中提取全长序列，按唯一 subject ID 去重查询。
+失败时返回对应状态码：400（参数错误）、404（数据库不存在）、500（BLAST 执行失败）、504（执行或轮询超时），错误消息在响应的 `message`/`detail` 字段。
 
-### 生成静态结果页面
-
-设置 `save_html=true` 会在服务器生成一份 HTML 结果页面，自动清理 7 天前的过期结果：
+**异步模式**（`wait=false`）：立即返回，适合浏览器前端与长查询：
 
 ```bash
 curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \
-  -d "program=blastp" \
-  -d "database=Fielder_protein" \
-  -d "save_html=true" \
-  --data-urlencode "query=>seq\nMSSSTGAVTSGIKK..."
+  -d "program=blastn" -d "database=CS_v2.1_cds" -d "wait=false" \
+  --data-urlencode "query=>seq\nACGTACGTACGT"
 ```
-
-响应会额外返回 `html_url` 字段：
 
 ```json
 {
   "success": true,
-  "html_url": "https://wheatomics.sdau.edu.cn/blast_results/blast_20250618_112233_123456.html",
-  "hits": [...]
+  "job_id": "a3f1c9d2-e9b5-4d4c-b3a1-6e8f0d9c2a1b",
+  "status": "pending",
+  "status_url": "/api/blast/status/a3f1c9d2-e9b5-4d4c-b3a1-6e8f0d9c2a1b",
+  "message": "BLAST job submitted; poll the status_url for completion."
 }
 ```
 
-结果页面带有完整站点风格（header/footer、Bootstrap 表格），每个 hit 支持展开查看全长序列。
+### 轮询 job 状态
+
+```bash
+curl "https://wheatomics.sdau.edu.cn/api/blast/status/<job_id>"
+```
+
+```json
+{
+  "success": true,
+  "job_id": "a3f1c9d2-e9b5-4d4c-b3a1-6e8f0d9c2a1b",
+  "status": "done",
+  "message": "",
+  "download_urls": {
+    "tabular": "https://wheatomics.sdau.edu.cn/blast_results/<job_id>/result.tsv",
+    "traditional": "https://wheatomics.sdau.edu.cn/blast_results/<job_id>/result.txt"
+  }
+}
+```
+
+`status` 取值：`pending`（排队）→ `running`（执行中）→ `done` / `error` / `stale`（终态）。`done` 时 `download_urls` 填充；`error`/`stale` 时看 `message`——`stale` 表示 job 在 daemon 重启时被中断，需重新提交。`job_id` 必须为 uuid4 格式，非法或不存在返回 404。
 
 ### 列出可用数据库
 
@@ -281,9 +285,11 @@ MCP 工具目前提供序列查询等功能，可通过配置 MCP 客户端连�
 | `DB_*` | 各业务数据库名 | 见 config.py |
 | `BLAST_DB_PATH` | BLAST 数据库路径 | /var/www/html/getfasta/blastdb |
 | `FASTA_DB_PATH` | FASTA 序列文件路径 | /data/fasta |
-| `BLAST_RESULT_DIR` | BLAST 结果 HTML 存储路径 | /var/www/html/blast_results |
+| `BLAST_RESULT_DIR` | BLAST job 目录（结果 + 状态文件） | /var/www/html/blast_results |
 | `BLAST_RESULT_BASE_URL` | BLAST 结果 URL 前缀 | /blast_results |
-| `BLAST_RESULT_EXPIRE_DAYS` | 结果文件保留天数 | 7 |
+| `BLAST_RESULT_EXPIRE_DAYS` | job 结果保留天数 | 7 |
+| `BLAST_RESULT_MAX_FILES` | 结果目录条目上限（超限按最老裁剪） | 3000 |
+| `BLAST_MAX_CONCURRENT` | blast daemon 全局并发上限（需重启 daemon 生效） | 20 |
 | `BLAST_SITE_BASE_URL` | 站点域名 | https://wheatomics.sdau.edu.cn |
 
 ## 遗留系统说明
