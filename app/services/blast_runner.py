@@ -16,8 +16,11 @@ Job directory layout (per job, under ``settings.BLAST_RESULT_DIR/<uuid4>/``)::
     params.json   - validated submission parameters (query included)
     status.json   - pending | running | done | error | stale (+ timestamps)
     result.asn1   - transient BLAST archive (deleted after formatting)
-    result.tsv    - tabular output (outfmt 6)
-    result.txt    - traditional output (outfmt 0)
+    result.tsv    - tabular output (outfmt 6, cols incl. ppos/btop)
+    result.txt    - traditional output (outfmt 0, pairwise alignment)
+
+Which of result.tsv / result.txt exist depends on the outfmt parameter
+(tabular / traditional / both, default tabular).
 
 ``status.json`` is written atomically (tmp + os.replace) so readers never see a
 half-written file. The result tree is served by Apache at
@@ -269,10 +272,18 @@ def execute_blast_job(job_id: str, params: Optional[dict] = None) -> dict:
                      created_at=created_at, started_at=started_at,
                      finished_at=_time.time())
 
-    # ---- 构造结果格式映射 ----
+    # ---- 结果格式：outfmt 控制生成哪几种（默认 tabular）----
+    # tabular 列 = 标准列 + ppos（BLOSUM62 正匹配%）+ btop（逐位变异编码，
+    # 如 "45AC7G-": 45 个相同残基、然后 A→C 错配、G 对应空位……），
+    # 不用 traditional 也能从表格看出具体氨基酸差异。
     fmt_defs = {
-        "tabular": ("6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle", ".tsv"),
+        "tabular": ("6 qseqid sseqid pident ppos length mismatch gapopen qstart qend sstart send evalue bitscore btop stitle", ".tsv"),
         "traditional": ("0", ".txt"),
+    }
+    outfmt_names = {
+        "tabular": ["tabular"],
+        "traditional": ["traditional"],
+        "both": ["tabular", "traditional"],
     }
 
     download_urls = {}
@@ -284,6 +295,11 @@ def execute_blast_job(job_id: str, params: Optional[dict] = None) -> dict:
         max_targets = params["max_targets"]
         word_size = params.get("word_size")
         matrix = params.get("matrix")
+        # 兼容旧 params.json（无 outfmt 键）→ 默认 tabular
+        outfmt = params.get("outfmt") or "tabular"
+        names = outfmt_names.get(outfmt)
+        if names is None:
+            raise BlastExecutionError(500, f"Job {job_id}: invalid outfmt: {outfmt!r}")
 
         blast_path = BLAST_PROG_MAP.get(program, BLASTP)
         # ---- 优先 blast_formatter（ASN.1 archive + 转换，BLAST 只跑一次）----
@@ -300,7 +316,8 @@ def execute_blast_job(job_id: str, params: Optional[dict] = None) -> dict:
                 archive_path.unlink(missing_ok=True)
                 raise BlastExecutionError(500, f"BLAST 执行错误: {err.strip()}")
 
-            for name, (oflag, ext) in fmt_defs.items():
+            for name in names:
+                oflag, ext = fmt_defs[name]
                 out_path = jd / f"result{ext}"
                 subprocess.run(
                     [BLAST_FORMATTER, "-archive", str(archive_path),
@@ -312,7 +329,8 @@ def execute_blast_job(job_id: str, params: Optional[dict] = None) -> dict:
             archive_path.unlink(missing_ok=True)
         else:
             # ---- 降级：BLAST 跑两次 ----
-            for name, (oflag, ext) in fmt_defs.items():
+            for name in names:
+                oflag, ext = fmt_defs[name]
                 fname = f"result{ext}"
                 filepath = jd / fname
                 cmd = _base_cmd(blast_path, program, dbs, oflag, filepath,

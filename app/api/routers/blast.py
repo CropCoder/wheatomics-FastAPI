@@ -247,14 +247,15 @@ async def _wait_for_job(job_id: str, program: str, dbs: list[str],
         if data is not None:
             status = data.get("status")
             if status == "done":
+                download_urls = data.get("download_urls") or {}
                 return {
                     "success": True,
                     "program": program,
                     "database": dbs,
                     "parameters": {"evalue": evalue, "max_target_seqs": max_targets},
                     "query_header": query.strip().split("\n")[0],
-                    "outfmt": ["tabular", "traditional"],
-                    "download_url": data.get("download_urls") or {},
+                    "outfmt": list(download_urls.keys()),
+                    "download_url": download_urls,
                 }
             if status in ("error", "stale"):
                 raise HTTPException(data.get("status_code") or 500,
@@ -283,7 +284,7 @@ async def blast_search(
     word_size: Optional[int] = Form(default=None),
     matrix: Optional[str] = Form(default=None),
     outfmt: str = Form(default="tabular",
-        description="结果格式: tabular (outfmt 6) / traditional (outfmt 0, 带比对) / both (同时生成两种)"),
+        description="结果格式: tabular (默认, outfmt 6, 含 ppos/btop 列) / traditional (outfmt 0 逐位比对) / both (两种都生成)"),
     wait: bool = Form(default=True,
         description="true=等待结果完成（默认，兼容现有调用方）；false=立即返回 job_id，轮询 /api/blast/status/{job_id}"),
 ):
@@ -298,6 +299,9 @@ async def blast_search(
       curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \\n        -d "program=blastp" \\n        -d "database=Fielder_protein" \\n        --data-urlencode "query=>test\\nMSSSTG..."
     """
     query = _validate_and_normalize_query(program, query)
+    if outfmt not in ("tabular", "traditional", "both"):
+        raise HTTPException(400,
+                            f"不支持的 outfmt: {outfmt}，可选: tabular / traditional / both")
 
     blast_path = BLAST_PROG_MAP.get(program, BLASTP)
     if not os.path.exists(blast_path):
@@ -320,6 +324,7 @@ async def blast_search(
         "dbs": dbs, "program": program, "query": query,
         "evalue": evalue, "max_targets": max_targets,
         "word_size": word_size, "matrix": matrix,
+        "outfmt": outfmt,
     }
 
     # Single channel: enqueue for the blast daemon in both modes.
