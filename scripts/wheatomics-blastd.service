@@ -11,6 +11,12 @@ WorkingDirectory=/var/www/FastAPI_backend_Port8000
 ExecStart=/home/fei/mambaforge/envs/zjw/bin/python -m app.services.blast_daemon
 Restart=always
 RestartSec=5
+# Backstop for BLAST_MAX_CONCURRENT=20: worst case 20 x ~2GB RSS would be
+# 40GB. Cap the daemon's cgroup at 32G — under a full storm the kernel OOM
+# kills a blast/daemon inside the cgroup (systemd restarts the daemon;
+# queued jobs survive, in-flight ones go stale) instead of starving the
+# rest of the system. Tune together with BLAST_MAX_CONCURRENT.
+MemoryMax=32G
 # Longest job: 600s blast + 2x120s formatter + margin. On SIGTERM the daemon
 # stops claiming new jobs and waits for in-flight ones; do not SIGKILL them
 # before they can finish.
