@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     DB_LITERATURE: str = "wheatomics_db"
     DB_TRITICEAE: str = "Triticeae_Research_filter"
     DB_WHEAT_FUNCTION: str = "wheat_function"
+    DB_SYNTENY: str = "synteny_mysql"
 
     BLAST_DB_PATH: Path = Path("/var/www/html/getfasta/blastdb")
     BLAST_BIN_DIR: Path = Path("/var/www/html/blast/blast+/bin")
