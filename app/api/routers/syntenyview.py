@@ -29,8 +29,7 @@ DB_NAME = settings.DB_SYNTENY
 COL_BED_DIR = os.getenv("COL_BED_DIR", "/var/www/html/col_bed")
 TRITICEAE_FILE = os.path.join(COL_BED_DIR, "triticeae.txt")
 
-# [CLUSTER-FIX] SpeciesIDs cluster mapping file: genome -> per-group prefix
-# tokens (type1 genomes) or chromosome-name tokens (type2 genomes).
+# [CLUSTER-FIX] SpeciesIDs cluster mapping file
 CLUSTER_FILE = os.getenv(
     "SPECIES_CLUSTER_FILE",
     "/var/www/html/orthefind/Results_Jul24/WorkingDirectory/SpeciesIDs_cluster.txt",
@@ -40,8 +39,7 @@ MAX_WINDOW = 50
 DEFAULT_UPSTREAM = 5
 DEFAULT_DOWNSTREAM = 5
 
-# [COLLINEAR-FIX] Max allowed gap (bp) between two consecutive target hits for
-# them to be considered part of the same local collinear block.
+# [COLLINEAR-FIX] Max allowed gap (bp) between consecutive target hits
 MAX_SYNTENY_GAP = int(os.getenv("SYNTENY_MAX_GAP", "5000000"))  # 5 Mb
 
 _QUERY_SEMAPHORE = threading.BoundedSemaphore(8)
@@ -56,12 +54,10 @@ _CLUSTER_CACHE_TTL = 300.0
 
 
 def _conn_cursor():
-    """Yield a pooled connection for read-only synteny queries."""
     return mysql_connection(settings.DB_SYNTENY)
 
 
 def _split_label(label: str) -> Tuple[str, str]:
-    """Split genome label like Chinese_Spring2.1_A into base + subgenome."""
     m = re.match(r"^(.+)_([A-Za-z][A-Za-z0-9]*)$", label or "")
     return (m.group(1), m.group(2)) if m else (label or "", "")
 
@@ -110,7 +106,7 @@ def _gene_subgenome(gid: str) -> Optional[str]:
 
 
 def _chrom_subgenome(chrom: str) -> Optional[str]:
-    m = re.search(r"(?i)(?:chr)?[1-7]\s*([abd])\b", str(chrom or ""))
+    m = re.search(r"(?i)(?:chr)?[1-7]\s*([abd])", str(chrom or ""))
     return m.group(1).upper() if m else None
 
 
@@ -124,19 +120,14 @@ def _gene_cluster(gid: str) -> Optional[int]:
 
 
 def _chrom_cluster(chrom: str) -> Optional[int]:
-    m = re.search(r"(?i)(?:chr)?([1-7])\s*[abd]\b", str(chrom or ""))
+    m = re.search(r"(?i)(?:chr)?([1-7])\s*[abd]", str(chrom or ""))
     return int(m.group(1)) if m else None
 
 
 # ---------------------------------------------------------------------------
-# [CLUSTER-FIX] Chromosome-group (cluster) resolution from SpeciesIDs_cluster.txt
+# [CLUSTER-FIX] Chromosome-group resolution from SpeciesIDs_cluster.txt
 # ---------------------------------------------------------------------------
 def _load_cluster_map() -> Dict[str, dict]:
-    """Parse SpeciesIDs_cluster.txt into a genome -> resolver dict.
-
-    * mode == "prefix"  -> gene-ID prefix decides the cluster (type1=yes)
-    * mode == "chrom"   -> BED chromosome decides the cluster (type2=yes)
-    """
     global _CLUSTER_CACHE, _CLUSTER_CACHE_TIME
     now = time.monotonic()
     if _CLUSTER_CACHE is not None and now - _CLUSTER_CACHE_TIME < _CLUSTER_CACHE_TTL:
@@ -185,7 +176,6 @@ def _resolve_cluster(
     chromosome: str,
     cluster_map: Dict[str, dict],
 ) -> Optional[int]:
-    """Resolve the chromosome group (1-7) for a gene record."""
     info = cluster_map.get(genome_label)
     if not info:
         return _gene_cluster(gene_id) or _chrom_cluster(chromosome)
@@ -202,7 +192,6 @@ def _resolve_cluster(
             return best
         return _gene_cluster(gene_id) or _chrom_cluster(chromosome)
 
-    # mode == "chrom"
     c = str(chromosome or "")
     best, best_len = None, -1
     for tok, cl in tokens.items():
@@ -225,8 +214,6 @@ def _filter_collinear_block(
     query_order: Optional[int],
     max_gap: int = MAX_SYNTENY_GAP,
 ) -> Tuple[List[dict], int]:
-    """Keep only target homologs forming ONE contiguous collinear block that is
-    anchored on the query gene's ortholog."""
     if not genes:
         return [], 0
 
@@ -275,7 +262,7 @@ def _query_limit(fn):
     @functools.wraps(fn)
     def wrapped(*args, **kwargs):
         if not _QUERY_SEMAPHORE.acquire(timeout=300):
-            return {"error": "Server is busy processing other synteny queries; please retry shortly."}
+            return {"error": "Server is busy; please retry shortly."}
         try:
             return fn(*args, **kwargs)
         finally:
@@ -342,7 +329,6 @@ def _fetch_gene_candidates(conn, gene_id: str) -> List[dict]:
 
 
 def _fetch_neighbors(conn, ref: dict, upstream: int, downstream: int) -> List[dict]:
-    """Fetch only the requested local neighborhood using indexed LIMITs."""
     base = """
         SELECT id, genome_name, subgenome, chromosome, start_pos, end_pos,
                gene_id, annotation, family
@@ -354,8 +340,7 @@ def _fetch_neighbors(conn, ref: dict, upstream: int, downstream: int) -> List[di
 
     with conn.cursor() as cur:
         cur.execute(
-            base
-            + """
+            base + """
               AND (start_pos < %s
                    OR (start_pos = %s AND end_pos < %s)
                    OR (start_pos = %s AND end_pos = %s AND id < %s))
@@ -371,8 +356,7 @@ def _fetch_neighbors(conn, ref: dict, upstream: int, downstream: int) -> List[di
         up = [_normalize_gene_row(r) for r in cur.fetchall()]
 
         cur.execute(
-            base
-            + """
+            base + """
               AND (start_pos > %s
                    OR (start_pos = %s AND end_pos > %s)
                    OR (start_pos = %s AND end_pos = %s AND id > %s))
@@ -409,7 +393,6 @@ def _fetch_orthogroups(conn, gene_ids: List[str]) -> Dict[str, List[str]]:
 
 
 def _fetch_target_records_by_ogs(conn, ogs: List[str], target_labels: set) -> Dict[str, List[dict]]:
-    """Fetch target records by exact genome_info labels."""
     if not ogs or not target_labels:
         return {}
 
@@ -468,10 +451,7 @@ def api_genomes():
     with _conn_cursor() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT genome_name, bed_file FROM genome_info ORDER BY genome_name")
-            labels = []
-            for row in cur.fetchall():
-                name = row["genome_name"]
-                labels.append(name)
+            labels = [row["genome_name"] for row in cur.fetchall()]
     _GENOME_CACHE = sorted(set(labels), key=_genome_sort_key)
     _GENOME_CACHE_TIME = now
     return _GENOME_CACHE
@@ -482,7 +462,6 @@ def api_gene_search(
     q: str = Query(..., min_length=1),
     limit: int = Query(20, ge=1, le=50),
 ):
-    """Autocomplete/search gene IDs directly from MySQL."""
     term = q.strip()
     with _conn_cursor() as conn:
         with conn.cursor() as cur:
@@ -566,7 +545,6 @@ def api_synteny(
 
     target_labels = {x.strip() for x in re.split(r"[,;|]", targets or "") if x.strip()}
 
-    # [CLUSTER-FIX] Load the genome -> cluster resolver once per request.
     cluster_map = _load_cluster_map()
 
     with _conn_cursor() as conn:
@@ -583,13 +561,11 @@ def api_synteny(
         og_map_multi = _fetch_orthogroups(conn, neighbor_ids)
         og_results = {gid: (ogs[0] if ogs else None) for gid, ogs in og_map_multi.items()}
 
-        # [CLUSTER-FIX] Resolve the query's chromosome group.
         query_cluster = _resolve_cluster(
             ref["genome_name"], ref["gene_id"], ref["chromosome"], cluster_map
         )
         query_label = ref["label"]
 
-        # Reference (query) track — this is the ROOT track of the plot.
         query_track_genes = []
         query_order = None
         for order, rec in enumerate(neighbors):
@@ -621,7 +597,6 @@ def api_synteny(
                 "chrom": ref["chromosome"],
                 "genes": query_track_genes,
                 "is_query_track": True,
-                # [ROOT-FIX] Explicitly mark this as the root track.
                 "root": True,
                 "region_start": min(r["start_pos"] for r in neighbors),
                 "region_end": max(r["end_pos"] for r in neighbors),
@@ -652,7 +627,6 @@ def api_synteny(
                 if gk == query_label or gk not in target_labels:
                     continue
 
-                # [CLUSTER-FIX] Drop homologs not on the query's chromosome group.
                 rec_cluster = _resolve_cluster(
                     rec["genome_name"], hom, rec["chromosome"], cluster_map
                 )
@@ -693,8 +667,6 @@ def api_synteny(
                         "chrom_subgenome": _chrom_subgenome(rec["chromosome"]),
                     })
 
-        # [COLLINEAR-FIX] Keep only the local collinear block anchored on the
-        # query ortholog for every target track; drop distant paralogs.
         for key, tr in tracks.items():
             if key == query_label:
                 continue
@@ -703,7 +675,6 @@ def api_synteny(
                 skipped_counts[key] = skipped_counts.get(key, 0) + skipped
             tr["genes"] = kept
 
-        # Deduplicate and add region labels.
         for tr in tracks.values():
             seen = set()
             unique = []
@@ -724,15 +695,13 @@ def api_synteny(
                 tr["region_end"] = None
                 tr["region_label"] = ""
 
-        # [COLLINEAR-FIX] Flag fully emptied target tracks.
         for key, tr in tracks.items():
             if key == query_label:
                 continue
             if not tr.get("genes"):
                 tr["no_homologs"] = True
 
-        # [ROOT-FIX] Root the plot on the query genome: query track is ALWAYS
-        # index 0 (top row); remaining targets follow in a stable order.
+        # [ROOT-FIX] Query track always first (index 0 = top row)
         ordered = [tracks[query_label]] + sorted(
             [tr for key, tr in tracks.items() if key != query_label],
             key=lambda t: _genome_sort_key(t["label"]),
@@ -742,7 +711,6 @@ def api_synteny(
             tr["root"] = (ti == 0)
             tr["is_query_track"] = (ti == 0)
 
-        link_groups = []
         grouped = {}
         for ti, tr in enumerate(ordered):
             for g in tr["genes"]:
@@ -780,7 +748,6 @@ def api_synteny(
             "query": ref["gene_id"],
             "submitted_query": gene_id,
             "request_genome": query_label,
-            # [ROOT-FIX] Explicit root track label for the frontend to anchor on.
             "root_track": query_label,
             "requested_targets": sorted(target_labels, key=_genome_sort_key),
             "target_summary": target_summary,
