@@ -72,6 +72,15 @@ class Settings(BaseSettings):
     # restarts it, queued jobs survive, in-flight ones go stale) instead of
     # taking the whole box down. Can be tuned live via .env.
     BLAST_MAX_CONCURRENT: int = 20
+    # Upper bound on queued (pending + running) blast jobs. Submissions beyond
+    # this get HTTP 429 — an unbounded disk queue under a submission storm
+    # would fill BLAST_RESULT_DIR with 100KB params.json each.
+    BLAST_MAX_QUEUED: int = 200
+    # NovaBrowse workflow is disabled by default: its input validation is
+    # weak (unbounded interval, unchecked chrom, no timeout) and it is
+    # reachable unauthenticated via both HTTP and the MCP tool. Set
+    # NOVABROWSE_ENABLED=true in .env to re-enable after hardening.
+    NOVABROWSE_ENABLED: bool = False
     BLAST_SITE_BASE_URL: str = "https://wheatomics.sdau.edu.cn"
     PRIMERSERVER2_CONFIG_PATH: Path = Path("/var/www/html/PrimerServer2/config.ini")
     PRIMERSERVER2_WORKDIR_BASE: Path = Path("/var/www/html/PrimerServer2/jobs")

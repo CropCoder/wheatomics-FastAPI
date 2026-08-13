@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 
+from ..dependencies import validate_job_id
 from ..services.storage import JobManager
 from .jobs import get_job_manager
 
@@ -35,6 +36,7 @@ def get_result_html(
     job_manager: JobManager = Depends(get_job_manager),
 ):
     """Legacy endpoint that returns the raw HTML result if available."""
+    job_id = validate_job_id(job_id)
     status = job_manager.get_status(job_id)
     if status is None:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -63,6 +65,7 @@ def get_specificity_result(
     filename: str,
     job_manager: JobManager = Depends(get_job_manager),
 ):
+    job_id = validate_job_id(job_id)
     status = job_manager.get_status(job_id)
     if status is None:
         raise HTTPException(status_code=404, detail="Job not found")

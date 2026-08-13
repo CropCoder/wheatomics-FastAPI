@@ -1,5 +1,6 @@
 """Optional API key guard for PrimerServer2 endpoints."""
 
+import re
 import secrets
 from typing import Optional
 
@@ -51,3 +52,18 @@ def verify_api_key(
     if not secrets.compare_digest(x_api_key, ps2_settings.api_key):
         raise HTTPException(status_code=403, detail="Invalid API key")
     return x_api_key
+
+
+#: Job ids are uuid4 (JobManager.create_job). Anything else — including ".."
+#: segments used to escape workdir_base and rmtree foreign directories — is
+#: rejected before it ever reaches the filesystem.
+_JOB_ID_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
+
+
+def validate_job_id(job_id: str) -> str:
+    """Return job_id if it has the uuid4 shape, else 404."""
+    if not _JOB_ID_RE.match(job_id):
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job_id

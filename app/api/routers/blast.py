@@ -30,7 +30,7 @@ from app.core.config import settings
 from app.services.blast_runner import (
     BLASTDBCMD, BLAST_FORMATTER, BLASTN, BLASTP, BLASTX,
     BLAST_PROG_MAP, DB_DIR, TBLASTN, TBLASTX,
-    read_status, write_params, write_status,
+    count_active_jobs, read_status, write_params, write_status,
 )
 
 router = APIRouter(prefix="/blast", tags=["BLAST"])
@@ -43,6 +43,11 @@ MAX_QUERY_LENGTH = 100_000  # 查询序列最大字符数
 #: uuid4 job id — accepted shape for /status/{job_id} (also guards the path
 #: join against traversal).
 _JOB_ID_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
+#: BLAST database names — path traversal guard for the `database` form field.
+#: Without this, "database=/etc/passwd" makes os.path.join(DB_DIR, name) land
+#: outside DB_DIR (an existence oracle + reads of arbitrary BLAST indexes).
+_DB_NAME_RE = re.compile(r"^[\w.\-]+$")
 
 #: wait=true poll loop: how often to check the job status file.
 _SYNC_POLL_INTERVAL_SECONDS = 0.5
@@ -277,10 +282,10 @@ async def blast_search(
         description="数据库名，多个用逗号分隔，如 Fielder_protein,AK58_protein.fasta"),
     query: str = Form(default=...,
         description="FASTA 格式的查询序列"),
-    evalue: float = Form(default=10.0,
-        description="E-value 阈值"),
-    max_targets: int = Form(default=1000, alias="max_target_seqs",
-        description="最多返回的匹配数"),
+    evalue: float = Form(default=10.0, ge=0, le=1000,
+        description="E-value 阈值 (0-1000)"),
+    max_targets: int = Form(default=1000, ge=1, le=50000, alias="max_target_seqs",
+        description="最多返回的匹配数 (1-50000)"),
     word_size: Optional[int] = Form(default=None),
     matrix: Optional[str] = Form(default=None),
     outfmt: str = Form(default="tabular",
@@ -311,11 +316,25 @@ async def blast_search(
     dbs = [d.strip() for d in database.split(",") if d.strip()]
     if not dbs:
         raise HTTPException(400, "请指定至少一个数据库")
+    if len(dbs) > 20:
+        raise HTTPException(400, f"一次最多搜索 20 个数据库（收到 {len(dbs)} 个）")
+    for d in dbs:
+        if not _DB_NAME_RE.fullmatch(d):
+            raise HTTPException(
+                400,
+                f"非法数据库名: {d!r}（仅允许字母/数字/下划线/点/连字符）",
+            )
 
     missing = [d for d in dbs if not check_db_exists(d, program)]
     if missing:
         raise HTTPException(404,
             f"以下数据库在 {DB_DIR} 中找不到索引: {missing}")
+
+    if count_active_jobs() >= settings.BLAST_MAX_QUEUED:
+        raise HTTPException(
+            429,
+            f"BLAST 任务队列已满（排队/运行中 ≥ {settings.BLAST_MAX_QUEUED}），请稍后再试。",
+        )
 
     result_dir = settings.BLAST_RESULT_DIR
     result_dir.mkdir(parents=True, exist_ok=True)
