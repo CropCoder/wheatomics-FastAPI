@@ -3,14 +3,11 @@ import json
 from mcp.server import Server
 import mcp.types as types
 
-from app.core.config import settings
-
 # 导入你现有的路由函数
 from app.api.routers.sequence import (
     sequence_by_gene,
     sequence_by_interval,
     batch_sequence,
-    novabrowse_run
 )
 
 # 1. 初始化 MCP Server
@@ -64,23 +61,6 @@ async def handle_list_tools() -> list[types.Tool]:
             }
         ),
     ]
-    # NovaBrowse is gated: disabled by default (see settings.NOVABROWSE_ENABLED).
-    if settings.NOVABROWSE_ENABLED:
-        tools.append(
-            types.Tool(
-                name="run_novabrowse",
-                description="Start the NovaBrowse workflow for a genomic region and return the generated result URL.",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "chrom": {"type": "string", "description": "Chromosome name"},
-                        "start": {"type": "integer", "description": "Start position (>=1)"},
-                        "end": {"type": "integer", "description": "End position (must be > start)"}
-                    },
-                    "required": ["chrom", "start", "end"]
-                }
-            )
-        )
     return tools
 
 
@@ -121,21 +101,6 @@ async def handle_call_tool(name: str, arguments: dict) -> list[types.TextContent
                     batch_sequence,
                     database=arguments["database"],
                     ids=arguments["ids"],
-                )
-                return [types.TextContent(type="text", text=json.dumps(result))]
-
-            elif name == "run_novabrowse":
-                if not settings.NOVABROWSE_ENABLED:
-                    return [types.TextContent(
-                        type="text",
-                        text=json.dumps({"error": "NovaBrowse is currently disabled",
-                                         "status": "failed"})
-                    )]
-                result = await asyncio.to_thread(
-                    novabrowse_run,
-                    chrom=arguments["chrom"],
-                    start=arguments["start"],
-                    end=arguments["end"],
                 )
                 return [types.TextContent(type="text", text=json.dumps(result))]
 

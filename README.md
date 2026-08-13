@@ -291,7 +291,6 @@ MCP 工具目前提供序列查询等功能，可通过配置 MCP 客户端连�
 | `BLAST_RESULT_MAX_FILES` | 结果目录条目上限（超限按最老裁剪） | 3000 |
 | `BLAST_MAX_CONCURRENT` | blast daemon 全局并发上限（需重启 daemon 生效） | 20 |
 | `BLAST_MAX_QUEUED` | 排队+运行中 blast 任务上限（超限提交返回 429） | 200 |
-| `NOVABROWSE_ENABLED` | NovaBrowse 工作流开关（默认 false 关闭，.env 设 true 开启） | false |
 | `BLAST_SITE_BASE_URL` | 站点域名 | https://wheatomics.sdau.edu.cn |
 
 ## 遗留系统说明

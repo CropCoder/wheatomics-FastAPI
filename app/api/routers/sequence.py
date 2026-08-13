@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import re
-import importlib.util
-import sys
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query
@@ -432,63 +430,6 @@ def batch_sequence(
         "failed": len(records) - succeeded,
         "records": records,
     })
-
-
-@router.get("/novabrowse")
-def novabrowse_run(
-    chrom: str = Query(...),
-    start: int = Query(..., ge=1),
-    end: int = Query(..., ge=1),
-) -> dict:
-    """启动 NovaBrowse 基因组可视化工作流。
-
-    功能:
-        根据染色体和起止位置，动态加载并运行 NovaBrowse 服务模块，
-        生成基因组区间可视化结果页面。返回任务 ID 和结果页面的 URL。
-
-    用法:
-        GET /api/novabrowse?chrom=<染色体>&start=<起始>&end=<结束>
-        - chrom: 必填，染色体名称
-        - start: 必填，起始位置（>=1）
-        - end: 必填，结束位置（>=1，必须大于 start）
-
-    案例:
-        请求:
-          curl -X GET "http://localhost:8000/api/novabrowse?chrom=chr5A&start=587000000&end=588000000"
-
-        响应:
-          {
-            "success": true,
-            "data": {
-              "run_id": "abc123",
-              "url": "http://wheatomics.sdau.edu.cn/novabrowse/abc123/output.html"
-            }
-          }
-    """
-
-    if not settings.NOVABROWSE_ENABLED:
-        raise ResourceNotFound("NovaBrowse is currently disabled")
-
-    if end <= start:
-        raise ValidationFailure("end must be greater than start")
-    if not _DB_NAME_RE.fullmatch(chrom):
-        raise ValidationFailure(
-            f"Invalid chromosome name: {chrom!r} (allowed: letters, digits, '_', '.', '-')")
-    if end - start > 100_000_000:
-        raise ValidationFailure("Region length must be <= 100,000,000 bp")
-
-    module_path = settings.NOVABROWSE_SERVICE_DIR / "run_novabrowse.py"
-    if not module_path.exists():
-        raise ResourceNotFound(f"NovaBrowse service module not found: {module_path}")
-
-    spec = importlib.util.spec_from_file_location("run_novabrowse", module_path)
-    if spec is None or spec.loader is None:
-        raise ResourceNotFound("Unable to load NovaBrowse service module")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules.setdefault("run_novabrowse", module)
-    spec.loader.exec_module(module)
-    run_id = module.run(chrom, start, end)
-    return ok({"run_id": run_id, "url": f"{settings.NOVABROWSE_RESULT_BASE_URL}/{run_id}/output.html"})
 
 
 @blast_extra_router.get("/blastp")
