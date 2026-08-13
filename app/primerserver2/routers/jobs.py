@@ -4,7 +4,7 @@ import logging
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
 from ..config import PrimerServerConfig, get_primer_config
-from ..dependencies import PrimerServer2Settings, get_primerserver2_settings, verify_api_key
+from ..dependencies import PrimerServer2Settings, get_primerserver2_settings, verify_api_key, validate_job_id
 from ..models import (
     CheckJobRequest,
     DesignJobRequest,
@@ -137,6 +137,7 @@ def get_job(
     job_id: str,
     job_manager: JobManager = Depends(get_job_manager),
 ):
+    job_id = validate_job_id(job_id)
     status = job_manager.get_status(job_id)
     if status is None:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -158,6 +159,7 @@ def get_progress(
     job_id: str,
     job_manager: JobManager = Depends(get_job_manager),
 ):
+    job_id = validate_job_id(job_id)
     status = job_manager.get_status(job_id)
     if status is None:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -182,6 +184,7 @@ def get_result(
     job_manager: JobManager = Depends(get_job_manager),
     runner: PipelineRunner = Depends(get_runner),
 ):
+    job_id = validate_job_id(job_id)
     status = job_manager.get_status(job_id)
     if status is None:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -198,6 +201,7 @@ def delete_job(
     job_id: str,
     job_manager: JobManager = Depends(get_job_manager),
 ):
+    job_id = validate_job_id(job_id)
     status = job_manager.get_status(job_id)
     if status is None:
         raise HTTPException(status_code=404, detail="Job not found")

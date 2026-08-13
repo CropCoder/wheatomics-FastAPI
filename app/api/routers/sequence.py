@@ -66,6 +66,19 @@ def _check_db_exists(db_path: Path) -> bool:
     return False
 
 
+#: BLAST database names — path traversal guard for db query params. Without
+#: this, an absolute or ../ name escapes settings.BLAST_DB_PATH inside
+#: os.path.join (existence oracle + reads of arbitrary BLAST indexes).
+_DB_NAME_RE = re.compile(r"^[\w.\-]+$")
+
+
+def _ensure_db_name(name: str, label: str = "database") -> str:
+    if not name or not _DB_NAME_RE.fullmatch(name):
+        raise ValidationFailure(
+            f"Invalid {label}: {name!r} (allowed: letters, digits, '_', '.', '-')")
+    return name
+
+
 def _candidate_entries(gene_id: str) -> list[str]:
     """Common suffix variants BLAST databases may have stored an entry
     under. TraesCSxxx-style IDs may appear with a trailing .1 allele,
@@ -187,6 +200,11 @@ def sequence_by_gene(
             f"Use /api/sequence/by-interval?region=<chr:start-end> instead."
         )
 
+    if gene_db:
+        gene_db = _ensure_db_name(gene_db, "gene_db")
+    if protein_db:
+        protein_db = _ensure_db_name(protein_db, "protein_db")
+
     # Fail fast if either DB doesn't exist on disk — much clearer than
     # the generic "No sequence found" 404 that comes out when blastdbcmd
     # silently can't open the database file.
@@ -260,6 +278,7 @@ def sequence_by_interval(
     """
 
     ensure_interval_like(region)
+    database = _ensure_db_name(database)
 
     chrom = region.split(":")[0]
     interval = region.split(":")[1].replace("..", "-")
@@ -313,6 +332,13 @@ def batch_sequence(
     if not raw_tokens:
         raise HTTPException(status_code=400, detail="ID parameter is empty")
 
+    database = _ensure_db_name(database)
+    # Bound the batch size: each range token spawns a blastdbcmd subprocess and
+    # large ranges produce huge outputs that are captured into memory.
+    if len(raw_tokens) > 500:
+        raise HTTPException(status_code=400,
+                            detail=f"Too many IDs: {len(raw_tokens)} (max 500)")
+
     db_path = settings.BLAST_DB_PATH / database
     # BLAST databases are a set of index files (.nsq/.nin/.nhr for nucleotide,
     # .psq/.pin/.phr for protein), not a single path. Check via blastdbcmd.
@@ -325,19 +351,28 @@ def batch_sequence(
     #   - gene_ids: tokens without ":" → fetch in ONE blastdbcmd call via -entry_batch stdin
     #   - ranges:   tokens matching "chr:start-end" → fetched in parallel threads
     #              (blastdbcmd has no native batch mode for -range)
+    records_by_token: dict[str, dict] = {}
     gene_ids = []
     gene_tokens = []   # original tokens in the same order
     range_jobs = []    # (token, chrom, start, end)
     for token in raw_tokens:
         m = interval_re.match(token)
         if m:
-            range_jobs.append((token, m.group(1), int(m.group(2)), int(m.group(3))))
+            start_i, end_i = int(m.group(2)), int(m.group(3))
+            # Same 5 Mb cap as the single-interval endpoint — without it a
+            # token like chr1A:1-700000000 makes blastdbcmd extract ~700 Mb
+            # which run_command captures fully into memory (OOM vector).
+            if end_i <= start_i or end_i - start_i > 5_000_000:
+                records_by_token[token] = {
+                    "sequence_id": token, "fasta": "", "ok": False,
+                    "error": "Region length must be > 0 and <= 5,000,000 bp",
+                }
+                continue
+            range_jobs.append((token, m.group(1), start_i, end_i))
         else:
             entry = token if token.endswith(".1") else f"{token}.1"
             gene_tokens.append(token)
             gene_ids.append(entry)
-
-    records_by_token: dict[str, dict] = {}
 
     # ---- 1) Genes: single blastdbcmd -entry_batch - call ----
     if gene_ids:
@@ -431,8 +466,16 @@ def novabrowse_run(
           }
     """
 
+    if not settings.NOVABROWSE_ENABLED:
+        raise ResourceNotFound("NovaBrowse is currently disabled")
+
     if end <= start:
         raise ValidationFailure("end must be greater than start")
+    if not _DB_NAME_RE.fullmatch(chrom):
+        raise ValidationFailure(
+            f"Invalid chromosome name: {chrom!r} (allowed: letters, digits, '_', '.', '-')")
+    if end - start > 100_000_000:
+        raise ValidationFailure("Region length must be <= 100,000,000 bp")
 
     module_path = settings.NOVABROWSE_SERVICE_DIR / "run_novabrowse.py"
     if not module_path.exists():

@@ -3,6 +3,8 @@ import json
 from mcp.server import Server
 import mcp.types as types
 
+from app.core.config import settings
+
 # 导入你现有的路由函数
 from app.api.routers.sequence import (
     sequence_by_gene,
@@ -23,7 +25,7 @@ _MCP_SEMAPHORE = asyncio.Semaphore(4)
 # 2. 注册大模型可以使用的工具列表
 @sequence_mcp_server.list_tools()
 async def handle_list_tools() -> list[types.Tool]:
-    return [
+    tools = [
         types.Tool(
             name="get_sequence_by_gene",
             description="Retrieve wheat gene and protein FASTA records by gene ID.",
@@ -61,20 +63,25 @@ async def handle_list_tools() -> list[types.Tool]:
                 "required": ["database", "ids"]
             }
         ),
-        types.Tool(
-            name="run_novabrowse",
-            description="Start the NovaBrowse workflow for a genomic region and return the generated result URL.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "chrom": {"type": "string", "description": "Chromosome name"},
-                    "start": {"type": "integer", "description": "Start position (>=1)"},
-                    "end": {"type": "integer", "description": "End position (must be > start)"}
-                },
-                "required": ["chrom", "start", "end"]
-            }
-        )
     ]
+    # NovaBrowse is gated: disabled by default (see settings.NOVABROWSE_ENABLED).
+    if settings.NOVABROWSE_ENABLED:
+        tools.append(
+            types.Tool(
+                name="run_novabrowse",
+                description="Start the NovaBrowse workflow for a genomic region and return the generated result URL.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "chrom": {"type": "string", "description": "Chromosome name"},
+                        "start": {"type": "integer", "description": "Start position (>=1)"},
+                        "end": {"type": "integer", "description": "End position (must be > start)"}
+                    },
+                    "required": ["chrom", "start", "end"]
+                }
+            )
+        )
+    return tools
 
 
 # 3. 处理大模型的工具调用请求
@@ -118,6 +125,12 @@ async def handle_call_tool(name: str, arguments: dict) -> list[types.TextContent
                 return [types.TextContent(type="text", text=json.dumps(result))]
 
             elif name == "run_novabrowse":
+                if not settings.NOVABROWSE_ENABLED:
+                    return [types.TextContent(
+                        type="text",
+                        text=json.dumps({"error": "NovaBrowse is currently disabled",
+                                         "status": "failed"})
+                    )]
                 result = await asyncio.to_thread(
                     novabrowse_run,
                     chrom=arguments["chrom"],

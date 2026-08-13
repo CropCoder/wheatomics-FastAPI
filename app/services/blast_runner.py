@@ -185,6 +185,24 @@ def list_job_ids() -> list[str]:
     return sorted(p.name for p in result_dir.iterdir() if p.is_dir())
 
 
+def count_active_jobs() -> int:
+    """Number of jobs currently queued (pending) or executing (running).
+
+    Used by the API to reject submissions with 429 once BLAST_MAX_QUEUED is
+    reached — without a queue bound, a submission storm fills the result dir
+    with an unbounded number of params.json files.
+    """
+    result_dir = settings.BLAST_RESULT_DIR
+    if not result_dir.is_dir():
+        return 0
+    n = 0
+    for job_id in list_job_ids():
+        data = read_status_raw(job_id)
+        if data and data.get("status") in ("pending", "running"):
+            n += 1
+    return n
+
+
 # ---------------------------------------------------------------------------
 # Execution
 # ---------------------------------------------------------------------------

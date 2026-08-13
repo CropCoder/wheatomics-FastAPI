@@ -121,10 +121,10 @@ curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `program` | string | `blastp` | `blastp`（蛋白→蛋白库） / `blastn`（核酸→核酸库） / `blastx`（核酸翻译→蛋白库） / `tblastn`（蛋白→核酸库翻译） / `tblastx`（核酸翻译→蛋白库翻译） |
-| `database` | string | **必填** | 数据库名，多个用逗号分隔 |
+| `database` | string | **必填** | 数据库名，多个用逗号分隔（最多 20 个；仅允许字母/数字/下划线/点/连字符） |
 | `query` | string | **必填** | FASTA 格式查询序列（最长 100K 字符；不以 `>` 开头时自动补 `>query` 头） |
-| `evalue` | float | `10.0` | E-value 阈值 |
-| `max_target_seqs` | int | `1000` | 最多返回的匹配数 |
+| `evalue` | float | `10.0` | E-value 阈值（0–1000） |
+| `max_target_seqs` | int | `1000` | 最多返回的匹配数（1–50000） |
 | `word_size` | int | — | 可选，word 大小 |
 | `matrix` | string | — | 可选，打分矩阵 |
 | `outfmt` | string | `tabular` | 结果格式：`tabular`（默认，outfmt 6 表格，含 `ppos`/`btop` 变异信息列） / `traditional`（outfmt 0 逐位比对，标记行直接显示氨基酸差异） / `both`（两种都生成） |
@@ -148,7 +148,7 @@ curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \
 
 `download_url` 与 `outfmt` 只包含提交时选择的格式：`traditional` 时是 `.txt` 逐位比对文件，`both` 时两个键都有。tabular 的 `.tsv` 除标准列外还带 `ppos`（正匹配百分比）与 `btop`（逐位变异编码）两列，不用 traditional 也能看出具体氨基酸差异。
 
-失败时返回对应状态码：400（参数错误）、404（数据库不存在）、500（BLAST 执行失败）、504（执行或轮询超时），错误消息在响应的 `message`/`detail` 字段。
+失败时返回对应状态码：400（参数错误）、404（数据库不存在）、429（任务队列已满，稍后重试）、500（BLAST 执行失败）、504（执行或轮询超时），错误消息在响应的 `message`/`detail` 字段。
 
 **异步模式**（`wait=false`）：立即返回，适合浏览器前端与长查询：
 
@@ -290,6 +290,8 @@ MCP 工具目前提供序列查询等功能，可通过配置 MCP 客户端连�
 | `BLAST_RESULT_EXPIRE_DAYS` | job 结果保留天数 | 7 |
 | `BLAST_RESULT_MAX_FILES` | 结果目录条目上限（超限按最老裁剪） | 3000 |
 | `BLAST_MAX_CONCURRENT` | blast daemon 全局并发上限（需重启 daemon 生效） | 20 |
+| `BLAST_MAX_QUEUED` | 排队+运行中 blast 任务上限（超限提交返回 429） | 200 |
+| `NOVABROWSE_ENABLED` | NovaBrowse 工作流开关（默认 false 关闭，.env 设 true 开启） | false |
 | `BLAST_SITE_BASE_URL` | 站点域名 | https://wheatomics.sdau.edu.cn |
 
 ## 遗留系统说明
