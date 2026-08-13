@@ -49,8 +49,6 @@ class Settings(BaseSettings):
     SNPRIMER_PIPELINE: Path = Path("/var/www/html/snprimer/SNP_Primer_Pipeline/run_getkasp.py")
     SYMAP_RESULT_DIR: Path = Path("/var/www/html/symap/result")
     SYMAP_DEFAULT_BED: Path = Path("/var/www/html/symap/CS_CS_durum_emmer_urartu_tauschii.bed")
-    NOVABROWSE_SERVICE_DIR: Path = Path("/var/www/novabrowse_service")
-    NOVABROWSE_RESULT_BASE_URL: str = "/novabrowse_results"
     VARIANTHUB_VCF_DIR: Path = Path("/var/www/html/variants")
     BCFTOOLS_BIN: Path = Path("/home/fei/data/tiantian_data/soft/bcftools-1.8/bin/bcftools")
 
@@ -76,11 +74,6 @@ class Settings(BaseSettings):
     # this get HTTP 429 — an unbounded disk queue under a submission storm
     # would fill BLAST_RESULT_DIR with 100KB params.json each.
     BLAST_MAX_QUEUED: int = 200
-    # NovaBrowse workflow is disabled by default: its input validation is
-    # weak (unbounded interval, unchecked chrom, no timeout) and it is
-    # reachable unauthenticated via both HTTP and the MCP tool. Set
-    # NOVABROWSE_ENABLED=true in .env to re-enable after hardening.
-    NOVABROWSE_ENABLED: bool = False
     BLAST_SITE_BASE_URL: str = "https://wheatomics.sdau.edu.cn"
     PRIMERSERVER2_CONFIG_PATH: Path = Path("/var/www/html/PrimerServer2/config.ini")
     PRIMERSERVER2_WORKDIR_BASE: Path = Path("/var/www/html/PrimerServer2/jobs")
