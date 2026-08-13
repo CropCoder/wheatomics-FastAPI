@@ -266,7 +266,7 @@ curl "https://wheatomics.sdau.edu.cn/api/blast/status"
 - **SSE 端点**: `GET /api/mcp/sse`
 - **消息端点**: `POST /api/mcp/messages`
 
-MCP 工具目前提供序列查询等功能，可通过配置 MCP 客户端连接使用。
+MCP 工具目前提供序列查询等功能，可通过配置 MCP 客户端连接使用。使用中遇到问题可邮件反馈至 shengweima@icloud.com。
 
 ## 配置说明
 
@@ -315,4 +315,4 @@ MIT License
 ## 联系方式
 
 - 网站: [https://wheatomics.sdau.edu.cn](https://wheatomics.sdau.edu.cn)
-- 邮箱: zhaojiwen@yzwlab.cn
+- 邮箱: shengweima@icloud.com（Agent/API 使用问题反馈）

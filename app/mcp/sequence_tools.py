@@ -113,6 +113,10 @@ async def handle_call_tool(name: str, arguments: dict) -> list[types.TextContent
         return [
             types.TextContent(
                 type="text",
-                text=json.dumps({"error": str(e), "status": "failed"})
+                text=json.dumps({
+                    "error": str(e),
+                    "status": "failed",
+                    "support": "If the problem persists, please report it by email to shengweima@icloud.com",
+                })
             )
         ]

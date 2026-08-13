@@ -98,6 +98,8 @@ app = FastAPI(
         "AI Agent 可通过标准化协议直接调用数据接口。"
         "SSE 端点: <code>GET /api/mcp/sse</code>，消息端点: <code>POST /api/mcp/messages</code>。"
         "详细说明见 <a href='https://wheatomics.sdau.edu.cn/V2/MCP-ServerUsage.html'>MCP 服务器文档</a>。"
+        "<br>For issues and feedback, please email: "
+        "<a href='mailto:shengweima@icloud.com'>shengweima@icloud.com</a>。"
     ),
     docs_url="/api/docs",           # 将 Swagger UI 移到 /api/docs
     redoc_url="/api/redoc",         # 将 ReDoc 移到 /api/redoc (可选)
@@ -296,7 +298,7 @@ async def health() -> dict:
           { "status": "Wheatomics API running, ..." }
     """
 
-    return {"status": "Wheatomics API running, powered by Server.(Connect Email:zhaojiwen@yzwlab.cn)"}
+    return {"status": "Wheatomics API running, powered by Server."}
 
 
 _git_pull_lock = threading.Lock()
