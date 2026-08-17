@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+import pymysql
+from fastapi import APIRouter, HTTPException, Query
 
 from app.core.config import settings
 from app.core.exceptions import ResourceNotFound, ValidationFailure
@@ -196,6 +197,26 @@ def _bioproject_from_row(row: dict) -> BioprojectMeta:
     )
 
 
+def _query_bioprojects(sql: str, params: list) -> list[dict]:
+    """Run a bioproject_meta query, turning a missing table into a clear 503.
+
+    Without this, a never-initialized table surfaces as a generic 500 with a
+    full traceback in the journal on every frontend poll.
+    """
+    try:
+        with mysql_cursor(settings.DB_COEXPRESSION) as cursor:
+            cursor.execute(sql, params)
+            return cursor.fetchall()
+    except pymysql.err.ProgrammingError as exc:
+        if exc.args[0] == 1146:  # ER_NO_SUCH_TABLE
+            raise HTTPException(
+                status_code=503,
+                detail="bioproject_meta 元数据表尚未初始化：请在服务器运行 "
+                       "python3 scripts/crawl_bioprojects.py（自动建表并爬取 NCBI/ENA 元数据）。",
+            ) from exc
+        raise
+
+
 @coexpression_router.get("/coexpression/projects")
 def list_bioprojects(
     source: str | None = Query(None, pattern="^(NCBI|ENA|CNGB)$"),
@@ -228,9 +249,7 @@ def list_bioprojects(
         sql += " WHERE " + " AND ".join(where)
     sql += " ORDER BY source, accession"
 
-    with mysql_cursor(settings.DB_COEXPRESSION) as cursor:
-        cursor.execute(sql, params)
-        rows = cursor.fetchall()
+    rows = _query_bioprojects(sql, params)
 
     records = [_bioproject_from_row(r).model_dump() for r in rows]
     return ok({"total": len(records), "records": records})
@@ -243,10 +262,9 @@ def get_bioproject(accession: str) -> dict:
     用法:
         GET /api/coexpression/projects/PRJNA976214
     """
-    with mysql_cursor(settings.DB_COEXPRESSION) as cursor:
-        cursor.execute("SELECT * FROM bioproject_meta WHERE accession = %s", (accession,))
-        row = cursor.fetchone()
-    if not row:
+    rows = _query_bioprojects(
+        "SELECT * FROM bioproject_meta WHERE accession = %s", [accession])
+    if not rows:
         raise ResourceNotFound(f"Bioproject not found: {accession}")
-    return ok(_bioproject_from_row(row).model_dump())
+    return ok(_bioproject_from_row(rows[0]).model_dump())
 

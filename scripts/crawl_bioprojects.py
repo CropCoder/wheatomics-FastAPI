@@ -281,6 +281,34 @@ ON DUPLICATE KEY UPDATE
 """.strip()
 
 
+# Keep in sync with scripts/init_bioproject_meta.sql.
+CREATE_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS `bioproject_meta` (
+  `accession`        VARCHAR(32)  NOT NULL,
+  `source`           VARCHAR(8)   NOT NULL,
+  `title`            TEXT,
+  `description`      TEXT,
+  `organism`         VARCHAR(128),
+  `submitter`        VARCHAR(256),
+  `submission_date`  VARCHAR(32),
+  `publication_date` VARCHAR(32),
+  `data_type`        VARCHAR(64),
+  `sample_count`     INT,
+  `study_type`       VARCHAR(64),
+  `related_pubmed`   VARCHAR(256),
+  `related_doi`      TEXT,
+  `raw_json`         LONGTEXT,
+  PRIMARY KEY (`accession`),
+  KEY `idx_source` (`source`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+""".strip()
+
+
+def ensure_table(cursor) -> None:
+    """Create bioproject_meta if missing (idempotent)."""
+    cursor.execute(CREATE_TABLE_SQL)
+
+
 def upsert(cursor, source: str, row: dict) -> bool:
     payload = {"source": source, **row}
     cursor.execute(UPSERT_SQL, payload)
@@ -405,6 +433,8 @@ def main(argv: list[str] | None = None) -> int:
     fail = 0
     saved: list[tuple[str, dict]] = []
     cur = conn.cursor() if conn else None
+    if cur is not None:
+        ensure_table(cur)
     for i, acc in enumerate(target, 1):
         source = source_for(acc)
         print(f"[{i:2d}/{len(target)}] {acc} ({source}) ... ", end="", flush=True)
