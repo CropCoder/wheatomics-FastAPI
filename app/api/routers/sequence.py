@@ -161,8 +161,8 @@ def _try_interval(database: Path, chrom: str, start: int, end: int) -> str:
 @router.get("/sequence/by-gene")
 def sequence_by_gene(
     gene_id: str = Query(...),
-    gene_db: str | None = Query(None, description="CDS / genomic BLAST DB. Omit to skip CDS lookup."),
-    protein_db: str | None = Query(None, description="Protein BLAST DB. Omit to skip protein lookup."),
+    gene_db: str = Query("all_gene", description="CDS / genomic BLAST DB (default: all_gene)."),
+    protein_db: str = Query("all_protein", description="Protein BLAST DB (default: all_protein)."),
 ) -> SequenceBundle:
     """根据基因 ID 获取基因和蛋白质序列（FASTA 格式）。
 
