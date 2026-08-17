@@ -281,26 +281,30 @@ ON DUPLICATE KEY UPDATE
 """.strip()
 
 
-# Keep in sync with scripts/init_bioproject_meta.sql.
+# Keep in sync with init_bioproject_meta.sql (repo root).
 CREATE_TABLE_SQL = """
-CREATE TABLE IF NOT EXISTS `bioproject_meta` (
-  `accession`        VARCHAR(32)  NOT NULL,
-  `source`           VARCHAR(8)   NOT NULL,
-  `title`            TEXT,
-  `description`      TEXT,
-  `organism`         VARCHAR(128),
-  `submitter`        VARCHAR(256),
-  `submission_date`  VARCHAR(32),
-  `publication_date` VARCHAR(32),
-  `data_type`        VARCHAR(64),
-  `sample_count`     INT,
-  `study_type`       VARCHAR(64),
-  `related_pubmed`   VARCHAR(256),
-  `related_doi`      TEXT,
-  `raw_json`         LONGTEXT,
-  PRIMARY KEY (`accession`),
-  KEY `idx_source` (`source`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+CREATE TABLE IF NOT EXISTS bioproject_meta (
+  accession        VARCHAR(20)  NOT NULL,
+  source           VARCHAR(16)  NOT NULL,                  -- 'NCBI' | 'ENA' | 'CNGB'
+  title            TEXT         NULL,
+  description      MEDIUMTEXT   NULL,
+  organism         VARCHAR(255) NULL,
+  submitter        VARCHAR(255) NULL,
+  submission_date  DATE         NULL,
+  publication_date DATE         NULL,
+  data_type        VARCHAR(64)  NULL,
+  sample_count     INT          NULL,
+  study_type       VARCHAR(64)  NULL,
+  related_pubmed   VARCHAR(64)  NULL,
+  related_doi      VARCHAR(255) NULL,
+  raw_json         JSON         NULL,
+  fetched_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (accession),
+  KEY idx_source (source),
+  KEY idx_organism (organism),
+  KEY idx_submission_date (submission_date)
+)
 """.strip()
 
 
