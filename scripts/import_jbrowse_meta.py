@@ -159,10 +159,12 @@ def discover_datasets(root: Path) -> list[Path]:
         sys.exit(f"JBrowse data root not found: {root}")
     found, skipped = [], []
     for sub in sorted(p for p in root.iterdir() if p.is_dir()):
+        if sub.name == "tests":
+            continue  # JBrowse's own test dataset, not WheatOmics data
         tl = sub / "trackList.json"
         if tl.is_file():
             found.append(tl)
-        elif sub.name not in ("src", "css", "js", "docs", "plugins", "tests"):
+        elif sub.name not in ("src", "css", "js", "docs", "plugins"):
             # JBrowse app dirs legitimately lack trackList.json; anything
             # else is suspicious and worth eyeballing.
             skipped.append(sub.name)
