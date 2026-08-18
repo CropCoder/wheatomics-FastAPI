@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 from app.primerserver2.dependencies import verify_api_key
@@ -91,6 +91,8 @@ app = FastAPI(
         "<td>GO/KEGG 富集分析：超几何检验 + Benjamini-Hochberg FDR 校正，支持气泡图可视化</td></tr>"
         "<tr><td><b>VariantHub</b></td><td><code>/api/VariantHub/query</code></td>"
         "<td>VCF 变异查询：按基因组分组的 26 个群体变异数据集（IWGSCv1.0 / IWGSCv2.1），支持区间/变异 ID 查询与样本子集过滤（bcftools）</td></tr>"
+        "<tr><td><b>JBrowse</b></td><td><code>/api/jbrowse</code></td>"
+        "<td>基因组浏览器数据集与轨道元数据（jbrowse_meta 库，trackList.json 由 API 重建）</td></tr>"
         "</table>"
 
         "<h2>AI Agent 接入 (MCP)</h2>"
@@ -199,6 +201,7 @@ for router in [
     go_kegg,
     varianthub,
     syntenyview,
+    jbrowse,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)
 
