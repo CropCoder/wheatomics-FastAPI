@@ -133,9 +133,10 @@
   </div>
   <div class="form-group">
     <label>Specificity check databases <small>(used when you click "Check specificity" on a design; checked = checked against)</small></label>
+    <div id="db-selected" style="margin-bottom:4px; min-height:20px;" class="small"></div>
     <div style="margin-bottom:4px;">
-      <button type="button" class="btn btn-outline-secondary btn-sm" id="db-clear">Clear</button>
-      <input id="db-search" class="form-control form-control-sm d-inline-block" style="width:200px; margin-left:8px;" placeholder="Search database...">
+      <input id="db-search" class="form-control form-control-sm d-inline-block" style="width:200px;" placeholder="Search database...">
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="db-clear" style="margin-left:8px;">Clear</button>
     </div>
     <div class="enzyme-box" id="db-list" style="max-height:180px;">Loading databases...</div>
   </div>
@@ -178,6 +179,7 @@
 <script>
 var ALL_ENZYMES = [];
 var LAST_DESIGNS = [];
+var CHECKED_ENZYMES = {};   // name -> true; survives search re-renders
 
 function showError(msg) {
   var el = $('#error-msg');
@@ -195,6 +197,7 @@ function loadEnzymes() {
   $.getJSON('/api/caps/enzymes')
     .done(function(resp) {
       ALL_ENZYMES = resp.data.enzymes;
+      ALL_ENZYMES.forEach(function(e) { if (e.common) CHECKED_ENZYMES[e.name] = true; });
       renderEnzymes('');
     })
     .fail(function() { $('#enzyme-list').text('Failed to load enzyme library'); });
@@ -205,13 +208,18 @@ function renderEnzymes(query) {
   var q = query.toLowerCase();
   ALL_ENZYMES.forEach(function(e) {
     if (q && e.name.toLowerCase().indexOf(q) < 0) return;
-    var checked = e.common ? 'checked' : '';
     box.append(
       '<label class="enz-item" data-name="' + e.name + '">' +
-      '<input type="checkbox" class="enz-cb" value="' + e.name + '" ' + checked + '> ' +
+      '<input type="checkbox" class="enz-cb" value="' + e.name + '" ' +
+      (CHECKED_ENZYMES[e.name] ? 'checked' : '') + '> ' +
       e.name + '<small class="text-muted"> ' + e.recognition + '</small></label>');
   });
 }
+
+$(document).on('change', '.enz-cb', function() {
+  if (this.checked) CHECKED_ENZYMES[this.value] = true;
+  else delete CHECKED_ENZYMES[this.value];
+});
 
 $('#enzyme-search').on('input', function() { renderEnzymes($(this).val()); });
 
@@ -337,6 +345,7 @@ $(document).on('click', '.btn-align', function() {
 // ---------- specificity check databases (chosen in the main form) ----------
 var PS2_DB_GROUPS = [];   // [{name, databases: [{name, label}]}]
 var DB_SEARCH_QUERY = '';
+var CHECKED_DBS = { 'primer_Chinese_Spring2.1.genome': true };  // survives search re-renders
 
 function loadCheckDatabases() {
   $.getJSON('/api/PrimerServer2/databases')
@@ -356,6 +365,42 @@ function loadCheckDatabases() {
     });
 }
 
+function shortDbName(name) {
+  return String(name).replace(/^primer[._]/, '').replace(/\.genome$/, '');
+}
+
+function updateDbSelected() {
+  var names = Object.keys(CHECKED_DBS);
+  var el = $('#db-selected');
+  if (!names.length) {
+    el.html('<span class="text-muted">(none selected — falls back to Chinese Spring v2.1)</span>');
+    return;
+  }
+  var chips = [];
+  var max = 8;
+  names.forEach(function(n, i) {
+    if (i >= max) return;
+    chips.push('<span class="badge badge-info db-chip" title="' + escapeHtml(n) + '" style="cursor:pointer; margin-right:4px;">' +
+      escapeHtml(shortDbName(n)) + ' ×</span>');
+  });
+  if (names.length > max) chips.push('<span class="text-muted small">+' + (names.length - max) + ' more</span>');
+  el.html(chips.join(''));
+}
+
+$(document).on('change', '.check-db', function() {
+  if (this.checked) CHECKED_DBS[this.value] = true;
+  else delete CHECKED_DBS[this.value];
+  updateDbSelected();
+});
+$(document).on('click', '.db-chip', function() {
+  var full = $(this).attr('title');
+  delete CHECKED_DBS[full];
+  $('.check-db').each(function() {
+    if (this.value === full) { this.checked = false; return false; }
+  });
+  updateDbSelected();
+});
+
 function renderDbList() {
   var box = $('#db-list').empty();
   var q = DB_SEARCH_QUERY.toLowerCase();
@@ -366,21 +411,24 @@ function renderDbList() {
     if (!shown.length) return;
     box.append('<div class="db-group-head"><b>' + escapeHtml(g.name) + '</b></div>');
     shown.forEach(function(db) {
-      var def = (db.name === 'primer_Chinese_Spring2.1.genome');
       box.append(
         '<label style="display:inline-block; margin:0 12px 3px 0; font-size:12px; white-space:nowrap;">' +
         '<input type="checkbox" class="check-db" value="' + escapeHtml(db.name) + '"' +
-        (def ? ' checked' : '') + '> ' + escapeHtml(db.label || db.name) + '</label>');
+        (CHECKED_DBS[db.name] ? ' checked' : '') + '> ' + escapeHtml(db.label || db.name) + '</label>');
     });
   });
+  updateDbSelected();
 }
 
 $('#db-search').on('input', function() { DB_SEARCH_QUERY = $(this).val(); renderDbList(); });
-$('#db-clear').on('click', function() { $('.check-db').prop('checked', false); });
+$('#db-clear').on('click', function() {
+  CHECKED_DBS = {};
+  $('.check-db').prop('checked', false);
+  updateDbSelected();
+});
 
 function selectedCheckDbs() {
-  var names = [];
-  $('.check-db:checked').each(function() { names.push(this.value); });
+  var names = Object.keys(CHECKED_DBS);
   return names.length ? names : ['primer_Chinese_Spring2.1.genome'];
 }
 
