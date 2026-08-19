@@ -6,14 +6,14 @@ GENOME_EXAMPLES = [
     "display_name": "Chinese Spring genome v1.0",
     "region": "chr1A:1-141522",
     "gene": "TraesCS1A01G000100LC",
-    "table_name": "Genefunc_table"
+    "table_name": "Genefunc_CS_IWGSCv1.0_table"
   },
   {
     "pfam": "",
     "display_name": "Chinese Spring genome v2.1",
     "region": "chr1A:1-142819",
     "gene": "TraesCS1A03G0000100LC",
-    "table_name": "Genefunc_IWGSC03G_table"
+    "table_name": "Genefunc_CS_IWGSC03G_table"
   },
   {
     "pfam": "PF00830",
