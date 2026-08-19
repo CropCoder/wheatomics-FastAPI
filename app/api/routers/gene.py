@@ -388,13 +388,13 @@ def _make_function_record(row, table):
 @pfam_router.get("/pfam")
 def search_pfam(
     domain: str = Query(..., alias="ID"),
-    table: str = Query("Genefunc_CS_IWGSCv1.0_table"),
+    table: str = Query("Genefunc_CS_IWGSC03G_table"),
 ) -> dict:
     """PfamSearch: 按 PFAM 结构域搜索基因 [gene family]
 
     功能:
         输入 PFAM 结构域 ID（以 PF 开头），返回包含该结构域的
-        所有基因列表。可指定查询表（默认 Genefunc_CS_IWGSCv1.0_table，
+        所有基因列表。可指定查询表（默认 Genefunc_CS_IWGSC03G_table，
         完整列表见 /api/genes/functions/tables）。
         注意方向：本端点按 PFAM 找基因；若要查单个基因的结构域，
         请用 /api/genes/functions/interval（返回的 Domain 列即 PFAM 注释）。
@@ -405,7 +405,7 @@ def search_pfam(
     用法:
         GET /api/genes/functions/pfam?ID=<PFAM域名>&table=<表名>
         - ID: 必填，PFAM 结构域 ID，如 PF00319
-        - table: 可选，默认 Genefunc_CS_IWGSCv1.0_table（中国春 IWGSC v1.0）
+        - table: 可选，默认 Genefunc_CS_IWGSC03G_table（中国春 IWGSC v2.1）
 
     案例:
         请求:
@@ -415,7 +415,7 @@ def search_pfam(
           {
             "success": true,
             "data": {
-              "table": "Genefunc_CS_IWGSCv1.0_table",
+              "table": "Genefunc_CS_IWGSC03G_table",
               "domain": "PF00319",
               "count": 5,
               "records": [
@@ -723,13 +723,13 @@ def list_gene_function_registry() -> dict:
 @interval_router.get("/interval")
 def search_gene_interval(
     region: str = Query(..., alias="ID"),
-    table: str = Query("Genefunc_CS_IWGSCv1.0_table"),
+    table: str = Query("Genefunc_CS_IWGSC03G_table"),
 ) -> dict:
     """按染色体区间搜索基因。
 
     功能:
         输入染色体区间（如 chr5A:587000000..587200000），返回该区间内
-        的所有基因列表。可指定查询表（默认 Genefunc_CS_IWGSCv1.0_table，
+        的所有基因列表。可指定查询表（默认 Genefunc_CS_IWGSC03G_table，
         完整列表见 /api/genes/functions/tables）。
 
     关联网站:
@@ -738,7 +738,7 @@ def search_gene_interval(
     用法:
         GET /api/genes/functions/interval?ID=<区间>&table=<表名>
         - ID: 必填，染色体区间，格式 chr5A:587000000..587200000
-        - table: 可选，默认 Genefunc_CS_IWGSCv1.0_table（中国春 IWGSC v1.0）
+        - table: 可选，默认 Genefunc_CS_IWGSC03G_table（中国春 IWGSC v2.1）
 
     案例:
         请求:
@@ -748,7 +748,7 @@ def search_gene_interval(
           {
             "success": true,
             "data": {
-              "table": "Genefunc_CS_IWGSCv1.0_table",
+              "table": "Genefunc_CS_IWGSC03G_table",
               "region": "chr5A:587000000..587200000",
               "count": 5,
               "records": [
