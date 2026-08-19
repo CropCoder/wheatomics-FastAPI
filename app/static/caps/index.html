@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAPS/dCAPS Primer Design - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<style>
+  body { background: #f2f2f2; font-size: 15px; }
+  .main-wrap { max-width: 1100px; margin: 0 auto; background: #fff; padding: 25px 35px 45px 35px; border-left: 2px solid #d7ebff; border-right: 2px solid #d7ebff; min-height: 600px; }
+  .enzyme-box { max-height: 220px; overflow-y: auto; border: 1px solid #ccc; border-radius: 3px; padding: 8px 12px; background: #fafbfc; }
+  .enzyme-box label { display: inline-block; margin: 0 10px 4px 0; font-size: 13px; white-space: nowrap; }
+  .alignment-pre { background: #f6fbff; border: 1px solid #cfe7ff; padding: 10px; font-size: 12px; line-height: 1.5; white-space: pre; overflow-x: auto; }
+  .mismatch-badge { background: #ff9800; color: #fff; border-radius: 3px; padding: 1px 6px; font-size: 11px; }
+  .nav-tabs .nav-link { font-weight: bold; }
+  #results-section { display: none; }
+  .table td, .table th { vertical-align: middle; }
+  .check-status { font-size: 13px; }
+</style>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+</head>
+<body>
+<!-- header -->
+<div style="background:#0785bc; color:#fff; text-align:center;">
+  <div style="font-size:30px; padding:18px 0 4px 0;">WheatOmics 2.0</div>
+  <div style="padding-bottom:10px;">
+    <a href="/" style="color:#fff; margin:0 12px;">Home</a>
+    <a href="/getfasta/index.html" style="color:#fff; margin:0 12px;">GetSequence</a>
+    <a href="/expression" style="color:#fff; margin:0 12px;">GeneExpression</a>
+    <a href="/coexpression" style="color:#fff; margin:0 12px;">Co-expression</a>
+    <a href="/wheatPPI" style="color:#fff; margin:0 12px;">WheatPPI</a>
+    <a href="/genes" style="color:#fff; margin:0 12px;">KnownGene</a>
+    <a href="/blast/blast.html" style="color:#fff; margin:0 12px;">BLAST</a>
+    <a href="/jbrowse.html" style="color:#fff; margin:0 12px;">JBrowse</a>
+    <a href="/VariantHub" style="color:#fff; margin:0 12px;">VariantHub</a>
+    <a href="/caps" style="color:#ffd; margin:0 12px;"><b>CAPS/dCAPS</b></a>
+  </div>
+</div>
+
+<div class="main-wrap">
+  <h4 style="text-align:center; margin: 10px 0 6px 0;">CAPS / dCAPS Primer Design</h4>
+  <p style="text-align:center; color:#555; font-size:14px;">
+    Design primers that discriminate two alleles of a SNP by restriction digestion.
+    CAPS uses a natural site created/destroyed by the SNP; dCAPS introduces 1-3 mismatches
+    in the primer to create the site (Neff et al. 2002).
+  </p>
+
+  <ul class="nav nav-tabs" id="mode-tabs">
+    <li class="nav-item"><a class="nav-link active" data-mode="seq" href="#tab-seq" data-toggle="tab">Paste sequences</a></li>
+    <li class="nav-item"><a class="nav-link" data-mode="coord" href="#tab-coord" data-toggle="tab">Genomic coordinates</a></li>
+    <li class="nav-item"><a class="nav-link" data-mode="vcf" href="#tab-vcf" data-toggle="tab">VCF variant</a></li>
+  </ul>
+
+  <div class="tab-content" style="margin-top:15px;">
+    <div class="tab-pane active" id="tab-seq">
+      <div class="form-group">
+        <label>Allele 1 sequence (WT)</label>
+        <textarea id="seq1" class="form-control" rows="4" placeholder="e.g. AGTTCAACGTTAGCATGAATCATGTTCAAGCCATGTCTATCTTGATCTCAACCTTCCACCATGGCAAGATTCCTTCTGCTATCGATC"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Allele 2 sequence (mutant, identical except the SNP)</label>
+        <textarea id="seq2" class="form-control" rows="4" placeholder="Same length; one base differs from allele 1"></textarea>
+      </div>
+    </div>
+    <div class="tab-pane" id="tab-coord">
+      <div class="form-row">
+        <div class="form-group col-md-4">
+          <label>BLAST DB name</label>
+          <input id="coord-db" class="form-control" placeholder="Chinese_Spring2.1">
+        </div>
+        <div class="form-group col-md-5">
+          <label>Region (chrom:start-end)</label>
+          <input id="coord-region" class="form-control" placeholder="chr1A:100-500">
+        </div>
+        <div class="form-group col-md-3">
+          <label>SNP position (bp)</label>
+          <input id="coord-pos" class="form-control" type="number" placeholder="250">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label>Allele 1 base</label>
+          <input id="coord-a1" class="form-control" maxlength="1" placeholder="A">
+        </div>
+        <div class="form-group col-md-6">
+          <label>Allele 2 base</label>
+          <input id="coord-a2" class="form-control" maxlength="1" placeholder="G">
+        </div>
+      </div>
+      <small class="text-muted">Flanking sequence is fetched from the BLAST database (blastdbcmd). Chrom naming follows the DB convention, e.g. chr1A for Chinese_Spring2.1.</small>
+    </div>
+    <div class="tab-pane" id="tab-vcf">
+      <div class="form-row">
+        <div class="form-group col-md-5">
+          <label>VariantHub dataset</label>
+          <select id="vcf-dataset" class="form-control"></select>
+        </div>
+        <div class="form-group col-md-3">
+          <label>Chromosome</label>
+          <input id="vcf-chrom" class="form-control" placeholder="1A">
+        </div>
+        <div class="form-group col-md-4">
+          <label>Position (bp)</label>
+          <input id="vcf-pos" class="form-control" type="number" placeholder="123456">
+        </div>
+      </div>
+      <small class="text-muted">REF/ALT are read from the VCF with bcftools and flanks are fetched from the dataset's reference BLAST DB.</small>
+    </div>
+  </div>
+
+  <hr>
+  <div class="form-row">
+    <div class="form-group col-md-3">
+      <label>Mismatch max</label>
+      <select id="mismatch-max" class="form-control">
+        <option value="0">0 (CAPS only)</option>
+        <option value="1" selected>1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+      </select>
+    </div>
+    <div class="form-group col-md-3">
+      <label>Top designs</label>
+      <input id="top-n" class="form-control" type="number" value="20" min="1" max="100">
+    </div>
+    <div class="form-group col-md-6">
+      <label>Restriction enzymes <small>(checked = used; all shown = 全部)</small></label>
+      <input id="enzyme-search" class="form-control form-control-sm" placeholder="Search enzyme name...">
+      <div class="enzyme-box" id="enzyme-list">Loading enzymes...</div>
+    </div>
+  </div>
+  <p>
+    <a data-toggle="collapse" href="#adv-params" role="button">Advanced options</a>
+  </p>
+  <div class="collapse" id="adv-params">
+    <div class="form-row">
+      <div class="form-group col-md-3"><label>Primer length (min,max)</label><input id="p-len" class="form-control" value="20,27"></div>
+      <div class="form-group col-md-3"><label>Tm range (°C)</label><input id="p-tm" class="form-control" value="55,65"></div>
+      <div class="form-group col-md-3"><label>Product size (bp)</label><input id="p-prod" class="form-control" value="100,1000"></div>
+      <div class="form-group col-md-3"><label>Flank for coord/VCF (bp)</label><input id="p-flank" class="form-control" value="250"></div>
+    </div>
+  </div>
+  <button id="btn-design" class="btn btn-primary btn-lg btn-block" style="margin:10px 0;">Design primers</button>
+  <div id="error-msg" class="alert alert-danger" style="display:none;"></div>
+
+  <div id="results-section">
+    <h5>Designs <button id="btn-tsv" class="btn btn-sm btn-outline-secondary float-right">Download TSV</button></h5>
+    <div class="table-wrapper" style="overflow-x:auto;">
+      <table class="table table-sm table-bordered table-striped" id="results-table">
+        <thead><tr>
+          <th>Rank</th><th>Mode</th><th>Enzyme</th><th>Recognition</th>
+          <th>Designed primer</th><th>Mismatches</th><th>Cut pos</th>
+          <th>Tm F / R</th><th>Product (bp)</th><th>Actions</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="alignment-area"></div>
+    <div id="check-area" class="mt-3"></div>
+  </div>
+</div>
+
+<!-- footer -->
+<div style="background:#d9d9d9; text-align:center; padding:8px 0; font-size:12px;">
+  For any question and suggestion, please contact: <a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+</div>
+
+<script>
+var ALL_ENZYMES = [];
+var LAST_DESIGNS = [];
+
+function showError(msg) {
+  var el = $('#error-msg');
+  el.text(msg).show();
+  $('html, body').animate({scrollTop: el.offset().top - 100}, 200);
+}
+
+function parsePair(text) {
+  var parts = String(text).split(',').map(function(s){ return s.trim(); });
+  return parts.length === 2 ? parts : null;
+}
+
+// ---------- enzymes ----------
+function loadEnzymes() {
+  $.getJSON('/api/caps/enzymes')
+    .done(function(resp) {
+      ALL_ENZYMES = resp.data.enzymes;
+      renderEnzymes('');
+    })
+    .fail(function() { $('#enzyme-list').text('Failed to load enzyme library'); });
+}
+
+function renderEnzymes(query) {
+  var box = $('#enzyme-list').empty();
+  var q = query.toLowerCase();
+  ALL_ENZYMES.forEach(function(e) {
+    if (q && e.name.toLowerCase().indexOf(q) < 0) return;
+    var checked = e.common ? 'checked' : '';
+    box.append(
+      '<label class="enz-item" data-name="' + e.name + '">' +
+      '<input type="checkbox" class="enz-cb" value="' + e.name + '" ' + checked + '> ' +
+      e.name + '<small class="text-muted"> ' + e.recognition + '</small></label>');
+  });
+}
+
+$('#enzyme-search').on('input', function() { renderEnzymes($(this).val()); });
+
+// ---------- VCF datasets ----------
+function loadVcfDatasets() {
+  $.getJSON('/api/VariantHub/datasets')
+    .done(function(resp) {
+      var sel = $('#vcf-dataset').empty();
+      (resp.data.datasets || []).forEach(function(d) {
+        sel.append($('<option>').val(d).text(d));
+      });
+    })
+    .fail(function() { $('#vcf-dataset').empty().append($('<option>').text('unavailable')); });
+}
+
+// ---------- design ----------
+function activeMode() {
+  return $('#mode-tabs .nav-link.active').data('mode');
+}
+
+function selectedEnzymes() {
+  var names = [];
+  $('.enz-cb:checked').each(function() { names.push(this.value); });
+  return names;
+}
+
+function buildRequest() {
+  var req = {
+    mismatch_max: parseInt($('#mismatch-max').val(), 10),
+    top_n: parseInt($('#top-n').val(), 10),
+    enzymes: selectedEnzymes()
+  };
+  var len = parsePair($('#p-len').val()), tm = parsePair($('#p-tm').val()), prod = parsePair($('#p-prod').val());
+  if (len) req.primer_len = [parseInt(len[0],10), parseInt(len[1],10)];
+  if (tm)  req.tm_range   = [parseFloat(tm[0]), parseFloat(tm[1])];
+  if (prod) req.product_size = [parseInt(prod[0],10), parseInt(prod[1],10)];
+  req.flank = parseInt($('#p-flank').val(), 10);
+
+  var mode = activeMode();
+  if (mode === 'seq') {
+    req.seq1 = $('#seq1').val().trim().toUpperCase();
+    req.seq2 = $('#seq2').val().trim().toUpperCase();
+  } else if (mode === 'coord') {
+    req.db = $('#coord-db').val().trim();
+    req.region = $('#coord-region').val().trim();
+    req.pos = parseInt($('#coord-pos').val(), 10);
+    req.allele1 = $('#coord-a1').val().trim().toUpperCase();
+    req.allele2 = $('#coord-a2').val().trim().toUpperCase();
+  } else {
+    req.vcf_dataset = $('#vcf-dataset').val();
+    req.chrom = $('#vcf-chrom').val().trim();
+    req.pos = parseInt($('#vcf-pos').val(), 10);
+  }
+  return req;
+}
+
+$('#btn-design').on('click', function() {
+  $('#error-msg').hide();
+  $('#results-section').hide();
+  $('#alignment-area').empty();
+  $('#check-area').empty();
+  var btn = $(this).prop('disabled', true).text('Designing...');
+  $.ajax({
+    url: '/api/caps/design', method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(buildRequest())
+  })
+  .done(function(resp) {
+    LAST_DESIGNS = resp.data.designs || [];
+    renderResults(resp.data);
+  })
+  .fail(function(xhr) {
+    var msg = 'Design failed';
+    try {
+      var j = JSON.parse(xhr.responseText);
+      if (j.detail) msg = typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail);
+    } catch (e) {}
+    showError(msg);
+  })
+  .always(function() { btn.prop('disabled', false).text('Design primers'); });
+});
+
+function renderResults(data) {
+  var tbody = $('#results-table tbody').empty();
+  if (!LAST_DESIGNS.length) {
+    showError('No design found. Try relaxing the mismatch max or the Tm range, or a longer input sequence.');
+    return;
+  }
+  LAST_DESIGNS.forEach(function(d) {
+    var mm = d.mismatch_count > 0
+      ? '<span class="mismatch-badge" title="' + (d.mismatch_positions || []).join(',') + ' (0-based from 5\')">' + d.mismatch_count + ' mm</span>'
+      : '<span class="badge badge-success">0</span>';
+    var tmr = d.tm_r == null ? '—' : d.tm_r;
+    var prod = d.product_size == null ? '—' : d.product_size;
+    var row = $('<tr>');
+    row.append($('<td>').text(d.rank));
+    row.append($('<td>').text(d.mode));
+    row.append($('<td>').text(d.enzyme));
+    row.append($('<td>').text(d.recognition));
+    row.append($('<td>').text(d.designed_primer));
+    row.append($('<td>').html(mm));
+    row.append($('<td>').text(d.cut_pos));
+    row.append($('<td>').text(d.tm_f + ' / ' + tmr));
+    row.append($('<td>').text(prod));
+    row.append($('<td>').html(
+      '<button class="btn btn-sm btn-outline-primary btn-align">Alignment</button> ' +
+      '<button class="btn btn-sm btn-outline-success btn-check">Check specificity</button>'));
+    tbody.append(row);
+  });
+  $('#results-section').show();
+}
+
+$(document).on('click', '.btn-align', function() {
+  var idx = $(this).closest('tr').index();
+  var d = LAST_DESIGNS[idx];
+  $('#alignment-area').html(
+    '<h6>Alignment — ' + d.enzyme + ' (' + d.mode + ', designed primer: ' + d.designed_primer + ')</h6>' +
+    '<pre class="alignment-pre">' + $('<div>').text(d.alignment).html() + '</pre>' +
+    '<p class="small">Primer F: <b>' + d.primer_f + '</b><br>Primer R: <b>' + (d.primer_r || '(none found — supply your own)') + '</b></p>');
+  $('html, body').animate({scrollTop: $('#alignment-area').offset().top - 100}, 200);
+});
+
+// ---------- send to PrimerServer2 specificity check ----------
+function pollCheckResult(jobId, el, attempts) {
+  $.getJSON('/api/PrimerServer2/jobs/' + jobId + '/result')
+    .done(function(resp) {
+      var st = resp.status || (resp.data && resp.data.status);
+      if (st === 'done' || st === 'finished') {
+        el.html('<span class="badge badge-success">Check done</span> jobId ' + jobId +
+          ' — see full report at <a href="/PrimerServer2" target="_blank">PrimerServer2</a> (or API /api/PrimerServer2/jobs/' + jobId + '/result).');
+      } else if (attempts > 0) {
+        el.text('Specificity check running... (' + st + ')');
+        setTimeout(function() { pollCheckResult(jobId, el, attempts - 1); }, 3000);
+      } else {
+        el.html('Check still running (jobId ' + jobId + '). Poll later via API /api/PrimerServer2/jobs/' + jobId + '/result.');
+      }
+    })
+    .fail(function() {
+      if (attempts > 0) setTimeout(function() { pollCheckResult(jobId, el, attempts - 1); }, 3000);
+      else el.text('Check job ' + jobId + ' status unavailable.');
+    });
+}
+
+$(document).on('click', '.btn-check', function() {
+  var idx = $(this).closest('tr').index();
+  var d = LAST_DESIGNS[idx];
+  var el = $('#check-area');
+  if (!d.primer_r) {
+    el.html('<div class="alert alert-warning">This design has no paired reverse primer — add one before specificity checking.</div>');
+    return;
+  }
+  var payload = {
+    'app-type': 'check',
+    'check-primers': d.enzyme + '_' + d.rank + ' ' + d.primer_f + ' ' + d.primer_r,
+    'size_start': 50,
+    'size_stop': 5000,
+    'min_Tm_diff': 20,
+    'end3_mismatch_threshold': 5,
+    'selected-databases': ['primer_Chinese_Spring2.1.genome']
+  };
+  el.html('<span class="check-status">Submitting to PrimerServer2 check...</span>');
+  $.ajax({
+    url: '/api/PrimerServer2/jobs/check', method: 'POST',
+    contentType: 'application/json', data: JSON.stringify(payload)
+  })
+  .done(function(resp) {
+    var jobId = resp.jobId || (resp.data && resp.data.jobId);
+    if (!jobId) { el.html('Unexpected check response: ' + JSON.stringify(resp)); return; }
+    el.html('Specificity check running... (jobId ' + jobId + ')');
+    pollCheckResult(jobId, el, 60);
+  })
+  .fail(function(xhr) {
+    el.html('<div class="alert alert-danger">Failed to submit specificity check: ' + xhr.responseText.slice(0, 300) + '</div>');
+  });
+});
+
+// ---------- TSV download ----------
+$('#btn-tsv').on('click', function() {
+  if (!LAST_DESIGNS.length) return;
+  var lines = ['rank\tmode\tenzyme\trecognition\tdesigned_primer\tmismatch_count\tmismatch_positions\tcut_pos\ttm_f\ttm_r\tproduct_size\tprimer_f\tprimer_r'];
+  LAST_DESIGNS.forEach(function(d) {
+    lines.push([d.rank, d.mode, d.enzyme, d.recognition, d.designed_primer,
+      d.mismatch_count, (d.mismatch_positions||[]).join(';'), d.cut_pos,
+      d.tm_f, d.tm_r == null ? '' : d.tm_r, d.product_size == null ? '' : d.product_size,
+      d.primer_f, d.primer_r || ''].join('\t'));
+  });
+  var blob = new Blob([lines.join('\n')], {type: 'text/tab-separated-values'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'caps_dcaps_designs.tsv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+});
+
+// ---------- init ----------
+loadEnzymes();
+loadVcfDatasets();
+</script>
+</body>
+</html>
