@@ -134,7 +134,6 @@
   <div class="form-group">
     <label>Specificity check databases <small>(used when you click "Check specificity" on a design; checked = checked against)</small></label>
     <div style="margin-bottom:4px;">
-      <button type="button" class="btn btn-outline-secondary btn-sm" id="db-sel-all-genome">All genomes</button>
       <button type="button" class="btn btn-outline-secondary btn-sm" id="db-clear">Clear</button>
       <input id="db-search" class="form-control form-control-sm d-inline-block" style="width:200px; margin-left:8px;" placeholder="Search database...">
     </div>
@@ -377,15 +376,6 @@ function renderDbList() {
 }
 
 $('#db-search').on('input', function() { DB_SEARCH_QUERY = $(this).val(); renderDbList(); });
-$('#db-sel-all-genome').on('click', function() {
-  $('.check-db').each(function() {
-    var name = this.value;
-    var inGenome = PS2_DB_GROUPS.some(function(g) {
-      return g.name === 'genome' && g.databases.some(function(db) { return db.name === name; });
-    });
-    this.checked = inGenome;
-  });
-});
 $('#db-clear').on('click', function() { $('.check-db').prop('checked', false); });
 
 function selectedCheckDbs() {
