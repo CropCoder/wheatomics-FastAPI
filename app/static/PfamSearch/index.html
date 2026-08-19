@@ -270,9 +270,9 @@ function loadTables() {
         sel.html('<option value="">(no PFAM-supported tables found)</option>');
         showError('No Genefuncdb tables have both Chrom and Domain columns.');
       } else {
-        // 默认选中中国春 v1.0 表
-        if (sel.find('option[value="Genefunc_CS_IWGSCv1.0_table"]').length) {
-          sel.val('Genefunc_CS_IWGSCv1.0_table');
+        // 默认选中中国春 v2.1 表
+        if (sel.find('option[value="Genefunc_CS_IWGSC03G_table"]').length) {
+          sel.val('Genefunc_CS_IWGSC03G_table');
         }
       }
     })

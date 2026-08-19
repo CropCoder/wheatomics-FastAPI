@@ -277,9 +277,9 @@ function loadTables() {
         var opt = $('<option>').val(item.table_name).text(item.display_name);
         sel.append(opt);
       });
-      // 默认选中中国春 v1.0 表
-      if (sel.find('option[value="Genefunc_CS_IWGSCv1.0_table"]').length) {
-        sel.val('Genefunc_CS_IWGSCv1.0_table');
+      // 默认选中中国春 v2.1 表
+      if (sel.find('option[value="Genefunc_CS_IWGSC03G_table"]').length) {
+        sel.val('Genefunc_CS_IWGSC03G_table');
       }
       updateExample();
       // 基因组切换时更新示例
