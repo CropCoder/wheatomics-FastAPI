@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 from app.primerserver2.dependencies import verify_api_key
@@ -93,6 +93,8 @@ app = FastAPI(
         "<td>VCF 变异查询：按基因组分组的 26 个群体变异数据集（IWGSCv1.0 / IWGSCv2.1），支持区间/变异 ID 查询与样本子集过滤（bcftools）</td></tr>"
         "<tr><td><b>JBrowse</b></td><td><code>/api/jbrowse</code></td>"
         "<td>基因组浏览器数据集与轨道元数据（jbrowse_meta 库，trackList.json 由 API 重建）</td></tr>"
+        "<tr><td><b>CAPS/dCAPS</b></td><td><code>/api/caps</code></td>"
+        "<td>CAPS/dCAPS 引物设计：按 SNP 枚举限制酶与错配引物，支持序列/坐标/VCF 三种输入</td></tr>"
         "</table>"
 
         "<h2>AI Agent 接入 (MCP)</h2>"
@@ -138,6 +140,7 @@ app.mount("/genes", StaticFiles(directory=Path(__file__).parent / "app" / "stati
 app.mount("/GO_KEGG", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "GO_KEGG", html=True), name="GO_KEGG")
 app.mount("/VariantHub", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "VariantHub", html=True), name="VariantHub")
 app.mount("/syntenyview", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "syntenyview", html=True), name="syntenyview")
+app.mount("/caps", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "caps", html=True), name="caps")
 
 
 @app.middleware("http")
@@ -202,6 +205,7 @@ for router in [
     varianthub,
     syntenyview,
     jbrowse,
+    caps,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)
 

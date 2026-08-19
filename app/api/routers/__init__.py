@@ -18,3 +18,4 @@ from .go_kegg import router as go_kegg
 from .varianthub import router as varianthub
 from .syntenyview import router as syntenyview
 from .jbrowse import router as jbrowse
+from .caps import router as caps

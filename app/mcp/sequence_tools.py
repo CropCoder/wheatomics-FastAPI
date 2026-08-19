@@ -9,6 +9,7 @@ from app.api.routers.sequence import (
     sequence_by_interval,
     batch_sequence,
 )
+from app.services.caps_designer import design_caps_dcaps
 
 # 1. 初始化 MCP Server
 sequence_mcp_server = Server("wheatomics")
@@ -60,6 +61,27 @@ async def handle_list_tools() -> list[types.Tool]:
                 "required": ["database", "ids"]
             }
         ),
+        types.Tool(
+            name="design_caps_primers",
+            description=(
+                "Design CAPS/dCAPS primer pairs that discriminate two alleles "
+                "of a SNP by restriction digestion. Provide the two allele "
+                "sequences (equal length, differing at exactly one position); "
+                "returns ranked designs with enzyme, primer sequences, "
+                "mismatches, cut position and Tm. mismatch_max 0 = CAPS only "
+                "(natural site), 1-3 = dCAPS (primer introduces mismatches)."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "seq1": {"type": "string", "description": "Allele 1 sequence (A/C/G/T)"},
+                    "seq2": {"type": "string", "description": "Allele 2 sequence, same length, one base differs"},
+                    "mismatch_max": {"type": "integer", "description": "Max primer mismatches (0-3)", "default": 1},
+                    "top_n": {"type": "integer", "description": "Number of designs to return", "default": 10}
+                },
+                "required": ["seq1", "seq2"]
+            }
+        ),
     ]
     return tools
 
@@ -103,6 +125,20 @@ async def handle_call_tool(name: str, arguments: dict) -> list[types.TextContent
                     ids=arguments["ids"],
                 )
                 return [types.TextContent(type="text", text=json.dumps(result))]
+
+            # 工具 4: CAPS/dCAPS 引物设计
+            elif name == "design_caps_primers":
+                result = await asyncio.to_thread(
+                    design_caps_dcaps,
+                    seq1=arguments["seq1"],
+                    seq2=arguments["seq2"],
+                    mismatch_max=int(arguments.get("mismatch_max", 1)),
+                    top_n=int(arguments.get("top_n", 10)),
+                )
+                return [types.TextContent(
+                    type="text",
+                    text=json.dumps({"total_designs": len(result), "designs": result}),
+                )]
 
             else:
                 raise ValueError(f"Unknown tool: {name}")
