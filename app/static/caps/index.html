@@ -327,22 +327,75 @@ $(document).on('click', '.btn-align', function() {
 });
 
 // ---------- send to PrimerServer2 specificity check ----------
+function escapeHtml(s) {
+  return $('<div>').text(s == null ? '' : String(s)).html();
+}
+
+function renderCheckResults(resp, el) {
+  var rows = resp.checkResults || [];
+  var html = '<h6>Specificity check results <small class="text-muted">(job ' + resp.jobId + ')</small></h6>';
+  if (!rows.length) {
+    html += '<div class="alert alert-info">0 amplicon rows: the primer pair does not ' +
+      'amplify the checked genome database (or the check found no valid amplicons). ' +
+      'Consider re-checking against other databases via PrimerServer2.</div>';
+  } else {
+    html += '<div style="overflow-x:auto;"><table class="table table-sm table-bordered table-striped">' +
+      '<thead><tr><th>Primer ID</th><th>Rank</th><th>Database</th><th>Amplicons</th><th>Sizes (bp)</th><th>Primers</th><th>Detail</th></tr></thead><tbody>';
+    rows.forEach(function(r, i) {
+      var verdict = r.ampliconNumber === 1
+        ? '<span class="badge badge-success">unique</span>'
+        : '<span class="badge badge-danger">' + r.ampliconNumber + ' loci</span>';
+      html += '<tr>' +
+        '<td>' + escapeHtml(r.siteId) + '</td>' +
+        '<td>' + r.rank + '</td>' +
+        '<td>' + escapeHtml(r.database) + '</td>' +
+        '<td>' + verdict + '</td>' +
+        '<td>' + (r.sizes || []).join(', ') + '</td>' +
+        '<td><small>' + escapeHtml((r.primerSeqs || []).join(' / ')) + '</small></td>' +
+        '<td>' + (r.alignment
+          ? '<button class="btn btn-sm btn-outline-secondary btn-check-align" data-i="' + i + '">Alignment</button>'
+          : '—') + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '<p class="small">amplicons = 1 说明该引物对在中国春参考基因组上唯一扩增；>1 表示会同时扩增其他位点（A/B/D 同源基因等）。</p>';
+  }
+  if (resp.html) {
+    html += '<details><summary>Full HTML report</summary>' +
+      '<div style="max-height:420px; overflow:auto; border:1px solid #ccc; padding:8px; background:#fafafa;">' +
+      resp.html + '</div></details>';
+  }
+  el.html(html);
+  el.data('check-results', rows);
+}
+
+$(document).on('click', '.btn-check-align', function() {
+  var rows = $('#check-area').data('check-results') || [];
+  var r = rows[parseInt($(this).data('i'), 10)];
+  if (!r || !r.alignment) return;
+  var box = $('#check-area');
+  box.append('<pre class="alignment-pre">' + escapeHtml(r.alignment) + '</pre>');
+  $(this).prop('disabled', true).text('Shown below');
+});
+
 function pollCheckResult(jobId, el, attempts) {
   $.getJSON('/api/PrimerServer2/jobs/' + jobId + '/result')
     .done(function(resp) {
-      var st = resp.status || (resp.data && resp.data.status);
-      if (st === 'done' || st === 'finished') {
-        el.html('<span class="badge badge-success">Check done</span> jobId ' + jobId +
-          ' — see full report at <a href="/PrimerServer2" target="_blank">PrimerServer2</a> (or API /api/PrimerServer2/jobs/' + jobId + '/result).');
+      var st = resp.status;
+      if (st === 'done') {
+        renderCheckResults(resp, el);
+      } else if (st === 'error') {
+        el.html('<div class="alert alert-danger">Specificity check failed: ' +
+          escapeHtml(resp.error || 'unknown error') + '</div>');
       } else if (attempts > 0) {
-        el.text('Specificity check running... (' + st + ')');
-        setTimeout(function() { pollCheckResult(jobId, el, attempts - 1); }, 3000);
+        el.text('Specificity check running... (' + st + ', job ' + jobId + ')');
+        setTimeout(function() { pollCheckResult(jobId, el, attempts - 1); }, 5000);
       } else {
-        el.html('Check still running (jobId ' + jobId + '). Poll later via API /api/PrimerServer2/jobs/' + jobId + '/result.');
+        el.html('Check still running (job ' + jobId + '). Poll later via API ' +
+          '/api/PrimerServer2/jobs/' + jobId + '/result.');
       }
     })
     .fail(function() {
-      if (attempts > 0) setTimeout(function() { pollCheckResult(jobId, el, attempts - 1); }, 3000);
+      if (attempts > 0) setTimeout(function() { pollCheckResult(jobId, el, attempts - 1); }, 5000);
       else el.text('Check job ' + jobId + ' status unavailable.');
     });
 }
@@ -355,9 +408,12 @@ $(document).on('click', '.btn-check', function() {
     el.html('<div class="alert alert-warning">This design has no paired reverse primer — add one before specificity checking.</div>');
     return;
   }
+  // PrimerServer2 check parser expects TAB-separated lines with a rank
+  // column: "ID<TAB>Rank<TAB>LeftSeq<TAB>RightSeq" (space-separated input
+  // without a rank column is silently dropped by parse_primer_input).
   var payload = {
     'app-type': 'check',
-    'check-primers': d.enzyme + '_' + d.rank + ' ' + d.primer_f + ' ' + d.primer_r,
+    'check-primers': d.enzyme + '_' + d.rank + '\t1\t' + d.primer_f + '\t' + d.primer_r,
     'size_start': 50,
     'size_stop': 5000,
     'min_Tm_diff': 20,
@@ -373,7 +429,7 @@ $(document).on('click', '.btn-check', function() {
     var jobId = resp.jobId || (resp.data && resp.data.jobId);
     if (!jobId) { el.html('Unexpected check response: ' + JSON.stringify(resp)); return; }
     el.html('Specificity check running... (jobId ' + jobId + ')');
-    pollCheckResult(jobId, el, 60);
+    pollCheckResult(jobId, el, 120);
   })
   .fail(function(xhr) {
     el.html('<div class="alert alert-danger">Failed to submit specificity check: ' + xhr.responseText.slice(0, 300) + '</div>');
