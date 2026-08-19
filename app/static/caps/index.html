@@ -126,10 +126,19 @@
       <input id="top-n" class="form-control" type="number" value="20" min="1" max="100">
     </div>
     <div class="form-group col-md-6">
-      <label>Restriction enzymes <small>(checked = used; all shown = 全部)</small></label>
+      <label>Restriction enzymes <small>(checked = used)</small></label>
       <input id="enzyme-search" class="form-control form-control-sm" placeholder="Search enzyme name...">
       <div class="enzyme-box" id="enzyme-list">Loading enzymes...</div>
     </div>
+  </div>
+  <div class="form-group">
+    <label>Specificity check databases <small>(used when you click "Check specificity" on a design; checked = checked against)</small></label>
+    <div style="margin-bottom:4px;">
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="db-sel-all-genome">All genomes</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="db-clear">Clear</button>
+      <input id="db-search" class="form-control form-control-sm d-inline-block" style="width:200px; margin-left:8px;" placeholder="Search database...">
+    </div>
+    <div class="enzyme-box" id="db-list" style="max-height:180px;">Loading databases...</div>
   </div>
   <p>
     <a data-toggle="collapse" href="#adv-params" role="button">Advanced options</a>
@@ -326,9 +335,9 @@ $(document).on('click', '.btn-align', function() {
   $('html, body').animate({scrollTop: $('#alignment-area').offset().top - 100}, 200);
 });
 
-// ---------- send to PrimerServer2 specificity check ----------
-var PS2_DB_GROUPS = [];   // [{name, label, databases: [{name, label}]}]
-var PENDING_CHECK = null; // design awaiting a database choice
+// ---------- specificity check databases (chosen in the main form) ----------
+var PS2_DB_GROUPS = [];   // [{name, databases: [{name, label}]}]
+var DB_SEARCH_QUERY = '';
 
 function loadCheckDatabases() {
   $.getJSON('/api/PrimerServer2/databases')
@@ -339,85 +348,50 @@ function loadCheckDatabases() {
         });
         return {name: g.name, databases: dbs};
       });
+      renderDbList();
     })
     .fail(function() {
       PS2_DB_GROUPS = [{name: 'genome', databases: [
         {name: 'primer_Chinese_Spring2.1.genome', label: 'Chinese Spring genome v2.1'}]}];
+      renderDbList();
     });
 }
 
-function renderCheckDbChooser(d) {
-  var el = $('#check-area');
-  var html = '<div class="card"><div class="card-body">' +
-    '<h6>Select databases for specificity check</h6>' +
-    '<p class="small text-muted">Checking more genomes detects cross-amplification ' +
-    '(A/B/D homeologs, related species) but takes longer — each DB is a BLAST run. ' +
-    'Default: Chinese Spring v2.1 reference.</p>';
+function renderDbList() {
+  var box = $('#db-list').empty();
+  var q = DB_SEARCH_QUERY.toLowerCase();
   PS2_DB_GROUPS.forEach(function(g) {
-    html += '<div class="form-group mb-2"><b>' + escapeHtml(g.name) + '</b><br>';
-    g.databases.forEach(function(db) {
-      var def = (db.name === 'primer_Chinese_Spring2.1.genome');
-      html += '<label class="small" style="margin-right:14px; white-space:nowrap;">' +
-        '<input type="checkbox" class="check-db" value="' + escapeHtml(db.name) + '"' +
-        (def ? ' checked' : '') + '> ' + escapeHtml(db.label || db.name) + '</label>';
+    var shown = g.databases.filter(function(db) {
+      return !q || db.name.toLowerCase().indexOf(q) >= 0 || (db.label || '').toLowerCase().indexOf(q) >= 0;
     });
-    html += '</div>';
+    if (!shown.length) return;
+    box.append('<div class="db-group-head"><b>' + escapeHtml(g.name) + '</b></div>');
+    shown.forEach(function(db) {
+      var def = (db.name === 'primer_Chinese_Spring2.1.genome');
+      box.append(
+        '<label style="display:inline-block; margin:0 12px 3px 0; font-size:12px; white-space:nowrap;">' +
+        '<input type="checkbox" class="check-db" value="' + escapeHtml(db.name) + '"' +
+        (def ? ' checked' : '') + '> ' + escapeHtml(db.label || db.name) + '</label>');
+    });
   });
-  html += '<button class="btn btn-success btn-sm" id="btn-start-check">Start check</button> ' +
-    '<button class="btn btn-outline-secondary btn-sm" id="btn-cancel-check">Cancel</button>' +
-    '</div></div>';
-  el.html(html);
 }
+
+$('#db-search').on('input', function() { DB_SEARCH_QUERY = $(this).val(); renderDbList(); });
+$('#db-sel-all-genome').on('click', function() {
+  $('.check-db').each(function() {
+    var name = this.value;
+    var inGenome = PS2_DB_GROUPS.some(function(g) {
+      return g.name === 'genome' && g.databases.some(function(db) { return db.name === name; });
+    });
+    this.checked = inGenome;
+  });
+});
+$('#db-clear').on('click', function() { $('.check-db').prop('checked', false); });
 
 function selectedCheckDbs() {
   var names = [];
   $('.check-db:checked').each(function() { names.push(this.value); });
   return names.length ? names : ['primer_Chinese_Spring2.1.genome'];
-}
-
-$(document).on('click', '#btn-start-check', function() {
-  var d = PENDING_CHECK;
-  if (!d) return;
-  var el = $('#check-area');
-  if (!d.primer_r) {
-    el.html('<div class="alert alert-warning">This design has no paired reverse primer — add one before specificity checking.</div>');
-    return;
-  }
-  // PrimerServer2 check parser expects TAB-separated lines with a rank
-  // column: "ID<TAB>Rank<TAB>LeftSeq<TAB>RightSeq" (space-separated input
-  // without a rank column is silently dropped by parse_primer_input).
-  var payload = {
-    'app-type': 'check',
-    'check-primers': d.enzyme + '_' + d.rank + '\t1\t' + d.primer_f + '\t' + d.primer_r,
-    'size_start': 50,
-    'size_stop': 5000,
-    'min_Tm_diff': 20,
-    'end3_mismatch_threshold': 5,
-    'selected-databases': selectedCheckDbs()
-  };
-  el.html('Submitting specificity check against ' + payload['selected-databases'].length +
-    ' database(s): ' + payload['selected-databases'].map(function(n){ return n.replace('primer_', ''); }).join(', ') + ' ...');
-  $.ajax({
-    url: '/api/PrimerServer2/jobs/check', method: 'POST',
-    contentType: 'application/json', data: JSON.stringify(payload)
-  })
-  .done(function(resp) {
-    var jobId = resp.jobId || (resp.data && resp.data.jobId);
-    if (!jobId) { el.html('Unexpected check response: ' + JSON.stringify(resp)); return; }
-    el.html('Specificity check running... (jobId ' + jobId + ')');
-    pollCheckResult(jobId, el, 120);
-  })
-  .fail(function(xhr) {
-    el.html('<div class="alert alert-danger">Failed to submit specificity check: ' + xhr.responseText.slice(0, 300) + '</div>');
-  });
-});
-
-$(document).on('click', '#btn-cancel-check', function() {
-  $('#check-area').empty();
-});
-
-function escapeHtml(s) {
-  return $('<div>').text(s == null ? '' : String(s)).html();
 }
 
 function renderCheckResults(resp, el) {
@@ -492,14 +466,44 @@ function pollCheckResult(jobId, el, attempts) {
 $(document).on('click', '.btn-check', function() {
   var idx = $(this).closest('tr').index();
   var d = LAST_DESIGNS[idx];
-  PENDING_CHECK = d;
+  var el = $('#check-area');
   if (!d.primer_r) {
-    $('#check-area').html('<div class="alert alert-warning">This design has no paired reverse primer — add one before specificity checking.</div>');
+    el.html('<div class="alert alert-warning">This design has no paired reverse primer — add one before specificity checking.</div>');
     return;
   }
-  renderCheckDbChooser(d);
-  $('html, body').animate({scrollTop: $('#check-area').offset().top - 100}, 200);
+  var dbs = selectedCheckDbs();
+  // PrimerServer2 check parser expects TAB-separated lines with a rank
+  // column: "ID<TAB>Rank<TAB>LeftSeq<TAB>RightSeq" (space-separated input
+  // without a rank column is silently dropped by parse_primer_input).
+  var payload = {
+    'app-type': 'check',
+    'check-primers': d.enzyme + '_' + d.rank + '\t1\t' + d.primer_f + '\t' + d.primer_r,
+    'size_start': 50,
+    'size_stop': 5000,
+    'min_Tm_diff': 20,
+    'end3_mismatch_threshold': 5,
+    'selected-databases': dbs
+  };
+  el.html('<span class="check-status">Submitting specificity check against ' + dbs.length +
+    ' database(s)...</span>');
+  $.ajax({
+    url: '/api/PrimerServer2/jobs/check', method: 'POST',
+    contentType: 'application/json', data: JSON.stringify(payload)
+  })
+  .done(function(resp) {
+    var jobId = resp.jobId || (resp.data && resp.data.jobId);
+    if (!jobId) { el.html('Unexpected check response: ' + JSON.stringify(resp)); return; }
+    el.html('Specificity check running... (jobId ' + jobId + ')');
+    pollCheckResult(jobId, el, 120);
+  })
+  .fail(function(xhr) {
+    el.html('<div class="alert alert-danger">Failed to submit specificity check: ' + xhr.responseText.slice(0, 300) + '</div>');
+  });
 });
+
+function escapeHtml(s) {
+  return $('<div>').text(s == null ? '' : String(s)).html();
+}
 
 // ---------- TSV download ----------
 $('#btn-tsv').on('click', function() {
