@@ -15,8 +15,8 @@ COEXPRESSION_TABLES = {
 }
 
 GENE_FUNCTION_TABLES = {
-    "Genefunc_table": "Functional annotation against IWGSC v1/v2",
-    "Genefunc_IWGSC03G_table": "Functional annotation with IWGSC v3 mapping",
+    "Genefunc_CS_IWGSCv1.0_table": "Functional annotation against IWGSC v1/v2",
+    "Genefunc_CS_IWGSC03G_table": "Functional annotation with IWGSC v3 mapping",
     "GenePageIWGSCv1_table": "Gene detail page table",
     "WheatRiceArabidopsis_tbl": "Wheat, rice and Arabidopsis homologs",
     "Triticeae_table": "Triticeae homologs",

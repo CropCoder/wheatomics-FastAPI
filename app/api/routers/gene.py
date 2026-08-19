@@ -19,7 +19,10 @@ def _validate_genefunc_table(table: str) -> str:
                        (settings.DB_GENEFUNC, table))
         if not cursor.fetchone():
             from app.core.exceptions import ValidationFailure
-            raise ValidationFailure(f"Unknown gene function table: {table}")
+            raise ValidationFailure(
+                f"Unknown gene function table: {table}. "
+                "Call GET /api/genes/functions/tables for the list of available tables."
+            )
     return table
 from app.db.mysql import mysql_cursor
 from app.schemas.gene import DOIReference, GeneDetailResponse, GeneFunctionRecord, KnownGeneDetail, KnownGeneSummary
@@ -385,13 +388,16 @@ def _make_function_record(row, table):
 @pfam_router.get("/pfam")
 def search_pfam(
     domain: str = Query(..., alias="ID"),
-    table: str = Query("Genefunc_table"),
+    table: str = Query("Genefunc_CS_IWGSCv1.0_table"),
 ) -> dict:
     """PfamSearch: 按 PFAM 结构域搜索基因 [gene family]
 
     功能:
         输入 PFAM 结构域 ID（以 PF 开头），返回包含该结构域的
-        所有基因列表。可指定查询表（Genefunc_table 或 Genefunc_IWGSC03G_table）。
+        所有基因列表。可指定查询表（默认 Genefunc_CS_IWGSCv1.0_table，
+        完整列表见 /api/genes/functions/tables）。
+        注意方向：本端点按 PFAM 找基因；若要查单个基因的结构域，
+        请用 /api/genes/functions/interval（返回的 Domain 列即 PFAM 注释）。
 
     关联网站:
         对应 PfamSearch 工具: https://wheatomics.sdau.edu.cn/tools/proteinfamily.html
@@ -399,7 +405,7 @@ def search_pfam(
     用法:
         GET /api/genes/functions/pfam?ID=<PFAM域名>&table=<表名>
         - ID: 必填，PFAM 结构域 ID，如 PF00319
-        - table: 可选，默认 Genefunc_table
+        - table: 可选，默认 Genefunc_CS_IWGSCv1.0_table（中国春 IWGSC v1.0）
 
     案例:
         请求:
@@ -409,7 +415,7 @@ def search_pfam(
           {
             "success": true,
             "data": {
-              "table": "Genefunc_table",
+              "table": "Genefunc_CS_IWGSCv1.0_table",
               "domain": "PF00319",
               "count": 5,
               "records": [
@@ -464,7 +470,7 @@ def list_gene_function_tables() -> dict:
               "database": "Genefuncdb",
               "total_tables": 5,
               "tables": [
-                { "name": "Genefunc_table", "rows": 168900, "columns": ["Chrom", "Start1", ...] },
+                { "name": "Genefunc_CS_IWGSCv1.0_table", "rows": 168900, "columns": ["Chrom", "Start1", ...] },
                 ...
               ]
             }
@@ -538,7 +544,7 @@ def list_genome_examples() -> dict:
             "success": true,
             "data": {
               "examples": [
-                { "table_name": "Genefunc_table", "display_name": "Chinese Spring genome v1.0",
+                { "table_name": "Genefunc_CS_IWGSCv1.0_table", "display_name": "Chinese Spring genome v1.0",
                   "region": "chr1A:1-141522", "gene": "TraesCS1A01G000100LC", "pfam": "" },
                 ...
               ]
@@ -717,13 +723,14 @@ def list_gene_function_registry() -> dict:
 @interval_router.get("/interval")
 def search_gene_interval(
     region: str = Query(..., alias="ID"),
-    table: str = Query("Genefunc_table"),
+    table: str = Query("Genefunc_CS_IWGSCv1.0_table"),
 ) -> dict:
     """按染色体区间搜索基因。
 
     功能:
         输入染色体区间（如 chr5A:587000000..587200000），返回该区间内
-        的所有基因列表。可指定查询表（Genefunc_table 或 Genefunc_IWGSC03G_table）。
+        的所有基因列表。可指定查询表（默认 Genefunc_CS_IWGSCv1.0_table，
+        完整列表见 /api/genes/functions/tables）。
 
     关联网站:
         对应 IntervalTool: https://wheatomics.sdau.edu.cn/tools/intervalTools.html
@@ -731,7 +738,7 @@ def search_gene_interval(
     用法:
         GET /api/genes/functions/interval?ID=<区间>&table=<表名>
         - ID: 必填，染色体区间，格式 chr5A:587000000..587200000
-        - table: 可选，默认 Genefunc_table
+        - table: 可选，默认 Genefunc_CS_IWGSCv1.0_table（中国春 IWGSC v1.0）
 
     案例:
         请求:
@@ -741,7 +748,7 @@ def search_gene_interval(
           {
             "success": true,
             "data": {
-              "table": "Genefunc_table",
+              "table": "Genefunc_CS_IWGSCv1.0_table",
               "region": "chr5A:587000000..587200000",
               "count": 5,
               "records": [
