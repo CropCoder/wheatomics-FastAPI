@@ -70,6 +70,19 @@ def _check_db_exists(db_path: Path) -> bool:
 _DB_NAME_RE = re.compile(r"^[\w.\-]+$")
 
 
+def _probe_db_readable(db_path: Path) -> None:
+    """Raise ExternalToolFailure if blastdbcmd cannot open the database.
+
+    Called only on the entry-miss path of /sequence/by-gene: a successful
+    `-info` means the DB itself is readable and the entry is genuinely
+    absent; a failure means the DB is broken on disk (e.g. a moved/removed
+    volume or LMDB metadata, surfaced by blastdbcmd as "mdb_env_open: No
+    such file or directory"). Silently returning null for a broken DB hides
+    the real outage — the user just sees "no sequence found".
+    """
+    _blastdbcmd("-db", str(db_path), "-info")
+
+
 def _ensure_db_name(name: str, label: str = "database") -> str:
     if not name or not _DB_NAME_RE.fullmatch(name):
         raise ValidationFailure(
@@ -161,8 +174,14 @@ def _try_interval(database: Path, chrom: str, start: int, end: int) -> str:
 @router.get("/sequence/by-gene")
 def sequence_by_gene(
     gene_id: str = Query(...),
-    gene_db: str = Query("all_gene", description="CDS / genomic BLAST DB (default: all_gene)."),
-    protein_db: str = Query("all_protein", description="Protein BLAST DB (default: all_protein)."),
+    gene_db: str | None = Query(None,
+        description="CDS / genomic BLAST DB. Provide only one of gene_db / protein_db "
+                    "to fetch that side alone. Omit both to use the defaults "
+                    "(all_gene + all_protein)."),
+    protein_db: str | None = Query(None,
+        description="Protein BLAST DB. Provide only one of gene_db / protein_db "
+                    "to fetch that side alone. Omit both to use the defaults "
+                    "(all_gene + all_protein)."),
 ) -> SequenceBundle:
     """根据基因 ID 获取基因和蛋白质序列（FASTA 格式）。
 
@@ -174,12 +193,13 @@ def sequence_by_gene(
     用法:
         GET /api/sequence/by-gene?gene_id=<基因ID>&gene_db=<基因库>&protein_db=<蛋白库>
         - gene_id: 必填，如 TraesCS5A02G391700
-        - gene_db: 可选，基因 BLAST 数据库名，默认 all_gene
-        - protein_db: 可选，蛋白 BLAST 数据库名，默认 all_protein
+        - 两个 db 参数都省略时使用默认值（gene_db=all_gene, protein_db=all_protein）
+        - 只传其中一个时仅查询该侧（如只传 protein_db=all_protein → 仅蛋白序列）
 
     案例:
         请求:
           curl -X GET "http://localhost:8000/api/sequence/by-gene?gene_id=TraesCS5A02G391700"
+          curl -X GET "http://localhost:8000/api/sequence/by-gene?gene_id=TraesCS5A02G391700&protein_db=all_protein"
 
         响应:
           {
@@ -197,6 +217,12 @@ def sequence_by_gene(
             f"'{gene_id[:60]}...' looks like a chromosomal interval, not a gene ID. "
             f"Use /api/sequence/by-interval?region=<chr:start-end> instead."
         )
+
+    # Legacy contract: a bare call with no db params fetches both sides.
+    # An explicit side means "only this side" — the frontend relies on this
+    # to skip the CDS lookup when the user picked all_protein (and vice versa).
+    if gene_db is None and protein_db is None:
+        gene_db, protein_db = "all_gene", "all_protein"
 
     if gene_db:
         gene_db = _ensure_db_name(gene_db, "gene_db")
@@ -242,6 +268,15 @@ def sequence_by_gene(
             bundle.protein_sequence = None
     else:
         bundle.protein_sequence = None
+
+    # Entry misses can mean either "not in this database" or "the database
+    # itself is broken on disk". Probe -info to tell them apart and surface
+    # the real error — the all_protein outage previously looked exactly like
+    # "no protein for this gene".
+    if gene_db and gene_entry is None:
+        _probe_db_readable(settings.BLAST_DB_PATH / gene_db)
+    if protein_db and protein_entry is None:
+        _probe_db_readable(settings.BLAST_DB_PATH / protein_db)
 
     if not bundle.gene_sequence and not bundle.protein_sequence:
         raise ResourceNotFound(
