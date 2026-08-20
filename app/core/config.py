@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     DB_WHEAT_FUNCTION: str = "wheat_function"
     DB_SYNTENY: str = "synteny_mysql"
     DB_JBROWSE: str = "jbrowse_meta"
+    DB_EQTL: str = "eqtl"
 
     BLAST_DB_PATH: Path = Path("/var/www/html/getfasta/blastdb")
     BLAST_BIN_DIR: Path = Path("/var/www/html/blast/blast+/bin")
@@ -52,6 +53,7 @@ class Settings(BaseSettings):
     SYMAP_DEFAULT_BED: Path = Path("/var/www/html/symap/CS_CS_durum_emmer_urartu_tauschii.bed")
     VARIANTHUB_VCF_DIR: Path = Path("/var/www/html/variants")
     JBROWSE_DATA_ROOT: Path = Path("/var/www/html/jbrowse-1.12.3-release")
+    EQTL_IMAGE_DIR: Path = Path("/var/www/eqtl/static/image")
     BCFTOOLS_BIN: Path = Path("/home/fei/data/tiantian_data/soft/bcftools-1.8/bin/bcftools")
 
     CGI_SUBMISSION_PASSWORD: str = Field(default="wheatomics")

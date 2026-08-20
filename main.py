@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps, eqtl
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 from app.primerserver2.dependencies import verify_api_key
@@ -95,6 +95,8 @@ app = FastAPI(
         "<td>基因组浏览器数据集与轨道元数据（jbrowse_meta 库，trackList.json 由 API 重建）</td></tr>"
         "<tr><td><b>CAPS/dCAPS</b></td><td><code>/api/caps</code></td>"
         "<td>CAPS/dCAPS 引物设计：按 SNP 枚举限制酶与错配引物，支持序列/坐标/VCF 三种输入</td></tr>"
+        "<tr><td><b>eQTL Atlas</b></td><td><code>/api/eqtl/search</code></td>"
+        "<td>小麦 eQTL 图谱：按基因查询 eQTL 记录与各 project 的 FarmCPU 曼哈顿图</td></tr>"
         "</table>"
 
         "<h2>AI Agent 接入 (MCP)</h2>"
@@ -141,6 +143,8 @@ app.mount("/GO_KEGG", StaticFiles(directory=Path(__file__).parent / "app" / "sta
 app.mount("/VariantHub", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "VariantHub", html=True), name="VariantHub")
 app.mount("/syntenyview", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "syntenyview", html=True), name="syntenyview")
 app.mount("/caps", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "caps", html=True), name="caps")
+app.mount("/eqtl", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "eqtl", html=True), name="eqtl")
+app.mount("/eqtl-image", StaticFiles(directory=settings.EQTL_IMAGE_DIR, check_dir=False), name="eqtl-image")
 
 
 @app.middleware("http")
@@ -206,6 +210,7 @@ for router in [
     syntenyview,
     jbrowse,
     caps,
+    eqtl,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)
 
