@@ -20,16 +20,14 @@ import re
 
 from fastapi import APIRouter, Query
 from fastapi.encoders import jsonable_encoder
+from fastapi.responses import FileResponse
 
 from app.core.config import settings
-from app.core.exceptions import ValidationFailure
+from app.core.exceptions import ResourceNotFound, ValidationFailure
 from app.core.response import ok
 from app.db.mysql import mysql_connection
 
 router = APIRouter(prefix="/eqtl", tags=["eQTL Atlas"])
-
-#: Image URL prefix under which the Manhattan plots are mounted (see main.py).
-IMAGE_URL_PREFIX = "/eqtl-image"
 
 #: Ordered project list — the legacy app iterates this exact order.
 PROJECT_ORDER = [
@@ -76,7 +74,7 @@ def _projects_for(gene: str) -> list[dict]:
         filename = f"{project}_{gene}.FarmCPU.GWAS.png"
         image_url = None
         if (image_dir / filename).is_file():
-            image_url = f"{IMAGE_URL_PREFIX}/{filename}"
+            image_url = f"/api/eqtl/image/{project}/{gene}"
         projects.append(
             {
                 "project": project,
@@ -86,6 +84,20 @@ def _projects_for(gene: str) -> list[dict]:
             }
         )
     return projects
+
+
+@router.get("/image/{project}/{gene}")
+def manhattan_image(project: str, gene: str) -> FileResponse:
+    """Serve the FarmCPU Manhattan plot for a gene in a project."""
+    if project not in PROJECT_INFO:
+        raise ValidationFailure(f"Unknown project: {project!r}")
+    if not GENE_PATTERN.match(gene):
+        raise ValidationFailure(f"Invalid gene ID: {gene!r}")
+    filename = f"{project}_{gene}.FarmCPU.GWAS.png"
+    path = settings.EQTL_IMAGE_DIR / filename
+    if not path.is_file():
+        raise ResourceNotFound(f"No FarmCPU Manhattan plot for {gene} in {project}")
+    return FileResponse(path, media_type="image/png")
 
 
 @router.get("/search")
@@ -109,7 +121,7 @@ def search_eqtl(
             "columns": ["Geneid", "Project", ...],
             "rows": [ {"Geneid": ..., "Project": ..., ...} ],
             "projects": [
-              {"project": "PRJNA670223", "desc": "...", "url": "...", "image": "/eqtl-image/PRJNA670223_TraesCS5A02G391700.FarmCPU.GWAS.png" | null}
+              {"project": "PRJNA670223", "desc": "...", "url": "...", "image": "/api/eqtl/image/PRJNA670223/TraesCS5A02G391700" | null}
             ]
           }
         }

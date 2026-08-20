@@ -144,7 +144,6 @@ app.mount("/VariantHub", StaticFiles(directory=Path(__file__).parent / "app" / "
 app.mount("/syntenyview", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "syntenyview", html=True), name="syntenyview")
 app.mount("/caps", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "caps", html=True), name="caps")
 app.mount("/eqtl", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "eqtl", html=True), name="eqtl")
-app.mount("/eqtl-image", StaticFiles(directory=settings.EQTL_IMAGE_DIR, check_dir=False), name="eqtl-image")
 
 
 @app.middleware("http")
