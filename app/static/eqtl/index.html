@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>eQTL Atlas - WheatOmics</title>
+<title>eQTL Atlas (FastAPI) - WheatOmics</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
@@ -81,7 +81,12 @@
 </div>
 
 <div id="home_content">
-  <br><h5 class="card-title">Wheat eQTL Atlas</h5><br>
+  <br><h5 class="card-title">Wheat eQTL Atlas <span class="badge badge-success">FastAPI 版</span></h5><br>
+
+  <div class="alert alert-success" style="font-size:14px;">
+    <strong>API 架构已生效</strong> — 本页面由 FastAPI 提供（前端 SPA + <code>/api/eqtl/search</code> JSON 接口）。
+    看到此绿色提示即代表新 eQTL 模块已响应；旧版 Flask 服务端渲染页面不会出现本提示。
+  </div>
 
   <div class="row">
     <div class="col-md-8">
