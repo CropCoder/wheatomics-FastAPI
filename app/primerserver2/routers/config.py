@@ -35,6 +35,12 @@ def _blast_db_groups(nuc_dbs: list[str]) -> list[DatabaseGroup]:
             genome.append(name)
         elif name.endswith(".cds") or "transcripts" in name or "mrna" in name:
             gene.append(name)
+    # Chinese Spring v2.1 is the platform default — put it first so the
+    # pickers' visually-first genome choice is the recommended one.
+    _CS21_GENOME = "AABBDD_Chinese_Spring2.1.genome"
+    if _CS21_GENOME in genome:
+        genome.remove(_CS21_GENOME)
+        genome.insert(0, _CS21_GENOME)
     groups_spec = [
         ("genome", genome),
         ("gene", gene),
