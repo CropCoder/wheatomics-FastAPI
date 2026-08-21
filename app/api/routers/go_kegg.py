@@ -357,10 +357,11 @@ def kegg_enrichment(req: EnrichmentRequest):
         )
         bg_map = {r["pathway"]: int(r["K"]) for r in cur.fetchall()}
 
-        # Fetch ALL pathway names and index by normalized core id — the DB may
-        # store ids with different prefixes (ko00360 vs path:ko00360 vs
-        # map00360), so an exact IN-match silently drops names. Fall back to
-        # the bundled dictionary for pathways missing from kegg_pathway.
+        # Fetch ALL pathway names from kegg_pathway. NOTE: this table stores
+        # truncated names (cut at the first space — "Plant" instead of "Plant
+        # hormone signal transduction"), so the bundled REST-derived dictionary
+        # is consulted FIRST and the DB only fills gaps. To fix the table
+        # itself, run scripts/fix_kegg_pathway_names.sql on the server.
         cur.execute("SELECT pathway_id, pathway_name FROM kegg_pathway")
         db_names = {_pathway_core(r["pathway_id"]): r["pathway_name"]
                     for r in cur.fetchall()}
@@ -375,8 +376,8 @@ def kegg_enrichment(req: EnrichmentRequest):
         pval = hypergeometric_pval(k, K, n, N)
         ratio = (k / n) / (K / N) if n > 0 and K > 0 else 0.0
         core = _pathway_core(pw_id)
-        name = (db_names.get(core) or bundle_names.get(pw_id)
-                or bundle_names.get(core) or pw_id)
+        name = (bundle_names.get(pw_id) or bundle_names.get(core)
+                or db_names.get(core) or pw_id)
         results.append(
             {
                 "id": pw_id,
