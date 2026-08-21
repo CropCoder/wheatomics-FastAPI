@@ -161,7 +161,7 @@ function renderKEGG() {
         (function(r){
             rows.push(
                 '<tr class="kegg-row" data-pw="'+escHtml(r.id)+'">'+
-                '<td><a target="_blank" href="https://www.genome.jp/pathway/'+escHtml((r.id||'').replace('path:',''))+'">'+escHtml(r.id||'')+'</a></td>'+
+                '<td><a target="_blank" href="https://www.kegg.jp/pathway/'+escHtml((r.id||'').replace(/^(path:|ko:|map:)/,''))+'">'+escHtml(r.id||'')+'</a></td>'+
                 '<td>'+escHtml(r.name||'')+'</td>'+
                 '<td><a href="#" class="gene-link" data-pw="'+escHtml(r.id)+'">'+(r.k||0)+'</a></td>'+
                 '<td>'+(r.K||0)+'</td><td>'+(r.ratio||0).toFixed(2)+'</td>'+
@@ -246,10 +246,23 @@ async function toggleKEGGGenes(el) {
         var resp = await fetch('/api/kegg/genes?pathway='+encodeURIComponent(pwId)+'&genes='+encodeURIComponent(genes.join(',')));
         var data = await resp.json();
         var hits = (data.genes||[]).filter(Boolean);
-        sub.querySelector('td').innerHTML = hits.length
+        var kds = data.ko_details || [];
+        var html = hits.length
             ? '<strong style="color:#E91E63;">'+hits.length+' genes:</strong><br>'+
               hits.map(function(g){return '<code>'+escHtml(g)+'</code>'}).join(' ')
             : '<em style="color:#999;">None</em>';
+        if (kds.length) {
+            var byGene = {};
+            kds.forEach(function(d){
+                (byGene[d.gene_id] = byGene[d.gene_id] || []).push(
+                    d.ko + (d.ko_description ? ' ' + d.ko_description : ''));
+            });
+            html += '<br><strong style="color:#E91E63;">KO annotations:</strong><br>' +
+                Object.keys(byGene).sort().map(function(g){
+                    return '<code>'+escHtml(g)+': '+escHtml(byGene[g].join('; '))+'</code>';
+                }).join('<br>');
+        }
+        sub.querySelector('td').innerHTML = html;
     } catch(e) { sub.querySelector('td').innerHTML = '<em style="color:red;">Error</em>'; }
 }
 

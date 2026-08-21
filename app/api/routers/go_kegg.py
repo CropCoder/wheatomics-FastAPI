@@ -7,7 +7,10 @@ and KEGG pathways against the wheat_function database.
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+import json
 import math
+import re
+from pathlib import Path
 from typing import Optional, List
 
 from app.core.config import settings
@@ -17,6 +20,52 @@ from app.db.mysql import mysql_cursor
 # /kegg/genes. The legacy /go-kegg/... paths are kept as hidden aliases
 # (include_in_schema=False) so existing links/scripts keep working.
 router = APIRouter(prefix="", tags=["GO/KEGG Enrichment"])
+
+
+# ============================================================
+# Bundled KEGG annotation dictionaries
+# ============================================================
+# app/services/data/kegg_ko_defs.json / kegg_pathway_names.json are built by
+# scripts/build_kegg_dicts.py from clusterProfiler reference outputs. They are
+# used as a fallback when the kegg_pathway / gene_kegg tables lack a name or
+# definition (the tables may store pathway ids with different prefixes).
+_KEGG_KO_DEFS: Optional[dict] = None
+_KEGG_PATHWAY_NAMES: Optional[dict] = None
+
+
+def _data_file(name: str) -> Path:
+    return Path(__file__).resolve().parent.parent.parent / "services" / "data" / name
+
+
+def _load_data_dict(name: str) -> dict:
+    try:
+        return json.loads(_data_file(name).read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _kegg_ko_defs() -> dict:
+    global _KEGG_KO_DEFS
+    if _KEGG_KO_DEFS is None:
+        _KEGG_KO_DEFS = _load_data_dict("kegg_ko_defs.json")
+    return _KEGG_KO_DEFS
+
+
+def _kegg_pathway_names() -> dict:
+    global _KEGG_PATHWAY_NAMES
+    if _KEGG_PATHWAY_NAMES is None:
+        _KEGG_PATHWAY_NAMES = _load_data_dict("kegg_pathway_names.json")
+    return _KEGG_PATHWAY_NAMES
+
+
+#: Pathway ids may carry different prefixes across tables
+#: (ko00360 vs path:ko00360 vs map00360) — normalize to the 5-digit core.
+_PATHWAY_CORE_RE = re.compile(r"^(?:path:)?(?:ko|map)?(\d{5})$")
+
+
+def _pathway_core(pw: str) -> str:
+    m = _PATHWAY_CORE_RE.match((pw or "").strip())
+    return m.group(1) if m else (pw or "").strip()
 
 
 # ============================================================
@@ -116,6 +165,7 @@ class EnrichmentResult(BaseModel):
     id: str
     term: Optional[str] = ""
     ontology: Optional[str] = ""
+    name: Optional[str] = ""   # KEGG pathway name (GO results leave it empty)
     k: int
     K: int
     ratio: float
@@ -307,11 +357,14 @@ def kegg_enrichment(req: EnrichmentRequest):
         )
         bg_map = {r["pathway"]: int(r["K"]) for r in cur.fetchall()}
 
-        cur.execute(
-            f"SELECT pathway_id, pathway_name FROM kegg_pathway WHERE pathway_id IN ({pw_ph})",
-            pw_ids,
-        )
-        name_map = {r["pathway_id"]: r["pathway_name"] for r in cur.fetchall()}
+        # Fetch ALL pathway names and index by normalized core id — the DB may
+        # store ids with different prefixes (ko00360 vs path:ko00360 vs
+        # map00360), so an exact IN-match silently drops names. Fall back to
+        # the bundled dictionary for pathways missing from kegg_pathway.
+        cur.execute("SELECT pathway_id, pathway_name FROM kegg_pathway")
+        db_names = {_pathway_core(r["pathway_id"]): r["pathway_name"]
+                    for r in cur.fetchall()}
+        bundle_names = _kegg_pathway_names()
 
     results = []
     for pw_id in pw_ids:
@@ -321,10 +374,13 @@ def kegg_enrichment(req: EnrichmentRequest):
             continue
         pval = hypergeometric_pval(k, K, n, N)
         ratio = (k / n) / (K / N) if n > 0 and K > 0 else 0.0
+        core = _pathway_core(pw_id)
+        name = (db_names.get(core) or bundle_names.get(pw_id)
+                or bundle_names.get(core) or pw_id)
         results.append(
             {
                 "id": pw_id,
-                "name": name_map.get(pw_id, pw_id),
+                "name": name,
                 "k": k,
                 "K": K,
                 "ratio": round(ratio, 4),
@@ -372,7 +428,7 @@ def kegg_genes(pathway: str = Query(...), genes: str = Query("")):
         ph = ",".join(["%s"] * len(gene_list))
         cur.execute(
             f"""
-            SELECT DISTINCT gk.gene_id
+            SELECT DISTINCT gk.gene_id, gk.ko
             FROM gene_kegg gk
             JOIN ko_pathway kp ON gk.ko = kp.ko
             WHERE kp.pathway=%s AND gk.gene_id IN ({ph})
@@ -380,5 +436,21 @@ def kegg_genes(pathway: str = Query(...), genes: str = Query("")):
             """,
             [pathway] + gene_list,
         )
-        hits = [r["gene_id"] for r in cur.fetchall()]
-    return {"pathway": pathway, "genes": hits}
+        rows = cur.fetchall()
+        hits = sorted({r["gene_id"] for r in rows})
+        ko_defs = _kegg_ko_defs()
+        ko_details = []
+        seen = set()
+        for r in rows:
+            ko = (r.get("ko") or "").replace("ko:", "")
+            if (r["gene_id"], ko) in seen:
+                continue
+            seen.add((r["gene_id"], ko))
+            ko_details.append(
+                {
+                    "gene_id": r["gene_id"],
+                    "ko": ko,
+                    "ko_description": ko_defs.get(ko, ""),
+                }
+            )
+    return {"pathway": pathway, "genes": hits, "ko_details": ko_details}
