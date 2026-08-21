@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import os
 import re
 
@@ -94,17 +95,115 @@ def to_float(v):
 
 def to_int(v):
     v = (v or "").strip()
-    return int(v) if v else None
+    if not v:
+        return None
+    try:
+        return int(float(v))
+    except (ValueError, TypeError):
+        return None
 
 
 def to_bool(v):
     return 1 if str(v).strip().lower() == "true" else 0
 
 
+AA_COLS = ["A", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "V", "W", "Y"]
+
+FEATURE_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS wheat_psp_feature (
+    seq_id VARCHAR(100) PRIMARY KEY,
+    sequence LONGTEXT,
+    new_molphase DOUBLE,
+    length INT,
+    idr_percentage DOUBLE,
+    pi_pi DOUBLE,
+    prion_like DOUBLE,
+    lcr_percentage DOUBLE,
+    shannon_entropy DOUBLE,
+    fcr DOUBLE,
+    ncpr DOUBLE,
+    kappa DOUBLE,
+    omega DOUBLE,
+    hydrophobicity DOUBLE,
+    ppii_propensity DOUBLE,
+    aa_composition TEXT,
+    polar DOUBLE,
+    hydrophobic DOUBLE,
+    aromatic DOUBLE,
+    cationic DOUBLE,
+    anionic DOUBLE,
+    expanding DOUBLE,
+    disorder_promoting DOUBLE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+"""
+
+FEATURE_INSERT_SQL = """
+INSERT IGNORE INTO wheat_psp_feature
+    (seq_id, sequence, new_molphase, length, idr_percentage, pi_pi, prion_like,
+     lcr_percentage, shannon_entropy, fcr, ncpr, kappa, omega, hydrophobicity,
+     ppii_propensity, aa_composition, polar, hydrophobic, aromatic, cationic,
+     anionic, expanding, disorder_promoting)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+"""
+
+
+def import_feature(cur, path: str | None, batch_size: int = BATCH) -> int:
+    """Import fangenome.csv (sequence + physicochemical properties)."""
+    if not path or not os.path.exists(path):
+        print("no feature file, skip", flush=True)
+        return 0
+    cur.execute(FEATURE_TABLE_SQL)
+    cur.execute("TRUNCATE TABLE wheat_psp_feature")
+    count = 0
+    batch = []
+    with open(path, encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            sid = (row.get("id") or "").strip()
+            if not sid:
+                continue
+            aa = {a: to_float(row.get(a, "")) for a in AA_COLS}
+            batch.append((
+                sid,
+                row.get("sequence", ""),
+                to_float(row.get("new_molphase", "")),
+                to_int(row.get("length", "")),
+                to_float(row.get("IDR Percentage", "")),
+                to_float(row.get("Pi-Pi Interaction", "")),
+                to_float(row.get("Prion like domain", "")),
+                to_float(row.get("LCR Percentage", "")),
+                to_float(row.get("Shannon Entropy", "")),
+                to_float(row.get("FCR", "")),
+                to_float(row.get("NCPR", "")),
+                to_float(row.get("kappa", "")),
+                to_float(row.get("omega", "")),
+                to_float(row.get("Hydrophobicity", "")),
+                to_float(row.get("PPII Propensity", "")),
+                json.dumps(aa),
+                to_float(row.get("Polar", "")),
+                to_float(row.get("Hydrophobic", "")),
+                to_float(row.get("Aromatic", "")),
+                to_float(row.get("Cationic", "")),
+                to_float(row.get("Anionic", "")),
+                to_float(row.get("Expanding", "")),
+                to_float(row.get("Disorder Promoting", "")),
+            ))
+            if len(batch) >= batch_size:
+                cur.executemany(FEATURE_INSERT_SQL, batch)
+                count += len(batch)
+                batch = []
+    if batch:
+        cur.executemany(FEATURE_INSERT_SQL, batch)
+        count += len(batch)
+    print(f"feature imported: {count} rows", flush=True)
+    return count
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("csv", help="path to fangenome_ps_results.csv")
     parser.add_argument("--mapping", help="path to filtered_best.tsv (PanRef -> CS gene id)")
+    parser.add_argument("--feature", help="path to fangenome.csv (sequence + physicochemical properties)")
     parser.add_argument("--host", default="localhost")
     parser.add_argument("--port", type=int, default=3306)
     parser.add_argument("--user", default="wheatomics_user")
@@ -175,6 +274,8 @@ def main() -> None:
         count += len(batch)
 
     print(f"done: {count} rows total")
+    import_feature(cur, args.feature)
+    conn.commit()
     cur.close()
     conn.close()
 
