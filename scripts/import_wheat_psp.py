@@ -6,16 +6,22 @@ The CSV has 11 columns:
 
 ``gene_id`` is derived from ``seq_id`` by stripping the ``-P<number>``
 transcript suffix (e.g. PanRefChrChr1A_011243-P1 -> PanRefChrChr1A_011243).
-Missing / nan numeric fields are stored as NULL.
+
+``cs_gene_id`` is the Chinese Spring 02G id (e.g. TraesCS1A02G228500) looked
+up from a blastp best-hit mapping file (``filtered_best.tsv``):
+    query<TAB>subject<TAB>pident<...>
+The subject's trailing ``.1`` transcript suffix is stripped.
 
 Usage:
-    python scripts/import_wheat_psp.py /path/to/fangenome_ps_results.csv
+    python scripts/import_wheat_psp.py fangenome_ps_results.csv \
+        --mapping filtered_best.tsv
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import os
 import re
 
 import pymysql
@@ -25,6 +31,7 @@ CREATE TABLE IF NOT EXISTS wheat_psp (
     id INT AUTO_INCREMENT PRIMARY KEY,
     seq_id VARCHAR(100) NOT NULL,
     gene_id VARCHAR(100) NOT NULL,
+    cs_gene_id VARCHAR(100) DEFAULT NULL,
     seq_length INT,
     ps_score DOUBLE,
     is_psp TINYINT(1) NOT NULL DEFAULT 0,
@@ -37,6 +44,7 @@ CREATE TABLE IF NOT EXISTS wheat_psp (
     plaac_papa_fi DOUBLE,
     INDEX idx_seq_id (seq_id),
     INDEX idx_gene_id (gene_id),
+    INDEX idx_cs_gene (cs_gene_id),
     INDEX idx_is_psp (is_psp),
     INDEX idx_has_prd (has_prd)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -44,10 +52,10 @@ CREATE TABLE IF NOT EXISTS wheat_psp (
 
 INSERT_SQL = """
 INSERT INTO wheat_psp
-    (seq_id, gene_id, seq_length, ps_score, is_psp, molphase_score, has_prd,
-     error, plaac_llr, plaac_core_score, plaac_papa_prop, plaac_papa_fi)
+    (seq_id, gene_id, cs_gene_id, seq_length, ps_score, is_psp, molphase_score,
+     has_prd, error, plaac_llr, plaac_core_score, plaac_papa_prop, plaac_papa_fi)
 VALUES
-    (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 """
 
 BATCH = 5000
@@ -55,6 +63,26 @@ BATCH = 5000
 
 def gene_id(seq_id: str) -> str:
     return re.sub(r"-P\d+$", "", seq_id)
+
+
+def load_mapping(path: str | None) -> dict[str, str]:
+    """Read blastp best-hit mapping: query seq_id -> CS gene id (no .1)."""
+    mapping: dict[str, str] = {}
+    if not path or not os.path.exists(path):
+        return mapping
+    with open(path, encoding="utf-8", errors="ignore") as f:
+        for line in f:
+            line = line.rstrip("\n").rstrip("\r")
+            if not line.strip():
+                continue
+            cols = line.split("\t")
+            if len(cols) < 2:
+                continue
+            query = cols[0].strip()
+            subject = cols[1].strip()
+            if query and subject:
+                mapping[query] = re.sub(r"\.\d+$", "", subject)
+    return mapping
 
 
 def to_float(v):
@@ -76,12 +104,16 @@ def to_bool(v):
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("csv", help="path to fangenome_ps_results.csv")
+    parser.add_argument("--mapping", help="path to filtered_best.tsv (PanRef -> CS gene id)")
     parser.add_argument("--host", default="localhost")
     parser.add_argument("--port", type=int, default=3306)
     parser.add_argument("--user", default="wheatomics_user")
     parser.add_argument("--password", default="wheatomics115599")
     parser.add_argument("--database", default="wheat_psp_db")
     args = parser.parse_args()
+
+    mapping = load_mapping(args.mapping)
+    print(f"loaded {len(mapping)} blastp mappings", flush=True)
 
     conn = pymysql.connect(
         host=args.host,
@@ -95,6 +127,17 @@ def main() -> None:
     cur.execute(f"CREATE DATABASE IF NOT EXISTS `{args.database}` DEFAULT CHARACTER SET utf8mb4")
     cur.execute(f"USE `{args.database}`")
     cur.execute(CREATE_TABLE_SQL)
+
+    # 兼容已建表：若缺 cs_gene_id 列则补上
+    cur.execute("SHOW COLUMNS FROM wheat_psp LIKE 'cs_gene_id'")
+    if not cur.fetchone():
+        cur.execute(
+            "ALTER TABLE wheat_psp "
+            "ADD COLUMN cs_gene_id VARCHAR(100) DEFAULT NULL, "
+            "ADD INDEX idx_cs_gene (cs_gene_id)"
+        )
+        conn.commit()
+
     cur.execute("TRUNCATE TABLE wheat_psp")
     conn.commit()
 
@@ -107,6 +150,7 @@ def main() -> None:
             batch.append((
                 sid,
                 gene_id(sid),
+                mapping.get(sid),
                 to_int(row.get("seq_length", "")),
                 to_float(row.get("ps_score", "")),
                 to_bool(row.get("is_psp", "")),

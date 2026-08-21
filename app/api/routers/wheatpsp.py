@@ -101,8 +101,8 @@ def api_search(
     where, args = "", []
     if q:
         like = f"%{q}%"
-        where = "WHERE seq_id LIKE %s OR gene_id LIKE %s"
-        args = [like, like]
+        where = "WHERE seq_id LIKE %s OR gene_id LIKE %s OR cs_gene_id LIKE %s"
+        args = [like, like, like]
     return ok(_list(where, args, page, per_page))
 
 
@@ -117,8 +117,8 @@ def api_psp(
     args: list = []
     if q.strip():
         like = f"%{q.strip()}%"
-        where += " AND (seq_id LIKE %s OR gene_id LIKE %s)"
-        args = [like, like]
+        where += " AND (seq_id LIKE %s OR gene_id LIKE %s OR cs_gene_id LIKE %s)"
+        args = [like, like, like]
     return ok(_list(where, args, page, per_page))
 
 
@@ -133,8 +133,8 @@ def api_prd(
     args: list = []
     if q.strip():
         like = f"%{q.strip()}%"
-        where += " AND (seq_id LIKE %s OR gene_id LIKE %s)"
-        args = [like, like]
+        where += " AND (seq_id LIKE %s OR gene_id LIKE %s OR cs_gene_id LIKE %s)"
+        args = [like, like, like]
     return ok(_list(where, args, page, per_page))
 
 

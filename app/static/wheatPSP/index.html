@@ -166,7 +166,7 @@ function renderHome(){
     html += '</div>';
 
     html += '<div class="form-inline mb-3">';
-    html += '<input type="text" id="home-search" class="form-control mr-2" style="width:420px;" placeholder="Search by seq_id or gene_id (e.g. PanRefChrChr1A_011243)">';
+    html += '<input type="text" id="home-search" class="form-control mr-2" style="width:420px;" placeholder="Search by gene ID (e.g. TraesCS1A02G228500)">';
     html += '<button class="btn btn-primary" onclick="doHomeSearch()">Search</button>';
     html += '</div>';
     html += '<div class="info-box">Enter a protein/gene ID to view its PSP score, MolPhase score and PLAAC prediction. Browse all predicted <a href="#/psp">PSPs</a> or <a href="#/prd">PrD proteins</a>.</div>';
@@ -198,21 +198,21 @@ function renderList(kind, q){
   $.getJSON(ep, { page:page, per_page:20, q:q }).done(function(resp){
     var d = resp.data;
     var html = '<h4 class="card-title">'+title+'</h4>';
-    html += '<div class="form-inline mb-3"><input type="text" id="list-q" class="form-control mr-2" style="width:420px;" value="'+h(q)+'" placeholder="filter by seq_id / gene_id"><button class="btn btn-outline-primary" onclick="doListFilter(\''+kind+'\')">Filter</button></div>';
+    html += '<div class="form-inline mb-3"><input type="text" id="list-q" class="form-control mr-2" style="width:420px;" value="'+h(q)+'" placeholder="filter by gene ID"><button class="btn btn-outline-primary" onclick="doListFilter(\''+kind+'\')">Filter</button></div>';
     html += '<p class="text-muted">'+d.total.toLocaleString()+' record(s)</p>';
     if(!d.rows.length){
       html += '<div class="alert alert-warning">No records found.</div>';
     } else {
       html += '<div class="result-table"><table class="table table-bordered table-hover table-sm"><thead><tr>';
-      if(kind==="prd"){ html += '<th>#</th><th>Protein ID</th><th>Gene ID</th><th>PLAAC LLR</th>'; }
-      else { html += '<th>Protein ID</th><th>Gene ID</th><th>PSP score</th>'; }
+      if(kind==="prd"){ html += '<th>#</th><th>CS Gene ID</th><th>PanRef ID</th><th>PLAAC LLR</th>'; }
+      else { html += '<th>CS Gene ID</th><th>PanRef ID</th><th>PSP score</th>'; }
       html += '</tr></thead><tbody>';
       d.rows.forEach(function(r, i){
-        var sid = h(r.seq_id);
+        var cs = r.cs_gene_id ? '<a href="#/protein/'+encodeURIComponent(r.seq_id)+'">'+h(r.cs_gene_id)+'</a>' : '<span class="text-muted">'+h(r.gene_id)+'</span>';
         if(kind==="prd"){
-          html += '<tr><td>'+(d.per_page*(d.page-1)+i+1)+'</td><td><a href="#/protein/'+encodeURIComponent(r.seq_id)+'">'+sid+'</a></td><td>'+h(r.gene_id)+'</td><td>'+num(r.plaac_llr)+'</td></tr>';
+          html += '<tr><td>'+(d.per_page*(d.page-1)+i+1)+'</td><td>'+cs+'</td><td>'+h(r.seq_id)+'</td><td>'+num(r.plaac_llr)+'</td></tr>';
         } else {
-          html += '<tr><td><a href="#/protein/'+encodeURIComponent(r.seq_id)+'">'+sid+'</a></td><td>'+h(r.gene_id)+'</td><td>'+num(r.ps_score)+'</td></tr>';
+          html += '<tr><td>'+cs+'</td><td>'+h(r.seq_id)+'</td><td>'+num(r.ps_score)+'</td></tr>';
         }
       });
       html += '</tbody></table></div>';
@@ -241,6 +241,7 @@ function renderProtein(seqId){
   $.getJSON(API+"/protein/"+encodeURIComponent(seqId)).done(function(resp){
     var p = resp.data.protein;
     var fields = [
+      ["CS Gene ID", "cs_gene_id"],
       ["Protein ID", "seq_id"],
       ["Gene ID", "gene_id"],
       ["Sequence Length", "seq_length"],
@@ -253,7 +254,8 @@ function renderProtein(seqId){
       ["PLAAC PAPA proportion", "plaac_papa_prop"],
       ["PLAAC PAPA FI", "plaac_papa_fi"],
     ];
-    var html = '<h4 class="card-title">Protein: '+h(p.seq_id)+'</h4>';
+    var titleId = p.cs_gene_id || p.gene_id || p.seq_id;
+    var html = '<h4 class="card-title">Protein: '+h(titleId)+'</h4>';
     html += '<div class="result-table"><table class="table table-bordered detail-table">';
     fields.forEach(function(f){
       var v = p[f[1]];
