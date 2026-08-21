@@ -35,6 +35,13 @@ CLUSTER_FILE = os.getenv(
     "/var/www/html/orthefind/Results_Jul24/WorkingDirectory/SpeciesIDs_cluster.txt",
 )
 
+# [PLOIDY-FIX] genome_type.txt maps species -> (type, ploidy), used to order
+# and label the target-genome picker by ploidy level instead of alphabetically.
+GENOME_TYPE_FILE = os.getenv(
+    "GENOME_TYPE_FILE",
+    "/var/www/html/orthefind/genome_type.txt",
+)
+
 MAX_WINDOW = 50
 DEFAULT_UPSTREAM = 5
 DEFAULT_DOWNSTREAM = 5
@@ -51,6 +58,10 @@ _GENOME_CACHE_TTL = 300.0
 _CLUSTER_CACHE = None
 _CLUSTER_CACHE_TIME = 0.0
 _CLUSTER_CACHE_TTL = 300.0
+
+# [PLOIDY-FIX] Cache for the parsed genome_type.txt mapping.
+_GENOME_TYPE_CACHE = None
+_GENOME_TYPE_CACHE_TIME = 0.0
 
 
 def _conn_cursor():
@@ -72,6 +83,26 @@ def _genome_sort_key(label: str):
         order = {"A": 0, "B": 1, "D": 2}
         return (order.get(suffix.upper(), 3), suffix.upper(), prefix.lower())
     return (4, "", label.lower())
+
+
+def _genome_entry_sort_key(entry: dict) -> tuple:
+    """Order genome entries for the picker.
+
+    Within each subgenome (A/B/D) the ordering is: Chinese Spring genomes
+    first, then by ploidy (from genome_type.txt), then by name.  This
+    replaces the old alphabetical ordering so the picker groups genomes by
+    ploidy level rather than by name.
+    """
+    name = entry["name"]
+    ploidy = entry.get("ploidy") or ""
+    if "_" in name:
+        _, suffix = name.rsplit("_", 1)
+        order = {"A": 0, "B": 1, "D": 2}
+        sub = order.get(suffix.upper(), 3)
+    else:
+        sub = 4
+    cs = 0 if "Chinese_Spring" in name else 1
+    return (sub, cs, ploidy, name.lower())
 
 
 def _mb_label(start, end):
@@ -167,6 +198,40 @@ def _load_cluster_map() -> Dict[str, dict]:
 
     _CLUSTER_CACHE = out
     _CLUSTER_CACHE_TIME = now
+    return out
+
+
+def _load_genome_type_map() -> Dict[str, dict]:
+    """Parse genome_type.txt (Number<TAB>species<TAB>type<TAB>ploidy) into
+    {species: {"type": ..., "ploidy": ...}}.  Tolerant of whitespace/tab
+    delimiters; a species not present in the file simply falls back to an
+    empty mapping (the picker then shows the raw genome name)."""
+    global _GENOME_TYPE_CACHE, _GENOME_TYPE_CACHE_TIME
+    now = time.monotonic()
+    if _GENOME_TYPE_CACHE is not None and now - _GENOME_TYPE_CACHE_TIME < _GENOME_TYPE_CACHE_TTL:
+        return _GENOME_TYPE_CACHE
+
+    out: Dict[str, dict] = {}
+    if os.path.exists(GENOME_TYPE_FILE):
+        with open(GENOME_TYPE_FILE, encoding="utf-8", errors="ignore") as fh:
+            fh.readline()  # skip header (Number species type ploidy)
+            for raw in fh:
+                line = raw.rstrip("\n").rstrip("\r")
+                if not line.strip():
+                    continue
+                parts = line.split("\t")
+                if len(parts) < 4:
+                    parts = re.split(r"\s+", line.strip())
+                if len(parts) < 4:
+                    continue
+                species = parts[1].strip()
+                typ = parts[2].strip()
+                ploidy = parts[3].strip()
+                if species:
+                    out[species] = {"type": typ, "ploidy": ploidy}
+
+    _GENOME_TYPE_CACHE = out
+    _GENOME_TYPE_CACHE_TIME = now
     return out
 
 
@@ -452,7 +517,20 @@ def api_genomes():
         with conn.cursor() as cur:
             cur.execute("SELECT genome_name, bed_file FROM genome_info ORDER BY genome_name")
             labels = [row["genome_name"] for row in cur.fetchall()]
-    _GENOME_CACHE = sorted(set(labels), key=_genome_sort_key)
+
+    type_map = _load_genome_type_map()
+    entries = []
+    for name in sorted(set(labels)):
+        info = type_map.get(name, {})
+        ploidy = info.get("ploidy", "")
+        typ = info.get("type", "")
+        label = f"{ploidy}_{typ}" if ploidy and typ else name
+        entries.append({"name": name, "ploidy": ploidy, "type": typ, "label": label})
+
+    entries.sort(key=_genome_entry_sort_key)
+    names = [e["name"] for e in entries]
+    meta = {e["name"]: {"ploidy": e["ploidy"], "type": e["type"], "label": e["label"]} for e in entries}
+    _GENOME_CACHE = {"genomes": names, "meta": meta}
     _GENOME_CACHE_TIME = now
     return _GENOME_CACHE
 
