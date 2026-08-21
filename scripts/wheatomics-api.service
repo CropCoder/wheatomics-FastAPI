@@ -1,0 +1,30 @@
+# WheatOmics FastAPI backend — systemd unit (repo-tracked copy)
+#
+# Production installs this at /etc/systemd/system/wheatomics-api.service:
+#   sudo cp scripts/wheatomics-api.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now wheatomics-api
+#
+# Restart after code changes:  sudo systemctl restart wheatomics-api
+# Logs:                        journalctl -u wheatomics-api -f
+#
+# The /etc copy is authoritative — edit the server copy directly if the
+# production config diverges, then update this file to match.
+
+[Unit]
+Description=WheatOmics FastAPI backend (gunicorn 8 workers)
+After=network.target
+
+[Service]
+Type=simple
+User=fei
+Group=fei
+WorkingDirectory=/var/www/FastAPI_backend_Port8000
+Environment="PATH=/home/fei/mambaforge/envs/zjw/bin:/usr/bin:/bin"
+ExecStart=/home/fei/mambaforge/envs/zjw/bin/gunicorn main:app -c gunicorn.conf.py
+Restart=always
+RestartSec=3
+MemoryMax=3G
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
