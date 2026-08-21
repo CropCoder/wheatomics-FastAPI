@@ -77,9 +77,9 @@ def api_stats():
     with mysql_connection(settings.DB_WHEATPSP) as conn:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT COUNT(*) AS total, "
-                "COALESCE(SUM(is_psp), 0) AS psp, "
-                "COALESCE(SUM(has_prd), 0) AS prd "
+                "SELECT COUNT(DISTINCT cs_gene_id) AS total, "
+                "COUNT(DISTINCT CASE WHEN is_psp = 1 THEN cs_gene_id END) AS psp, "
+                "COUNT(DISTINCT CASE WHEN has_prd = 1 THEN cs_gene_id END) AS prd "
                 "FROM wheat_psp WHERE cs_gene_id IS NOT NULL"
             )
             row = cur.fetchone()
