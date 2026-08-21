@@ -141,10 +141,20 @@ def api_prd(
 
 @router.get("/protein/{seq_id}")
 def api_protein(seq_id: str):
-    """单个蛋白的完整预测结果（11 个数据列）。"""
+    """单个蛋白的完整预测结果 + 序列 + 理化性质（来自 fangenome.csv）。"""
     with mysql_connection(settings.DB_WHEATPSP) as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM wheat_psp WHERE seq_id = %s", (seq_id,))
+            cur.execute(
+                "SELECT p.*, f.sequence, f.new_molphase AS feature_molphase, "
+                "f.idr_percentage, f.pi_pi, f.prion_like, f.lcr_percentage, "
+                "f.shannon_entropy, f.fcr, f.ncpr, f.kappa, f.omega, "
+                "f.hydrophobicity, f.ppii_propensity, f.aa_composition, "
+                "f.polar, f.hydrophobic, f.aromatic, f.cationic, f.anionic, "
+                "f.expanding, f.disorder_promoting "
+                "FROM wheat_psp p LEFT JOIN wheat_psp_feature f ON p.seq_id = f.seq_id "
+                "WHERE p.seq_id = %s",
+                (seq_id,),
+            )
             row = cur.fetchone()
     if not row:
         raise ResourceNotFound(f"Protein {seq_id} not found.")

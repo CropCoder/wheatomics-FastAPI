@@ -267,10 +267,19 @@ function renderStatic(title, msg){
 
 // ---------- Cite ----------
 function renderCite(){
-  document.getElementById("view").innerHTML =
-    '<h4 class="card-title">Cite</h4>'+
-    '<div class="info-box">wheatPSP: a database of wheat phase separation-associated proteins.<br>'+
-    'Please cite the corresponding publication. (citation to be added)</div>';
+  var refs = [
+    {title: "Liquid–liquid phase separation of OsvWA36 fine-tunes brassinosteroid signaling and leaf angle in rice", url: "https://www.sciencedirect.com/science/article/pii/S0981942826001841?via%3Dihub", doi: "10.1016/j.plaphy.2026.111198"},
+    {title: "3D epigenome architecture orchestrates cis and trans regulation of flowering time in rice", url: "https://link.springer.com/article/10.1186/s13059-026-03940-3", doi: "10.1186/s13059-026-03940-3"},
+    {title: "ricePSP: a database of rice phase separation-associated proteins", url: "https://link.springer.com/article/10.1186/s13059-025-03842-w", doi: "10.1186/s13059-025-03842-w"},
+  ];
+  var html = '<h4 class="card-title">Cite</h4><ol class="mt-3">';
+  refs.forEach(function(r, i){
+    html += '<li class="mb-3"><b>'+(i+1)+'.</b> '+h(r.title)+'<br>'+
+      '<a href="'+h(r.url)+'" target="_blank" class="small">'+h(r.url)+'</a><br>'+
+      '<span class="small">DOI: <a href="https://doi.org/'+encodeURIComponent(r.doi)+'" target="_blank">'+h(r.doi)+'</a></span></li>';
+  });
+  html += '</ol>';
+  document.getElementById("view").innerHTML = html;
 }
 
 // ---------- Protein detail ----------
@@ -278,27 +287,48 @@ function renderProtein(seqId){
   var el = document.getElementById("view");
   $.getJSON(API+"/protein/"+encodeURIComponent(seqId)).done(function(resp){
     var p = resp.data.protein;
-    var fields = [
-      ["CS Gene ID", "cs_gene_id"],
-      ["PSP score", "ps_score"],
-      ["Predicted PSP", "is_psp"],
-      ["MolPhase score", "molphase_score"],
-      ["Predicted PrD", "has_prd"],
-      ["PLAAC LLR", "plaac_llr"],
-      ["PLAAC core score", "plaac_core_score"],
-      ["PLAAC PAPA proportion", "plaac_papa_prop"],
-      ["PLAAC PAPA FI", "plaac_papa_fi"],
-      ["Sequence Length", "seq_length"],
-    ];
+    function row(label, value){ return '<tr><td>'+label+'</td><td>'+h(value==null?"":value)+'</td></tr>'; }
     var html = '<h4 class="card-title">Protein: '+h(p.cs_gene_id||"")+'</h4>';
+
+    html += '<h6 class="mt-4">Prediction</h6>';
     html += '<div class="result-table"><table class="table table-bordered detail-table">';
-    fields.forEach(function(f){
-      var v = p[f[1]];
-      if(f[1]==="is_psp"||f[1]==="has_prd") v = v ? "Yes" : "No";
-      html += '<tr><td>'+f[0]+'</td><td>'+h(v==null?"":v)+'</td></tr>';
-    });
+    html += row('CS Gene ID', p.cs_gene_id);
+    html += row('PSP score', p.ps_score);
+    html += row('Predicted PSP', p.is_psp ? 'Yes' : 'No');
+    html += row('MolPhase score', p.molphase_score);
+    html += row('Predicted PrD', p.has_prd ? 'Yes' : 'No');
+    html += row('PLAAC LLR', p.plaac_llr);
+    html += row('PLAAC core score', p.plaac_core_score);
+    html += row('PLAAC PAPA proportion', p.plaac_papa_prop);
+    html += row('PLAAC PAPA FI', p.plaac_papa_fi);
     html += '</table></div>';
-    html += '<a href="#/psp" class="btn btn-outline-secondary">&larr; Back</a>';
+
+    if (p.idr_percentage != null || p.sequence != null) {
+      html += '<h6 class="mt-4">Physicochemical properties</h6>';
+      html += '<div class="result-table"><table class="table table-bordered detail-table">';
+      html += row('Sequence Length', (p.length != null ? p.length : p.seq_length));
+      html += row('IDR Percentage', p.idr_percentage);
+      html += row('Pi-Pi Interaction', p.pi_pi);
+      html += row('Prion like domain', p.prion_like);
+      html += row('LCR Percentage', p.lcr_percentage);
+      html += row('Shannon Entropy', p.shannon_entropy);
+      html += row('FCR', p.fcr);
+      html += row('NCPR', p.ncpr);
+      html += row('kappa', p.kappa);
+      html += row('omega', p.omega);
+      html += row('Hydrophobicity', p.hydrophobicity);
+      html += row('PPII Propensity', p.ppii_propensity);
+      html += row('Disorder Promoting', p.disorder_promoting);
+      html += row('Expanding', p.expanding);
+      html += '</table></div>';
+    }
+
+    if (p.sequence) {
+      html += '<h6 class="mt-4">Sequence</h6>';
+      html += '<div class="result-table"><div style="font-family:monospace;font-size:12px;word-break:break-all;max-height:300px;overflow:auto;background:#f8f9fa;padding:12px;border-radius:4px;">'+h(p.sequence)+'</div></div>';
+    }
+
+    html += '<a href="#/psp" class="btn btn-outline-secondary mt-3">&larr; Back</a>';
     el.innerHTML = html;
   }).fail(function(){ el.innerHTML = '<div class="alert alert-warning">Protein not found.</div>'; });
 }
