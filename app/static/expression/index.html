@@ -401,7 +401,12 @@ function queryExpression() {
         var tableDiv = $('<div>').addClass('data-table-container');
         projDiv.append(chartDiv);
         projDiv.append(tableDiv);
-        renderResults(resp, proj, projectNames[proj] || proj, genes, chartDiv, tableDiv);
+        if (!resp || !resp.success || !resp.data) {
+          tableDiv.append('<div class="alert alert-danger">Failed to load: ' +
+            ((resp && resp.message) || 'unknown error') + '</div>');
+          return;
+        }
+        renderResults(resp.data, proj, projectNames[proj] || proj, genes, chartDiv, tableDiv);
       })
       .fail(function(jqXHR) {
         doneCount++;

@@ -51,17 +51,21 @@ def get_expression_projects() -> dict:
     return ok(list_projects())
 
 
-@router.get("/query", response_model=ExpressionQueryResponse)
+@router.get("/query")
 def query_expression(
-    gene_ids: str = Query(..., description="Comma separated gene IDs. 表达数据基于中国春 IWGSC v2.1 (02G)，详见注释。"),
+    gene_ids: str | list[str] = Query(
+        ...,
+        description="Gene IDs: comma-separated string (gene_ids=a,b) or repeated "
+                    "params (gene_ids=a&gene_ids=b). 表达数据基于中国春 IWGSC v2.1 (02G)，详见注释。"),
     project: str = Query("PRJEB5314_paired_tbl", examples=["PRJEB5314_paired_tbl", "PRJEB25639_tbl", "ABA_JA_6BA_DMSO3h_mean_tbl"]),
-) -> ExpressionQueryResponse:
+) -> dict:
     """查询基因在指定表达项目中的表达量。
 
     功能:
         查询一个或多个基因在指定表达谱项目中的表达值及标准差。
-        支持多个基因同时查询（逗号分隔），返回每个基因在不同
-        实验条件下的表达量点数据（含误差棒）。
+        支持多个基因同时查询（逗号分隔字符串或重复参数），返回每个基因
+        在不同实验条件下的表达量点数据（含误差棒）。
+        响应为平台标准信封 {success, message, timestamp, data}。
 
     ⚠️  基因 ID 版本说明:
         表达量数据基于中国春 IWGSC v2.1 注释（基因 ID 含 02G 格式）。
@@ -71,30 +75,37 @@ def query_expression(
 
     用法:
         GET /api/expression/query?gene_ids=<基因1,基因2>&project=<项目表名>
-        - gene_ids: 必填，逗号分隔的基因 ID 列表
+        - gene_ids: 必填，逗号分隔的基因 ID 列表（或重复 gene_ids 参数）
         - project: 可选，表达项目表名，默认 PRJEB5314_paired_tbl
 
     案例:
         请求:
           curl -X GET "http://localhost:8000/api/expression/query?gene_ids=TraesCS5A02G391700&project=PRJEB5314_paired_tbl"
+          curl -X GET "http://localhost:8000/api/expression/query?gene_ids=TraesCS5A02G391700&gene_ids=TraesCS1A02G001000"
 
         响应:
           {
-            "project": "PRJEB5314_paired_tbl",
-            "genes_found": 2,
-            "genes_not_found": [],
-            "results": [
-              {
-                "gene_id": "TraesCS5A02G391700",
-                "project": "PRJEB5314_paired_tbl",
-                "points": [
-                  { "label": "root", "value": 12.5, "std": 1.2, "error_bar": [11.3, 13.7] },
-                  { "label": "leaf", "value": 45.2, "std": 3.1, "error_bar": [42.1, 48.3] }
-                ]
-              }
-            ]
+            "success": true, "message": "ok", "timestamp": "...",
+            "data": {
+              "project": "PRJEB5314_paired_tbl",
+              "genes_found": 2,
+              "genes_not_found": [],
+              "results": [ ... ]
+            }
           }
     """
+
+    # Accept both the legacy comma-separated string and repeated-param /
+    # list forms so agent clients can pass arrays positionally.
+    def _split(raw: str) -> list[str]:
+        return [g.strip() for g in raw.split(",") if g.strip()]
+
+    if isinstance(gene_ids, str):
+        gene_id_items = _split(gene_ids)
+    else:
+        gene_id_items = []
+        for item in gene_ids:
+            gene_id_items.extend(_split(str(item)))
 
     # 动态校验：从数据库 project_meta 验证项目是否存在
     from app.db.mysql import mysql_cursor
@@ -103,7 +114,7 @@ def query_expression(
         if not cursor.fetchone():
             from app.core.exceptions import ValidationFailure
             raise ValidationFailure(f"Unsupported expression project: {project}")
-    requested_genes = [ensure_gene_like(gene.strip()) for gene in gene_ids.split(",") if gene.strip()]
+    requested_genes = [ensure_gene_like(g) for g in gene_id_items]
     if not requested_genes:
         raise ResourceNotFound("No valid gene IDs provided")
 
@@ -220,10 +231,10 @@ def query_expression(
 
             results.append(ExpressionGeneResult(gene_id=gene_id, project=project, points=points))
 
-    return ExpressionQueryResponse(
+    return ok(ExpressionQueryResponse(
         project=project,
         genes_found=len(results),
         genes_not_found=missing,
         genes_converted=genes_converted,
         results=results,
-    )
+    ).model_dump())
