@@ -53,7 +53,7 @@ try:
     mydb = MySQLdb.connect(host='localhost',
                            user='wheatomics_user',
                            passwd='wheatomics115599',
-                           db='Genefuncdb',
+                           db='Genehub_DB',
                            charset='utf8')
     cursor = mydb.cursor()
     cursor.execute(sql)
