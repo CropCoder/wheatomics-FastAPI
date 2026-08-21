@@ -160,6 +160,7 @@ def retrieve_regions_for_amplicons(
     query_seqs: Dict[str, str],
     db: Path,
     samtools: str = "samtools",
+    blastdbcmd: str = "blastdbcmd",
 ) -> Tuple[Dict[str, Dict[str, str]], Dict[str, List[Tuple[str, str, str]]]]:
     """Retrieve target sequences for amplicon ends and build lookup maps."""
     retrieve_region_data: Dict[str, List[Tuple[str, str, str]]] = {}
@@ -193,7 +194,7 @@ def retrieve_regions_for_amplicons(
 
     target_seqs: Dict[str, Dict[str, str]] = {}
     for db_path, regions in db_regions.items():
-        fetched = faidx_fetch(Path(db_path), regions, samtools=samtools)
+        fetched = faidx_fetch(Path(db_path), regions, samtools=samtools, blastdbcmd=blastdbcmd)
         target_seqs.setdefault(Path(db_path).name, {}).update(fetched)
 
     # Reorganize by (db_name, query)
@@ -391,6 +392,7 @@ def run(
     params: SpecificityParams,
     samtools: str = "samtools",
     blastn: str = "blastn",
+    blastdbcmd: str = "blastdbcmd",
     detail: bool = False,
     progress_fh: Optional[TextIO] = None,
 ) -> None:
@@ -466,7 +468,7 @@ def run(
     for db_path in databases:
         db_name = Path(db_path).name
         db_pairs = [p for p in all_pairs if p.db_name == db_name]
-        seqs, mapping = retrieve_regions_for_amplicons(db_pairs, query_seqs, Path(db_path), samtools=samtools)
+        seqs, mapping = retrieve_regions_for_amplicons(db_pairs, query_seqs, Path(db_path), samtools=samtools, blastdbcmd=blastdbcmd)
         target_seqs.update(seqs)
         for key, regions in mapping.items():
             retrieve_map[key] = regions

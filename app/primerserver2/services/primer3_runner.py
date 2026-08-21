@@ -3,9 +3,9 @@
 import re
 import subprocess
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
-from .fasta_utils import faidx_fetch, sequence_length
+from .fasta_utils import faidx_fetch, fetch_sequence_lengths, sequence_length
 
 
 _REGION_LINE_RE = re.compile(r"^\s*(\S+)\s+(\S+)\s*(\S*)?\s*(\S*)?\s*(\S*)?\s*")
@@ -49,10 +49,25 @@ def parse_input_regions(
     db: Path,
     product_size_min: int,
     product_size_max: int,
+    samtools: str = "samtools",
+    blastdbcmd: str = "blastdbcmd",
 ) -> List[Primer3Region]:
     """Parse the tab-delimited input region list."""
     regions: List[Primer3Region] = []
-    lengths = sequence_length(db)
+    fai_path = Path(f"{db}.fai")
+    have_fai = fai_path.exists()
+    lengths: Dict[str, int] = {}
+    if have_fai:
+        lengths = sequence_length(db, samtools=samtools)
+
+    def chrom_length(chrom: str) -> int:
+        """Length of one chromosome. BLAST index-only DBs (the shared BLAST
+        library, no FASTA/.fai) resolve lengths lazily via blastdbcmd."""
+        if chrom in lengths:
+            return lengths[chrom]
+        if not have_fai and blastdbcmd:
+            lengths.update(fetch_sequence_lengths(db, [chrom], blastdbcmd))
+        return lengths.get(chrom, 0)
 
     with open(input_path, "r", encoding="utf-8") as fh:
         for line in fh:
@@ -75,7 +90,7 @@ def parse_input_regions(
                 target_length = int(target_length_str.replace(",", ""))
             elif target_start == 1:
                 # ID only: whole template (qRT-PCR)
-                target_length = lengths.get(chrom, 0)
+                target_length = chrom_length(chrom)
             else:
                 # ID + position only: SNP, length = 1
                 target_length = 1
@@ -201,6 +216,7 @@ def run(
     product_size_min: int = 100,
     product_size_max: int = 1000,
     samtools: str = "samtools",
+    blastdbcmd: str = "blastdbcmd",
     primer3bin: str = "primer3_core",
     primer3setting: Optional[Path] = None,
     debug: bool = False,
@@ -209,12 +225,14 @@ def run(
     outputdir = Path(outputdir)
     outputdir.mkdir(parents=True, exist_ok=True)
 
-    regions = parse_input_regions(input_path, db, product_size_min, product_size_max)
+    regions = parse_input_regions(
+        input_path, db, product_size_min, product_size_max,
+        samtools=samtools, blastdbcmd=blastdbcmd)
     if not regions:
         raise ValueError("No valid input regions")
 
     retrieve_regions = [r.retrieve_region for r in regions]
-    sequences = faidx_fetch(db, retrieve_regions, samtools=samtools)
+    sequences = faidx_fetch(db, retrieve_regions, samtools=samtools, blastdbcmd=blastdbcmd)
 
     primer3_input = outputdir / "primer3input.tmp"
     primer3_output = outputdir / "primer3output.txt"

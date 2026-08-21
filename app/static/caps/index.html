@@ -467,7 +467,7 @@ $(document).on('click', '.btn-align', function() {
 // ---------- specificity check databases (chosen in the main form) ----------
 var PS2_DB_GROUPS = [];   // [{name, databases: [{name, label}]}]
 var DB_SEARCH_QUERY = '';
-var CHECKED_DBS = { 'primer_Chinese_Spring2.1.genome': true };  // survives search re-renders
+var CHECKED_DBS = { 'AABBDD_Chinese_Spring2.1.genome': true };  // survives search re-renders
 
 function loadCheckDatabases() {
   $.getJSON('/api/PrimerServer2/databases')
@@ -482,13 +482,13 @@ function loadCheckDatabases() {
     })
     .fail(function() {
       PS2_DB_GROUPS = [{name: 'genome', databases: [
-        {name: 'primer_Chinese_Spring2.1.genome', label: 'Chinese Spring genome v2.1'}]}];
+        {name: 'AABBDD_Chinese_Spring2.1.genome', label: 'Chinese Spring genome v2.1'}]}];
       renderDbList();
     });
 }
 
 function shortDbName(name) {
-  return String(name).replace(/^primer[._]/, '').replace(/\.genome$/, '');
+  return String(name).replace(/^(AABBDD_|primer[._])/, '').replace(/\.genome$/, '');
 }
 
 function updateDbSelected() {
@@ -551,7 +551,7 @@ $('#db-clear').on('click', function() {
 
 function selectedCheckDbs() {
   var names = Object.keys(CHECKED_DBS);
-  return names.length ? names : ['primer_Chinese_Spring2.1.genome'];
+  return names.length ? names : ['AABBDD_Chinese_Spring2.1.genome'];
 }
 
 function renderCheckResults(resp, el) {
