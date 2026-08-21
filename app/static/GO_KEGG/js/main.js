@@ -102,10 +102,21 @@ function makeBubble(divId, items, color, title, maxN) {
     Plotly.newPlot(divId, allTraces, layout, { responsive:true, displayModeBar:false });
 }
 
+// Build the enrichment summary line: statistical method + background /
+// query / significant counts.
+function enrichSummary(label, d, R) {
+    var thresh = document.getElementById('padjThreshold').value;
+    var method = 'Hypergeometric test + Benjamini-Hochberg FDR correction';
+    return '<b>'+label+' enrichment</b> &mdash; '+method+
+        '<br>Background (BG): '+(d.N||0).toLocaleString()+
+        ' | Query with annotation: '+(d.n||0).toLocaleString()+
+        ' / '+(d.gene_count||0).toLocaleString()+' submitted'+
+        ' | <b>Significant number (p.adjust &le; '+(thresh||0.05)+'): '+R.length+'</b>';
+}
+
 function renderGO() {
     var d = goData, R = d.results || [];
-    document.getElementById('goSummary').innerHTML =
-        '<b>GO:</b> BG='+(d.N||0).toLocaleString()+' | Query='+(d.n||0).toLocaleString()+' | Sig='+R.length;
+    document.getElementById('goSummary').innerHTML = enrichSummary('GO', d, R);
     if (!R.length) {
         ['goChartBP','goChartMF','goChartCC'].forEach(function(id){ document.getElementById(id).innerHTML='<p class="no-data">None</p>'; });
         document.querySelector('#goTable tbody').innerHTML='<tr><td colspan="8" class="no-data">None</td></tr>';
@@ -148,8 +159,7 @@ function renderGO() {
 
 function renderKEGG() {
     var d = keggData, R = d.results || [];
-    document.getElementById('keggSummary').innerHTML =
-        '<b>KEGG:</b> BG='+(d.N||0).toLocaleString()+' | Query='+(d.n||0).toLocaleString()+' | Sig='+R.length;
+    document.getElementById('keggSummary').innerHTML = enrichSummary('KEGG', d, R);
     if (!R.length) {
         document.getElementById('keggChart').innerHTML='<p class="no-data">None</p>';
         document.querySelector('#keggTable tbody').innerHTML='<tr><td colspan="7" class="no-data">None</td></tr>';
