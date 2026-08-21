@@ -185,7 +185,28 @@ function renderHome(){
 function doHomeSearch(){
   var q = document.getElementById("home-search").value.trim();
   if(!q) return;
-  location.hash = "#/search/" + encodeURIComponent(q);
+  // Skip the result list when the query unambiguously identifies one record:
+  // 1) exact cs_gene_id -> gene detail (all transcripts)
+  // 2) exact seq_id     -> protein detail
+  // 3) otherwise        -> /search list (also shows "No records found")
+  $.getJSON(API+"/gene/"+encodeURIComponent(q)).done(function(){
+    location.hash = "#/gene/" + encodeURIComponent(q);
+  }).fail(function(){
+    $.getJSON(API+"/protein/"+encodeURIComponent(q)).done(function(){
+      location.hash = "#/protein/" + encodeURIComponent(q);
+    }).fail(function(){
+      $.getJSON(API+"/search", { q: q, page: 1, per_page: 100 }).done(function(resp){
+        var d = resp && resp.data;
+        if(d && d.total > 0 && d.rows){
+          var genes = {};
+          d.rows.forEach(function(r){ if(r.cs_gene_id) genes[r.cs_gene_id] = 1; });
+          var ks = Object.keys(genes);
+          if(ks.length === 1){ location.hash = "#/gene/" + encodeURIComponent(ks[0]); return; }
+        }
+        location.hash = "#/search/" + encodeURIComponent(q);
+      }).fail(function(){ location.hash = "#/search/" + encodeURIComponent(q); });
+    });
+  });
 }
 
 // ---------- List (psp / prd / search) ----------
