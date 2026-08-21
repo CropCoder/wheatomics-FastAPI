@@ -40,8 +40,16 @@ def _blastdbcmd(*args: str, stdin_data: str | None = None) -> str:
     """Run blastdbcmd and return trimmed stdout.
 
     `stdin_data` (if given) is piped to the process — used for `-entry_batch -`.
+    Runs with cwd=BLAST_DB_PATH: alias files (.pal/.nal) resolve their
+    relative DBLIST volume names against the working directory — from the
+    service CWD (/var/www/FastAPI_backend_Port8000) every volume misses and
+    blastdbcmd reports "No alias or index file found".
     """
-    result = run_command([_blastdbcmd_path(), *args], stdin=stdin_data)
+    result = run_command(
+        [_blastdbcmd_path(), *args],
+        stdin=stdin_data,
+        cwd=settings.BLAST_DB_PATH,
+    )
     return result.stdout.strip()
 
 
