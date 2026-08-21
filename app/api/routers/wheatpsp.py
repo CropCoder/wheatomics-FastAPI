@@ -73,7 +73,7 @@ def _iter_download(table: str) -> Iterator[str]:
 
 @router.get("/stats")
 def api_stats():
-    """数据库统计：总蛋白数、预测 PSP 数、PrD 蛋白数。"""
+    """数据库统计：总蛋白数、预测 PSP 数、PrD 蛋白数（含百分比）+ 关键得分分布。"""
     with mysql_connection(settings.DB_WHEATPSP) as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -83,10 +83,41 @@ def api_stats():
                 "FROM wheat_psp WHERE cs_gene_id IS NOT NULL"
             )
             row = cur.fetchone()
+
+            def dist(expr: str, width: float, nround: int) -> dict:
+                """Histogram over proteins: bin start values + counts."""
+                cur.execute(
+                    f"SELECT FLOOR({expr}/{width}) AS b, COUNT(*) AS n "
+                    f"FROM wheat_psp WHERE {expr} IS NOT NULL "
+                    f"GROUP BY b ORDER BY b"
+                )
+                bins, counts = [], []
+                for r in cur.fetchall():
+                    bins.append(round(float(r["b"]) * width, nround))
+                    counts.append(int(r["n"]))
+                return {"bins": bins, "counts": counts}
+
+            distributions = {
+                "ps_score": dist("ps_score", 0.1, 1),
+                "molphase_score": dist("molphase_score", 0.1, 1),
+                "plaac_llr": dist("plaac_llr", 2.0, 0),
+                "plaac_papa_prop": dist("plaac_papa_prop", 0.1, 1),
+                "seq_length": dist("seq_length", 100.0, 0),
+            }
+    total = max(int(row["total"] or 0), 0)
+    psp = int(row["psp"] or 0)
+    prd = int(row["prd"] or 0)
+
+    def pct(n: int) -> float:
+        return round(n / total * 100, 1) if total else 0.0
+
     return ok({
-        "total": int(row["total"]),
-        "psp": int(row["psp"]),
-        "prd": int(row["prd"]),
+        "total": total,
+        "psp": psp,
+        "prd": prd,
+        "psp_pct": pct(psp),
+        "prd_pct": pct(prd),
+        "distributions": distributions,
     })
 
 

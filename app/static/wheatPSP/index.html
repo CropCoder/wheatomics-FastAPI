@@ -7,6 +7,7 @@
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<script src="/wheatPSP/js/plotly-3.0.1.min.js"></script>
 
 <script>
 // ===== Visit tracking =====
@@ -47,6 +48,7 @@
   .stat-box { flex:1; min-width:180px; max-width:260px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:18px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
   .stat-box .num { font-size:34px; font-weight:bold; color:#0077b6; }
   .stat-box .lbl { font-size:14px; color:#64748b; }
+  .stat-box .pct { font-size:13px; color:#0077b6; margin-top:2px; }
   .stat-box a { display:block; margin-top:8px; font-size:13px; }
   .result-table { background:#fff; border-radius:6px; padding:20px; margin-top:16px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
   .result-table table { font-size:15px; }
@@ -161,11 +163,12 @@ function renderHome(){
   var el = document.getElementById("view");
   $.getJSON(API+"/stats").done(function(resp){
     var d = resp.data;
+    function pct(v){ return (v!=null?v:0).toFixed(1)+'% of all wheat proteins'; }
     var html = '<div class="hero"><h3>wheatPSP</h3><p>A comprehensive database of wheat phase separation-associated proteins</p></div>';
     html += '<div class="stat-row">';
-    html += '<div class="stat-box"><div class="num">'+(d.total||0).toLocaleString()+'</div><div class="lbl">annotated wheat proteins</div><a href="'+API+'/download/allProteins">Download</a></div>';
-    html += '<div class="stat-box"><div class="num">'+(d.psp||0).toLocaleString()+'</div><div class="lbl">predicted PSPs</div><a href="'+API+'/download/PredPSPs">Download</a></div>';
-    html += '<div class="stat-box"><div class="num">'+(d.prd||0).toLocaleString()+'</div><div class="lbl">predicted PrD proteins</div><a href="'+API+'/download/PrD_Pro">Download</a></div>';
+    html += '<div class="stat-box"><div class="num">'+(d.total||0).toLocaleString()+'</div><div class="lbl">annotated wheat proteins</div><div class="pct">100%</div><a href="'+API+'/download/allProteins">Download</a></div>';
+    html += '<div class="stat-box"><div class="num">'+(d.psp||0).toLocaleString()+'</div><div class="lbl">predicted PSPs</div><div class="pct">'+pct(d.psp_pct)+'</div><a href="'+API+'/download/PredPSPs">Download</a></div>';
+    html += '<div class="stat-box"><div class="num">'+(d.prd||0).toLocaleString()+'</div><div class="lbl">predicted PrD proteins</div><div class="pct">'+pct(d.prd_pct)+'</div><a href="'+API+'/download/PrD_Pro">Download</a></div>';
     html += '</div>';
 
     html += '<div class="form-inline justify-content-center mb-2">';
@@ -174,12 +177,49 @@ function renderHome(){
     html += '</div>';
     html += '<p class="text-center text-muted small">Search by Chinese Spring gene ID; browse all predicted <a href="#/psp">PSPs</a> or <a href="#/prdp">PrD proteins</a>.</p>';
 
+    html += '<h6 class="mt-5"><strong>Score distributions</strong><span class="text-muted small"> (protein-level, from the wheatPSP prediction table)</span></h6>';
+    html += '<div class="stat-row">';
+    html += distCard('PSP score', 'dist-ps');
+    html += distCard('MolPhase score', 'dist-mol');
+    html += distCard('PLAAC LLR', 'dist-llr');
+    html += distCard('Sequence length (aa)', 'dist-len');
+    html += '</div>';
+
     html += '<div class="info-box mt-4"><strong>Reference</strong><br>'
       + 'wheatPSP: a database of wheat phase separation-associated proteins. (citation to be added)</div>';
 
     el.innerHTML = html;
     document.getElementById("home-search").addEventListener("keydown", function(e){ if(e.key==="Enter") doHomeSearch(); });
+    var dists = d.distributions || {};
+    plotHist("dist-ps", dists.ps_score, 0.1, "PSP score");
+    plotHist("dist-mol", dists.molphase_score, 0.1, "MolPhase score");
+    plotHist("dist-llr", dists.plaac_llr, 2.0, "PLAAC LLR");
+    plotHist("dist-len", dists.seq_length, 100, "Sequence length");
   }).fail(function(){ el.innerHTML = '<div class="alert alert-danger">Failed to load stats.</div>'; });
+}
+
+function distCard(title, id){
+  return '<div class="stat-box" style="text-align:left;min-width:240px;"><div class="lbl" style="font-weight:600;">'+h(title)+'</div>'
+    + '<div id="'+id+'" style="width:100%;height:200px;"></div></div>';
+}
+
+function plotHist(id, hist, width, xlabel){
+  var elx = document.getElementById(id);
+  if(!elx || !hist || !hist.bins || !hist.counts) return;
+  var xs = hist.bins.map(function(b){ return +(b + width/2).toFixed(2); });
+  var labels = hist.bins.map(function(b){ return (b) + ' - ' + (b + width); });
+  Plotly.newPlot(elx, [{
+    x: xs, y: hist.counts, type: 'bar',
+    marker: { color: '#0077b6' },
+    customdata: labels,
+    hovertemplate: '%{customdata}<br>n = %{y}<extra></extra>'
+  }], {
+    margin: { l: 42, r: 8, t: 8, b: 36 },
+    xaxis: { title: { text: xlabel, font: { size: 11 } }, tickfont: { size: 10 } },
+    yaxis: { title: { text: 'proteins', font: { size: 11 } }, tickfont: { size: 10 } },
+    bargap: 0.08,
+    autosize: true
+  }, { responsive: true, displayModeBar: false });
 }
 
 function doHomeSearch(){
