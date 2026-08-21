@@ -203,6 +203,20 @@ def _load_cluster_map() -> Dict[str, dict]:
     return out
 
 
+# 基因组命名别名：数据库 genome_name 与 genome_type.txt / SpeciesIDs_cluster.txt
+# 里 species 名的差异。例：硬粒小麦(Triticum turgidum) 数据库里叫
+# Triticum_turgidum_Svevo_A，但文件里叫 Durum_Wheat_A。key=数据库名，value=文件名。
+_GENOME_ALIASES = {
+    "Triticum_turgidum_Svevo_A": "Durum_Wheat_A",
+    "Triticum_turgidum_Svevo_B": "Durum_Wheat_B",
+}
+
+
+def _genome_alias(name: str) -> str:
+    """Resolve a database genome_name to its file-side (canonical) name."""
+    return _GENOME_ALIASES.get(name, name)
+
+
 def _load_genome_type_map() -> Dict[str, dict]:
     """Parse genome_type.txt (Number<TAB>species<TAB>type<TAB>ploidy) into
     {species: {"type": ..., "ploidy": ...}}.  Tolerant of whitespace/tab
@@ -243,7 +257,7 @@ def _resolve_cluster(
     chromosome: str,
     cluster_map: Dict[str, dict],
 ) -> Optional[int]:
-    info = cluster_map.get(genome_label)
+    info = cluster_map.get(_genome_alias(genome_label))
     if not info:
         return _gene_cluster(gene_id) or _chrom_cluster(chromosome)
 
@@ -523,7 +537,7 @@ def api_genomes():
     type_map = _load_genome_type_map()
     entries = []
     for name in sorted(set(labels)):
-        info = type_map.get(name, {})
+        info = type_map.get(_genome_alias(name), {})
         ploidy = info.get("ploidy", "")
         typ = info.get("type", "")
         label = f"{ploidy}_{typ}" if ploidy and typ else name
