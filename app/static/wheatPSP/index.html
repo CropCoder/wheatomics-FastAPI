@@ -152,6 +152,7 @@ function router(){
   else if(view==="cite") renderCite();
   else if(view==="search") renderList("search", parts[1]||"");
   else if(view==="protein") renderProtein(parts[1]||"");
+  else if(view==="gene") renderGene(parts[1]||"");
   else renderHome();
 }
 
@@ -210,7 +211,7 @@ function renderList(kind, q){
       html += '</tr></thead><tbody>';
       d.rows.forEach(function(r, i){
         var gid = h(r.cs_gene_id || "");
-        var link = '<a href="#/protein/'+encodeURIComponent(r.seq_id)+'">'+gid+'</a>';
+        var link = '<a href="#/gene/'+encodeURIComponent(r.cs_gene_id||'')+'">'+gid+'</a>';
         if(kind==="prd"){
           html += '<tr><td>'+(d.per_page*(d.page-1)+i+1)+'</td><td>'+link+'</td><td>'+num(r.plaac_llr)+'</td></tr>';
         } else {
@@ -236,6 +237,71 @@ function pagination(kind, d, q){
 }
 function goPage(kind, page, q){ currentPage[kind]=page; renderList(kind, q); }
 function doListFilter(kind){ var q=document.getElementById("list-q").value.trim(); currentPage[kind]=1; renderList(kind, q); }
+
+// ---------- Gene: all transcripts ----------
+function renderGene(csGeneId){
+  var el = document.getElementById("view");
+  $.getJSON(API+"/gene/"+encodeURIComponent(csGeneId)).done(function(resp){
+    var d = resp.data;
+    var html = '<a href="#/home" class="text-decoration-none small text-primary">&larr; Home</a> ';
+    html += '<h4 class="card-title">Gene: '+h(d.cs_gene_id||"")+'</h4>';
+    html += '<p class="text-muted">'+d.transcripts.length.toLocaleString()+' transcript(s) with phase-separation prediction. '+
+      '<a href="/cgi-bin/geneDetail.py?search='+encodeURIComponent(d.cs_gene_id||'')+'" target="_blank">View in GeneHub &raquo;</a></p>';
+    html += '<div class="result-table"><table class="table table-bordered table-hover table-sm"><thead><tr>';
+    html += '<th>#</th><th>seq_id</th><th>gene_id</th><th>PSP score</th><th>Predicted PSP</th><th>MolPhase</th><th>PrD</th><th>PLAAC LLR</th><th>PAPA prop</th><th></th>';
+    html += '</tr></thead><tbody>';
+    d.transcripts.forEach(function(p, i){
+      html += '<tr><td>'+(i+1)+'</td>'+
+        '<td>'+h(p.seq_id||'')+'</td>'+
+        '<td>'+h(p.gene_id||'')+'</td>'+
+        '<td>'+num(p.ps_score)+'</td>'+
+        '<td>'+(p.is_psp?'Yes':'No')+'</td>'+
+        '<td>'+num(p.molphase_score)+'</td>'+
+        '<td>'+(p.has_prd?'Yes':'No')+'</td>'+
+        '<td>'+num(p.plaac_llr)+'</td>'+
+        '<td>'+num(p.plaac_papa_prop)+'</td>'+
+        '<td><a href="#/protein/'+encodeURIComponent(p.seq_id||'')+'">Detail</a></td></tr>';
+    });
+    html += '</tbody></table></div>';
+    el.innerHTML = html;
+  }).fail(function(){ el.innerHTML = '<div class="alert alert-warning">Gene not found.</div>'; });
+}
+
+// Download the protein FASTA via the sequence module (default DB = all_protein).
+function downloadProteinFasta(geneId){
+  if(!geneId) return;
+  $.getJSON("/api/sequence/by-gene", { gene_id: geneId, protein_db: "all_protein" })
+    .done(function(resp){
+      var fa = resp && resp.protein_sequence;
+      if(!fa){ alert("No protein sequence found."); return; }
+      var blob = new Blob([fa], {type:"text/plain;charset=utf-8"});
+      var a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+      a.download = geneId+".fasta"; a.click(); URL.revokeObjectURL(a.href);
+    })
+    .fail(function(){ alert("Failed to fetch sequence."); });
+}
+
+// Download the prediction table as CSV (client-side).
+function downloadProteinPrediction(){
+  var p = window._wpspProtein;
+  if(!p) return;
+  var rows = [
+    ["field","value"],
+    ["seq_id", p.seq_id], ["gene_id", p.gene_id], ["cs_gene_id", p.cs_gene_id],
+    ["PSP score", p.ps_score], ["Predicted PSP", p.is_psp ? "Yes":"No"],
+    ["MolPhase score", p.molphase_score], ["Predicted PrD", p.has_prd ? "Yes":"No"],
+    ["PLAAC LLR", p.plaac_llr], ["PLAAC core score", p.plaac_core_score],
+    ["PLAAC PAPA proportion", p.plaac_papa_prop], ["PLAAC PAPA FI", p.plaac_papa_fi],
+    ["IDR percentage", p.idr_percentage], ["Pi-Pi", p.pi_pi], ["LCR percentage", p.lcr_percentage],
+    ["Shannon entropy", p.shannon_entropy], ["FCR", p.fcr], ["NCPR", p.ncpr],
+    ["kappa", p.kappa], ["omega", p.omega], ["Hydrophobicity", p.hydrophobicity],
+    ["PPII propensity", p.ppii_propensity], ["Sequence length", p.length != null ? p.length : p.seq_length]
+  ];
+  var csv = rows.map(function(r){ return r.map(function(v){ return '"'+String(v==null?"":v).replace(/"/g,'""')+'"'; }).join(","); }).join("\n");
+  var blob = new Blob(["\ufeff"+csv], {type:"text/csv;charset=utf-8"});
+  var a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = (p.seq_id||"protein")+"_prediction.csv"; a.click(); URL.revokeObjectURL(a.href);
+}
 
 // ---------- Static placeholder (Fams / Docs) ----------
 function renderStatic(title, msg){
@@ -264,9 +330,15 @@ function renderProtein(seqId){
   var el = document.getElementById("view");
   $.getJSON(API+"/protein/"+encodeURIComponent(seqId)).done(function(resp){
     var p = resp.data.protein;
+    window._wpspProtein = p;
     function row(label, value){ return '<tr><td>'+label+'</td><td>'+h(value==null?"":value)+'</td></tr>'; }
     var html = '<a href="#/home" class="text-decoration-none small text-primary">&larr; Home</a> ';
-    html += '<h4 class="card-title">Protein: '+h(p.cs_gene_id||"")+'</h4>';
+    html += '<h4 class="card-title">Protein: '+h(p.seq_id||"")+'</h4>';
+    html += '<p class="text-muted">'+
+      (p.cs_gene_id ? '<a href="/cgi-bin/geneDetail.py?search='+encodeURIComponent(p.cs_gene_id)+'" target="_blank">View in GeneHub &raquo;</a> | ' : '')+
+      '<a href="#" onclick="downloadProteinFasta(\''+h(p.cs_gene_id||p.seq_id||'')+'\');return false;">Download FASTA</a> | '+
+      '<a href="#" onclick="downloadProteinPrediction();return false;">Download prediction CSV</a>'+
+      '</p>';
 
     html += '<h6 class="mt-4">Prediction</h6>';
     html += '<div class="result-table"><table class="table table-bordered detail-table">';

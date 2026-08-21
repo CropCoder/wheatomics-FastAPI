@@ -102,8 +102,9 @@ def api_search(
     args: list = []
     if q:
         like = f"%{q}%"
-        where += " AND cs_gene_id LIKE %s"
-        args = [like]
+        # Match any of the three ID sets: CS 02G gene id / pan-genome gene id / seq id
+        where += " AND (cs_gene_id LIKE %s OR gene_id LIKE %s OR seq_id LIKE %s)"
+        args = [like, like, like]
     return ok(_list(where, args, page, per_page))
 
 
@@ -137,6 +138,23 @@ def api_prd(
         where += " AND cs_gene_id LIKE %s"
         args = [like]
     return ok(_list(where, args, page, per_page))
+
+
+@router.get("/gene/{cs_gene_id}")
+def api_gene(cs_gene_id: str):
+    """一个基因（CS 02G id）下的所有转录本，相分离预测并列对比。"""
+    with mysql_connection(settings.DB_WHEATPSP) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT p.*, f.sequence, f.new_molphase AS feature_molphase "
+                "FROM wheat_psp p LEFT JOIN wheat_psp_feature f ON p.seq_id = f.seq_id "
+                "WHERE p.cs_gene_id = %s ORDER BY p.id",
+                (cs_gene_id,),
+            )
+            rows = cur.fetchall()
+    if not rows:
+        raise ResourceNotFound(f"No wheatPSP record for gene {cs_gene_id}.")
+    return ok({"cs_gene_id": cs_gene_id, "transcripts": rows})
 
 
 @router.get("/protein/{seq_id}")

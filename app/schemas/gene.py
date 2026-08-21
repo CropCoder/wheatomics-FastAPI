@@ -65,6 +65,11 @@ class GeneDetailResponse(BaseModel):
     functions: list[str] = Field(default_factory=list)
     jbrowse_links: dict[str, str] = Field(default_factory=dict)
     external_links: dict[str, str] = Field(default_factory=dict)
+    #: wheatPSP phase-separation summary, populated by gene.py from wheat_psp_db
+    #: keys: any_psp, any_prd, transcripts[{seq_id, ps_score, is_psp,
+    #: molphase_score, has_prd, plaac_llr, plaac_papa_prop}]. None when the gene
+    #: has no wheatPSP records.
+    phase_separation: dict | None = None
 
 
 class GeneFunctionRecord(BaseModel):

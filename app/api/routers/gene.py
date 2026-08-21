@@ -24,7 +24,7 @@ def _validate_genefunc_table(table: str) -> str:
                 "Call GET /api/genes/functions/tables for the list of available tables."
             )
     return table
-from app.db.mysql import mysql_cursor
+from app.db.mysql import mysql_connection, mysql_cursor
 from app.schemas.gene import DOIReference, GeneDetailResponse, GeneFunctionRecord, KnownGeneDetail, KnownGeneSummary
 from app.services.genome_examples import GENOME_EXAMPLES  # noqa: F401  (legacy re-export)
 from app.services.legacy_parsers import normalize_text, split_legacy_multi_value
@@ -355,6 +355,40 @@ def get_gene_detail(gene_id: str) -> dict:
             "ensembl": f"https://ensembl.gramene.org/Triticum_aestivum/Gene/Summary?g={gene_v2}" if gene_v2 else "",
         },
     )
+
+    # wheatPSP: phase-separation predictions for this gene (any transcript).
+    # Normalize gene ids to the CS 02G form (strip numeric transcript suffix)
+    # and match against wheat_psp.cs_gene_id. Never fails the gene detail —
+    # on any error the field stays None.
+    phase_sep = None
+    try:
+        candidates: list[str] = []
+        for gid in detail.gene_ids or []:
+            g2 = re.sub(r"\.\d+$", "", str(gid))
+            if g2 and g2 not in candidates:
+                candidates.append(g2)
+        if candidates:
+            with mysql_connection(settings.DB_WHEATPSP) as conn:
+                with conn.cursor() as cur:
+                    ph = ",".join(["%s"] * len(candidates))
+                    cur.execute(
+                        "SELECT seq_id, gene_id, cs_gene_id, ps_score, is_psp, "
+                        "molphase_score, has_prd, plaac_llr, plaac_core_score, "
+                        "plaac_papa_prop, plaac_papa_fi "
+                        f"FROM wheat_psp WHERE cs_gene_id IN ({ph}) ORDER BY id",
+                        candidates,
+                    )
+                    rows = cur.fetchall()
+            if rows:
+                phase_sep = {
+                    "any_psp": bool(any(r.get("is_psp") for r in rows)),
+                    "any_prd": bool(any(r.get("has_prd") for r in rows)),
+                    "transcripts": rows,
+                }
+    except Exception:
+        phase_sep = None
+    detail.phase_separation = phase_sep
+
     return ok(detail.model_dump())
 
 def _make_function_record(row, table):

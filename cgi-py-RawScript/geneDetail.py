@@ -68,6 +68,38 @@ try:
       print('<tr><th>Molecular Weight:</th><td>' + ele[10] + '</td></tr>')
       print('<tr><th>Isoelectric points:</th><td>' + ele[11] + '</td></tr>')
       print('<tr><th>Function:</th><td>' + ele[13] +'<br>' + ele[14] + '<br>' +ele[15] + '</td></tr>')
+      # Phase separation (wheatPSP) — same <th>:</th> row style as Function.
+      # Best-effort: any DB error just prints a dash, never breaks the page.
+      try:
+          psp_db = MySQLdb.connect(host='localhost', user='wheatomics_user', passwd='wheatomics115599', db='wheat_psp_db', charset='utf8')
+          psp_cur = psp_db.cursor()
+          cand_norm = []
+          for cand in [str(ele[2]).strip(), str(ele[3]).strip(), str(ele[4]).strip()]:
+              if cand.endswith('.1'):
+                  cand = cand[:-2]
+              if cand and cand not in cand_norm:
+                  cand_norm.append(cand)
+          ge = " OR ".join(["cs_gene_id='" + c + "'" for c in cand_norm]) if cand_norm else "1=0"
+          psp_cur.execute("SELECT seq_id, ps_score, is_psp, molphase_score, has_prd, plaac_llr, plaac_papa_prop FROM wheat_psp WHERE " + ge + " ORDER BY id")
+          psp_rows = psp_cur.fetchall()
+          psp_db.close()
+      except Exception:
+          psp_rows = []
+      if psp_rows:
+          any_psp = any(r[2] == 1 for r in psp_rows)
+          any_prd = any(r[4] == 1 for r in psp_rows)
+          lines = ['Predicted PSP: ' + ('YES' if any_psp else 'NO') + (' | PrD: YES' if any_prd else '')]
+          for r in psp_rows[:6]:
+              lines.append('seq ' + str(r[0]) + ': ps_score ' + str(r[1]) +
+                           ' | MolPhase ' + str(r[3]) +
+                           ' | PrD ' + ('YES' if r[4] == 1 else 'NO') +
+                           ' | PLAAC LLR ' + str(r[5]) + ' | PAPA prop ' + str(r[6]))
+          if len(psp_rows) > 6:
+              lines.append('... ' + str(len(psp_rows) - 6) + ' more transcript(s)')
+          psp_link = '<a href="/wheatPSP/#/gene/' + cand_norm[0] + '" target="_blank">View in wheatPSP &raquo;</a>'
+          print('<tr><th>Phase separation:</th><td>' + '<br>'.join(lines) + '<br>' + psp_link + '</td></tr>')
+      else:
+          print('<tr><th>Phase separation:</th><td>&mdash;</td></tr>')
       print('<tr><th>GetSequence:</th><td><button style="color:white;background-color:#007DBC;border-color:#007BFF" id="button"> <a style="color:white;" href="http://wheatomics.sdau.edu.cn/cgi-bin/geneDetail_get_sequence.py?genome_db=all_genomes&chrom=' + ele[5]+ '_' + ele[1]+ '&start='+ str(ele[6])+'&end='+ str(ele[7])+'&gene_db=all_gene&gene_id='+ ele[2] +'.1&protein_db=all_protein&protein_id='+ ele[2] +'.1" target="_blank">Download genomic, gene and protein sequence</a></button></td></tr>')
       print('''<tr><th>Gene structure:</th><td><p style="font-size:12px;" align="right"> <a href="http://wheatomics.sdau.edu.cn/jbrowse-1.12.3-release/?data=Chinese_Spring1.0&loc='''+ ele[5]+ '%3A' + str(ele[6]-200)+'..'+ str(ele[7]+200) + '&tracks=IWGSCv1.1_HC_LC&amp;tracklist=0&amp;nav=0&amp;overview=0&amp;fullviewlink=0"' + ''' target="jbrowse1">Center on '''+ ele[2] +''' </a> | <a href="http://wheatomics.sdau.edu.cn/jbrowse-1.12.3-release/?data=Chinese_Spring1.0&loc='''+ ele[5]+ '%3A' + str(ele[6]-200)+'..'+ str(ele[7]+200) + '&tracks=IWGSCv1.1_HC_LC"' +''' target="_blank">Full-screen view</a></p>
     <iframe name="jbrowse1" src="http://wheatomics.sdau.edu.cn/jbrowse-1.12.3-release/?data=Chinese_Spring1.0&loc='''+ ele[5]+ '%3A' + str(ele[6]-200)+'..'+ str(ele[7] + 200) + '&tracks=IWGSCv1.1_HC_LC&amp;tracklist=0&amp;nav=0&amp;overview=0&amp;fullviewlink=0"' +''' style="border: 1px solid black" width="900" height="200"></iframe></td></tr>''')
