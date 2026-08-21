@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>wheatPSP - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+
+<script>
+// ===== Visit tracking =====
+(function() {
+  var page = location.pathname || 'unknown';
+  try {
+    fetch('/api/track/visit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({page:page}) }).catch(function(){});
+  } catch (e) {}
+  function fmt(n){ n=Number(n)||0; if(n>=1000000)return (n/1000000).toFixed(3)+'M'; if(n>=10000)return (n/1000).toFixed(3)+'k'; return String(n); }
+  function setHtml(html){ var el=document.getElementById('visit-stats'); if(el)el.innerHTML=html; }
+  fetch('/api/track/stats').then(function(r){return r.json();}).then(function(resp){
+    if(!resp||!resp.success){ setHtml('<span class="vs-pill vs-error">stats unavailable</span>'); return; }
+    var d=resp.data;
+    setHtml('<span class="vs-pill vs-today"><span class="vs-dot vs-dot-today"></span>Today <b>'+fmt(d.today.pv)+'</b></span>'+
+      '<span class="vs-pill vs-total"><span class="vs-dot vs-dot-total"></span>Total <b>'+fmt(d.total.pv)+'</b></span>'+
+      '<span class="vs-pill vs-online"><span class="vs-dot vs-dot-online"></span>Online <b>'+fmt(d.online)+'</b></span>');
+  }).catch(function(){ setHtml('<span class="vs-pill vs-error">stats unavailable</span>'); });
+})();</script>
+<style>
+  body { background:#f8f9fa; margin:0; padding:0; }
+  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+  #home_header span { font-size:28px; font-weight:bold; color:#fff; }
+  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+  #header-tabs li { display:inline-block !important; width:190px !important; }
+  #header-tabs a { background:#0077b6; font-size:13pt; color:#fff !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+  #header-tabs a:hover { background:#98c1d9; color:#000; }
+  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+  #header-tabs ul li ul { display:none !important; position:absolute; }
+  #header-tabs ul li:hover ul { display:block !important; }
+  #header-tabs ul li ul a { border-radius:0; }
+  #home_content { max-width:1200px; margin:0 auto; padding:0 15px 40px; }
+  .card-title { margin-top:20px; }
+  .stat-row { display:flex; flex-wrap:wrap; gap:16px; margin:20px 0; }
+  .stat-box { flex:1; min-width:180px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:18px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+  .stat-box .num { font-size:30px; font-weight:bold; color:#0077b6; }
+  .stat-box .lbl { font-size:14px; color:#64748b; }
+  .dl-list { background:#fff; border-radius:6px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+  .dl-list li { padding:8px 0; }
+  .result-table { background:#fff; border-radius:6px; padding:20px; margin-top:16px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+  .result-table table { font-size:13px; }
+  .info-box { background:#f8f9fa; border-left:4px solid #17a2b8; padding:12px 16px; border-radius:4px; margin-top:16px; font-size:14px; color:#495057; }
+  .pagination { text-align:center; margin-top:16px; }
+  .pagination button { margin:0 2px; }
+  .detail-table td:first-child { font-weight:bold; width:240px; background:#f8f9fa; }
+
+  /* visit stats footer */
+  .visit-stats { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .visit-stats .vs-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:11px; line-height:1.4; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; }
+  .visit-stats .vs-pill b { color:#0f172a; font-weight:600; }
+  .visit-stats .vs-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#94a3b8; }
+  .visit-stats .vs-dot-today { background:#22c55e; box-shadow:0 0 0 2px rgba(34,197,94,0.18); }
+  .visit-stats .vs-dot-total { background:#3b82f6; }
+  .visit-stats .vs-dot-online { background:#f59e0b; animation:vs-pulse 1.6s ease-in-out infinite; }
+  .visit-stats .vs-error { background:#fef2f2; color:#b91c1c; border-color:#fecaca; }
+  @keyframes vs-pulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+</style>
+</head>
+<body>
+<div id="home_header"><span><img src="/css/logo.jpg" id="logo_style">WheatOmics 1.0</span></div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/index.html">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/caps/">CAPS/dCAPS</a></li>
+        <li><a href="/PfamSearch/">PfamSearch</a></li>
+        <li><a href="/idConvert/">IDConvert</a></li>
+        <li><a href="/HomologFinder/">HomologFinder</a></li>
+        <li><a href="/interval/">IntervalTool</a></li>
+        <li><a href="/expression/">GeneExpression</a></li>
+        <li><a href="/coexpression/index.html">Co-expression</a></li>
+        <li><a href="/wheatPPI/">WheatPPI</a></li>
+        <li><a href="/genes/">KnownGene</a></li>
+        <li><a href="/symap/index.html">SyntenySearch</a></li>
+        <li><a href="/preblast/">preBLAST</a></li>
+        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+        <li><a href="/orthofinder/">OrthoFinder</a></li>
+        <li><a href="/VariantHub/">VariantHub</a></li>
+        <li><a href="/scRNA/">scRNA</a></li>
+        <li><a href="/wheatPSP/">wheatPSP</a></li>
+        <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
+        <li><a href="/papers">Triticeae papers</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href="#"><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div id="home_content" class="mt-4">
+  <div id="view"></div>
+</div>
+
+<div class="line" style="height:10px;background-color:white"></div>
+<div id="home_footer">
+  <center style="margin-top:5px">
+    <table>
+      <tr>
+        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+        <td><div style="height:50px;width:15px;"></div></td>
+        <td><div id="visit-stats" class="visit-stats"><span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span></div></td>
+      </tr>
+    </table>
+    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+  </center>
+</div>
+
+<script>
+var API = "/api/wheatpsp";
+function h(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function num(v){ return v==null?'':String(v); }
+
+function router(){
+  var hash = location.hash || "#/";
+  var parts = hash.replace(/^#\//,"").split("/");
+  var view = parts[0] || "home";
+  var el = document.getElementById("view");
+  el.innerHTML = '<div class="text-center text-muted py-5">Loading...</div>';
+  if(view==="home"||view==="") renderHome();
+  else if(view==="psp") renderList("psp", parts[1]||"");
+  else if(view==="prd") renderList("prd", parts[1]||"");
+  else if(view==="protein") renderProtein(parts[1]||"");
+  else if(view==="search") renderList("search", parts[1]||"");
+  else if(view==="download") renderDownload();
+  else renderHome();
+}
+
+// ---------- Home ----------
+function renderHome(){
+  var el = document.getElementById("view");
+  $.getJSON(API+"/stats").done(function(resp){
+    var d = resp.data;
+    var html = '<h4 class="card-title">wheatPSP — A comprehensive database of wheat phase separation-associated proteins</h4>';
+    html += '<div class="stat-row">';
+    html += '<div class="stat-box"><div class="num">'+(d.total||0).toLocaleString()+'</div><div class="lbl">annotated proteins</div></div>';
+    html += '<div class="stat-box"><div class="num">'+(d.psp||0).toLocaleString()+'</div><div class="lbl">predicted PSPs</div></div>';
+    html += '<div class="stat-box"><div class="num">'+(d.prd||0).toLocaleString()+'</div><div class="lbl">predicted PrD proteins</div></div>';
+    html += '</div>';
+
+    html += '<div class="form-inline mb-3">';
+    html += '<input type="text" id="home-search" class="form-control mr-2" style="width:420px;" placeholder="Search by seq_id or gene_id (e.g. PanRefChrChr1A_011243)">';
+    html += '<button class="btn btn-primary" onclick="doHomeSearch()">Search</button>';
+    html += '</div>';
+    html += '<div class="info-box">Enter a protein/gene ID to view its PSP score, MolPhase score and PLAAC prediction. Browse all predicted <a href="#/psp">PSPs</a> or <a href="#/prd">PrD proteins</a>.</div>';
+
+    html += '<div class="dl-list mt-3"><strong>Download</strong><ul class="mb-0">';
+    html += '<li><a href="'+API+'/download/allProteins">allProteins.table.txt</a> — all annotated proteins with PSP scores</li>';
+    html += '<li><a href="'+API+'/download/PredPSPs">PredPSPs.table.txt</a> — predicted phase-separating proteins</li>';
+    html += '<li><a href="'+API+'/download/PrD_Pro">PrD_Pro.txt</a> — predicted prion-like domain proteins</li>';
+    html += '</ul></div>';
+
+    el.innerHTML = html;
+    document.getElementById("home-search").addEventListener("keydown", function(e){ if(e.key==="Enter") doHomeSearch(); });
+  }).fail(function(){ el.innerHTML = '<div class="alert alert-danger">Failed to load stats.</div>'; });
+}
+
+function doHomeSearch(){
+  var q = document.getElementById("home-search").value.trim();
+  if(!q) return;
+  location.hash = "#/search/" + encodeURIComponent(q);
+}
+
+// ---------- List (psp / prd / search) ----------
+function renderList(kind, q){
+  var el = document.getElementById("view");
+  q = decodeURIComponent(q||"");
+  var page = currentPage[kind] || 1;
+  var title = kind==="psp" ? "Predicted PSPs" : kind==="prd" ? "Predicted PrD proteins" : "Search results";
+  var ep = kind==="psp" ? API+"/psp" : kind==="prd" ? API+"/prd" : API+"/search";
+  $.getJSON(ep, { page:page, per_page:20, q:q }).done(function(resp){
+    var d = resp.data;
+    var html = '<h4 class="card-title">'+title+'</h4>';
+    html += '<div class="form-inline mb-3"><input type="text" id="list-q" class="form-control mr-2" style="width:420px;" value="'+h(q)+'" placeholder="filter by seq_id / gene_id"><button class="btn btn-outline-primary" onclick="doListFilter(\''+kind+'\')">Filter</button></div>';
+    html += '<p class="text-muted">'+d.total.toLocaleString()+' record(s)</p>';
+    if(!d.rows.length){
+      html += '<div class="alert alert-warning">No records found.</div>';
+    } else {
+      html += '<div class="result-table"><table class="table table-bordered table-hover table-sm"><thead><tr>';
+      if(kind==="prd"){ html += '<th>#</th><th>Protein ID</th><th>Gene ID</th><th>PLAAC LLR</th>'; }
+      else { html += '<th>Protein ID</th><th>Gene ID</th><th>PSP score</th>'; }
+      html += '</tr></thead><tbody>';
+      d.rows.forEach(function(r, i){
+        var sid = h(r.seq_id);
+        if(kind==="prd"){
+          html += '<tr><td>'+(d.per_page*(d.page-1)+i+1)+'</td><td><a href="#/protein/'+encodeURIComponent(r.seq_id)+'">'+sid+'</a></td><td>'+h(r.gene_id)+'</td><td>'+num(r.plaac_llr)+'</td></tr>';
+        } else {
+          html += '<tr><td><a href="#/protein/'+encodeURIComponent(r.seq_id)+'">'+sid+'</a></td><td>'+h(r.gene_id)+'</td><td>'+num(r.ps_score)+'</td></tr>';
+        }
+      });
+      html += '</tbody></table></div>';
+      html += pagination(kind, d, q);
+    }
+    el.innerHTML = html;
+  }).fail(function(){ el.innerHTML = '<div class="alert alert-danger">Failed to load list.</div>'; });
+}
+
+var currentPage = {};
+function pagination(kind, d, q){
+  var html = '<div class="pagination">';
+  if(d.page>1) html += '<button class="btn btn-sm btn-outline-primary" onclick="goPage(\''+kind+'\','+(d.page-1)+',\''+h(q)+'\')">Previous</button>';
+  var s=Math.max(1,d.page-3), e=Math.min(Math.ceil(d.total/d.per_page), d.page+3);
+  for(var p=s;p<=e;p++) html += '<button class="btn btn-sm '+(p===d.page?'btn-primary':'btn-outline-primary')+'" onclick="goPage(\''+kind+'\','+p+',\''+h(q)+'\')">'+p+'</button>';
+  if(d.page<Math.ceil(d.total/d.per_page)) html += '<button class="btn btn-sm btn-outline-primary" onclick="goPage(\''+kind+'\','+(d.page+1)+',\''+h(q)+'\')">Next</button>';
+  html += '</div>';
+  return html;
+}
+function goPage(kind, page, q){ currentPage[kind]=page; renderList(kind, q); }
+function doListFilter(kind){ var q=document.getElementById("list-q").value.trim(); currentPage[kind]=1; renderList(kind, q); }
+
+// ---------- Protein detail ----------
+function renderProtein(seqId){
+  var el = document.getElementById("view");
+  $.getJSON(API+"/protein/"+encodeURIComponent(seqId)).done(function(resp){
+    var p = resp.data.protein;
+    var fields = [
+      ["Protein ID", "seq_id"],
+      ["Gene ID", "gene_id"],
+      ["Sequence Length", "seq_length"],
+      ["PSP score", "ps_score"],
+      ["Predicted PSP", "is_psp"],
+      ["MolPhase score", "molphase_score"],
+      ["Predicted PrD", "has_prd"],
+      ["PLAAC LLR", "plaac_llr"],
+      ["PLAAC core score", "plaac_core_score"],
+      ["PLAAC PAPA proportion", "plaac_papa_prop"],
+      ["PLAAC PAPA FI", "plaac_papa_fi"],
+    ];
+    var html = '<h4 class="card-title">Protein: '+h(p.seq_id)+'</h4>';
+    html += '<div class="result-table"><table class="table table-bordered detail-table">';
+    fields.forEach(function(f){
+      var v = p[f[1]];
+      if(f[1]==="is_psp"||f[1]==="has_prd") v = v ? "Yes" : "No";
+      html += '<tr><td>'+f[0]+'</td><td>'+h(v==null?"":v)+'</td></tr>';
+    });
+    html += '</table></div>';
+    html += '<a href="#/psp" class="btn btn-outline-secondary">&larr; Back</a>';
+    el.innerHTML = html;
+  }).fail(function(){ el.innerHTML = '<div class="alert alert-warning">Protein not found.</div>'; });
+}
+
+// ---------- Download ----------
+function renderDownload(){
+  var el = document.getElementById("view");
+  var html = '<h4 class="card-title">Download</h4><div class="dl-list"><ul class="mb-0">';
+  html += '<li><a href="'+API+'/download/allProteins">allProteins.table.txt</a> — all annotated proteins with PSP scores (seq_id \t gene_id \t ps_score)</li>';
+  html += '<li><a href="'+API+'/download/PredPSPs">PredPSPs.table.txt</a> — predicted phase-separating proteins</li>';
+  html += '<li><a href="'+API+'/download/PrD_Pro">PrD_Pro.txt</a> — predicted prion-like domain proteins (PLAAC LLR)</li>';
+  html += '</ul></div>';
+  el.innerHTML = html;
+}
+
+window.addEventListener("hashchange", router);
+router();
+</script>
+</body>
+</html>
