@@ -50,14 +50,49 @@ function makeLegendTraces(color) {
     ];
 }
 
+// Wrap long term names into multiple lines for the y-axis at word boundaries,
+// so full text is visible (Plotly ellipsizes labels it cannot fit). Hover text
+// still shows the raw term.
+function wrapLabel(s, maxLen) {
+    s = String(s || '').trim();
+    if (!s) return '';
+    maxLen = maxLen || 40;
+    if (s.length <= maxLen) return s;
+    var out = [], line = '';
+    s.split(' ').forEach(function(w) {
+        while (w.length > maxLen) {          // hard-split over-long words
+            if (line) { out.push(line); line = ''; }
+            out.push(w.slice(0, maxLen));
+            w = w.slice(maxLen);
+        }
+        var next = line ? line + ' ' + w : w;
+        if (next.length > maxLen) {
+            if (line) out.push(line);
+            line = w;
+        } else {
+            line = next;
+        }
+    });
+    if (line) out.push(line);
+    // A blank (nbsp) line between text lines doubles the visual line spacing —
+    // single <br> renders too tight for multi-line tick labels.
+    return out.join('<br>\u00a0<br>');
+}
+
 function makeBubble(divId, items, color, title, maxN) {
     maxN = maxN || 20;
     var el = document.getElementById(divId);
     if (!items || !items.length) { el.innerHTML = '<p class="no-data">No significant terms</p>'; return; }
     var top = items.slice().sort(function(a,b){return (a.padj||1)-(b.padj||1)}).slice(0, maxN).reverse();
 
+    // Wrap long term names at word boundaries so full text shows on the y-axis.
+    var ylabels = top.map(function(r){ return wrapLabel(r.term||r.name||r.id||'', 40); });
+    var totalLines = ylabels.reduce(function(s,l){
+        return s + l.replace(/\u00a0/g,'').split('<br>').filter(Boolean).length;
+    }, 0);
+
     var mainTrace = {
-        y: top.map(function(r){ var t=r.term||r.name||r.id||''; return t.length>55 ? t.slice(0,52)+'...' : t; }),
+        y: ylabels,
         x: top.map(function(r){ return -Math.log10(Math.max(r.padj||1e-300,1e-300)); }),
         text: top.map(function(r){
             return '<b>'+escHtml(r.id||r.term)+'</b><br>'+escHtml(r.term||r.name||'')+
@@ -82,8 +117,8 @@ function makeBubble(divId, items, color, title, maxN) {
     var layout = {
         title: { text: title+' ('+top.length+' terms)', font:{size:13} },
         xaxis: { title:'-log10(p.adjust)', zeroline:false, gridcolor:'#e8e8e8', titlefont:{size:11} },
-        margin: { l:20, r:20, t:40, b:50 },
-        height: Math.max(420, top.length*24),
+        margin: { l:40, r:20, t:40, b:50 },
+        height: Math.max(420, top.length*32 + (totalLines - top.length)*26),
         showlegend: true,
         legend: {
             title:{text:'<b>Gene Number</b>'},
@@ -94,7 +129,7 @@ function makeBubble(divId, items, color, title, maxN) {
             bordercolor:'#ddd', borderwidth:1
         },
         paper_bgcolor: '#fafbfc', plot_bgcolor: '#fafbfc',
-        yaxis: { automargin:true, tickfont:{size:10} }
+        yaxis: { automargin:true, tickfont:{size:11} }
     };
     Plotly.newPlot(divId, allTraces, layout, { responsive:true, displayModeBar:false });
 }
