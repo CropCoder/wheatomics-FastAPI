@@ -1,40 +1,93 @@
 #!/usr/bin/env python3
 """Build bundled KEGG annotation dictionaries for the GO/KEGG enrichment module.
 
-Reads clusterProfiler reference outputs (outside the repo) and emits:
-  app/services/data/kegg_ko_defs.json         {KO_id: definition}
-  app/services/data/kegg_pathway_names.json   {pathway_id: short_name}
+Primary source: KEGG REST API (rest.kegg.jp) — authoritative and complete:
+  list/pathway  587 reference pathways (map:XXXXX -> full name)
+  list/ko       25,885 KO definitions (KXXXXX -> definition)
 
-Sources:
-  kegg_ko_cache.json      ko:Kxxxxx -> definition (clean, 5128 entries)
-  cp_KEGG_ko.tsv          ko:Kxxxxx + Description (clean, enrichment run)
-  cp_KEGG_Pathway.tsv     ko/map pathway ids + Description (ko rows carry the
-                          full KEGG entry, so the short name is cut at the
-                          first KO/module/compound token)
+Supplement: clusterProfiler reference outputs (outside the repo), used only to
+fill any IDs the REST lists miss.
+
+Emits:
+  app/services/data/kegg_ko_defs.json         {KO_id: definition}
+  app/services/data/kegg_pathway_names.json   {mapXXXXX/koXXXXX/XXXXX: name}
+  scripts/fix_kegg_pathway_names.sql          UPDATEs for the broken
+                                              wheat_function.kegg_pathway table
+                                              (its pathway_name values are
+                                              truncated at the first space)
 """
 import csv
 import json
 import re
+import subprocess
+import sys
+import urllib.request
 from pathlib import Path
 
 SRC = Path("/Users/mashengwei/Desktop/markdown/陈甜甜/小麦泛基因组序列-0601/enrichment_top1000_union/out_clusterProfiler")
 OUT = Path(__file__).resolve().parent.parent / "app" / "services" / "data"
+SCRIPTS = Path(__file__).resolve().parent
 
-# --- 1. KO definitions -------------------------------------------------------
+
+def fetch(url: str) -> str:
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=120) as r:
+        return r.read().decode("utf-8", errors="replace")
+
+
+# --- 1. Pathway names from KEGG REST (mapXXXXX -> name) -----------------------
+pw_names = {}
+try:
+    for line in fetch("https://rest.kegg.jp/list/pathway").splitlines():
+        pid, name = line.split("	", 1)
+        pid = pid.replace("path:", "").strip()          # mapXXXXX
+        name = name.strip()
+        if not pid or not name:
+            continue
+        m = re.fullmatch(r"map(\d{5})", pid)
+        core = m.group(1) if m else ""
+        for key in {pid, "ko" + core if core else "", core}:   # mapXXXXX / koXXXXX / XXXXX
+            if key:
+                pw_names.setdefault(key, name)
+except Exception as e:
+    print("WARN: REST list/pathway failed:", e)
+
+# Supplement from clusterProfiler output
+try:
+    with open(SRC / "cp_KEGG_Pathway.tsv", encoding="utf-8", newline="") as f:
+        for row in csv.DictReader(f, delimiter="\t"):
+            pid = (row.get("ID") or "").replace("path:", "").strip()
+            desc = (row.get("Description") or "").strip()
+            if not pid or not desc:
+                continue
+            clean = re.split(r"\s+[KMC]\d{5}\b", desc)[0].strip()
+            if clean:
+                pw_names.setdefault(pid, clean)
+except FileNotFoundError as e:
+    print("WARN: missing", e)
+
+# --- 2. KO definitions from KEGG REST (KXXXXX -> definition) ------------------
 ko_defs = {}
+try:
+    for line in fetch("https://rest.kegg.jp/list/ko").splitlines():
+        ko, desc = line.split("	", 1)
+        ko = ko.replace("ko:", "").strip()
+        desc = desc.strip()
+        if ko and desc:
+            ko_defs[ko] = desc
+except Exception as e:
+    print("WARN: REST list/ko failed:", e)
+
+# Supplement from reference files
 try:
     cache = json.loads((SRC / "kegg_ko_cache.json").read_text(encoding="utf-8"))
     for k, v in cache.items():
         ko = str(k).replace("ko:", "").strip()
-        if not ko or not v:
-            continue
-        v = str(v).strip()
-        if v in (ko, "ko:" + ko):      # placeholder entry (definition not fetched)
-            continue
-        ko_defs[ko] = v
+        v = str(v).strip() if v else ""
+        if ko and v and v not in (ko, "ko:" + ko):
+            ko_defs.setdefault(ko, v)
 except FileNotFoundError as e:
     print("WARN: missing", e)
-
 try:
     with open(SRC / "cp_KEGG_ko.tsv", encoding="utf-8", newline="") as f:
         for row in csv.DictReader(f, delimiter="\t"):
@@ -45,32 +98,41 @@ try:
 except FileNotFoundError as e:
     print("WARN: missing", e)
 
-# --- 2. Pathway short names --------------------------------------------------
-pw_names = {}
-try:
-    with open(SRC / "cp_KEGG_Pathway.tsv", encoding="utf-8", newline="") as f:
-        for row in csv.DictReader(f, delimiter="\t"):
-            pid = (row.get("ID") or "").replace("path:", "").strip()
-            desc = (row.get("Description") or "").strip()
-            if not pid or not desc:
-                continue
-            # ko: rows embed the whole KEGG entry; cut at first KO/module/compound
-            clean = re.split(r"\s+[KMC]\d{5}\b", desc)[0].strip()
-            if clean:
-                pw_names.setdefault(pid, clean)
-except FileNotFoundError as e:
-    print("WARN: missing", e)
-
-# Final cleanup: drop any leftover placeholder values (value == key).
+# Cleanup placeholders
 for d in (ko_defs, pw_names):
     for k in [k for k, v in d.items() if v in (k, "ko:" + k)]:
         del d[k]
 
+# --- 3. Emit JSONs -------------------------------------------------------------
 OUT.mkdir(parents=True, exist_ok=True)
 for fname, data in (("kegg_ko_defs.json", ko_defs), ("kegg_pathway_names.json", pw_names)):
     (OUT / fname).write_text(
         json.dumps(dict(sorted(data.items())), ensure_ascii=False, separators=(",", ":")) + "\n",
         encoding="utf-8",
     )
+
+# --- 4. SQL to fix the truncated pathway_name column ---------------------------
+sql_lines = [
+    "-- Generated by scripts/build_kegg_dicts.py from KEGG REST API.",
+    "-- Fixes truncated pathway_name values (cut at the first space) in",
+    "-- wheat_function.kegg_pathway. Run on the server:",
+    "--   mysql wheat_function < scripts/fix_kegg_pathway_names.sql",
+    "USE wheat_function;",
+    "",
+]
+for pid in sorted(pw_names):
+    m = re.fullmatch(r"(?:map|ko)(\d{5})", pid)
+    if not m:
+        continue
+    core = m.group(1)
+    name = pw_names[pid].replace("'", "''")
+    sql_lines.append(
+        f"UPDATE `kegg_pathway` SET `pathway_name`='{name}' "
+        f"WHERE `pathway_id` LIKE '%{core}' AND "
+        f"`pathway_name` NOT LIKE '% {name}%';"
+    )
+(SCRIPTS / "fix_kegg_pathway_names.sql").write_text("\n".join(sql_lines) + "\n", encoding="utf-8")
+
 print(f"kegg_ko_defs.json:        {len(ko_defs)} entries -> {OUT / 'kegg_ko_defs.json'}")
 print(f"kegg_pathway_names.json:  {len(pw_names)} entries -> {OUT / 'kegg_pathway_names.json'}")
+print(f"fix_kegg_pathway_names.sql: {len(sql_lines) - 2} UPDATEs -> {SCRIPTS / 'fix_kegg_pathway_names.sql'}")
