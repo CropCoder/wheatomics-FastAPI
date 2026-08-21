@@ -54,26 +54,28 @@ sudo apachectl restart
 
 ### 4. 重启 FastAPI
 
+生产环境由 systemd 管理（单元 `wheatomics-api`，见 §四「生产推荐：gunicorn 8 workers」章节）：
+
 ```bash
-pkill -f 'uvicorn main:app'
-sleep 1
-nohup /home/fei/mambaforge/envs/zjw/bin/uvicorn main:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
+sudo systemctl restart wheatomics-api
+sudo systemctl status wheatomics-api
+sudo journalctl -u wheatomics-api -f    # 看启动日志
 ```
 
 > ⚠️ **改动任何 `.py` 文件都必须手动跑这步**。
 >
-> Webhook（`/api/webhook/gitee`）**只跑 `git pull`，不会自动重启 uvicorn**。
+> Webhook（`/api/webhook/gitee`）**只跑 `git pull`，不会自动重启 API 服务**。
 > 即使新代码已经拉到 `/var/www/FastAPI_backend_Port8000/`，正在跑的进程仍然加载旧版本，
 > 表现为：路由 404（新增端点没注册）、接口行为错乱（旧逻辑）。
 >
-> **典型症状**：curl 返回 404 但 OpenAPI 里有路由 → uvicorn 没重启加载新代码。
+> **典型症状**：curl 返回 404 但 OpenAPI 里有路由 → 服务没重启加载新代码。
 >
 > **判断方法**（服务器上）：
 > ```bash
 > cd /var/www/FastAPI_backend_Port8000 && git log --oneline -1
-> ps -o etime= -p $(pgrep -f 'uvicorn main:app' | head -1)
+> systemctl show wheatomics-api -p ActiveEnterTimestamp   # 服务启动时间
 > ```
-> 如果 git 最新 commit 比 uvicorn 进程启动时间晚 → 必须重启。
+> 如果 git 最新 commit 比服务启动时间晚 → 必须 `sudo systemctl restart wheatomics-api`。
 
 ---
 
@@ -173,17 +175,14 @@ for p in sorted(d['paths']):
 ### Q: 改了 Python 后端代码，访问接口还是老逻辑
 **症状**: 提交了 Python 文件改动，`git pull` 也跑了，但 `curl /api/xxx` 仍然返回老逻辑（404 / 老 SQL / 老参数）。
 
-**原因**: webhook 只 `git pull`，**不重启 uvicorn**。见第一节 4 的 ⚠️ 警告。
+**原因**: webhook 只 `git pull`，**不重启 API 服务**。见第一节 4 的 ⚠️ 警告。
 
 **修法**:
 ```bash
-pkill -f 'uvicorn main:app'
-sleep 2
-cd /var/www/FastAPI_backend_Port8000
-nohup /home/fei/mambaforge/envs/zjw/bin/uvicorn main:app --host 0.0.0.0 --port 8000 >> api.log 2>&1 &
+sudo systemctl restart wheatomics-api
 ```
 
-**判断**: `git log -1` vs `ps -o lstart` 看是不是老进程。
+**判断**: `git log -1` vs `systemctl show wheatomics-api -p ActiveEnterTimestamp` 看是不是老进程。
 
 ---
 
@@ -275,15 +274,18 @@ gunicorn 8 workers 把长查询的影响限制到 1/8：
 # 1) 装 gunicorn（如果还没）
 /home/fei/mambaforge/envs/zjw/bin/pip install gunicorn
 
-# 2) 杀现有 uvicorn
-pkill -f 'uvicorn main:app'
+# 2) 停掉旧的 uvicorn/gunicorn（如果还在跑）
+pkill -f 'uvicorn main:app' || true
+pkill -f 'gunicorn main:app' || true
 sleep 2
 
-# 3) 切到项目根，启动 gunicorn（gunicorn.conf.py 已随代码进仓库）
-cd /var/www/FastAPI_backend_Port8000
-nohup /home/fei/mambaforge/envs/zjw/bin/gunicorn main:app -c gunicorn.conf.py > api.log 2>&1 &
+# 3) 部署为 systemd 服务（单元文件见下方，生产推荐方式）
+sudo cp scripts/wheatomics-api.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl restart wheatomics-api
 
 # 4) 验证：1 master + 8 workers
+sudo systemctl status wheatomics-api
 ps -ef | grep -E 'gunicorn' | grep -v grep
 # 期望: 1 个 "gunicorn: master" + 8 个 "gunicorn: worker"
 ss -tlnp | grep ':8000'
@@ -341,9 +343,8 @@ git push origin main
 ssh fei@wheatomics
 cd /var/www/FastAPI_backend_Port8000
 git pull origin main
-pkill -f 'uvicorn main:app'
-sleep 1
-nohup /home/fei/mambaforge/envs/zjw/bin/uvicorn main:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
+sudo systemctl restart wheatomics-api
+sudo systemctl status wheatomics-api
 # 如果涉及前端路径，还需加 Apache ProxyPass + sudo apachectl restart
 ```
 
@@ -404,12 +405,10 @@ sudo sed -i '/ProxyPassReverse \/PfamSearch/a\    ProxyPass /coexpression http:/
 sudo apachectl restart
 ```
 
-第三步：重启 uvicorn（**关键**：webhook 只 git pull，不重启进程，`main.py` 改动不会自动生效）：
+第三步：重启 API 服务（**关键**：webhook 只 git pull，不重启进程，`main.py` 改动不会自动生效）：
 
 ```bash
-pkill -f 'uvicorn main:app'
-sleep 1
-nohup /home/fei/mambaforge/envs/zjw/bin/uvicorn main:app --host 0.0.0.0 --port 8000 >> api.log 2>&1 &
+sudo systemctl restart wheatomics-api
 ```
 
 ### 验证
