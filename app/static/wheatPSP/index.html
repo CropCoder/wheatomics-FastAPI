@@ -40,11 +40,6 @@
 
   #home_content { width:80%; margin:0 auto; padding:0 15px 40px; font-size:17px; }
 
-  /* module nav (ricePSP style) */
-  #module-nav { margin:18px 0; text-align:center; }
-  #module-nav a { display:inline-block; padding:8px 20px; margin:0 4px; background:#fff; color:#0077b6; font-weight:bold; border:1px solid #cfe7ff; border-radius:4px; text-decoration:none; }
-  #module-nav a:hover, #module-nav a.active { background:#0077b6; color:#fff; }
-
   .hero { text-align:center; padding:20px 0 10px; }
   .hero h3 { font-size:34px; font-weight:bold; }
   .hero p { color:#64748b; font-size:16px; }
@@ -116,12 +111,6 @@
 </div>
 
 <div id="home_content">
-  <div id="module-nav">
-    <a href="#/home">Home</a>
-    <a href="#/psp">PSP</a>
-    <a href="#/prdp">PrDP</a>
-    <a href="#/cite">Cite</a>
-  </div>
   <div id="view"></div>
 </div>
 
@@ -155,7 +144,6 @@ function router(){
   var hash = location.hash || "#/home";
   var parts = hash.replace(/^#\//,"").split("/");
   var view = parts[0] || "home";
-  setActiveNav(view);
   var el = document.getElementById("view");
   el.innerHTML = '<div class="empty-note">Loading...</div>';
   if(view==="home"||view==="") renderHome();
@@ -165,14 +153,6 @@ function router(){
   else if(view==="search") renderList("search", parts[1]||"");
   else if(view==="protein") renderProtein(parts[1]||"");
   else renderHome();
-}
-
-function setActiveNav(view){
-  var map = {home:"Home", psp:"PSP", prdp:"PrDP", cite:"Cite", search:"PSP", protein:"PSP"};
-  var label = map[view] || "Home";
-  document.querySelectorAll("#module-nav a").forEach(function(a){
-    a.classList.toggle("active", a.textContent === label);
-  });
 }
 
 // ---------- Home ----------
@@ -217,7 +197,8 @@ function renderList(kind, q){
   var ep = kind==="psp" ? API+"/psp" : kind==="prd" ? API+"/prd" : API+"/search";
   $.getJSON(ep, { page:page, per_page:20, q:q }).done(function(resp){
     var d = resp.data;
-    var html = '<h4 class="card-title">'+title+'</h4>';
+    var html = '<a href="#/home" class="text-decoration-none small text-primary">&larr; Home</a> ';
+    html += '<h4 class="card-title">'+title+'</h4>';
     html += '<div class="form-inline mb-3"><input type="text" id="list-q" class="form-control mr-2" style="width:420px;" value="'+h(q)+'" placeholder="filter by gene ID"><button class="btn btn-outline-primary" onclick="doListFilter(\''+kind+'\')">Filter</button></div>';
     html += '<p class="text-muted">'+d.total.toLocaleString()+' record(s)</p>';
     if(!d.rows.length){
@@ -268,7 +249,8 @@ function renderCite(){
     {title: "3D epigenome architecture orchestrates cis and trans regulation of flowering time in rice", url: "https://link.springer.com/article/10.1186/s13059-026-03940-3", doi: "10.1186/s13059-026-03940-3"},
     {title: "ricePSP: a database of rice phase separation-associated proteins", url: "https://link.springer.com/article/10.1186/s13059-025-03842-w", doi: "10.1186/s13059-025-03842-w"},
   ];
-  var html = '<h4 class="card-title">Cite</h4><ol class="mt-3">';
+  var html = '<a href="#/home" class="text-decoration-none small text-primary">&larr; Home</a> ';
+  html += '<h4 class="card-title">Cite</h4><ol class="mt-3">';
   refs.forEach(function(r, i){
     html += '<li class="mb-3">'+h(r.title)+'<br>'+
       '<span>DOI: <a href="https://doi.org/'+encodeURIComponent(r.doi)+'" target="_blank">'+h(r.doi)+'</a></span></li>';
@@ -283,7 +265,8 @@ function renderProtein(seqId){
   $.getJSON(API+"/protein/"+encodeURIComponent(seqId)).done(function(resp){
     var p = resp.data.protein;
     function row(label, value){ return '<tr><td>'+label+'</td><td>'+h(value==null?"":value)+'</td></tr>'; }
-    var html = '<h4 class="card-title">Protein: '+h(p.cs_gene_id||"")+'</h4>';
+    var html = '<a href="#/home" class="text-decoration-none small text-primary">&larr; Home</a> ';
+    html += '<h4 class="card-title">Protein: '+h(p.cs_gene_id||"")+'</h4>';
 
     html += '<h6 class="mt-4">Prediction</h6>';
     html += '<div class="result-table"><table class="table table-bordered detail-table">';
