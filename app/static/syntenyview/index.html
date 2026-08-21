@@ -241,7 +241,7 @@ var COLOR_QUERY_OG="#2563eb";
 var COLOR_OTHER="#2e8b57";
 var COLOR_LINK="#2e8b57";
 
-var allGenomes=[],selectedTargetSet=new Set();
+var allGenomes=[],genomeMeta={},selectedTargetSet=new Set();
 var lastData=null,lastSvgFileName="syntenyview.svg",lastTableRows=[],lastTableFileName="syntenyview_table.tsv";
 var selectionChangedSinceDraw=false;
 
@@ -284,13 +284,14 @@ function updateTargetHelp(){
 function markSelectionChanged(){selectionChangedSinceDraw=true;}
 
 function makeGenomeItem(g,mode){
+  var label=(genomeMeta[g]&&genomeMeta[g].label)||g;
   var btn=document.createElement("button");
   btn.type="button";
   btn.className="genome-item"+(mode==="selected"?" selected":"");
-  btn.title=mode==="selected"?"Remove "+g:"Add "+g;
+  btn.title=mode==="selected"?"Remove "+label:"Add "+label;
   var name=document.createElement("span");
   name.className="name";
-  name.textContent=g;
+  name.textContent=label;
   btn.appendChild(name);
   if(mode==="selected"){
     var rm=document.createElement("span");
@@ -367,7 +368,7 @@ function renderTargetPicker(){
       body.id=gid;
       items.forEach(function(g){body.appendChild(makeGenomeItem(g,"available"));});
       var isOpen = _openGroups[grp];
-      if(isOpen===undefined) isOpen = (gi===0);
+      if(isOpen===undefined) isOpen = false;
       if(isOpen){
         body.style.display="block";hdr.classList.add("open");hdr.querySelector(".sg-arrow").classList.add("open");
       }
@@ -444,6 +445,7 @@ function updateGeneSoftLink(gene,targets,upstream,downstream){
 
 fetch(API_BASE+"/genomes").then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}).then(function(gs){
   allGenomes=Array.isArray(gs)?gs:(gs.genomes||[]);
+  genomeMeta=(gs&&gs.meta)?gs.meta:{};
   populateTargetGenomes(initTargets);
   if(initGene){document.getElementById("gene").value=initGene;if(selectedTargets().length||initTargets.length)run(false);}
 }).catch(function(e){
