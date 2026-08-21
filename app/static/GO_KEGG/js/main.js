@@ -23,8 +23,8 @@ async function runEnrichment() {
         var body = JSON.stringify({genes: genes, padj_threshold: parseFloat(padj)});
         var headers = {'Content-Type': 'application/json'};
         var rs = await Promise.all([
-            fetch('/api/go-kegg/go', {method:'POST', headers:headers, body:body}),
-            fetch('/api/go-kegg/kegg', {method:'POST', headers:headers, body:body})
+            fetch('/api/go', {method:'POST', headers:headers, body:body}),
+            fetch('/api/kegg', {method:'POST', headers:headers, body:body})
         ]);
         goData = await rs[0].json(); keggData = await rs[1].json();
         if (goData.error) { setStatus('GO: '+goData.error, 'error'); return; }
@@ -222,7 +222,7 @@ async function toggleGoGenes(el) {
     row.parentNode.insertBefore(sub, row.nextSibling);
     var genes = parseGenes(document.getElementById('geneInput').value);
     try {
-        var resp = await fetch('/api/go-kegg/go-genes?go_id='+encodeURIComponent(goId)+'&genes='+encodeURIComponent(genes.join(',')));
+        var resp = await fetch('/api/go/genes?go_id='+encodeURIComponent(goId)+'&genes='+encodeURIComponent(genes.join(',')));
         var data = await resp.json();
         var hits = (data.genes||[]).filter(Boolean);
         sub.querySelector('td').innerHTML = hits.length
@@ -243,7 +243,7 @@ async function toggleKEGGGenes(el) {
     row.parentNode.insertBefore(sub, row.nextSibling);
     var genes = parseGenes(document.getElementById('geneInput').value);
     try {
-        var resp = await fetch('/api/go-kegg/kegg-genes?pathway='+encodeURIComponent(pwId)+'&genes='+encodeURIComponent(genes.join(',')));
+        var resp = await fetch('/api/kegg/genes?pathway='+encodeURIComponent(pwId)+'&genes='+encodeURIComponent(genes.join(',')));
         var data = await resp.json();
         var hits = (data.genes||[]).filter(Boolean);
         sub.querySelector('td').innerHTML = hits.length

@@ -13,7 +13,10 @@ from typing import Optional, List
 from app.core.config import settings
 from app.db.mysql import mysql_cursor
 
-router = APIRouter(prefix="/go-kegg", tags=["GO/KEGG Enrichment"])
+# Router with no prefix — canonical endpoints are /go, /kegg, /go/genes,
+# /kegg/genes. The legacy /go-kegg/... paths are kept as hidden aliases
+# (include_in_schema=False) so existing links/scripts keep working.
+router = APIRouter(prefix="", tags=["GO/KEGG Enrichment"])
 
 
 # ============================================================
@@ -161,6 +164,7 @@ class EnrichmentResponse(BaseModel):
                 "**输出**: 显著富集的 GO term 列表。",
     response_model=EnrichmentResponse,
 )
+@router.post("/go-kegg/go", include_in_schema=False)
 def go_enrichment(req: EnrichmentRequest):
     genes = list(set(req.genes))
     if not genes:
@@ -250,6 +254,7 @@ def go_enrichment(req: EnrichmentRequest):
                 "**输入/输出**: 格式与 GO 富集一致。",
     response_model=EnrichmentResponse,
 )
+@router.post("/go-kegg/kegg", include_in_schema=False)
 def kegg_enrichment(req: EnrichmentRequest):
     genes = list(set(req.genes))
     if not genes:
@@ -337,7 +342,8 @@ def kegg_enrichment(req: EnrichmentRequest):
 # ============================================================
 # Gene lookup helpers (for inline table expansion in frontend)
 # ============================================================
-@router.get("/go-genes")
+@router.get("/go/genes")
+@router.get("/go-kegg/go-genes", include_in_schema=False)
 def go_genes(go_id: str = Query(...), genes: str = Query("")):
     """Return which genes from the query list match a GO term."""
     gene_list = list(set([g.strip() for g in genes.split(",") if g.strip()]))
@@ -354,7 +360,8 @@ def go_genes(go_id: str = Query(...), genes: str = Query("")):
     return {"go_id": go_id, "genes": hits}
 
 
-@router.get("/kegg-genes")
+@router.get("/kegg/genes")
+@router.get("/go-kegg/kegg-genes", include_in_schema=False)
 def kegg_genes(pathway: str = Query(...), genes: str = Query("")):
     """Return which genes from the query list match a KEGG pathway."""
     gene_list = list(set([g.strip() for g in genes.split(",") if g.strip()]))
