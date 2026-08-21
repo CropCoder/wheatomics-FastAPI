@@ -88,10 +88,13 @@ def _genome_sort_key(label: str):
 def _genome_entry_sort_key(entry: dict) -> tuple:
     """Order genome entries for the picker.
 
-    Within each subgenome (A/B/D) the ordering is: Chinese Spring genomes
-    first, then by ploidy (from genome_type.txt), then by name.  This
-    replaces the old alphabetical ordering so the picker groups genomes by
-    ploidy level rather than by name.
+    Within each subgenome (A/B/D) the ordering is:
+      1. Chinese Spring genomes
+      2. CS-Gapless / CS-IAAS (Chinese Spring variants)
+      3. other AABBDD (hexaploid)
+      4. everything else (by ploidy, then name)
+    This replaces the old alphabetical ordering so the picker groups genomes
+    by ploidy level rather than by name.
     """
     name = entry["name"]
     ploidy = entry.get("ploidy") or ""
@@ -101,10 +104,17 @@ def _genome_entry_sort_key(entry: dict) -> tuple:
         sub = order.get(suffix.upper(), 3)
     else:
         sub = 4
-    cs = 0 if "Chinese_Spring" in name else 1
+    if "Chinese_Spring" in name:
+        rank = 0
+    elif "CS-Gapless" in name or "CS-IAAS" in name:
+        rank = 1
+    elif ploidy == "AABBDD":
+        rank = 2
+    else:
+        rank = 3
     # Missing ploidy (species not in genome_type.txt) sorts last, not first.
     ploidy_key = ploidy or "~"
-    return (sub, cs, ploidy_key, name.lower())
+    return (sub, rank, ploidy_key, name.lower())
 
 
 def _mb_label(start, end):
@@ -540,7 +550,9 @@ def api_genomes():
         info = type_map.get(_genome_alias(name), {})
         ploidy = info.get("ploidy", "")
         typ = info.get("type", "")
-        label = f"{ploidy}_{typ}" if ploidy and typ else name
+        # 用数据库 genome_name 构造 type（而非文件里的 species 名），这样别名映射后
+        # label 仍是数据库侧的名字，如 AABB_Triticum_turgidum_Svevo_A_subgenome。
+        label = f"{ploidy}_{name}_subgenome" if ploidy else name
         entries.append({"name": name, "ploidy": ploidy, "type": typ, "label": label})
 
     entries.sort(key=_genome_entry_sort_key)
