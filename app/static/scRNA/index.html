@@ -104,7 +104,7 @@ a:hover { text-decoration: none; }
 .pagination-box a, .pagination-box span { display: inline-block; margin: 0 3px; padding: 5px 10px; border: 1px solid #ccc; color: #0785bc; background: #fff; cursor: pointer; }
 .pagination-box span.current { background: #0785bc; color: #fff; border-color: #0785bc; }
 
-#results { height: 1px; }
+/* #results 是 dotplot 结果容器，不再作为锚点限高 */
 .result-header { margin-top: 10px; margin-bottom: 35px; }
 .info { font-size: 18px; text-align: center; margin: 8px 0; }
 .section { margin-top: 55px; text-align: center; padding-top: 20px; border-top: 1px solid #eee; }
@@ -485,9 +485,6 @@ function renderDotplotResults(d) {
       html += '<a class="btn btn-success" href="' + API_BASE + '/dotplot/download?genome=' + encodeURIComponent(genome) + '&folder=' + encodeURIComponent(ds.folder) + '&genes=' + encodeURIComponent((d.genes||[]).join(',')) + '">Download Data</a>';
       html += '</div>';
       html += '<div class="chart-box-wrapper"><div id="' + chartId + '" class="chart-box" style="width:1200px;height:700px;"></div></div>';
-      window.__dotplotRows = window.__dotplotRows || {};
-      window.__dotplotRows[chartId] = ds.rows;
-      html += '<script>drawDotPlot("' + chartId + '", window.__dotplotRows["' + chartId + '"], {title:"' + h(ds.folder) + '", orientation:"gene_x_cluster_y", dotScale:2.2});<\/script>';
     } else {
       html += '<p style="color:#999;margin-top:20px;">No dotplot data found for the submitted gene ID.</p>';
       if (ds.error) html += '<p style="color:#999;font-size:13px;">' + h(ds.error) + '</p>';
@@ -507,6 +504,17 @@ function renderDotplotResults(d) {
   }
 
   container.innerHTML = html;
+
+  // innerHTML 里的 <script> 不会执行，改为手动调用 drawDotPlot 渲染图表
+  (d.datasets || []).forEach(function(ds) {
+    if (ds.rows && ds.rows.length) {
+      var cid = "dotplot_" + ds.folder.replace(/[^A-Za-z0-9_]/g, "_");
+      window.__dotplotRows = window.__dotplotRows || {};
+      window.__dotplotRows[cid] = ds.rows;
+      drawDotPlot(cid, ds.rows, { title: ds.folder, orientation: "gene_x_cluster_y", dotScale: 2.2 });
+    }
+  });
+
   container.scrollIntoView({ behavior: "smooth" });
 }
 
