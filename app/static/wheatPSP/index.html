@@ -12,9 +12,7 @@
 // ===== Visit tracking =====
 (function() {
   var page = location.pathname || 'unknown';
-  try {
-    fetch('/api/track/visit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({page:page}) }).catch(function(){});
-  } catch (e) {}
+  try { fetch('/api/track/visit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({page:page}) }).catch(function(){}); } catch (e) {}
   function fmt(n){ n=Number(n)||0; if(n>=1000000)return (n/1000000).toFixed(3)+'M'; if(n>=10000)return (n/1000).toFixed(3)+'k'; return String(n); }
   function setHtml(html){ var el=document.getElementById('visit-stats'); if(el)el.innerHTML=html; }
   fetch('/api/track/stats').then(function(r){return r.json();}).then(function(resp){
@@ -39,20 +37,29 @@
   #header-tabs ul li ul { display:none !important; position:absolute; }
   #header-tabs ul li:hover ul { display:block !important; }
   #header-tabs ul li ul a { border-radius:0; }
+
   #home_content { max-width:1200px; margin:0 auto; padding:0 15px 40px; }
-  .card-title { margin-top:20px; }
-  .stat-row { display:flex; flex-wrap:wrap; gap:16px; margin:20px 0; }
-  .stat-box { flex:1; min-width:180px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:18px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+
+  /* module nav (ricePSP style) */
+  #module-nav { margin:18px 0; text-align:center; }
+  #module-nav a { display:inline-block; padding:8px 20px; margin:0 4px; background:#fff; color:#0077b6; font-weight:bold; border:1px solid #cfe7ff; border-radius:4px; text-decoration:none; }
+  #module-nav a:hover, #module-nav a.active { background:#0077b6; color:#fff; }
+
+  .hero { text-align:center; padding:20px 0 10px; }
+  .hero h3 { font-size:30px; font-weight:bold; }
+  .hero p { color:#64748b; font-size:16px; }
+  .stat-row { display:flex; flex-wrap:wrap; gap:16px; margin:20px 0; justify-content:center; }
+  .stat-box { flex:1; min-width:180px; max-width:260px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:18px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
   .stat-box .num { font-size:30px; font-weight:bold; color:#0077b6; }
   .stat-box .lbl { font-size:14px; color:#64748b; }
-  .dl-list { background:#fff; border-radius:6px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
-  .dl-list li { padding:8px 0; }
+  .stat-box a { display:block; margin-top:8px; font-size:13px; }
   .result-table { background:#fff; border-radius:6px; padding:20px; margin-top:16px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
   .result-table table { font-size:13px; }
   .info-box { background:#f8f9fa; border-left:4px solid #17a2b8; padding:12px 16px; border-radius:4px; margin-top:16px; font-size:14px; color:#495057; }
   .pagination { text-align:center; margin-top:16px; }
   .pagination button { margin:0 2px; }
-  .detail-table td:first-child { font-weight:bold; width:240px; background:#f8f9fa; }
+  .detail-table td:first-child { font-weight:bold; width:260px; background:#f8f9fa; }
+  .empty-note { text-align:center; color:#999; padding:40px 0; }
 
   /* visit stats footer */
   .visit-stats { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; }
@@ -108,7 +115,15 @@
   </ul>
 </div>
 
-<div id="home_content" class="mt-4">
+<div id="home_content">
+  <div id="module-nav">
+    <a href="#/home">Home</a>
+    <a href="#/psp">PSP</a>
+    <a href="#/fams">Fams</a>
+    <a href="#/prdp">PrDP</a>
+    <a href="#/docs">Docs</a>
+    <a href="#/cite">Cite</a>
+  </div>
   <div id="view"></div>
 </div>
 
@@ -139,18 +154,29 @@ function h(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&
 function num(v){ return v==null?'':String(v); }
 
 function router(){
-  var hash = location.hash || "#/";
+  var hash = location.hash || "#/home";
   var parts = hash.replace(/^#\//,"").split("/");
   var view = parts[0] || "home";
+  setActiveNav(view);
   var el = document.getElementById("view");
-  el.innerHTML = '<div class="text-center text-muted py-5">Loading...</div>';
+  el.innerHTML = '<div class="empty-note">Loading...</div>';
   if(view==="home"||view==="") renderHome();
   else if(view==="psp") renderList("psp", parts[1]||"");
-  else if(view==="prd") renderList("prd", parts[1]||"");
-  else if(view==="protein") renderProtein(parts[1]||"");
+  else if(view==="fams") renderStatic("Fams", "Protein family data is being prepared.");
+  else if(view==="prdp") renderList("prd", parts[1]||"");
+  else if(view==="docs") renderStatic("Docs", "Literature data is being prepared.");
+  else if(view==="cite") renderCite();
   else if(view==="search") renderList("search", parts[1]||"");
-  else if(view==="download") renderDownload();
+  else if(view==="protein") renderProtein(parts[1]||"");
   else renderHome();
+}
+
+function setActiveNav(view){
+  var map = {home:"Home", psp:"PSP", fams:"Fams", prdp:"PrDP", docs:"Docs", cite:"Cite", search:"PSP", protein:"PSP"};
+  var label = map[view] || "Home";
+  document.querySelectorAll("#module-nav a").forEach(function(a){
+    a.classList.toggle("active", a.textContent === label);
+  });
 }
 
 // ---------- Home ----------
@@ -158,24 +184,21 @@ function renderHome(){
   var el = document.getElementById("view");
   $.getJSON(API+"/stats").done(function(resp){
     var d = resp.data;
-    var html = '<h4 class="card-title">wheatPSP — A comprehensive database of wheat phase separation-associated proteins</h4>';
+    var html = '<div class="hero"><h3>wheatPSP</h3><p>A comprehensive database of wheat phase separation-associated proteins</p></div>';
     html += '<div class="stat-row">';
-    html += '<div class="stat-box"><div class="num">'+(d.total||0).toLocaleString()+'</div><div class="lbl">annotated proteins</div></div>';
-    html += '<div class="stat-box"><div class="num">'+(d.psp||0).toLocaleString()+'</div><div class="lbl">predicted PSPs</div></div>';
-    html += '<div class="stat-box"><div class="num">'+(d.prd||0).toLocaleString()+'</div><div class="lbl">predicted PrD proteins</div></div>';
+    html += '<div class="stat-box"><div class="num">'+(d.total||0).toLocaleString()+'</div><div class="lbl">annotated wheat proteins</div><a href="'+API+'/download/allProteins">Download</a></div>';
+    html += '<div class="stat-box"><div class="num">'+(d.psp||0).toLocaleString()+'</div><div class="lbl">predicted PSPs</div><a href="'+API+'/download/PredPSPs">Download</a></div>';
+    html += '<div class="stat-box"><div class="num">'+(d.prd||0).toLocaleString()+'</div><div class="lbl">predicted PrD proteins</div><a href="'+API+'/download/PrD_Pro">Download</a></div>';
     html += '</div>';
 
-    html += '<div class="form-inline mb-3">';
+    html += '<div class="form-inline justify-content-center mb-2">';
     html += '<input type="text" id="home-search" class="form-control mr-2" style="width:420px;" placeholder="Search by gene ID (e.g. TraesCS1A02G228500)">';
     html += '<button class="btn btn-primary" onclick="doHomeSearch()">Search</button>';
     html += '</div>';
-    html += '<div class="info-box">Enter a protein/gene ID to view its PSP score, MolPhase score and PLAAC prediction. Browse all predicted <a href="#/psp">PSPs</a> or <a href="#/prd">PrD proteins</a>.</div>';
+    html += '<p class="text-center text-muted small">Search by Chinese Spring gene ID; browse all predicted <a href="#/psp">PSPs</a> or <a href="#/prdp">PrD proteins</a>.</p>';
 
-    html += '<div class="dl-list mt-3"><strong>Download</strong><ul class="mb-0">';
-    html += '<li><a href="'+API+'/download/allProteins">allProteins.table.txt</a> — all annotated proteins with PSP scores</li>';
-    html += '<li><a href="'+API+'/download/PredPSPs">PredPSPs.table.txt</a> — predicted phase-separating proteins</li>';
-    html += '<li><a href="'+API+'/download/PrD_Pro">PrD_Pro.txt</a> — predicted prion-like domain proteins</li>';
-    html += '</ul></div>';
+    html += '<div class="info-box mt-4"><strong>Reference</strong><br>'
+      + 'wheatPSP: a database of wheat phase separation-associated proteins. (citation to be added)</div>';
 
     el.innerHTML = html;
     document.getElementById("home-search").addEventListener("keydown", function(e){ if(e.key==="Enter") doHomeSearch(); });
@@ -189,6 +212,7 @@ function doHomeSearch(){
 }
 
 // ---------- List (psp / prd / search) ----------
+var currentPage = {};
 function renderList(kind, q){
   var el = document.getElementById("view");
   q = decodeURIComponent(q||"");
@@ -204,15 +228,16 @@ function renderList(kind, q){
       html += '<div class="alert alert-warning">No records found.</div>';
     } else {
       html += '<div class="result-table"><table class="table table-bordered table-hover table-sm"><thead><tr>';
-      if(kind==="prd"){ html += '<th>#</th><th>CS Gene ID</th><th>PanRef ID</th><th>PLAAC LLR</th>'; }
-      else { html += '<th>CS Gene ID</th><th>PanRef ID</th><th>PSP score</th>'; }
+      if(kind==="prd"){ html += '<th>#</th><th>CS Gene ID</th><th>PLAAC LLR</th>'; }
+      else { html += '<th>CS Gene ID</th><th>PSP score</th>'; }
       html += '</tr></thead><tbody>';
       d.rows.forEach(function(r, i){
-        var cs = r.cs_gene_id ? '<a href="#/protein/'+encodeURIComponent(r.seq_id)+'">'+h(r.cs_gene_id)+'</a>' : '<span class="text-muted">'+h(r.gene_id)+'</span>';
+        var gid = h(r.cs_gene_id || "");
+        var link = '<a href="#/protein/'+encodeURIComponent(r.seq_id)+'">'+gid+'</a>';
         if(kind==="prd"){
-          html += '<tr><td>'+(d.per_page*(d.page-1)+i+1)+'</td><td>'+cs+'</td><td>'+h(r.seq_id)+'</td><td>'+num(r.plaac_llr)+'</td></tr>';
+          html += '<tr><td>'+(d.per_page*(d.page-1)+i+1)+'</td><td>'+link+'</td><td>'+num(r.plaac_llr)+'</td></tr>';
         } else {
-          html += '<tr><td>'+cs+'</td><td>'+h(r.seq_id)+'</td><td>'+num(r.ps_score)+'</td></tr>';
+          html += '<tr><td>'+link+'</td><td>'+num(r.ps_score)+'</td></tr>';
         }
       });
       html += '</tbody></table></div>';
@@ -222,18 +247,31 @@ function renderList(kind, q){
   }).fail(function(){ el.innerHTML = '<div class="alert alert-danger">Failed to load list.</div>'; });
 }
 
-var currentPage = {};
 function pagination(kind, d, q){
   var html = '<div class="pagination">';
+  var totalPages = Math.ceil(d.total/d.per_page);
   if(d.page>1) html += '<button class="btn btn-sm btn-outline-primary" onclick="goPage(\''+kind+'\','+(d.page-1)+',\''+h(q)+'\')">Previous</button>';
-  var s=Math.max(1,d.page-3), e=Math.min(Math.ceil(d.total/d.per_page), d.page+3);
+  var s=Math.max(1,d.page-3), e=Math.min(totalPages, d.page+3);
   for(var p=s;p<=e;p++) html += '<button class="btn btn-sm '+(p===d.page?'btn-primary':'btn-outline-primary')+'" onclick="goPage(\''+kind+'\','+p+',\''+h(q)+'\')">'+p+'</button>';
-  if(d.page<Math.ceil(d.total/d.per_page)) html += '<button class="btn btn-sm btn-outline-primary" onclick="goPage(\''+kind+'\','+(d.page+1)+',\''+h(q)+'\')">Next</button>';
+  if(d.page<totalPages) html += '<button class="btn btn-sm btn-outline-primary" onclick="goPage(\''+kind+'\','+(d.page+1)+',\''+h(q)+'\')">Next</button>';
   html += '</div>';
   return html;
 }
 function goPage(kind, page, q){ currentPage[kind]=page; renderList(kind, q); }
 function doListFilter(kind){ var q=document.getElementById("list-q").value.trim(); currentPage[kind]=1; renderList(kind, q); }
+
+// ---------- Static placeholder (Fams / Docs) ----------
+function renderStatic(title, msg){
+  document.getElementById("view").innerHTML = '<h4 class="card-title">'+h(title)+'</h4><div class="empty-note">'+h(msg)+'</div>';
+}
+
+// ---------- Cite ----------
+function renderCite(){
+  document.getElementById("view").innerHTML =
+    '<h4 class="card-title">Cite</h4>'+
+    '<div class="info-box">wheatPSP: a database of wheat phase separation-associated proteins.<br>'+
+    'Please cite the corresponding publication. (citation to be added)</div>';
+}
 
 // ---------- Protein detail ----------
 function renderProtein(seqId){
@@ -242,9 +280,6 @@ function renderProtein(seqId){
     var p = resp.data.protein;
     var fields = [
       ["CS Gene ID", "cs_gene_id"],
-      ["Protein ID", "seq_id"],
-      ["Gene ID", "gene_id"],
-      ["Sequence Length", "seq_length"],
       ["PSP score", "ps_score"],
       ["Predicted PSP", "is_psp"],
       ["MolPhase score", "molphase_score"],
@@ -253,9 +288,9 @@ function renderProtein(seqId){
       ["PLAAC core score", "plaac_core_score"],
       ["PLAAC PAPA proportion", "plaac_papa_prop"],
       ["PLAAC PAPA FI", "plaac_papa_fi"],
+      ["Sequence Length", "seq_length"],
     ];
-    var titleId = p.cs_gene_id || p.gene_id || p.seq_id;
-    var html = '<h4 class="card-title">Protein: '+h(titleId)+'</h4>';
+    var html = '<h4 class="card-title">Protein: '+h(p.cs_gene_id||"")+'</h4>';
     html += '<div class="result-table"><table class="table table-bordered detail-table">';
     fields.forEach(function(f){
       var v = p[f[1]];
@@ -266,17 +301,6 @@ function renderProtein(seqId){
     html += '<a href="#/psp" class="btn btn-outline-secondary">&larr; Back</a>';
     el.innerHTML = html;
   }).fail(function(){ el.innerHTML = '<div class="alert alert-warning">Protein not found.</div>'; });
-}
-
-// ---------- Download ----------
-function renderDownload(){
-  var el = document.getElementById("view");
-  var html = '<h4 class="card-title">Download</h4><div class="dl-list"><ul class="mb-0">';
-  html += '<li><a href="'+API+'/download/allProteins">allProteins.table.txt</a> — all annotated proteins with PSP scores (seq_id \t gene_id \t ps_score)</li>';
-  html += '<li><a href="'+API+'/download/PredPSPs">PredPSPs.table.txt</a> — predicted phase-separating proteins</li>';
-  html += '<li><a href="'+API+'/download/PrD_Pro">PrD_Pro.txt</a> — predicted prion-like domain proteins (PLAAC LLR)</li>';
-  html += '</ul></div>';
-  el.innerHTML = html;
 }
 
 window.addEventListener("hashchange", router);

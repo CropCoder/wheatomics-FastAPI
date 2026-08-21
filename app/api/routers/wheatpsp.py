@@ -80,7 +80,7 @@ def api_stats():
                 "SELECT COUNT(*) AS total, "
                 "COALESCE(SUM(is_psp), 0) AS psp, "
                 "COALESCE(SUM(has_prd), 0) AS prd "
-                "FROM wheat_psp"
+                "FROM wheat_psp WHERE cs_gene_id IS NOT NULL"
             )
             row = cur.fetchone()
     return ok({
@@ -98,11 +98,12 @@ def api_search(
 ):
     """按 seq_id / gene_id 搜索蛋白，分页。"""
     q = q.strip()
-    where, args = "", []
+    where = "WHERE cs_gene_id IS NOT NULL"
+    args: list = []
     if q:
         like = f"%{q}%"
-        where = "WHERE seq_id LIKE %s OR gene_id LIKE %s OR cs_gene_id LIKE %s"
-        args = [like, like, like]
+        where += " AND cs_gene_id LIKE %s"
+        args = [like]
     return ok(_list(where, args, page, per_page))
 
 
@@ -113,12 +114,12 @@ def api_psp(
     q: str = Query("", description="seq_id / gene_id 模糊过滤"),
 ):
     """预测的相分离相关蛋白（is_psp=1）列表，分页。"""
-    where = "WHERE is_psp = 1"
+    where = "WHERE is_psp = 1 AND cs_gene_id IS NOT NULL"
     args: list = []
     if q.strip():
         like = f"%{q.strip()}%"
-        where += " AND (seq_id LIKE %s OR gene_id LIKE %s OR cs_gene_id LIKE %s)"
-        args = [like, like, like]
+        where += " AND cs_gene_id LIKE %s"
+        args = [like]
     return ok(_list(where, args, page, per_page))
 
 
@@ -129,12 +130,12 @@ def api_prd(
     q: str = Query("", description="seq_id / gene_id 模糊过滤"),
 ):
     """预测的 PrD（prion-like domain）蛋白（has_prd=1）列表，分页。"""
-    where = "WHERE has_prd = 1"
+    where = "WHERE has_prd = 1 AND cs_gene_id IS NOT NULL"
     args: list = []
     if q.strip():
         like = f"%{q.strip()}%"
-        where += " AND (seq_id LIKE %s OR gene_id LIKE %s OR cs_gene_id LIKE %s)"
-        args = [like, like, like]
+        where += " AND cs_gene_id LIKE %s"
+        args = [like]
     return ok(_list(where, args, page, per_page))
 
 
