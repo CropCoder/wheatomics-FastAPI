@@ -38,7 +38,7 @@
   #header-tabs ul li:hover ul { display:block !important; }
   #header-tabs ul li ul a { border-radius:0; }
 
-  #home_content { max-width:1200px; margin:0 auto; padding:0 15px 40px; }
+  #home_content { width:80%; margin:0 auto; padding:0 15px 40px; font-size:17px; }
 
   /* module nav (ricePSP style) */
   #module-nav { margin:18px 0; text-align:center; }
@@ -46,15 +46,15 @@
   #module-nav a:hover, #module-nav a.active { background:#0077b6; color:#fff; }
 
   .hero { text-align:center; padding:20px 0 10px; }
-  .hero h3 { font-size:30px; font-weight:bold; }
+  .hero h3 { font-size:34px; font-weight:bold; }
   .hero p { color:#64748b; font-size:16px; }
   .stat-row { display:flex; flex-wrap:wrap; gap:16px; margin:20px 0; justify-content:center; }
   .stat-box { flex:1; min-width:180px; max-width:260px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:18px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
-  .stat-box .num { font-size:30px; font-weight:bold; color:#0077b6; }
+  .stat-box .num { font-size:34px; font-weight:bold; color:#0077b6; }
   .stat-box .lbl { font-size:14px; color:#64748b; }
   .stat-box a { display:block; margin-top:8px; font-size:13px; }
   .result-table { background:#fff; border-radius:6px; padding:20px; margin-top:16px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
-  .result-table table { font-size:13px; }
+  .result-table table { font-size:15px; }
   .info-box { background:#f8f9fa; border-left:4px solid #17a2b8; padding:12px 16px; border-radius:4px; margin-top:16px; font-size:14px; color:#495057; }
   .pagination { text-align:center; margin-top:16px; }
   .pagination button { margin:0 2px; }
@@ -270,9 +270,8 @@ function renderCite(){
   ];
   var html = '<h4 class="card-title">Cite</h4><ol class="mt-3">';
   refs.forEach(function(r, i){
-    html += '<li class="mb-3"><b>'+(i+1)+'.</b> '+h(r.title)+'<br>'+
-      '<a href="'+h(r.url)+'" target="_blank" class="small">'+h(r.url)+'</a><br>'+
-      '<span class="small">DOI: <a href="https://doi.org/'+encodeURIComponent(r.doi)+'" target="_blank">'+h(r.doi)+'</a></span></li>';
+    html += '<li class="mb-3">'+h(r.title)+'<br>'+
+      '<span>DOI: <a href="https://doi.org/'+encodeURIComponent(r.doi)+'" target="_blank">'+h(r.doi)+'</a></span></li>';
   });
   html += '</ol>';
   document.getElementById("view").innerHTML = html;
