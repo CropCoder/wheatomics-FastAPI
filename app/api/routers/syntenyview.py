@@ -102,7 +102,9 @@ def _genome_entry_sort_key(entry: dict) -> tuple:
     else:
         sub = 4
     cs = 0 if "Chinese_Spring" in name else 1
-    return (sub, cs, ploidy, name.lower())
+    # Missing ploidy (species not in genome_type.txt) sorts last, not first.
+    ploidy_key = ploidy or "~"
+    return (sub, cs, ploidy_key, name.lower())
 
 
 def _mb_label(start, end):
