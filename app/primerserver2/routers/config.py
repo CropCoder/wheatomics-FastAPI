@@ -35,12 +35,16 @@ def _blast_db_groups(nuc_dbs: list[str]) -> list[DatabaseGroup]:
             genome.append(name)
         elif name.endswith(".cds") or "transcripts" in name or "mrna" in name:
             gene.append(name)
-    # Chinese Spring v2.1 is the platform default — put it first so the
-    # pickers' visually-first genome choice is the recommended one.
-    _CS21_GENOME = "AABBDD_Chinese_Spring2.1.genome"
-    if _CS21_GENOME in genome:
-        genome.remove(_CS21_GENOME)
-        genome.insert(0, _CS21_GENOME)
+    # Chinese Spring genomes go first (v2.1 is the platform default and
+    # ranks highest); everything else stays alphabetical.
+    def _genome_sort_key(name: str) -> tuple:
+        if name == "AABBDD_Chinese_Spring2.1.genome":
+            return (0, name)
+        if "Chinese_Spring" in name or "CS-CAU" in name or "CS-IAAS" in name:
+            return (1, name)
+        return (2, name)
+
+    genome.sort(key=_genome_sort_key)
     groups_spec = [
         ("genome", genome),
         ("gene", gene),
