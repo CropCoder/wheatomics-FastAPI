@@ -12,13 +12,15 @@ WheatOmics API — the FastAPI backend for [wheatomics.sdau.edu.cn](https://whea
 # Dev server
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# Production (8 workers)
+# Production (8 workers) — manual fallback; production now runs as the
+# systemd unit wheatomics-api (unit file tracked in scripts/):
 nohup gunicorn main:app -b 127.0.0.1:8000 -w 8 -k uvicorn.workers.UvicornWorker --reload > api.log 2>&1 &
 
-# Restart on server (webhook only does git pull, does NOT restart)
-pkill -f 'uvicorn main:app'
-sleep 1
-nohup /home/fei/mambaforge/envs/zjw/bin/uvicorn main:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
+# Restart on server — production API runs as systemd unit wheatomics-api
+# (webhook only does git pull, does NOT restart the service)
+sudo systemctl restart wheatomics-api
+sudo systemctl status wheatomics-api
+sudo journalctl -u wheatomics-api -f
 
 # BLAST job daemon (executes wait=false async jobs; survives API restarts)
 sudo systemctl status wheatomics-blastd
@@ -70,7 +72,7 @@ app/
 
 **MCP server**: Wraps 4 sequence-tool route functions as MCP tools. Errors are serialized as JSON text (not raised) so the LLM can adapt. Wired via SSE transport with raw `Route` objects in `main.py`.
 
-**Webhook**: `POST /api/webhook/gitee` validates `X-Gitee-Token` header, then runs `auto_pull.sh` as a background task. It does **not** restart uvicorn — after a `git pull`, manual restart is required for Python changes to take effect.
+**Webhook**: `POST /api/webhook/gitee` validates `X-Gitee-Token` header, then runs `auto_pull.sh` as a background task. It does **not** restart the API service — after a `git pull`, run `sudo systemctl restart wheatomics-api` for Python changes to take effect.
 
 **BLAST jobs**: All blast execution lives in the standalone daemon `wheatomics-blastd.service` (app/services/blast_daemon.py, systemd unit in scripts/). `POST /api/blast/search` writes `params.json` + `status.json` under `BLAST_RESULT_DIR/<uuid4>/`; the daemon claims pending jobs and runs them (thread pool = BLAST_MAX_CONCURRENT, a true global cap). `wait=true` (default) enqueues and polls to completion (1100s cap < gunicorn timeout=1200), preserving the old sync contract; `wait=false` returns job_id immediately for `GET /api/blast/status/{job_id}` polling. Jobs survive worker recycling and API deploys; stale detection in blast_runner.read_status(). Never move blast execution back into the API worker / BackgroundTasks.
 
