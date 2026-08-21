@@ -74,7 +74,9 @@ function wrapLabel(s, maxLen) {
         }
     });
     if (line) out.push(line);
-    return out.join('<br>');
+    // A blank (nbsp) line between text lines doubles the visual line spacing —
+    // single <br> renders too tight for multi-line tick labels.
+    return out.join('<br>\u00a0<br>');
 }
 
 function makeBubble(divId, items, color, title, maxN) {
@@ -85,7 +87,9 @@ function makeBubble(divId, items, color, title, maxN) {
 
     // Wrap long term names at word boundaries so full text shows on the y-axis.
     var ylabels = top.map(function(r){ return wrapLabel(r.term||r.name||r.id||'', 40); });
-    var totalLines = ylabels.reduce(function(s,l){ return s + l.split('<br>').length; }, 0);
+    var totalLines = ylabels.reduce(function(s,l){
+        return s + l.replace(/\u00a0/g,'').split('<br>').filter(Boolean).length;
+    }, 0);
 
     var mainTrace = {
         y: ylabels,
@@ -114,7 +118,7 @@ function makeBubble(divId, items, color, title, maxN) {
         title: { text: title+' ('+top.length+' terms)', font:{size:13} },
         xaxis: { title:'-log10(p.adjust)', zeroline:false, gridcolor:'#e8e8e8', titlefont:{size:11} },
         margin: { l:40, r:20, t:40, b:50 },
-        height: Math.max(420, top.length*22 + (totalLines - top.length)*14),
+        height: Math.max(420, top.length*32 + (totalLines - top.length)*26),
         showlegend: true,
         legend: {
             title:{text:'<b>Gene Number</b>'},
@@ -125,7 +129,7 @@ function makeBubble(divId, items, color, title, maxN) {
             bordercolor:'#ddd', borderwidth:1
         },
         paper_bgcolor: '#fafbfc', plot_bgcolor: '#fafbfc',
-        yaxis: { automargin:true, tickfont:{size:10} }
+        yaxis: { automargin:true, tickfont:{size:11} }
     };
     Plotly.newPlot(divId, allTraces, layout, { responsive:true, displayModeBar:false });
 }
