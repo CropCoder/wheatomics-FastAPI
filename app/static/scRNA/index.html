@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>scRNA - WheatOmics</title>
+
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<script src="/js/echarts.min.js"></script>
+
+<style>
+html, body { margin: 0; padding: 0; background: #f2f2f2; font-family: Arial, Helvetica, sans-serif; font-size: 16px; }
+* { box-sizing: border-box; }
+a { text-decoration: none; }
+a:hover { text-decoration: none; }
+
+#wo_header { width: 100%; background: #0785bc; position: relative; z-index: 9999; }
+#wo_title { height: 88px; text-align: center; color: #fff; font-size: 36px; line-height: 88px; font-weight: normal; }
+#wo_title img { height: 70px; width: auto; vertical-align: middle; margin-right: 14px; }
+#wo_nav { height: 42px; background: #0785bc; text-align: center; white-space: nowrap; }
+#wo_nav ul { margin: 0; padding: 0; list-style: none; }
+#wo_nav > ul > li { display: inline-block; position: relative; vertical-align: top; width: 190px; height: 42px; line-height: 42px; background: #0785bc; border-radius: 4px 4px 0 0; }
+#wo_nav > ul > li > a { display: block; color: #fff; font-size: 16px; font-weight: bold; width: 100%; height: 42px; line-height: 42px; }
+#wo_nav > ul > li:hover > a, #wo_nav > ul > li.active > a { background: #94c1da; color: #000; border-radius: 4px 4px 0 0; }
+#wo_nav li ul { display: none; position: absolute; top: 42px; left: 0; width: 190px; margin: 0; padding: 0; background: #0785bc; z-index: 10000; }
+#wo_nav li:hover ul { display: block; }
+#wo_nav li ul li { display: block; width: 190px; height: 42px; line-height: 42px; background: #0785bc; }
+#wo_nav li ul li a { display: block; width: 190px; height: 42px; line-height: 42px; color: #fff; font-size: 16px; font-weight: bold; text-align: center; }
+#wo_nav li ul li a:hover { background: #006fa3; color: #fff; }
+#wo_header ul, #wo_header li { list-style: none; }
+
+#main_content { width: 86%; max-width: 1450px; min-height: 420px; margin: 0 auto; background: #fff; padding: 45px 60px 55px 60px; border-left: 2px solid #d7ebff; border-right: 2px solid #d7ebff; }
+#main_content h2 { text-align: center; font-size: 30px; margin: 0 0 36px 0; color: #000; }
+
+.search-box { width: 860px; max-width: 100%; margin: 0 auto 30px auto; text-align: left; }
+.search-row { margin-bottom: 18px; }
+.search-row label { display: block; font-weight: bold; margin-bottom: 6px; color: #333; }
+.search-row select, .search-row textarea, .search-row input[type="file"] { width: 100%; font-size: 16px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 3px; }
+.search-row textarea { height: 105px; resize: vertical; }
+.search-help { font-size: 13px; color: #666; margin-top: 5px; }
+.search-action { text-align: center; margin-top: 22px; }
+.search-action button { font-size: 16px; padding: 8px 32px; }
+
+.dataset-description { width: 920px; max-width: 100%; margin: 25px auto 35px auto; padding: 16px 20px; background: #f6fbff; border-left: 4px solid #0785bc; color: #333; font-size: 15px; line-height: 1.7; }
+
+.annotation-box { margin: 25px auto 35px auto; width: 100%; }
+.annotation-box h3 { text-align: center; font-size: 22px; margin-bottom: 16px; }
+.table-controls { text-align: right; margin-bottom: 10px; font-size: 14px; }
+.table-controls select { padding: 4px 8px; font-size: 14px; }
+.table-wrapper { width: 100%; overflow-x: auto; border: 1px solid #ddd; }
+.annotation-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
+.annotation-table th { background: #0785bc; color: #fff; padding: 8px; border: 1px solid #ddd; white-space: nowrap; }
+.annotation-table td { padding: 7px 8px; border: 1px solid #ddd; white-space: nowrap; }
+.annotation-table tr:nth-child(even) { background: #f7f7f7; }
+.pagination-box { text-align: center; margin-top: 14px; font-size: 14px; }
+.pagination-box a, .pagination-box span { display: inline-block; margin: 0 3px; padding: 5px 10px; border: 1px solid #ccc; color: #0785bc; background: #fff; cursor: pointer; }
+.pagination-box span.current { background: #0785bc; color: #fff; border-color: #0785bc; }
+
+#results { height: 1px; }
+.result-header { margin-top: 10px; margin-bottom: 35px; }
+.info { font-size: 18px; text-align: center; margin: 8px 0; }
+.section { margin-top: 55px; text-align: center; padding-top: 20px; border-top: 1px solid #eee; }
+.result-meta { text-align: center; font-size: 18px; margin-bottom: 18px; }
+.result-meta a { color: #007bff; }
+.result-meta a:hover { text-decoration: underline; }
+.result-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 12px auto 16px auto; }
+.stat-box { display: inline-block; background: #f6fbff; border: 1px solid #cfe7ff; color: #333; padding: 8px 14px; border-radius: 4px; font-size: 14px; }
+.missing-box { width: 960px; max-width: 100%; margin: 12px auto; text-align: left; background: #fff8f0; border-left: 4px solid #ff9800; padding: 12px 16px; color: #333; font-size: 14px; line-height: 1.6; }
+.chart-toolbar { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin: 12px 0 10px 0; }
+.chart-toolbar input, .chart-toolbar select { padding: 6px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 14px; }
+.download-toolbar { display: flex; flex-wrap: nowrap; justify-content: center; align-items: center; gap: 12px; margin: 8px 0 18px 0; }
+.download-toolbar .btn { min-width: 130px; }
+.chart-box-wrapper { width: 100%; overflow-x: auto; padding-bottom: 8px; }
+.chart-box { margin: 0 auto; border: 1px solid #000; background: #fff; min-height: 500px; }
+.btn { margin: 4px 4px; font-size: 15px; }
+.result-note { width: 980px; max-width: 100%; margin: 45px auto 20px auto; padding: 15px 18px; background: #fafafa; border-left: 4px solid #28a745; text-align: left; font-size: 14px; line-height: 1.7; color: #333; }
+.result-note p { margin: 8px 0; }
+.back-search { text-align: center; margin-top: 30px; margin-bottom: 10px; }
+
+#home_footer { width: 100%; background-color: #d9d9d9; text-align: center; font-size: 12px; color: #000; padding: 0 0 8px 0; margin: 0; border-top: 1px solid #ccc; }
+#home_footer center { margin-top: 5px; }
+#home_footer table { margin: 0 auto; border-collapse: collapse; }
+#home_footer td { vertical-align: middle; padding: 0; }
+#home_footer img { width: auto; vertical-align: middle; display: inline-block; margin: 0; }
+#home_footer a { color: #007bff; }
+#home_footer a:hover { text-decoration: underline; }
+.line { display: block; }
+</style>
+</head>
+
+<body>
+
+<div id="wo_header">
+    <div id="wo_title">
+        <img src="/css/LOGO_footer.jpg" alt="WheatOmics" onerror="this.style.display='none'">
+        WheatOmics 1.0
+    </div>
+    <div id="wo_nav">
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li class="active"><a href="#">Tools/Browse</a>
+                <ul>
+                    <li><a href="/getfasta/index.html">GetSequence</a></li>
+                    <li><a href="/blast/blast.html">BLAST</a></li>
+                    <li><a href="/PrimerServer">PrimerServer</a></li>
+                    <li><a href="/caps/">CAPS/dCAPS</a></li>
+                    <li><a href="/PfamSearch/">PfamSearch</a></li>
+                    <li><a href="/idConvert/">IDConvert</a></li>
+                    <li><a href="/HomologFinder/">HomologFinder</a></li>
+                    <li><a href="/interval/">IntervalTool</a></li>
+                    <li><a href="/expression/">GeneExpression</a></li>
+                    <li><a href="/coexpression/index.html">Co-expression</a></li>
+                    <li><a href="/wheatPPI/">WheatPPI</a></li>
+                    <li><a href="/genes/">KnownGene</a></li>
+                    <li><a href="/symap/index.html">SyntenySearch</a></li>
+                    <li><a href="/preblast/">preBLAST</a></li>
+                    <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+                    <li><a href="/orthofinder/">OrthoFinder</a></li>
+                    <li><a href="/VariantHub/">VariantHub</a></li>
+                    <li><a href="/scRNA/">scRNA</a></li>
+                    <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
+                    <li><a href="/papers">Triticeae papers</a></li>
+                </ul>
+            </li>
+            <li><a href="/jbrowse.html">JBrowse</a></li>
+            <li><a href="/download.html">Download Data</a></li>
+            <li><a href="/outsitelink.html">External Links</a></li>
+            <li><a href="#">About</a>
+                <ul>
+                    <li><a href="/help/contact.html">Contact</a></li>
+                    <li><a href="/help/news.html">News</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div id="main_content">
+    <h2>Gene Expression Viewer</h2>
+
+    <div class="search-box">
+        <div class="search-row">
+            <label for="genome">Select Genome</label>
+            <select name="genome" id="genome"></select>
+        </div>
+        <div class="search-row">
+            <label for="gene">Enter Gene Name</label>
+            <textarea name="gene" id="gene" placeholder="Enter one or more gene IDs. Multiple genes can be separated by comma, space, semicolon, or new line."></textarea>
+            <div class="search-help">Example: TraesCSU03G0001100, TraesCSU03G0002800, TraesCSU03G0002900LC</div>
+        </div>
+        <div class="search-row">
+            <label for="gene_file_upload">Upload Gene List File</label>
+            <input type="file" id="gene_file_upload" multiple>
+            <div class="search-help">The uploaded file should contain one gene ID per line, or gene IDs in the first column of a TXT/CSV/TSV file.</div>
+        </div>
+        <div class="search-action">
+            <button class="btn btn-primary" type="button" onclick="searchDotplot()">Search</button>
+        </div>
+    </div>
+
+    <div class="dataset-description">
+        The current website supports single-cell search for two genomes, including Chinese Spring and Kronos.
+        The Chinese Spring dataset is based on root single-cell data, while the Kronos dataset is based on spike single-cell data.
+        The DotPlot is generated dynamically from dotplot_data.tsv instead of pre-generated PNG images.
+    </div>
+
+    <div class="annotation-box">
+        <h3>Marker Gene Preview: <span id="annotation-genome"></span></h3>
+        <div id="annotation-controls" class="table-controls" style="display:none;">
+            Show
+            <select id="per-page">
+                <option value="10">10</option>
+                <option value="20" selected>20</option>
+                <option value="50">50</option>
+            </select>
+            rows
+        </div>
+        <div class="table-wrapper">
+            <table class="annotation-table" id="annotation-table">
+                <thead id="annotation-thead"></thead>
+                <tbody id="annotation-tbody"></tbody>
+            </table>
+        </div>
+        <div class="pagination-box" id="annotation-pagination"></div>
+    </div>
+
+    <div id="results"></div>
+</div>
+
+<div class="line" style="height: 10px;background-color:white"></div>
+
+<div id="home_footer">
+    <center style="margin-top:5px">
+        <table>
+            <tr>
+                <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
+                <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+                <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
+                <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+                <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
+                <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+                <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
+                <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
+                <td><div class="line" style="height:50px;width:15px;"></div></td>
+                <td>
+                    <span><a href="https://clustrmaps.com/site/1c2ry" title="Visit tracker"><img src="//www.clustrmaps.com/map_v2.png?d=fVblT8MfQ65ClPkORSIs7Sz0A0Ttlm1wOwVQiR8f_ME&cl=ffffff" height="50"></a></span>
+                </td>
+            </tr>
+        </table>
+        For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+    </center>
+</div>
+
+<script>
+var API_BASE = "/api/scrna";
+var GENOMES = {};
+var currentGenome = "";
+var currentAnnotationPage = 1;
+var currentPerPage = 20;
+var currentGenes = [];
+
+function h(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function getGenome() { return document.getElementById("genome").value; }
+
+// ---------- 基因组列表 ----------
+function loadGenomes() {
+  $.getJSON(API_BASE + "/genomes").done(function(resp) {
+    if (!resp || !resp.success) return;
+    GENOMES = resp.data.genomes || {};
+    var sel = document.getElementById("genome");
+    sel.innerHTML = "";
+    Object.keys(GENOMES).forEach(function(key) {
+      var o = document.createElement("option");
+      o.value = key;
+      o.textContent = GENOMES[key].label || key;
+      sel.appendChild(o);
+    });
+    var q = new URLSearchParams(window.location.search);
+    var init = q.get("genome");
+    if (init && GENOMES[init]) sel.value = init;
+    onGenomeChange();
+  });
+}
+
+function onGenomeChange() {
+  currentGenome = getGenome();
+  currentAnnotationPage = 1;
+  loadAnnotation();
+  var q = new URLSearchParams(window.location.search);
+  var genes = q.get("genes");
+  if (genes) {
+    document.getElementById("gene").value = genes.replace(/,/g, "\n");
+    searchDotplot();
+  }
+}
+
+// ---------- marker 预览表 ----------
+function loadAnnotation(page) {
+  if (!currentGenome) return;
+  page = page || currentAnnotationPage;
+  document.getElementById("annotation-genome").textContent = currentGenome;
+  $.getJSON(API_BASE + "/annotation", {
+    genome: currentGenome, page: page, per_page: currentPerPage
+  }).done(function(resp) {
+    if (!resp || !resp.success) return;
+    var d = resp.data;
+    currentAnnotationPage = d.page;
+    renderAnnotationTable(d);
+  }).fail(function() {
+    renderAnnotationTable(null);
+  });
+}
+
+function renderAnnotationTable(d) {
+  var thead = document.getElementById("annotation-thead");
+  var tbody = document.getElementById("annotation-tbody");
+  var controls = document.getElementById("annotation-controls");
+  var pag = document.getElementById("annotation-pagination");
+  if (!d || !d.header || !d.header.length) {
+    thead.innerHTML = ""; tbody.innerHTML = "";
+    controls.style.display = "none";
+    pag.innerHTML = "";
+    return;
+  }
+  controls.style.display = "block";
+  thead.innerHTML = "<tr>" + d.header.map(function(c){ return "<th>" + h(c) + "</th>"; }).join("") + "</tr>";
+  tbody.innerHTML = (d.rows || []).map(function(row) {
+    return "<tr>" + row.map(function(c){ return "<td>" + h(c) + "</td>"; }).join("") + "</tr>";
+  }).join("");
+
+  var html = "";
+  if (d.page > 1) html += '<a onclick="loadAnnotation(' + (d.page - 1) + ')">Previous</a>';
+  var start = Math.max(1, d.page - 3), end = Math.min(d.total_pages, d.page + 3);
+  for (var p = start; p <= end; p++) {
+    html += (p === d.page) ? '<span class="current">' + p + '</span>' : '<a onclick="loadAnnotation(' + p + ')">' + p + '</a>';
+  }
+  if (d.page < d.total_pages) html += '<a onclick="loadAnnotation(' + (d.page + 1) + ')">Next</a>';
+  html += '<span>Total: ' + d.total_rows + ' rows</span>';
+  pag.innerHTML = html;
+}
+
+// ---------- 基因拆分（含文件） ----------
+function collectGenes() {
+  var genes = [];
+  var text = document.getElementById("gene").value;
+  text.split(/[\s,;，；]+/).forEach(function(p){ p = p.trim(); if (p && genes.indexOf(p) === -1) genes.push(p); });
+  return genes;
+}
+
+function splitFileText(text) {
+  var genes = [];
+  text.split(/\r\n|\r|\n/).forEach(function(line) {
+    line = line.trim();
+    if (!line) return;
+    var cols = line.split(/[\t,]+/);
+    var gene = (cols[0] || "").trim();
+    var low = gene.toLowerCase();
+    if (gene && low !== 'gene' && low !== 'geneid' && low !== 'gene_id' && low !== 'genome') {
+      if (genes.indexOf(gene) === -1) genes.push(gene);
+    }
+  });
+  return genes;
+}
+
+document.getElementById("gene_file_upload").addEventListener("change", function() {
+  var files = this.files;
+  if (!files || !files.length) return;
+  var pending = files.length, merged = collectGenes();
+  Array.prototype.forEach.call(files, function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var fg = splitFileText(e.target.result);
+      fg.forEach(function(g){ if (merged.indexOf(g) === -1) merged.push(g); });
+      if (--pending === 0) {
+        document.getElementById("gene").value = merged.join("\n");
+      }
+    };
+    reader.readAsText(file);
+  });
+});
+
+document.getElementById("genome").addEventListener("change", onGenomeChange);
+document.getElementById("per-page").addEventListener("change", function() {
+  currentPerPage = parseInt(this.value, 10) || 20;
+  currentAnnotationPage = 1;
+  loadAnnotation();
+});
+
+// ---------- dotplot 查询 ----------
+function searchDotplot() {
+  currentGenes = collectGenes();
+  if (!currentGenes.length) { alert("Please enter at least one gene ID."); return; }
+  var genome = getGenome();
+  document.getElementById("results").innerHTML = '<div class="info">Searching...</div>';
+  $.getJSON(API_BASE + "/dotplot", { genome: genome, genes: currentGenes.join(",") })
+    .done(function(resp) {
+      if (!resp || !resp.success) { document.getElementById("results").innerHTML = ""; return; }
+      renderDotplotResults(resp.data);
+    })
+    .fail(function(jqXHR) {
+      var msg = jqXHR.responseJSON && (jqXHR.responseJSON.detail || jqXHR.responseJSON.error);
+      document.getElementById("results").innerHTML = '<p style="color:#999;text-align:center;">' + h(msg || "Query failed") + '</p>';
+    });
+}
+
+function renderDotplotResults(d) {
+  var container = document.getElementById("results");
+  var genome = d.genome;
+  var label = (GENOMES[genome] && GENOMES[genome].label) || genome;
+  var html = '<div class="result-header">';
+  html += '<p class="info"><b>Genome:</b> ' + h(label) + '</p>';
+  html += '<p class="info"><b>Submitted Genes:</b> ' + h((d.genes || []).join(", ")) + '</p>';
+  html += '</div>';
+
+  var hasAny = false;
+  (d.datasets || []).forEach(function(ds) {
+    if (ds.rows && ds.rows.length) hasAny = true;
+  });
+
+  (d.datasets || []).forEach(function(ds) {
+    var chartId = "dotplot_" + ds.folder.replace(/[^A-Za-z0-9_]/g, "_");
+    html += '<div class="section">';
+    html += '<div class="result-meta">';
+    if (ds.url) html += '<a href="' + h(ds.url) + '" target="_blank">' + h(ds.label) + '</a>';
+    else html += h(ds.label);
+    html += '</div>';
+
+    if (ds.rows && ds.rows.length) {
+      html += '<div class="result-stats">';
+      html += '<span class="stat-box">Found genes: ' + ds.found_genes.length + '</span>';
+      html += '<span class="stat-box">Missing genes: ' + ds.missing_genes.length + '</span>';
+      html += '<span class="stat-box">Clusters: ' + ds.clusters.length + '</span>';
+      html += '<span class="stat-box">DotPlot rows: ' + ds.rows.length + '</span>';
+      html += '</div>';
+      if (ds.missing_genes.length) {
+        html += '<div class="missing-box"><b>Genes not found in this dataset:</b> ' + h(ds.missing_genes.join(", ")) + '</div>';
+      }
+      html += '<div class="chart-toolbar">';
+      html += '<span>Width</span><input type="number" id="' + chartId + '_width" value="1200" min="400" max="4000" style="width:95px;">';
+      html += '<span>Height</span><input type="number" id="' + chartId + '_height" value="700" min="300" max="4000" style="width:95px;">';
+      html += '<span>Dot scale</span><input type="number" id="' + chartId + '_dot_scale" value="2.2" min="0.5" max="10" step="0.1" style="width:80px;">';
+      html += '<select id="' + chartId + '_orientation" style="width:210px;"><option value="gene_x_cluster_y" selected>Gene X / Cluster Y</option><option value="cluster_x_gene_y">Cluster X / Gene Y</option></select>';
+      html += '<button type="button" class="btn btn-outline-primary" onclick="applyChartOptions(\'' + chartId + '\', \'' + h(ds.folder) + '\')">Apply</button>';
+      html += '</div>';
+      html += '<div class="download-toolbar">';
+      html += '<button type="button" class="btn btn-primary" onclick="downloadChartPNG(\'' + chartId + '\', \'' + h(genome + '_' + ds.folder + '_dotplot') + '\')">Download PNG</button>';
+      html += '<button type="button" class="btn btn-secondary" onclick="printChartPDF(\'' + chartId + '\', \'' + h(genome + '_' + ds.folder + '_dotplot') + '\')">Download PDF</button>';
+      html += '<a class="btn btn-success" href="' + API_BASE + '/dotplot/download?genome=' + encodeURIComponent(genome) + '&folder=' + encodeURIComponent(ds.folder) + '&genes=' + encodeURIComponent((d.genes||[]).join(',')) + '">Download Data</a>';
+      html += '</div>';
+      html += '<div class="chart-box-wrapper"><div id="' + chartId + '" class="chart-box" style="width:1200px;height:700px;"></div></div>';
+      window.__dotplotRows = window.__dotplotRows || {};
+      window.__dotplotRows[chartId] = ds.rows;
+      html += '<script>drawDotPlot("' + chartId + '", window.__dotplotRows["' + chartId + '"], {title:"' + h(ds.folder) + '", orientation:"gene_x_cluster_y", dotScale:2.2});<\/script>';
+    } else {
+      html += '<p style="color:#999;margin-top:20px;">No dotplot data found for the submitted gene ID.</p>';
+      if (ds.error) html += '<p style="color:#999;font-size:13px;">' + h(ds.error) + '</p>';
+    }
+    html += '</div>';
+  });
+
+  if (hasAny) {
+    html += '<div class="result-note">';
+    html += '<p><b>Average Expression:</b> Represents the mean expression level of a particular gene across all cells within a given cell cluster. A darker red color or higher value on the color scale indicates a higher average expression level, while blue indicates a lower relative expression level.</p>';
+    html += '<p><b>Percent Expressed:</b> Represents the percentage of cells within a given cell cluster that express, or have detectable expression of, a particular gene. A larger dot indicates that more cells in the cluster express the gene; conversely, a smaller dot means that a lower proportion of cells express the gene.</p>';
+    html += '</div>';
+    html += '<div class="back-search"><a href="?genome=' + encodeURIComponent(genome) + '" class="btn btn-secondary">Back to Search</a></div>';
+  } else {
+    html += '<p style="text-align:center;color:#999;margin-top:30px;">No dotplot data was found for the submitted gene ID.</p>';
+    html += '<div class="back-search"><a href="?genome=' + encodeURIComponent(genome) + '" class="btn btn-secondary">Back to Search</a></div>';
+  }
+
+  container.innerHTML = html;
+  container.scrollIntoView({ behavior: "smooth" });
+}
+
+// ---------- ECharts dotplot（复用原 PHP 逻辑） ----------
+window.__chartInstances = {};
+
+function getUniqueValues(rows, key) {
+  var arr = [];
+  rows.forEach(function(row){ if (arr.indexOf(row[key]) === -1) arr.push(row[key]); });
+  return arr;
+}
+function computePctLegendValues(rows) {
+  var maxPct = 0;
+  rows.forEach(function(row){ var v = Number(row.pct_exp || 0); if (v > maxPct) maxPct = v; });
+  if (maxPct <= 0) return [25, 50, 75];
+  var v1 = Math.max(1, Math.round(maxPct * 0.25));
+  var v2 = Math.max(v1 + 1, Math.round(maxPct * 0.50));
+  var v3 = Math.max(v2 + 1, Math.round(maxPct * 0.75));
+  return [v1, v2, v3];
+}
+function formatLegendNumber(v) {
+  if (!isFinite(v)) return '';
+  if (Math.abs(v) >= 10 || Number.isInteger(v)) return String(Math.round(v * 100) / 100);
+  return (Math.round(v * 100) / 100).toFixed(2).replace(/\.?0+$/, '');
+}
+function buildLegendGraphics(rows, dotScale, colorMin, colorMax) {
+  var pctValues = computePctLegendValues(rows);
+  var colorLegendLeft = 0, colorLegendWidth = 92, colorBarX = 34, colorBarY = 72, colorBarHeight = 128, colorBarWidth = 16;
+  var pctLegendLeft = 0, pctLegendWidth = 110, pctStartY = 62;
+  var midColor = (colorMin + colorMax) / 2;
+  var graphics = [];
+  graphics.push({ type: 'group', right: 48, top: 56, children: [
+    { type: 'text', left: colorLegendLeft + colorLegendWidth / 2, top: 0, style: { text: 'Average\nExpression', fill: '#333', font: 'bold 15px Arial', textAlign: 'center', textVerticalAlign: 'middle' } },
+    { type: 'text', left: colorBarX + colorBarWidth + 14, top: colorBarY - 6, style: { text: formatLegendNumber(colorMax), fill: '#333', font: '12px Arial', textAlign: 'left', textVerticalAlign: 'middle' } },
+    { type: 'text', left: colorBarX + colorBarWidth + 14, top: colorBarY + colorBarHeight / 2 - 6, style: { text: formatLegendNumber(midColor), fill: '#333', font: '12px Arial', textAlign: 'left', textVerticalAlign: 'middle' } },
+    { type: 'text', left: colorBarX + colorBarWidth + 14, top: colorBarY + colorBarHeight - 6, style: { text: formatLegendNumber(colorMin), fill: '#333', font: '12px Arial', textAlign: 'left', textVerticalAlign: 'middle' } }
+  ]});
+  var pctChildren = [
+    { type: 'text', left: pctLegendWidth / 2, top: 0, style: { text: 'Percent\nExpressed', fill: '#333', font: 'bold 15px Arial', textAlign: 'center', textVerticalAlign: 'middle' } }
+  ];
+  pctValues.forEach(function(v, i) {
+    var size = Math.max(4, Math.sqrt(v) * dotScale);
+    var cy = pctStartY + i * 48, circleX = 30, textX = 68;
+    pctChildren.push({ type: 'circle', left: circleX, top: cy, shape: { cx: 0, cy: 0, r: size / 2 }, style: { stroke: '#777', fill: '#fff', lineWidth: 1.4 } });
+    pctChildren.push({ type: 'text', left: textX, top: cy - 7, style: { text: String(v), fill: '#333', font: '13px Arial', textAlign: 'left', textVerticalAlign: 'middle' } });
+  });
+  graphics.push({ type: 'group', right: 42, top: 292, children: pctChildren });
+  return graphics;
+}
+
+function drawDotPlot(containerId, rows, options) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  if (typeof echarts === 'undefined') { container.innerHTML = '<p style="color:#999;text-align:center;padding:30px 0;">ECharts failed to load.</p>'; return; }
+  if (!rows || rows.length === 0) { container.innerHTML = '<p style="color:#999;text-align:center;padding:30px 0;">No dotplot data found.</p>'; return; }
+  options = options || {};
+  var title = options.title || '', orientation = options.orientation || 'gene_x_cluster_y', dotScale = Number(options.dotScale || 2.2);
+  if (isNaN(dotScale) || dotScale <= 0) dotScale = 2.2;
+  var genes = getUniqueValues(rows, 'gene'), clusters = getUniqueValues(rows, 'cluster');
+  var xCategories, yCategories, xName, yName;
+  if (orientation === 'cluster_x_gene_y') { xCategories = clusters; yCategories = genes; xName = 'Cluster'; yName = 'Gene'; }
+  else { xCategories = genes; yCategories = clusters; xName = 'Gene'; yName = 'Cluster'; }
+  var data = rows.map(function(row) {
+    var xValue, yValue;
+    if (orientation === 'cluster_x_gene_y') { xValue = clusters.indexOf(row.cluster); yValue = genes.indexOf(row.gene); }
+    else { xValue = genes.indexOf(row.gene); yValue = clusters.indexOf(row.cluster); }
+    return [xValue, yValue, Number(row.pct_exp || 0), Number(row.avg_exp_scaled || 0), Number(row.avg_exp || 0), row.gene, row.cluster];
+  });
+  var scaledValues = rows.map(function(r){ return Number(r.avg_exp_scaled || 0); });
+  var colorMin = Math.min.apply(null, scaledValues), colorMax = Math.max.apply(null, scaledValues);
+  if (!isFinite(colorMin)) colorMin = -2;
+  if (!isFinite(colorMax)) colorMax = 2;
+  if (colorMin === colorMax) { colorMin = colorMin - 1; colorMax = colorMax + 1; }
+  if (window.__chartInstances[containerId]) window.__chartInstances[containerId].dispose();
+  var chart = echarts.init(container, null, { renderer: 'canvas' });
+  window.__chartInstances[containerId] = chart;
+  var xIsGene = xName === 'Gene', yIsGene = yName === 'Gene';
+  var rotateXAxis = 0;
+  if (xIsGene) rotateXAxis = xCategories.length > 15 ? 90 : 45;
+  else rotateXAxis = xCategories.length > 8 ? 45 : 0;
+  var bottomMargin = 130;
+  if (xIsGene) bottomMargin = rotateXAxis === 90 ? 240 : 170;
+  else if (xCategories.length > 8) bottomMargin = 170;
+  var leftMargin = yIsGene ? 230 : 150;
+  var option = {
+    animation: false,
+    title: { text: title, left: 'center', top: 8, textStyle: { fontSize: 16, fontWeight: 'normal' } },
+    tooltip: { trigger: 'item', formatter: function(params) {
+      var value = params.value;
+      return '<b>Gene:</b> ' + value[5] + '<br><b>Cluster:</b> ' + value[6] +
+        '<br><b>Percent Expressed:</b> ' + Number(value[2]||0).toFixed(2) + '%' +
+        '<br><b>Average Expression:</b> ' + Number(value[4]||0).toFixed(4) +
+        '<br><b>Scaled Average Expression:</b> ' + Number(value[3]||0).toFixed(4);
+    }},
+    grid: { left: leftMargin, right: 220, top: 60, bottom: bottomMargin, containLabel: false },
+    xAxis: { type: 'category', data: xCategories, name: xName, nameLocation: 'middle', nameGap: rotateXAxis === 90 ? 175 : 105,
+      axisLabel: { interval: 0, rotate: rotateXAxis, fontSize: 11, fontWeight: xIsGene ? 'bold' : 'normal' },
+      axisLine: { lineStyle: { color: '#000', width: 1 } }, splitLine: { show: false } },
+    yAxis: { type: 'category', data: yCategories, name: yName, nameLocation: 'middle', nameGap: yIsGene ? 170 : 110,
+      axisLabel: { fontSize: 11, fontWeight: yIsGene ? 'bold' : 'normal' },
+      axisLine: { lineStyle: { color: '#000', width: 1 } }, splitLine: { show: false } },
+    visualMap: { min: colorMin, max: colorMax, dimension: 3, orient: 'vertical', right: 92, top: 128, itemWidth: 16, itemHeight: 128,
+      calculable: false, precision: 2, text: ['', ''], textGap: 6, textStyle: { fontSize: 12, color: '#333' },
+      inRange: { color: ['#4575b4', '#f7f7f7', '#d73027'] } },
+    graphic: buildLegendGraphics(rows, dotScale, colorMin, colorMax),
+    series: [{ name: 'DotPlot', type: 'scatter', data: data,
+      symbolSize: function(value) { var pct = Number(value[2] || 0); if (pct <= 0) return 3; return Math.max(4, Math.sqrt(pct) * dotScale); },
+      itemStyle: { opacity: 0.95, borderColor: '#333', borderWidth: 0.3 } }]
+  };
+  chart.setOption(option);
+  setTimeout(function(){ chart.resize(); }, 100);
+}
+
+function applyChartOptions(chartId, datasetTitle) {
+  var container = document.getElementById(chartId);
+  if (!container) return;
+  var w = parseInt(document.getElementById(chartId + '_width').value, 10) || 1200;
+  var h = parseInt(document.getElementById(chartId + '_height').value, 10) || 700;
+  var dotScale = parseFloat(document.getElementById(chartId + '_dot_scale').value) || 2.2;
+  var orientation = document.getElementById(chartId + '_orientation').value || 'gene_x_cluster_y';
+  if (w < 400) w = 400;
+  if (h < 300) h = 300;
+  container.style.width = w + 'px';
+  container.style.height = h + 'px';
+  drawDotPlot(chartId, window.__dotplotRows[chartId], { title: datasetTitle || '', orientation: orientation, dotScale: dotScale });
+}
+function downloadChartPNG(chartId, fileBaseName) {
+  var chart = window.__chartInstances[chartId];
+  if (!chart) return;
+  var url = chart.getDataURL({ type: 'png', pixelRatio: 4, backgroundColor: '#fff' });
+  var link = document.createElement('a');
+  link.href = url; link.download = (fileBaseName || 'dotplot') + '.png';
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+function printChartPDF(chartId, fileBaseName) {
+  var chart = window.__chartInstances[chartId];
+  if (!chart) return;
+  var url = chart.getDataURL({ type: 'png', pixelRatio: 4, backgroundColor: '#fff' });
+  var win = window.open('', '_blank');
+  if (!win) return;
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + (fileBaseName || 'dotplot') + '</title><style>body{margin:0;padding:20px;text-align:center;background:#fff;font-family:Arial;}img{max-width:100%;height:auto;}@media print{body{padding:0;}}</style></head><body><img src="' + url + '" alt="dotplot"></body></html>');
+  win.document.close(); win.focus();
+  setTimeout(function(){ win.print(); }, 600);
+}
+window.addEventListener('resize', function() {
+  Object.keys(window.__chartInstances).forEach(function(key){ if (window.__chartInstances[key]) window.__chartInstances[key].resize(); });
+});
+
+loadGenomes();
+</script>
+</body>
+</html>

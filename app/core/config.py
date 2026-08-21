@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     VARIANTHUB_VCF_DIR: Path = Path("/var/www/html/variants")
     JBROWSE_DATA_ROOT: Path = Path("/var/www/html/jbrowse-1.12.3-release")
     EQTL_IMAGE_DIR: Path = Path("/var/www/eqtl/static/image")
+    SCRNNA_DATA_DIR: Path = Path("/var/www/html/scRNA")
     BCFTOOLS_BIN: Path = Path("/home/fei/data/tiantian_data/soft/bcftools-1.8/bin/bcftools")
 
     CGI_SUBMISSION_PASSWORD: str = Field(default="wheatomics")
