@@ -71,20 +71,25 @@ class PipelineRunner:
     def _db_path(self, db_name: str, job_dir: Path, custom_dir: str) -> str:
         """Resolve a database name to an absolute path.
 
-        Resolution order: 'custom' (job-local FASTA) → config.ini
-        database_dir (legacy primer_* files, if still present) →
-        settings.BLAST_DB_PATH (shared BLAST library). The primer_* FASTA
-        databases were removed from the server, so BLAST_DB_PATH is the
-        normal home for genome/gene databases now.
+        Resolution order:
+        1. 'custom' — job-local FASTA
+        2. exact name in the shared BLAST library (settings.BLAST_DB_PATH)
+        3. primer_X legacy names mapped to AABBDD_X in the BLAST library
+           (the config.ini primer_* FASTA files were removed from the server
+           and the ones still on disk are broken — blastn exit 2)
+        4. config.ini database_dir file (only for legacy names with no
+           BLAST library counterpart)
         """
         if db_name == "custom":
             return str(job_dir / custom_dir)
-        legacy = self.config.database_path(db_name)
-        if legacy.exists():
-            return str(legacy)
         if blast_db_exists(db_name):
             return str(wheatomics_settings.BLAST_DB_PATH / db_name)
-        return str(legacy)  # let the worker fail with a clear tool error
+        if db_name.startswith("primer_"):
+            mapped = "AABBDD_" + db_name[len("primer_"):]
+            if blast_db_exists(mapped):
+                return str(wheatomics_settings.BLAST_DB_PATH / mapped)
+        legacy = self.config.database_path(db_name)
+        return str(legacy)  # may not exist; the worker fails with a clear error
 
     def _resolve_databases(self, selected: List[str], job_dir: Path) -> List[str]:
         """Resolve selected database names to absolute paths."""

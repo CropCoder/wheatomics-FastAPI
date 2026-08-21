@@ -11,23 +11,42 @@ from typing import Dict, List, Optional
 
 from app.core.config import settings
 
-#: BLAST index extensions — same set used by the main API's DB existence
-#: oracle (app/api/routers/sequence.py). .nal/.pal are alias files.
+#: BLAST index extensions — single-volume flat files and alias files.
+#: Multi-volume splits (name.00.nsq, name.01.nsq) and BLAST v5 files are
+#: handled separately in blast_db_exists.
 _BLAST_INDEX_EXTS = (".nsq", ".nin", ".nhr", ".nal", ".psq", ".pin", ".phr", ".pal")
 
 
 def blast_db_exists(name: str) -> bool:
     """True if `name` resolves to a BLAST database under BLAST_DB_PATH.
 
-    Accepts multi-volume index sets (name.nsq/name.nin/name.nhr), alias
-    files (name.nal/.pal) and BLAST v5 database directories.
+    Covers the layouts actually present on the server:
+    - single-volume index sets (name.nsq / name.nin / name.nhr)
+    - multi-volume splits (name.00.nsq, name.01.nsq, ...)
+    - BLAST v5 single-file databases (name.ndb / .njs / ...)
+    - alias files (name.nal / .pal)
+    - v5 database directories
     """
     if not name:
         return False
     base = Path(settings.BLAST_DB_PATH) / name
+    parent, stem = base.parent, base.name
+
     for ext in _BLAST_INDEX_EXTS:
-        if (base.parent / (base.name + ext)).exists():
+        if (parent / f"{stem}{ext}").exists():
             return True
+        # multi-volume: stem.00.ext, stem.01.ext, ...
+        try:
+            if next(parent.glob(f"{stem}.[0-9][0-9]{ext}"), None):
+                return True
+        except OSError:
+            pass
+
+    # BLAST v5 single-file databases (nucleotide .ndb family, protein .pdb family)
+    for ext in (".ndb", ".njs", ".not", ".ntf", ".nto", ".pdb", ".pjs", ".pot", ".ptf", ".pto"):
+        if (parent / f"{stem}{ext}").exists():
+            return True
+
     if base.is_dir():
         return any(base.glob("*.nsq")) or any(base.glob("*.psq")) or any(base.glob("*.ndb"))
     return False
