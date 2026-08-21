@@ -488,7 +488,7 @@ function loadCheckDatabases() {
 }
 
 function shortDbName(name) {
-  return String(name).replace(/^(AABBDD_|primer[._])/, '').replace(/\.genome$/, '');
+  return String(name).replace(/^primer[._]/, '').replace(/\.genome$/, '');
 }
 
 function updateDbSelected() {

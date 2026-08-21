@@ -21,21 +21,21 @@ def _blast_db_groups(nuc_dbs: list[str]) -> list[DatabaseGroup]:
     The legacy config.ini primer_* FASTA databases were removed from the
     server, so the specificity-check DB list now comes from the same BLAST
     library used by the BLAST search pages (settings.BLAST_DB_PATH).
-    Groups mirror the old genome/gene split plus the aggregated all_* DBs.
+    Groups mirror the old genome/gene split. The all_* aggregated databases
+    are intentionally excluded: they concatenate many genomes, so hits in
+    them are meaningless for primer specificity checking.
     """
-    groups_spec = []  # (group_name, [db_names])
-    aggregated, genome, gene = [], [], []
+    genome, gene = [], []
     for name in nuc_dbs:
         if _PER_CHROM_RE.search(name):
             continue
         if name.startswith("all_"):
-            aggregated.append(name)
-        elif name.endswith(".genome"):
+            continue
+        if name.endswith(".genome"):
             genome.append(name)
         elif name.endswith(".cds") or "transcripts" in name or "mrna" in name:
             gene.append(name)
     groups_spec = [
-        ("All-in-one", aggregated),
         ("genome", genome),
         ("gene", gene),
     ]
@@ -78,9 +78,11 @@ def get_config_endpoint(config: PrimerServerConfig = Depends(get_primer_config))
     "/databases",
     response_model=DatabasesResponse,
     summary="List available specificity-check databases",
-    description="Returns database groups (All-in-one / genome / gene) built from the "
-                "shared BLAST library at settings.BLAST_DB_PATH. The legacy config.ini "
-                "primer_* FASTA databases are no longer used. Use the file names in the "
+    description="Returns database groups (genome / gene) built from the shared "
+                "BLAST library at settings.BLAST_DB_PATH. The legacy config.ini "
+                "primer_* FASTA databases are no longer used, and the all_* "
+                "aggregated databases are excluded (hits in multi-genome aggregates "
+                "are meaningless for primer specificity). Use the file names in the "
                 "`selected-databases` field when submitting jobs.",
 )
 def get_databases(config: PrimerServerConfig = Depends(get_primer_config)):
