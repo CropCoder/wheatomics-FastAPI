@@ -119,9 +119,7 @@
   <div id="module-nav">
     <a href="#/home">Home</a>
     <a href="#/psp">PSP</a>
-    <a href="#/fams">Fams</a>
     <a href="#/prdp">PrDP</a>
-    <a href="#/docs">Docs</a>
     <a href="#/cite">Cite</a>
   </div>
   <div id="view"></div>
@@ -162,9 +160,7 @@ function router(){
   el.innerHTML = '<div class="empty-note">Loading...</div>';
   if(view==="home"||view==="") renderHome();
   else if(view==="psp") renderList("psp", parts[1]||"");
-  else if(view==="fams") renderStatic("Fams", "Protein family data is being prepared.");
   else if(view==="prdp") renderList("prd", parts[1]||"");
-  else if(view==="docs") renderStatic("Docs", "Literature data is being prepared.");
   else if(view==="cite") renderCite();
   else if(view==="search") renderList("search", parts[1]||"");
   else if(view==="protein") renderProtein(parts[1]||"");
@@ -172,7 +168,7 @@ function router(){
 }
 
 function setActiveNav(view){
-  var map = {home:"Home", psp:"PSP", fams:"Fams", prdp:"PrDP", docs:"Docs", cite:"Cite", search:"PSP", protein:"PSP"};
+  var map = {home:"Home", psp:"PSP", prdp:"PrDP", cite:"Cite", search:"PSP", protein:"PSP"};
   var label = map[view] || "Home";
   document.querySelectorAll("#module-nav a").forEach(function(a){
     a.classList.toggle("active", a.textContent === label);
