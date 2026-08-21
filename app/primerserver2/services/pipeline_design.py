@@ -43,6 +43,7 @@ def run(
     primer3bin: str = "primer3_core",
     primer3setting: Optional[Path] = None,
     blastn: str = "blastn",
+    blastdbcmd: str = "blastdbcmd",
     debug: bool = False,
     progress_fh: Optional[TextIO] = None,
 ) -> None:
@@ -61,6 +62,7 @@ def run(
         product_size_min=product_size_min,
         product_size_max=product_size_max,
         samtools=samtools,
+        blastdbcmd=blastdbcmd,
         primer3bin=primer3bin,
         primer3setting=primer3setting,
         debug=debug,
@@ -100,6 +102,7 @@ def run(
         params=spec_params,
         samtools=samtools,
         blastn=blastn,
+        blastdbcmd=blastdbcmd,
         detail=output_detail,
     )
     log_progress(75, "final_selection")

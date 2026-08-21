@@ -6,7 +6,9 @@ from functools import partial
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from ..config import PrimerServerConfig
+from app.core.config import settings as wheatomics_settings
+
+from ..config import PrimerServerConfig, blast_db_exists
 from ..dependencies import PrimerServer2Settings
 from ..models import CheckJobRequest, DesignJobRequest, JobResultResponse, JobStatus
 from . import pipeline_design, selection_runner, specificity_runner
@@ -66,15 +68,27 @@ class PipelineRunner:
         ]
         return "\n".join(lines)
 
+    def _db_path(self, db_name: str, job_dir: Path, custom_dir: str) -> str:
+        """Resolve a database name to an absolute path.
+
+        Resolution order: 'custom' (job-local FASTA) → config.ini
+        database_dir (legacy primer_* files, if still present) →
+        settings.BLAST_DB_PATH (shared BLAST library). The primer_* FASTA
+        databases were removed from the server, so BLAST_DB_PATH is the
+        normal home for genome/gene databases now.
+        """
+        if db_name == "custom":
+            return str(job_dir / custom_dir)
+        legacy = self.config.database_path(db_name)
+        if legacy.exists():
+            return str(legacy)
+        if blast_db_exists(db_name):
+            return str(wheatomics_settings.BLAST_DB_PATH / db_name)
+        return str(legacy)  # let the worker fail with a clear tool error
+
     def _resolve_databases(self, selected: List[str], job_dir: Path) -> List[str]:
         """Resolve selected database names to absolute paths."""
-        resolved = []
-        for db_name in selected:
-            if db_name == "custom":
-                resolved.append(str(job_dir / "customdb"))
-            else:
-                resolved.append(str(self.config.database_path(db_name)))
-        return resolved
+        return [self._db_path(name, job_dir, "customdb") for name in selected]
 
     def _prepare_custom_inputs(
         self,
@@ -138,9 +152,9 @@ class PipelineRunner:
         self._write_text(job_dir / "design_params.json", json.dumps(design_params))
 
         if request.selectTemplate == "custom":
-            template_path = job_dir / "custom"
+            template_path = Path(job_dir / "custom")
         else:
-            template_path = self.config.database_path(request.selectTemplate)
+            template_path = Path(self._db_path(request.selectTemplate, job_dir, "custom"))
 
         selected_dbs = ",".join(self._resolve_databases(request.selectedDatabases, job_dir))
 
@@ -174,6 +188,7 @@ class PipelineRunner:
             "primer3bin": self.config.primer3,
             "primer3setting": p3_settings,
             "blastn": self.config.blastn,
+            "blastdbcmd": self.config.blastdbcmd,
         }
 
     def prepare_check_inputs(
@@ -220,6 +235,7 @@ class PipelineRunner:
             "params": params,
             "samtools": self.config.samtools,
             "blastn": self.config.blastn,
+            "blastdbcmd": self.config.blastdbcmd,
             "detail": True,
         }
 

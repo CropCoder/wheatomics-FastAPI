@@ -62,10 +62,35 @@ def normalize_region(region: str) -> str:
     return f"{chrom}:{start}-{end}"
 
 
+def _blastdbcmd_fetch(db: Path, chrom: str, start: int, end: int, blastdbcmd: str) -> str:
+    """Fetch one region from a BLAST database via blastdbcmd (no FASTA needed)."""
+    cmd = [
+        blastdbcmd,
+        "-db", str(db),
+        "-entry", chrom,
+        "-range", f"{start}-{end}",
+        "-strand", "plus",
+        "-line_length", "10000",
+    ]
+    result = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=True,
+    )
+    lines = []
+    for line in result.stdout.splitlines():
+        if not line.startswith(">"):
+            lines.append(line.strip())
+    return "".join(lines).upper()
+
+
 def faidx_fetch(
     db: Path,
     regions: List[str],
     samtools: str = "samtools",
+    blastdbcmd: Optional[str] = None,
     batch_size: int = 500,
 ) -> Dict[str, str]:
     """Fetch multiple regions from an indexed FASTA using samtools faidx.
@@ -73,6 +98,11 @@ def faidx_fetch(
     Regions are processed in batches to avoid exceeding the operating system's
     command-line length limit (``ARG_MAX``). Returns a dict mapping region
     string to uppercase sequence string.
+
+    If the FASTA index (.fai) is missing or samtools fails, falls back to
+    blastdbcmd region extraction (works directly on BLAST database index
+    files, no FASTA required) — this is how the shared BLAST library
+    databases are queried.
     """
     if not regions:
         return {}
@@ -80,9 +110,62 @@ def faidx_fetch(
     normalized_regions = [normalize_region(r) for r in regions]
     sequences: Dict[str, str] = {}
 
-    for i in range(0, len(normalized_regions), batch_size):
-        batch = normalized_regions[i : i + batch_size]
-        cmd = [samtools, "faidx", str(db), *batch]
+    use_samtools = samtools and Path(f"{db}.fai").exists()
+    if use_samtools:
+        for i in range(0, len(normalized_regions), batch_size):
+            batch = normalized_regions[i : i + batch_size]
+            try:
+                cmd = [samtools, "faidx", str(db), *batch]
+                result = subprocess.run(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=True,
+                )
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                use_samtools = False
+                sequences = {}  # discard partial batches, redo via blastdbcmd
+                break
+            else:
+                current_name: Optional[str] = None
+                lines: List[str] = []
+                for line in result.stdout.splitlines():
+                    if line.startswith(">"):
+                        if current_name is not None:
+                            sequences[current_name] = "".join(lines).upper()
+                        current_name = line[1:].split()[0]
+                        lines = []
+                    else:
+                        lines.append(line.strip())
+                if current_name is not None:
+                    sequences[current_name] = "".join(lines).upper()
+
+    if not use_samtools and blastdbcmd:
+        for region in normalized_regions:
+            chrom, start, end = parse_region(region)
+            try:
+                sequences[region] = _blastdbcmd_fetch(db, chrom, start, end, blastdbcmd)
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                continue
+
+    return sequences
+
+
+def fetch_sequence_lengths(
+    db: Path,
+    chroms: List[str],
+    blastdbcmd: str,
+) -> Dict[str, int]:
+    """Sequence lengths from a BLAST database via `blastdbcmd -outfmt %l`.
+
+    Fallback used when no .fai index exists next to the FASTA (the shared
+    BLAST library databases are index-only). One subprocess per chromosome;
+    callers should pass the small set of chromosomes they actually need.
+    """
+    lengths: Dict[str, int] = {}
+    for chrom in dict.fromkeys(chroms):
+        cmd = [blastdbcmd, "-db", str(db), "-entry", chrom, "-outfmt", "%l"]
         result = subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
@@ -90,22 +173,11 @@ def faidx_fetch(
             text=True,
             check=True,
         )
-
-        current_name: Optional[str] = None
-        lines: List[str] = []
-
-        for line in result.stdout.splitlines():
-            if line.startswith(">"):
-                if current_name is not None:
-                    sequences[current_name] = "".join(lines).upper()
-                current_name = line[1:].split()[0]
-                lines = []
-            else:
-                lines.append(line.strip())
-        if current_name is not None:
-            sequences[current_name] = "".join(lines).upper()
-
-    return sequences
+        try:
+            lengths[chrom] = int(result.stdout.strip())
+        except ValueError:
+            continue
+    return lengths
 
 
 def sequence_length(db: Path, samtools: str = "samtools") -> Dict[str, int]:

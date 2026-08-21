@@ -11,6 +11,27 @@ from typing import Dict, List, Optional
 
 from app.core.config import settings
 
+#: BLAST index extensions — same set used by the main API's DB existence
+#: oracle (app/api/routers/sequence.py). .nal/.pal are alias files.
+_BLAST_INDEX_EXTS = (".nsq", ".nin", ".nhr", ".nal", ".psq", ".pin", ".phr", ".pal")
+
+
+def blast_db_exists(name: str) -> bool:
+    """True if `name` resolves to a BLAST database under BLAST_DB_PATH.
+
+    Accepts multi-volume index sets (name.nsq/name.nin/name.nhr), alias
+    files (name.nal/.pal) and BLAST v5 database directories.
+    """
+    if not name:
+        return False
+    base = Path(settings.BLAST_DB_PATH) / name
+    for ext in _BLAST_INDEX_EXTS:
+        if (base.parent / (base.name + ext)).exists():
+            return True
+    if base.is_dir():
+        return any(base.glob("*.nsq")) or any(base.glob("*.psq")) or any(base.glob("*.ndb"))
+    return False
+
 
 class PrimerServerConfig:
     """Wrapper around config.ini with typed accessors."""
@@ -56,6 +77,20 @@ class PrimerServerConfig:
     @property
     def blastn(self) -> str:
         return self._path_value("blastn")
+
+    @property
+    def blastdbcmd(self) -> str:
+        """blastdbcmd binary path: [Path] blastdbcmd, else sibling of blastn,
+        else rely on PATH."""
+        configured = self._path_value("blastdbcmd")
+        if configured:
+            return configured
+        blastn = self.blastn
+        if blastn:
+            sibling = Path(blastn).parent / "blastdbcmd"
+            if sibling.exists():
+                return str(sibling)
+        return "blastdbcmd"
 
     @property
     def makeblastdb(self) -> str:
@@ -114,10 +149,13 @@ class PrimerServerConfig:
         return files
 
     def database_exists(self, name: str) -> bool:
-        """Check whether a database file name is declared in config.ini."""
+        """Check whether a database file name is declared in config.ini or
+        present as a BLAST database under settings.BLAST_DB_PATH."""
         if name == "custom":
             return True
-        return name in self.all_database_files()
+        if name in self.all_database_files():
+            return True
+        return blast_db_exists(name)
 
     def database_path(self, name: str) -> Path:
         """Return absolute path to a database file."""
