@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps, eqtl, scrna
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps, eqtl, scrna, wheatpsp
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 from app.primerserver2.dependencies import verify_api_key
@@ -145,6 +145,7 @@ app.mount("/syntenyview", StaticFiles(directory=Path(__file__).parent / "app" / 
 app.mount("/caps", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "caps", html=True), name="caps")
 app.mount("/eqtl", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "eqtl", html=True), name="eqtl")
 app.mount("/scRNA", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "scRNA", html=True), name="scRNA")
+app.mount("/wheatPSP", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "wheatPSP", html=True), name="wheatPSP")
 
 
 @app.middleware("http")
@@ -212,6 +213,7 @@ for router in [
     caps,
     eqtl,
     scrna,
+    wheatpsp,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)
 
