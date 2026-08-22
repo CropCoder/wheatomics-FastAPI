@@ -93,14 +93,15 @@ def api_stats():
                 )
                 bins, counts = [], []
                 for r in cur.fetchall():
-                    bins.append(round(float(r["b"]) * width, nround))
+                    # + 0.0 normalizes "-0.0" float artifacts from negative quartiles
+                    bins.append(round(float(r["b"]) * width, nround) + 0.0)
                     counts.append(int(r["n"]))
                 return {"bins": bins, "counts": counts}
 
             distributions = {
                 "ps_score": dist("ps_score", 0.1, 1),
                 "molphase_score": dist("molphase_score", 0.1, 1),
-                "plaac_llr": dist("plaac_llr", 2.0, 0),
+                "plaac_llr": dist("plaac_llr", 5.0, 0),   # width 5 keeps ~35 bins instead of 90
                 "plaac_papa_prop": dist("plaac_papa_prop", 0.1, 1),
                 "seq_length": dist("seq_length", 100.0, 0),
             }
