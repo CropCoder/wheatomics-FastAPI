@@ -11,7 +11,8 @@ Canonical order - one row of exactly 3 cards per card-group:
   Collinearity | Triticeae papers
 
 The whole tool section (<!-- tool --> ... up to the "Data in JBrowse" ribbon)
-is regenerated, so it works whether or not the earlier add_* scripts were run.
+is regenerated (the ribbon span itself is preserved/restored), so it works
+whether or not the earlier add_* scripts were run.
 
 Run on the server (Apache docroot /var/www/html):
     sudo python3 scripts/fix_homepage_card_grid.py
@@ -71,7 +72,10 @@ def build_grid() -> str:
     rows = []
     for i in range(0, len(CARDS), 3):
         rows.append(group(CARDS[i:i + 3]))
-    return ('    <!-- tool -->' + NL + NL.join(rows) + '    <br>' + NL)
+    # NOTE: the cut keeps everything up to (not including) 'Data in JBrowse:',
+    # so the ribbon span opening tag must be emitted here (see main()).
+    return ('    <!-- tool -->' + NL + NL.join(rows) + '    <br>' + NL
+            + '    <span class="ribbon ribbon-text">&nbsp;&nbsp;&nbsp;&nbsp;')
 
 
 def main() -> None:
