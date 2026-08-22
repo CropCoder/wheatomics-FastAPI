@@ -49,6 +49,9 @@
   .stat-box .num { font-size:34px; font-weight:bold; color:#0077b6; }
   .stat-box .lbl { font-size:14px; color:#64748b; }
   .stat-box .pct { font-size:13px; color:#0077b6; margin-top:2px; }
+  /* distribution row: exactly 4 cards on one row */
+  .dist-row { flex-wrap:nowrap; }
+  .dist-row .stat-box { flex:1 1 0; min-width:0; max-width:none; }
   .stat-box a { display:block; margin-top:8px; font-size:13px; }
   .result-table { background:#fff; border-radius:6px; padding:20px; margin-top:16px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
   .result-table table { font-size:15px; }
@@ -178,11 +181,11 @@ function renderHome(){
     html += '<p class="text-center text-muted small">Search by Chinese Spring gene ID; browse all predicted <a href="#/psp">PSPs</a> or <a href="#/prdp">PrD proteins</a>.</p>';
 
     html += '<h6 class="mt-5"><strong>Score distributions</strong><span class="text-muted small"> (protein-level, from the wheatPSP prediction table)</span></h6>';
-    html += '<div class="stat-row">';
+    html += '<div class="stat-row dist-row">';
+    html += distCard('Sequence length (aa)', 'dist-len');
     html += distCard('PSP score', 'dist-ps');
     html += distCard('MolPhase score', 'dist-mol');
     html += distCard('PLAAC LLR', 'dist-llr');
-    html += distCard('Sequence length (aa)', 'dist-len');
     html += '</div>';
 
     html += '<div class="info-box mt-4"><strong>Reference</strong><br>'
@@ -191,10 +194,10 @@ function renderHome(){
     el.innerHTML = html;
     document.getElementById("home-search").addEventListener("keydown", function(e){ if(e.key==="Enter") doHomeSearch(); });
     var dists = d.distributions || {};
+    plotHist("dist-len", dists.seq_length, 100, "Sequence length (aa)");
     plotHist("dist-ps", dists.ps_score, 0.1, "PSP score");
     plotHist("dist-mol", dists.molphase_score, 0.1, "MolPhase score");
-    plotHist("dist-llr", dists.plaac_llr, 2.0, "PLAAC LLR");
-    plotHist("dist-len", dists.seq_length, 100, "Sequence length");
+    plotHist("dist-llr", dists.plaac_llr, 5.0, "PLAAC LLR");
   }).fail(function(){ el.innerHTML = '<div class="alert alert-danger">Failed to load stats.</div>'; });
 }
 
