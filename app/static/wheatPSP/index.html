@@ -169,9 +169,9 @@ function renderHome(){
     function pct(v){ return (v!=null?v:0).toFixed(1)+'% of all wheat proteins'; }
     var html = '<div class="hero"><h3>wheatPSP</h3><p>A comprehensive database of wheat phase separation-associated proteins</p></div>';
     html += '<div class="stat-row">';
-    html += '<div class="stat-box"><div class="num">'+(d.total||0).toLocaleString()+'</div><div class="lbl">annotated wheat proteins</div><div class="pct">100%</div><a href="'+API+'/download/allProteins">Download</a></div>';
-    html += '<div class="stat-box"><div class="num">'+(d.psp||0).toLocaleString()+'</div><div class="lbl">predicted PSPs</div><div class="pct">'+pct(d.psp_pct)+'</div><a href="'+API+'/download/PredPSPs">Download</a></div>';
-    html += '<div class="stat-box"><div class="num">'+(d.prd||0).toLocaleString()+'</div><div class="lbl">predicted PrD proteins</div><div class="pct">'+pct(d.prd_pct)+'</div><a href="'+API+'/download/PrD_Pro">Download</a></div>';
+    html += '<div class="stat-box"><div class="num">'+(d.total||0).toLocaleString()+'</div><div class="lbl">annotated wheat proteins</div><div class="pct">100%</div></div>';
+    html += '<div class="stat-box"><div class="num">'+(d.psp||0).toLocaleString()+'</div><div class="lbl">predicted PSPs</div><div class="pct">'+pct(d.psp_pct)+'</div></div>';
+    html += '<div class="stat-box"><div class="num">'+(d.prd||0).toLocaleString()+'</div><div class="lbl">predicted PrD proteins</div><div class="pct">'+pct(d.prd_pct)+'</div></div>';
     html += '</div>';
 
     html += '<div class="form-inline justify-content-center mb-2">';
@@ -187,6 +187,14 @@ function renderHome(){
     html += distCard('MolPhase score', 'dist-mol');
     html += distCard('PLAAC LLR', 'dist-llr');
     html += '</div>';
+
+    html += '<div class="text-center mt-4">';
+    html += '<h6><strong>Downloads</strong> <span class="text-muted small">(TSV inside ZIP)</span></h6>';
+    html += '<div class="d-flex justify-content-center" style="gap:12px;flex-wrap:wrap;">';
+    html += '<a class="btn btn-outline-primary" href="'+API+'/download/allProteins">All proteins ('+(d.total||0).toLocaleString()+')</a>';
+    html += '<a class="btn btn-outline-primary" href="'+API+'/download/PredPSPs">Predicted PSPs ('+(d.psp||0).toLocaleString()+')</a>';
+    html += '<a class="btn btn-outline-primary" href="'+API+'/download/PrD_Pro">PrD proteins ('+(d.prd||0).toLocaleString()+')</a>';
+    html += '</div></div>';
 
     html += '<div class="info-box mt-4"><strong>Reference</strong><br>'
       + 'wheatPSP: a database of wheat phase separation-associated proteins. (citation to be added)</div>';
