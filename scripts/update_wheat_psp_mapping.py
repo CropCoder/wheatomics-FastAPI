@@ -78,11 +78,11 @@ def main() -> int:
                            password=args.password, database=args.database,
                            charset="utf8mb4", autocommit=False)
     try:
-        cur = conn.cursor()
+        cur = conn.cursor(pymysql.cursors.DictCursor)
 
         # ---- ensure columns ----
         cur.execute("SHOW COLUMNS FROM wheat_psp")
-        existing = {r[0] for r in cur.fetchall()}
+        existing = {r["Field"] for r in cur.fetchall()}
         if "cs_gene_id" not in existing:
             cur.execute("ALTER TABLE wheat_psp ADD COLUMN cs_gene_id VARCHAR(100) DEFAULT NULL, "
                         "ADD INDEX idx_cs_gene (cs_gene_id)")
