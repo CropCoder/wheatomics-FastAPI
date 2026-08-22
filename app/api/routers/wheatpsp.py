@@ -7,10 +7,12 @@ listings, per-protein detail, and TSV downloads, backing a ricePSP-style SPA.
 
 from __future__ import annotations
 
+import io
+import zipfile
 from typing import Iterator
 
 from fastapi import APIRouter, Query
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response
 
 from app.core.config import settings
 from app.core.exceptions import ResourceNotFound, ValidationFailure
@@ -213,13 +215,17 @@ def api_protein(seq_id: str):
 
 @router.get("/download/{table}")
 def api_download(table: str):
-    """下载拆分表：allProteins / PredPSPs / PrD_Pro（TSV）。"""
+    """下载拆分表：allProteins / PredPSPs / PrD_Pro（ZIP 内的 TSV，DEFLATE 压缩）。"""
     table = table.strip()
     if table not in _DOWNLOAD_TABLES:
         raise ValidationFailure(f"Unknown table: {table!r} (expected allProteins / PredPSPs / PrD_Pro)")
-    filename = "PrD_Pro.txt" if table == "PrD_Pro" else f"{table}.table.txt"
-    return StreamingResponse(
-        _iter_download(table),
-        media_type="text/tab-separated-values; charset=utf-8",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    base = "PrD_Pro" if table == "PrD_Pro" else table
+    tsv = "".join(_iter_download(table)).encode("utf-8")
+    zbuf = io.BytesIO()
+    with zipfile.ZipFile(zbuf, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
+        zf.writestr(f"{base}.tsv", tsv)
+    return Response(
+        content=zbuf.getvalue(),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{base}.tsv.zip"'},
     )
