@@ -38,7 +38,7 @@ CARDS = [
     ("KnownGene", "/genes", "Wheat Known Genes Search"),
     ("SyntenySearch", "/symap/index.html", "Querying Gene Synteny"),
     ("IntervalTool", "/tools/intervalTools.html", "Gene information for a genome interval"),
-    ("CAPS/KASP(Beta)", "/snprimer", "Marker Design for CAPS, dCAPS & KASP"),
+    ("CAPS/dCAPS", "/caps", "CAPS/dCAPS Primer Design"),
     ("preBLAST", "/preblast", "Pre-computed BLAST Alignment"),
     ("SequenceToolkit", "/sms2", "Multi-purpose Sequence Processing"),
     ("Orthofinder", "/orthofinder", "Orthogroup Browser & Search"),
