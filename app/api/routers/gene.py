@@ -574,6 +574,27 @@ def _friendly_name(tbl):
     return s
 
 
+def _infer_karyotype(table_name):
+    """从表名推断染色体组成（Genefunc_AABBDD_xxx_table → AABBDD）。
+
+    Genefunc_* 表名的第一段通常是染色体组成（AABBDD/AABB/AA/DD/HH/RR/SS/...），
+    中国春 IWGSC 表用 CS 前缀（六倍体 AABBDD）。用于 Polyploidy 列为空时兜底。
+    """
+    if not table_name:
+        return None
+    s = table_name
+    if s.startswith("Genefunc_"):
+        s = s[len("Genefunc_"):]
+    if s.endswith("_table"):
+        s = s[: -len("_table")]
+    first = s.split("_")[0] if s else ""
+    if not first:
+        return None
+    if first.upper().startswith("CS"):
+        return "AABBDD"
+    return first
+
+
 @interval_router.get("/examples")
 def list_genome_examples() -> dict:
     """获取所有基因组的示例查询数据。
@@ -738,17 +759,18 @@ def list_gene_function_registry() -> dict:
             ORDER BY display_order, id
         """)
         for row in cursor.fetchall():
+            polyploidy = row.get("Polyploidy") or _infer_karyotype(row.get("table_name"))
             records.append({
                 "id": row.get("id"),
                 "table_name": row.get("table_name"),
                 "display_name": (
-                    f"{row.get('Polyploidy')}_{_friendly_name(row.get('table_name'))}"
-                    if row.get("Polyploidy")
+                    f"{polyploidy}_{_friendly_name(row.get('table_name'))}"
+                    if polyploidy
                     else _friendly_name(row.get("table_name"))
                 ),
                 "subgenome": row.get("Accession"),
                 "group": row.get("Group"),
-                "polyploidy": row.get("Polyploidy"),
+                "polyploidy": polyploidy,
                 "chromosome_level": row.get("chromosome_level"),
                 "doi": row.get("Doi"),
                 "title": row.get("title"),
