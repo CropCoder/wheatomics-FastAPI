@@ -83,6 +83,7 @@ class GeneFunctionRecord(BaseModel):
     strand: str | None = None
     description: str | None = None
     domain: str | None = None
+    chinese_spring_02g: str | None = None
 
 
 class GeneSubmissionRequest(BaseModel):

@@ -404,7 +404,7 @@ function renderResults(resp, title) {
   $('#result-title').text(title + ' (' + records.length + ' records)');
 
   var html = '<table class="table table-bordered table-hover table-sm">';
-  html += '<thead><tr><th>Chrom</th><th>Start (Mb)</th><th>End (Mb)</th><th>Gene</th><th>Strand</th><th>Description</th><th>Domain</th></tr></thead><tbody>';
+  html += '<thead><tr><th>Chrom</th><th>Start (Mb)</th><th>End (Mb)</th><th>Gene</th><th>ChineseSpring02G</th><th>Strand</th><th>Description</th><th>Domain</th></tr></thead><tbody>';
 
   records.forEach(function(r) {
     html += '<tr>';
@@ -412,6 +412,7 @@ function renderResults(resp, title) {
     html += '<td>' + (r.start_mb != null ? r.start_mb.toFixed(6) : '-') + '</td>';
     html += '<td>' + (r.end_mb != null ? r.end_mb.toFixed(6) : '-') + '</td>';
     html += '<td><strong>' + (r.gene_primary || '-') + '</strong></td>';
+    html += '<td>' + (r.chinese_spring_02g || '-') + '</td>';
     html += '<td>' + (r.strand || '-') + '</td>';
     html += '<td>' + (r.description || '-') + '</td>';
     html += '<td>' + (r.domain || '-') + '</td>';
@@ -435,6 +436,7 @@ var CSV_COLUMNS = [
   ['start_mb',    'Start (Mb)'],
   ['end_mb',      'End (Mb)'],
   ['gene_primary','Gene'],
+  ['chinese_spring_02g', 'ChineseSpring02G'],
   ['gene_secondary', 'Gene (secondary)'],
   ['strand',      'Strand'],
   ['description', 'Description'],
