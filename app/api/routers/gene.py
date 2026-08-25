@@ -595,6 +595,14 @@ def _infer_karyotype(table_name):
     return first
 
 
+def _display_name(polyploidy, table_name):
+    """构造显示名，避免 karyotype 前缀重复（新表名已含前缀）。"""
+    friendly = _friendly_name(table_name)
+    if polyploidy and friendly and not friendly.startswith(polyploidy + "_"):
+        return f"{polyploidy}_{friendly}"
+    return friendly
+
+
 @interval_router.get("/examples")
 def list_genome_examples() -> dict:
     """获取所有基因组的示例查询数据。
@@ -667,14 +675,16 @@ def list_genome_examples() -> dict:
             return s
         return s if ":" in s else f"{s}:1-5000000"
 
-    examples = [
-        {
-            "table_name":   r.get("display_name"),
-            "display_name": (
-                f"{r['polyploidy']}_{_friendly_name(r.get('display_name'))}"
-                if r.get("polyploidy")
-                else _friendly_name(r.get("display_name"))
-            ),
+    seen = set()
+    examples = []
+    for r in rows:
+        table_name = r.get("display_name")
+        if table_name in seen:
+            continue
+        seen.add(table_name)
+        examples.append({
+            "table_name":   table_name,
+            "display_name": _display_name(r.get("polyploidy") or None, table_name),
             # Frontend keys are region / gene / pfam for backward compat.
             "region":       _ensure_range(r.get("example_chr_id")),
             "gene":         r.get("example_gene_id"),
@@ -683,10 +693,8 @@ def list_genome_examples() -> dict:
             # Columns of the underlying Genefunc_* table, so the frontend
             # can filter to tables that support its query (e.g. PfamSearch
             # needs a `Domain` column).
-            "columns":      cols_map.get(r.get("display_name"), []),
-        }
-        for r in rows
-    ]
+            "columns":      cols_map.get(table_name, []),
+        })
     return ok({"examples": examples})
 @interval_router.get("/registry")
 def list_gene_function_registry() -> dict:
@@ -758,17 +766,17 @@ def list_gene_function_registry() -> dict:
             WHERE visible = 1
             ORDER BY display_order, id
         """)
+        seen = set()
         for row in cursor.fetchall():
-            polyploidy = row.get("Polyploidy") or _infer_karyotype(row.get("table_name"))
+            table_name = row.get("table_name")
+            if table_name in seen:
+                continue
+            seen.add(table_name)
+            polyploidy = row.get("Polyploidy") or _infer_karyotype(table_name)
             records.append({
                 "id": row.get("id"),
-                "table_name": row.get("table_name"),
-                "display_name": (
-                    f"{polyploidy}_{_friendly_name(row.get('table_name'))}"
-                    if polyploidy
-                    and not _friendly_name(row.get('table_name')).startswith(polyploidy + "_")
-                    else _friendly_name(row.get("table_name"))
-                ),
+                "table_name": table_name,
+                "display_name": _display_name(polyploidy, table_name),
                 "subgenome": row.get("Accession"),
                 "group": row.get("Group"),
                 "polyploidy": polyploidy,
