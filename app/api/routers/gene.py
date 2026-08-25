@@ -679,12 +679,13 @@ def list_genome_examples() -> dict:
     examples = []
     for r in rows:
         table_name = r.get("display_name")
-        if table_name in seen:
+        display_name = _display_name(r.get("polyploidy") or None, table_name)
+        if display_name in seen:
             continue
-        seen.add(table_name)
+        seen.add(display_name)
         examples.append({
             "table_name":   table_name,
-            "display_name": _display_name(r.get("polyploidy") or None, table_name),
+            "display_name": display_name,
             # Frontend keys are region / gene / pfam for backward compat.
             "region":       _ensure_range(r.get("example_chr_id")),
             "gene":         r.get("example_gene_id"),
@@ -769,14 +770,15 @@ def list_gene_function_registry() -> dict:
         seen = set()
         for row in cursor.fetchall():
             table_name = row.get("table_name")
-            if table_name in seen:
-                continue
-            seen.add(table_name)
             polyploidy = row.get("Polyploidy") or _infer_karyotype(table_name)
+            display_name = _display_name(polyploidy, table_name)
+            if display_name in seen:
+                continue
+            seen.add(display_name)
             records.append({
                 "id": row.get("id"),
                 "table_name": table_name,
-                "display_name": _display_name(polyploidy, table_name),
+                "display_name": display_name,
                 "subgenome": row.get("Accession"),
                 "group": row.get("Group"),
                 "polyploidy": polyploidy,
