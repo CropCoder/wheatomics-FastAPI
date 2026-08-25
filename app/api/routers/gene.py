@@ -557,6 +557,21 @@ def list_gene_function_tables() -> dict:
     return ok({"database": "Genefuncdb", "total_tables": len(tables), "tables": tables})
 
 
+def _friendly_name(tbl):
+    # Turn 'Genefunc_<species>_<cultivar>_table' into a short human label
+    # like 'CS_IWGSCv1.0' / 'Abo' for the frontend (used by /examples and
+    # /registry). Falls back to the raw name if the pattern doesn't match.
+    # table_name itself is unchanged so queries (?table=...) keep working.
+    if not tbl:
+        return tbl
+    s = tbl
+    if s.startswith("Genefunc_"):
+        s = s[len("Genefunc_"):]
+    if s.endswith("_table"):
+        s = s[: -len("_table")]
+    return s
+
+
 @interval_router.get("/examples")
 def list_genome_examples() -> dict:
     """获取所有基因组的示例查询数据。
@@ -628,22 +643,6 @@ def list_genome_examples() -> dict:
         if not s:
             return s
         return s if ":" in s else f"{s}:1-5000000"
-
-    def _friendly_name(tbl):
-        # Turn `Genefunc_<species>_<cultivar>_table` into a short human
-        # label like `<Polyploidy>_<species>_<cultivar>` for the interval
-        # dropdown, where `<Polyploidy>` comes from the Genefunc_registry
-        # row (e.g. AABBDD / AABB / AA / DD / SS). Falls back to the raw
-        # name if the pattern doesn't match. table_name itself is
-        # unchanged so the interval query (`?table=...`) keeps working.
-        if not tbl:
-            return tbl
-        s = tbl
-        if s.startswith("Genefunc_"):
-            s = s[len("Genefunc_"):]
-        if s.endswith("_table"):
-            s = s[:-len("_table")]
-        return s
 
     examples = [
         {
@@ -740,7 +739,11 @@ def list_gene_function_registry() -> dict:
             records.append({
                 "id": row.get("id"),
                 "table_name": row.get("table_name"),
-                "display_name": row.get("table_name"),
+                "display_name": (
+                    f"{row.get('Polyploidy')}_{_friendly_name(row.get('table_name'))}"
+                    if row.get("Polyploidy")
+                    else _friendly_name(row.get("table_name"))
+                ),
                 "subgenome": row.get("Accession"),
                 "group": row.get("Group"),
                 "polyploidy": row.get("Polyploidy"),
