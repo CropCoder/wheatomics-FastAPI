@@ -766,6 +766,7 @@ def list_gene_function_registry() -> dict:
                 "display_name": (
                     f"{polyploidy}_{_friendly_name(row.get('table_name'))}"
                     if polyploidy
+                    and not _friendly_name(row.get('table_name')).startswith(polyploidy + "_")
                     else _friendly_name(row.get("table_name"))
                 ),
                 "subgenome": row.get("Accession"),
