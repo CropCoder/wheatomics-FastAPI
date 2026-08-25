@@ -602,8 +602,8 @@ def list_genome_examples() -> dict:
     """
 
     # Read from Genefunc_registry so the dropdown stays in sync with
-    # the actual list of installed genomes. The registry has 86 rows
-    # (visible=1) as of 2026-07; the legacy hardcoded GENOME_EXAMPLES
+    # the actual list of installed genomes. The registry has 104 rows
+    # (visible=1) as of 2026-08; the legacy hardcoded GENOME_EXAMPLES
     # list only had 32.
     # We use the legacy example_chr_id / example_gene_id columns
     # (not example_species_chr_id / example_cds_id) per user request.
