@@ -39,7 +39,7 @@ if sub_paswd == 'wheatomics':
     try:
         mydb = MySQLdb.connect(host='localhost',
                                user='wheatomics_user',
-                               passwd='wheatomics115599',
+                               passwd='<REDACTED>',
                                db='cloned_gene_db',
                                charset='utf8')
         cursor = mydb.cursor()

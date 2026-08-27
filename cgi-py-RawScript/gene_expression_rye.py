@@ -53,7 +53,7 @@ name = form["ID"].value.strip().split()  # 获取输入的基因
 
 mydb = MySQLdb.connect(host='localhost',
                        user='wheatomics_user',
-                       passwd='wheatomics115599',
+                       passwd='<REDACTED>',
                        db='gene_expression',
                        charset='utf8')
 cursor = mydb.cursor()

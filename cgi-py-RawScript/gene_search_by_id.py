@@ -50,7 +50,7 @@ try:
     sql = "SELECT * FROM cloned_gene_tbl WHERE gene_id =\'" + searchid + "\';"
     mydb = MySQLdb.connect(host='localhost',
                            user='wheatomics_user',
-                           passwd='wheatomics115599',
+                           passwd='<REDACTED>',
                            db='cloned_gene_db',
                            charset='utf8')
     cursor = mydb.cursor()

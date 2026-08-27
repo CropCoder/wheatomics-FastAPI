@@ -53,7 +53,7 @@ try:
         "%' or chrom_pos like '%" + searchid + "%' or gene_phenotype like '%" + searchid + "%' or gene_species like '%" + searchid + "%' or paper_doi like '%" + searchid + "%';"
     mydb = MySQLdb.connect(host='localhost',
                            user='wheatomics_user',
-                           passwd='wheatomics115599',
+                           passwd='<REDACTED>',
                            db='cloned_gene_db',
                            charset='utf8')
     cursor = mydb.cursor()

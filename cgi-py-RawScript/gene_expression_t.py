@@ -41,7 +41,7 @@ if not selected_tables or not name:
 
 # 连接数据库
 try:
-    mydb = MySQLdb.connect(host='localhost', user='wheatomics_user', passwd='wheatomics115599', db='gene_expression', charset='utf8')
+    mydb = MySQLdb.connect(host='localhost', user='wheatomics_user', passwd='<REDACTED>', db='gene_expression', charset='utf8')
     cursor = mydb.cursor()
 except Exception as e:
     print('<div class="alert alert-danger">Database Connection Error: ' + str(e) + '</div>')

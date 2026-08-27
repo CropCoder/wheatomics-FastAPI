@@ -207,9 +207,12 @@ def main() -> None:
     parser.add_argument("--host", default="localhost")
     parser.add_argument("--port", type=int, default=3306)
     parser.add_argument("--user", default="wheatomics_user")
-    parser.add_argument("--password", default="wheatomics115599")
+    parser.add_argument("--password", default=os.environ.get("DB_PASSWORD"),
+                        help="DB password (or export DB_PASSWORD)")
     parser.add_argument("--database", default="wheat_psp_db")
     args = parser.parse_args()
+    if not args.password:
+        parser.error("--password is required (or export DB_PASSWORD)")
 
     mapping = load_mapping(args.mapping)
     print(f"loaded {len(mapping)} blastp mappings", flush=True)

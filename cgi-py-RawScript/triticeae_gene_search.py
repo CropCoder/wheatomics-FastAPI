@@ -60,7 +60,7 @@ wheat_max = MAXtargets * 3
 durum_max = MAXtargets * 2
 mydb = MySQLdb.connect(host='localhost',
                        user='wheatomics_user',
-                       passwd='wheatomics115599',
+                       passwd='<REDACTED>',
                        db='Genefuncdb',
                        charset='utf8')
 cursor = mydb.cursor()

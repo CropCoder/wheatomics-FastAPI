@@ -195,7 +195,7 @@ sudo systemctl restart wheatomics-api
 | `DB_HOST` | `localhost` | MySQL 主机 |
 | `DB_PORT` | `3306` | MySQL 端口 |
 | `DB_USER` | `wheatomics_user` | MySQL 用户 |
-| `DB_PASSWORD` | `wheatomics115599` | MySQL 密码 |
+| `DB_PASSWORD` | *(secret — real value lives only in the server-side `.env`; never commit)* | MySQL 密码 |
 | `DB_GENEFUNC` | `Genefuncdb` | 基因功能数据库 |
 | `DB_ORTHOFINDER` | `orthofinder_n` | OrthoFinder 数据库 |
 | `DB_PPI` | `wheatPPIdb` | 蛋白质互作数据库 |

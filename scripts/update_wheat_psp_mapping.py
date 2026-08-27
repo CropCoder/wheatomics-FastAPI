@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 import sys
 
 import pymysql
@@ -62,11 +63,14 @@ def main() -> int:
     ap.add_argument("--host", default="localhost")
     ap.add_argument("--port", type=int, default=3306)
     ap.add_argument("--user", default="wheatomics_user")
-    ap.add_argument("--password", default="wheatomics115599")
+    ap.add_argument("--password", default=os.environ.get("DB_PASSWORD"),
+                    help="DB password (or export DB_PASSWORD)")
     ap.add_argument("--database", default="wheat_psp_db")
     ap.add_argument("--unmap-missing", action="store_true",
                     help="also NULL out cs_gene_id/cs_03g_id for gene_ids absent from the mapping")
     args = ap.parse_args()
+    if not args.password:
+        ap.error("--password is required (or export DB_PASSWORD)")
 
     mapping = load_mapping(args.mapping)
     print(f"mapping loaded: {len(mapping)} panref genes", flush=True)
