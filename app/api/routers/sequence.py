@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import re
+import threading
+import time
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query
@@ -76,6 +78,49 @@ def _check_db_exists(db_path: Path) -> bool:
 #: this, an absolute or ../ name escapes settings.BLAST_DB_PATH inside
 #: os.path.join (existence oracle + reads of arbitrary BLAST indexes).
 _DB_NAME_RE = re.compile(r"^[\w.\-]+$")
+
+
+# --- chromosome-name enumeration (used by getfasta "Supported genomes") ---
+#
+# The merged all_genomes BLAST DB stores one entry per chromosome with
+# header-style seqids such as "Chr1A_Abo" / "chr1H_Barley3". Frontend chips
+# without curated registry examples derive their demo region from this list.
+# Enumerating entries costs one full -entry pass over the DB, so results are
+# cached in-process.
+_CHROM_CACHE: dict[str, tuple[float, list[str]]] = {}
+_CHROM_CACHE_TTL = 3600.0
+_CHROM_LOCK = threading.Lock()
+
+
+@router.get("/chromosomes")
+def list_chromosomes(
+    database: str = Query("all_genomes", description="BLAST database under BLAST_DB_PATH"),
+) -> dict:
+    """List every sequence (chromosome) name stored in a BLAST database.
+
+    Usage:
+        GET /api/sequence/chromosomes?database=all_genomes
+
+    Case:
+        Names come back exactly as stored in the DB headers (e.g.
+        "Chr1A_Abo", "chr1D_Aegilops_tauschii_TA1675"), so callers can build
+        guaranteed-valid chr:start-end regions without guessing naming
+        conventions.
+    """
+    name = _ensure_db_name(database)
+    now = time.monotonic()
+    with _CHROM_LOCK:
+        hit = _CHROM_CACHE.get(name)
+        if hit and now - hit[0] < _CHROM_CACHE_TTL:
+            chromosomes = hit[1]
+        else:
+            db_path = settings.BLAST_DB_PATH / name
+            out = _blastdbcmd("-db", str(db_path), "-entry", "all", "-outfmt", "%a")
+            chromosomes = sorted({ln.strip() for ln in out.splitlines() if ln.strip()})
+            if not chromosomes:
+                raise ResourceNotFound(f"No sequence entries found in database '{name}'.")
+            _CHROM_CACHE[name] = (now, chromosomes)
+    return ok({"database": name, "count": len(chromosomes), "chromosomes": chromosomes})
 
 
 def _probe_db_readable(db_path: Path) -> None:
