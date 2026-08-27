@@ -39,7 +39,8 @@ except ImportError:
 DEFAULT_HOST = "localhost"
 DEFAULT_PORT = 3306
 DEFAULT_USER = "wheatomics_user"
-DEFAULT_PASSWORD = "wheatomics115599"
+# Resolved at runtime: --password flag, else DB_PASSWORD env var.
+DEFAULT_PASSWORD = None
 DEFAULT_DB = "cloned_gene_db"
 
 # Same allowlist as app/core/security.py ensure_gene_like: symbols ("TaARF4.1",
@@ -122,6 +123,10 @@ def main():
     parser.add_argument("--ensure-pmid-column", action="store_true",
                         help="run ALTER TABLE to add the pmid column if missing")
     args = parser.parse_args()
+    if not args.password:
+        args.password = os.environ.get("DB_PASSWORD")
+    if not args.password:
+        parser.error("--password is required (or export DB_PASSWORD)")
 
     if not os.path.isfile(args.csv_path):
         sys.exit("CSV not found: %s" % args.csv_path)

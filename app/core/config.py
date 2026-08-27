@@ -19,7 +19,8 @@ class Settings(BaseSettings):
     DB_HOST: str = "localhost"
     DB_PORT: int = 3306
     DB_USER: str = "wheatomics_user"
-    DB_PASSWORD: str = "wheatomics115599"
+    # No default: real password lives only in the server-side .env.
+    DB_PASSWORD: str = ""
     DB_CHARSET: str = "utf8mb4"
 
     DB_GENE_EXPRESSION: str = "gene_expression"
@@ -58,10 +59,11 @@ class Settings(BaseSettings):
     SCRNNA_DATA_DIR: Path = Path("/var/www/html/scRNA")
     BCFTOOLS_BIN: Path = Path("/home/fei/data/tiantian_data/soft/bcftools-1.8/bin/bcftools")
 
-    CGI_SUBMISSION_PASSWORD: str = Field(default="wheatomics")
+    CGI_SUBMISSION_PASSWORD: str = Field(default="")
     REQUEST_TIMEOUT_SECONDS: int = 120
 
-    WEBHOOK_SECRET: str = "Zjw_Super_Secret_Token_2026"
+    # Secret values come from .env only - never hardcode defaults here.
+    WEBHOOK_SECRET: str = ""
     AUTO_PULL_SCRIPT: Path = Path("/var/www/FastAPI_backend_Port8000/auto_pull.sh")
 
     BLAST_RESULT_DIR: Path = Path("/var/www/html/blast_results")
@@ -100,3 +102,10 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+if not settings.DB_PASSWORD:
+    raise RuntimeError(
+        "DB_PASSWORD is not set. Create a .env next to the repo root "
+        "(see .env.example) with real credentials - hardcoded defaults "
+        "were removed for security."
+    )

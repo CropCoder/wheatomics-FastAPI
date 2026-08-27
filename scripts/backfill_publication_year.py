@@ -45,7 +45,10 @@ except ImportError:
 DB_HOST = os.environ.get("DB_HOST", "localhost")
 DB_PORT = int(os.environ.get("DB_PORT", "3306"))
 DB_USER = os.environ.get("DB_USER", "wheatomics_user")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "wheatomics115599")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
+if not DB_PASSWORD:
+    raise SystemExit("[secrets] export DB_PASSWORD before running this script "
+                     "(hardcoded defaults removed for security)")
 DB_NAME = os.environ.get("DB_CLONED_GENE", "cloned_gene_db")
 
 CROSSREF_BASE = "https://api.crossref.org/works"

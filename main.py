@@ -356,6 +356,9 @@ async def gitee_webhook(request: Request, background_tasks: BackgroundTasks):
     """
 
     token = request.headers.get("X-Gitee-Token")
+    if not settings.WEBHOOK_SECRET:
+        # Secret deliberately not hardcoded; set WEBHOOK_SECRET in .env.
+        raise HTTPException(status_code=503, detail="Webhook 未配置：请在服务器 .env 设置 WEBHOOK_SECRET")
     if token != settings.WEBHOOK_SECRET:
         raise HTTPException(status_code=403, detail="身份验证失败：无效的 Webhook Token")
 

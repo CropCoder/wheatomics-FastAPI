@@ -39,7 +39,8 @@ except ImportError:
 DEFAULT_HOST = "localhost"
 DEFAULT_PORT = 3306
 DEFAULT_USER = "wheatomics_user"
-DEFAULT_PASSWORD = "wheatomics115599"
+# Resolved at runtime: --password flag, else DB_PASSWORD env var.
+DEFAULT_PASSWORD = None
 DEFAULT_ANN_DB = "Triticeae_Research_filter"
 DEFAULT_KNOWN_DB = "cloned_gene_db"
 
@@ -243,6 +244,10 @@ def main():
     parser.add_argument("--out-dir", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "output"),
                         help="directory for CSV output (default: scripts/output)")
     args = parser.parse_args()
+    if not args.password:
+        args.password = os.environ.get("DB_PASSWORD")
+    if not args.password:
+        parser.error("--password is required (or export DB_PASSWORD)")
 
     try:
         conn_ann = _connect(args.host, args.port, args.user, args.password, args.ann_db)

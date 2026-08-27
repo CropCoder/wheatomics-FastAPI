@@ -65,7 +65,7 @@ import json
 mydb = MySQLdb.connect(
     host='localhost',
     user='wheatomics_user',
-    passwd='wheatomics115599',
+    passwd='<REDACTED>',
     db='coexpressiondb',
     charset='utf8'
 )

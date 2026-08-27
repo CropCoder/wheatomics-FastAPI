@@ -58,7 +58,7 @@ web = "http://wheatomics.sdau.edu.cn/cgi-bin/geneDetail.py?search="
 
 mydb = MySQLdb.connect(host='localhost',
                        user='wheatomics_user',
-                       passwd='wheatomics115599',
+                       passwd='<REDACTED>',
                        db='Genefuncdb',
                        charset='utf8')
 cursor = mydb.cursor()

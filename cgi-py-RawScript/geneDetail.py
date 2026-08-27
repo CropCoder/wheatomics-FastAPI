@@ -52,7 +52,7 @@ try:
     sql = "SELECT * FROM GenePageIWGSCv1_table WHERE GeneIDv2='" + geneid + "' or GeneIDv1='" + geneid + "' or GeneIDv3='" + geneid + "';"
     mydb = MySQLdb.connect(host='localhost',
                            user='wheatomics_user',
-                           passwd='wheatomics115599',
+                           passwd='<REDACTED>',
                            db='Genehub_DB',
                            charset='utf8')
     cursor = mydb.cursor()
@@ -71,7 +71,7 @@ try:
       # Phase separation (wheatPSP) — same <th>:</th> row style as Function.
       # Best-effort: any DB error just prints a dash, never breaks the page.
       try:
-          psp_db = MySQLdb.connect(host='localhost', user='wheatomics_user', passwd='wheatomics115599', db='wheat_psp_db', charset='utf8')
+          psp_db = MySQLdb.connect(host='localhost', user='wheatomics_user', passwd='<REDACTED>', db='wheat_psp_db', charset='utf8')
           psp_cur = psp_db.cursor()
           cand_norm = []
           for cand in [str(ele[2]).strip(), str(ele[3]).strip(), str(ele[4]).strip()]:
