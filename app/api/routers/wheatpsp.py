@@ -30,6 +30,13 @@ _COLUMNS = (
 _DOWNLOAD_TABLES = ("allProteins", "PredPSPs", "PrD_Pro")
 
 
+def _id_filter(q: str) -> tuple[str, list]:
+    """LIKE clause matching any of the four id columns (CS02G/CS03G/panref/seq)."""
+    like = f"%{q}%"
+    return ("(cs_gene_id LIKE %s OR gene_id LIKE %s OR seq_id LIKE %s "
+            "OR cs_03g_id LIKE %s)", [like, like, like, like])
+
+
 def _fmt_ps(v) -> str:
     return "%.4f" % v if v is not None else ""
 
@@ -135,10 +142,9 @@ def api_search(
     where = "WHERE cs_gene_id IS NOT NULL"
     args: list = []
     if q:
-        like = f"%{q}%"
-        # Match any of the three ID sets: CS 02G gene id / pan-genome gene id / seq id
-        where += " AND (cs_gene_id LIKE %s OR gene_id LIKE %s OR seq_id LIKE %s)"
-        args = [like, like, like]
+        clause, like_args = _id_filter(q.strip())
+        where += " AND " + clause
+        args = like_args
     return ok(_list(where, args, page, per_page))
 
 
@@ -152,9 +158,9 @@ def api_psp(
     where = "WHERE is_psp = 1 AND cs_gene_id IS NOT NULL"
     args: list = []
     if q.strip():
-        like = f"%{q.strip()}%"
-        where += " AND cs_gene_id LIKE %s"
-        args = [like]
+        clause, like_args = _id_filter(q.strip())
+        where += " AND " + clause
+        args = like_args
     return ok(_list(where, args, page, per_page))
 
 
@@ -168,9 +174,9 @@ def api_prd(
     where = "WHERE has_prd = 1 AND cs_gene_id IS NOT NULL"
     args: list = []
     if q.strip():
-        like = f"%{q.strip()}%"
-        where += " AND cs_gene_id LIKE %s"
-        args = [like]
+        clause, like_args = _id_filter(q.strip())
+        where += " AND " + clause
+        args = like_args
     return ok(_list(where, args, page, per_page))
 
 
