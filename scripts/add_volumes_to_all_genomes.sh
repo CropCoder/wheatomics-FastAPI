@@ -127,8 +127,20 @@ fi
 
 if [[ $ALIAS_MODE -eq 1 ]]; then
     cp -p "$NAL" "$NAL.bak.$(date +%Y%m%d%H%M%S)"
-    COUNT=$(($(head -n 1 "$NAL") + 1))
-    { echo "$COUNT"; tail -n +2 "$NAL"; echo "$VOL"; } > "$NAL.tmp"
+    echo "[info] current first line of $NAL: $(head -n 1 "$NAL")"
+    # Tolerant parse: if line 1 is the volume-count integer, treat the rest
+    # as the list; otherwise assume the WHOLE file lists volumes (some
+    # hand-made .nal variants carry other headers).
+    FIRST=$(head -n 1 "$NAL")
+    if [[ "$FIRST" =~ ^[0-9]+[[:space:]]*$ ]]; then
+        LIST=$(tail -n +2 "$NAL")
+    else
+        LIST=$(cat "$NAL")
+        echo "[WARN] non-standard $NAL header replaced (backup kept)."
+    fi
+    NEWLIST=$(printf '%s\n%s\n' "$LIST" "$VOL" | grep -v '^$' | awk '!seen[$0]++')
+    COUNT=$(printf '%s\n' "$NEWLIST" | grep -c .)
+    { echo "$COUNT"; echo "$NEWLIST"; } > "$NAL.tmp"
     mv "$NAL.tmp" "$NAL"
     echo "appended $VOL to $NAL (now $COUNT volumes)"
 else
