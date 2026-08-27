@@ -22,6 +22,17 @@
 #
 set -euo pipefail
 
+# A volume counts as present if ANY BLAST v4/v5 index component exists.
+# v5 families use .nal/.ndb/.njs/.nos/.not/.ntf/.nto instead of v4's
+# .nsq/.nin/.nhr; aliases ship with .nal too.
+db_volume_exists() {
+    local b="$1" f
+    for f in nal nsq nin nhr ndb njs nos not ntf nto pal psq pin phr; do
+        [[ -e "${b}.${f}" ]] && return 0
+    done
+    return 1
+}
+
 FASTA=""; TOKEN=""; DB_DIR="/var/www/html/getfasta/blastdb"; NAME="all_genomes"
 EXISTING_VOL=""; YES=0
 
@@ -44,8 +55,8 @@ NAL="$NAME.nal"
 
 if [[ -n "$EXISTING_VOL" ]]; then
     VOL="$EXISTING_VOL"
-    [[ -f "$VOL.nsq" || -f "$VOL.nin" ]] \
-        || { echo "[ERR] volume indexes not found under $DB_DIR: $VOL.(nsq|nin)" >&2; exit 2; }
+    db_volume_exists "$VOL" \
+        || { echo "[ERR] volume indexes not found under $DB_DIR: $VOL.(nal|nsq|nin|...)" >&2; exit 2; }
     TOKEN="${VOL##*_}"          # display helper only
 else
     [[ -n "$FASTA" && -n "$TOKEN" ]] \
@@ -75,15 +86,14 @@ WOF
     fi
 fi
 
-# ---------------------------------------------------------------- volume build
 if [[ -n "$EXISTING_VOL" ]]; then
     PLAN="attach existing volume $VOL as-is"
-elif [[ ! -f "$VOL_PLACEHOLDER_MARKER" && ! -f "${NAME}_${TOKEN}.nsq" ]]; then
-    VOL="${NAME}_${TOKEN}"
-    PLAN="makeblastdb: $FASTA -> $VOL (nucl, parse_seqids)"
-else
+elif db_volume_exists "${NAME}_${TOKEN}"; then
     VOL="${NAME}_${TOKEN}"
     PLAN="reuse built volume $VOL"
+else
+    VOL="${NAME}_${TOKEN}"
+    PLAN="makeblastdb: $FASTA -> $VOL (nucl, parse_seqids)"
 fi
 [[ -n "$EXISTING_VOL" ]] || :   # keep set -u happy for later references
 
@@ -109,7 +119,7 @@ if [[ $YES -ne 1 ]]; then
 fi
 
 # ---------------------------------------------------------------- apply
-if [[ -z "$EXISTING_VOL" && ! -f "$VOL.nsq" ]]; then
+if [[ -z "$EXISTING_VOL" ]] && ! db_volume_exists "$VOL"; then
     "$MAKEBLASTDB" -in "$FASTA" -dbtype nucl -parse_seqids \
                    -title "getfasta $TOKEN" -out "$VOL" >/dev/null
     echo "built volume $VOL"
