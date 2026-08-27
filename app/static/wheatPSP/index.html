@@ -280,16 +280,18 @@ function renderList(kind, q){
       html += '<div class="alert alert-warning">No records found.</div>';
     } else {
       html += '<div class="result-table"><table class="table table-bordered table-hover table-sm"><thead><tr>';
-      if(kind==="prd"){ html += '<th>#</th><th>CS Gene ID</th><th>PLAAC LLR</th>'; }
-      else { html += '<th>CS Gene ID</th><th>PSP score</th>'; }
+      if(kind==="prd"){ html += '<th>#</th><th>CS Gene ID</th><th>03G Gene ID</th><th>PLAAC LLR</th><th></th>'; }
+      else { html += '<th>CS Gene ID</th><th>03G Gene ID</th><th>PSP score</th><th></th>'; }
       html += '</tr></thead><tbody>';
       d.rows.forEach(function(r, i){
         var gid = h(r.cs_gene_id || "");
         var link = '<a href="#/gene/'+encodeURIComponent(r.cs_gene_id||'')+'">'+gid+'</a>';
+        var hub = r.cs_gene_id ? '<a href="/cgi-bin/geneDetail.py?search='+encodeURIComponent(r.cs_gene_id)+'" target="_blank" title="Open this gene in GeneHub (Chinese Spring reference)">GeneHub&raquo;</a>' : '';
+        var g3 = h(r.cs_03g_id || '');
         if(kind==="prd"){
-          html += '<tr><td>'+(d.per_page*(d.page-1)+i+1)+'</td><td>'+link+'</td><td>'+num(r.plaac_llr)+'</td></tr>';
+          html += '<tr><td>'+(d.per_page*(d.page-1)+i+1)+'</td><td>'+link+'</td><td>'+g3+'</td><td>'+num(r.plaac_llr)+'</td><td>'+hub+'</td></tr>';
         } else {
-          html += '<tr><td>'+link+'</td><td>'+num(r.ps_score)+'</td></tr>';
+          html += '<tr><td>'+link+'</td><td>'+g3+'</td><td>'+num(r.ps_score)+'</td><td>'+hub+'</td></tr>';
         }
       });
       html += '</tbody></table></div>';
@@ -319,7 +321,10 @@ function renderGene(csGeneId){
     var d = resp.data;
     var html = '<a href="#/home" class="text-decoration-none small text-primary">&larr; Home</a> ';
     html += '<h4 class="card-title">Gene: '+h(d.cs_gene_id||"")+'</h4>';
-    html += '<p class="text-muted">'+d.transcripts.length.toLocaleString()+' transcript(s) with phase-separation prediction. '+
+    var g3map = {}; d.transcripts.forEach(function(t){ if(t.cs_03g_id) g3map[t.cs_03g_id] = 1; });
+    var g3keys = Object.keys(g3map);
+    var g3line = g3keys.length ? 'CS 03G: <strong>'+h(g3keys.join(', '))+'</strong> &middot; ' : '';
+    html += '<p class="text-muted">'+g3line+d.transcripts.length.toLocaleString()+' transcript(s) with phase-separation prediction. '+
       '<a href="/cgi-bin/geneDetail.py?search='+encodeURIComponent(d.cs_gene_id||'')+'" target="_blank">View in GeneHub &raquo;</a></p>';
     html += '<div class="result-table"><table class="table table-bordered table-hover table-sm"><thead><tr>';
     html += '<th>#</th><th>seq_id</th><th>gene_id</th><th>PSP score</th><th>Predicted PSP</th><th>MolPhase</th><th>PrD</th><th>PLAAC LLR</th><th>PAPA prop</th><th></th>';
@@ -417,6 +422,7 @@ function renderProtein(seqId){
     html += '<h6 class="mt-4">Prediction</h6>';
     html += '<div class="result-table"><table class="table table-bordered detail-table">';
     html += row('CS Gene ID', p.cs_gene_id);
+    html += row('CS 03G Gene ID', p.cs_03g_id);
     html += row('PSP score', p.ps_score);
     html += row('Predicted PSP', p.is_psp ? 'Yes' : 'No');
     html += row('MolPhase score', p.molphase_score);
