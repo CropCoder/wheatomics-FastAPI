@@ -92,9 +92,14 @@ _CHROM_CACHE_TTL = 3600.0
 _CHROM_LOCK = threading.Lock()
 
 
-@router.get("/chromosomes")
+@router.get("/sequence/chromosomes")
 def list_chromosomes(
     database: str = Query("all_genomes", description="BLAST database under BLAST_DB_PATH"),
+    pattern: str = Query(
+        "",
+        max_length=100,
+        description="Optional case-insensitive regex on seqid, e.g. ^chr",
+    ),
 ) -> dict:
     """List every sequence (chromosome) name stored in a BLAST database.
 
@@ -108,18 +113,28 @@ def list_chromosomes(
         conventions.
     """
     name = _ensure_db_name(database)
+    pat = None
+    if pattern:
+        try:
+            pat = re.compile(pattern, re.IGNORECASE)
+        except re.error as e:
+            raise ValidationFailure(f"Invalid pattern: {e}")
+    cache_key = f"{name}|{pattern}"
     now = time.monotonic()
     with _CHROM_LOCK:
-        hit = _CHROM_CACHE.get(name)
+        hit = _CHROM_CACHE.get(cache_key)
         if hit and now - hit[0] < _CHROM_CACHE_TTL:
             chromosomes = hit[1]
         else:
             db_path = settings.BLAST_DB_PATH / name
             out = _blastdbcmd("-db", str(db_path), "-entry", "all", "-outfmt", "%a")
-            chromosomes = sorted({ln.strip() for ln in out.splitlines() if ln.strip()})
+            seqids = {ln.strip() for ln in out.splitlines() if ln.strip()}
+            if pat is not None:
+                seqids = {s for s in seqids if pat.search(s)}
+            chromosomes = sorted(seqids)
             if not chromosomes:
                 raise ResourceNotFound(f"No sequence entries found in database '{name}'.")
-            _CHROM_CACHE[name] = (now, chromosomes)
+            _CHROM_CACHE[cache_key] = (now, chromosomes)
     return ok({"database": name, "count": len(chromosomes), "chromosomes": chromosomes})
 
 

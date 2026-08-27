@@ -548,7 +548,7 @@ function renderGenomes(records) {
             // then retry this same chip.
             $('#genomes-summary').text('Loading example region for '
               + (r.display_name || r.table_name) + ' ...');
-            $.getJSON('/api/sequence/chromosomes', { database: 'all_genomes' })
+            $.getJSON('/api/sequence/chromosomes', { database: 'all_genomes', pattern: '^chr' })
               .done(function(resp) {
                 ALL_GENOMES_CHROMS = (resp && resp.data && resp.data.chromosomes) || [];
                 renderGenomesSummaryOnly(recordsRef);
