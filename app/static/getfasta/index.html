@@ -100,6 +100,12 @@
   #genomes-groups .gg-chip .gg-karyotype { color: #0369a1; font-weight: 600; }
   #genomes-groups .gg-chip .gg-hint { display: none; }
   #genomes-groups .gg-chip:hover .gg-hint { display: inline; color: #0c4a6e; font-size: 11px; }
+  /* Chips without a curated registry example: visually quieter, hover
+     reveals the region that clicking will resolve and fill. */
+  #genomes-groups .gg-chip.gg-chip-soft { background: #f8fafc; color: #64748b; border: 1px dashed #cbd5e1; }
+  #genomes-groups .gg-chip.gg-chip-soft:hover { background: #e2e8f0; color: #475569; }
+  /* Brief highlight of the query box after an example is filled in. */
+  #query-input.example-flash { box-shadow: 0 0 0 3px rgba(56,189,248,.55); border-color: #38bdf8; }
   #genomes-groups .gg-toggle { margin-top: 6px; font-size: 12px; color: #007bff; cursor: pointer; background: none; border: none; padding: 0; }
   #genomes-groups .gg-toggle:hover { text-decoration: underline; }
 
@@ -410,6 +416,11 @@ function useExample(value, db) {
   if (db && databaseOptions.find(function(o) { return o.value === db; })) {
     $('#db-select').val(db);
   }
+  // Make the fill visible: scroll the input into view, focus it, flash it.
+  var inp = $('#query-input');
+  inp.addClass('example-flash');
+  try { inp[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+  setTimeout(function(){ inp.removeClass('example-flash'); }, 1400);
   autoDetectMode();
 }
 
@@ -444,24 +455,43 @@ function _genomeTokens(r) {
              .sort(function(a, b){ return b.length - a.length; });
 }
 
-// Match tokens against real chromosome names. The genome suffix lives after
-// the last '_' in each name ('Chr1A_Abo' -> 'abo'). Requires one-way
-// containment so unrelated genomes never collide.
+// Match tokens against real chromosome names, two-tier scoring:
+//   score 0: normalized seqid suffix equals a species token exactly
+//            ('Chr1A_Abo' vs token 'abo')
+//   score 1: one-way substring with length guards - either the suffix (>=4)
+//            sits inside a label token, or a long token (>=5) sits inside the
+//            suffix. Guards keep tiny suffixes ('v2', '6') from hijacking.
+// Deterministic pick order: better score, chromosome 1 first, shorter name.
+function _suffixOf(c) {
+  var us = c.lastIndexOf('_');
+  return _normToken(us >= 0 ? c.slice(us + 1) : c);
+}
+// Compound suffixes live after the FIRST underscore too
+// ('Chr1A_Svevo_V2' -> 'svevov2'), which last-segment alone destroys.
+function _altSuffixOf(c) {
+  var us = c.indexOf('_');
+  return us >= 0 ? _normToken(c.slice(us + 1)) : '';
+}
+function _matchScore(toks, suf) {
+  if (!suf) return -1;
+  if (toks.indexOf(suf) !== -1) return 0;
+  if (suf.length >= 4 && toks.some(function(t){ return t.indexOf(suf) !== -1; })) return 1;
+  if (toks.some(function(t){ return t.length >= 5 && suf.indexOf(t) !== -1; })) return 1;
+  return -1;
+}
 function guessGenomeRegion(r) {
   if (!ALL_GENOMES_CHROMS || !ALL_GENOMES_CHROMS.length) return null;
   var toks = _genomeTokens(r);
   if (!toks.length) return null;
   var best = null;
   ALL_GENOMES_CHROMS.forEach(function(c) {
-    var us = c.lastIndexOf('_');
-    var suf = us >= 0 ? _normToken(c.slice(us + 1)) : _normToken(c);
-    if (!suf) return;
-    var matched = toks.some(function(t) { return suf.indexOf(t) !== -1 || t.indexOf(suf) !== -1; });
-    if (!matched) return;
-    // Deterministic pick: chromosome 1 first, then shortest name.
+    var sc = Math.max(_matchScore(toks, _suffixOf(c)), _matchScore(toks, _altSuffixOf(c)));
+    if (sc < 0) return;
     var rank = /^chr0?1[^0-9]/i.test(c) ? 0 : 1;
-    if (!best || rank < best.rank || (rank === best.rank && c.length < best.name.length)) {
-      best = { name: c, rank: rank };
+    if (!best || sc < best.sc
+        || (sc === best.sc && rank < best.rank)
+        || (sc === best.sc && rank === best.rank && c.length < best.name.length)) {
+      best = { name: c, rank: rank, sc: sc };
     }
   });
   return best ? best.name + ':200-500' : null;
@@ -527,11 +557,19 @@ function renderGenomes(records) {
       var chip = $('<span class="gg-chip"></span>');
       chip.append('<span class="gg-name">' + escapeHtml(r.display_name || r.table_name) + '</span>');
       // Click → fill query with example chr + example gene id (one per line).
-      chip.attr('title',
-        'Click to load example: '
-        + (r.example_species_chr || '?') + ' / '
-        + (r.example_cds || '?')
-        + (r.example_protein ? '\nProtein: ' + r.example_protein : ''));
+      if (r.example_species_chr) {
+        chip.attr('title',
+          'Click to load example: '
+          + r.example_species_chr + ' / '
+          + (r.example_cds || '?')
+          + (r.example_protein ? '\nProtein: ' + r.example_protein : ''));
+      } else {
+        // No curated example: hover tells the user what WILL happen,
+        // and the chip renders quieter until the backfill lands.
+        chip.addClass('gg-chip-soft');
+        chip.attr('title', 'Click to load a demo region (resolved against '
+          + 'real chromosome names on first click).');
+      }
       chip.on('click', function() {
         // Curated rows: use the value exactly as it comes back from
         // /api/genes/functions/registry — it already includes any
