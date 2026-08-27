@@ -54,7 +54,7 @@ GROUP_PRIORITY = {
 PINNED_TABLES = [
     "Genefunc_CS_IWGSCv1.0_table",
     "Genefunc_CS_IWGSC03G_table",
-    "Genefunc_CS_CAU_table",
+    "Genefunc_AABBDD_CS_CNAU_table",   # renamed from CS_CAU 2026-08 (assembly = Chinese Spring CNAU)
     "Genefunc_CS_IAAS_table",
 ]
 
