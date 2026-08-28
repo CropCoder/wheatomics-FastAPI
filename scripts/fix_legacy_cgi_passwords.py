@@ -24,7 +24,7 @@ REPL = "__import__('wheat_dbpass').DB_PASSWORD"
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('--dir', default='/var/www/html/cgi-bin')
+    ap.add_argument('--dir', default='/var/www/cgi-bin')
     ap.add_argument('--helper', default='cgi-py-RawScript/wheat_dbpass.py')
     ap.add_argument('--yes', action='store_true', help='apply changes (default: dry run)')
     args = ap.parse_args()
