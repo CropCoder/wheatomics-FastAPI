@@ -53,14 +53,17 @@ def main() -> int:
     if not args.yes:
         print('(dry run: re-run with --yes to apply)')
         return 0
+
+    # Always (re)install the helper, even when every CGI file was already
+    # rewritten in a previous run - the helper itself may have been upgraded.
+    shutil.copyfile(helper, d / 'wheat_dbpass.py')
+    print('installed:', d / 'wheat_dbpass.py')
     if not targets:
-        print('nothing to do')
+        print('no CGI files need rewriting (already converted)')
         return 0
 
     backup = d / f'.secret_backup_{time.strftime("%Y%m%d%H%M%S")}'
     backup.mkdir()
-    shutil.copyfile(helper, d / 'wheat_dbpass.py')
-    print('installed:', d / 'wheat_dbpass.py')
 
     for f, text in targets:
         shutil.copyfile(f, backup / f.name)
