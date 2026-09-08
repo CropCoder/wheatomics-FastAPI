@@ -207,7 +207,9 @@ var _hmt = _hmt || [];
     </div>
     <div class="col-md-6">
       <div class="form-group">
-        <div style="margin-bottom:6px;font-size:13px;color:#6c757d;">Select one or more databases</div>
+        <div style="margin-bottom:6px;font-size:13px;color:#6c757d;">Select one or more databases
+          <button type="button" class="btn btn-sm btn-outline-secondary ml-2" onclick="clearAllProjects()" style="padding:2px 10px;font-size:12px;">Clear all</button>
+        </div>
         <div id="project-list" class="checkbox-list"></div>
       </div>
     </div>
@@ -360,6 +362,10 @@ function loadProjects() {
 function showError(msg) {
   $('#error-msg').text(msg).show();
   $('#loading-indicator').hide();
+}
+
+function clearAllProjects() {
+  $('#project-list .proj-check').prop('checked', false);
 }
 
 function queryExpression() {
