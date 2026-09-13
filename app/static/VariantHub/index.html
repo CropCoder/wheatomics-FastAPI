@@ -676,7 +676,11 @@ function renderReferences() {
   referencesData.forEach(function(ref) {
     html += '<p><strong>' + escapeHtml(ref.display) + '</strong></p><ol>';
     ref.datasets.forEach(function(ds) {
-      html += '<li>' + escapeHtml(ds.label) + ' — ' + linkifySource(ds.source) + '</li>';
+      html += '<li>' + escapeHtml(ds.label) + ' — ' + linkifySource(ds.source);
+      if (ds.url) {
+        html += ' <a href="' + escapeHtml(ds.url) + '" target="_blank" rel="noopener">[link]</a>';
+      }
+      html += '</li>';
     });
     html += '</ol>';
   });
