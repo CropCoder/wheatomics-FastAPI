@@ -676,11 +676,13 @@ function renderReferences() {
   referencesData.forEach(function(ref) {
     html += '<p><strong>' + escapeHtml(ref.display) + '</strong></p><ol>';
     ref.datasets.forEach(function(ds) {
-      html += '<li>' + escapeHtml(ds.label) + ' — ' + linkifySource(ds.source);
+      html += '<li>';
       if (ds.url) {
-        html += ' <a href="' + escapeHtml(ds.url) + '" target="_blank" rel="noopener">[link]</a>';
+        html += '<a href="' + escapeHtml(ds.url) + '" target="_blank" rel="noopener">' + escapeHtml(ds.label) + '</a>';
+      } else {
+        html += escapeHtml(ds.label);
       }
-      html += '</li>';
+      html += ' — ' + linkifySource(ds.source) + '</li>';
     });
     html += '</ol>';
   });
