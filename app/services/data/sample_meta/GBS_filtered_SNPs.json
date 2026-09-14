@@ -1,0 +1,462 @@
+{
+  "dataset": "GBS_filtered_SNPs",
+  "source_file": "GBS_filtered_SNPs.txt",
+  "fields": [
+    {
+      "key": "Origin",
+      "label": "Origin"
+    },
+    {
+      "key": "Improvement status",
+      "label": "Improvement status"
+    },
+    {
+      "key": "Growth habit",
+      "label": "Growth habit"
+    },
+    {
+      "key": "Region",
+      "label": "Region"
+    },
+    {
+      "key": "Large region",
+      "label": "Large region"
+    }
+  ],
+  "samples": {
+    "rac875": {
+      "Origin": "Australia",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "Australia",
+      "Large region": "Australia"
+    },
+    "Opata": {
+      "Origin": "Mexico",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "W7984": {
+      "Origin": "Mexico",
+      "Improvement status": "Synthetic",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "PBW343": {
+      "Origin": "India",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "South-central Asia",
+      "Large region": "Asia"
+    },
+    "clear_white": {
+      "Origin": "USA",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "Vorobey": {
+      "Origin": "Mexico",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "klein_chamaco": {
+      "Origin": "Argentina",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "South America",
+      "Large region": "The Americas"
+    },
+    "Pavon": {
+      "Origin": "Mexico",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "acc2": {
+      "Origin": "USA",
+      "Improvement status": "Breeding line",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "acc3": {
+      "Origin": "USA",
+      "Improvement status": "Breeding line",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "acc4": {
+      "Origin": "USA",
+      "Improvement status": "Breeding line",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "acc1": {
+      "Origin": "USA",
+      "Improvement status": "Breeding line",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "acc5": {
+      "Origin": "USA",
+      "Improvement status": "Breeding line",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "PI366716": {
+      "Origin": "Afghanistan",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "South-central Asia",
+      "Large region": "Asia"
+    },
+    "PI406517": {
+      "Origin": "Nepal",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "South-central Asia",
+      "Large region": "Asia"
+    },
+    "PI349512": {
+      "Origin": "Switzerland",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "Western and Northern Europe",
+      "Large region": "Europe"
+    },
+    "PI481923": {
+      "Origin": "Sudan",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "Northern Africa",
+      "Large region": "Africa"
+    },
+    "PI481718": {
+      "Origin": "Bhutan",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "South-central Asia",
+      "Large region": "Asia"
+    },
+    "PI382150": {
+      "Origin": "Japan",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "Eastern Asia",
+      "Large region": "Asia"
+    },
+    "PI366905": {
+      "Origin": "Afghanistan",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "South-central Asia",
+      "Large region": "Asia"
+    },
+    "PI470817": {
+      "Origin": "Algeria",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "Northern Africa",
+      "Large region": "Africa"
+    },
+    "PI445736": {
+      "Origin": "Nepal",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "South-central Asia",
+      "Large region": "Asia"
+    },
+    "hidhab": {
+      "Origin": "Algeria",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "Northern Africa",
+      "Large region": "Africa"
+    },
+    "PI477870": {
+      "Origin": "Peru",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "South America",
+      "Large region": "The Americas"
+    },
+    "dharwar_dry": {
+      "Origin": "India",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "South-central Asia",
+      "Large region": "Asia"
+    },
+    "Cham6": {
+      "Origin": "Syria/Lebanon",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "Western Asia",
+      "Large region": "Asia"
+    },
+    "Chakwal86": {
+      "Origin": "Pakistan",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "South-central Asia",
+      "Large region": "Asia"
+    },
+    "Berkut": {
+      "Origin": "Mexico",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "PI262611": {
+      "Origin": "Turkmenistan",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "South-central Asia",
+      "Large region": "Asia"
+    },
+    "PI222669": {
+      "Origin": "Iran",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "Western Asia",
+      "Large region": "Asia"
+    },
+    "PI278297": {
+      "Origin": "Greece",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "Southern Europe",
+      "Large region": "Europe"
+    },
+    "PI210945": {
+      "Origin": "Cyprus",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "Western Asia",
+      "Large region": "Asia"
+    },
+    "PI192569": {
+      "Origin": "Sweden",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "Western and Northern Europe",
+      "Large region": "Europe"
+    },
+    "PI192147": {
+      "Origin": "Ethiopia",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "South and East Africa",
+      "Large region": "Africa"
+    },
+    "PI8813": {
+      "Origin": "Iraq",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "Western Asia",
+      "Large region": "Asia"
+    },
+    "PI565213": {
+      "Origin": "Bolivia",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "South America",
+      "Large region": "The Americas"
+    },
+    "PI82469": {
+      "Origin": "North Korea",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "Eastern Asia",
+      "Large region": "Asia"
+    },
+    "PI185715": {
+      "Origin": "Portugal",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "Southern Europe",
+      "Large region": "Europe"
+    },
+    "PI245368": {
+      "Origin": "Guatemala",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "PI166333": {
+      "Origin": "Turkey",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "Western Asia",
+      "Large region": "Asia"
+    },
+    "PI166180": {
+      "Origin": "India",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "South-central Asia",
+      "Large region": "The Americas"
+    },
+    "PI177943": {
+      "Origin": "Turkey",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "Western Asia",
+      "Large region": "Asia"
+    },
+    "PI192001": {
+      "Origin": "Angola",
+      "Improvement status": "Landrace",
+      "Growth habit": "Spring",
+      "Region": "South and East Africa",
+      "Large region": "Africa"
+    },
+    "PI153785": {
+      "Origin": "Brazil",
+      "Improvement status": "landrace",
+      "Growth habit": "spring",
+      "Region": "South America",
+      "Large region": "The Americas"
+    },
+    "Marquis": {
+      "Origin": "Canada",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "Neepawa": {
+      "Origin": "Canada",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "AC Barrie": {
+      "Origin": "Canada",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "Chinese Spring": {
+      "Origin": "China",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "Eastern Asia",
+      "Large region": "Asia"
+    },
+    "Utmost": {
+      "Origin": "Canada",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Spring",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "Rialto": {
+      "Origin": "United Kingdom",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Winter",
+      "Region": "Western and Northern Europe",
+      "Large region": "Europe"
+    },
+    "Truman": {
+      "Origin": "USA",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Winter",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "49-2914 H1096": {
+      "Origin": "Argentina",
+      "Improvement status": "Breeding line",
+      "Growth habit": "Facultative",
+      "Region": "South America",
+      "Large region": "The Americas"
+    },
+    "102": {
+      "Origin": "Chile",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Facultative",
+      "Region": "South America",
+      "Large region": "The Americas"
+    },
+    "93": {
+      "Origin": "Bulgaria",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Facultative",
+      "Region": "Western and Northern Europe",
+      "Large region": "Europe"
+    },
+    "Estacao": {
+      "Origin": "Portugal",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Winter",
+      "Region": "Southern Europe",
+      "Large region": "Europe"
+    },
+    "Taxi": {
+      "Origin": "United Kingdom",
+      "Improvement status": "cultivar",
+      "Growth habit": "Winter",
+      "Region": "Western and Northern Europe",
+      "Large region": "Europe"
+    },
+    "PR267": {
+      "Origin": "United States",
+      "Improvement status": "cultivar",
+      "Growth habit": "Winter",
+      "Region": "North and Central America",
+      "Large region": "The Americas"
+    },
+    "Alabasskaja": {
+      "Origin": "Kazakhstan",
+      "Improvement status": "cultivar",
+      "Growth habit": "Winter",
+      "Region": "",
+      "Large region": "Asia"
+    },
+    "Roemer": {
+      "Origin": "Germany",
+      "Improvement status": "cultivar",
+      "Growth habit": "Winter",
+      "Region": "Western and Northern Europe",
+      "Large region": "Europe"
+    },
+    "407-IV_60": {
+      "Origin": "Bosnia and Herzegovina",
+      "Improvement status": "cultivar",
+      "Growth habit": "Facultative",
+      "Region": "Western and Northern Europe",
+      "Large region": "Europe"
+    },
+    "403": {
+      "Origin": "Chile",
+      "Improvement status": "cultivar",
+      "Growth habit": "Winter",
+      "Region": "South America",
+      "Large region": "The Americas"
+    },
+    "Avalon": {
+      "Origin": "United Kingdom",
+      "Improvement status": "Cultivar",
+      "Growth habit": "Winter",
+      "Region": "Western and Northern Europe",
+      "Large region": "Europe"
+    }
+  }
+}

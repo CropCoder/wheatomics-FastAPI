@@ -1,0 +1,230 @@
+{
+  "dataset": "WildEmmer20WGS_SNP",
+  "source_file": "WildEmmer20WGS_SNP.txt",
+  "fields": [
+    {
+      "key": "Genetic group",
+      "label": "Genetic group"
+    },
+    {
+      "key": "Average",
+      "label": "Average"
+    },
+    {
+      "key": "Reference",
+      "label": "Reference"
+    },
+    {
+      "key": "Heterozygosis",
+      "label": "Heterozygosis"
+    },
+    {
+      "key": "Alter",
+      "label": "Alter"
+    },
+    {
+      "key": "Missing",
+      "label": "Missing"
+    },
+    {
+      "key": "Place",
+      "label": "Place"
+    },
+    {
+      "key": "Description",
+      "label": "Description"
+    }
+  ],
+  "samples": {
+    "W2": {
+      "Genetic group": "Wild emmer",
+      "Average": "11.272",
+      "Reference": "46,708,806",
+      "Heterozygosis": "774,700",
+      "Alter": "19,800,622",
+      "Missing": "820,275",
+      "Place": "Israel",
+      "Description": "Tetraploid"
+    },
+    "W3": {
+      "Genetic group": "Wild emmer",
+      "Average": "10.62",
+      "Reference": "47,976,920",
+      "Heterozygosis": "653,316",
+      "Alter": "18,122,085",
+      "Missing": "1,352,082",
+      "Place": "Israel",
+      "Description": "Tetraploid"
+    },
+    "W4": {
+      "Genetic group": "Wild emmer",
+      "Average": "9.463",
+      "Reference": "47,231,914",
+      "Heterozygosis": "719,464",
+      "Alter": "18,942,378",
+      "Missing": "1,210,647",
+      "Place": "Israel",
+      "Description": "Tetraploid"
+    },
+    "W5": {
+      "Genetic group": "Wild emmer",
+      "Average": "11.762",
+      "Reference": "39,360,212",
+      "Heterozygosis": "699,594",
+      "Alter": "26,501,433",
+      "Missing": "1,543,164",
+      "Place": "Israel",
+      "Description": "Tetraploid"
+    },
+    "W6": {
+      "Genetic group": "Wild emmer",
+      "Average": "8.349",
+      "Reference": "46,419,017",
+      "Heterozygosis": "712,344",
+      "Alter": "19,263,004",
+      "Missing": "1,710,038",
+      "Place": "Israel",
+      "Description": "Tetraploid"
+    },
+    "W7": {
+      "Genetic group": "Wild emmer",
+      "Average": "11.504",
+      "Reference": "39,395,103",
+      "Heterozygosis": "733,293",
+      "Alter": "26,553,164",
+      "Missing": "1,422,843",
+      "Place": "Israel",
+      "Description": "Tetraploid"
+    },
+    "W8": {
+      "Genetic group": "Wild emmer",
+      "Average": "11.639",
+      "Reference": "46,923,077",
+      "Heterozygosis": "752,800",
+      "Alter": "19,264,077",
+      "Missing": "1,164,449",
+      "Place": "Israel",
+      "Description": "Tetraploid"
+    },
+    "W9": {
+      "Genetic group": "Wild emmer",
+      "Average": "8.96",
+      "Reference": "48,093,493",
+      "Heterozygosis": "651,875",
+      "Alter": "17,704,705",
+      "Missing": "1,654,330",
+      "Place": "Israel",
+      "Description": "Tetraploid"
+    },
+    "W10": {
+      "Genetic group": "Wild emmer",
+      "Average": "11.036",
+      "Reference": "48,315,510",
+      "Heterozygosis": "697,758",
+      "Alter": "17,720,154",
+      "Missing": "1,370,981",
+      "Place": "Israel",
+      "Description": "Tetraploid"
+    },
+    "W11": {
+      "Genetic group": "Wild emmer",
+      "Average": "9.653",
+      "Reference": "44,104,402",
+      "Heterozygosis": "11,480,027",
+      "Alter": "11,046,624",
+      "Missing": "1,473,350",
+      "Place": "Syria",
+      "Description": "Tetraploid"
+    },
+    "W12": {
+      "Genetic group": "Wild emmer",
+      "Average": "8.944",
+      "Reference": "55,182,996",
+      "Heterozygosis": "438,205",
+      "Alter": "11,230,330",
+      "Missing": "1,252,872",
+      "Place": "Turkey",
+      "Description": "Tetraploid"
+    },
+    "W13": {
+      "Genetic group": "Wild emmer",
+      "Average": "9.38",
+      "Reference": "52,654,211",
+      "Heterozygosis": "6,785,577",
+      "Alter": "7,669,239",
+      "Missing": "995,376",
+      "Place": "Turkey",
+      "Description": "Tetraploid"
+    },
+    "W14": {
+      "Genetic group": "Wild emmer",
+      "Average": "10.501",
+      "Reference": "46,546,280",
+      "Heterozygosis": "9,259,665",
+      "Alter": "11,365,392",
+      "Missing": "933,066",
+      "Place": "Israel",
+      "Description": "Tetraploid"
+    },
+    "W15": {
+      "Genetic group": "Wild emmer",
+      "Average": "12.902",
+      "Reference": "45,005,165",
+      "Heterozygosis": "9,825,988",
+      "Alter": "12,813,973",
+      "Missing": "459,277",
+      "Place": "Israel",
+      "Description": "Tetraploid"
+    },
+    "W16": {
+      "Genetic group": "Wild emmer",
+      "Average": "10.648",
+      "Reference": "45,848,890",
+      "Heterozygosis": "7,803,045",
+      "Alter": "13,575,560",
+      "Missing": "876,908",
+      "Place": "Syria",
+      "Description": "Tetraploid"
+    },
+    "W17": {
+      "Genetic group": "Wild emmer",
+      "Average": "11.392",
+      "Reference": "46,700,521",
+      "Heterozygosis": "8,921,633",
+      "Alter": "11,675,381",
+      "Missing": "806,868",
+      "Place": "Bahrain",
+      "Description": "Tetraploid"
+    },
+    "W18": {
+      "Genetic group": "Wild emmer",
+      "Average": "6.726",
+      "Reference": "47,087,730",
+      "Heterozygosis": "6,237,418",
+      "Alter": "13,225,246",
+      "Missing": "1,554,009",
+      "Place": "Jordan",
+      "Description": "Tetraploid"
+    },
+    "W19": {
+      "Genetic group": "Wild emmer",
+      "Average": "10.557",
+      "Reference": "46,975,800",
+      "Heterozygosis": "8,282,944",
+      "Alter": "12,031,141",
+      "Missing": "814,518",
+      "Place": "Jordan",
+      "Description": "Tetraploid"
+    },
+    "W20": {
+      "Genetic group": "Wild emmer",
+      "Average": "10.77",
+      "Reference": "46,919,183",
+      "Heterozygosis": "11,080,562",
+      "Alter": "9,144,289",
+      "Missing": "960,369",
+      "Place": "Lebanese",
+      "Description": "Tetraploid"
+    }
+  }
+}

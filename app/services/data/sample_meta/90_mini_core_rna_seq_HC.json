@@ -1,0 +1,658 @@
+{
+  "dataset": "90_mini_core_rna_seq_HC",
+  "source_file": "90_mini_core_rna_seq_HC.txt",
+  "fields": [
+    {
+      "key": "Abbr. name",
+      "label": "Abbr. name"
+    },
+    {
+      "key": "Province or region",
+      "label": "Province or region"
+    },
+    {
+      "key": "Country",
+      "label": "Country"
+    },
+    {
+      "key": "aVariety type",
+      "label": "aVariety type"
+    },
+    {
+      "key": "bID",
+      "label": "bID"
+    }
+  ],
+  "samples": {
+    "Aimengniu": {
+      "Abbr. name": "AMN",
+      "Province or region": "Shandong",
+      "Country": "China",
+      "aVariety type": "EV",
+      "bID": "ZM015830"
+    },
+    "Aodesa 3": {
+      "Abbr. name": "ADS3",
+      "Province or region": "Russia",
+      "Country": "Russia",
+      "aVariety type": "EV",
+      "bID": "unknown"
+    },
+    "Baibiansui": {
+      "Abbr. name": "BBS",
+      "Province or region": "Shandong",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM001782"
+    },
+    "Baidatou": {
+      "Abbr. name": "BDT",
+      "Province or region": "Gansu",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM004862"
+    },
+    "Baihuamai": {
+      "Abbr. name": "BHM",
+      "Province or region": "Guizhou",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM008598"
+    },
+    "Baimaizi": {
+      "Abbr. name": "BMZ",
+      "Province or region": "Sichuan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM008547"
+    },
+    "Baimangmai": {
+      "Abbr. name": "BMM",
+      "Province or region": "Guizhou",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM008732"
+    },
+    "BaipuLuoqing": {
+      "Abbr. name": "BPLQ",
+      "Province or region": "Zhejiang",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM007246"
+    },
+    "Baiqimai": {
+      "Abbr. name": "BQiM",
+      "Province or region": "Gansu",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM017630"
+    },
+    "Baiqiumai": {
+      "Abbr. name": "BQiuM",
+      "Province or region": "Hebei",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM000540"
+    },
+    "Baituzitou": {
+      "Abbr. name": "BTZT",
+      "Province or region": "Shandong",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM002330"
+    },
+    "Banjiemang": {
+      "Abbr. name": "BJM",
+      "Province or region": "Jiangsu",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM002569"
+    },
+    "Bendihuanghuamai": {
+      "Abbr. name": "BDHHM",
+      "Province or region": "Sichuan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM011565"
+    },
+    "Chanbuzhi": {
+      "Abbr. name": "CBZ",
+      "Province or region": "Anhui",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM006465"
+    },
+    "Changmangshibiantou": {
+      "Abbr. name": "CMSBT",
+      "Province or region": "Yunnan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM011859"
+    },
+    "Dabaimai": {
+      "Abbr. name": "DBM",
+      "Province or region": "Hebei",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM012760"
+    },
+    "Dachunbaisilengmai": {
+      "Abbr. name": "DCBSLM",
+      "Province or region": "Sichuan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM011525"
+    },
+    "Dahuangpi": {
+      "Abbr. name": "DHP",
+      "Province or region": "Anhui",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM006499"
+    },
+    "Daimanghongmai": {
+      "Abbr. name": "DMHM",
+      "Province or region": "Tianjin",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM000156"
+    },
+    "Dakoumai": {
+      "Abbr. name": "DKM",
+      "Province or region": "Henan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM003131"
+    },
+    "Dalibanmang": {
+      "Abbr. name": "DLBM",
+      "Province or region": "Shandong",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM001742"
+    },
+    "Dayuhua": {
+      "Abbr. name": "DYH",
+      "Province or region": "Jiangsu",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM006348"
+    },
+    "EarlyPremium": {
+      "Abbr. name": "ZYM",
+      "Province or region": "USA",
+      "Country": "USA",
+      "aVariety type": "EV",
+      "bID": "ZM014906"
+    },
+    "Fumai": {
+      "Abbr. name": "FM",
+      "Province or region": "Henan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM003145"
+    },
+    "Funo": {
+      "Abbr. name": "AF",
+      "Province or region": "Italy",
+      "Country": "Italy",
+      "aVariety type": "EV",
+      "bID": "ZM010222"
+    },
+    "Fuyanghong": {
+      "Abbr. name": "FYH",
+      "Province or region": "Anhui",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM011007"
+    },
+    "Hanzhongbai": {
+      "Abbr. name": "HZB",
+      "Province or region": "Shaanxi",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM004029"
+    },
+    "Honggoudou": {
+      "Abbr. name": "HGD",
+      "Province or region": "Henan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM002681"
+    },
+    "Hongheshangtou": {
+      "Abbr. name": "HHST",
+      "Province or region": "Henan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM003393"
+    },
+    "Honghuamai": {
+      "Abbr. name": "HHM",
+      "Province or region": "Sichuan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM007925"
+    },
+    "Hongjinmai": {
+      "Abbr. name": "HJM",
+      "Province or region": "Gansu",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM020735"
+    },
+    "Honglaomai": {
+      "Abbr. name": "HLM",
+      "Province or region": "Shaanxi",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM004174"
+    },
+    "Hongmai": {
+      "Abbr. name": "HongM",
+      "Province or region": "Hebei",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM004174"
+    },
+    "Hongmangmai": {
+      "Abbr. name": "HMM",
+      "Province or region": "Hebei",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM020720"
+    },
+    "Hongmangzi": {
+      "Abbr. name": "HMZ",
+      "Province or region": "Hubei",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM020144"
+    },
+    "Hongpidongmai": {
+      "Abbr. name": "HPDM",
+      "Province or region": "Shanxi",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM001138"
+    },
+    "Hongxumai": {
+      "Abbr. name": "HXM",
+      "Province or region": "Shaanxi",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM012545"
+    },
+    "Huangguaxian": {
+      "Abbr. name": "HGX",
+      "Province or region": "Shandong",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM003050"
+    },
+    "Huangshuibai": {
+      "Abbr. name": "HSB",
+      "Province or region": "Zhejiang",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM010980"
+    },
+    "Huanxiangguo": {
+      "Abbr. name": "HXG",
+      "Province or region": "Sichuan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM008249"
+    },
+    "Huomai": {
+      "Abbr. name": "HuoM",
+      "Province or region": "Henan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM020632"
+    },
+    "Jiahongmai": {
+      "Abbr. name": "JHM",
+      "Province or region": "Shanxi",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM001284"
+    },
+    "Jiangdongmen": {
+      "Abbr. name": "JDM",
+      "Province or region": "Jiangsu",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM005871"
+    },
+    "Jiangmai": {
+      "Abbr. name": "JM",
+      "Province or region": "Guizhou",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM005871"
+    },
+    "Jinan 17": {
+      "Abbr. name": "JN17",
+      "Province or region": "Shandong",
+      "Country": "China",
+      "aVariety type": "EV",
+      "bID": "Unknown"
+    },
+    "Laizhou 953": {
+      "Abbr. name": "LZ953",
+      "Province or region": "Shandong",
+      "Country": "China",
+      "aVariety type": "EV",
+      "bID": "ZM022727"
+    },
+    "Lanhuamai": {
+      "Abbr. name": "LHM",
+      "Province or region": "Gansu",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM005017"
+    },
+    "Laolaixia": {
+      "Abbr. name": "LLX",
+      "Province or region": "Shandong",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM001912"
+    },
+    "Laomai": {
+      "Abbr. name": "LM",
+      "Province or region": "Shaanxi",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM004174"
+    },
+    "Laoqimai": {
+      "Abbr. name": "LQM",
+      "Province or region": "Shaanxi",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM003663"
+    },
+    "Laotutou": {
+      "Abbr. name": "LTT",
+      "Province or region": "Ningxia",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM004670"
+    },
+    "Liuzhutou": {
+      "Abbr. name": "LZT",
+      "Province or region": "Jiangsu",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM005540"
+    },
+    "Louguding": {
+      "Abbr. name": "LGD",
+      "Province or region": "Shandong",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM001674"
+    },
+    "Lovrin 10": {
+      "Abbr. name": "LFL10",
+      "Province or region": "Romania",
+      "Country": "Romania",
+      "aVariety type": "EV",
+      "bID": "MY001759"
+    },
+    "Mazhamai": {
+      "Abbr. name": "MZM",
+      "Province or region": "Shaanxi",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM003807"
+    },
+    "Motuoxiaomai": {
+      "Abbr. name": "MTXM",
+      "Province or region": "Xizang",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM019907"
+    },
+    "Niuzhijia": {
+      "Abbr. name": "NZJ",
+      "Province or region": "Shanxi",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM001259"
+    },
+    "Nonglin 10": {
+      "Abbr. name": "NL10",
+      "Province or region": "Japan",
+      "Country": "Japan",
+      "aVariety type": "EV",
+      "bID": "MY000054"
+    },
+    "Panshiwumang": {
+      "Abbr. name": "PSWM",
+      "Province or region": "Jilin",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "unknown"
+    },
+    "Paozimai": {
+      "Abbr. name": "PZM",
+      "Province or region": "Jiangxi",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM007298"
+    },
+    "Qianjiaomai": {
+      "Abbr. name": "QJM",
+      "Province or region": "Unknown",
+      "Country": "Unknown",
+      "aVariety type": "EV",
+      "bID": "MY000663"
+    },
+    "Sankecun": {
+      "Abbr. name": "SKC",
+      "Province or region": "Hubei",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM011213"
+    },
+    "Sanyuehuang": {
+      "Abbr. name": "SYH",
+      "Province or region": "Henan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM002685"
+    },
+    "Shanxibaimai": {
+      "Abbr. name": "SXBM",
+      "Province or region": "Gansu",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM004922"
+    },
+    "Shijiazhuang 407": {
+      "Abbr. name": "SJZ407",
+      "Province or region": "Hebei",
+      "Country": "China",
+      "aVariety type": "EV",
+      "bID": "ZM009099"
+    },
+    "Shuilizhan": {
+      "Abbr. name": "SLZ",
+      "Province or region": "Jiangxi",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM007343"
+    },
+    "Suotiaohongmai": {
+      "Abbr. name": "STHM",
+      "Province or region": "Shaanxi",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM012711"
+    },
+    "Tongjiabaxiaomai": {
+      "Abbr. name": "TJBXM",
+      "Province or region": "Sichuan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM007916"
+    },
+    "Triumph": {
+      "Abbr. name": "SLM",
+      "Province or region": "USA",
+      "Country": "USA",
+      "aVariety type": "EV",
+      "bID": "MY002966"
+    },
+    "VillaGlori": {
+      "Abbr. name": "ZN28",
+      "Province or region": "Italy",
+      "Country": "Italy",
+      "aVariety type": "EV",
+      "bID": "ZM010179"
+    },
+    "Xianyangdasui": {
+      "Abbr. name": "XYDS",
+      "Province or region": "Shaanxi",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "unknown"
+    },
+    "Xiaobaimang": {
+      "Abbr. name": "XBM",
+      "Province or region": "Hebei",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM000556"
+    },
+    "Xiaofoshou": {
+      "Abbr. name": "XFS",
+      "Province or region": "Henan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM002955"
+    },
+    "Xiaokouhong": {
+      "Abbr. name": "XKH",
+      "Province or region": "Liaoning",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM004454"
+    },
+    "Xiaoyan 6": {
+      "Abbr. name": "XY6",
+      "Province or region": "Shaanxi",
+      "Country": "China",
+      "aVariety type": "EV",
+      "bID": "ZM017079"
+    },
+    "Xindong 2": {
+      "Abbr. name": "XD2",
+      "Province or region": "Xinjiang",
+      "Country": "China",
+      "aVariety type": "EV",
+      "bID": "ZM010146"
+    },
+    "Xishanbiansui": {
+      "Abbr. name": "XSBS",
+      "Province or region": "Shandong",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM001846"
+    },
+    "Youbaomai": {
+      "Abbr. name": "YBM",
+      "Province or region": "Shandong",
+      "Country": "China",
+      "aVariety type": "EV",
+      "bID": "ZM009411"
+    },
+    "Youmangbaifu": {
+      "Abbr. name": "YMBF",
+      "Province or region": "Jilin",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM004418"
+    },
+    "Youmangsaogudan": {
+      "Abbr. name": "YMSGD",
+      "Province or region": "Henan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM002659"
+    },
+    "Youzimai": {
+      "Abbr. name": "YZM",
+      "Province or region": "Henan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM002668"
+    },
+    "Yuqiumai": {
+      "Abbr. name": "YQM",
+      "Province or region": "Guizhou",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM008636"
+    },
+    "Zaowutian": {
+      "Abbr. name": "ZWT",
+      "Province or region": "Jiangsu",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM005992"
+    },
+    "Zaoxiaomai": {
+      "Abbr. name": "ZXM",
+      "Province or region": "Zhejiang",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM007209"
+    },
+    "Zhengyin 4": {
+      "Abbr. name": "ZJ4",
+      "Province or region": "Italy",
+      "Country": "Italy",
+      "aVariety type": "EV",
+      "bID": "ZM009472"
+    },
+    "Zhugoumai": {
+      "Abbr. name": "ZGM",
+      "Province or region": "Yunnan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "unknown"
+    },
+    "Zhuoludongmai": {
+      "Abbr. name": "ZLDM",
+      "Province or region": "Hebei",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM000474"
+    },
+    "Zhushimai": {
+      "Abbr. name": "ZSM",
+      "Province or region": "Yunnan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM008809"
+    },
+    "Zijiehong": {
+      "Abbr. name": "ZJH",
+      "Province or region": "Shandong",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM002272"
+    },
+    "Zipi": {
+      "Abbr. name": "ZP",
+      "Province or region": "Sichuan",
+      "Country": "China",
+      "aVariety type": "L",
+      "bID": "ZM011741"
+    }
+  }
+}

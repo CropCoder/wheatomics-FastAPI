@@ -1,0 +1,165 @@
+{
+  "dataset": "PRJNA381058_exome",
+  "source_file": "PRJNA381058_exome.txt",
+  "fields": [
+    {
+      "key": "NAM family",
+      "label": "NAM family"
+    },
+    {
+      "key": "Origin",
+      "label": "Origin"
+    },
+    {
+      "key": "Status",
+      "label": "Status"
+    }
+  ],
+  "samples": {
+    "Berkut": {
+      "NAM family": "all",
+      "Origin": "Mexico",
+      "Status": "Cultivar"
+    },
+    "Dharwar Dry": {
+      "NAM family": "NAM1",
+      "Origin": "India",
+      "Status": "Cultivar"
+    },
+    "PI 572692": {
+      "NAM family": "NAM2",
+      "Origin": "Georgia",
+      "Status": "Landrace"
+    },
+    "PI 283147": {
+      "NAM family": "NAM3",
+      "Origin": "Jordan",
+      "Status": "Landrace"
+    },
+    "PI 366716": {
+      "NAM family": "NAM4",
+      "Origin": "Afghanistan",
+      "Status": "Landrace"
+    },
+    "PI 382150": {
+      "NAM family": "NAM5",
+      "Origin": "Japan",
+      "Status": "Landrace"
+    },
+    "PI 470817": {
+      "NAM family": "NAM6",
+      "Origin": "Algeria",
+      "Status": "Landrace"
+    },
+    "PI 565213": {
+      "NAM family": "NAM7",
+      "Origin": "Bolivia",
+      "Status": "Landrace"
+    },
+    "PBW343": {
+      "NAM family": "NAM8",
+      "Origin": "India",
+      "Status": "Cultivar"
+    },
+    "Vida": {
+      "NAM family": "NAM9",
+      "Origin": "USA",
+      "Status": "Cultivar"
+    },
+    "PI 9791": {
+      "NAM family": "NAM10",
+      "Origin": "Uzbekistan",
+      "Status": "Landrace"
+    },
+    "CI 4175": {
+      "NAM family": "NAM11",
+      "Origin": "Philippines",
+      "Status": "Landrace"
+    },
+    "CI 11223": {
+      "NAM family": "NAM12",
+      "Origin": "Croatia",
+      "Status": "Landrace"
+    },
+    "PI 262611": {
+      "NAM family": "NAM13",
+      "Origin": "Turkmenistan",
+      "Status": "Landrace"
+    },
+    "PI 70613": {
+      "NAM family": "NAM14",
+      "Origin": "China",
+      "Status": "Landrace"
+    },
+    "CI 7635": {
+      "NAM family": "NAM15",
+      "Origin": "Russia",
+      "Status": "Landrace"
+    },
+    "PI 8813": {
+      "NAM family": "NAM16",
+      "Origin": "Iraq",
+      "Status": "Landrace"
+    },
+    "PI 82469": {
+      "NAM family": "NAM17",
+      "Origin": "North Korea",
+      "Status": "Landrace"
+    },
+    "CI 15144": {
+      "NAM family": "NAM18",
+      "Origin": "Saudi Arabia",
+      "Status": "Landrace"
+    },
+    "PI 43355": {
+      "NAM family": "NAM19",
+      "Origin": "Uruguay",
+      "Status": "Landrace"
+    },
+    "PI 94567": {
+      "NAM family": "NAM20",
+      "Origin": "Israel",
+      "Status": "Landrace"
+    },
+    "PI 192001": {
+      "NAM family": "NAM23",
+      "Origin": "Angola",
+      "Status": "Landrace"
+    },
+    "PI 192147": {
+      "NAM family": "NAM24",
+      "Origin": "Ethiopia",
+      "Status": "Landrace"
+    },
+    "CI 15134": {
+      "NAM family": "NAM25",
+      "Origin": "Pakistan",
+      "Status": "Landrace"
+    },
+    "PI 185715": {
+      "NAM family": "NAM26",
+      "Origin": "Portugal",
+      "Status": "Landrace"
+    },
+    "PI 192569": {
+      "NAM family": "NAM27",
+      "Origin": "Sweden",
+      "Status": "Landrace"
+    },
+    "PI 210945": {
+      "NAM family": "NAM28",
+      "Origin": "Cyprus",
+      "Status": "Landrace"
+    },
+    "PI 220431": {
+      "NAM family": "NAM29",
+      "Origin": "Egypt",
+      "Status": "Landrace"
+    },
+    "PI 278297": {
+      "NAM family": "NAM30",
+      "Origin": "Greece",
+      "Status": "Landrace"
+    }
+  }
+}
