@@ -1,0 +1,660 @@
+{
+  "dataset": "commonwheat63WGS",
+  "source_file": "commonwheat63WGS.txt",
+  "fields": [
+    {
+      "key": "Genetic group",
+      "label": "Genetic group"
+    },
+    {
+      "key": "Average",
+      "label": "Average"
+    },
+    {
+      "key": "Reference",
+      "label": "Reference"
+    },
+    {
+      "key": "Heterozygosis",
+      "label": "Heterozygosis"
+    },
+    {
+      "key": "Alter",
+      "label": "Alter"
+    },
+    {
+      "key": "Missing",
+      "label": "Missing"
+    },
+    {
+      "key": "Place",
+      "label": "Place"
+    },
+    {
+      "key": "Description",
+      "label": "Description"
+    }
+  ],
+  "samples": {
+    "C21": {
+      "Genetic group": "Landrace-east",
+      "Average": "6.371",
+      "Reference": "75,459,248",
+      "Heterozygosis": "2,716,479",
+      "Alter": "5,156,174",
+      "Missing": "1,263,893",
+      "Place": "Armenia",
+      "Description": "Hexaploid"
+    },
+    "C23": {
+      "Genetic group": "Landrace-east",
+      "Average": "6.113",
+      "Reference": "76,425,039",
+      "Heterozygosis": "433,930",
+      "Alter": "6,529,038",
+      "Missing": "1,207,787",
+      "Place": "Egypt",
+      "Description": "Hexaploid"
+    },
+    "C26": {
+      "Genetic group": "Landrace-east",
+      "Average": "6.158",
+      "Reference": "75,569,808",
+      "Heterozygosis": "432,666",
+      "Alter": "7,018,555",
+      "Missing": "1,574,765",
+      "Place": "Afghanistan",
+      "Description": "Hexaploid"
+    },
+    "C27": {
+      "Genetic group": "Landrace-east",
+      "Average": "6.25",
+      "Reference": "76,359,139",
+      "Heterozygosis": "438,209",
+      "Alter": "6,573,421",
+      "Missing": "1,225,025",
+      "Place": "Afghanistan",
+      "Description": "Hexaploid"
+    },
+    "C28": {
+      "Genetic group": "Landrace-east",
+      "Average": "6.39",
+      "Reference": "76,646,335",
+      "Heterozygosis": "465,989",
+      "Alter": "6,441,998",
+      "Missing": "1,041,472",
+      "Place": "Afghanistan",
+      "Description": "Hexaploid"
+    },
+    "C29": {
+      "Genetic group": "Landrace-east",
+      "Average": "6.288",
+      "Reference": "75,984,280",
+      "Heterozygosis": "444,703",
+      "Alter": "7,023,629",
+      "Missing": "1,143,182",
+      "Place": "Uzbekistan",
+      "Description": "Hexaploid"
+    },
+    "C30": {
+      "Genetic group": "Landrace-east",
+      "Average": "7.258",
+      "Reference": "73,704,524",
+      "Heterozygosis": "4,735,454",
+      "Alter": "4,096,174",
+      "Missing": "2,059,642",
+      "Place": "Uzbekistan",
+      "Description": "Hexaploid"
+    },
+    "C33": {
+      "Genetic group": "Landrace-east",
+      "Average": "6.398",
+      "Reference": "74,469,895",
+      "Heterozygosis": "488,203",
+      "Alter": "8,348,305",
+      "Missing": "1,289,391",
+      "Place": "India",
+      "Description": "Hexaploid"
+    },
+    "C34": {
+      "Genetic group": "Landrace-east",
+      "Average": "6.24",
+      "Reference": "77,543,538",
+      "Heterozygosis": "374,092",
+      "Alter": "5,244,673",
+      "Missing": "1,433,491",
+      "Place": "India",
+      "Description": "Hexaploid"
+    },
+    "C35": {
+      "Genetic group": "Landrace-east",
+      "Average": "6.198",
+      "Reference": "75,018,762",
+      "Heterozygosis": "4,048,223",
+      "Alter": "3,762,732",
+      "Missing": "1,766,077",
+      "Place": "India",
+      "Description": "Hexaploid"
+    },
+    "C36": {
+      "Genetic group": "Landrace-east",
+      "Average": "8.567",
+      "Reference": "77,045,676",
+      "Heterozygosis": "1,706,630",
+      "Alter": "4,651,048",
+      "Missing": "1,192,440",
+      "Place": "Ji Country, Hebei China",
+      "Description": "Hexaploid"
+    },
+    "C37": {
+      "Genetic group": "Landrace-east",
+      "Average": "11.924",
+      "Reference": "81,237,090",
+      "Heterozygosis": "271,582",
+      "Alter": "2,766,824",
+      "Missing": "320,298",
+      "Place": "Hangzhou, Zhejiang, China",
+      "Description": "Hexaploid"
+    },
+    "C38": {
+      "Genetic group": "Landrace-east",
+      "Average": "6.284",
+      "Reference": "83,127,734",
+      "Heterozygosis": "59,783",
+      "Alter": "479,054",
+      "Missing": "929,223",
+      "Place": "Chengdu, Sichuan, China",
+      "Description": "Hexaploid"
+    },
+    "CS": {
+      "Genetic group": "Landrace-east",
+      "Average": "30.864",
+      "Reference": "84,578,504",
+      "Heterozygosis": "16,487",
+      "Alter": "340",
+      "Missing": "463",
+      "Place": "China",
+      "Description": "Hexaploid"
+    },
+    "C1": {
+      "Genetic group": "Landrace-west",
+      "Average": "6.275",
+      "Reference": "73,071,412",
+      "Heterozygosis": "1,213,628",
+      "Alter": "8,620,708",
+      "Missing": "1,690,046",
+      "Place": "Austria",
+      "Description": "Hexaploid"
+    },
+    "C10": {
+      "Genetic group": "Landrace-west",
+      "Average": "6.165",
+      "Reference": "71,088,113",
+      "Heterozygosis": "699,479",
+      "Alter": "11,219,578",
+      "Missing": "1,588,624",
+      "Place": "Portugal",
+      "Description": "Hexaploid"
+    },
+    "C2": {
+      "Genetic group": "Landrace-west",
+      "Average": "6.341",
+      "Reference": "73,557,205",
+      "Heterozygosis": "795,535",
+      "Alter": "8,814,901",
+      "Missing": "1,428,153",
+      "Place": "Austria",
+      "Description": "Hexaploid"
+    },
+    "C24": {
+      "Genetic group": "Landrace-west",
+      "Average": "6.367",
+      "Reference": "71,454,000",
+      "Heterozygosis": "699,186",
+      "Alter": "11,247,495",
+      "Missing": "1,195,113",
+      "Place": "Jordan",
+      "Description": "Hexaploid"
+    },
+    "C25": {
+      "Genetic group": "Landrace-west",
+      "Average": "6.113",
+      "Reference": "71,504,646",
+      "Heterozygosis": "638,840",
+      "Alter": "10,202,780",
+      "Missing": "2,249,528",
+      "Place": "Jordan",
+      "Description": "Hexaploid"
+    },
+    "C3": {
+      "Genetic group": "Landrace-west",
+      "Average": "6.383",
+      "Reference": "73,058,027",
+      "Heterozygosis": "1,329,758",
+      "Alter": "8,656,999",
+      "Missing": "1,551,010",
+      "Place": "Austria",
+      "Description": "Hexaploid"
+    },
+    "C39": {
+      "Genetic group": "Landrace-west",
+      "Average": "12.134",
+      "Reference": "74,221,867",
+      "Heterozygosis": "5,873,270",
+      "Alter": "4,132,469",
+      "Missing": "368,188",
+      "Place": "Heilongjiang, China",
+      "Description": "Hexaploid"
+    },
+    "C4": {
+      "Genetic group": "Landrace-west",
+      "Average": "6.244",
+      "Reference": "73,029,229",
+      "Heterozygosis": "549,432",
+      "Alter": "9,487,665",
+      "Missing": "1,529,468",
+      "Place": "Bulgaria",
+      "Description": "Hexaploid"
+    },
+    "C40": {
+      "Genetic group": "Landrace-west",
+      "Average": "6.192",
+      "Reference": "73,700,891",
+      "Heterozygosis": "2,472,080",
+      "Alter": "7,004,162",
+      "Missing": "1,418,661",
+      "Place": "Inner Mongolia, China",
+      "Description": "Hexaploid"
+    },
+    "C5": {
+      "Genetic group": "Landrace-west",
+      "Average": "6.274",
+      "Reference": "70,329,480",
+      "Heterozygosis": "6,141,417",
+      "Alter": "6,211,606",
+      "Missing": "1,913,291",
+      "Place": "Andorra",
+      "Description": "Hexaploid"
+    },
+    "C6": {
+      "Genetic group": "Landrace-west",
+      "Average": "6.121",
+      "Reference": "72,933,101",
+      "Heterozygosis": "639,491",
+      "Alter": "9,472,489",
+      "Missing": "1,550,713",
+      "Place": "Andorra",
+      "Description": "Hexaploid"
+    },
+    "C7": {
+      "Genetic group": "Landrace-west",
+      "Average": "6.22",
+      "Reference": "74,255,596",
+      "Heterozygosis": "562,940",
+      "Alter": "8,392,174",
+      "Missing": "1,385,084",
+      "Place": "Spain",
+      "Description": "Hexaploid"
+    },
+    "C8": {
+      "Genetic group": "Landrace-west",
+      "Average": "6.226",
+      "Reference": "70,213,665",
+      "Heterozygosis": "777,031",
+      "Alter": "11,699,067",
+      "Missing": "1,906,031",
+      "Place": "Italy",
+      "Description": "Hexaploid"
+    },
+    "C9": {
+      "Genetic group": "Landrace-west",
+      "Average": "6.268",
+      "Reference": "72,053,861",
+      "Heterozygosis": "558,437",
+      "Alter": "10,550,360",
+      "Missing": "1,433,136",
+      "Place": "Portugal",
+      "Description": "Hexaploid"
+    },
+    "C11": {
+      "Genetic group": "Variety",
+      "Average": "6.369",
+      "Reference": "74,863,195",
+      "Heterozygosis": "668,841",
+      "Alter": "7,724,528",
+      "Missing": "1,339,230",
+      "Place": "America",
+      "Description": "Hexaploid"
+    },
+    "C12": {
+      "Genetic group": "Variety",
+      "Average": "6.016",
+      "Reference": "75,284,154",
+      "Heterozygosis": "671,756",
+      "Alter": "6,933,262",
+      "Missing": "1,706,622",
+      "Place": "America",
+      "Description": "Hexaploid"
+    },
+    "C13": {
+      "Genetic group": "Variety",
+      "Average": "6.045",
+      "Reference": "74,528,391",
+      "Heterozygosis": "498,952",
+      "Alter": "8,261,689",
+      "Missing": "1,306,762",
+      "Place": "America",
+      "Description": "Hexaploid"
+    },
+    "C14": {
+      "Genetic group": "Variety",
+      "Average": "6.228",
+      "Reference": "74,890,480",
+      "Heterozygosis": "1,071,621",
+      "Alter": "7,144,853",
+      "Missing": "1,488,840",
+      "Place": "America",
+      "Description": "Hexaploid"
+    },
+    "C15": {
+      "Genetic group": "Variety",
+      "Average": "6.135",
+      "Reference": "75,699,447",
+      "Heterozygosis": "557,230",
+      "Alter": "6,843,420",
+      "Missing": "1,495,697",
+      "Place": "America",
+      "Description": "Hexaploid"
+    },
+    "C16": {
+      "Genetic group": "Variety",
+      "Average": "6.396",
+      "Reference": "73,824,881",
+      "Heterozygosis": "897,945",
+      "Alter": "8,561,722",
+      "Missing": "1,311,246",
+      "Place": "America",
+      "Description": "Hexaploid"
+    },
+    "C17": {
+      "Genetic group": "Variety",
+      "Average": "6.262",
+      "Reference": "75,140,244",
+      "Heterozygosis": "475,979",
+      "Alter": "7,826,751",
+      "Missing": "1,152,820",
+      "Place": "America",
+      "Description": "Hexaploid"
+    },
+    "C18": {
+      "Genetic group": "Variety",
+      "Average": "6.141",
+      "Reference": "75,822,325",
+      "Heterozygosis": "1,296,481",
+      "Alter": "6,006,850",
+      "Missing": "1,470,138",
+      "Place": "America",
+      "Description": "Hexaploid"
+    },
+    "C19": {
+      "Genetic group": "Variety",
+      "Average": "6.205",
+      "Reference": "76,174,600",
+      "Heterozygosis": "630,876",
+      "Alter": "6,638,963",
+      "Missing": "1,151,355",
+      "Place": "America",
+      "Description": "Hexaploid"
+    },
+    "C22": {
+      "Genetic group": "Variety",
+      "Average": "6.284",
+      "Reference": "76,209,869",
+      "Heterozygosis": "482,632",
+      "Alter": "6,815,258",
+      "Missing": "1,088,035",
+      "Place": "Egypt",
+      "Description": "Hexaploid"
+    },
+    "C31": {
+      "Genetic group": "Variety",
+      "Average": "6.113",
+      "Reference": "72,929,376",
+      "Heterozygosis": "5,333,515",
+      "Alter": "4,496,201",
+      "Missing": "1,836,702",
+      "Place": "India",
+      "Description": "Hexaploid"
+    },
+    "C32": {
+      "Genetic group": "Variety",
+      "Average": "6.145",
+      "Reference": "75,509,165",
+      "Heterozygosis": "539,478",
+      "Alter": "7,311,463",
+      "Missing": "1,235,688",
+      "Place": "India",
+      "Description": "Hexaploid"
+    },
+    "C41": {
+      "Genetic group": "Variety",
+      "Average": "6.29",
+      "Reference": "75,631,108",
+      "Heterozygosis": "447,265",
+      "Alter": "7,334,106",
+      "Missing": "1,183,315",
+      "Place": "Jiangsu, China",
+      "Description": "Hexaploid"
+    },
+    "C42": {
+      "Genetic group": "Variety",
+      "Average": "6.088",
+      "Reference": "74,745,042",
+      "Heterozygosis": "449,777",
+      "Alter": "7,036,479",
+      "Missing": "2,364,496",
+      "Place": "Henan, China",
+      "Description": "Hexaploid"
+    },
+    "C43": {
+      "Genetic group": "Variety",
+      "Average": "9.399",
+      "Reference": "76,808,353",
+      "Heterozygosis": "506,181",
+      "Alter": "6,475,993",
+      "Missing": "805,267",
+      "Place": "Shaanxi, China",
+      "Description": "Hexaploid"
+    },
+    "C44": {
+      "Genetic group": "Variety",
+      "Average": "9.629",
+      "Reference": "77,966,218",
+      "Heterozygosis": "385,689",
+      "Alter": "5,377,658",
+      "Missing": "866,229",
+      "Place": "Shandong, China",
+      "Description": "Hexaploid"
+    },
+    "C45": {
+      "Genetic group": "Variety",
+      "Average": "8.694",
+      "Reference": "75,238,912",
+      "Heterozygosis": "434,632",
+      "Alter": "7,643,218",
+      "Missing": "1,279,032",
+      "Place": "Sichuan, China",
+      "Description": "Hexaploid"
+    },
+    "C46": {
+      "Genetic group": "Variety",
+      "Average": "8.806",
+      "Reference": "75,577,580",
+      "Heterozygosis": "489,581",
+      "Alter": "6,380,911",
+      "Missing": "2,147,722",
+      "Place": "Henan, China",
+      "Description": "Hexaploid"
+    },
+    "C47": {
+      "Genetic group": "Variety",
+      "Average": "16.219",
+      "Reference": "75,127,967",
+      "Heterozygosis": "847,193",
+      "Alter": "6,670,765",
+      "Missing": "1,949,869",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C48": {
+      "Genetic group": "Variety",
+      "Average": "10.061",
+      "Reference": "57,952,654",
+      "Heterozygosis": "359,747",
+      "Alter": "6,533,999",
+      "Missing": "19,749,394",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C49": {
+      "Genetic group": "Variety",
+      "Average": "9.278",
+      "Reference": "74,282,240",
+      "Heterozygosis": "572,782",
+      "Alter": "8,635,959",
+      "Missing": "1,104,813",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C50": {
+      "Genetic group": "Variety",
+      "Average": "14.742",
+      "Reference": "74,414,519",
+      "Heterozygosis": "834,876",
+      "Alter": "7,841,617",
+      "Missing": "1,504,782",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C51": {
+      "Genetic group": "Variety",
+      "Average": "22.039",
+      "Reference": "72,831,343",
+      "Heterozygosis": "890,747",
+      "Alter": "7,848,785",
+      "Missing": "3,024,919",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C52": {
+      "Genetic group": "Variety",
+      "Average": "15.979",
+      "Reference": "75,393,096",
+      "Heterozygosis": "678,582",
+      "Alter": "7,699,221",
+      "Missing": "824,895",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C53": {
+      "Genetic group": "Variety",
+      "Average": "12.064",
+      "Reference": "75,993,491",
+      "Heterozygosis": "682,422",
+      "Alter": "7,806,120",
+      "Missing": "113,761",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C54": {
+      "Genetic group": "Variety",
+      "Average": "11.501",
+      "Reference": "72,058,860",
+      "Heterozygosis": "537,799",
+      "Alter": "7,558,422",
+      "Missing": "4,440,713",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C55": {
+      "Genetic group": "Variety",
+      "Average": "12.541",
+      "Reference": "76,452,633",
+      "Heterozygosis": "659,824",
+      "Alter": "7,395,521",
+      "Missing": "87,816",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C56": {
+      "Genetic group": "Variety",
+      "Average": "11.26",
+      "Reference": "76,067,698",
+      "Heterozygosis": "853,118",
+      "Alter": "7,191,600",
+      "Missing": "483,378",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C57": {
+      "Genetic group": "Variety",
+      "Average": "16.168",
+      "Reference": "64,277,548",
+      "Heterozygosis": "405,068",
+      "Alter": "6,173,359",
+      "Missing": "13,739,819",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C58": {
+      "Genetic group": "Variety",
+      "Average": "14.001",
+      "Reference": "72,188,682",
+      "Heterozygosis": "599,744",
+      "Alter": "7,148,655",
+      "Missing": "4,658,713",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C59": {
+      "Genetic group": "Variety",
+      "Average": "56.832",
+      "Reference": "76,261,864",
+      "Heterozygosis": "690,021",
+      "Alter": "7,614,748",
+      "Missing": "29,161",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C60": {
+      "Genetic group": "Variety",
+      "Average": "11.054",
+      "Reference": "72,733,013",
+      "Heterozygosis": "872,177",
+      "Alter": "7,844,891",
+      "Missing": "3,145,713",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C61": {
+      "Genetic group": "Variety",
+      "Average": "15.756",
+      "Reference": "76,818,148",
+      "Heterozygosis": "779,007",
+      "Alter": "6,672,980",
+      "Missing": "325,659",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    },
+    "C62": {
+      "Genetic group": "Variety",
+      "Average": "22.602",
+      "Reference": "75,897,871",
+      "Heterozygosis": "646,373",
+      "Alter": "7,988,329",
+      "Missing": "63,221",
+      "Place": "Australia",
+      "Description": "Hexaploid"
+    }
+  }
+}

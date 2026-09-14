@@ -1,0 +1,3928 @@
+{
+  "dataset": "whealbi_minocc10",
+  "source_file": "whealbi.minocc10.txt",
+  "fields": [
+    {
+      "key": "Taxonomy",
+      "label": "Taxonomy"
+    },
+    {
+      "key": "Genome",
+      "label": "Genome"
+    },
+    {
+      "key": "Variety/Genotype",
+      "label": "Variety/Genotype"
+    },
+    {
+      "key": "Growth habit",
+      "label": "Growth habit"
+    },
+    {
+      "key": "Group",
+      "label": "Group"
+    },
+    {
+      "key": "Continent",
+      "label": "Continent"
+    }
+  ],
+  "samples": {
+    "WW-001": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "LEEDS",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-002": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "STADIUM",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-003": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CALISOL",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-004": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ZEPHYR",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-005": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "FORZOR",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-006": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "TOSKANI",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-007": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "LITHIUM",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-008": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MODERN",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-009": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KWS Dacanto",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-010": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KWS Ferrum",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-011": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Julius",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-012": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Dekan",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-013": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KWS Magic",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-014": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KWS Milaneco",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-015": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KWS Jonatan",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-016": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Taifun",
+      "Growth habit": "Spring",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-017": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KWS Scirocco",
+      "Growth habit": "Spring",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-018": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KWS Chamsin",
+      "Growth habit": "Spring",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-019": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Bologna",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-020": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Palesio",
+      "Growth habit": "Facultative",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-021": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Tiepolo",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-022": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Altamira",
+      "Growth habit": "Facultative",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-023": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MV-TOBORZO",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-024": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MV-KARIZMA",
+      "Growth habit": "Facultative",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-025": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MV-SUBA",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-026": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MV-KOLO",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-027": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MV-MAGDALENA",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-028": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Martonvásári 9kr1 (MV9KR1)",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-029": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ASAKAZE-KOMUGI",
+      "Growth habit": "Facultative",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-030": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KWS Satiago",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-031": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KWS Croft",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-032": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Conqueror",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-033": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Cordiale",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-034": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KWS Willow",
+      "Growth habit": "Spring",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-035": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Granary",
+      "Growth habit": "Spring",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-036": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Actros",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-037": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Aguila",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-038": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Akratos",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-039": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Akteur",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-040": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Alcazar",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-041": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Aldric",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-042": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Global",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-043": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Inspiration",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-044": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Kalahari",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-045": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Orcas",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-046": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Phare",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-047": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Rimbaud",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-048": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ALCHEMY",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-049": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BROMPTON",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-050": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CLAIRE",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-052": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "RIALTO",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-053": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ROBIGUS",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-055": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "XI-19",
+      "Growth habit": "Facultative",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-056": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "WELFORD",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-057": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CHANCELIER",
+      "Growth habit": "na",
+      "Group": "NA",
+      "Continent": "Europe"
+    },
+    "WW-058": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "AMI",
+      "Growth habit": "na",
+      "Group": "NA",
+      "Continent": "Europe"
+    },
+    "WW-059": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "SHAMROCK",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-060": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KALTOP",
+      "Growth habit": "na",
+      "Group": "NA",
+      "Continent": "Europe"
+    },
+    "WW-061": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "PAUILLAC",
+      "Growth habit": "na",
+      "Group": "NA",
+      "Continent": "Europe"
+    },
+    "WW-062": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "QUEBON",
+      "Growth habit": "na",
+      "Group": "NA",
+      "Continent": "Europe"
+    },
+    "WW-063": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "METEOR",
+      "Growth habit": "na",
+      "Group": "NA",
+      "Continent": "Europe"
+    },
+    "WW-064": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Saratovskya 29",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-065": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Janetskis Probat",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-066": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Synthetics R93",
+      "Growth habit": "Facultative",
+      "Group": "III",
+      "Continent": "na"
+    },
+    "WW-067": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Sibilla",
+      "Growth habit": "na",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-068": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Victo",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-069": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Spada",
+      "Growth habit": "na",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-070": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Agadir",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-071": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Artico",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-072": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Rusalka",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-073": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "San Pastore Typ 2",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-074": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Norin 16",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-075": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Suwon Nr. 86",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-076": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-077": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "NS 732",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-078": {
+      "Taxonomy": "Triticum aestivum var. ferrugineum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-079": {
+      "Taxonomy": "Triticum aestivum var. ferrugineum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Norin 4",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-080": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Minhardi Min. 1505",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "America"
+    },
+    "WW-081": {
+      "Taxonomy": "Triticum aestivum var. milturum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Chinesischer Weizen",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-082": {
+      "Taxonomy": "Triticum aestivum var. milturum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Crvena Zvezda",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-083": {
+      "Taxonomy": "Triticum aestivum var. suberythrospermum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Shirasay-Ibaragi 2",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-084": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Bej-Szi 3",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-085": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Egyptian",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Africa"
+    },
+    "WW-086": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Dawson Golden",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-087": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Karcagi 1042",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-088": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Mindenes",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-089": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Bánkúti 1201",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-090": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Odvos 116",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-091": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Fulcaster",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "America"
+    },
+    "WW-092": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Saline",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "America"
+    },
+    "WW-093": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Red Hussar",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "America"
+    },
+    "WW-094": {
+      "Taxonomy": "Triticum aestivum var. albidumcompactoides",
+      "Genome": "BAD",
+      "Variety/Genotype": "Sperlings Buhlendorfer",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-095": {
+      "Taxonomy": "Triticum aestivum var. ferrugineum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Li-Cho Nr. 3",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-096": {
+      "Taxonomy": "Triticum aestivum var. ferrugineum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Njemertsch Triumph Begrannter Roter Verbesserter",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-097": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Newsar",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "America"
+    },
+    "WW-098": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Riebesel St. 47-51",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-099": {
+      "Taxonomy": "Triticum aestivum var. aureum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Falco",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-100": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Carstens VIII",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-101": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Fema",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-102": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Caprimus",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-103": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Mado",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-104": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-105": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Virtue",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "na"
+    },
+    "WW-106": {
+      "Taxonomy": "Triticum aestivum var. lutescenscompactoides",
+      "Genome": "BAD",
+      "Variety/Genotype": "Draegers Dickkopf",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-107": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landweizen aus Neuhausen",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-108": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Smogger",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "America"
+    },
+    "WW-109": {
+      "Taxonomy": "Triticum aestivum var. subhostianuminflatum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-110": {
+      "Taxonomy": "Triticum aestivum var. wittmackianum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-111": {
+      "Taxonomy": "Triticum aestivum var. aureum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-112": {
+      "Taxonomy": "Triticum aestivum var. aureum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-113": {
+      "Taxonomy": "Triticum aestivum var. aureum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Jacob Cats",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Africa"
+    },
+    "WW-114": {
+      "Taxonomy": "Triticum aestivum var. hostianum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Griechischer Weizen",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-115": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Shireffs Dickkopf",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-116": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landweizen aus Heimtal",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-117": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Hercuter White",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-118": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Wietfelds Flettmarer Land Heidefürst",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-119": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Klimatinskaja",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-120": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landweizen aus Voehma II",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-121": {
+      "Taxonomy": "Triticum aestivum var. milturum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landweizen aus Heimtal",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-122": {
+      "Taxonomy": "Triticum aestivum var. milturum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Haidenburger Landweizen",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-123": {
+      "Taxonomy": "Triticum aestivum var. milturum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Kursas",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-124": {
+      "Taxonomy": "Triticum aestivum var. milturum",
+      "Genome": "BAD",
+      "Variety/Genotype": "",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-125": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Campeador",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-127": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "0",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-131": {
+      "Taxonomy": "Triticum aestivum var. milturum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Villa Glori",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-132": {
+      "Taxonomy": "Triticum aestivum var. milturum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Novaro",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-133": {
+      "Taxonomy": "Triticum aestivum var. alborubrum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Anna Migliori",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-134": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Madif 20",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-135": {
+      "Taxonomy": "Triticum aestivum var. ferrugineum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Colorben 4",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-136": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Marzotto",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-137": {
+      "Taxonomy": "Triticum aestivum var. milturum",
+      "Genome": "BAD",
+      "Variety/Genotype": "San Prospero",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-138": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "0",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-140": {
+      "Taxonomy": "Triticum aestivum var. subpseudohostianum",
+      "Genome": "BAD",
+      "Variety/Genotype": "0",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-143": {
+      "Taxonomy": "Triticum aestivum var. lutescens",
+      "Genome": "BAD",
+      "Variety/Genotype": "Mackoviko vahladka",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-145": {
+      "Taxonomy": "Triticum aestivum var. milturum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Zdzislawka",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-146": {
+      "Taxonomy": "Triticum aestivum var. suberythrospermum",
+      "Genome": "BAD",
+      "Variety/Genotype": "0",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-147": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "0",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-148": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Bussard",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-149": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Flair",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-150": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Ritmo",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-151": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Brando",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-152": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Recital",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-153": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Contur",
+      "Growth habit": "na",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-154": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Apache",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-155": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Monty",
+      "Growth habit": "na",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-156": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Timber",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-157": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Renan",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-158": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Sperber",
+      "Growth habit": "na",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-159": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Victo",
+      "Growth habit": "na",
+      "Group": "III",
+      "Continent": "na"
+    },
+    "WW-160": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "JB Asano",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-161": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Interet",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-162": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Sogood",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-163": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Frument",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-164": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Rosario",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-165": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Hereford",
+      "Growth habit": "na",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-166": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Mulan",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-167": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Ephoros",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-168": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Mikon",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-169": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Inspiration",
+      "Growth habit": "na",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-170": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Opata",
+      "Growth habit": "na",
+      "Group": "III",
+      "Continent": "na"
+    },
+    "WW-171": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "M6",
+      "Growth habit": "na",
+      "Group": "III",
+      "Continent": "na"
+    },
+    "WW-172": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Yuval",
+      "Growth habit": "na",
+      "Group": "NA",
+      "Continent": "Asia"
+    },
+    "WW-173": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Zahir",
+      "Growth habit": "na",
+      "Group": "NA",
+      "Continent": "Asia"
+    },
+    "WW-174": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Bar Nir",
+      "Growth habit": "na",
+      "Group": "NA",
+      "Continent": "Asia"
+    },
+    "WW-175": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Gedera",
+      "Growth habit": "na",
+      "Group": "NA",
+      "Continent": "Asia"
+    },
+    "WW-176": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Ruta",
+      "Growth habit": "na",
+      "Group": "NA",
+      "Continent": "Asia"
+    },
+    "WW-177": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Galil",
+      "Growth habit": "na",
+      "Group": "NA",
+      "Continent": "Asia"
+    },
+    "WW-178": {
+      "Taxonomy": "Triticum durum Desf.",
+      "Genome": "BA",
+      "Variety/Genotype": "Langdon",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "America"
+    },
+    "WW-179": {
+      "Taxonomy": "Triticum dicoccoides (Koern. ex Aschers. et Graebn.) Schweinf.",
+      "Genome": "BA",
+      "Variety/Genotype": "G18-16",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-180": {
+      "Taxonomy": "Triticum turgidum",
+      "Genome": "BA",
+      "Variety/Genotype": "LxG #12",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-181": {
+      "Taxonomy": "Triticum turgidum",
+      "Genome": "BA",
+      "Variety/Genotype": "LxG #105",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-182": {
+      "Taxonomy": "Triticum turgidum",
+      "Genome": "BA",
+      "Variety/Genotype": "LxG #154",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-183": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Turkmen-98",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Asia"
+    },
+    "WW-184": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Özkan",
+      "Growth habit": "Alternative",
+      "Group": "IV",
+      "Continent": "Asia"
+    },
+    "WW-185": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Balattila",
+      "Growth habit": "Alternative",
+      "Group": "IV",
+      "Continent": "Asia"
+    },
+    "WW-186": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Genç-99",
+      "Growth habit": "Alternative",
+      "Group": "IV",
+      "Continent": "Asia"
+    },
+    "WW-187": {
+      "Taxonomy": "Triticum aestivum var. subsardoum",
+      "Genome": "BAD",
+      "Variety/Genotype": "0",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-188": {
+      "Taxonomy": "Triticum aestivum var. ferrugineum",
+      "Genome": "BAD",
+      "Variety/Genotype": "0",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-189": {
+      "Taxonomy": "Triticum aestivum var. aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Nr. 301",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-190": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Pehlivan",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Asia"
+    },
+    "WW-191": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Tosunbey",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Asia"
+    },
+    "WW-192": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Sertak-52",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-194": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Cumhuriyet-75",
+      "Growth habit": "Alternative",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-195": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Sivas 111/33",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-196": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Akçabuğday",
+      "Growth habit": "Alternative",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-197": {
+      "Taxonomy": "Triticum aestivum var. erythroleucon",
+      "Genome": "BAD",
+      "Variety/Genotype": "0",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-200": {
+      "Taxonomy": "Triticum durum Desf.",
+      "Genome": "BA",
+      "Variety/Genotype": "Menceki",
+      "Growth habit": "Alternative/Spring",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-201": {
+      "Taxonomy": "Triticum durum Desf.",
+      "Genome": "BA",
+      "Variety/Genotype": "Durnadili",
+      "Growth habit": "Alternative/Spring",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-202": {
+      "Taxonomy": "Triticum durum Desf.",
+      "Genome": "BA",
+      "Variety/Genotype": "Boğacak",
+      "Growth habit": "Alternative/Spring",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-203": {
+      "Taxonomy": "Triticum durum Desf.",
+      "Genome": "BA",
+      "Variety/Genotype": "Mersiye",
+      "Growth habit": "Alternative/Spring",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-204": {
+      "Taxonomy": "Triticum durum Desf.",
+      "Genome": "BA",
+      "Variety/Genotype": "Balcalı-85",
+      "Growth habit": "Alternative/Spring",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-205": {
+      "Taxonomy": "Triticum durum Desf.",
+      "Genome": "BA",
+      "Variety/Genotype": "Balcalı-2000",
+      "Growth habit": "Alternative/Spring",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-207": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "H996",
+      "Growth habit": "spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-208": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "H995",
+      "Growth habit": "spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-209": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "H1001",
+      "Growth habit": "spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-210": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-211": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Karmraat",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-212": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-213": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-214": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-215": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Pashmak",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-216": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-217": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-218": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-219": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-220": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-221": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-222": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-223": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-224": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-225": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-226": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-227": {
+      "Taxonomy": "Triticum aestivum hadropyrum (Flaksb.)Tzvel.",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-228": {
+      "Taxonomy": "Triticum aestivum hadropyrum (Flaksb.)Tzvel.",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-229": {
+      "Taxonomy": "Triticum araraticum Jakubz. subsp. kurdistanicum Dorof. et Migusch.",
+      "Genome": "GA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-230": {
+      "Taxonomy": "Triticum araraticum Jakubz. subsp. kurdistanicum Dorof. et Migusch.",
+      "Genome": "GA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-231": {
+      "Taxonomy": "Triticum araraticum Jakubz. subsp. araraticum",
+      "Genome": "GA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-232": {
+      "Taxonomy": "Triticum araraticum Jakubz. subsp. kurdistanicum Dorof. et Migusch.",
+      "Genome": "GA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-233": {
+      "Taxonomy": "Triticum araraticum Jakubz. subsp. araraticum",
+      "Genome": "GA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-234": {
+      "Taxonomy": "Triticum araraticum Jakubz. subsp. kurdistanicum Dorof. et Migusch.",
+      "Genome": "GA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-235": {
+      "Taxonomy": "Triticum araraticum Jakubz. subsp. kurdistanicum Dorof. et Migusch.",
+      "Genome": "GA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-236": {
+      "Taxonomy": "Triticum araraticum Jakubz. subsp. kurdistanicum Dorof. et Migusch.",
+      "Genome": "GA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-237": {
+      "Taxonomy": "Triticum araraticum Jakubz. subsp. kurdistanicum Dorof. et Migusch.",
+      "Genome": "GA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-238": {
+      "Taxonomy": "Triticum araraticum Jakubz. subsp. kurdistanicum Dorof. et Migusch.",
+      "Genome": "GA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-239": {
+      "Taxonomy": "Triticum araraticum Jakubz. subsp. kurdistanicum Dorof. et Migusch.",
+      "Genome": "GA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-240": {
+      "Taxonomy": "Triticum spelta L. subsp. spelta",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-241": {
+      "Taxonomy": "Triticum sphaerococcum Perciv.",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-242": {
+      "Taxonomy": "Triticum zhukovskyi A.M.Menabde & Eritzjan",
+      "Genome": "GAA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "na",
+      "Continent": "Europe"
+    },
+    "WW-243": {
+      "Taxonomy": "Triticum dicoccon Schrank subsp. abyssinicumVav.",
+      "Genome": "BA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Africa"
+    },
+    "WW-244": {
+      "Taxonomy": "Triticum dicoccon Schrank subsp. asiaticum Vav.",
+      "Genome": "BA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-245": {
+      "Taxonomy": "Triticum durum Desf. subsp. durum",
+      "Genome": "BA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Europe"
+    },
+    "WW-246": {
+      "Taxonomy": "Aegilops tauschii Coss. subsp. Tauschii",
+      "Genome": "D",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "diploide",
+      "Continent": "Asia"
+    },
+    "WW-247": {
+      "Taxonomy": "Aegilops tauschii Coss. subsp. tauschii",
+      "Genome": "D",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "diploide",
+      "Continent": "Asia"
+    },
+    "WW-248": {
+      "Taxonomy": "Aegilops tauschii Coss. subsp. strangulata (Eig) Tzvel.",
+      "Genome": "D",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "diploide",
+      "Continent": "Asia"
+    },
+    "WW-249": {
+      "Taxonomy": "Triticum urartu Thum. ex Gandil.",
+      "Genome": "Au",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "diploide",
+      "Continent": "Asia"
+    },
+    "WW-250": {
+      "Taxonomy": "Triticum urartu Thum. ex Gandil.",
+      "Genome": "Au",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "diploide",
+      "Continent": "Asia"
+    },
+    "WW-251": {
+      "Taxonomy": "Triticum urartu Thum. ex Gandil.",
+      "Genome": "Au",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "diploide",
+      "Continent": "Asia"
+    },
+    "WW-252": {
+      "Taxonomy": "Triticum boeoticum Boiss. subsp. thaoudar (Reut. ex Hausskn. ) Grossh.3",
+      "Genome": "Ab",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "diploide",
+      "Continent": "Asia"
+    },
+    "WW-253": {
+      "Taxonomy": "Triticum monococcum L. T. monococcum L.",
+      "Genome": "Ab",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "diploide",
+      "Continent": "Asia"
+    },
+    "WW-254": {
+      "Taxonomy": "Triticum monococcum L. T. monococcum L.",
+      "Genome": "Am",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "diploide",
+      "Continent": "Asia"
+    },
+    "WW-255": {
+      "Taxonomy": "Triticum monococcum L. T. monococcum L.",
+      "Genome": "Am",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "diploide",
+      "Continent": "Europe"
+    },
+    "WW-256": {
+      "Taxonomy": "Triticum timopheevii (Zhuk.) Zhuk.",
+      "Genome": "GA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-257": {
+      "Taxonomy": "Triticum dicoccoides (Koern. ex Aschers. et Graebn.) Schweinf. subsp. judaicum Vav.",
+      "Genome": "BA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-258": {
+      "Taxonomy": "Triticum dicoccoides (Koern. ex Aschers. et Graebn.) Schweinf. subsp. dicoccoides",
+      "Genome": "BA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-259": {
+      "Taxonomy": "Triticum dicoccoides (Koern. ex Aschers. et Graebn.) Schweinf. subsp. judaicum Vav.",
+      "Genome": "BA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-260": {
+      "Taxonomy": "Triticum dicoccoides (Koern. ex Aschers. et Graebn.) Schweinf. subsp. dicoccoides",
+      "Genome": "BA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-261": {
+      "Taxonomy": "Triticum dicoccoides (Koern. ex Aschers. et Graebn.) Schweinf. subsp. dicoccoides",
+      "Genome": "BA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-262": {
+      "Taxonomy": "Triticum durum Desf.",
+      "Genome": "BA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Europe"
+    },
+    "WW-263": {
+      "Taxonomy": "Triticum boeoticum Boiss. subsp. thaoudar (Reut. ex Hausskn. ) Grossh.3",
+      "Genome": "Ab",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "diploide",
+      "Continent": "Asia"
+    },
+    "WW-264": {
+      "Taxonomy": "Triticum dicoccon Schrank subsp. asiaticum Vav.",
+      "Genome": "BA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-265": {
+      "Taxonomy": "Triticum dicoccon Schrank subsp. dicoccon",
+      "Genome": "BA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Europe"
+    },
+    "WW-266": {
+      "Taxonomy": "Triticum dicoccon Schrank subsp. asiaticum Vav.",
+      "Genome": "BA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Europe"
+    },
+    "WW-267": {
+      "Taxonomy": "Triticum dicoccon Schrank subsp. dicoccon",
+      "Genome": "BA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Europe"
+    },
+    "WW-268": {
+      "Taxonomy": "Triticum dicoccon Schrank subsp. asiaticum Vav.",
+      "Genome": "BA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-269": {
+      "Taxonomy": "Triticum timopheevii (Zhuk.) Zhuk.",
+      "Genome": "GA",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "tetraploid",
+      "Continent": "Asia"
+    },
+    "WW-271": {
+      "Taxonomy": "Triticum spelta L. subsp. spelta",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-272": {
+      "Taxonomy": "Aegilops speltoides Tausch subsp. speltoides",
+      "Genome": "Ss",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "diploide",
+      "Continent": "Asia"
+    },
+    "WW-274": {
+      "Taxonomy": "Aegilops speltoides Tausch subsp. speltoides",
+      "Genome": "Ss",
+      "Variety/Genotype": "",
+      "Growth habit": "na",
+      "Group": "diploide",
+      "Continent": "Asia"
+    },
+    "WW-276": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ALTIGO",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-277": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "AREZZO",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-278": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BAROK",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-279": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "PREMIO",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-280": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "11IWSWSN14",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "America"
+    },
+    "WW-281": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "3716-1",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-282": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CH62022",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-283": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "AFRICA MAYO",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Africa"
+    },
+    "WW-284": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ANDES 56",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "America"
+    },
+    "WW-285": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ARAWA",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Oceania"
+    },
+    "WW-286": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Arkas",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-287": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ATUT II",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-288": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BT2277-TUN",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Africa"
+    },
+    "WW-289": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BUCKBUCK'S'",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "America"
+    },
+    "WW-290": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "114/62",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-291": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CH73052",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-292": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "DAERAAD",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Africa"
+    },
+    "WW-293": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "DI6402-34-2-4",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-294": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "EMU'S'",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "America"
+    },
+    "WW-295": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "GLENLEA-CAN",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "America"
+    },
+    "WW-296": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "HIVERNAL",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-297": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "K1898-9/L200-6",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-298": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MINTURK",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "America"
+    },
+    "WW-299": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "N46",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-300": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "NYU BAY",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-301": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Pitic 62",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "America"
+    },
+    "WW-302": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ZANDA",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-303": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Coronation",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "America"
+    },
+    "WW-304": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "NAVARRO150",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-305": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CONCURRENT",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-306": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ORFIELD",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-307": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Mirleben",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-308": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Tau-bugda",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-309": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Yumai 34",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-310": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CH01193",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-311": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "2838-39",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-312": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "line06/01/2003",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Africa"
+    },
+    "WW-313": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "line60293",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-314": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "664-258-18",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-315": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "A4",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-316": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ADMONTER",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-317": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Adular",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-318": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "AIFENG NO4",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-319": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "AMIFORT",
+      "Growth habit": "Spring",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-321": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ARCHE",
+      "Growth habit": "Spring",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-322": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ARGENT",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-323": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ARTOIS-DESPREZ",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-324": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "AUSTRO_BANKUT",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-325": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BAHATANE 87",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Africa"
+    },
+    "WW-326": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BAIONETTE I",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-327": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Balkan",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-328": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BARBU DU FINISTERE",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-329": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BEL ET BON",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-330": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BELLIEI 590",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-331": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BERZATACA",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-332": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BIRGITTA",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-333": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BLANC PRECOCE",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-334": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BLONDYNKA",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-335": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Blueboy",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "America"
+    },
+    "WW-336": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BT2281",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Africa"
+    },
+    "WW-337": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BT2296",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Africa"
+    },
+    "WW-338": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CANDEAL DE AREVALO",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-339": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CENAD 512",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-340": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CEREALOR",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-341": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "COPPADRA",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-342": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CORIN",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-343": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "COTIPORA",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "America"
+    },
+    "WW-344": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "COURTOT",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-345": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "D130-63",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-346": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Danubia",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-347": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "DETENICKA CERVENA",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-348": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "DIANA",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-349": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "DIANA II",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-350": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "DNEPROVSKAIA",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-351": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "DRAGON",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-352": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "DRAVA",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-353": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "EBRO",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-354": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ESTANZUELA DORADO",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "America"
+    },
+    "WW-355": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "FERRUGINEUM",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-356": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "FLAMURA 85",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-357": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "FLINT",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "America"
+    },
+    "WW-358": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "FUKUHOKOMUGI",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-359": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "G66257",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-360": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "G72300",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-361": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "GAMMENYA",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Oceania"
+    },
+    "WW-362": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "GK SZOKE",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-363": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "GODOLLOI 15",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-364": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Granarolo",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-365": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "GRANIT",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-366": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "GULAR",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Oceania"
+    },
+    "WW-367": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "H742A",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-368": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "H93-70",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-369": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "HYBRIDE 56 VILMORIN",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-371": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "IAS 1",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "America"
+    },
+    "WW-372": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ICARDA079",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-374": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "JO3045",
+      "Growth habit": "Facultative",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-375": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "JUFY II",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-376": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KENYA 350",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Africa"
+    },
+    "WW-377": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KIRAC 66",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-378": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KOLBEN 3",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-379": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KRAKA",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-380": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Lammas",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-381": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "LESZYNSKA WCZESNA",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-382": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "LONTOI",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-383": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "M45/66",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "America"
+    },
+    "WW-384": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "M708//G25/N163",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-385": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Malgorzatka Udycka",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-386": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MARS DE SUEDE ROUGE BARBU",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-387": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MASTER",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-388": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MATRADERECSKEITF",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-389": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MEDRA/AURORA//HOHENTURM/DINA",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-390": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MEIRA",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-391": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MELCHIOR",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-392": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MICHE",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-393": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MISKAAGANI",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-394": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "MOCHO DE ESPIGA BRANCA",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-396": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "N67M2",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-397": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "NACHIPUNDO",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-398": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "NONG DA NO141",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-399": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "NZ(81)P43",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Oceania"
+    },
+    "WW-400": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ODESSA EXP.STA.17413",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-401": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ODESSA EXPSTA20722",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-402": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ODESSA EXPSTA21821",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-403": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ODESSKAIA 16",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-404": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "OGOSTA",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-405": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "OPAL",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-406": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Orlandi",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-407": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "OULIANOWSKA",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-408": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "P. DE BROLLON",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-409": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "P4523-80",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-410": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "PATO",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "America"
+    },
+    "WW-411": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "PRECOCE",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-412": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "PROMESSA",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-413": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "REDMAN",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "America"
+    },
+    "WW-414": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "RITAK",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-415": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ROUGE DE MARCHISSY",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-416": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "S975-A4-A1",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Africa"
+    },
+    "WW-417": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "SEU SEUN 27",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-419": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Strubes Dickkopf",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-420": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "TAFERSTAT",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Africa"
+    },
+    "WW-421": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "TAHTI",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-422": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "TREMESINO MEIRA",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-423": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "TRIGO DE MONTE",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-424": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "TURDA-81-77",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-425": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "VAKKA",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-426": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "VALDOR",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-427": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "RONGOTEA",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Oceania"
+    },
+    "WW-428": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KITCHENER",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "America"
+    },
+    "WW-429": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "STANLEY",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "America"
+    },
+    "WW-430": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "WS-13 CARDENO 34/45",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-431": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "NEELKANT",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-432": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "SANUNU",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-433": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "HOUMANA",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Africa"
+    },
+    "WW-434": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CARIBO",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-435": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "LIMPOPO",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Africa"
+    },
+    "WW-436": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Hopea",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-437": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "NON_PLUS_EXTRA",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-438": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "PRINCE LEOPOLD",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-439": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Solaris",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-440": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "FRUH-WEIZEN",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Europe"
+    },
+    "WW-441": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "VOLT",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-442": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ORNICAR",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-444": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "PAMUKALE",
+      "Growth habit": "Spring",
+      "Group": "IV",
+      "Continent": "Asia"
+    },
+    "WW-445": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ZILVE",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-446": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "AXONA",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-447": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "ROKYCANSKA_SAMETKA",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-448": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "HANA",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Europe"
+    },
+    "WW-449": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "FANTASIYA-ODESSKAYA",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-450": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "EQUINOX",
+      "Growth habit": "Winter",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-451": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "HAMAC",
+      "Growth habit": "Spring",
+      "Group": "IV",
+      "Continent": "Europe"
+    },
+    "WW-452": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-453": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-454": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-455": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Africa"
+    },
+    "WW-456": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Africa"
+    },
+    "WW-457": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Punjab Tipe 24",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-458": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Punjab Tipe 15",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-459": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Sarrubra",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-460": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-461": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-462": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-463": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Soor Ghanum",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-464": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-465": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Dalnevostochnaya 10",
+      "Growth habit": "Winter",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-467": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-468": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Croisement 268",
+      "Growth habit": "Facultative",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-469": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Spin121var12536",
+      "Growth habit": "Winter",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-470": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Albidum 12",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-471": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Palestinskaya",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-472": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-473": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Winter",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-474": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-475": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Ardito",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-476": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CHINESE_SPRING",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "Asia"
+    },
+    "WW-477": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "BENCHUNG",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-478": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CHANATE",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "America"
+    },
+    "WW-479": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CHIRKUNG",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-480": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "CHYAMTANG",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-481": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "FRONTHATCH",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "America"
+    },
+    "WW-482": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "GHURKA",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Oceania"
+    },
+    "WW-483": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "KULUNG",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-484": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Mexique 58",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "America"
+    },
+    "WW-485": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "NORIN 29",
+      "Growth habit": "Spring",
+      "Group": "II",
+      "Continent": "Asia"
+    },
+    "WW-486": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "SYNTHETIQUE-W7984",
+      "Growth habit": "Spring",
+      "Group": "III",
+      "Continent": "America"
+    },
+    "WW-487": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Punjab Tipe 18",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-488": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-489": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-490": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Landrace",
+      "Growth habit": "Spring",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-492": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Favori",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-493": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Africa"
+    },
+    "WW-494": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Douchani",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-495": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Dolatkhani (white)",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-496": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Gahu (Nepali) or Kyo (Sikkimese)",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-497": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Desi",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-498": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Deve",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-499": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-500": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-501": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Soor Ghanum",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-502": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-503": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-504": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Surka Oscista",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-505": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-506": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Europe"
+    },
+    "WW-507": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-508": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Gahu (Nepali) or Kyo (Sikkimese)",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-509": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-510": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Africa"
+    },
+    "WW-511": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "Abi",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Asia"
+    },
+    "WW-512": {
+      "Taxonomy": "Triticum aestivum",
+      "Genome": "BAD",
+      "Variety/Genotype": "na",
+      "Growth habit": "na",
+      "Group": "I",
+      "Continent": "Europe"
+    }
+  }
+}

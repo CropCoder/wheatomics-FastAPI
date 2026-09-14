@@ -1,0 +1,35 @@
+{
+  "dataset": "NewExomeCapute",
+  "source_file": "Exome_PRJEB30905.txt",
+  "fields": [
+    {
+      "key": "Country of Origin",
+      "label": "Country of Origin"
+    },
+    {
+      "key": "Seed collection/source",
+      "label": "Seed collection/source"
+    },
+    {
+      "key": "Type",
+      "label": "Type"
+    }
+  ],
+  "samples": {
+    "Charger": {
+      "Country of Origin": "Great Britain",
+      "Seed collection/source": "JIC",
+      "Type": "w"
+    },
+    "Avalon": {
+      "Country of Origin": "Great Britain",
+      "Seed collection/source": "JIC",
+      "Type": "w"
+    },
+    "Buster": {
+      "Country of Origin": "Great Britain",
+      "Seed collection/source": "JIC",
+      "Type": "w"
+    }
+  }
+}
