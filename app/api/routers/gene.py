@@ -881,8 +881,8 @@ def search_gene_interval(
 
     with mysql_cursor(settings.DB_GENEFUNC) as cursor:
         cursor.execute(
-            f"SELECT * FROM `{table}` WHERE Chrom=%s AND Start1 >= %s AND End1 <= %s",
-            (chrom, start, end),
+            f"SELECT * FROM `{table}` WHERE Chrom=%s AND Start1 <= %s AND End1 >= %s",
+            (chrom, end, start),
         )
         for row in cursor.fetchall():
             records.append(_make_function_record(row, table))
