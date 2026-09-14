@@ -174,17 +174,32 @@ def query_expression(
         columns = cursor.fetchall()
         gene_id_column = "GeneID"
         data_columns = []
+
+        # 1) 基因 ID 列：优先精确匹配 GeneID / gene_id / gene，
+        #    避免被 IWGSCV1_1_id 等其他文本列覆盖（旧逻辑无 break 且未排除）。
+        for col in columns:
+            cname = (col.get("Field") or col[0]).strip()
+            if cname.lower() in ("geneid", "gene_id", "gene"):
+                gene_id_column = cname
+                break
+        else:
+            # 回退：第一个非元数据的 varchar/char/text 列
+            for col in columns:
+                cname = (col.get("Field") or col[0]).strip()
+                ctype = (col.get("Type") or col[1]).lower()
+                if any(t in ctype for t in ("varchar", "char", "text")):
+                    if cname.lower() not in ("id", "iWGSCV1_1_id", "name"):
+                        gene_id_column = cname
+                        break
+
+        # 2) 数据列：非文本、非元数据的列
         for col in columns:
             cname = (col.get("Field") or col[0]).strip()
             ctype = (col.get("Type") or col[1]).lower()
-            # 找第一个 varchar/char/text 列作为基因 ID 列
             if any(t in ctype for t in ("varchar", "char", "text")):
-                if cname.lower() not in ("id",):
-                    gene_id_column = cname
-            else:
-                # 数值列作为数据列（排除元数据列）
-                if cname.lower() not in ("id", "geneid", "iWGSCV1_1_id", "name"):
-                    data_columns.append(cname)
+                continue
+            if cname.lower() not in ("id", "geneid", "iWGSCV1_1_id", "name"):
+                data_columns.append(cname)
 
         # labels 优先用 project_meta 定义，否则用数据列名
         labels = get_project_labels(project)
