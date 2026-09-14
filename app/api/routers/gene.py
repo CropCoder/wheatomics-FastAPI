@@ -408,7 +408,7 @@ def _make_function_record(row, table):
             strand=normalize_text(row["Strand"]) or None,
             description=normalize_text(row.get("Description") or row.get("description") or "") or None,
             domain=normalize_text(row["Domain"]) or None,
-            chinese_spring_02g=normalize_text(row.get("ChineseSpring02G")) or None,
+            chinese_spring_02g=normalize_text(row.get("ChineseSpring02G") or row.get("Gene02G")) or None,
         )
     return GeneFunctionRecord(
         chromosome=str(row["Chrom"]),
