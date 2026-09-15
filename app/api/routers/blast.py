@@ -420,6 +420,32 @@ async def list_databases(
     }
 
 
+@router.get("/database-example")
+async def database_example(db: str = Query(...)):
+    """返回 blast 数据库的第一个序列名（从 .fai 索引），供前端作为示例。"""
+    if not _DB_NAME_RE.fullmatch(db):
+        raise HTTPException(status_code=400, detail=f"Invalid database name: {db}")
+    fai_path = os.path.join(DB_DIR, f"{db}.fai")
+    if not os.path.isfile(fai_path):
+        raise HTTPException(status_code=404, detail=f"No .fai index for database {db}")
+    try:
+        with open(fai_path, encoding="utf-8", errors="ignore") as f:
+            line = f.readline()
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"Cannot read .fai: {exc}")
+    if not line.strip():
+        raise HTTPException(status_code=404, detail=f"Empty .fai for {db}")
+    parts = line.rstrip("\n").rstrip("\r").split("\t")
+    seq_name = parts[0].strip()
+    seq_len = 0
+    if len(parts) > 1:
+        try:
+            seq_len = int(parts[1])
+        except ValueError:
+            seq_len = 0
+    return {"success": True, "db": db, "example": seq_name, "length": seq_len}
+
+
 @router.get("/status")
 async def blast_status():
     """检查 BLAST 环境"""

@@ -294,6 +294,7 @@ $(function() {
   // Mark user-picked when the dropdown changes manually
   $('#db-select').on('change', function() {
     userPickedDatabase = true;
+    loadExample(this.value);
   });
 });
 
@@ -302,6 +303,28 @@ $(function() {
 // User-driven flag — once they manually pick a database from the
 // dropdown, stop auto-overriding it on input changes.
 var userPickedDatabase = false;
+
+function loadExample(db) {
+  if (!db) return;
+  // 聚合库没有对应的 .fai，跳过
+  if (db === 'all_genomes' || db === 'all_gene' || db === 'all_protein') return;
+  $.getJSON('/api/blast/database-example', { db: db })
+    .done(function(resp) {
+      if (!resp || !resp.success) return;
+      var seq = resp.example;
+      var len = resp.length;
+      if (!seq) return;
+      // genome 库 → 区间示例；否则 → 基因/转录本 ID
+      if (db.toLowerCase().indexOf('genome') !== -1 && len > 0) {
+        var end = Math.min(10000, len);
+        $('#query-input').val(seq + ':1-' + end);
+      } else {
+        $('#query-input').val(seq);
+      }
+      autoDetectMode();
+    })
+    .fail(function() {});
+}
 
 function autoDetectMode() {
   var input = $('#query-input').val().trim();
