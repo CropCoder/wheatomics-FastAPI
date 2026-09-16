@@ -8,9 +8,16 @@ symbols and matches them against cloned_gene_db.cloned_gene_tbl (gene_name + gen
 
 Output (with --write):
   <out_dir>/matched_report_<date>.csv   genes already in the known-genes table (report only)
-  <out_dir>/candidate_genes_<date>.csv  new-gene candidates for human review:
-                                        fill approve=1 (and optionally species_override /
-                                        chrom_pos_override) then run import_cloned_genes.py
+  <out_dir>/candidate_genes_<date>.csv  new-gene candidates for review. Two halves:
+                                        (a) read-only reference columns carried over
+                                            from the annotation layer
+                                        (b) empty *_columns for the cloned_gene_tbl
+                                            fields that only a human/full-text pass can
+                                            supply (chrom_pos, species, DOI, cloning
+                                            method, submitter, ...). Fill those, set
+                                            approve=1, then run import_cloned_genes.py
+  <out_dir>/papers_<date>.csv           de-duplicated PMID list behind the candidates —
+                                        use it to fetch the full texts for the review
 
 This script is read-only against both databases; it never writes to MySQL.
 Re-running it is safe and only refreshes the CSV reports.
@@ -44,12 +51,40 @@ DEFAULT_PASSWORD = None
 DEFAULT_ANN_DB = "Triticeae_Research_filter"
 DEFAULT_KNOWN_DB = "cloned_gene_db"
 
-CANDIDATE_FIELDS = [
+# Reviewed CSV layout. The first block is carried over from the annotation layer
+# and is reference-only; the second block is what the reviewer must supply, since
+# the annotation layer has no data for it (cloned_gene_tbl completeness is judged
+# by what app/static/genes/detail.html renders — anything it displays must be
+# filled in here or the imported row shows "—").
+CANDIDATE_REFERENCE_FIELDS = [
     "gene_name", "gene_type", "n_papers", "pmids", "paper_titles", "pub_dates",
     "traits", "function_summaries", "evidence_types", "max_confidence",
     "review_status", "source_method", "llm_reason",
-    "species_override", "chrom_pos_override", "approve",
 ]
+
+#: multi-value cells join with '###' and are positionally aligned with `pmids`,
+#: so `paper_doi` part N belongs to PMID part N of the same row.
+CANDIDATE_FILL_FIELDS = [
+    "gene_name_final",           # correct the symbol if the LLM read it wrong
+    "is_functional_confirmed",   # y/n — re-check the LLM's is_functional_gene call
+    "gene_species",              # wheat / barley / rye / Aegilops ...
+    "chrom_pos",                 # e.g. 5A, 3B:569382161-569388178
+    "gene_phenotype",            # seed: `traits` column
+    "key_result",                # seed: `function_summaries`; '###' per paper
+    "function_description",      # seed: gene_type; confidence; evidence
+    "cloning_method",            # map-based cloning / GWAS / CRISPR ...
+    "cloning_method_description",
+    "paper_doi",                 # '###'-aligned with pmids
+    "author",                    # submitter (see import script notes)
+    "author_mail",
+    "review_note",
+    "approve",                   # 1/yes to import
+]
+
+CANDIDATE_FIELDS = CANDIDATE_REFERENCE_FIELDS + CANDIDATE_FILL_FIELDS
+
+PAPER_FIELDS = ["pmid", "pub_date", "title", "n_genes", "gene_names"]
+
 
 MATCHED_FIELDS = [
     "gene_name", "matched_clone_ids", "n_papers", "pmids", "review_status",
@@ -294,6 +329,7 @@ def main():
     stamp = datetime.now().strftime("%Y%m%d")
     matched_path = os.path.join(args.out_dir, "matched_report_%s.csv" % stamp)
     cand_path = os.path.join(args.out_dir, "candidate_genes_%s.csv" % stamp)
+    papers_path = os.path.join(args.out_dir, "papers_%s.csv" % stamp)
 
     with open(matched_path, "w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(fh, fieldnames=MATCHED_FIELDS)
@@ -311,29 +347,81 @@ def main():
         writer = csv.DictWriter(fh, fieldnames=CANDIDATE_FIELDS)
         writer.writeheader()
         for rec in candidates:
+            traits = ";".join(rec["traits"])
+            summaries = "###".join(rec["summaries"])
+            gene_types = ";".join(rec["gene_types"])
             writer.writerow({
+                # --- reference columns (from the annotation layer) ---
                 "gene_name": rec["gene_name"],
-                "gene_type": ";".join(rec["gene_types"]),
+                "gene_type": gene_types,
                 "n_papers": len(rec["papers"]),
                 "pmids": "###".join(p[0] for p in rec["papers"]),
                 "paper_titles": "###".join(p[1] for p in rec["papers"]),
                 "pub_dates": "###".join(p[2] for p in rec["papers"]),
-                "traits": ";".join(rec["traits"]),
-                "function_summaries": "###".join(rec["summaries"]),
+                "traits": traits,
+                "function_summaries": summaries,
                 "evidence_types": ";".join(rec["evidence"]),
                 "max_confidence": rec["max_confidence"],
                 "review_status": ";".join(rec["review_status"]),
                 "source_method": ";".join(rec["source_method"]),
                 "llm_reason": rec["llm_reason"],
-                "species_override": "",
-                "chrom_pos_override": "",
+                # --- fields only a human/full-text pass can supply ---
+                # Seeded where the annotation layer gives a usable draft; the
+                # reviewer overwrites or clears. paper_doi stays empty on purpose:
+                # it must stay '###'-aligned with pmids, so a blind seed would
+                # misalign the moment a gene has more than one paper.
+                "gene_name_final": "",
+                "is_functional_confirmed": "",
+                "gene_species": "",
+                "chrom_pos": "",
+                "gene_phenotype": traits,
+                "key_result": summaries,
+                "function_description": "%s; confidence=%s; evidence=%s" % (
+                    gene_types,
+                    rec["max_confidence"] if rec["max_confidence"] is not None else "",
+                    ";".join(rec["evidence"]),
+                ),
+                "cloning_method": "",
+                "cloning_method_description": "",
+                "paper_doi": "",
+                "author": "",
+                "author_mail": "",
+                "review_note": "",
                 "approve": "",
             })
 
+    # De-duplicated paper list behind the candidates — the fetch list for the
+    # full-text pass (one row per PMID, naming every candidate gene citing it).
+    papers = {}
+    for rec in candidates:
+        for pmid, title, pub_date in rec["papers"]:
+            if not pmid:
+                continue
+            entry = papers.setdefault(pmid, {"title": title, "pub_date": pub_date, "genes": []})
+            if rec["gene_name"] not in entry["genes"]:
+                entry["genes"].append(rec["gene_name"])
+    with open(papers_path, "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=PAPER_FIELDS)
+        writer.writeheader()
+        for pmid in sorted(papers, key=lambda p: (len(p), p)):
+            entry = papers[pmid]
+            writer.writerow({
+                "pmid": pmid,
+                "pub_date": entry["pub_date"],
+                "title": entry["title"],
+                "n_genes": len(entry["genes"]),
+                "gene_names": "###".join(entry["genes"]),
+            })
+
+    multi_paper = sum(1 for rec in candidates if len(rec["papers"]) > 1)
     print("\nwritten: %s (%d rows)" % (matched_path, len(matched)))
     print("written: %s (%d rows)" % (cand_path, len(candidates)))
-    print("review %s: set approve=1 per gene, fill species_override/"
-          "chrom_pos_override if known, then run import_cloned_genes.py" % cand_path)
+    print("written: %s (%d unique PMIDs)" % (papers_path, len(papers)))
+    if multi_paper:
+        print("note: %d candidate genes cite >1 paper; their '###'-joined multi-value"
+              " cells must stay positionally aligned on review" % multi_paper)
+    print("review %s: fill the fill-columns, set approve=1, then run"
+          " import_cloned_genes.py" % cand_path)
 
 
 if __name__ == "__main__":
