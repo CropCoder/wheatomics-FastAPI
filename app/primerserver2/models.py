@@ -36,7 +36,7 @@ class ConfigResponse(BaseModel):
 class DatabaseGroup(BaseModel):
     name: str
     databases: Dict[str, str]
-    examples: Dict[str, list[str]] = {}
+    examples: Dict[str, List[str]] = {}
 
 
 class DatabasesResponse(BaseModel):
