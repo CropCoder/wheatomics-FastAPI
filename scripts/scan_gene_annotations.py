@@ -46,10 +46,38 @@ except ImportError:
 DEFAULT_HOST = "localhost"
 DEFAULT_PORT = 3306
 DEFAULT_USER = "wheatomics_user"
-# Resolved at runtime: --password flag, else DB_PASSWORD env var.
+# Resolved at runtime: --password flag, else DB_PASSWORD env var, else .env.
 DEFAULT_PASSWORD = None
 DEFAULT_ANN_DB = "Triticeae_Research_filter"
 DEFAULT_KNOWN_DB = "cloned_gene_db"
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _dotenv(key):
+    """Read KEY from the repo-root .env — the same file Pydantic loads for the app.
+
+    Scripts are launched from a plain shell, where .env is NOT in the process
+    environment, so without this fallback the password would have to be pasted
+    onto the command line (leaking into shell history and `ps`).
+    """
+    try:
+        with open(os.path.join(REPO_ROOT, ".env"), encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, _, v = line.partition("=")
+                if k.strip() != key:
+                    continue
+                v = v.strip()
+                if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+                    return v[1:-1]
+                # strip a trailing inline comment only when whitespace precedes it
+                return re.split(r"\s+#", v, 1)[0].strip()
+    except OSError:
+        return None
+    return None
 
 # Reviewed CSV layout. The first block is carried over from the annotation layer
 # and is reference-only; the second block is what the reviewer must supply, since
@@ -264,10 +292,14 @@ def scan(conn_ann, conn_known, limit=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--host", default=DEFAULT_HOST)
-    parser.add_argument("--port", type=int, default=DEFAULT_PORT)
-    parser.add_argument("--user", default=DEFAULT_USER)
-    parser.add_argument("--password", default=DEFAULT_PASSWORD)
+    parser.add_argument("--host", default=None,
+                        help="MySQL host (default: $DB_HOST, .env, then localhost)")
+    parser.add_argument("--port", type=int, default=None,
+                        help="MySQL port (default: $DB_PORT, .env, then 3306)")
+    parser.add_argument("--user", default=None,
+                        help="MySQL user (default: $DB_USER, .env, then wheatomics_user)")
+    parser.add_argument("--password", default=None,
+                        help="MySQL password (default: $DB_PASSWORD, then .env)")
     parser.add_argument("--ann-db", default=DEFAULT_ANN_DB,
                         help="annotation database (default: %s)" % DEFAULT_ANN_DB)
     parser.add_argument("--known-db", default=DEFAULT_KNOWN_DB,
@@ -279,10 +311,14 @@ def main():
     parser.add_argument("--out-dir", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "output"),
                         help="directory for CSV output (default: scripts/output)")
     args = parser.parse_args()
+    # Credentials resolve the way the app does: CLI flag > process env > repo
+    # .env > built-in default.
+    args.host = args.host or os.environ.get("DB_HOST") or _dotenv("DB_HOST") or DEFAULT_HOST
+    args.port = int(args.port or os.environ.get("DB_PORT") or _dotenv("DB_PORT") or DEFAULT_PORT)
+    args.user = args.user or os.environ.get("DB_USER") or _dotenv("DB_USER") or DEFAULT_USER
+    args.password = args.password or os.environ.get("DB_PASSWORD") or _dotenv("DB_PASSWORD")
     if not args.password:
-        args.password = os.environ.get("DB_PASSWORD")
-    if not args.password:
-        parser.error("--password is required (or export DB_PASSWORD)")
+        parser.error("--password is required (or export DB_PASSWORD, or set it in .env)")
 
     try:
         conn_ann = _connect(args.host, args.port, args.user, args.password, args.ann_db)
