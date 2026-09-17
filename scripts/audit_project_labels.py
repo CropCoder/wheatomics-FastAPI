@@ -70,7 +70,7 @@ def _dotenv(key):
     return None
 
 
-def fetch_columns(cur, table):
+def fetch_columns(cur, schema, table):
     """Column names of `table` in physical order, plus the numeric ones.
 
     Returns (all_names, string_names, numeric_names) or None if the table is
@@ -79,7 +79,7 @@ def fetch_columns(cur, table):
     cur.execute(
         "SELECT COLUMN_NAME, DATA_TYPE FROM information_schema.columns "
         "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s ORDER BY ORDINAL_POSITION",
-        (cur.database, table),
+        (schema, table),
     )
     rows = cur.fetchall()
     if not rows:
@@ -92,9 +92,9 @@ def fetch_columns(cur, table):
     return all_names, string_names, numeric_names
 
 
-def audit_one(cur, table_name, labels):
+def audit_one(cur, schema, table_name, labels):
     """Return a verdict dict for one project."""
-    cols = fetch_columns(cur, table_name)
+    cols = fetch_columns(cur, schema, table_name)
     rec = {
         "table_name": table_name,
         "n_labels": len(labels),
@@ -197,7 +197,7 @@ def main():
                         raw = []
                 labels = [str(x) for x in (raw or [])]
 
-                rec = audit_one(cur, table_name, labels)
+                rec = audit_one(cur, args.db, table_name, labels)
                 rec["group"] = row.get("group_name") or ""
                 records.append(rec)
     finally:
