@@ -491,10 +491,19 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
   chartDiv.show();
 
   var chart = new Highcharts.Chart({
-    chart: { renderTo: chartId, zoomType: 'xy', height: 420 },
+    chart: {
+      renderTo: chartId,
+      zoomType: 'xy',
+      height: 420,
+      // 列数多时让绘图区横向滚动，避免柱子被压缩到看不清
+      scrollablePlotArea: { minWidth: Math.max(labels.length * 70, 600) }
+    },
     credits: { enabled: false },
     title: { text: projectDesc },
-    xAxis: { categories: labels, labels: { rotation: -45, style: { fontSize: '11px' } } },
+    xAxis: {
+      categories: labels,
+      labels: { rotation: -45, step: 1, style: { fontSize: '11px' } }
+    },
     yAxis: { title: { text: 'Expression (TPM)' }, lineWidth: 2 },
     tooltip: { shared: true, valueDecimals: 1 },
     exporting: { buttons: { contextButton: { text: 'Export data' } } }
@@ -510,7 +519,7 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
   var hasStd = resp.results[0].points.some(function(p) { return p.std !== null; });
 
   var html = '<h6 class="mb-2">' + projectDesc + '</h6>';
-  html += '<div style="max-height:500px;overflow-y:auto;"><table class="table table-bordered table-hover table-sm">';
+  html += '<div style="max-height:500px;overflow:auto;"><table class="table table-bordered table-hover table-sm" style="min-width:100%;white-space:nowrap;">';
 
   // 表头
   html += '<thead><tr><th style="position:sticky;top:0;background:#f8f9fa;">Gene ID</th>';
