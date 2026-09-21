@@ -118,6 +118,11 @@ git add app/static/primerserver2 && git commit -m "chore(primerserver2): rebuild
 这个 SPA 用的接口全部在 `/api/PrimerServer2/*`（见 §二、main.py 的 `PS2_PREFIX`），
 和静态挂载 `/PrimerServer2` 是两个不同的前缀，不会互相拦截。
 
+**部署自检**：`GET /api/PrimerServer2/health` 逐项检查 config.ini、samtools / primer3 /
+blastn / makeblastdb 四个可执行文件、database 目录、job workdir 是否就位，全通过才返回
+`status=healthy`，否则 `degraded` 并列出哪一项是 false。缺工具时首发症状是"任务跑失败"，
+这个端点能直接定位。它和 `main.py` 里那个只回一句静态文本的 `/api/health` 不是一回事。
+
 **站点外壳（§七.2 / §七.3）**：菜单栏、页脚、访问统计都按规范接好了，但它们的**源码在前端仓库的
 `frontend/index.html`**（`#app` 之外的静态 HTML，Vue 只替换 `#app` 内部，所以重建不丢）。
 改菜单要去那边改再重新构建，不要动本仓库的产物。

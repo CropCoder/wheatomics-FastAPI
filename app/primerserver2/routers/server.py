@@ -3,11 +3,13 @@ import datetime
 import logging
 import platform
 import shutil
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Depends
 
 from ..config import PrimerServerConfig, get_primer_config
+from ..dependencies import PrimerServer2Settings, get_app_settings
 from ..models import ServerInfoResponse
 
 logger = logging.getLogger(__name__)
@@ -64,3 +66,26 @@ async def get_server_info(config: PrimerServerConfig = Depends(get_primer_config
         response.primer3Version = await _run_cmd(config.primer3, "-version")
 
     return response
+
+
+@router.get(
+    "/health",
+    summary="Check that the config, external tools and directories are in place",
+    description="Returns status=healthy only when every check passes, plus the individual "
+                "booleans. Useful straight after a deploy — a missing primer3 or blastn, or a "
+                "database dir that does not exist, is otherwise only visible as a failed job.",
+)
+def get_health(
+    config: PrimerServerConfig = Depends(get_primer_config),
+    settings: PrimerServer2Settings = Depends(get_app_settings),
+):
+    checks = {
+        "config": config.path.exists(),
+        "samtools": config.executable_available("samtools"),
+        "primer3": config.executable_available("primer3"),
+        "blastn": config.executable_available("blastn"),
+        "makeblastdb": config.executable_available("makeblastdb"),
+        "database_dir": bool(config.database_dir) and Path(config.database_dir).exists(),
+        "workdir_base": settings.workdir_base.exists() or settings.workdir_base.parent.exists(),
+    }
+    return {"status": "healthy" if all(checks.values()) else "degraded", "checks": checks}
