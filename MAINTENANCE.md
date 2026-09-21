@@ -118,8 +118,14 @@ git add app/static/primerserver2 && git commit -m "chore(primerserver2): rebuild
 这个 SPA 用的接口全部在 `/api/PrimerServer2/*`（见 §二、main.py 的 `PS2_PREFIX`），
 和静态挂载 `/PrimerServer2` 是两个不同的前缀，不会互相拦截。
 
-**部署自检**：`GET /api/PrimerServer2/health` 逐项检查 config.ini、samtools / primer3 /
-blastn / makeblastdb 四个可执行文件、database 目录、job workdir 是否就位，全通过才返回
+**配置**：这个模块**没有配置文件**。工具路径和限额全部走 Pydantic Settings ——
+`app/core/config.py` 里的 `PRIMERSERVER2_*`（见 §四）。原版 PrimerServer 的 `config.ini`
+已在 2026-09-21 废弃：那个文件一半是代码早就不再解析的 legacy FASTA 库清单，而且线上那份
+有重复键，Python 的 configparser 一读就抛 `DuplicateOptionError`，会把整组
+`/api/PrimerServer2/*` 端点变成 500。
+
+**部署自检**：`GET /api/PrimerServer2/health` 逐项检查 samtools / primer3 / blastn /
+makeblastdb 四个可执行文件、`BLAST_DB_PATH` 目录、job workdir 是否就位，全通过才返回
 `status=healthy`，否则 `degraded` 并列出哪一项是 false。缺工具时首发症状是"任务跑失败"，
 这个端点能直接定位。它和 `main.py` 里那个只回一句静态文本的 `/api/health` 不是一回事。
 
@@ -288,7 +294,8 @@ sudo systemctl restart wheatomics-api
 | `DB_PPI` | `wheatPPIdb` | 蛋白质互作数据库 |
 | `BLAST_DB_PATH` | `/var/www/html/getfasta/blastdb` | BLAST 数据库路径 |
 | `ORTHOFINDER_BASE_DIR` | `/var/www/html/orthefind/Results_Jul23` | OrthoFinder 结果根目录 |
-| `PRIMERSERVER2_CONFIG_PATH` | `/var/www/html/PrimerServer2/config.ini` | PrimerServer2 配置文件 |
+| `PRIMERSERVER2_SAMTOOLS` `_PRIMER3` `_BLASTN` `_MAKEBLASTDB` | `/usr/bin/samtools`、`/usr/bin/primer3_core`、`/var/www/html/blast/blast+/bin/blastn`、`.../makeblastdb` | PrimerServer2 外部工具路径（原 config.ini 的 `[Path]`）；`/health` 逐项检查可执行性 |
+| `PRIMERSERVER2_LIMIT_SITE` `_LIMIT_PRIMER` `_LIMIT_DATABASE` | `100` / `1000` / `4` | PrimerServer2 单次任务输入上限，超出返回 422 |
 
 ### Apache 站点配置（`/etc/apache2/sites-enabled/`）
 

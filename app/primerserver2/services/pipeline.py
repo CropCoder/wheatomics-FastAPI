@@ -75,10 +75,8 @@ class PipelineRunner:
         1. 'custom' — job-local FASTA
         2. exact name in the shared BLAST library (settings.BLAST_DB_PATH)
         3. primer_X legacy names mapped to AABBDD_X in the BLAST library
-           (the config.ini primer_* FASTA files were removed from the server
-           and the ones still on disk are broken — blastn exit 2)
-        4. config.ini database_dir file (only for legacy names with no
-           BLAST library counterpart)
+           (the old primer_* FASTA files were removed from the server and the
+           ones still on disk are broken — blastn exit 2)
         """
         if db_name == "custom":
             return str(job_dir / custom_dir)
@@ -88,8 +86,10 @@ class PipelineRunner:
             mapped = "AABBDD_" + db_name[len("primer_"):]
             if blast_db_exists(mapped):
                 return str(wheatomics_settings.BLAST_DB_PATH / mapped)
-        legacy = self.config.database_path(db_name)
-        return str(legacy)  # may not exist; the worker fails with a clear error
+        # Paths do not get here: the job router validates every selection with
+        # database_exists() before creating the job. A name that disappeared in
+        # between still fails in the worker, with the missing path in the log.
+        return str(wheatomics_settings.BLAST_DB_PATH / db_name)
 
     def _resolve_databases(self, selected: List[str], job_dir: Path) -> List[str]:
         """Resolve selected database names to absolute paths."""

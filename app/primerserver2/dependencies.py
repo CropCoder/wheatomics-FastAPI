@@ -14,7 +14,6 @@ class PrimerServer2Settings:
     """Thin wrapper exposing PrimerServer2 settings to keep router code unchanged."""
 
     def __init__(self):
-        self.config_path = settings.PRIMERSERVER2_CONFIG_PATH
         self.workdir_base = settings.PRIMERSERVER2_WORKDIR_BASE
         self.api_key: Optional[str] = settings.PRIMERSERVER2_API_KEY
         self.cors_origins = settings.PRIMERSERVER2_CORS_ORIGINS

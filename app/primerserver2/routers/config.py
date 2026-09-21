@@ -110,9 +110,9 @@ def _blast_db_groups(nuc_dbs: List[str]) -> List[DatabaseGroup]:
     """
     Group the shared BLAST nucleotide databases for the picker UI.
 
-    The legacy config.ini primer_* FASTA databases were removed from the
-    server, so the specificity-check DB list now comes from the same BLAST
-    library used by the BLAST search pages:
+    The legacy primer_* FASTA databases — once listed in PrimerServer's
+    config.ini, both since removed — are gone, so the specificity-check DB list
+    now comes from the same BLAST library used by the BLAST search pages:
 
         settings.BLAST_DB_PATH
 
@@ -283,8 +283,7 @@ def get_config_endpoint(
     summary="List available specificity-check databases",
     description=(
         "Returns database groups (genome / gene) built from the shared "
-        "BLAST library at settings.BLAST_DB_PATH. The legacy config.ini "
-        "primer_* FASTA databases are no longer used, and the all_* "
+        "BLAST library at settings.BLAST_DB_PATH, and the all_* "
         "aggregated databases are excluded because hits in multi-genome "
         "aggregates are not useful for genome-specific primer specificity "
         "checking. For each database, sequence IDs are read from the "
@@ -293,9 +292,7 @@ def get_config_endpoint(
         "jobs."
     ),
 )
-def get_databases(
-    config: PrimerServerConfig = Depends(get_primer_config),
-):
+def get_databases():
     from app.api.routers.blast import list_dbs
 
     # Obtain the same BLAST nucleotide database list already used by
