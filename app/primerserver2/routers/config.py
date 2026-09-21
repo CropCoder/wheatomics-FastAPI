@@ -30,10 +30,10 @@ def _is_picker_database(name: str) -> bool:
     return not (_PER_CHROM_RE.search(name) or name.startswith("all_"))
 
 
-#: Number of sequence IDs shown as examples for each database.
-#: For a wheat genome this will normally produce examples such as:
-#: 1A, 1B, 1D, 2A, 2B, ...
-_MAX_FAI_EXAMPLES = 10
+#: Number of sequence IDs shown as examples for each database. Enough to show
+#: the ID format without wrapping the form — the complete list is the
+#: /databases/{name}/sequences download.
+_MAX_FAI_EXAMPLES = 3
 
 
 def _read_fai_examples(
