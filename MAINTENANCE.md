@@ -118,8 +118,18 @@ git add app/static/primerserver2 && git commit -m "chore(primerserver2): rebuild
 这个 SPA 用的接口全部在 `/api/PrimerServer2/*`（见 §二、main.py 的 `PS2_PREFIX`），
 和静态挂载 `/PrimerServer2` 是两个不同的前缀，不会互相拦截。
 
-**已知差异**：它用 Element Plus，不是 §七 规定的 Bootstrap 4.5.3 + jQuery 结构，也没有
-站点级导航菜单（`硬编码 nav` 约定）。它是独立视觉体系，这两条豁免。
+**站点外壳（§七.2 / §七.3）**：菜单栏、页脚、访问统计都按规范接好了，但它们的**源码在前端仓库的
+`frontend/index.html`**（`#app` 之外的静态 HTML，Vue 只替换 `#app` 内部，所以重建不丢）。
+改菜单要去那边改再重新构建，不要动本仓库的产物。
+
+**与 §七 的两点已知差异**（有意为之）：
+
+- **不引 Bootstrap 4.5.3 和 jQuery**。菜单栏和页脚的样式全部来自 `/css/style.css`
+  （`#home_header` / `#header-tabs` / `#home_footer` 都是 ID 作用域的），不依赖 Bootstrap；
+  页面主体是 Element Plus，再挂一份 Bootstrap CSS 只会互相抢样式。
+- **`#app p` 被覆盖回 14px / margin:0**。`/css/style.css` 里有一条全局 `p { font-size:1.15em;
+  line-height:130%; margin:0.83em }`，那是给站点散文页用的，套在 Element Plus 表单和结果表格的
+  `<p>` 上会全变大变松。前端仓库的 `index.html` 里有一条 `#app p` 把它压回来。
 
 ---
 
@@ -541,6 +551,9 @@ fetch('/header.html').then(r => r.text()).then(html => document.getElementById('
 ```
 
 —— 线上 `/header.html` 不存在，会导致菜单空白。参考 `app/static/interval/index.html` 的 `#home_header` + `#header-tabs` + `#home_footer` 结构。
+
+> **构建型 SPA 例外**：PrimerServer2（`/PrimerServer2/`）的菜单和页脚不在本仓库，在前端仓库的
+> `frontend/index.html` 里。改它的导航要去那边改，其余约定相同。见 §一.5。
 
 ### 3. 访问统计：每个页面都自带
 
