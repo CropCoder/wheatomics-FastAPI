@@ -1,13 +1,17 @@
-"""PrimerServer2 configuration adapter for WheatOmics.
+"""PrimerServer2 configuration.
 
-Reads centralized settings from app.core.config.settings and provides the
-same typed accessors the original PrimerServer backend used.
+The original PrimerServer read its own config.ini. This module keeps the same
+typed accessors but sources them from app.core.config.settings, so the whole
+project has one configuration mechanism and one place to look — see the
+PRIMERSERVER2_* entries in .env.example.
+
+The ini format is gone on purpose: half of that file was a legacy FASTA database
+list the code no longer resolves, and a duplicate key in it made configparser
+raise, which turned every /api/PrimerServer2/* request into a 500.
 """
 
-import configparser
-import re
+import shutil
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from app.core.config import settings
 
@@ -53,57 +57,29 @@ def blast_db_exists(name: str) -> bool:
 
 
 class PrimerServerConfig:
-    """Wrapper around config.ini with typed accessors."""
-
-    _QUOTE_RE = re.compile(r'^["\']|["\']$')
-
-    def __init__(self, config_path: Path):
-        self._path = config_path
-        self._parser = configparser.ConfigParser()
-        # Preserve the original case of option keys (e.g. database names).
-        self._parser.optionxform = str
-        if config_path.exists():
-            self._parser.read(config_path, encoding="utf-8")
-
-    @property
-    def path(self) -> Path:
-        return self._path
-
-    @classmethod
-    def _strip_quotes(cls, value: str) -> str:
-        return cls._QUOTE_RE.sub("", value).strip()
-
-    def _path_value(self, key: str) -> str:
-        return self._strip_quotes(self._parser.get("Path", key, fallback=""))
-
-    def _system_value(self, key: str, fallback=None):
-        return self._parser.get("System Configuration", key, fallback=fallback)
-
-    def _limit_value(self, key: str, fallback: int = 0) -> int:
-        try:
-            return self._parser.getint("Input Limit Number", key, fallback=fallback)
-        except ValueError:
-            return fallback
+    """Typed accessors over the PRIMERSERVER2_* settings."""
 
     @property
     def samtools(self) -> str:
-        return self._path_value("samtools")
+        return settings.PRIMERSERVER2_SAMTOOLS
 
     @property
     def primer3(self) -> str:
-        return self._path_value("primer3")
+        return settings.PRIMERSERVER2_PRIMER3
 
     @property
     def blastn(self) -> str:
-        return self._path_value("blastn")
+        return settings.PRIMERSERVER2_BLASTN
+
+    @property
+    def makeblastdb(self) -> str:
+        return settings.PRIMERSERVER2_MAKEBLASTDB
 
     @property
     def blastdbcmd(self) -> str:
-        """blastdbcmd binary path: [Path] blastdbcmd, else sibling of blastn,
-        else rely on PATH."""
-        configured = self._path_value("blastdbcmd")
-        if configured:
-            return configured
+        """Configured path, else the blastdbcmd beside blastn, else PATH."""
+        if settings.PRIMERSERVER2_BLASTDBCMD:
+            return settings.PRIMERSERVER2_BLASTDBCMD
         blastn = self.blastn
         if blastn:
             sibling = Path(blastn).parent / "blastdbcmd"
@@ -112,73 +88,28 @@ class PrimerServerConfig:
         return "blastdbcmd"
 
     @property
-    def makeblastdb(self) -> str:
-        return self._path_value("makeblastdb")
-
-    @property
-    def database_dir(self) -> str:
-        return self._path_value("database")
-
-    @property
     def use_cpu(self) -> int:
-        try:
-            return int(self._system_value("useCPU", fallback="1"))
-        except ValueError:
-            return 1
+        return settings.PRIMERSERVER2_USE_CPU
 
     @property
     def show_info(self) -> bool:
-        val = self._system_value("showInfo", fallback="false")
-        return val.lower() in ("true", "1", "yes")
+        return settings.PRIMERSERVER2_SHOW_INFO
 
     @property
     def remove_tmp(self) -> bool:
-        val = self._system_value("removeTmp", fallback="true")
-        return val.lower() in ("true", "1", "yes")
+        return settings.PRIMERSERVER2_REMOVE_TMP
 
     @property
     def limit_site(self) -> int:
-        return self._limit_value("limitSite", fallback=100)
+        return settings.PRIMERSERVER2_LIMIT_SITE
 
     @property
     def limit_primer(self) -> int:
-        return self._limit_value("limitPrimer", fallback=1000)
+        return settings.PRIMERSERVER2_LIMIT_PRIMER
 
     @property
     def limit_database(self) -> int:
-        return self._limit_value("limitDatabase", fallback=4)
-
-    def databases(self) -> Dict[str, Dict[str, str]]:
-        """Return database groups mapping group name to {filename: alias}."""
-        groups: Dict[str, Dict[str, str]] = {}
-        for section in self._parser.sections():
-            if section.startswith("Database."):
-                group_name = section[len("Database."):]
-                groups[group_name] = {
-                    self._strip_quotes(k): self._strip_quotes(v)
-                    for k, v in self._parser.items(section)
-                }
-        return groups
-
-    def all_database_files(self) -> List[str]:
-        """Return all database file names declared in [Database.*] sections."""
-        files = []
-        for group in self.databases().values():
-            files.extend(group.keys())
-        return files
-
-    def database_exists(self, name: str) -> bool:
-        """Check whether a database file name is declared in config.ini or
-        present as a BLAST database under settings.BLAST_DB_PATH."""
-        if name == "custom":
-            return True
-        if name in self.all_database_files():
-            return True
-        return blast_db_exists(name)
-
-    def database_path(self, name: str) -> Path:
-        """Return absolute path to a database file."""
-        return Path(self.database_dir) / name
+        return settings.PRIMERSERVER2_LIMIT_DATABASE
 
     def to_public_dict(self) -> dict:
         return {
@@ -191,15 +122,22 @@ class PrimerServerConfig:
         }
 
     def executable_available(self, name: str) -> bool:
-        """Check whether an executable configured in [Path] is available."""
-        import shutil
+        """True when the `name` tool is configured and actually runnable.
 
+        False covers both "not configured" and "configured but missing" — either
+        way the job would fail, and /health reports which tools are affected.
+        """
         exe = getattr(self, name, "")
         if not exe:
             return False
         return shutil.which(exe) is not None
 
+    def database_exists(self, name: str) -> bool:
+        """True if `name` is 'custom' or a BLAST database under BLAST_DB_PATH."""
+        if name == "custom":
+            return True
+        return blast_db_exists(name)
+
 
 def get_primer_config() -> PrimerServerConfig:
-    """Load PrimerServer config.ini from the path configured in WheatOmics settings."""
-    return PrimerServerConfig(settings.PRIMERSERVER2_CONFIG_PATH)
+    return PrimerServerConfig()

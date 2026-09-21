@@ -83,7 +83,6 @@ class Settings(BaseSettings):
     # would fill BLAST_RESULT_DIR with 100KB params.json each.
     BLAST_MAX_QUEUED: int = 200
     BLAST_SITE_BASE_URL: str = "https://wheatomics.sdau.edu.cn"
-    PRIMERSERVER2_CONFIG_PATH: Path = Path("/var/www/html/PrimerServer2/config.ini")
     PRIMERSERVER2_WORKDIR_BASE: Path = Path("/var/www/html/PrimerServer2/jobs")
     PRIMERSERVER2_API_KEY: str = ""
     PRIMERSERVER2_CORS_ORIGINS: str = ""
@@ -91,6 +90,25 @@ class Settings(BaseSettings):
     PRIMERSERVER2_MAX_JOB_AGE_DAYS: int = 7
     PRIMERSERVER2_MAX_JOBS_ON_DISK: int = 1000
     PRIMERSERVER2_MAX_CONCURRENT_JOBS: int = 4
+
+    # PrimerServer2 external tools. blastn/makeblastdb point at the same BLAST+
+    # install the blast module uses, so the databases under BLAST_DB_PATH and
+    # the binary that searches them cannot drift apart by version.
+    PRIMERSERVER2_SAMTOOLS: str = "/usr/bin/samtools"
+    PRIMERSERVER2_PRIMER3: str = "/usr/bin/primer3_core"
+    PRIMERSERVER2_BLASTN: str = "/var/www/html/blast/blast+/bin/blastn"
+    PRIMERSERVER2_MAKEBLASTDB: str = "/var/www/html/blast/blast+/bin/makeblastdb"
+    # Blank = use blastdbcmd beside blastn, else rely on PATH.
+    PRIMERSERVER2_BLASTDBCMD: str = ""
+    # A request above these limits is rejected with 422 before it is queued.
+    PRIMERSERVER2_USE_CPU: int = 4
+    PRIMERSERVER2_LIMIT_SITE: int = 100
+    PRIMERSERVER2_LIMIT_PRIMER: int = 1000
+    PRIMERSERVER2_LIMIT_DATABASE: int = 4
+    # showInfo adds CPU/memory to /server-info; removeTmp deletes a job's temp
+    # files once the client closes the result window.
+    PRIMERSERVER2_SHOW_INFO: bool = False
+    PRIMERSERVER2_REMOVE_TMP: bool = True
 
 
     model_config = SettingsConfigDict(
