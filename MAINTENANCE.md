@@ -122,6 +122,18 @@ git add app/static/primerserver2 && git commit -m "chore(primerserver2): rebuild
 `frontend/index.html`**（`#app` 之外的静态 HTML，Vue 只替换 `#app` 内部，所以重建不丢）。
 改菜单要去那边改再重新构建，不要动本仓库的产物。
 
+**菜单是全站同一份，共 22 个副本**（21 个 `app/static/*/index.html`、`stats.html`、`detail.html`，
+外加前端仓库那份）。改任何一条菜单项都要**同时改 22 处**，否则立刻漂移——2026-09-21 就是因为
+逐份复制粘贴，导致 `CAPS/dCAPS` 只在 5 个页面存在、`SynTenyView` 只在它自己页面里。
+
+2026-09-21 统一时定的三条口径：
+
+- **scRNA / wheatPSP / eQTL 用内链**（`/scRNA/` 等）。原来写的是 `http://wheatomics.sdau.edu.cn/scRNA`，
+  实测要 301 三次才落地，最终 URL 还带双重斜杠（`https://...//scRNA/`）；内链一次 200。
+- **补上 `CAPS/dCAPS` 和 `SynTenyView`**（原来前者只有 5 个页面有，后者只有自己页面有）。
+- **`Neighborhood` 不加**——`/neighborhood/` 线上 404（Apache 规则缺失），加了等于全站散死链。
+  见 §三「某个 SPA 在本地正常，线上 404」。
+
 **与 §七 的两点已知差异**（有意为之）：
 
 - **不引 Bootstrap 4.5.3 和 jQuery**。菜单栏和页脚的样式全部来自 `/css/style.css`
@@ -163,6 +175,22 @@ git add app/static/primerserver2 && git commit -m "chore(primerserver2): rebuild
 ### Q: StaticFiles 挂载报 "Directory does not exist"
 **原因**: `main.py` 中的路径与实际文件夹名不匹配（如目录改名后没改代码）。
 **解决**: 检查 `app.mount()` 的 `directory=` 参数与 `app/static/` 下的实际文件夹名一致。
+
+### Q: 某个 SPA 在本地正常，线上 404
+**原因**: `main.py` 里注册了 mount，但 Apache 没有对应的 `ProxyPass`。uvicorn 直接访问没问题，
+经 443 进来就打不到——**两类注册都要做**，少一个就是 404。
+
+**症状**：`curl -I https://wheatomics.sdau.edu.cn/<module>/` 返回 404，
+但服务器上 `curl -I http://127.0.0.1:8000/<module>/` 返回 200。
+
+**解决**: 按 §一.3 补 ProxyPass（SSL 和非 SSL 两个文件都要），`sudo apachectl restart`。
+
+**2026-09-21 状态**：
+
+| 路径 | 状态 |
+|------|------|
+| `/PrimerServer2/` | 规则待补（见 §一.5） |
+| `/neighborhood/` | ⚠️ **404，规则一直没加，该 SPA 在线上打不开**。因此**没有**把 `Neighborhood` 加进全站菜单——补上 ProxyPass 之后再把它加进菜单并重新统一 |
 
 ### Q: 浏览器报 ERR_CERT_DATE_INVALID
 **原因**: 服务器 SSL 证书过期。HTTP 可访问，HTTPS 被浏览器拒绝。
