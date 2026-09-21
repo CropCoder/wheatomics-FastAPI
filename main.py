@@ -146,6 +146,9 @@ app.mount("/caps", StaticFiles(directory=Path(__file__).parent / "app" / "static
 app.mount("/eqtl", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "eqtl", html=True), name="eqtl")
 app.mount("/scRNA", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "scRNA", html=True), name="scRNA")
 app.mount("/wheatPSP", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "wheatPSP", html=True), name="wheatPSP")
+# Built Vue SPA. The path must match base: '/PrimerServer2/' in the frontend's
+# vite.config.js, which also bakes it into the asset URLs.
+app.mount("/PrimerServer2", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "primerserver2", html=True), name="primerserver2")
 
 
 @app.middleware("http")

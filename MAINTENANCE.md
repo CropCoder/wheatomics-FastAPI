@@ -77,6 +77,50 @@ sudo journalctl -u wheatomics-api -f    # 看启动日志
 > ```
 > 如果 git 最新 commit 比服务启动时间晚 → 必须 `sudo systemctl restart wheatomics-api`。
 
+### 5. 预构建 SPA（Vite / Vue / React）
+
+上面 1–4 步假设前端是手写的静态 HTML。如果前端是**独立仓库里的构建型项目**（Vite + Vue/React），
+流程多一步「构建」，但**产物仍然提交进本仓库**——服务器上没有 Node，不装 npm，部署只靠 `git pull`。
+
+目前只有一个这样的模块：**PrimerServer2**（`/PrimerServer2/`）。
+
+| 项 | 值 |
+|----|----|
+| 源码仓库 | `git@gitee.com:shengwei-ma/PrimerServer-wheatomics.git`（私有，SSH） |
+| 构建目录 | 仓库内 `frontend/`（Vue 3 + Vite + Element Plus + D3） |
+| 产物落点 | `app/static/primerserver2/` |
+| 挂载路径 | `/PrimerServer2`（**大小写敏感**） |
+
+⚠️ **挂载路径必须和 `frontend/vite.config.js` 里的 `base` 一致**。构建时 vite 会把 `base`
+写死进 `index.html` 的资源 URL（`/PrimerServer2/assets/xxx.js`），两边对不上就是整页白屏 +
+一堆 404。改路径要同时改 vite config 和后端 `app.mount()`，然后重新构建。
+
+重建步骤：
+
+```bash
+# 1) 拉源码 + 构建（本地做，服务器上没有 Node）
+git clone git@gitee.com:shengwei-ma/PrimerServer-wheatomics.git /tmp/ps2-fe
+cd /tmp/ps2-fe/frontend && npm install && npm run build
+
+# 2) 产物拷进本仓库（assets 带 hash，先清旧文件避免堆积）
+rm -rf app/static/primerserver2/assets
+mkdir -p app/static/primerserver2/assets
+cp /tmp/ps2-fe/frontend/dist/index.html app/static/primerserver2/
+cp /tmp/ps2-fe/frontend/dist/assets/* app/static/primerserver2/assets/
+
+# 3) 提交 + 部署（服务器侧只需 pull + 重启）
+git add app/static/primerserver2 && git commit -m "chore(primerserver2): rebuild frontend"
+```
+
+> ⚠️ **别手改 `app/static/primerserver2/index.html`**。下次重建会被覆盖。要改 title、favicon
+> 之类，改前端仓库的 `frontend/index.html` 再构建。
+
+这个 SPA 用的接口全部在 `/api/PrimerServer2/*`（见 §二、main.py 的 `PS2_PREFIX`），
+和静态挂载 `/PrimerServer2` 是两个不同的前缀，不会互相拦截。
+
+**已知差异**：它用 Element Plus，不是 §七 规定的 Bootstrap 4.5.3 + jQuery 结构，也没有
+站点级导航菜单（`硬编码 nav` 约定）。它是独立视觉体系，这两条豁免。
+
 ---
 
 ## 二、后端路由注册模式
