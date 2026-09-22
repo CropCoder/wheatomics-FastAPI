@@ -634,16 +634,15 @@ $(document).on('click', '.btn-check', function() {
     return;
   }
   var dbs = selectedCheckDbs();
-  // PrimerServer2 check parser expects TAB-separated lines with a rank
-  // column: "ID<TAB>Rank<TAB>LeftSeq<TAB>RightSeq" (space-separated input
-  // without a rank column is silently dropped by parse_primer_input).
+  // TAB-separated with a rank column: "ID<TAB>Rank<TAB>LeftSeq<TAB>RightSeq".
+  // PrimerServer2 also accepts "ID<TAB>LeftSeq<TAB>RightSeq" (rank defaults to 0).
   var payload = {
     'app-type': 'check',
     'check-primers': d.enzyme + '_' + d.rank + '\t1\t' + d.primer_f + '\t' + d.primer_r,
     'size_start': 50,
-    'size_stop': 5000,
+    'size_stop': 2000,
     'min_Tm_diff': 20,
-    'end3_mismatch_threshold': 5,
+    'end3_mismatch_threshold': 3,
     'selected-databases': dbs
   };
   el.html('<span class="check-status">Submitting specificity check against ' + dbs.length +
