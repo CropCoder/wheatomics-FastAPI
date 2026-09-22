@@ -458,10 +458,14 @@ def _finalize(d: dict, seq_len: int) -> dict:
             d["recognition"], d["_rec_start"], d["enzyme"],
             d["_cut_top"], d["_cut_bottom"])
     else:
-        # Designed primer (left end of the RC pair) becomes the reverse
-        # primer; its RC opposite becomes the forward primer.
-        primer_f = _rc(d["_opp"].seq) if d["_opp"] is not None else None
-        primer_r = _rc(d["_primer"])
+        # The enumeration ran on the caller's reverse complement, so a primer
+        # that sits verbatim in that strand is already a primer on the caller's
+        # bottom strand. Its 5'->3' synthesis sequence is therefore the string
+        # itself: reverse-complementing it here would report the wrong oligo and
+        # the pair would not amplify. primer_f/primer_r still swap, because
+        # "left end of the RC pair" is the caller's right end.
+        primer_f = d["_opp"].seq if d["_opp"] is not None else None
+        primer_r = d["_primer"]
         designed_tm, opp_tm = d["_tm"], (d["_opp"].tm if d["_opp"] is not None else None)
         E = d["_primer_end"]
         mismatch_positions = sorted(
