@@ -452,6 +452,11 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
 
   // === 图表 ===
   var labels = resp.results[0].points.map(function(p) { return p.label; });
+  // 按最长标签估算每列宽度和底部空间，避免长标签被隐藏/裁剪
+  var maxLabelLen = 0;
+  labels.forEach(function(l) { if (l && l.length > maxLabelLen) maxLabelLen = l.length; });
+  var colWidth = Math.max(maxLabelLen * 6 + 30, 70);
+  var bottomMargin = Math.max(maxLabelLen * 4.5 + 60, 80);
 
   var chartData = [];
   resp.results.forEach(function(gene) {
@@ -497,14 +502,22 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
       renderTo: chartId,
       zoomType: 'xy',
       height: 420,
-      // 列数多时让绘图区横向滚动，避免柱子被压缩到看不清
-      scrollablePlotArea: { minWidth: Math.max(labels.length * 70, 600) }
+      // 列宽按最长标签估算，列多/标签长时横向滚动，避免柱子被压缩或标签被隐藏
+      scrollablePlotArea: { minWidth: Math.max(labels.length * colWidth, 600) },
+      // 给旋转后的长标签预留足够底部空间，避免被裁剪
+      marginBottom: bottomMargin
     },
     credits: { enabled: false },
     title: { text: projectDesc },
     xAxis: {
       categories: labels,
-      labels: { rotation: -45, step: 1, style: { fontSize: '11px' } }
+      labels: {
+        rotation: -45,
+        step: 1,
+        allowOverlap: true,
+        useHTML: true,
+        style: { fontSize: '11px', textOverflow: 'none', whiteSpace: 'nowrap' }
+      }
     },
     yAxis: { title: { text: 'Expression (TPM)' }, lineWidth: 2 },
     tooltip: { shared: true, valueDecimals: 1 },
