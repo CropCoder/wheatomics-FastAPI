@@ -324,6 +324,15 @@ def specificity_check(
                             end1 = "No" if seq[-1] == target_seq[-1] else "Yes"
                             end2 = "No" if next_seq[-1] == next_target_seq[-1] else "Yes"
 
+                            # A mismatched 3'-terminal base blocks extension
+                            # outright: Taq has no 3'->5' proofreading and the
+                            # polymerase needs a paired terminus to start. That
+                            # makes it a hard reject, not something to put behind
+                            # a threshold — end3_mismatch_threshold counts the
+                            # whole last five bases and cannot express it.
+                            if end1 == "Yes" or end2 == "Yes":
+                                continue
+
                             end3_window = min(5, len(seq), len(next_seq))
                             diff1 = sum(
                                 a != b for a, b in zip(seq[-end3_window:], target_seq[-end3_window:])

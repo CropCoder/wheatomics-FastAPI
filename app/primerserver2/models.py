@@ -445,6 +445,15 @@ class PrimerResult(BaseModel):
     databases: List[Dict] = Field(..., description="Specificity-check results per database (amplicons, alignments, etc.).")
 
 
+class AmpliconDetail(BaseModel):
+    """One candidate amplicon: where it sits on the target and how long it is."""
+
+    chrom: str = Field(..., description="Target sequence the amplicon sits on.")
+    start: int = Field(..., description="Amplicon start (1-based, on chrom).")
+    end: int = Field(..., description="Amplicon end (1-based, on chrom).")
+    size: int = Field(..., description="Amplicon length in bp.")
+
+
 class CheckResult(BaseModel):
     """Specificity-check result for one primer group against one database."""
 
@@ -453,6 +462,16 @@ class CheckResult(BaseModel):
     database: str = Field(..., description="Database name used for the check.")
     ampliconNumber: int = Field(..., description="Total number of amplicons found.")
     primerSeqs: List[str] = Field(..., description="Input primer sequences.")
+    sizes: List[int] = Field(
+        default_factory=list,
+        description="Amplicon sizes in bp, in the order the amplicons were found. "
+                    "Capped at max_report_amplicon.",
+    )
+    amplicons: List[AmpliconDetail] = Field(
+        default_factory=list,
+        description="Where each amplicon sits. Empty when a job predates the "
+                    "amplicon file being kept, so treat it as best-effort.",
+    )
 
 
 class JobResultResponse(BaseModel):
