@@ -604,6 +604,9 @@ class PipelineRunner:
                     "database": database,
                     "ampliconNumber": int(amplicon_num) if amplicon_num.isdigit() else 0,
                     "primerSeqs": seqs.split(),
+                    # Sixth column, written by the runner. Absent in results
+                    # produced before it existed, hence the length check.
+                    "ampliconsCapped": len(parts) > 5 and parts[5].strip() == "1",
                 })
         except Exception as exc:
             logger.warning("Failed to parse check result %s: %s", path, exc)

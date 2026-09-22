@@ -571,9 +571,12 @@ function renderCheckResults(resp, el) {
     html += '<div style="overflow-x:auto;"><table class="table table-sm table-bordered table-striped">' +
       '<thead><tr><th>Primer ID</th><th>Rank</th><th>Database</th><th>Amplicons</th><th>Sizes (bp)</th><th>Primers</th><th>Detail</th></tr></thead><tbody>';
     rows.forEach(function(r, i) {
-      var verdict = r.ampliconNumber === 1
+      // A capped count is a floor, not the real number — say so.
+      var n = r.ampliconNumber;
+      var capped = !!r.ampliconsCapped;
+      var verdict = (n === 1 && !capped)
         ? '<span class="badge badge-success">unique</span>'
-        : '<span class="badge badge-danger">' + r.ampliconNumber + ' loci</span>';
+        : '<span class="badge badge-danger">' + n + (capped ? '+ loci' : ' loci') + '</span>';
       html += '<tr>' +
         '<td>' + escapeHtml(r.siteId) + '</td>' +
         '<td>' + r.rank + '</td>' +
@@ -584,7 +587,7 @@ function renderCheckResults(resp, el) {
         '<td><button class="btn btn-sm btn-outline-secondary btn-check-align" data-i="' + i + '">Alignment</button></td></tr>';
     });
     html += '</tbody></table></div>';
-    html += '<p class="small">amplicons = 1 说明该引物对在中国春参考基因组上唯一扩增；>1 表示会同时扩增其他位点（A/B/D 同源基因等）。</p>';
+    html += '<p class="small">amplicons = 1 说明该引物对在中国春参考基因组上唯一扩增；>1 表示会同时扩增其他位点（A/B/D 同源基因等）。带 “+” 表示命中数已达报告上限，实际更多。</p>';
   }
   if (resp.html) {
     html += '<details><summary>Full HTML report</summary>' +

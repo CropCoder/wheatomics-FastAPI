@@ -461,6 +461,11 @@ class CheckResult(BaseModel):
     rank: int = Field(..., description="Primer pair rank (1-based).")
     database: str = Field(..., description="Database name used for the check.")
     ampliconNumber: int = Field(..., description="Total number of amplicons found.")
+    ampliconsCapped: bool = Field(
+        default=False,
+        description="True when ampliconNumber stopped at max_report_amplicon and more "
+                    "amplicons exist — display it as 'N+' rather than N.",
+    )
     primerSeqs: List[str] = Field(..., description="Input primer sequences.")
     sizes: List[int] = Field(
         default_factory=list,
