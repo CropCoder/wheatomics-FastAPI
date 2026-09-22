@@ -81,7 +81,7 @@ class SpecificityParams(BaseModel):
         description="Maximum allowed amplicon size (bp) during specificity checking.",
     )
     minTmDiff: int = Field(
-        default=20,
+        default=10,
         alias="min_Tm_diff",
         ge=0,
         le=100,
@@ -265,7 +265,7 @@ class DesignJobRequest(SpecificityParams):
                 "PRIMER_NUM_RETURN": 30,
                 "size_start": 50,
                 "size_stop": 2000,
-                "min_Tm_diff": 20,
+                "min_Tm_diff": 10,
                 "end3_mismatch_threshold": 3,
                 "retain": 10,
                 "blast_e_value": 30000,
@@ -374,7 +374,7 @@ class CheckJobRequest(SpecificityParams):
                 "check-primers": "Primer1 TTCGATGCTGAGGAAGGCTG AGGAGAGAACGGAGACGAAG\nPrimer2 AGGAGAGAACGGAGACGAAG TTCGATGCTGAGGAAGGCTG",
                 "size_start": 50,
                 "size_stop": 2000,
-                "min_Tm_diff": 20,
+                "min_Tm_diff": 10,
                 "end3_mismatch_threshold": 3,
                 "retain": 10,
                 "blast_e_value": 30000,
