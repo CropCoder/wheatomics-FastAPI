@@ -43,7 +43,17 @@ class Query:
 
 
 def parse_primer_input(input_path: Path) -> Tuple[List[PrimerGroup], List[Query], Dict[str, str]]:
-    """Parse the simple primer table: #Site_ID Primer_Rank Primer_Seq_Left ..."""
+    """Parse a primer table, with or without a rank column.
+
+    Two shapes are accepted, told apart by whether the second field is a rank:
+
+        Site_ID <TAB> Rank <TAB> Seq1 <TAB> Seq2 ...   (what the design stage emits)
+        PrimerID Seq1 Seq2 ...                          (what check-only callers send)
+
+    Without that distinction a caller line loses its left primer to the rank
+    slot, which used to drop the line entirely and now would silently check only
+    the right primer. Missing ranks default to 0.
+    """
     groups: List[PrimerGroup] = []
     queries: List[Query] = []
     group_for_query: Dict[str, str] = {}
@@ -55,15 +65,19 @@ def parse_primer_input(input_path: Path) -> Tuple[List[PrimerGroup], List[Query]
             if not line or line.startswith("#"):
                 continue
             parts = line.split("\t")
-            if len(parts) < 4:
+            if len(parts) < 3:
                 # Fallback: space-separated check input
                 parts = line.split()
-            if len(parts) < 4:
+            if len(parts) < 3:
                 continue
 
             site_id = parts[0]
-            rank = int(parts[1]) if parts[1].isdigit() else 0
-            seqs = parts[2:]
+            if parts[1].isdigit():
+                rank = int(parts[1])
+                seqs = parts[2:]
+            else:
+                rank = 0
+                seqs = parts[1:]
 
             key = f"{site_id}.{rank}"
             group = seen_keys.get(key)
