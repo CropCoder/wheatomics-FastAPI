@@ -452,14 +452,14 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
 
   // === 图表 ===
   var labels = resp.results[0].points.map(function(p) { return p.label; });
-  // 标签完整显示、超长自动换行：固定每列宽度，标签在列宽内折行，比例正常
-  var LABEL_WIDTH = 110;  // 每个标签的最大宽度 px
+  // -45° 斜排 + 长标签在列宽内折多行完整显示
+  var LABEL_WIDTH = 90;  // 折行宽度（每列标签的最大宽度）
   var maxLabelLen = 0;
   labels.forEach(function(l) { if (l && l.length > maxLabelLen) maxLabelLen = l.length; });
   var colWidth = LABEL_WIDTH;
-  // 估算最长标签折几行（约每行 16 字符），据此留底部空间
-  var linesPerLabel = Math.max(1, Math.ceil(maxLabelLen / 16));
-  var bottomMargin = linesPerLabel * 14 + 40;
+  // 估算最长标签折几行（约每行 14 字符），据此留底部空间
+  var linesPerLabel = Math.max(1, Math.ceil(maxLabelLen / 14));
+  var bottomMargin = linesPerLabel * 14 + 50;
 
   var chartData = [];
   resp.results.forEach(function(gene) {
@@ -517,14 +517,14 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
       labels: {
         rotation: -45,
         step: 1,
+        allowOverlap: true,
         useHTML: true,
         style: {
-          width: LABEL_WIDTH + 'px',
+          fontSize: '11px',
+          textOverflow: 'none',
           whiteSpace: 'normal',
           wordBreak: 'break-word',
-          fontSize: '11px',
-          lineHeight: '13px',
-          textAlign: 'center'
+          width: LABEL_WIDTH + 'px'
         }
       }
     },
