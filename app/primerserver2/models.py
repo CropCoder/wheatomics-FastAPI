@@ -74,7 +74,7 @@ class SpecificityParams(BaseModel):
         description="Minimum allowed amplicon size (bp) during specificity checking.",
     )
     sizeStop: int = Field(
-        default=5000,
+        default=2000,
         alias="size_stop",
         ge=1,
         le=1_000_000,
@@ -94,12 +94,12 @@ class SpecificityParams(BaseModel):
         description="Maximum number of primer pairs to return per site.",
     )
     end3MismatchThreshold: int = Field(
-        default=5,
+        default=3,
         alias="end3_mismatch_threshold",
         ge=0,
         le=5,
         description="Maximum mismatches allowed in the last 5 bp of the 3' end. "
-                    "Use 5 to disable strict filtering (legacy behavior).",
+                    "5 is the window size, so passing 5 turns the check off.",
     )
     maxReportAmplicon: int = Field(
         default=50,
@@ -264,9 +264,9 @@ class DesignJobRequest(SpecificityParams):
                 "PRIMER_MAX_TM": 63,
                 "PRIMER_NUM_RETURN": 30,
                 "size_start": 50,
-                "size_stop": 5000,
+                "size_stop": 2000,
                 "min_Tm_diff": 20,
-                "end3_mismatch_threshold": 5,
+                "end3_mismatch_threshold": 3,
                 "retain": 10,
                 "blast_e_value": 30000,
                 "blast_word_size": 7,
@@ -373,9 +373,9 @@ class CheckJobRequest(SpecificityParams):
                 "app-type": "check",
                 "check-primers": "Primer1 TTCGATGCTGAGGAAGGCTG AGGAGAGAACGGAGACGAAG\nPrimer2 AGGAGAGAACGGAGACGAAG TTCGATGCTGAGGAAGGCTG",
                 "size_start": 50,
-                "size_stop": 5000,
+                "size_stop": 2000,
                 "min_Tm_diff": 20,
-                "end3_mismatch_threshold": 5,
+                "end3_mismatch_threshold": 3,
                 "retain": 10,
                 "blast_e_value": 30000,
                 "blast_word_size": 7,
