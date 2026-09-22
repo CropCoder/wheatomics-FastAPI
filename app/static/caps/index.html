@@ -577,9 +577,7 @@ function renderCheckResults(resp, el) {
         '<td>' + verdict + '</td>' +
         '<td>' + (r.sizes || []).join(', ') + '</td>' +
         '<td><small>' + escapeHtml((r.primerSeqs || []).join(' / ')) + '</small></td>' +
-        '<td>' + (r.alignment
-          ? '<button class="btn btn-sm btn-outline-secondary btn-check-align" data-i="' + i + '">Alignment</button>'
-          : '—') + '</td></tr>';
+        '<td><button class="btn btn-sm btn-outline-secondary btn-check-align" data-i="' + i + '">Alignment</button></td></tr>';
     });
     html += '</tbody></table></div>';
     html += '<p class="small">amplicons = 1 说明该引物对在中国春参考基因组上唯一扩增；>1 表示会同时扩增其他位点（A/B/D 同源基因等）。</p>';
@@ -591,15 +589,35 @@ function renderCheckResults(resp, el) {
   }
   el.html(html);
   el.data('check-results', rows);
+  el.data('check-job', resp.jobId);
 }
 
+// A check result carries no alignment text of its own — the pipeline writes one
+// detail file per (database, site, rank) into the job's specificity result dir,
+// holding every amplicon with its off-target Tm and 3'-end mismatch flags.
+// GET /jobs/{id}/specificity/{filename} serves it.
 $(document).on('click', '.btn-check-align', function() {
-  var rows = $('#check-area').data('check-results') || [];
-  var r = rows[parseInt($(this).data('i'), 10)];
-  if (!r || !r.alignment) return;
+  var $btn = $(this);
   var box = $('#check-area');
-  box.append('<pre class="alignment-pre">' + escapeHtml(r.alignment) + '</pre>');
-  $(this).prop('disabled', true).text('Shown below');
+  var rows = box.data('check-results') || [];
+  var jobId = box.data('check-job');
+  var r = rows[parseInt($btn.data('i'), 10)];
+  if (!r || !jobId) return;
+  var file = 'PrimerGroup.' + r.database + '.' + r.siteId + '.' + r.rank + '.txt';
+  var url = '/api/PrimerServer2/jobs/' + encodeURIComponent(jobId) +
+            '/specificity/' + encodeURIComponent(file);
+  $btn.prop('disabled', true).text('Loading...');
+  $.ajax({ url: url, dataType: 'text' })
+    .done(function(text) {
+      box.append('<pre class="alignment-pre">' + escapeHtml(text) + '</pre>');
+      $btn.text('Shown below');
+    })
+    .fail(function(xhr) {
+      $btn.prop('disabled', false).text('Alignment');
+      box.append('<div class="alert alert-warning">Could not load the alignment' +
+        (xhr.status === 404 ? ' (no detail file for this row)' : ' (HTTP ' + xhr.status + ')') +
+        '.</div>');
+    });
 });
 
 function pollCheckResult(jobId, el, attempts) {
