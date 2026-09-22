@@ -65,7 +65,11 @@
   .main-wrap { max-width: 1100px; margin: 0 auto; background: #fff; padding: 25px 35px 45px 35px; border-left: 2px solid #d7ebff; border-right: 2px solid #d7ebff; min-height: 600px; }
   .enzyme-box { max-height: 220px; overflow-y: auto; border: 1px solid #ccc; border-radius: 3px; padding: 8px 12px; background: #fafbfc; }
   .enzyme-box label { display: inline-block; margin: 0 10px 4px 0; font-size: 13px; white-space: nowrap; }
-  .alignment-pre { background: #f6fbff; border: 1px solid #cfe7ff; padding: 10px; font-size: 12px; line-height: 1.5; white-space: pre; overflow-x: auto; }
+  .alignment-pre { background: #f6fbff; border: 1px solid #cfe7ff; padding: 10px; font-size: 12px; line-height: 1.5; white-space: pre; overflow-x: auto; margin: 0; }
+  /* Expanded check row: gel on the left, per-amplicon alignment on the right. */
+  .check-detail { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; margin: 10px 0 18px 0; }
+  .gel-box { flex: 0 0 auto; max-width: 320px; }
+  .detail-panel { flex: 1 1 360px; min-width: 300px; max-height: 520px; overflow: auto; }
   .mismatch-badge { background: #ff9800; color: #fff; border-radius: 3px; padding: 1px 6px; font-size: 11px; }
   .nav-tabs .nav-link { font-weight: bold; }
   #results-section { display: none; }
@@ -592,6 +596,43 @@ function renderCheckResults(resp, el) {
   el.data('check-job', resp.jobId);
 }
 
+// Schematic gel: marker ladder beside the amplicon bands, sized by bp. Mirrors
+// the figure PrimerServer2 draws with d3, but as a plain SVG string so this page
+// keeps its no-extra-dependencies setup.
+var GEL_FILTER_SEQ = 0;
+function gelSvg(sizes, targetSize) {
+  var marker = [100, 250, 500, 750, 1000, 2000];
+  var W = 320, H = Math.max(320, 60 + sizes.length * 14);
+  var m = { top: 34, right: 52, bottom: 20, left: 14 };
+  var iw = W - m.left - m.right, ih = H - m.top - m.bottom;
+  var all = marker.concat(sizes);
+  var maxSize = Math.max.apply(null, all.length ? all : [2000]);
+  var y = function (s) { return m.top + ih - (s / maxSize) * ih; };
+  var th = function (s) { return 1 + (s / maxSize) * 20; };
+  var laneW = iw / 2, bandW = Math.min(38, laneW - 10);
+  var fid = 'caps-gel-blur-' + (GEL_FILTER_SEQ++);
+  var out = ['<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H +
+             '" style="background:#222;border-radius:4px;display:block">',
+             '<defs><filter id="' + fid + '" height="500%" width="100%">',
+             '<feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter></defs>'];
+  [{ label: 'Marker', list: marker }, { label: 'Amplicons', list: sizes }].forEach(function (lane, li) {
+    var x0 = m.left + li * laneW;
+    out.push('<text x="' + (x0 + laneW / 2) + '" y="' + (m.top - 14) +
+             '" fill="#fff" font-size="13" text-anchor="middle">' + lane.label + '</text>');
+    lane.list.forEach(function (s) {
+      var yy = y(s), t = th(s), bx = x0 + (laneW - bandW) / 2;
+      out.push('<rect x="' + bx + '" y="' + yy + '" width="' + bandW + '" height="' + t +
+               '" fill="#fff" filter="url(#' + fid + ')"/>');
+      var hot = li === 1 && targetSize != null && s === targetSize;
+      out.push('<text x="' + (bx + bandW + 4) + '" y="' + (yy + t / 2 + 4) + '" fill="' +
+               (hot ? '#ff5252' : '#fff') + '" font-size="11"' +
+               (hot ? ' font-weight="bold"' : '') + '>' + s + ' bp</text>');
+    });
+  });
+  out.push('</svg>');
+  return out.join('');
+}
+
 // A check result carries no alignment text of its own — the pipeline writes one
 // detail file per (database, site, rank) into the job's specificity result dir,
 // holding every amplicon with its off-target Tm and 3'-end mismatch flags.
@@ -603,20 +644,28 @@ $(document).on('click', '.btn-check-align', function() {
   var jobId = box.data('check-job');
   var r = rows[parseInt($btn.data('i'), 10)];
   if (!r || !jobId) return;
+  var id = 'check-detail-' + $btn.data('i');
+  if (document.getElementById(id)) return;
+
+  var sizes = r.sizes || [];
+  var gel = sizes.length
+    ? gelSvg(sizes, sizes.length === 1 ? sizes[0] : null)
+    : '<p class="small text-muted">No amplicon sizes recorded for this row.</p>';
+  box.append('<div class="check-detail" id="' + id + '">' +
+    '<div class="gel-box">' + gel + '</div>' +
+    '<div class="detail-panel" id="' + id + '-panel"></div></div>');
+
   var file = 'PrimerGroup.' + r.database + '.' + r.siteId + '.' + r.rank + '.txt';
   var url = '/api/PrimerServer2/jobs/' + encodeURIComponent(jobId) +
             '/specificity/' + encodeURIComponent(file);
-  $btn.prop('disabled', true).text('Loading...');
+  $btn.prop('disabled', true).text('Shown below');
   $.ajax({ url: url, dataType: 'text' })
     .done(function(text) {
-      box.append('<pre class="alignment-pre">' + escapeHtml(text) + '</pre>');
-      $btn.text('Shown below');
+      $('#' + id + '-panel').html('<pre class="alignment-pre">' + escapeHtml(text) + '</pre>');
     })
     .fail(function(xhr) {
-      $btn.prop('disabled', false).text('Alignment');
-      box.append('<div class="alert alert-warning">Could not load the alignment' +
-        (xhr.status === 404 ? ' (no detail file for this row)' : ' (HTTP ' + xhr.status + ')') +
-        '.</div>');
+      $('#' + id + '-panel').html('<div class="alert alert-warning">Could not load the alignment' +
+        (xhr.status === 404 ? ' (no detail file for this row)' : ' (HTTP ' + xhr.status + ')') + '.</div>');
     });
 });
 
