@@ -452,14 +452,11 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
 
   // === 图表 ===
   var labels = resp.results[0].points.map(function(p) { return p.label; });
-  // -45° 斜排 + 长标签在列宽内折多行完整显示
-  var LABEL_WIDTH = 90;  // 折行宽度（每列标签的最大宽度）
+  // 按最长标签估算每列宽度和底部空间，避免长标签被隐藏/裁剪
   var maxLabelLen = 0;
   labels.forEach(function(l) { if (l && l.length > maxLabelLen) maxLabelLen = l.length; });
-  var colWidth = LABEL_WIDTH;
-  // 估算最长标签折几行（约每行 14 字符），据此留底部空间
-  var linesPerLabel = Math.max(1, Math.ceil(maxLabelLen / 14));
-  var bottomMargin = linesPerLabel * 14 + 50;
+  var colWidth = Math.max(maxLabelLen * 6 + 30, 70);
+  var bottomMargin = Math.max(maxLabelLen * 4.5 + 60, 80);
 
   var chartData = [];
   resp.results.forEach(function(gene) {
@@ -519,13 +516,7 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
         step: 1,
         allowOverlap: true,
         useHTML: true,
-        style: {
-          fontSize: '11px',
-          textOverflow: 'none',
-          whiteSpace: 'normal',
-          wordBreak: 'break-word',
-          width: LABEL_WIDTH + 'px'
-        }
+        style: { fontSize: '11px', textOverflow: 'none', whiteSpace: 'nowrap' }
       }
     },
     yAxis: { title: { text: 'Expression (TPM)' }, lineWidth: 2 },
