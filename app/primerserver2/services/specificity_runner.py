@@ -380,7 +380,7 @@ class SpecificityParams:
     """Parameters controlling specificity checking."""
 
     size_start: int = 50
-    size_stop: int = 5000
+    size_stop: int = 2000
     min_tm_diff: float = 20.0
     max_report_amplicon: int = 50
     primer_conc: float = 100.0
@@ -394,7 +394,7 @@ class SpecificityParams:
     blast_identity: float = 60.0
     blast_max_hsps: int = 500
     num_cpu: int = 1
-    end3_mismatch_threshold: int = 5
+    end3_mismatch_threshold: int = 3
     report_last_5bp_in_3end: bool = True
     debug: bool = False
 

@@ -22,7 +22,7 @@ def run(
     product_size_max: int = 1000,
     primer_num_retain: int = 10,
     size_start: int = 50,
-    size_stop: int = 5000,
+    size_stop: int = 2000,
     min_tm_diff: float = 20.0,
     max_report_amplicon: int = 50,
     primer_conc: float = 100.0,
