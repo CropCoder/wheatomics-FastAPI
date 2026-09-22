@@ -361,7 +361,9 @@ class CheckJobRequest(SpecificityParams):
     checkPrimers: str = Field(
         ...,
         alias="check-primers",
-        description="One primer group per line: PrimerID LeftSeq RightSeq [AdditionalSeq ...].",
+        description="One primer group per line: PrimerID LeftSeq RightSeq [AdditionalSeq ...]. "
+                    "A numeric rank may follow PrimerID — the 'Site_ID Rank Seq1 Seq2' shape the "
+                    "design stage emits — in which case the rank is used instead of 0.",
     )
 
     model_config = ConfigDict(
