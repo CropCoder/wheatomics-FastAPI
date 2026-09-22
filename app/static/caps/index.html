@@ -571,12 +571,21 @@ function renderCheckResults(resp, el) {
     html += '<div style="overflow-x:auto;"><table class="table table-sm table-bordered table-striped">' +
       '<thead><tr><th>Primer ID</th><th>Rank</th><th>Database</th><th>Amplicons</th><th>Sizes (bp)</th><th>Primers</th><th>Detail</th></tr></thead><tbody>';
     rows.forEach(function(r, i) {
-      // A capped count is a floor, not the real number — say so.
+      // A capped count is a floor, not the real number — say so. Zero is the
+      // good outcome for a background database (nothing to amplify), so it must
+      // not wear the same red badge as many hits.
       var n = r.ampliconNumber;
       var capped = !!r.ampliconsCapped;
-      var verdict = (n === 1 && !capped)
-        ? '<span class="badge badge-success">unique</span>'
-        : '<span class="badge badge-danger">' + n + (capped ? '+ loci' : ' loci') + '</span>';
+      var verdict;
+      if (capped) {
+        verdict = '<span class="badge badge-danger">' + n + '+ loci</span>';
+      } else if (n === 0) {
+        verdict = '<span class="badge badge-success">no amplicon</span>';
+      } else if (n === 1) {
+        verdict = '<span class="badge badge-success">unique</span>';
+      } else {
+        verdict = '<span class="badge badge-danger">' + n + ' loci</span>';
+      }
       html += '<tr>' +
         '<td>' + escapeHtml(r.siteId) + '</td>' +
         '<td>' + r.rank + '</td>' +
@@ -587,7 +596,7 @@ function renderCheckResults(resp, el) {
         '<td><button class="btn btn-sm btn-outline-secondary btn-check-align" data-i="' + i + '">Alignment</button></td></tr>';
     });
     html += '</tbody></table></div>';
-    html += '<p class="small">amplicons = 1 说明该引物对在中国春参考基因组上唯一扩增；>1 表示会同时扩增其他位点（A/B/D 同源基因等）。带 “+” 表示命中数已达报告上限，实际更多。</p>';
+    html += '<p class="small">0 表示该库内不产生扩增子（对背景库是期望结果）；1 表示唯一扩增；>1 表示会同时扩增其他位点（A/B/D 同源基因等）。带 “+” 表示命中数已达报告上限，实际更多。</p>';
   }
   if (resp.html) {
     html += '<details><summary>Full HTML report</summary>' +
