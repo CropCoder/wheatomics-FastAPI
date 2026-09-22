@@ -275,7 +275,7 @@ def specificity_check(
     result_dir.mkdir(parents=True, exist_ok=True)
 
     with open(result_txt, "w", encoding="utf-8") as out, open(result_amp, "w", encoding="utf-8") as amp_out:
-        out.write("#Site_ID\tPrimer_Rank\tDatabase\tPossible_Amplicon_Number\tPrimer_Seqs\n")
+        out.write("#Site_ID\tPrimer_Rank\tDatabase\tPossible_Amplicon_Number\tPrimer_Seqs\tCapped\n")
         amp_out.write(
             "#ID\tRank\tDatabase\tTarget_ID\tTarget_start\tNext_target_end\t"
             "Left_end3\tRight_end3\tDiff_left_end3\tDiff_right_end3\n"
@@ -290,6 +290,10 @@ def specificity_check(
                 )
 
                 hit_num = 0
+                # True when the cap stopped us early, i.e. there were more
+                # amplicons than max_report_amplicon. Without this the count is
+                # indistinguishable from one that legitimately landed on the cap.
+                capped = False
                 alignment_file = result_dir / f"PrimerGroup.{db_name}.{group.site_id}.{group.rank}.txt"
                 with open(alignment_file, "w", encoding="utf-8") as aln:
                     aln.write("Primer Group:\n")
@@ -304,6 +308,7 @@ def specificity_check(
                         regions = retrieve_map.get(f"{db_name}|{qname}", [])
                         for left_region, right_region, next_qname in regions:
                             if hit_num >= params.max_report_amplicon:
+                                capped = True
                                 break
 
                             target_seq = target_seqs.get(db_name, {}).get(left_region)
@@ -377,7 +382,7 @@ def specificity_check(
                             )
 
                 hit_num_for_primer.setdefault(group.site_id, {}).setdefault(group.rank, {})[db_name] = hit_num
-                out.write(f"{group.site_id}\t{group.rank}\t{db_name}\t{hit_num}\t{' '.join(seqs)}\n")
+                out.write(f"{group.site_id}\t{group.rank}\t{db_name}\t{hit_num}\t{' '.join(seqs)}\t{1 if capped else 0}\n")
                 if hit_num == 1 and db_name == primary_db:
                     success_site[group.site_id] = True
 
@@ -432,7 +437,7 @@ def run(
     groups, queries, group_for_query = parse_primer_input(input_path)
     if not groups:
         (outputdir / "specificity.check.result.txt").write_text(
-            "#Site_ID\tPrimer_Rank\tDatabase\tPossible_Amplicon_Number\tPrimer_Seqs\n"
+            "#Site_ID\tPrimer_Rank\tDatabase\tPossible_Amplicon_Number\tPrimer_Seqs\tCapped\n"
         )
         (outputdir / "specificity.check.result.amplicon").write_text(
             "#ID\tRank\tDatabase\tTarget_ID\tTarget_start\tNext_target_end\t"
