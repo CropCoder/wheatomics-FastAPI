@@ -591,7 +591,14 @@ function renderCheckResults(resp, el) {
         '<td>' + r.rank + '</td>' +
         '<td>' + escapeHtml(r.database) + '</td>' +
         '<td>' + verdict + '</td>' +
-        '<td>' + (r.sizes || []).join(', ') + '</td>' +
+        // A long hit list would stretch the row to hundreds of pixels; show the
+        // first few and point at the Detail panel for the rest.
+        '<td><small>' + (function() {
+          var s = r.sizes || [];
+          if (!s.length) return '—';
+          var head = s.slice(0, 5).join(', ');
+          return s.length > 5 ? head + ' … (+' + (s.length - 5) + ')' : head;
+        })() + '</small></td>' +
         '<td><small>' + escapeHtml((r.primerSeqs || []).join(' / ')) + '</small></td>' +
         '<td><button class="btn btn-sm btn-outline-secondary btn-check-align" data-i="' + i + '">Alignment</button></td></tr>';
     });
