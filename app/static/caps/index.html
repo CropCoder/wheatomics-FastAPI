@@ -177,11 +177,11 @@
       <div class="form-row">
         <div class="form-group col-md-4">
           <label>BLAST DB name</label>
-          <input id="coord-db" class="form-control" placeholder="Chinese_Spring2.1">
+          <input id="coord-db" class="form-control" placeholder="AABBDD_Chinese_Spring2.1.genome">
         </div>
         <div class="form-group col-md-5">
           <label>Region (chrom:start-end)</label>
-          <input id="coord-region" class="form-control" placeholder="chr1A:100-500">
+          <input id="coord-region" class="form-control" placeholder="Chr1A_Chinese_Spring2.1:100000-100400">
         </div>
         <div class="form-group col-md-3">
           <label>SNP position (bp)</label>
@@ -198,7 +198,7 @@
           <input id="coord-a2" class="form-control" maxlength="1" placeholder="G">
         </div>
       </div>
-      <small class="text-muted">Flanking sequence is fetched from the BLAST database (blastdbcmd). Chrom naming follows the DB convention, e.g. chr1A for Chinese_Spring2.1.</small>
+      <small class="text-muted">Flanking sequence is fetched from the BLAST database (blastdbcmd). The BLAST DB name is the file name, e.g. AABBDD_Chinese_Spring2.1.genome — not the assembly name. Chromosome names inside the DB look like Chr1A_Chinese_Spring2.1; check GET /api/PrimerServer2/databases/&lt;db&gt;/sequences for the list.</small>
     </div>
     <div class="tab-pane" id="tab-vcf">
       <div class="form-row">
@@ -208,14 +208,14 @@
         </div>
         <div class="form-group col-md-3">
           <label>Chromosome</label>
-          <input id="vcf-chrom" class="form-control" placeholder="1A">
+          <input id="vcf-chrom" class="form-control" placeholder="Chr1A">
         </div>
         <div class="form-group col-md-4">
           <label>Position (bp)</label>
           <input id="vcf-pos" class="form-control" type="number" placeholder="123456">
         </div>
       </div>
-      <small class="text-muted">REF/ALT are read from the VCF with bcftools and flanks are fetched from the dataset's reference BLAST DB.</small>
+      <small class="text-muted">REF/ALT are read from the VCF with bcftools and the flank is fetched from the dataset's reference BLAST DB. Enter the chromosome as the VCF spells it — Chr1A for the Chinese Spring datasets, chr1A for Kronos; it is translated to the DB's naming automatically.</small>
     </div>
   </div>
 

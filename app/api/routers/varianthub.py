@@ -1,8 +1,9 @@
 """VariantHub — query bgzipped, tabix-indexed VCF files via bcftools.
 
-All datasets are against the Chinese_Spring1.0 (IWGSCv1.0) reference genome.
-New datasets / new reference genomes: add entries to VARIANTHUB_DATASETS (and
-VARIANTHUB_REFERENCES for a new genome) — no other code changes needed.
+Datasets come from several reference assemblies; each entry names its own in
+VARIANTHUB_DATASETS. New datasets / new reference genomes: add entries to
+VARIANTHUB_DATASETS, plus VARIANTHUB_REFERENCES for the display name and
+VARIANTHUB_REFERENCE_BLAST_DB so sequence lookups can find the genome.
 """
 
 from __future__ import annotations
@@ -28,6 +29,18 @@ VARIANTHUB_REFERENCES: dict[str, str] = {
     "Chinese_Spring2.1": "Chinese Spring (IWGSCv2.1)",
     "Kronos": "Kronos (Tetraploid)",
 }
+
+# Reference genome -> the BLAST database holding its sequence. Kept separate
+# from VARIANTHUB_REFERENCES because the two are different namespaces: a dataset
+# labels a reference, while a BLAST lookup needs a database *filename*, and the
+# ploidy prefix differs (AABBDD for hexaploid, AABB for Kronos) so one cannot be
+# derived from the other. Add an entry here when adding a reference.
+VARIANTHUB_REFERENCE_BLAST_DB: dict[str, str] = {
+    "Chinese_Spring1.0": "AABBDD_Chinese_Spring1.0.genome",
+    "Chinese_Spring2.1": "AABBDD_Chinese_Spring2.1.genome",
+    "Kronos": "AABB_Kronos.genome",
+}
+
 
 # Dataset key -> {label, filename, source, reference}
 VARIANTHUB_DATASETS: dict[str, dict[str, str]] = {

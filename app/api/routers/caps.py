@@ -128,14 +128,70 @@ def _fetch_flank(db: str, chrom: str, start: int, end: int) -> str:
                    if not line.startswith(">"))
 
 
+def _blast_sequence_ids(db: str) -> list[str]:
+    """Sequence names in a BLAST database, read from its .fai."""
+    fai = settings.BLAST_DB_PATH / f"{db}.fai"
+    if not fai.is_file():
+        return []
+    names = []
+    try:
+        with fai.open(encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                name = line.split("\t", 1)[0].strip()
+                if name:
+                    names.append(name)
+    except OSError:
+        return []
+    return names
+
+
+def _resolve_chrom(db: str, contig: str) -> str:
+    """Map a VCF contig onto the name the database actually uses.
+
+    The VCFs spell their own contigs (Chr1A in the Chinese Spring builds, chr1A
+    in Kronos) while the databases name theirs Chr1A_<reference>. Rather than
+    encode one convention per genome, match the part before the first underscore
+    against the names the database has.
+    """
+    names = _blast_sequence_ids(db)
+    if not names:
+        raise ValidationFailure(
+            f"BLAST database '{db}' has no sequence index (.fai) to resolve "
+            f"chromosome {contig!r} against.")
+    for name in names:
+        if name == contig:
+            return name
+    want = contig.casefold()
+    for name in names:
+        if name.split("_", 1)[0].casefold() == want:
+            return name
+    raise ValidationFailure(
+        f"Chromosome {contig!r} is not in '{db}' "
+        f"(its sequences are named like {names[0]!r}).")
+
+
 def _resolve_vcf_variant(req: CapsDesignRequest) -> tuple[str, str, str, str]:
-    """Return (db, chrom, ref, alt) for the VCF mode variant."""
+    """Return (db, chrom, ref, alt) for the VCF mode variant.
+
+    `db` is the BLAST database for the dataset's reference genome, not the
+    reference label the dataset carries — a label is not a filename, and the
+    ploidy prefix differs between them.
+    """
     from app.api.routers.varianthub import (
-        VARIANTHUB_DATASETS, _bcftools_path, _vcf_path)
+        VARIANTHUB_DATASETS, VARIANTHUB_REFERENCE_BLAST_DB,
+        _bcftools_path, _vcf_path)
 
     vcf = _vcf_path(req.vcf_dataset)
     meta = VARIANTHUB_DATASETS[req.vcf_dataset]
-    db = meta["reference"]
+    reference = meta["reference"]
+    db = VARIANTHUB_REFERENCE_BLAST_DB.get(reference)
+    if db is None:
+        raise ValidationFailure(
+            f"No BLAST database is mapped for reference {reference!r}; add it "
+            "to VARIANTHUB_REFERENCE_BLAST_DB.")
+
+    # Ask the VCF for the variant under the contig as the VCF spells it, then
+    # translate that contig to the database's naming for the sequence fetch.
     chrom = req.chrom
     out = run_command(
         [_bcftools_path(), "view", "-H", "--no-version", str(vcf),
@@ -167,8 +223,9 @@ def _resolve_sequences(req: CapsDesignRequest) -> tuple[str, str, dict]:
             raise ValidationFailure(
                 "VCF mode requires vcf_dataset + chrom + pos")
         db, chrom, ref, alt = _resolve_vcf_variant(req)
+        db_chrom = _resolve_chrom(db, chrom)
         start, end = req.pos - req.flank, req.pos + req.flank
-        seq = _fetch_flank(db, chrom, start, end)
+        seq = _fetch_flank(db, db_chrom, start, end)
         offset = req.pos - start
         if seq[offset:offset + len(ref)].upper() != ref:
             raise ValidationFailure(
