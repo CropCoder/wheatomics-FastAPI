@@ -376,6 +376,22 @@ def _filter_samples_by_meta(
     return meta, matched
 
 
+def _chrom_candidates(chrom: str) -> list[str]:
+    """Chromosome spellings worth trying, the name as given first.
+
+    Datasets disagree on casing (chr1A in the older Chinese Spring VCFs, Chr1A
+    in the newer ones, chr1A for Kronos) and bcftools matches contigs
+    case-sensitively, so callers try these in order and keep the first that
+    returns something.
+    """
+    out = [chrom]
+    if chrom.startswith("Chr"):
+        out.append("chr" + chrom[3:])
+    elif chrom.startswith("chr") and len(chrom) > 3:
+        out.append("Chr" + chrom[3:])
+    return out
+
+
 def _parse_region(region: str) -> list[str]:
     """Validate a region string and return candidate `chr:start-end` strings.
 
@@ -391,12 +407,7 @@ def _parse_region(region: str) -> list[str]:
     if end <= start or end - start > _MAX_REGION_BP:
         raise ValidationFailure(f"Region length must be > 0 and <= {_MAX_REGION_BP} bp")
 
-    candidates = [f"{chrom}:{start}-{end}"]
-    if chrom.startswith("Chr"):
-        candidates.append(f"chr{chrom[3:]}:{start}-{end}")
-    elif chrom.startswith("chr") and len(chrom) > 3:
-        candidates.append(f"Chr{chrom[3:]}:{start}-{end}")
-    return candidates
+    return [f"{c}:{start}-{end}" for c in _chrom_candidates(chrom)]
 
 
 def _parse_vcf_header(header_text: str) -> tuple[list[str], list[str]]:
@@ -641,6 +652,9 @@ def varianthub_datasets() -> dict:
             {
                 "name": name,
                 "display": VARIANTHUB_REFERENCES.get(name, name),
+                # Lets a client list this reference's chromosomes without
+                # knowing the naming convention itself.
+                "blast_db": VARIANTHUB_REFERENCE_BLAST_DB.get(name, ""),
                 "datasets": datasets,
             }
             for name, datasets in references.items()
