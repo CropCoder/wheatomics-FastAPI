@@ -210,8 +210,11 @@ def _resolve_vcf_variant(req: CapsDesignRequest) -> tuple[str, str, str, str]:
     if len(fields) < 5:
         raise ValidationFailure(
             f"Unexpected VCF row: {lines[0][:80]!r}")
-    ref = fields[3].upper()
-    alt = fields[4].split(",")[0].upper()
+    # The Chinese Spring 1.0 VCFs pad the ALT column with a leading space, so
+    # strip before validating — otherwise a perfectly good SNP looks like an
+    # ambiguous base.
+    ref = fields[3].strip().upper()
+    alt = fields[4].split(",")[0].strip().upper()
     if len(ref) != 1 or len(alt) != 1 or not _SEQ_RE.fullmatch(ref) or not _SEQ_RE.fullmatch(alt):
         raise ValidationFailure(
             f"Variant {chrom}:{req.pos} in {req.vcf_dataset} has REF={ref!r} "
