@@ -179,7 +179,7 @@ def _resolve_vcf_variant(req: CapsDesignRequest) -> tuple[str, str, str, str]:
     """
     from app.api.routers.varianthub import (
         VARIANTHUB_DATASETS, VARIANTHUB_REFERENCE_BLAST_DB,
-        _bcftools_path, _vcf_path)
+        _bcftools_path, _chrom_candidates, _vcf_path)
 
     vcf = _vcf_path(req.vcf_dataset)
     meta = VARIANTHUB_DATASETS[req.vcf_dataset]
@@ -190,13 +190,19 @@ def _resolve_vcf_variant(req: CapsDesignRequest) -> tuple[str, str, str, str]:
             f"No BLAST database is mapped for reference {reference!r}; add it "
             "to VARIANTHUB_REFERENCE_BLAST_DB.")
 
-    # Ask the VCF for the variant under the contig as the VCF spells it, then
-    # translate that contig to the database's naming for the sequence fetch.
+    # Dataset VCFs disagree on contig casing (chr1A in the older Chinese Spring
+    # files, Chr1A in the newer ones, chr1A for Kronos) and bcftools matches
+    # contigs case-sensitively, so try the spellings rather than trusting the
+    # one the caller typed.
     chrom = req.chrom
-    out = run_command(
-        [_bcftools_path(), "view", "-H", "--no-version", str(vcf),
-         "-r", f"{chrom}:{req.pos}-{req.pos}"])
-    lines = [ln for ln in out.stdout.splitlines() if ln.strip()]
+    lines: list[str] = []
+    for candidate in _chrom_candidates(chrom):
+        out = run_command(
+            [_bcftools_path(), "view", "-H", "--no-version", str(vcf),
+             "-r", f"{candidate}:{req.pos}-{req.pos}"])
+        lines = [ln for ln in out.stdout.splitlines() if ln.strip()]
+        if lines:
+            break
     if not lines:
         raise ResourceNotFound(
             f"No variant at {chrom}:{req.pos} in {req.vcf_dataset}")
@@ -204,7 +210,15 @@ def _resolve_vcf_variant(req: CapsDesignRequest) -> tuple[str, str, str, str]:
     if len(fields) < 5:
         raise ValidationFailure(
             f"Unexpected VCF row: {lines[0][:80]!r}")
-    return db, chrom, fields[3].upper(), fields[4].split(",")[0].upper()
+    ref = fields[3].upper()
+    alt = fields[4].split(",")[0].upper()
+    if len(ref) != 1 or len(alt) != 1 or not _SEQ_RE.fullmatch(ref) or not _SEQ_RE.fullmatch(alt):
+        raise ValidationFailure(
+            f"Variant {chrom}:{req.pos} in {req.vcf_dataset} has REF={ref!r} "
+            f"ALT={alt!r}. CAPS discriminates a single-base substitution, so "
+            "indels, multi-nucleotide variants and ambiguous bases are out of "
+            "scope — pick a SNP.")
+    return db, chrom, ref, alt
 
 
 def _resolve_sequences(req: CapsDesignRequest) -> tuple[str, str, dict]:

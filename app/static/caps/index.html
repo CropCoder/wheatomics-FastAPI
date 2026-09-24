@@ -177,15 +177,23 @@
       <div class="form-row">
         <div class="form-group col-md-4">
           <label>BLAST DB name</label>
-          <input id="coord-db" class="form-control" placeholder="AABBDD_Chinese_Spring2.1.genome">
-        </div>
-        <div class="form-group col-md-5">
-          <label>Region (chrom:start-end)</label>
-          <input id="coord-region" class="form-control" placeholder="Chr1A_Chinese_Spring2.1:100000-100400">
+          <select id="coord-db" class="form-control"></select>
         </div>
         <div class="form-group col-md-3">
-          <label>SNP position (bp)</label>
-          <input id="coord-pos" class="form-control" type="number" placeholder="250">
+          <label>Chromosome</label>
+          <select id="coord-chrom" class="form-control"><option value="">loading…</option></select>
+        </div>
+        <div class="form-group col-md-2">
+          <label>Region start</label>
+          <input id="coord-start" class="form-control" type="number" placeholder="100000">
+        </div>
+        <div class="form-group col-md-2">
+          <label>Region end</label>
+          <input id="coord-end" class="form-control" type="number" placeholder="100400">
+        </div>
+        <div class="form-group col-md-1">
+          <label>SNP pos</label>
+          <input id="coord-pos" class="form-control" type="number" placeholder="100200">
         </div>
       </div>
       <div class="form-row">
@@ -198,7 +206,7 @@
           <input id="coord-a2" class="form-control" maxlength="1" placeholder="G">
         </div>
       </div>
-      <small class="text-muted">Flanking sequence is fetched from the BLAST database (blastdbcmd). The BLAST DB name is the file name, e.g. AABBDD_Chinese_Spring2.1.genome — not the assembly name. Chromosome names inside the DB look like Chr1A_Chinese_Spring2.1; check GET /api/PrimerServer2/databases/&lt;db&gt;/sequences for the list.</small>
+      <small class="text-muted">The chromosome list comes from the chosen BLAST database, so the names are always the ones it actually uses. The region is fetched with blastdbcmd; SNP pos must lie inside it, and the database's base there must be one of the two alleles.</small>
     </div>
     <div class="tab-pane" id="tab-vcf">
       <div class="form-row">
@@ -208,7 +216,7 @@
         </div>
         <div class="form-group col-md-3">
           <label>Chromosome</label>
-          <input id="vcf-chrom" class="form-control" placeholder="Chr1A">
+          <select id="vcf-chrom" class="form-control"><option value="">pick a dataset</option></select>
         </div>
         <div class="form-group col-md-4">
           <label>Position (bp)</label>
@@ -355,12 +363,97 @@ $('#enzyme-search').on('input', function() { renderEnzymes($(this).val()); });
 function loadVcfDatasets() {
   $.getJSON('/api/VariantHub/datasets')
     .done(function(resp) {
+      // The endpoint groups datasets under their reference; reading data.datasets
+      // (which does not exist) left this dropdown permanently empty.
       var sel = $('#vcf-dataset').empty();
-      (resp.data.datasets || []).forEach(function(d) {
-        sel.append($('<option>').val(d).text(d));
+      VCF_DS_INDEX = {};
+      (((resp.data || {}).references) || []).forEach(function(ref) {
+        var grp = $('<optgroup>').attr('label', ref.display || ref.name);
+        (ref.datasets || []).forEach(function(d) {
+          grp.append($('<option>').val(d.key).text(d.label || d.key));
+          VCF_DS_INDEX[d.key] = {reference: ref.name, blastDb: ref.blast_db || ''};
+        });
+        sel.append(grp);
       });
+      loadVcfChroms();
     })
     .fail(function() { $('#vcf-dataset').empty().append($('<option>').text('unavailable')); });
+}
+
+// Chromosome names are picked from the source itself rather than typed: the
+// databases and the VCFs each spell them their own way (Chr1A_Chinese_Spring2.1
+// vs Chr1A vs chr1A), which is not something a user can be expected to know.
+var VCF_DS_INDEX = {};   // dataset key -> {reference, blastDb}
+
+function fillChroms(sel, names) {
+  sel.empty();
+  names.forEach(function(n) { sel.append($('<option>').val(n).text(n)); });
+  if (!names.length) sel.append($('<option>').text('(no chromosomes found)'));
+}
+
+function loadVcfChroms() {
+  var ds = $('#vcf-dataset').val();
+  var sel = $('#vcf-chrom').empty().append($('<option>').text('loading…'));
+  if (!ds) return;
+  var meta = VCF_DS_INDEX[ds] || {};
+  $.getJSON('/api/VariantHub/dataset_info?dataset=' + encodeURIComponent(ds))
+    .done(function(resp) {
+      var joined = (((resp.data || {}).meta_lines) || []).join('\n');
+      var contigs = [];
+      joined.replace(/##contig=<ID=([^,>]+)/g, function(_, id) { contigs.push(id); return ''; });
+      if (contigs.length || !meta.blastDb) { fillChroms(sel, contigs); return; }
+      // The older VCFs carry no ##contig lines. Their reference's chromosomes
+      // are named Chr1A_<reference> in the BLAST database and just Chr1A or
+      // chr1A in the VCF, so strip the suffix and let the server try both
+      // casings.
+      var suffix = '_' + meta.reference;
+      $.ajax({url: '/api/PrimerServer2/databases/' + encodeURIComponent(meta.blastDb) + '/sequences',
+              dataType: 'text'})
+        .done(function(text) {
+          fillChroms(sel, String(text).split('\n').map(function(l) {
+            var name = l.split('\t')[0].trim();
+            if (!name) return '';
+            return (name.length > suffix.length && name.slice(-suffix.length) === suffix)
+              ? name.slice(0, -suffix.length) : name;
+          }).filter(Boolean));
+        })
+        .fail(function() { fillChroms(sel, []); });
+    })
+    .fail(function() { sel.empty().append($('<option>').text('unavailable')); });
+}
+
+$(document).on('change', '#vcf-dataset', loadVcfChroms);
+
+function loadCoordChroms() {
+  var db = $('#coord-db').val();
+  var sel = $('#coord-chrom').empty().append($('<option>').text('loading…'));
+  if (!db) return;
+  $.ajax({url: '/api/PrimerServer2/databases/' + encodeURIComponent(db) + '/sequences',
+          dataType: 'text'})
+    .done(function(text) {
+      var ids = String(text).split('\n').map(function(l) {
+        return l.split('\t')[0].trim();
+      }).filter(Boolean);
+      sel.empty();
+      ids.forEach(function(n) { sel.append($('<option>').val(n).text(n)); });
+      if (!ids.length) sel.append($('<option>').text('(no sequences)'));
+    })
+    .fail(function() { sel.empty().append($('<option>').text('unavailable')); });
+}
+
+$(document).on('change', '#coord-db', loadCoordChroms);
+
+// Coordinate mode reads a chromosome interval, so only whole-genome databases
+// make sense there — a CDS database is keyed by transcript, not coordinates.
+function renderCoordDbs() {
+  var sel = $('#coord-db'), prev = sel.val();
+  sel.empty();
+  (PS2_DB_GROUPS || []).forEach(function(g) {
+    if (g.name !== 'genome') return;
+    g.databases.forEach(function(d) { sel.append($('<option>').val(d.name).text(d.name)); });
+  });
+  if (prev) sel.val(prev);
+  loadCoordChroms();
 }
 
 // ---------- design ----------
@@ -391,8 +484,8 @@ function buildRequest() {
     req.seq1 = $('#seq1').val().trim().toUpperCase();
     req.seq2 = $('#seq2').val().trim().toUpperCase();
   } else if (mode === 'coord') {
-    req.db = $('#coord-db').val().trim();
-    req.region = $('#coord-region').val().trim();
+    req.db = $('#coord-db').val();
+    req.region = $('#coord-chrom').val() + ':' + $('#coord-start').val() + '-' + $('#coord-end').val();
     req.pos = parseInt($('#coord-pos').val(), 10);
     req.allele1 = $('#coord-a1').val().trim().toUpperCase();
     req.allele2 = $('#coord-a2').val().trim().toUpperCase();
@@ -485,11 +578,13 @@ function loadCheckDatabases() {
         return {name: g.name, databases: dbs};
       });
       renderDbList();
+      renderCoordDbs();
     })
     .fail(function() {
       PS2_DB_GROUPS = [{name: 'genome', databases: [
         {name: 'AABBDD_Chinese_Spring2.1.genome', label: 'Chinese Spring genome v2.1'}]}];
       renderDbList();
+      renderCoordDbs();
     });
 }
 
