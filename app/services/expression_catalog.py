@@ -75,10 +75,10 @@ def list_projects() -> dict:
     # Build ordered list of groups
     group_order = [
         "wheat developmental tissues",
-        "wheat biotic stresses",
+        "wheat-biotic interaction",
         "wheat abiotic stresses",
         "wheat population",
-        "Others",
+        "wheat genetic material",
     ]
     groups_out: list[dict] = []
     seen: set[str] = set()
