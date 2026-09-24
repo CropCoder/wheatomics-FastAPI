@@ -99,6 +99,10 @@
   .checkbox-subgroup-label:hover { color: #007bff; }
   .checkbox-subgroup-label .arrow { display: inline-block; width: 16px; font-size: 14px; transition: transform 0.15s; }
   .checkbox-subgroup-label .arrow.open { transform: rotate(90deg); }
+  .checkbox-sub-subgroup-label { font-weight: 500; font-size: 12px; color: #666; padding: 5px 0 2px 24px; cursor: pointer; user-select: none; }
+  .checkbox-sub-subgroup-label:hover { color: #007bff; }
+  .checkbox-sub-subgroup-label .arrow { display: inline-block; width: 16px; font-size: 13px; transition: transform 0.15s; }
+  .checkbox-sub-subgroup-label .arrow.open { transform: rotate(90deg); }
   .checkbox-item { padding: 3px 0 3px 48px; font-size: 13px; cursor: pointer; display: flex; align-items: center; }
   .checkbox-item input { margin-right: 6px; cursor: pointer; }
   .checkbox-item:hover { background: #f0f4ff; border-radius: 3px; }
@@ -297,24 +301,40 @@ function loadProjects() {
             group.subgroups.forEach(function(subgroup) {
               var sgId = gId + '-sg-' + (subgroup.name || '__none').replace(/[^a-z0-9]/gi, '_');
               var sgName = subgroup.name || '—';
+              var subSubGroups = subgroup.sub_subgroups || [];
+              var projCount = subSubGroups.reduce(function(acc, ssg) { return acc + ssg.projects.length; }, 0);
               // Subgroup label (no checkbox, arrow + count)
               $body.append(
                 '<div class="checkbox-subgroup-label" data-target="#' + sgId + '-body">' +
                 '<span class="arrow">▸</span> ' +
-                escapeHtml(sgName) + ' (' + subgroup.projects.length + ')' +
+                escapeHtml(sgName) + ' (' + projCount + ')' +
                 '</div>'
               );
               var $sgBody = $('<div id="' + sgId + '-body" style="display:none;"></div>');
               $body.append($sgBody);
 
-              subgroup.projects.forEach(function(proj) {
-                var checked = (proj.id === 'PRJEB5314_paired_tbl') ? ' checked' : '';
+              subSubGroups.forEach(function(ssg) {
+                var ssgId = sgId + '-ssg-' + (ssg.name || '__none').replace(/[^a-z0-9]/gi, '_');
+                var ssgName = ssg.name || '—';
+                // sub_subgroup label (no checkbox, arrow + count)
                 $sgBody.append(
-                  '<label class="checkbox-item" title="' + escapeHtml(proj.description) + '">' +
-                  '<input type="checkbox" value="' + proj.id + '" class="proj-check"' + checked + '> ' +
-                  escapeHtml(proj.description) +
-                  '</label>'
+                  '<div class="checkbox-sub-subgroup-label" data-target="#' + ssgId + '-body">' +
+                  '<span class="arrow">▸</span> ' +
+                  escapeHtml(ssgName) + ' (' + ssg.projects.length + ')' +
+                  '</div>'
                 );
+                var $ssgBody = $('<div id="' + ssgId + '-body" style="display:none;"></div>');
+                $sgBody.append($ssgBody);
+
+                ssg.projects.forEach(function(proj) {
+                  var checked = (proj.id === 'PRJEB5314_paired_tbl') ? ' checked' : '';
+                  $ssgBody.append(
+                    '<label class="checkbox-item" title="' + escapeHtml(proj.description) + '">' +
+                    '<input type="checkbox" value="' + proj.id + '" class="proj-check"' + checked + '> ' +
+                    escapeHtml(proj.description) +
+                    '</label>'
+                  );
+                });
               });
             });
           }
@@ -337,6 +357,20 @@ function loadProjects() {
         }
       });
       $('#project-list').on('click', '.checkbox-subgroup-label', function(e) {
+        var tgt = $($(this).data('target'));
+        var arrow = $(this).find('.arrow');
+        var closing = tgt.is(':visible');
+        if (closing) {
+          tgt.slideUp(150, function() {
+            arrow.text('▸').removeClass('open');
+          });
+        } else {
+          tgt.slideDown(150, function() {
+            arrow.text('▾').addClass('open');
+          });
+        }
+      });
+      $('#project-list').on('click', '.checkbox-sub-subgroup-label', function(e) {
         var tgt = $($(this).data('target'));
         var arrow = $(this).find('.arrow');
         var closing = tgt.is(':visible');

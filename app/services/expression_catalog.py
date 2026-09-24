@@ -14,7 +14,7 @@ def _fetch_all_projects() -> list[dict[str, Any]]:
     try:
         with mysql_cursor(settings.DB_GENE_EXPRESSION) as cursor:
             cursor.execute(
-                "SELECT table_name, display_name, labels, citation, group_name, subgroup FROM project_meta"
+                "SELECT table_name, display_name, labels, citation, group_name, subgroup, sub_subgroup FROM project_meta"
             )
             for row in cursor.fetchall():
                 labels_raw = row.get("labels")
@@ -30,6 +30,7 @@ def _fetch_all_projects() -> list[dict[str, Any]]:
                     "citation": row.get("citation") or "",
                     "group": row.get("group_name") or "Others",
                     "subgroup": row.get("subgroup") or "",
+                    "sub_subgroup": row.get("sub_subgroup") or "",
                 })
     except Exception:
         pass
@@ -39,23 +40,37 @@ def _fetch_all_projects() -> list[dict[str, Any]]:
 def list_projects() -> dict:
     """Build project list and groups from project_meta table.
 
-    Returns a 3-level tree: group_name → subgroup → display_name / table_name.
+    Returns a 4-level tree: group_name → subgroup → sub_subgroup → project.
     """
 
     all_projects = _fetch_all_projects()
 
-    # Build tree: {group_name: {subgroup: [project_dict, ...]}}
-    tree: dict[str, dict[str, list[dict]]] = {}
+    # Build tree: {group_name: {subgroup: {sub_subgroup: [project_dict, ...]}}}
+    tree: dict[str, dict[str, dict[str, list[dict]]]] = {}
     for p in all_projects:
         gname = p["group"]
-        # Normalise: empty subgroup maps to ""; strip whitespace
+        # Normalise: empty subgroup / sub_subgroup map to ""; strip whitespace
         sgname = (p.get("subgroup") or "").strip()
-        tree.setdefault(gname, {}).setdefault(sgname, []).append({
+        ssgname = (p.get("sub_subgroup") or "").strip()
+        tree.setdefault(gname, {}).setdefault(sgname, {}).setdefault(ssgname, []).append({
             "id": p["id"],
             "description": p["description"],
             "categories": p["categories"],
             "citation": p["citation"],
         })
+
+    def build_subgroups(subgroup_tree: dict) -> list[dict]:
+        """Turn {subgroup: {sub_subgroup: [projects]}} into the ordered subgroup list."""
+        subgroups = []
+        for sgname, ss_tree in subgroup_tree.items():
+            sub_subgroups = []
+            for ssgname, projects in ss_tree.items():
+                projects.sort(key=lambda p: p["description"])
+                sub_subgroups.append({"name": ssgname, "projects": projects})
+            sub_subgroups.sort(key=lambda s: s["name"])
+            subgroups.append({"name": sgname, "sub_subgroups": sub_subgroups})
+        subgroups.sort(key=lambda s: s["name"])
+        return subgroups
 
     # Build ordered list of groups
     group_order = [
@@ -71,36 +86,19 @@ def list_projects() -> dict:
     for gname in group_order:
         if gname in tree and gname not in seen:
             seen.add(gname)
-            subgroups = []
-            for sgname, projects in tree[gname].items():
-                # Sort projects within each subgroup by description
-                projects.sort(key=lambda p: p["description"])
-                subgroups.append({
-                    "name": sgname,
-                    "projects": projects,
-                })
-            # Sort subgroups by name
-            subgroups.sort(key=lambda s: s["name"])
-            groups_out.append({
-                "name": gname,
-                "subgroups": subgroups,
-            })
+            groups_out.append({"name": gname, "subgroups": build_subgroups(tree[gname])})
 
     # Remaining groups not in the fixed order
     for gname in sorted(tree):
         if gname not in seen:
-            subgroups = []
-            for sgname, projects in tree[gname].items():
-                projects.sort(key=lambda p: p["description"])
-                subgroups.append({"name": sgname, "projects": projects})
-            subgroups.sort(key=lambda s: s["name"])
-            groups_out.append({"name": gname, "subgroups": subgroups})
+            groups_out.append({"name": gname, "subgroups": build_subgroups(tree[gname])})
 
     # Flat project list for backwards compatibility
     flat = [
         {"id": p["id"], "description": p["description"],
          "categories": p["categories"], "citation": p["citation"],
-         "group": p["group"], "subgroup": p.get("subgroup", "")}
+         "group": p["group"], "subgroup": p.get("subgroup", ""),
+         "sub_subgroup": p.get("sub_subgroup", "")}
         for p in all_projects
     ]
 
