@@ -530,7 +530,10 @@ $('#btn-design').on('click', function() {
 function renderResults(data) {
   var tbody = $('#results-table tbody').empty();
   if (!LAST_DESIGNS.length) {
-    showError('No design found. Try relaxing the mismatch max or the Tm range, or a longer input sequence.');
+    showError('No design found. Only the common enzymes are ticked by default — '
+      + 'ticking more is usually the first thing to try (the search box filters '
+      + 'which ones are listed, it does not check them). Otherwise relax the '
+      + 'mismatch max or the Tm range, or use a longer input sequence.');
     return;
   }
   LAST_DESIGNS.forEach(function(d) {
