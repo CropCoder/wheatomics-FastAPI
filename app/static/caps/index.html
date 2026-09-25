@@ -658,8 +658,7 @@ $('#db-clear').on('click', function() {
 });
 
 function selectedCheckDbs() {
-  var names = Object.keys(CHECKED_DBS);
-  return names.length ? names : ['AABBDD_Chinese_Spring2.1.genome'];
+  return Object.keys(CHECKED_DBS);
 }
 
 function renderCheckResults(resp, el) {
@@ -822,6 +821,12 @@ $(document).on('click', '.btn-check', function() {
     return;
   }
   var dbs = selectedCheckDbs();
+  if (!dbs.length) {
+    el.html('<div class="alert alert-warning">Tick at least one database under ' +
+      '"Specificity check databases" first — the check has to be run against ' +
+      'something.</div>');
+    return;
+  }
   // TAB-separated with a rank column: "ID<TAB>Rank<TAB>LeftSeq<TAB>RightSeq".
   // PrimerServer2 also accepts "ID<TAB>LeftSeq<TAB>RightSeq" (rank defaults to 0).
   var payload = {
@@ -846,7 +851,30 @@ $(document).on('click', '.btn-check', function() {
     pollCheckResult(jobId, el, 120);
   })
   .fail(function(xhr) {
-    el.html('<div class="alert alert-danger">Failed to submit specificity check: ' + xhr.responseText.slice(0, 300) + '</div>');
+    // An empty responseText means the request never reached the app — a dropped
+    // connection, or a proxy turning it away — and rendering nothing leaves the
+    // user with no idea what happened. Fall back to the status, and pull the
+    // message out of a FastAPI error body rather than dumping its JSON.
+    var msg;
+    if (xhr.responseText) {
+      try {
+        var j = JSON.parse(xhr.responseText);
+        if (typeof j.detail === 'string') {
+          msg = j.detail;
+        } else if (Array.isArray(j.detail)) {
+          msg = j.detail.map(function(e) { return e.msg || JSON.stringify(e); }).join('; ');
+        } else {
+          msg = j.error || j.message || xhr.responseText.slice(0, 300);
+        }
+      } catch (e) {
+        msg = xhr.responseText.slice(0, 300);
+      }
+    } else {
+      msg = 'the server did not answer (HTTP ' + xhr.status + '). Retry, and if it '
+        + 'keeps happening the API may be down.';
+    }
+    el.html('<div class="alert alert-danger">Failed to submit specificity check: '
+      + escapeHtml(msg) + '</div>');
   });
 });
 
