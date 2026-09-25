@@ -370,10 +370,14 @@ function loadVcfDatasets() {
       (((resp.data || {}).references) || []).forEach(function(ref) {
         var grp = $('<optgroup>').attr('label', ref.display || ref.name);
         (ref.datasets || []).forEach(function(d) {
+          // CAPS reads the flank out of the reference genome and checks the VCF
+          // REF against it, so a dataset whose coordinates disagree with that
+          // genome cannot be used here. VariantHub still lists them.
+          if (d.genome_concordant === false) return;
           grp.append($('<option>').val(d.key).text(d.label || d.key));
           VCF_DS_INDEX[d.key] = {reference: ref.name, blastDb: ref.blast_db || ''};
         });
-        sel.append(grp);
+        if (grp.children().length) sel.append(grp);
       });
       loadVcfChroms();
     })

@@ -42,14 +42,19 @@ VARIANTHUB_REFERENCE_BLAST_DB: dict[str, str] = {
 }
 
 
-# Dataset key -> {label, filename, source, reference}
-VARIANTHUB_DATASETS: dict[str, dict[str, str]] = {
+# Dataset key -> {label, filename, source, reference, ...}
+VARIANTHUB_DATASETS: dict[str, dict] = {
     "WEC_filtered_SNPs": {
         "label": "WEC_filtered_SNPs",
         "filename": "WEC_SNP_IWGSCv1.0.eff.vcf.gz",
         "source": "WEC SNP (PMID 25886949)",
         "reference": "Chinese_Spring1.0",
         "url": "https://pubmed.ncbi.nlm.nih.gov/25886949/",
+        # Its coordinates agree with AABBDD_Chinese_Spring1.0.genome at only ~87%
+        # of sampled SNPs, so a tool that reads the flank from that genome and
+        # checks REF against it rejects the other 13%. Still fine to browse in
+        # VariantHub, which never looks at the genome — only CAPS hides it.
+        "genome_concordant": False,
     },
     "WEC_filtered_INDELs": {
         "label": "WEC_filtered_INDELs",
@@ -57,6 +62,7 @@ VARIANTHUB_DATASETS: dict[str, dict[str, str]] = {
         "source": "WEC InDel",
         "reference": "Chinese_Spring1.0",
         "url": "https://pubmed.ncbi.nlm.nih.gov/25886949/",
+        "genome_concordant": False,
     },
     "whealbi_minocc10": {
         "label": "whealbi.minocc10",
@@ -645,6 +651,10 @@ def varianthub_datasets() -> dict:
                 "source": meta["source"],
                 "url": meta.get("url", ""),
                 "has_sample_meta": _sample_meta(key) is not None,
+                # False when this VCF's coordinates do not line up with the
+                # genome a caller would read flanks from. Clients that only
+                # browse variants can ignore it.
+                "genome_concordant": meta.get("genome_concordant", True),
             }
         )
     return ok({
