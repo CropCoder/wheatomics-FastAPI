@@ -603,7 +603,7 @@ function updateDbSelected() {
   var names = Object.keys(CHECKED_DBS);
   var el = $('#db-selected');
   if (!names.length) {
-    el.html('<span class="text-muted">(none selected — falls back to Chinese Spring v2.1)</span>');
+    el.html('<span class="text-muted">(none selected — pick at least one to check against)</span>');
     return;
   }
   var chips = [];
