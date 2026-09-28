@@ -753,11 +753,9 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
         useHTML: false,
 
         /*
-         * 关键：
-         * 使用 center 对齐，使标签围绕 tick 展开，
-         * 再配合左右 chart margin，避免第一个标签左侧被截断。
+         * 右对齐：标签右端锚在 tick，向左下延伸（远离柱子/绘图区）
          */
-        align: 'center',
+        align: 'right',
 
         /*
          * 负值让标签远离绘图区（柱子），避免标签侵入柱子
