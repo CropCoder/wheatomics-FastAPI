@@ -493,19 +493,21 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
   var bottomMargin = Math.max(maxLabelLen * 4.5 + 60, 80);
 
   var chartData = [];
-  resp.results.forEach(function(gene) {
+  resp.results.forEach(function(gene, geneIndex) {
+    var seriesId = 'expr-gene-' + geneIndex;
     // column series
     var colData = gene.points.map(function(p) {
       var v = parseFloat(p.value);
       return isNaN(v) ? 0 : Math.round(v * 10) / 10;
     });
     chartData.push({
+      id: seriesId,
       name: gene.gene_id,
       type: 'column',
       data: colData,
       tooltip: { pointFormat: '<span style="font-weight: bold; color: {series.color}">{series.name}</span>: <b>{point.y:.1f} TPM</b> ' }
     });
-    // errorbar series: [low, high]
+    // errorbar series: [low, high]，linkedTo 让误差棒和对应柱子 x 对齐
     var hasErr = gene.points.some(function(p) {
       return p.error_bar !== null;
     });
@@ -514,11 +516,12 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
         if (p.error_bar) {
           return [Math.round(p.error_bar[0] * 100) / 100, Math.round(p.error_bar[1] * 100) / 100];
         }
-        return [null, null];
+        return null;
       });
       chartData.push({
         name: gene.gene_id,
         type: 'errorbar',
+        linkedTo: seriesId,
         data: errData,
         tooltip: { pointFormat: '(error range: {point.low}-{point.high} TPM)<br/>' }
       });
