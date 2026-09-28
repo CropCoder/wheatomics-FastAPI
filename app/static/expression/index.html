@@ -760,9 +760,9 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
         align: 'center',
 
         /*
-         * 旋转标签与坐标轴之间留出空间
+         * 负值让标签远离绘图区（柱子），避免标签侵入柱子
          */
-        y: 18,
+        y: -15,
 
         style: {
           fontSize: labelFontSize,
