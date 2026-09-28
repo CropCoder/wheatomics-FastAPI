@@ -486,10 +486,9 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
 
   // === 图表 ===
   var labels = resp.results[0].points.map(function(p) { return p.label; });
-  // 按最长标签估算每列宽度和底部空间，避免长标签被隐藏/裁剪
+  // 按最长标签估算底部空间，避免旋转标签被裁剪
   var maxLabelLen = 0;
   labels.forEach(function(l) { if (l && l.length > maxLabelLen) maxLabelLen = l.length; });
-  var colWidth = Math.max(maxLabelLen * 6 + 30, 70);
   var bottomMargin = Math.max(maxLabelLen * 4.5 + 60, 80);
 
   var chartData = [];
@@ -539,8 +538,6 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
       renderTo: chartId,
       zoomType: 'xy',
       height: 420,
-      // 列宽按最长标签估算，列多/标签长时横向滚动，避免柱子被压缩或标签被隐藏
-      scrollablePlotArea: { minWidth: Math.max(labels.length * colWidth, 600) },
       // 给旋转后的长标签预留足够底部空间，避免被裁剪
       marginBottom: bottomMargin
     },
@@ -557,6 +554,14 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
       }
     },
     yAxis: { title: { text: 'Expression (TPM)' }, lineWidth: 2 },
+    plotOptions: {
+      column: {
+        // 去掉横向滚动后，列多时柱子自动变细；groupPadding/pointPadding 调小让柱子占满每列
+        groupPadding: 0.02,
+        pointPadding: 0.02,
+        borderWidth: 0
+      }
+    },
     tooltip: { shared: true, valueDecimals: 1 },
     exporting: { buttons: { contextButton: { text: 'Export data' } } }
   });
