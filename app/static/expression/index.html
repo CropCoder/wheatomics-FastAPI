@@ -753,14 +753,16 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
         useHTML: false,
 
         /*
-         * 右对齐：标签右端锚在 tick，向左下延伸（远离柱子/绘图区）
+         * SVG 标签安全模式：
+         * align=right + 正 y 值，让旋转标签的锚点位于 tick
+         * 下方 & 右侧，文字向左下方延伸（远离绘图区），
+         * 不会再翻到坐标轴上方。
          */
         align: 'right',
 
-        /*
-         * 负值让标签远离绘图区（柱子），避免标签侵入柱子
-         */
-        y: -15,
+        y: 18,
+
+        reserveSpace: true,
 
         style: {
           fontSize: labelFontSize,
