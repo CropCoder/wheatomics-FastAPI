@@ -489,28 +489,86 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
     return p.label;
   });
 
-  // 根据最长标签计算底部空间，并限制最大值，
-  // 避免长 sample 名称把图表底部撑得过大
+  /*
+   * ============================================================
+   * X轴标签布局说明
+   * ------------------------------------------------------------
+   * 1. 标签采用 -45° 倾斜；
+   * 2. 根据最长标签动态增加 chart 左/右/底部空间；
+   * 3. 底部空间同时给 X 轴标签和 Gene legend 预留；
+   * 4. 第一、最后一个标签额外增加左右缓冲，避免旋转后被裁剪；
+   * 5. Citation 位于 chart 外部，因此 chart 底部不会再压到 Citation。
+   * ============================================================
+   */
+
   var maxLabelLen = 0;
+
   labels.forEach(function(l) {
     if (l && l.length > maxLabelLen) {
       maxLabelLen = l.length;
     }
   });
 
-  var bottomMargin = Math.min(
-    Math.max(maxLabelLen * 3.2 + 50, 80),
-    150
-  );
-
-  // 根据 sample 数量动态调整 x 轴标签字体
+  // 根据 sample 数量调整标签字体
   var labelFontSize = '11px';
 
-  if (labels.length > 20) {
+  if (labels.length > 30) {
+    labelFontSize = '8px';
+  } else if (labels.length > 20) {
     labelFontSize = '9px';
   } else if (labels.length > 10) {
     labelFontSize = '10px';
   }
+
+  /*
+   * -45° 长标签的实际占用高度明显大于文字本身。
+   * 使用字符长度估算，并设置上下限。
+   *
+   * 这里比之前的 150px 上限更宽松，
+   * 目的是确保长 sample 名称不会压到 legend。
+   */
+  var labelBottomSpace = Math.max(
+    105,
+    Math.min(230, maxLabelLen * 4.2 + 65)
+  );
+
+  /*
+   * Gene legend 位于图表底部，因此额外预留空间。
+   * 当 gene 较多时 legend 可能自动换行，所以空间继续增加。
+   */
+  var geneCount = resp.results.length;
+
+  var legendBottomSpace = 42;
+
+  if (geneCount > 3) {
+    legendBottomSpace = 58;
+  }
+
+  if (geneCount > 6) {
+    legendBottomSpace = 78;
+  }
+
+  /*
+   * 总 bottom margin =
+   *   X轴标签空间
+   *   + Gene legend 空间
+   *   + 少量安全距离
+   */
+  var bottomMargin =
+    Math.min(300, labelBottomSpace + legendBottomSpace + 18);
+
+  /*
+   * 第一、最后一个标签在旋转后最容易被 chart 边缘裁掉。
+   * 增加左右 margin，尤其是第一个标签左侧。
+   */
+  var sideMargin = Math.min(
+    100,
+    Math.max(30, Math.round(maxLabelLen * 1.2))
+  );
+
+  var chartMarginLeft = 75 + sideMargin;
+  var chartMarginRight = 35 + sideMargin;
+
 
   var chartData = [];
 
@@ -518,9 +576,7 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
 
     var seriesId = 'expr-gene-' + geneIndex;
 
-    // 不在绘图数据阶段四舍五入。
-    // 保留后端返回的真实 TPM，让 Highcharts 根据真实值绘制柱子。
-    // 小数位数只在 tooltip 中控制。
+    // 保留真实 TPM，不在绘图前四舍五入
     var colData = gene.points.map(function(p) {
       var v = parseFloat(p.value);
       return isNaN(v) ? 0 : v;
@@ -560,7 +616,6 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
           if (isNaN(low)) low = 0;
           if (isNaN(high)) high = 0;
 
-          // 表达量不能小于 0
           low = Math.max(0, low);
 
           return [low, high];
@@ -595,11 +650,11 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
       .attr('id', chartId)
       .css({
         width: '100%',
-        overflow: 'hidden'
+        overflow: 'visible'
       })
   );
 
-  // 确保父元素可见，否则 Highcharts 无法正确计算宽度
+  // 确保父元素可见
   $('#result-area').show();
   chartDiv.show();
 
@@ -611,12 +666,31 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
 
       zoomType: 'xy',
 
-      height: 420,
+      /*
+       * 增加图表总高度，避免为了给标签让空间而把绘图区压得太小。
+       * 标签越长，整体图高度适当增加。
+       */
+      height: Math.min(
+        680,
+        Math.max(480, 420 + bottomMargin - 100)
+      ),
+
+      marginTop: 55,
 
       marginBottom: bottomMargin,
 
-      // 图表宽度始终跟随父容器
-      reflow: true
+      marginLeft: chartMarginLeft,
+
+      marginRight: chartMarginRight,
+
+      reflow: true,
+
+      /*
+       * 防止 SVG/HTML 标签在 chart 外层被裁掉
+       */
+      style: {
+        overflow: 'visible'
+      }
     },
 
     credits: {
@@ -627,24 +701,80 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
       text: projectDesc
     },
 
+    /*
+     * Gene legend 固定放在图表底部。
+     * bottom margin 已经为它和 X 轴标签预留独立空间。
+     */
+    legend: {
+      enabled: true,
+
+      align: 'center',
+
+      verticalAlign: 'bottom',
+
+      layout: 'horizontal',
+
+      floating: false,
+
+      margin: 8,
+
+      padding: 3,
+
+      itemStyle: {
+        fontSize: '11px'
+      },
+
+      itemDistance: 20
+    },
+
     xAxis: {
 
       categories: labels,
 
+      /*
+       * 两端增加 category padding，
+       * 避免第一个和最后一个旋转标签贴到边缘。
+       */
+      minPadding: 0.08,
+
+      maxPadding: 0.08,
+
       labels: {
+
         rotation: -45,
 
         step: 1,
 
-        // 避免 sample 名称互相重叠
+        /*
+         * 不允许标签互相覆盖
+         */
         allowOverlap: false,
 
-        useHTML: true,
+        useHTML: false,
+
+        /*
+         * 关键：
+         * 使用 center 对齐，使标签围绕 tick 展开，
+         * 再配合左右 chart margin，避免第一个标签左侧被截断。
+         */
+        align: 'center',
+
+        /*
+         * 旋转标签与坐标轴之间留出空间
+         */
+        y: 18,
 
         style: {
           fontSize: labelFontSize,
+
+          /*
+           * 不截断文字
+           */
           textOverflow: 'none',
-          whiteSpace: 'nowrap'
+
+          whiteSpace: 'nowrap',
+
+          lineHeight: '14px'
         }
       }
     },
@@ -664,24 +794,21 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
 
       column: {
 
-        // 不设置 pointWidth。
-        // Highcharts 会根据当前可视宽度和 sample 数量
-        // 自动计算柱子的宽度。
-        // sample 越多，柱子自动越细。
+        /*
+         * 不设置 pointWidth。
+         * sample 越多，柱子自动变细。
+         */
         groupPadding: 0.08,
 
         pointPadding: 0.03,
 
         borderWidth: 0,
 
-        // sample 很少时限制柱子最大宽度，
-        // 防止只有 1~4 个 sample 时柱子过粗。
         maxPointWidth: 60
       },
 
       errorbar: {
 
-        // errorbar 不参与普通柱子的分组宽度计算
         grouping: false,
 
         whiskerLength: '60%',
