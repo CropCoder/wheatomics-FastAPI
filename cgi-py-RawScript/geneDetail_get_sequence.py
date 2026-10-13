@@ -55,20 +55,42 @@ print('<div id=seq>')
 
 strand = 'plus'
 
-order1 ='/usr/bin/blastdbcmd -db ' + genome_db + ' -line_length 110 -entry ' + chrom + ' -range ' + start + '-' + end + ' -strand ' + strand
-proc1 = subprocess.Popen(['/bin/bash', '-c', order1], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-out1 = proc1.stdout.read()
-print(out1.strip())
 
-order2 ='/usr/bin/blastdbcmd -db ' + gene_db + ' -entry ' + gene_id
-proc2 = subprocess.Popen(['/bin/bash', '-c', order2], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-out2 = proc2.stdout.read()
-print(out2.strip())
+def run_blastdbcmd(args):
+    """Run blastdbcmd with stderr merged into stdout, as this page always did."""
+    proc = subprocess.Popen(['/usr/bin/blastdbcmd'] + args,
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    return proc.stdout.read().strip()
 
-order3 ='/usr/bin/blastdbcmd -db ' + protein_db + ' -entry ' + protein_id
-proc3 = subprocess.Popen(['/bin/bash', '-c', order3], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-out3 = proc3.stdout.read()
-print(out3.strip())
+
+def fetch_genome(db, chrom, start, end):
+    """Fetch a chromosome interval, tolerating a chr/Chr casing mismatch.
+
+    The gene table and the chromosome database disagree on the first letter:
+    GenePageIWGSCv1_table stores the arm as "chr6A" while all_genomes holds the
+    entry as "Chr6A_Chinese_Spring1.0", and blastdbcmd matches entry names
+    case-sensitively — the requested arm is only found in its own spelling.
+    """
+    candidates = [chrom]
+    if len(chrom) > 3 and chrom[:3].lower() == 'chr':
+        other = ('Chr' if chrom[0] == 'c' else 'chr') + chrom[3:]
+        if other != chrom:
+            candidates.append(other)
+    first_output = None
+    for candidate in candidates:
+        out = run_blastdbcmd(['-db', db, '-line_length', '110', '-entry',
+                              candidate, '-range', start + '-' + end,
+                              '-strand', strand])
+        if first_output is None:
+            first_output = out
+        if 'Entry not found' not in out:
+            return out
+    return first_output
+
+
+print(fetch_genome(genome_db, chrom, start, end))
+print(run_blastdbcmd(['-db', gene_db, '-entry', gene_id]))
+print(run_blastdbcmd(['-db', protein_db, '-entry', protein_id]))
 print('</div>')
 print('</pre>')
 print('</div>')
