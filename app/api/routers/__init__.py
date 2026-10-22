@@ -22,3 +22,4 @@ from .caps import router as caps
 from .eqtl import router as eqtl
 from .scrna import router as scrna
 from .wheatpsp import router as wheatpsp
+from .genome import router as genome
