@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS `wheatomics_db`.`genome_registry` (
   `source_md5` char(32) DEFAULT NULL,
   `doi` varchar(255) DEFAULT NULL COMMENT '论文 DOI',
   `paper_title` text,
+  `citation_text` text DEFAULT NULL COMMENT 'cite.html 中的引用文字',
+  `citation_source` varchar(64) DEFAULT NULL COMMENT '引用来源页面',
   `annotation_status` enum('none','pending','available') NOT NULL DEFAULT 'none',
   `annotation_source` varchar(255) DEFAULT NULL,
   `annotation_doi` varchar(255) DEFAULT NULL,

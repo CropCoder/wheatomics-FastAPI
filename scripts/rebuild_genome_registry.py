@@ -30,6 +30,8 @@ JB = "/var/www/html/jbrowse-1.12.3-release"
 BLASTDB = "/var/www/html/getfasta/blastdb"
 BLAST_HTML = "/var/www/html/blast/blast.html"
 ALL_GENOMES = os.path.join(BLASTDB, "all_genomes.nal")
+JBROWSE_HTML = "/var/www/html/jbrowse.html"
+CITE_HTML = "/var/www/html/cite.html"
 
 DB_HOST = os.environ.get("DB_HOST", "localhost")
 DB_PORT = int(os.environ.get("DB_PORT", "3306"))
@@ -77,6 +79,114 @@ def mysql(db: str):
         host=DB_HOST, port=DB_PORT, user=DB_USER, password=DB_PASSWORD,
         database=db, charset="utf8mb4", cursorclass=pymysql.cursors.DictCursor,
     )
+
+
+CARD_RE = re.compile(r'<div class="card-body">(.*?)</div>', re.S)
+SELF_LINK_RE = re.compile(r"\?data=([^\"']+)[\"'][^>]*>(.*?)</a>", re.S)
+LINK_RE = re.compile(r'href="([^"]+)"[^>]*>(.*?)</a>', re.S)
+DOI_RE = re.compile(r"(10\.\d{4,9}/[^\s\"'<>]+)")
+ACC_RE = re.compile(
+    r"\b(GWH[A-Za-z]{2,}[0-9]+(?:\.[0-9]+)?|GCA_[0-9]+\.[0-9]+|GCF_[0-9]+\.[0-9]+|"
+    r"PRJ[A-Z]{2}[0-9]+|SAM[A-Z][0-9]+|CRA[0-9]+)\b"
+)
+REPO_DOMAINS = (
+    "ngdc.cncb.ac.cn", "gwh", "ncbi.nlm.nih.gov", "ebi.ac.uk",
+    "ensembl.org", "gramene.org", "urgi.versailles", "plants.ensembl.org",
+)
+
+
+def _strip_tags(text: str) -> str:
+    text = re.sub(r"<[^>]+>", " ", text or "")
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _extract_doi(*texts: str) -> str | None:
+    for t in texts:
+        if not t:
+            continue
+        m = DOI_RE.search(t)
+        if m:
+            return m.group(1).rstrip(".,;")
+        m = re.search(r"doi:\s*(10\.[^\s<]+)", t, re.I)
+        if m:
+            return m.group(1).rstrip(".,;")
+    return None
+
+
+def parse_jbrowse_cards() -> dict:
+    """解析 jbrowse.html 卡片：dataset -> 标题/引文/数据源/组装号。"""
+    try:
+        html = open(JBROWSE_HTML, encoding="utf-8", errors="replace").read()
+    except OSError:
+        return {}
+    cards = {}
+    for block in CARD_RE.findall(html):
+        m = SELF_LINK_RE.search(block)
+        if not m:
+            continue
+        ds = m.group(1).strip()
+        title = _strip_tags(m.group(2))
+        doi = None
+        repo_url = None
+        link_label = None
+        accession = None
+        for href, label in LINK_RE.findall(block):
+            if "data=" in href:
+                continue
+            label_s = _strip_tags(label)
+            d = _extract_doi(href, label_s)
+            if d:
+                doi = d
+                link_label = label_s
+            if any(dom in href for dom in REPO_DOMAINS):
+                repo_url = href
+            a = ACC_RE.search(href + " " + label_s)
+            if a and not accession:
+                accession = a.group(1)
+        # 有些卡片 DOI 不在 <a> 内，直接扫整块纯文本
+        if not doi:
+            doi = _extract_doi(_strip_tags(block))
+        if not accession:
+            a2 = ACC_RE.search(_strip_tags(block))
+            if a2:
+                accession = a2.group(1)
+        ploidy = None
+        pm = re.match(r"^(.*?)\s*\(([A-Za-z]{2,12})\)\s*$", title)
+        if pm:
+            title = pm.group(1).strip()
+            ploidy = pm.group(2).upper()
+        cards[ds] = {
+            "title": title, "doi": doi, "repo_url": repo_url,
+            "link_label": link_label, "ploidy": ploidy, "accession": accession,
+        }
+    return cards
+
+
+def parse_cite_blocks() -> tuple[dict, list[dict]]:
+    """解析 cite.html：返回 (doi -> 引文, 全部块列表)。"""
+    try:
+        html = open(CITE_HTML, encoding="utf-8", errors="replace").read()
+    except OSError:
+        return {}, []
+    blocks = re.findall(
+        r"If you use (.+?) please cite:(.*?)(?=<br>\s*<br>|If you use |$)",
+        html, re.S,
+    )
+    by_doi = {}
+    all_blocks = []
+    for trigger, body in blocks:
+        trigger_s = _strip_tags(trigger)
+        citation = _strip_tags(body)[:1500]
+        doi = _extract_doi(citation)
+        title = None
+        tm = re.search(r"\((?:19|20)\d{2}\)\s*(.+?)(?:\.\s|\?|$)", citation)
+        if tm:
+            title = tm.group(1).strip()[:500]
+        all_blocks.append({"trigger": trigger_s, "citation": citation,
+                           "doi": doi, "title": title})
+        if doi:
+            by_doi.setdefault(doi, {"citation": citation, "title": title})
+    return by_doi, all_blocks
 
 
 def gather_sources() -> dict:
@@ -137,6 +247,9 @@ def gather_sources() -> dict:
         cur.execute("SELECT genome_number, species, genome_type, subgenome FROM genome_type")
         src["orthofinder"] = cur.fetchall()
 
+    # 8) 页面来源：jbrowse.html 卡片 + cite.html 引文
+    src["jbrowse_cards"] = parse_jbrowse_cards()
+    src["cite_by_doi"], src["cite_blocks"] = parse_cite_blocks()
     return src
 
 
@@ -204,6 +317,52 @@ def main() -> int:
         r["jbrowse_dataset"] = j
         r["aliases"]["jbrowse"] = j
         r["usage"]["jbrowse"] = {"dataset": j, "path": f"{JB}/{j}"}
+
+    # --- jbrowse.html 卡片 + cite.html 引文/数据源 ---
+    cards = src.get("jbrowse_cards", {})
+    cite_by_doi = src.get("cite_by_doi", {})
+    for ds, card in cards.items():
+        r = records.get(ds)
+        if not r:
+            continue
+        if card.get("doi") and not r.get("doi"):
+            r["doi"] = card["doi"]
+        cite_info = cite_by_doi.get(card.get("doi") or "")
+        if cite_info and not r.get("citation_text"):
+            r["citation_text"] = cite_info.get("citation")
+            r["citation_source"] = "cite.html"
+            if not r.get("paper_title") and cite_info.get("title"):
+                r["paper_title"] = cite_info["title"]
+        if card.get("repo_url") and not r.get("source_url"):
+            r["source_url"] = card["repo_url"]
+        if card.get("ploidy") and not r.get("ploidy"):
+            r["ploidy"] = card["ploidy"]
+        if card.get("accession") and not r.get("assembly_accession"):
+            r["assembly_accession"] = card["accession"]
+        if card.get("title") and r.get("display_name") in (None, "", ds):
+            r["display_name"] = card["title"]
+
+    # 对仍缺 doi/引文的记录，用 cite.html 的 "If you use ..." 描述做关键词回退
+    stop_words = {"genome", "genomes", "transcripts", "transcript", "sequences",
+                  "sequence", "proteins", "protein", "genes", "gene", "please", "cite"}
+    for r in records.values():
+        if r.get("doi") and r.get("citation_text"):
+            continue
+        kws = [w for w in re.split(r"[^A-Za-z0-9]+", r.get("display_name") or r["dataset_id"])
+               if len(w) >= 4 and w.lower() not in stop_words]
+        if not kws:
+            continue
+        for blk in src.get("cite_blocks", []):
+            trig = (blk.get("trigger") or "").lower()
+            if trig and any(k.lower() in trig for k in kws):
+                if not r.get("doi") and blk.get("doi"):
+                    r["doi"] = blk["doi"]
+                if not r.get("citation_text") and blk.get("citation"):
+                    r["citation_text"] = blk["citation"]
+                    r["citation_source"] = "cite.html (keyword match)"
+                if not r.get("paper_title") and blk.get("title"):
+                    r["paper_title"] = blk["title"]
+                break
 
     # --- Genefunc_registry ---
     for row in src["genefunc"]:
@@ -376,6 +535,29 @@ def main() -> int:
                 continue
             r[k] = v
 
+    # --- 保留数据库中已有字段（只补空，不覆盖已有数据）---
+    existing: dict[str, dict] = {}
+    try:
+        with mysql(DB_REGISTRY) as conn, conn.cursor() as cur:
+            cur.execute("SELECT * FROM genome_registry")
+            existing = {row["dataset_id"]: row for row in cur.fetchall()}
+    except Exception:
+        existing = {}
+    preserve_fields = (
+        "species", "subgenomes", "cultivar_or_line", "assembly_accession",
+        "assembly_version", "assembly_level", "assembly_date", "genome_size",
+        "chromosome_count", "source_url", "source_file", "source_md5", "doi",
+        "paper_title", "citation_text", "citation_source", "annotation_source",
+        "annotation_doi", "notes", "visible",
+    )
+    for r in records.values():
+        old = existing.get(r["dataset_id"])
+        if not old:
+            continue
+        for f in preserve_fields:
+            if not r.get(f) and old.get(f) not in (None, ""):
+                r[f] = old[f]
+
     # --- 统一补默认值 ---
     for r in records.values():
         if not r.get("ploidy"):
@@ -396,6 +578,7 @@ def main() -> int:
         "assembly_level", "assembly_date", "genome_size", "chromosome_count",
         "source_url", "source_file", "source_md5", "doi", "paper_title",
         "annotation_status", "annotation_source", "annotation_doi", "gene_table",
+        "citation_text", "citation_source",
         "blast_genome_db", "blast_cds_db", "blast_pep_db", "getfasta_member",
         "primerserver_fai", "web_blast_group", "gene_function_ui",
         "synteny_entry", "orthofinder_entry", "aliases_json", "usage_json",
@@ -418,6 +601,11 @@ def main() -> int:
         "orthofinder": sum(1 for r in records if r.get("orthofinder_entry")),
         "annotation_available": sum(1 for r in records if r.get("annotation_status") == "available"),
         "annotation_pending": sum(1 for r in records if r.get("annotation_status") == "pending"),
+        "doi": sum(1 for r in records if r.get("doi")),
+        "citation": sum(1 for r in records if r.get("citation_text")),
+        "source_url": sum(1 for r in records if r.get("source_url")),
+        "accession": sum(1 for r in records if r.get("assembly_accession")),
+        "paper_title": sum(1 for r in records if r.get("paper_title")),
     }
     print(json.dumps(preview, ensure_ascii=False, indent=2))
     if dry:
