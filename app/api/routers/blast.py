@@ -111,6 +111,14 @@ DB_CLASSIFICATION = [
         ],
     },
     {
+        "id": "triticale",
+        "label": "Triticale (AABBRR)",
+        "description": "Hexaploid triticale (AABBRR): PT and ZX830",
+        "keywords": [
+            "aabbrr", "triticale",
+        ],
+    },
+    {
         "id": "other_triticeae",
         "label": "Other Triticeae genome",
         "description": "Rye (Secale cereale), Thinopyrum, Elymus, non-tauschii Aegilops species, Dasypyrum, Leymus, Roegneria",
