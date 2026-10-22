@@ -32,6 +32,8 @@ BLAST_HTML = "/var/www/html/blast/blast.html"
 ALL_GENOMES = os.path.join(BLASTDB, "all_genomes.nal")
 JBROWSE_HTML = "/var/www/html/jbrowse.html"
 CITE_HTML = "/var/www/html/cite.html"
+CURATED_JSON = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "data", "triticeae_genome_metadata_v5.3.json")
 
 DB_HOST = os.environ.get("DB_HOST", "localhost")
 DB_PORT = int(os.environ.get("DB_PORT", "3306"))
@@ -189,6 +191,15 @@ def parse_cite_blocks() -> tuple[dict, list[dict]]:
     return by_doi, all_blocks
 
 
+def load_curated() -> dict:
+    """加载策展表（陈甜甜 Triticeae Genome Metadata V5.3，289 行 x 29 列）。"""
+    try:
+        with open(CURATED_JSON, encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return {"rows": []}
+
+
 def gather_sources() -> dict:
     src: dict = {}
 
@@ -250,6 +261,7 @@ def gather_sources() -> dict:
     # 8) 页面来源：jbrowse.html 卡片 + cite.html 引文
     src["jbrowse_cards"] = parse_jbrowse_cards()
     src["cite_by_doi"], src["cite_blocks"] = parse_cite_blocks()
+    src["curated"] = load_curated()
     return src
 
 
@@ -308,6 +320,12 @@ def main() -> int:
                 "genome_size": None,
                 "chromosome_count": None,
                 "visible": 1,
+                "journal": None,
+                "publication_year": None,
+                "gene_count": None,
+                "te_content": None,
+                "curated_json": None,
+                "curated_source": None,
             }
         return records[key]
 
@@ -469,6 +487,176 @@ def main() -> int:
             r["usage"].setdefault("web_blast", {})["databank"] = hit
             r["usage"]["web_blast"]["frontend"] = "/blast/blast.html"
 
+    # --- 策展表：Triticeae_Genome_Metadata_V5.3（陈甜甜） ---
+    curated = src.get("curated") or {"rows": []}
+    if curated.get("rows"):
+        VER_RE = re.compile(r"^(bpgv?\d+|clr|v\d+(\.\d+)?|hap\d+|t2t|refseq|draft|assembly|genome)$", re.I)
+        STOP = {"genome", "genomes", "assembly", "assemblies", "version", "sp", "subsp",
+                "cultivar", "cv", "line", "accession", "the", "and", "of", "none"}
+        def _toks(x): return re.findall(r"[A-Za-z0-9]+", x or "")
+        def _core(x): return [t.lower() for t in _toks(x)
+                             if len(t) >= 2 and t.lower() not in STOP and not VER_RE.match(t)]
+        def _vstrip_compact(x: str) -> str:
+            core = [re.sub(r"v\d+$", "", t, flags=re.I) for t in _core(x)]
+            core = [t for t in core if t]
+            return re.sub(r"[^a-z0-9]", "", " ".join(core))
+
+        record_alias = {}
+        for key, r in records.items():
+            vals = [key, r.get("display_name") or ""]
+            def _walk(x, _vals=vals):
+                if isinstance(x, dict):
+                    for v in x.values():
+                        _walk(v, _vals)
+                elif isinstance(x, list):
+                    for v in x:
+                        _walk(v, _vals)
+                elif isinstance(x, str):
+                    _vals.append(x)
+            _walk(r.get("aliases") or {})
+            alias_set = {norm(v) for v in vals if norm(v)}
+            for v in vals:
+                vc = _vstrip_compact(v)
+                if vc:
+                    alias_set.add(vc)
+            record_alias[key] = alias_set
+
+        def _match_curated(species: str):
+            """严格匹配：精确/去版本 token 后精确，避免误配。"""
+            sp = (species or "").replace("\xa0", " ").strip()
+            base = re.sub(r"\(.*?\)", " ", sp).strip()
+            parens = re.findall(r"\(([^)]*)\)", sp)
+            fc = norm(sp)
+            bc = _vstrip_compact(base)
+            bc_full = _vstrip_compact(sp)
+            paren_c = [_vstrip_compact(p) for p in parens if _vstrip_compact(p)]
+            best = (0, None)
+            for key, comp in record_alias.items():
+                sc = 0
+                if fc and fc in comp:
+                    sc = 100
+                elif bc_full and bc_full in comp:
+                    sc = 97
+                elif bc and bc in comp:
+                    sc = 95
+                elif paren_c and any(pc in comp for pc in paren_c) and len(bc) <= 2:
+                    sc = 88
+                if sc > best[0]:
+                    best = (sc, key)
+            return best
+
+        PL_OVERRIDES = {
+            "Chinese Spring": "Chinese_Spring2.0",
+            "Chinese Spring v1.0": "Chinese_Spring1.0",
+            "Chinese Spring v2.1": "Chinese_Spring2.1",
+            "Abbondanza(Abo)": "Abo",
+            "PT": "AABBRR_PT",
+            "ZX830": "AABBRR_ZX830",
+            "JM44": "Triticum_aestivum_JM44",
+            "Jimai22(JM22)": "JM22",
+            "Fielder v1.0": "Fielder",
+        }
+        SUB = {"AABBDD": "A,B,D", "AABBRR": "A,B,R", "AABB": "A,B", "AA": "A", "DD": "D",
+               "HH": "H", "SS": "S", "TT": "T", "MM": "M", "AAGG": "A,G", "DDNN": "D,N",
+               "STSTYYHH": "St,Y,H", "STSTVVJJ": "St,V,J", "NSNSXMXM": "Ns,Ns,Xm,Xm",
+               "UU": "U", "VV": "V", "EE": "E", "RR": "R", "ATATGG": "At,G"}
+        def _num(v):
+            if v is None:
+                return None
+            m = re.search(r"\d+(?:\.\d+)?", str(v).replace(",", ""))
+            return int(float(m.group(0))) if m else None
+
+        matched_n = created_n = skipped_n = 0
+        candidates: dict[str, list] = {}
+        for row in curated["rows"]:
+            species = str(row.get("Species") or "").strip()
+            if not species or species == "None":
+                skipped_n += 1
+                continue
+            key, sc = PL_OVERRIDES.get(species), 100
+            if not key:
+                sc, key = _match_curated(species)
+            existed = bool(key) and key in records
+            if not existed:
+                specific = bool(re.search(r"[()\d]", species))
+                if not specific:
+                    skipped_n += 1
+                    continue
+                ds = re.sub(r"[^A-Za-z0-9._-]+", "_", species).strip("_")[:150]
+                if not ds or ds in records:
+                    ds = ("curated_" + ds)[:150]
+                key = ds
+                created_n += 1
+            else:
+                matched_n += 1
+            candidates.setdefault(key, []).append((sc, row, existed))
+
+        def _apply_curated(r, row, existed):
+            ploidy = str(row.get("Chromosome_Level") or "").strip().upper()
+            genome_comp = str(row.get("Genome_Composition") or "").strip()
+            if re.fullmatch(r"[A-Z]+", ploidy or ""):
+                r["ploidy"] = ploidy
+            if genome_comp:
+                r["species"] = genome_comp
+            if ploidy in SUB:
+                r["subgenomes"] = SUB[ploidy]
+            n = _num(row.get("Chromosome_Number"))
+            if n:
+                r["chromosome_count"] = n
+            try:
+                gb = float(str(row.get("Genome_Size_Gb")).strip())
+                if 1.0 <= gb <= 40.0:  # Triticeae 合理范围，过滤异常值
+                    r["genome_size"] = int(round(gb * 1e9))
+            except (TypeError, ValueError):
+                pass
+            curated_doi = str(row.get("DOI_cleaned") or row.get("DOI") or "").strip()
+            if curated_doi:
+                _m = re.search(r"10\.\d{4,9}/\S+", curated_doi)
+                if _m:
+                    curated_doi = _m.group(0).rstrip(".,;")
+                    if r.get("doi") and r.get("doi") != curated_doi:
+                        r["notes"] = (r.get("notes") or "") + f" [原 DOI: {r['doi']}]"
+                    r["doi"] = curated_doi
+            if row.get("NCBI_Assembly_Level"):
+                lv = str(row["NCBI_Assembly_Level"]).strip()
+                if lv.lower() != "none":
+                    r["assembly_level"] = lv
+            if row.get("Journal"):
+                j = str(row["Journal"]).strip()
+                if j.lower() != "none":
+                    r["journal"] = j
+            y = _num(row.get("Publication_Year"))
+            if y:
+                r["publication_year"] = y
+            gc = _num(row.get("Gene_Count"))
+            if gc:
+                r["gene_count"] = gc
+            if row.get("TE_Content"):
+                te = str(row["TE_Content"]).strip()
+                if te.lower() != "not provided":
+                    r["te_content"] = te
+            if not r.get("cultivar_or_line"):
+                mm = re.search(r"\(([^)]*)\)", species)
+                r["cultivar_or_line"] = (mm.group(1) if mm else "")[:255] or None
+            r["curated_json"] = json.dumps(row, ensure_ascii=False)
+            r["curated_source"] = "Triticeae_Genome_Metadata_English_V5.3.xlsx/Sheet1"
+            if not existed and not r.get("notes"):
+                r["notes"] = "策展表 V5.3 收录；平台尚未上线（无 JBrowse/BLAST 记录）"
+
+        ambiguous = 0
+        for key, cands in candidates.items():
+            cands.sort(key=lambda x: (-x[0], -(_num(x[1].get("Publication_Year")) or 0)))
+            top = [c for c in cands if c[0] == cands[0][0]]
+            if len(top) > 1:
+                ambiguous += 1
+            sc, row, existed = cands[0]
+            _apply_curated(rec(key), row, existed)
+            if len(top) > 1:
+                r = records[key]
+                r["notes"] = (r.get("notes") or "") + f" [策展表同分候选 {len(top)} 条，取最新年份]"
+
+        print(f"curated: rows={len(curated['rows'])} matched={matched_n} created={created_n} skipped={skipped_n} ambiguous={ambiguous}")
+
     # --- synteny / orthofinder 登记 ---
     for row in src["synteny"]:
         name = row["genome_name"] or ""
@@ -547,8 +735,9 @@ def main() -> int:
         "species", "subgenomes", "cultivar_or_line", "assembly_accession",
         "assembly_version", "assembly_level", "assembly_date", "genome_size",
         "chromosome_count", "source_url", "source_file", "source_md5", "doi",
-        "paper_title", "citation_text", "citation_source", "annotation_source",
-        "annotation_doi", "notes", "visible",
+        "paper_title", "citation_text", "citation_source", "annotation_status",
+        "annotation_source", "annotation_doi", "journal", "publication_year",
+        "gene_count", "te_content", "curated_json", "curated_source", "notes", "visible",
     )
     for r in records.values():
         old = existing.get(r["dataset_id"])
@@ -576,12 +765,15 @@ def main() -> int:
         "dataset_id", "display_name", "species", "ploidy", "subgenomes",
         "cultivar_or_line", "jbrowse_dataset", "assembly_accession", "assembly_version",
         "assembly_level", "assembly_date", "genome_size", "chromosome_count",
+        "gene_count", "te_content",
         "source_url", "source_file", "source_md5", "doi", "paper_title",
+        "journal", "publication_year",
         "annotation_status", "annotation_source", "annotation_doi", "gene_table",
         "citation_text", "citation_source",
         "blast_genome_db", "blast_cds_db", "blast_pep_db", "getfasta_member",
         "primerserver_fai", "web_blast_group", "gene_function_ui",
         "synteny_entry", "orthofinder_entry", "aliases_json", "usage_json",
+        "curated_json", "curated_source",
         "notes", "visible",
     ]
     placeholders = ",".join(["%s"] * len(cols))

@@ -35,7 +35,8 @@ _DATASET_RE = re.compile(r"^[\w.\-]+$")
 _LIST_COLUMNS = (
     "dataset_id, display_name, species, ploidy, subgenomes, cultivar_or_line, "
     "jbrowse_dataset, assembly_accession, assembly_level, genome_size, "
-    "chromosome_count, doi, annotation_status, gene_table, "
+    "chromosome_count, gene_count, te_content, doi, journal, "
+    "publication_year, annotation_status, gene_table, "
     "getfasta_member, primerserver_fai, web_blast_group, gene_function_ui, "
     "synteny_entry, orthofinder_entry, visible, updated_at"
 )
