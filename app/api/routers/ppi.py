@@ -81,8 +81,10 @@ def query_ppi(
     # Batched: one query for all genes (previously N queries, one per gene).
     # REGEXP can't use an index, so we still scan once per table, but now it's
     # one scan matching any of the requested genes via alternation, not N scans.
-    # Each gene is anchored (^...$) so a prefix doesn't match unrelated IDs.
-    patterns = [f"^{re.escape(g)}$" for g in genes]
+    # WheatID columns store multiple IDs joined by '#' (e.g. "A.1#B.1#C.1"), so
+    # anchor each gene with (^|#)...(#|$) instead of ^...$ to match one ID inside
+    # the multi-value field without matching an unrelated prefix.
+    patterns = [f"(^|#){re.escape(g)}(#|$)" for g in genes]
     # MySQL REGEXP supports alternation; join into one pattern so a single scan
     # matches any requested gene in either WheatID column.
     combined = "|".join(patterns)
