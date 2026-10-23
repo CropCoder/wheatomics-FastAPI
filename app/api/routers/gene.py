@@ -762,6 +762,7 @@ def list_gene_function_registry() -> dict:
                 example_species_chr_id,
                 example_cds_id,
                 example_protein_id,
+                display_name,
                 display_order,
                 visible
             FROM Genefunc_registry
@@ -772,7 +773,7 @@ def list_gene_function_registry() -> dict:
         for row in cursor.fetchall():
             table_name = row.get("table_name")
             polyploidy = row.get("Polyploidy") or _infer_karyotype(table_name)
-            display_name = _display_name(polyploidy, table_name)
+            display_name = (row.get("display_name") or "").strip() or _display_name(polyploidy, table_name)
             if display_name in seen:
                 continue
             seen.add(display_name)
