@@ -864,6 +864,79 @@ def main() -> int:
         print("pruned stale curated-only rows:", len(stale))
     except Exception as exc:  # noqa: BLE001
         print("prune failed:", exc)
+
+    # --- 去重合并：同一基因组的多种命名（DD_/UU_ 前缀、dot/underscore 差异、缩写等）---
+    PL_PREFIX = re.compile(
+        r"^(AABBDD|AABBRR|AABBGG|AABB|AAGG|AA|BB|DD|HH|SS|TT|MM|UU|VV|EE|RR|CC|NN|JJ|KK|II|"
+        r"PPPP|STSTYYHH|STSTVVJJ|NSNSXMXM|ATATGG)_", re.I
+    )
+    def _core_id(x: str) -> str:
+        return re.sub(r"[^a-z0-9]", "", PL_PREFIX.sub("", x or "", count=1).lower())
+    fill_fields = (
+        "species", "ploidy", "subgenomes", "cultivar_or_line", "assembly_accession",
+        "assembly_version", "assembly_level", "assembly_date", "genome_size",
+        "chromosome_count", "source_url", "source_file", "source_md5", "doi",
+        "paper_title", "journal", "publication_year", "gene_count", "te_content",
+        "annotation_status", "annotation_source", "annotation_doi", "gene_table",
+        "blast_genome_db", "blast_cds_db", "blast_pep_db", "getfasta_member",
+        "primerserver_fai", "web_blast_group", "gene_function_ui",
+        "synteny_entry", "orthofinder_entry", "curated_json", "curated_source", "notes",
+    )
+    try:
+        conn3 = mysql(DB_REGISTRY)
+        try:
+            with conn3.cursor() as cur:
+                cur.execute("SELECT * FROM genome_registry")
+                all_rows = cur.fetchall()
+                groups: dict[str, list] = {}
+                for row in all_rows:
+                    groups.setdefault(_core_id(row["dataset_id"]), []).append(row)
+                removed = 0
+                for rows in groups.values():
+                    if len(rows) < 2:
+                        continue
+                    def _score(r):
+                        return ((3 if r.get("jbrowse_dataset") else 0)
+                                + (2 if r.get("blast_genome_db") else 0)
+                                + (1 if r.get("gene_table") else 0)
+                                + (1 if r.get("curated_source") else 0)
+                                + (1 if r.get("doi") else 0)
+                                + (1 if r.get("species") else 0))
+                    rows.sort(key=_score, reverse=True)
+                    canon = rows[0]
+                    try:
+                        aliases = json.loads(canon.get("aliases_json") or "{}")
+                    except (TypeError, ValueError):
+                        aliases = {}
+                    merged_ids = set(aliases.get("merged_ids") or [])
+                    for dup in rows[1:]:
+                        merged_ids.add(dup["dataset_id"])
+                        updates = {}
+                        for f in fill_fields:
+                            if not canon.get(f) and dup.get(f):
+                                canon[f] = dup[f]
+                                updates[f] = dup[f]
+                        aliases["merged_ids"] = sorted(merged_ids)
+                        if updates:
+                            sets = ",".join(f"`{k}`=%s" for k in updates)
+                            cur.execute(
+                                f"UPDATE genome_registry SET aliases_json=%s,{sets} WHERE dataset_id=%s",
+                                [json.dumps(aliases, ensure_ascii=False)]
+                                + list(updates.values()) + [canon["dataset_id"]],
+                            )
+                        else:
+                            cur.execute(
+                                "UPDATE genome_registry SET aliases_json=%s WHERE dataset_id=%s",
+                                (json.dumps(aliases, ensure_ascii=False), canon["dataset_id"]),
+                            )
+                        cur.execute("DELETE FROM genome_registry WHERE dataset_id=%s", (dup["dataset_id"],))
+                        removed += 1
+            conn3.commit()
+        finally:
+            conn3.close()
+        print("dedupe merged/removed rows:", removed)
+    except Exception as exc:  # noqa: BLE001
+        print("dedupe failed:", exc)
     return 0
 
 
