@@ -815,6 +815,28 @@ def main() -> int:
         "common_name": "Wild emmer wheat", "sample_type": "Wild emmer wheat",
         "notes": "Wild Emmer Zavitan v2.0（G3 2018, 10.1534/g3.118.200902）",
     }
+    overrides["Durum_Wheat"] = {
+        "display_name": "Durum Wheat cv. Svevo (AABB)",
+        "species": "Triticum turgidum L. ssp. durum",
+        "cultivar_or_line": "Svevo",
+        "common_name": "Durum wheat", "sample_type": "Free-threshing tetraploid wheat",
+        "notes": "Svevo 参考基因组（Maccaferri et al. 2019 Nat Genet 51:885-895；DOI 10.1038/s41588-019-0381-3）；JBrowse 浏览器：Durum_Wheat",
+    }
+    overrides["Svevo_V2"] = {
+        "display_name": "Durum Wheat cv. Svevo V2 (AABB)",
+        "species": "Triticum turgidum L. ssp. durum",
+        "cultivar_or_line": "Svevo",
+        "common_name": "Durum wheat", "sample_type": "Free-threshing tetraploid wheat",
+        "notes": "Svevo V2 组装（DOI 10.1111/pbi.70673）；独立 JBrowse 浏览器：Svevo_V2",
+    }
+    overrides["Triticum_turgidum_Svevo"] = {
+        "display_name": "Svevo NLR gene set (3,763 genes)",
+        "species": "Triticum turgidum L. ssp. durum",
+        "cultivar_or_line": "Svevo",
+        "common_name": "Durum wheat", "sample_type": "NLR gene set (annotation-only)",
+        "visible": 0,
+        "notes": "annotation-only：仅 3,763 个 NLR/抗病基因的基因功能表（无 JBrowse/BLAST/序列层）；Svevo 基因组浏览器请用 Durum_Wheat（DOI 10.1038/s41588-019-0381-3）",
+    }
     overrides["Thinopyrum_ponticum_decaploid"] = {
         "species": "Thinopyrum ponticum", "ploidy": "PPPP",
         "genome_size": 41330000000, "chromosome_count": 70,
