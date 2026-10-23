@@ -770,6 +770,17 @@ def main() -> int:
             "notes": "genome-only phase A done 2026-10-22; GFF not published yet",
         },
     }
+    overrides["Th.ponticum_public"] = {
+        "species": "Thinopyrum ponticum", "ploidy": "PPPP",
+        "genome_size": 41330000000, "chromosome_count": 70,
+        "doi": "10.1016/j.molp.2026.09.014",
+        "journal": "Molecular Plant", "publication_year": 2026,
+        "paper_title": ("The homoeolog-resolved assembly of the 40-Gb decaploid Thinopyrum ponticum "
+                        "genome reveals extensive homoeologous exchange and recombination, "
+                        "segmental allopolyploid organization, and allelic variations for wheat improvement"),
+        "notes": "JBrowse（序列+all_gene 注释）已上线（数据 2026-05-30，41.33 Gb/70 chr）；BLAST 库/基因功能表尚未建",
+    }
+
     for key, ov in overrides.items():
         r = rec(key)
         for k, v in ov.items():
@@ -811,6 +822,13 @@ def main() -> int:
             # 注意：visible=0 是"显式隐藏"，不能用 falsy 判断覆盖
             if r.get(f) in (None, "") and old.get(f) not in (None, ""):
                 r[f] = old[f]
+
+    # 旧 Th.ponticum scaffold 组装：清除误记 DOI，注明状态
+    _old = records.get("Thinopyrum_ponticum")
+    if _old is not None:
+        _old["doi"] = None
+        _old["notes"] = ("旧 scaffold 组装（33.6 Gb / 99,148 scaffolds，BLAST 库 Other_Thinopyrum_ponticum）；"
+                         "正式引用待确认（此前误记 10.1126/science.aan0032）")
 
     # --- 统一补默认值 ---
     for r in records.values():
@@ -906,8 +924,23 @@ def main() -> int:
         r"^(AABBDD|AABBRR|AABBGG|AABB|AAGG|AA|BB|DD|HH|SS|TT|MM|UU|VV|EE|RR|CC|NN|JJ|KK|II|"
         r"PPPP|STSTYYHH|STSTVVJJ|NSNSXMXM|ATATGG)_", re.I
     )
+    # 明确的"同一基因组不同命名"人工合并映射（全名/缩写/版本/clean 变体）
+    FORCE_MERGE = {
+        "CM104": "Chuanmai104",
+        "CS_IWGSC03G": "IWGSC03G",
+        "AABBDD_CS_CNAU": "CS-CAU",
+        "Renan_v2": "Renan",
+        "ArinaLrFor_PGSBv2": "ArinaLrFor",
+        "Julius_PGSBv2": "Julius",
+        "Norin61_PGSBv2": "Norin61",
+        "Landmark_PGSBv2": "CDC_Landmark",
+        "Triticum_turgidum_Kronos": "Kronos",
+    }
+
     def _core_id(x: str) -> str:
         core = PL_PREFIX.sub("", x or "", count=1).lower()
+        core = re.sub(r"[._-](clean|dedup|cleandedup|deduplicated)$", "", core)
+        core = re.sub(r"[._-](clean|dedup|cleandedup|deduplicated)(?=[._-]|$)", "", core)
         core = re.sub(r"\bae\b", "aegilops", core)
         core = re.sub(r"\bae[._-]", "aegilops_", core)
         core = re.sub(r"[^a-z0-9]", "", core)
@@ -934,7 +967,9 @@ def main() -> int:
                 all_rows = cur.fetchall()
                 groups: dict[str, list] = {}
                 for row in all_rows:
-                    groups.setdefault(_core_id(row["dataset_id"]), []).append(row)
+                    _target = FORCE_MERGE.get(row["dataset_id"])
+                    key = _core_id(_target) if _target else _core_id(row["dataset_id"])
+                    groups.setdefault(key, []).append(row)
                 removed = 0
                 for rows in groups.values():
                     if len(rows) < 2:
@@ -945,7 +980,8 @@ def main() -> int:
                                 + (1 if r.get("gene_table") else 0)
                                 + (1 if r.get("curated_source") else 0)
                                 + (1 if r.get("doi") else 0)
-                                + (1 if r.get("species") else 0))
+                                + (1 if r.get("species") else 0)
+                                + (10 if r["dataset_id"] in FORCE_MERGE.values() else 0))
                     rows.sort(key=_score, reverse=True)
                     canon = rows[0]
                     try:
@@ -961,6 +997,13 @@ def main() -> int:
                                 canon[f] = dup[f]
                                 updates[f] = dup[f]
                         aliases["merged_ids"] = sorted(merged_ids)
+                        _merged_note = f"[合并自 {dup['dataset_id']}"
+                        if dup.get("gene_table"):
+                            _merged_note += f"（基因表 {dup['gene_table']}）"
+                        _merged_note += "]"
+                        if _merged_note not in (canon.get("notes") or ""):
+                            canon["notes"] = ((canon.get("notes") or "") + " " + _merged_note).strip()
+                            updates["notes"] = canon["notes"]
                         if updates:
                             sets = ",".join(f"`{k}`=%s" for k in updates)
                             cur.execute(
@@ -975,6 +1018,15 @@ def main() -> int:
                             )
                         cur.execute("DELETE FROM genome_registry WHERE dataset_id=%s", (dup["dataset_id"],))
                         removed += 1
+                # 清理空壳记录（无任何模块/策展/DOI/物种）
+                cur.execute(
+                    "DELETE FROM genome_registry WHERE jbrowse_dataset IS NULL "
+                    "AND blast_genome_db IS NULL AND gene_table IS NULL AND curated_source IS NULL "
+                    "AND (doi IS NULL OR doi='') AND (species IS NULL OR species='') "
+                    "AND (notes IS NULL OR notes='')"
+                )
+                empties = cur.rowcount
+                print("pruned empty rows:", empties)
             conn3.commit()
         finally:
             conn3.close()
