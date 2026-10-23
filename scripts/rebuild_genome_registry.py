@@ -770,6 +770,31 @@ def main() -> int:
             "notes": "genome-only phase A done 2026-10-22; GFF not published yet",
         },
     }
+    overrides["Kronos"] = {
+        "display_name": "Kronos (pan-genome, 2026; Durum)",
+        "species": "Triticum turgidum L. ssp. durum (Desf.) Husn.",
+        "ploidy": "AABB", "assembly_level": "Chromosome",
+        "jbrowse_dataset": "Kronos",
+        "blast_genome_db": "AABB_Kronos",
+        "blast_cds_db": "AABB_Kronos", "blast_pep_db": "AABB_Kronos",
+        "gene_table": "Genefunc_Kronos_table",
+        "cultivar_or_line": "Kronos", "sample_id": "PI576168",
+        "common_name": "Durum", "sample_type": "Free-threshing tetraploid wheat",
+        "notes": "四倍体泛基因组 2026（10.1038/s41588-026-02678-9）；pan-genome assembly（2,292 seqs / 10.82 Gb）",
+    }
+    overrides["Triticum_turgidum_Kronos"] = {
+        "display_name": "Kronos v2.1 (New Phytologist 2026; Durum)",
+        "species": "Triticum turgidum L. ssp. durum (Desf.) Husn.",
+        "ploidy": "AABB", "assembly_level": "Chromosome",
+        "jbrowse_dataset": "Triticum_turgidum_Kronos",
+        "blast_genome_db": "AABB_Triticum_turgidum_Kronos",
+        "gene_table": "Genefunc_AABB_Kronos_table",
+        "cultivar_or_line": "Kronos", "sample_id": "PI576168",
+        "common_name": "Durum", "sample_type": "Free-threshing tetraploid wheat",
+        "doi": "10.1111/nph.71006", "journal": "New Phytologist", "publication_year": 2026,
+        "paper_title": "The annotated blueprint: integrated functional genomic resources for a model tetraploid wheat Triticum turgidum cv Kronos",
+        "notes": "Kronos v2.1 reference genome（15 seqs / 10.56 Gb）；New Phytologist 2026（10.1111/nph.71006）",
+    }
     overrides["Thinopyrum_ponticum_decaploid"] = {
         "species": "Thinopyrum ponticum", "ploidy": "PPPP",
         "genome_size": 41330000000, "chromosome_count": 70,
@@ -1011,7 +1036,6 @@ def main() -> int:
         "Julius_PGSBv2": "Julius",
         "Norin61_PGSBv2": "Norin61",
         "Landmark_PGSBv2": "CDC_Landmark",
-        "Triticum_turgidum_Kronos": "Kronos",
     }
 
     def _core_id(x: str) -> str:
