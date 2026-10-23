@@ -8,83 +8,116 @@
   },
   "samples": {
     "Kronos": {
-      "sample_name": "Kronos", "sample_id": "PI576168",
+      "sample_name": "Kronos",
+      "sample_id": "PI576168",
       "subspecies": "Triticum turgidum L. ssp. durum (Desf.) Husn.",
-      "sample_type": "Free-threshing tetraploid wheat", "common_name": "Durum",
-      "set_paper": true
+      "sample_type": "Free-threshing tetraploid wheat",
+      "common_name": "Durum",
+      "set_paper": false,
+      "strip_doi_notes": true,
+      "paper_override": {
+        "doi": "10.1111/nph.71006",
+        "journal": "New Phytologist",
+        "year": 2026,
+        "title": "The annotated blueprint: integrated functional genomic resources for a model tetraploid wheat Triticum turgidum cv Kronos"
+      }
     },
     "XM001097": {
-      "sample_name": "XM001097", "sample_id": "XM001097",
+      "sample_name": "XM001097",
+      "sample_id": "XM001097",
       "subspecies": "Triticum turgidum L. ssp. turanicum (Jakubz.) A. Love & D. Love",
-      "sample_type": "Free-threshing tetraploid wheat", "common_name": "Khorasan wheat",
+      "sample_type": "Free-threshing tetraploid wheat",
+      "common_name": "Khorasan wheat",
       "set_paper": true
     },
     "XM000834": {
-      "sample_name": "XM000834", "sample_id": "XM000834",
+      "sample_name": "XM000834",
+      "sample_id": "XM000834",
       "subspecies": "Triticum turgidum L. ssp. turgidum",
-      "sample_type": "Free-threshing tetraploid wheat", "common_name": "Rivet wheat",
+      "sample_type": "Free-threshing tetraploid wheat",
+      "common_name": "Rivet wheat",
       "set_paper": true
     },
     "XM000719": {
-      "sample_name": "XM000719", "sample_id": "XM000719",
+      "sample_name": "XM000719",
+      "sample_id": "XM000719",
       "subspecies": "Triticum turgidum L. ssp. polonicum (L.) Thell.",
-      "sample_type": "Free-threshing tetraploid wheat", "common_name": "Polish wheat",
+      "sample_type": "Free-threshing tetraploid wheat",
+      "common_name": "Polish wheat",
       "set_paper": true
     },
     "NU00021": {
-      "sample_name": "NU00021", "sample_id": "NU00021",
+      "sample_name": "NU00021",
+      "sample_id": "NU00021",
       "subspecies": "Triticum turgidum L. ssp. carthlicum (Nevski) A. Love & D. Love",
-      "sample_type": "Free-threshing tetraploid wheat", "common_name": "Persian wheat",
+      "sample_type": "Free-threshing tetraploid wheat",
+      "common_name": "Persian wheat",
       "set_paper": true
     },
     "AABB_IG77365": {
-      "sample_name": "IG77365", "sample_id": "IG77365",
+      "sample_name": "IG77365",
+      "sample_id": "IG77365",
       "subspecies": "Triticum turgidum L. ssp. aethiopicum (Jakubz.)",
-      "sample_type": "Free-threshing tetraploid wheat", "common_name": "Ethiopian wheat",
+      "sample_type": "Free-threshing tetraploid wheat",
+      "common_name": "Ethiopian wheat",
       "set_paper": true
     },
     "PI294478": {
-      "sample_name": "PI294478", "sample_id": "PI294478",
+      "sample_name": "PI294478",
+      "sample_id": "PI294478",
       "subspecies": "Triticum ispahanicum Heslot",
-      "sample_type": "Domesticated tetraploid wheat", "common_name": "Ispahanicum",
+      "sample_type": "Domesticated tetraploid wheat",
+      "common_name": "Ispahanicum",
       "set_paper": true
     },
     "PI330553": {
-      "sample_name": "PI330553", "sample_id": "PI330553",
+      "sample_name": "PI330553",
+      "sample_id": "PI330553",
       "subspecies": "Triticum karamyschevii NEVSKI var. karamyschevii",
-      "sample_type": "Domesticated tetraploid wheat", "common_name": "Georgian wheat",
+      "sample_type": "Domesticated tetraploid wheat",
+      "common_name": "Georgian wheat",
       "set_paper": true
     },
     "IG99236": {
-      "sample_name": "IG99236", "sample_id": "IG99236",
+      "sample_name": "IG99236",
+      "sample_id": "IG99236",
       "subspecies": "Triticum turgidum L. ssp. dicoccon (Schrank) Thell.",
-      "sample_type": "Domesticated tetraploid wheat", "common_name": "Domesticated emmer wheat",
+      "sample_type": "Domesticated tetraploid wheat",
+      "common_name": "Domesticated emmer wheat",
       "set_paper": true
     },
     "NU01905": {
-      "sample_name": "NU01905", "sample_id": "NU01905",
+      "sample_name": "NU01905",
+      "sample_id": "NU01905",
       "subspecies": "Triticum turgidum L. ssp. dicoccoides (Korn. ex Asch. & Graebn.) Thell.",
-      "sample_type": "Wild emmer wheat", "common_name": "Wild emmer wheat",
+      "sample_type": "Wild emmer wheat",
+      "common_name": "Wild emmer wheat",
       "set_paper": true
     },
     "NU01954": {
-      "sample_name": "NU01954", "sample_id": "NU01954",
+      "sample_name": "NU01954",
+      "sample_id": "NU01954",
       "subspecies": "Triticum turgidum L. ssp. dicoccoides (Korn. ex Asch. & Graebn.) Thell.",
-      "sample_type": "Wild emmer wheat", "common_name": "Wild emmer wheat",
+      "sample_type": "Wild emmer wheat",
+      "common_name": "Wild emmer wheat",
       "set_paper": true
     },
     "Zavitan": {
-      "sample_name": "Zavitan", "sample_id": "",
+      "sample_name": "Zavitan",
+      "sample_id": "",
       "subspecies": "Triticum turgidum L. ssp. dicoccoides (Korn. ex Asch. & Graebn.) Thell.",
-      "sample_type": "Wild emmer wheat", "common_name": "Wild emmer wheat",
+      "sample_type": "Wild emmer wheat",
+      "common_name": "Wild emmer wheat",
       "set_paper": true
     }
   },
   "related_samples": {
     "AABB_Wild_emmer_Zavitan": {
-      "sample_name": "Zavitan", "sample_id": "",
+      "sample_name": "Zavitan",
+      "sample_id": "",
       "subspecies": "Triticum turgidum L. ssp. dicoccoides (Korn. ex Asch. & Graebn.) Thell.",
-      "sample_type": "Wild emmer wheat", "common_name": "Wild emmer wheat",
+      "sample_type": "Wild emmer wheat",
+      "common_name": "Wild emmer wheat",
       "set_paper": false,
       "note": "also represented by the 2026 near-complete WEW_NT assembly"
     }

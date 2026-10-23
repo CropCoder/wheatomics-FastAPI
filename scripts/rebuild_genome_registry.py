@@ -854,27 +854,38 @@ def main() -> int:
                 _v = (_m.get(_k) or "").strip()
                 if _v:
                     _r[_f] = _v
-            if _m.get("set_paper", True) and _src.get("doi"):
+            _paper = _m.get("paper_override")
+            if _paper is None and _m.get("set_paper", True):
+                _paper = _src
+            if _paper and _paper.get("doi"):
                 _prev = _r.get("doi")
                 _notes = _r.get("notes") or ""
-                # 当前 DOI 的旧注释不再需要（避免重复/误导）
-                _notes = _notes.replace(f" [原 DOI: {_src['doi']}]", "").replace(f"[原 DOI: {_src['doi']}]", "")
-                if _prev and _prev != _src["doi"]:
+                # 去掉与新/旧 DOI 相关的历史注释（避免重复/误导）
+                for _d in {_prev, _paper.get("doi"), _src.get("doi")}:
+                    if _d:
+                        _notes = _notes.replace(f" [原 DOI: {_d}]", "").replace(f"[原 DOI: {_d}]", "")
+                if _m.get("strip_doi_notes"):
+                    _notes = re.sub(r"\s*\[原 DOI: [^\]]+\]", "", _notes)
+                if _prev and _prev != _paper["doi"] and not _m.get("strip_doi_notes"):
                     _note = f"[原 DOI: {_prev}]"
                     if _note not in _notes:
                         _notes = (_notes + " " + _note).strip()
                 _r["notes"] = _notes
-                _r["doi"] = _src["doi"]
-                _r["journal"] = _src.get("journal")
-                _r["publication_year"] = _src.get("year")
-                _r["paper_title"] = _src.get("title")
+                _r["doi"] = _paper["doi"]
+                for _pk, _rf in (("journal", "journal"), ("year", "publication_year"), ("title", "paper_title")):
+                    if _paper.get(_pk):
+                        _r[_rf] = _paper[_pk]
             try:
                 _cj = json.loads(_r.get("curated_json") or "{}")
                 if not isinstance(_cj, dict):
                     _cj = {}
             except (TypeError, ValueError):
                 _cj = {}
-            _cj["tetraploid_pangenome_2026"] = {**_m, "source_doi": _src.get("doi")}
+            _entry = {**_m, "source_doi": _src.get("doi")}
+            _paper_doi = (_paper or {}).get("doi")
+            if _paper_doi:
+                _entry["paper_doi"] = _paper_doi
+            _cj["tetraploid_pangenome_2026"] = _entry
             _r["curated_json"] = json.dumps(_cj, ensure_ascii=False)
             _note = (f"四倍体泛基因组 2026 样本：{_m.get('sample_name','')}"
                      f"（{_m.get('common_name','')}；{_m.get('sample_type','')}）")
