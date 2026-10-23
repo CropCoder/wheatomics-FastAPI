@@ -21,7 +21,7 @@ import shutil
 import sys
 import time
 
-HEADER = "Getsequence Name\tGetsequence Search example\tGene example"
+HEADER = "Getsequence Name\tGetsequence Search example\tGene example\tLibrary"
 
 
 def composition_of(name: str) -> str:
@@ -35,6 +35,7 @@ def main() -> int:
     ap.add_argument("--region", required=True, help="第二列：区间示例，如 Chr1A_xxx:200-500")
     ap.add_argument("--gene", required=True, help="第三列：基因示例 ID")
     ap.add_argument("--composition", default="", help="基因组组成前缀（如 AABBDD）；省略/未知时排到最后")
+    ap.add_argument("--library", default="", help="第 4 列：all_genomes / all_other_genomes")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -54,8 +55,13 @@ def main() -> int:
         lines = [HEADER]
     if not lines[0].startswith("Getsequence Name"):
         lines.insert(0, HEADER)
+    elif len(lines[0].split("\t")) == 3:
+        lines[0] = lines[0] + "\tLibrary"
+    for _i in range(1, len(lines)):
+        if lines[_i].strip() and len(lines[_i].split("\t")) == 3:
+            lines[_i] = lines[_i] + "\t?"
 
-    new_row = f"{args.name}\t{args.region}\t{args.gene}"
+    new_row = f"{args.name}\t{args.region}\t{args.gene}\t{args.library or '?'}"
     comp = (args.composition or "").strip()
     if comp and not comp.startswith(composition_of(args.name)):
         # 允许显式指定（如 Th.ponticum_public 的组成前缀），但记录提示
