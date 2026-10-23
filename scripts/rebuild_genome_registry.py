@@ -778,7 +778,7 @@ def main() -> int:
         "paper_title": ("The homoeolog-resolved assembly of the 40-Gb decaploid Thinopyrum ponticum "
                         "genome reveals extensive homoeologous exchange and recombination, "
                         "segmental allopolyploid organization, and allelic variations for wheat improvement"),
-        "notes": "JBrowse（序列+all_gene 注释）已上线（数据 2026-05-30，41.33 Gb/70 chr）；BLAST 库/基因功能表尚未建",
+        "notes": "合规处理完成（2026-10-23）：43,558 unplaced 已重命名 ChrUn_*，官方 QC 通过；BLAST 核酸库/CDS/PEP 库已建；JBrowse 已用新命名重建（DNA+all_gene）；基因功能表/02G 尚未建",
     }
 
     for key, ov in overrides.items():
@@ -822,6 +822,12 @@ def main() -> int:
             # 注意：visible=0 是"显式隐藏"，不能用 falsy 判断覆盖
             if r.get(f) in (None, "") and old.get(f) not in (None, ""):
                 r[f] = old[f]
+
+    # Th.ponticum_public：染色体数按论文 70（fai 里是全部序列数）
+    _tpp = records.get("Th.ponticum_public")
+    if _tpp is not None:
+        _tpp["chromosome_count"] = 70
+        _tpp["genome_size"] = 41328730192
 
     # 旧 Th.ponticum scaffold 组装：清除误记 DOI，注明状态
     _old = records.get("Thinopyrum_ponticum")
