@@ -1054,6 +1054,8 @@ def main() -> int:
         "CM104": "Chuanmai104",
         "CS_IWGSC03G": "IWGSC03G",
         "AABBDD_CS_CNAU": "CS-CAU",
+        "KeNong9204": "KN9204",
+        "ae_longissima_TAEG67822": "ae.longissima.AEG-6782-2",
         "Renan_v2": "Renan",
         "ArinaLrFor_PGSBv2": "ArinaLrFor",
         "Julius_PGSBv2": "Julius",
