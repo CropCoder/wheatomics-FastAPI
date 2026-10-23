@@ -210,8 +210,8 @@ var _hmt = _hmt || [];
       <div class="info-box" style="margin-top:12px;">
         <strong>Examples:</strong>
         <ul style="margin-bottom:0; padding-left:20px;">
-          <li><a href="javascript:void(0)" onclick="useExample('TraesCS5A02G391700', 'all_gene')">TraesCS5A02G391700</a> — VRN-A1, single gene</li>
-          <li><a href="javascript:void(0)" onclick="useExample('TraesCS5A02G391700\nTraesCS1A02G001000\nTraesCS2B02G123400', 'all_gene')">3 wheat genes, batch mode</li>
+          <li><a href="javascript:void(0)" onclick="useExample('TraesCS5A02G391700', 'all_genes')">TraesCS5A02G391700</a> — VRN-A1, single gene</li>
+          <li><a href="javascript:void(0)" onclick="useExample('TraesCS5A02G391700\nTraesCS1A02G001000\nTraesCS2B02G123400', 'all_genes')">3 wheat genes, batch mode</li>
           <li><a href="javascript:void(0)" onclick="useExample('Chr1A_Chinese_Spring1.0:200-500', 'all_genomes')">Chr1A_Chinese_Spring1.0:200-500</a> — Chinese Spring v1.0 interval</li>
           <li><a href="javascript:void(0)" onclick="useExample('Chr1A_Abo:200-500', 'all_genomes')">Chr1A_Abo:200-500</a> — Abbondanza interval</li>
         </ul>
@@ -225,7 +225,7 @@ var _hmt = _hmt || [];
       <div class="form-group">
         <label><strong>Sequence Database</strong></label>
         <select id="db-select" class="form-control"></select>
-        <small class="form-text text-muted" id="db-hint">Defaults to all_gene (CDS), or pick a genome-specific database for interval queries.</small>
+        <small class="form-text text-muted" id="db-hint">Defaults to all_genes (CDS); interval queries use all_genomes.</small>
       </div>
       <button id="query-btn" class="btn btn-primary" onclick="querySequence()">Get FASTA</button>
       <button class="btn btn-outline-secondary ml-2" onclick="clearAll()">Clear</button>
@@ -308,7 +308,7 @@ var userPickedDatabase = false;
 function loadExample(db) {
   if (!db) return;
   // 聚合库没有对应的 .fai，跳过
-  if (db === 'all_genomes' || db === 'all_gene' || db === 'all_protein') return;
+  if (db === 'all_genomes' || db === 'all_genes' || db === 'all_proteins' || db === 'all_other_genomes') return;
   $.getJSON('/api/blast/database-example', { db: db })
     .done(function(resp) {
       if (!resp || !resp.success) return;
@@ -330,7 +330,7 @@ function loadExample(db) {
 function autoDetectMode() {
   var input = $('#query-input').val().trim();
   if (!input) {
-    $('#db-hint').text('CDS / gene database. Defaults to all_gene.');
+    $('#db-hint').text('CDS / transcript database. Defaults to all_genes.');
     return;
   }
   // Split into tokens (space / newline / comma / semicolon)
@@ -348,11 +348,11 @@ function autoDetectMode() {
   } else {
     // Pure gene ID batch / single — default to CDS / all_gene
     $('#db-hint').text(tokens.length > 1
-      ? ('Detected ' + tokens.length + ' gene IDs. Defaulting to all_gene.')
-      : 'CDS / gene database. Defaults to all_gene.');
+      ? ('Detected ' + tokens.length + ' gene IDs. Defaulting to all_genes.')
+      : 'CDS / transcript database. Defaults to all_genes.');
     if (!userPickedDatabase) {
-      if (databaseOptions.find(function(o) { return o.value === 'all_gene'; })) {
-        $('#db-select').val('all_gene');
+      if (databaseOptions.find(function(o) { return o.value === 'all_genes'; })) {
+        $('#db-select').val('all_genes');
       }
     }
   }
@@ -384,62 +384,23 @@ function loadDatabases() {
   $('#db-select').html('<option>Loading...</option>');
   $.getJSON('/api/blast/databases?program=blastn')
     .done(function(resp) {
-      if (!resp.success) { showError('Failed to load databases'); return; }
       var sel = $('#db-select').empty();
       databaseOptions = [];
-
-      // Preferred presets
       var presets = [
-        { value: 'all_genomes', label: 'all_genomes (aggregated, recommended for intervals)' },
-        { value: 'all_gene', label: 'all_gene (CDS, aggregated)' },
-        { value: 'all_protein', label: 'all_protein (protein, aggregated)' }
+        { value: 'all_genomes',       label: 'all_genomes — 所有染色体水平基因组（区间检索）' },
+        { value: 'all_genes',         label: 'all_genes — 所有转录本序列' },
+        { value: 'all_proteins',      label: 'all_proteins — 所有蛋白序列' },
+        { value: 'all_other_genomes', label: 'all_other_genomes — 其他非染色体水平基因组（合并）' }
       ];
       presets.forEach(function(p) {
         sel.append($('<option>').val(p.value).text(p.label));
         databaseOptions.push(p);
       });
-
-      // Group by category if available.
-      // Note: /api/blast/databases returns a FLAT shape (categories /
-      // nucleotide / protein at the top level), not the wrapped { data: {...} }
-      // shape used by other endpoints.
-      var codingDbs = [];
-      if (resp.categories) {
-        var genomeDbs = [];
-        resp.categories.forEach(function(cat) {
-          cat.databases.forEach(function(db) {
-            if (shouldHideDb(db)) return;
-            if (isCodingTranscriptDb(db)) {
-              codingDbs.push({ name: db, catLabel: cat.label });
-            } else {
-              genomeDbs.push({ name: db, catLabel: cat.label });
-            }
-          });
-        });
-        if (genomeDbs.length) {
-          sel.append('<optgroup label="────────── Genome-specific ──────────"></optgroup>');
-          genomeDbs.forEach(function(item) {
-            var label = item.name + ' [' + item.catLabel + ']';
-            sel.append($('<option>').val(item.name).text(label));
-            databaseOptions.push({ value: item.name, label: label });
-          });
-        }
-        if (codingDbs.length) {
-          sel.append('<optgroup label="────────── Coding/transcript sequences ──────────"></optgroup>');
-          codingDbs.forEach(function(item) {
-            sel.append($('<option>').val(item.name).text(item.name));
-            databaseOptions.push({ value: item.name, label: item.name });
-          });
-        }
-      } else if (resp.nucleotide && resp.nucleotide.databases) {
-        resp.nucleotide.databases.forEach(function(db) {
-          if (shouldHideDb(db)) return;
-          sel.append($('<option>').val(db).text(db));
-          databaseOptions.push({ value: db, label: db });
-        });
+      $('#db-select').val('all_genes');
+      if (!resp || !resp.success) {
+        // 后端 DB 列表接口异常时仍保留聚合选项（blastdbcmd 可直接用）
+        console.warn('databases API failed; using aggregate presets only');
       }
-
-      $('#db-select').val('all_gene');
     })
     .fail(function() { showError('Failed to load databases'); });
 }
@@ -769,12 +730,11 @@ function querySequence() {
     // (chr:start-end) but not TraesCSxxx gene entry IDs. Refuse
     // non-interval queries here and route the user to the interval
     // mode / the /by-interval endpoint instead.
-    if (db === 'all_genomes') {
+    if (db === 'all_genomes' || db === 'all_other_genomes') {
       $('#loading-indicator').hide();
-      showError("all_genomes stores chromosome sequences, not gene entry IDs. " +
+      showError(db + " stores chromosome/scaffold sequences, not gene entry IDs. " +
                 "Please switch the input format to 'Chr1A_Abo:200-500' " +
-                "(interval mode) or pick a different database " +
-                "(all_gene / all_protein).");
+                "(interval mode) or pick 'all_genes' / 'all_proteins'.");
       return;
     }
 
@@ -784,15 +744,15 @@ function querySequence() {
     //   - all_protein    → protein only (skip CDS lookup)
     //   - other coding   → try CDS + protein in parallel
     var geneDb, protDb;
-    if (db === 'all_protein') {
+    if (db === 'all_proteins') {
       geneDb = null;       // skip CDS
-      protDb = 'all_protein';
-    } else if (db === 'all_gene') {
-      geneDb = 'all_gene';
+      protDb = 'all_proteins';
+    } else if (db === 'all_genes') {
+      geneDb = 'all_genes';
       protDb = null;       // skip protein
     } else {
       geneDb = db;
-      protDb = 'all_protein';
+      protDb = 'all_proteins';
     }
 
     // FastAPI's Query(...) on gene_db / protein_db is not Optional,
@@ -830,7 +790,7 @@ function renderGene(resp, gene, geneDb, protDb) {
   } else {
     // Build the summary bar. Only show CDS / Protein columns when the
     // matching lookup was actually run — skip the column entirely when
-    // the side was intentionally bypassed (e.g. user picked all_gene,
+    // the side was intentionally bypassed (e.g. user picked all_genes,
     // so protein_db is N/A).
     var barParts = [
       '<strong>Gene:</strong> ' + escapeHtml(gene),
