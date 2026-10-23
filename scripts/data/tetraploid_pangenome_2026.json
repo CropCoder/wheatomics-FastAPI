@@ -127,6 +127,24 @@
       "common_name": "Wild emmer wheat",
       "set_paper": false,
       "note": "also represented by the 2026 near-complete WEW_NT assembly"
+    },
+    "Wild_emmer": {
+      "sample_name": "Zavitan",
+      "sample_id": "",
+      "subspecies": "Triticum turgidum L. ssp. dicoccoides (Korn. ex Asch. & Graebn.) Thell.",
+      "sample_type": "Wild emmer wheat",
+      "common_name": "Wild emmer wheat",
+      "set_paper": false,
+      "note": "Wild Emmer Zavitan v1.0 (also known as Zavitan reference)"
+    },
+    "Wild_emmerV2": {
+      "sample_name": "Zavitan",
+      "sample_id": "",
+      "subspecies": "Triticum turgidum L. ssp. dicoccoides (Korn. ex Asch. & Graebn.) Thell.",
+      "sample_type": "Wild emmer wheat",
+      "common_name": "Wild emmer wheat",
+      "set_paper": false,
+      "note": "Wild Emmer Zavitan v2.0 (also known as Zavitan reference)"
     }
   }
 }

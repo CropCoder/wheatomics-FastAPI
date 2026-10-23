@@ -795,6 +795,20 @@ def main() -> int:
         "paper_title": "The annotated blueprint: integrated functional genomic resources for a model tetraploid wheat Triticum turgidum cv Kronos",
         "notes": "Kronos v2.1 reference genome（15 seqs / 10.56 Gb）；New Phytologist 2026（10.1111/nph.71006）",
     }
+    overrides["Wild_emmer"] = {
+        "display_name": "Wild Emmer Zavitan v1.0",
+        "species": "Triticum turgidum L. ssp. dicoccoides (Korn. ex Asch. & Graebn.) Thell.",
+        "cultivar_or_line": "Zavitan",
+        "common_name": "Wild emmer wheat", "sample_type": "Wild emmer wheat",
+        "notes": "Wild Emmer Zavitan v1.0（Avni et al. 2017, Science 10.1126/science.aan0032）",
+    }
+    overrides["Wild_emmerV2"] = {
+        "display_name": "Wild Emmer Zavitan v2.0",
+        "species": "Triticum turgidum L. ssp. dicoccoides (Korn. ex Asch. & Graebn.) Thell.",
+        "cultivar_or_line": "Zavitan",
+        "common_name": "Wild emmer wheat", "sample_type": "Wild emmer wheat",
+        "notes": "Wild Emmer Zavitan v2.0（G3 2018, 10.1534/g3.118.200902）",
+    }
     overrides["Thinopyrum_ponticum_decaploid"] = {
         "species": "Thinopyrum ponticum", "ploidy": "PPPP",
         "genome_size": 41330000000, "chromosome_count": 70,
