@@ -777,6 +777,16 @@ def main() -> int:
                 continue
             r[k] = v
 
+    # --- 人工确认忽略的基因组（无 JBrowse / 无可用数据），隐藏但保留溯源 ---
+    IGNORED_DATASETS = {"Aegilops_tauschii_V1.1", "Aegilops_tauschii_AL8_78"}
+    for _ds in IGNORED_DATASETS:
+        _r = records.get(_ds)
+        if _r is not None:
+            _r["visible"] = 0
+            _note = "已确认忽略（无 JBrowse/无可用数据，2026-10-23）"
+            if _note not in (_r.get("notes") or ""):
+                _r["notes"] = ((_r.get("notes") or "") + " [" + _note + "]").strip()
+
     # --- 保留数据库中已有字段（只补空，不覆盖已有数据）---
     existing: dict[str, dict] = {}
     try:
@@ -798,7 +808,8 @@ def main() -> int:
         if not old:
             continue
         for f in preserve_fields:
-            if not r.get(f) and old.get(f) not in (None, ""):
+            # 注意：visible=0 是"显式隐藏"，不能用 falsy 判断覆盖
+            if r.get(f) in (None, "") and old.get(f) not in (None, ""):
                 r[f] = old[f]
 
     # --- 统一补默认值 ---
