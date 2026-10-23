@@ -783,7 +783,7 @@ def main() -> int:
         "gene_table": "Genefunc_Thinopyrum_ponticum_decaploid_table",
         "assembly_accession": "Tpo.Acc-1",
         "cultivar_or_line": "Tpo.Acc-1",
-        "notes": "材料登录号 Tpo.Acc-1；原 dataset_id Th.ponticum_public（2026-10-23 整体迁移为 Thinopyrum_ponticum_decaploid）；合规处理完成：43,558 unplaced 已重命名 ChrUn_*，官方 QC 通过；BLAST 核酸库/CDS/PEP 库已建；JBrowse 已用新命名重建（DNA+all_gene）；基因功能表/02G 已建",
+        "notes": "材料登录号 Tpo.Acc-1；2026-10-23 完成 dataset_id 迁移；合规处理完成：43,558 unplaced 已重命名 ChrUn_*，官方 QC 通过；BLAST 核酸库/CDS/PEP 库已建；JBrowse 已用新命名重建（DNA+all_gene）；基因功能表/02G 已建",
     }
 
     for key, ov in overrides.items():

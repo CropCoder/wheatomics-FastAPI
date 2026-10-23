@@ -34,7 +34,6 @@ INVALID_DB_MEMBERS = {
 OVERRIDES = {
     # 数据库名: chromosome-level?
     "Thinopyrum_ponticum_decaploid.genome": True,   # 2026 Mol Plant, 70 chr
-    "Th.ponticum_public.genome": True,             # 迁移前旧名（兼容）
     "Other_Thinopyrum_ponticum.genome": False,
 }
 PLOIDY_PREFIX = re.compile(
