@@ -12,7 +12,7 @@
       "sample_id": "PI576168",
       "subspecies": "Triticum turgidum L. ssp. durum (Desf.) Husn.",
       "sample_type": "Free-threshing tetraploid wheat",
-      "common_name": "Durum",
+      "common_name": "Durum wheat",
       "set_paper": true
     },
     "XM001097": {
@@ -60,7 +60,7 @@
       "sample_id": "PI294478",
       "subspecies": "Triticum ispahanicum Heslot",
       "sample_type": "Domesticated tetraploid wheat",
-      "common_name": "Ispahanicum",
+      "common_name": "Ispahanicum wheat",
       "set_paper": true
     },
     "PI330553": {
@@ -108,7 +108,7 @@
       "sample_id": "PI576168",
       "subspecies": "Triticum turgidum L. ssp. durum (Desf.) Husn.",
       "sample_type": "Free-threshing tetraploid wheat",
-      "common_name": "Durum",
+      "common_name": "Durum wheat",
       "set_paper": false,
       "paper_override": {
         "doi": "10.1111/nph.71006",

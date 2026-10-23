@@ -877,6 +877,9 @@ def main() -> int:
                            ("species", "subspecies"), ("sample_type", "sample_type"),
                            ("common_name", "common_name")):
                 _v = (_m.get(_k) or "").strip()
+                # 单个单词的 Common name 统一补 "wheat"（如 Durum -> Durum wheat）
+                if _k == "common_name" and _v and " " not in _v and "wheat" not in _v.lower():
+                    _v = _v + " wheat"
                 if _v:
                     _r[_f] = _v
             _paper = _m.get("paper_override")
