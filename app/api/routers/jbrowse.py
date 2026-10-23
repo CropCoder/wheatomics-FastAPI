@@ -38,6 +38,19 @@ def _ensure_dataset_name(dataset: str) -> str:
     return dataset
 
 
+def _loads_json(value):
+    """Decode a JSON document stored as TEXT; pass through decoded values."""
+    if isinstance(value, (dict, list)):
+        return value
+    if not value:
+        return {}
+    try:
+        return json.loads(value)
+    except (TypeError, ValueError):
+        # A corrupted row must not take down the whole dataset listing.
+        return value
+
+
 @router.get("/jbrowse/datasets")
 def list_jbrowse_datasets() -> dict:
     """列出所有 JBrowse 数据集及轨道数。
@@ -95,12 +108,15 @@ def get_jbrowse_tracklist(dataset: str) -> Response:
             "WHERE dataset = %s ORDER BY ord",
             (dataset,),
         )
-        tracks = [row["track_json"] for row in cursor.fetchall()]
+        # `track_json` / `names_json` are stored as TEXT holding JSON docs.
+        # Decode them so the payload matches the on-disk trackList.json
+        # (tracks must be objects, names must be an object, not strings).
+        tracks = [_loads_json(row["track_json"]) for row in cursor.fetchall()]
 
     payload: dict = {"formatVersion": 1, "tracks": tracks}
     if meta.get("dataset_id"):
         payload["dataset_id"] = meta["dataset_id"]
     if meta.get("has_names") and meta.get("names_json"):
-        payload["names"] = meta["names_json"]
+        payload["names"] = _loads_json(meta["names_json"])
 
     return Response(content=json.dumps(payload), media_type="application/json")
