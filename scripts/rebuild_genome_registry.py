@@ -770,7 +770,7 @@ def main() -> int:
             "notes": "genome-only phase A done 2026-10-22; GFF not published yet",
         },
     }
-    overrides["Th.ponticum_public"] = {
+    overrides["Thinopyrum_ponticum_decaploid"] = {
         "species": "Thinopyrum ponticum", "ploidy": "PPPP",
         "genome_size": 41330000000, "chromosome_count": 70,
         "doi": "10.1016/j.molp.2026.09.014",
@@ -779,9 +779,11 @@ def main() -> int:
                         "genome reveals extensive homoeologous exchange and recombination, "
                         "segmental allopolyploid organization, and allelic variations for wheat improvement"),
         "display_name": "Thinopyrum ponticum (Tpo.Acc-1)",
+        "assembly_level": "Chromosome",
+        "gene_table": "Genefunc_Thinopyrum_ponticum_decaploid_table",
         "assembly_accession": "Tpo.Acc-1",
         "cultivar_or_line": "Tpo.Acc-1",
-        "notes": "材料登录号 Tpo.Acc-1；合规处理完成（2026-10-23）：43,558 unplaced 已重命名 ChrUn_*，官方 QC 通过；BLAST 核酸库/CDS/PEP 库已建；JBrowse 已用新命名重建（DNA+all_gene）；基因功能表/02G 已建",
+        "notes": "材料登录号 Tpo.Acc-1；原 dataset_id Th.ponticum_public（2026-10-23 整体迁移为 Thinopyrum_ponticum_decaploid）；合规处理完成：43,558 unplaced 已重命名 ChrUn_*，官方 QC 通过；BLAST 核酸库/CDS/PEP 库已建；JBrowse 已用新命名重建（DNA+all_gene）；基因功能表/02G 已建",
     }
 
     for key, ov in overrides.items():
@@ -826,8 +828,8 @@ def main() -> int:
             if r.get(f) in (None, "") and old.get(f) not in (None, ""):
                 r[f] = old[f]
 
-    # Th.ponticum_public：染色体数按论文 70（fai 里是全部序列数）
-    _tpp = records.get("Th.ponticum_public")
+    # Thinopyrum_ponticum_decaploid：染色体数按论文 70（fai 里是全部序列数）
+    _tpp = records.get("Thinopyrum_ponticum_decaploid")
     if _tpp is not None:
         _tpp["chromosome_count"] = 70
         _tpp["genome_size"] = 41328730192

@@ -123,7 +123,7 @@ DB_CLASSIFICATION = [
         "label": "Thinopyrum ponticum",
         "description": "Decaploid Thinopyrum ponticum genome (2026, 41.33 Gb / 70 chromosomes)",
         "keywords": [
-            "ponticum",  # Th.ponticum_public.* 以及旧 Thinopyrum_ponticum
+            "ponticum",  # Thinopyrum_ponticum_decaploid.* 以及旧 Thinopyrum_ponticum
         ],
     },
     {
