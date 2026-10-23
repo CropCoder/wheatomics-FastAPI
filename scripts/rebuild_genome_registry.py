@@ -813,6 +813,7 @@ def main() -> int:
         existing = {}
     preserve_fields = (
         "species", "subgenomes", "cultivar_or_line", "assembly_accession",
+        "sample_id", "common_name", "sample_type",
         "assembly_version", "assembly_level", "assembly_date", "genome_size",
         "chromosome_count", "source_url", "source_file", "source_md5", "doi",
         "paper_title", "citation_text", "citation_source", "annotation_status",
@@ -827,6 +828,59 @@ def main() -> int:
             # 注意：visible=0 是"显式隐藏"，不能用 falsy 判断覆盖
             if r.get(f) in (None, "") and old.get(f) not in (None, ""):
                 r[f] = old[f]
+
+    # --- 四倍体泛基因组 2026（Nature Genetics）样本元数据 ---
+    _tp_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "tetraploid_pangenome_2026.json")
+    try:
+        with open(_tp_file, encoding="utf-8") as _fh:
+            _tp = json.load(_fh)
+    except (OSError, ValueError) as _exc:
+        _tp = None
+        print(f"[WARN] 读取 {_tp_file} 失败: {_exc}")
+    if _tp:
+        _src = _tp.get("source", {})
+        _samples = dict(_tp.get("samples", {}))
+        _samples.update(_tp.get("related_samples", {}))
+        _found = 0
+        for _ds, _m in _samples.items():
+            _r = records.get(_ds)
+            if _r is None:
+                print(f"[WARN] tetraploid pangenome sample 未找到记录: {_ds}")
+                continue
+            _found += 1
+            for _f, _k in (("cultivar_or_line", "sample_name"), ("sample_id", "sample_id"),
+                           ("species", "subspecies"), ("sample_type", "sample_type"),
+                           ("common_name", "common_name")):
+                _v = (_m.get(_k) or "").strip()
+                if _v:
+                    _r[_f] = _v
+            if _m.get("set_paper", True) and _src.get("doi"):
+                _prev = _r.get("doi")
+                _notes = _r.get("notes") or ""
+                # 当前 DOI 的旧注释不再需要（避免重复/误导）
+                _notes = _notes.replace(f" [原 DOI: {_src['doi']}]", "").replace(f"[原 DOI: {_src['doi']}]", "")
+                if _prev and _prev != _src["doi"]:
+                    _note = f"[原 DOI: {_prev}]"
+                    if _note not in _notes:
+                        _notes = (_notes + " " + _note).strip()
+                _r["notes"] = _notes
+                _r["doi"] = _src["doi"]
+                _r["journal"] = _src.get("journal")
+                _r["publication_year"] = _src.get("year")
+                _r["paper_title"] = _src.get("title")
+            try:
+                _cj = json.loads(_r.get("curated_json") or "{}")
+                if not isinstance(_cj, dict):
+                    _cj = {}
+            except (TypeError, ValueError):
+                _cj = {}
+            _cj["tetraploid_pangenome_2026"] = {**_m, "source_doi": _src.get("doi")}
+            _r["curated_json"] = json.dumps(_cj, ensure_ascii=False)
+            _note = (f"四倍体泛基因组 2026 样本：{_m.get('sample_name','')}"
+                     f"（{_m.get('common_name','')}；{_m.get('sample_type','')}）")
+            if _note not in (_r.get("notes") or ""):
+                _r["notes"] = ((_r.get("notes") or "") + " " + _note).strip()
+        print(f"tetraploid pangenome metadata: matched={_found}/{len(_samples)}")
 
     # Thinopyrum_ponticum_decaploid：染色体数按论文 70（fai 里是全部序列数）
     _tpp = records.get("Thinopyrum_ponticum_decaploid")
@@ -857,7 +911,8 @@ def main() -> int:
 
     cols = [
         "dataset_id", "display_name", "species", "ploidy", "subgenomes",
-        "cultivar_or_line", "jbrowse_dataset", "assembly_accession", "assembly_version",
+        "cultivar_or_line", "sample_id", "common_name", "sample_type",
+        "jbrowse_dataset", "assembly_accession", "assembly_version",
         "assembly_level", "assembly_date", "genome_size", "chromosome_count",
         "gene_count", "te_content",
         "source_url", "source_file", "source_md5", "doi", "paper_title",
@@ -962,6 +1017,7 @@ def main() -> int:
         return core
     fill_fields = (
         "species", "ploidy", "subgenomes", "cultivar_or_line", "assembly_accession",
+        "sample_id", "common_name", "sample_type",
         "assembly_version", "assembly_level", "assembly_date", "genome_size",
         "chromosome_count", "source_url", "source_file", "source_md5", "doi",
         "paper_title", "journal", "publication_year", "gene_count", "te_content",
