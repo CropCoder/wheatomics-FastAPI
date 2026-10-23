@@ -40,14 +40,22 @@ PLACEHOLDER = '''<div class="card">
 
 
 def groups(s: str) -> list[dict]:
-    starts = [m.start() for m in GROUP_RE.finditer(s)]
+    """返回每个 card-group 的精确起止位置（按 div 配对，避免把后面的分区标题吞进来）。"""
     out = []
-    for i, st in enumerate(starts):
-        nxt = starts[i + 1] if i + 1 < len(starts) else len(s)
-        end = s.rfind("</div>", st, nxt)
-        if end < 0:
+    for m in GROUP_RE.finditer(s):
+        st = m.start()
+        pos = m.end()
+        depth = 1
+        while depth > 0:
+            nxt = re.search(r"<div\b|</div>", s[pos:])
+            if not nxt:
+                break
+            tok = nxt.group(0)
+            pos += nxt.end()
+            depth += 1 if tok.startswith("<div") else -1
+        if depth != 0:
             continue
-        out.append({"start": st, "end": end + len("</div>"), "body": s[st:end + len("</div>")]})
+        out.append({"start": st, "end": pos, "body": s[st:pos]})
     return out
 
 
