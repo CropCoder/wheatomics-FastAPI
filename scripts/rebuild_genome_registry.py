@@ -587,6 +587,13 @@ def main() -> int:
             m = re.search(r"\d+(?:\.\d+)?", str(v).replace(",", ""))
             return int(float(m.group(0))) if m else None
 
+        # DOI -> JBrowse 数据集（来自 jbrowse.html 卡片），用于名称不匹配时兜底
+        card_doi_map: dict[str, list] = {}
+        for _ds, _card in (src.get("jbrowse_cards") or {}).items():
+            _doi = str(_card.get("doi") or "").strip()
+            if _doi:
+                card_doi_map.setdefault(_doi, []).append(_ds)
+
         matched_n = created_n = skipped_n = 0
         candidates: dict[str, list] = {}
         for row in curated["rows"]:
@@ -594,9 +601,17 @@ def main() -> int:
             if not species or species == "None":
                 skipped_n += 1
                 continue
+            cur_doi = str(row.get("DOI_cleaned") or row.get("DOI") or "").strip()
+            _m = re.search(r"10\.\d{4,9}/\S+", cur_doi) if cur_doi else None
+            cur_doi = _m.group(0).rstrip(".,;") if _m else None
             key, sc = PL_OVERRIDES.get(species), 100
             if not key:
                 sc, key = _match_curated(species)
+            # DOI 兜底：名称匹配不上时，按论文 DOI 找唯一对应的 JBrowse 数据集
+            if not key and cur_doi:
+                cands = [c for c in card_doi_map.get(cur_doi, []) if c in records]
+                if len(cands) == 1:
+                    key, sc = cands[0], 93
             existed = bool(key) and key in records
             if not existed:
                 specific = bool(re.search(r"[()\d]", species))
@@ -604,8 +619,17 @@ def main() -> int:
                     skipped_n += 1
                     continue
                 ds = re.sub(r"[^A-Za-z0-9._-]+", "_", species).strip("_")[:150]
-                if not ds or ds in records:
-                    ds = ("curated_" + ds)[:150]
+                if ds in records:
+                    # 同名物种但 DOI 与已有记录不同：追加年份区分（例如 AL8/78 2013 vs 2017）
+                    if cur_doi and records[ds].get("doi") == cur_doi:
+                        key = ds
+                        existed = True
+                        matched_n += 1
+                        candidates.setdefault(key, []).append((sc, row, existed))
+                        continue
+                    ds = f"{ds}_{row.get('Publication_Year') or 'x'}"
+                if not ds:
+                    ds = "curated_" + re.sub(r"[^A-Za-z0-9._-]+", "_", species).strip("_")[:140]
                 key = ds
                 created_n += 1
             else:
