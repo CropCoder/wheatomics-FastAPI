@@ -778,7 +778,10 @@ def main() -> int:
         "paper_title": ("The homoeolog-resolved assembly of the 40-Gb decaploid Thinopyrum ponticum "
                         "genome reveals extensive homoeologous exchange and recombination, "
                         "segmental allopolyploid organization, and allelic variations for wheat improvement"),
-        "notes": "合规处理完成（2026-10-23）：43,558 unplaced 已重命名 ChrUn_*，官方 QC 通过；BLAST 核酸库/CDS/PEP 库已建；JBrowse 已用新命名重建（DNA+all_gene）；基因功能表/02G 尚未建",
+        "display_name": "Thinopyrum ponticum (Tpo.Acc-1)",
+        "assembly_accession": "Tpo.Acc-1",
+        "cultivar_or_line": "Tpo.Acc-1",
+        "notes": "材料登录号 Tpo.Acc-1；合规处理完成（2026-10-23）：43,558 unplaced 已重命名 ChrUn_*，官方 QC 通过；BLAST 核酸库/CDS/PEP 库已建；JBrowse 已用新命名重建（DNA+all_gene）；基因功能表/02G 已建",
     }
 
     for key, ov in overrides.items():
