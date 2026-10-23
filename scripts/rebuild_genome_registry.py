@@ -496,9 +496,10 @@ def main() -> int:
         def _toks(x): return re.findall(r"[A-Za-z0-9]+", x or "")
         def _core(x): return [t.lower() for t in _toks(x)
                              if len(t) >= 2 and t.lower() not in STOP and not VER_RE.match(t)]
+        SPECIES_ABBREV = {"ae": "aegilops", "aegilop": "aegilops"}
         def _vstrip_compact(x: str) -> str:
             core = [re.sub(r"v\d+$", "", t, flags=re.I) for t in _core(x)]
-            core = [t for t in core if t]
+            core = [SPECIES_ABBREV.get(t, t) for t in core if t]
             return re.sub(r"[^a-z0-9]", "", " ".join(core))
 
         record_alias = {}
@@ -871,7 +872,10 @@ def main() -> int:
         r"PPPP|STSTYYHH|STSTVVJJ|NSNSXMXM|ATATGG)_", re.I
     )
     def _core_id(x: str) -> str:
-        return re.sub(r"[^a-z0-9]", "", PL_PREFIX.sub("", x or "", count=1).lower())
+        core = PL_PREFIX.sub("", x or "", count=1).lower()
+        core = re.sub(r"\bae\b", "aegilops", core)
+        core = re.sub(r"\bae[._-]", "aegilops_", core)
+        return re.sub(r"[^a-z0-9]", "", core)
     fill_fields = (
         "species", "ploidy", "subgenomes", "cultivar_or_line", "assembly_accession",
         "assembly_version", "assembly_level", "assembly_date", "genome_size",
