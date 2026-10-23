@@ -119,6 +119,14 @@ DB_CLASSIFICATION = [
         ],
     },
     {
+        "id": "thinopyrum_ponticum",
+        "label": "Thinopyrum ponticum",
+        "description": "Decaploid Thinopyrum ponticum genome (2026, 41.33 Gb / 70 chromosomes)",
+        "keywords": [
+            "ponticum",  # Th.ponticum_public.* 以及旧 Thinopyrum_ponticum
+        ],
+    },
+    {
         "id": "other_triticeae",
         "label": "Other Triticeae genome",
         "description": "Rye (Secale cereale), Thinopyrum, Elymus, non-tauschii Aegilops species, Dasypyrum, Leymus, Roegneria",
