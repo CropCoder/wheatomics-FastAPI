@@ -899,7 +899,12 @@ def main() -> int:
         core = PL_PREFIX.sub("", x or "", count=1).lower()
         core = re.sub(r"\bae\b", "aegilops", core)
         core = re.sub(r"\bae[._-]", "aegilops_", core)
-        return re.sub(r"[^a-z0-9]", "", core)
+        core = re.sub(r"[^a-z0-9]", "", core)
+        # Aegilops/ae 前缀差异：AeComosa... / Aegilops_comosa... 视为同一 core
+        for pfx in ("aegilops", "aegilop", "ae"):
+            if core.startswith(pfx) and len(core) > len(pfx) + 3:
+                return core[len(pfx):]
+        return core
     fill_fields = (
         "species", "ploidy", "subgenomes", "cultivar_or_line", "assembly_accession",
         "assembly_version", "assembly_level", "assembly_date", "genome_size",
