@@ -555,6 +555,26 @@ def main() -> int:
             "JM44": "Triticum_aestivum_JM44",
             "Jimai22(JM22)": "JM22",
             "Fielder v1.0": "Fielder",
+            # 策展表用"全名_缩写"或"全名(缩写)"，平台已有缩写记录 -> 合并
+            "Aikang58(AK58)": "AK58",
+            "Aimengniu(AMN)": "AMN",
+            "Beijing8(BJ8)": "BJ8",
+            "Chuanmai42(CM42)": "CM42",
+            "Handan6172(HD6172)": "HD6172",
+            "Jinmai47(JM47)": "JM47",
+            "Kuofan11(KF11)": "KF11",
+            "Mazhamai(MZM)": "MZM",
+            "Ningchun4(NC4)": "NC4",
+            "Shi4185(S4185)": "S4185",
+            "Xiaoyan6(XY6)": "XY6",
+            "Xinong6028(XN6028)": "XN6028",
+            "Yangmai158(YM158)": "YM158",
+            "Zhengmai366(ZM366)": "ZM366",
+            "Zhoumai16(ZM16)": "ZM16",
+            "Zhoumai22(ZM22)": "ZM22",
+            "Ae.speltoides (Y2032)": "y2032",
+            "Aegilops ventricosa(cv. RM271)": "RM271",
+            "Yangmai33": "YM33",
         }
         SUB = {"AABBDD": "A,B,D", "AABBRR": "A,B,R", "AABB": "A,B", "AA": "A", "DD": "D",
                "HH": "H", "SS": "S", "TT": "T", "MM": "M", "AAGG": "A,G", "DDNN": "D,N",
@@ -621,6 +641,15 @@ def main() -> int:
                 lv = str(row["NCBI_Assembly_Level"]).strip()
                 if lv.lower() != "none":
                     r["assembly_level"] = lv
+            else:
+                cla = str(row.get("Chromosome_Level_Assembly") or "").strip().lower()
+                era = str(row.get("Era") or "").strip()
+                if cla == "yes":
+                    r["assembly_level"] = "Chromosome"
+                elif "partial" in cla:
+                    r["assembly_level"] = "Partial chromosome"
+                elif era == "Draft Era":
+                    r["assembly_level"] = "Draft"
             if row.get("Journal"):
                 j = str(row["Journal"]).strip()
                 if j.lower() != "none":
@@ -814,6 +843,27 @@ def main() -> int:
     finally:
         conn.close()
     print("upserted", len(records), "rows into", f"{DB_REGISTRY}.genome_registry")
+    # 清理失效的"纯策展"行（别名合并后不再对应任何记录）
+    keep = {r["dataset_id"] for r in records}
+    try:
+        conn2 = mysql(DB_REGISTRY)
+        try:
+            with conn2.cursor() as cur:
+                cur.execute(
+                    "SELECT dataset_id FROM genome_registry "
+                    "WHERE curated_source IS NOT NULL AND jbrowse_dataset IS NULL "
+                    "AND blast_genome_db IS NULL AND gene_table IS NULL"
+                )
+                stale = [row["dataset_id"] for row in cur.fetchall() if row["dataset_id"] not in keep]
+                if stale:
+                    placeholders = ",".join(["%s"] * len(stale))
+                    cur.execute(f"DELETE FROM genome_registry WHERE dataset_id IN ({placeholders})", stale)
+            conn2.commit()
+        finally:
+            conn2.close()
+        print("pruned stale curated-only rows:", len(stale))
+    except Exception as exc:  # noqa: BLE001
+        print("prune failed:", exc)
     return 0
 
 
