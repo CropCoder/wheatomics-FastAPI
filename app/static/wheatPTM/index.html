@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>wheatPTM - WheatOmics</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<script src="/js/echarts.min.js"></script>
+<style>
+  body { background:#f8f9fa; margin:0; padding:0; }
+  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
+  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
+  #home_header span { font-size:28px; font-weight:bold; color:#fff; }
+  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
+  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
+  #header-tabs li { display:inline-block !important; width:190px !important; }
+  #header-tabs a { background:#0077b6; font-size:13pt; color:#fff !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
+  #header-tabs a:hover { background:#98c1d9; color:#000; }
+  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
+  #header-tabs ul li ul { display:none !important; position:absolute; }
+  #header-tabs ul li:hover ul { display:block !important; }
+  #header-tabs ul li ul a { border-radius:0; }
+  #home_content { max-width:1200px; margin:0 auto; padding:0 15px; }
+  .card-title { color:#333; border-left:4px solid #007bff; padding-left:12px; }
+  .search-box { background:#fff; border-radius:6px; padding:20px; margin-top:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+  .stat-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .stat-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:14px; font-size:13px; background:#f1f5f9; color:#334155; }
+  .stat-chip .dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .chart-box { background:#fff; border-radius:6px; padding:16px; margin-top:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+  #ptm-chart { width:100%; height:420px; }
+  .table-box { background:#fff; border-radius:6px; padding:16px; margin-top:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+  .table-box table { font-size:13px; }
+  .table-box th { position:sticky; top:0; background:#f8f9fa; white-space:nowrap; }
+  #error-msg { display:none; margin-top:10px; }
+  .loading { display:none; text-align:center; padding:60px; }
+  .loading .spinner-border { width:3rem; height:3rem; }
+</style>
+</head>
+<body>
+<div id="home_header"><span><img src="/css/logo.jpg" id="logo_style">WheatOmics 2.0</span></div>
+<div id="header-tabs">
+  <ul>
+    <li><a href="/"><span>Home</span></a></li>
+    <li><a href="#"><span>Tools/Browse</span></a>
+      <ul>
+        <li><a href="/getfasta/index.html">GetSequence</a></li>
+        <li><a href="/blast/blast.html">BLAST</a></li>
+        <li><a href="/PrimerServer">PrimerServer</a></li>
+        <li><a href="/PrimerServer2/">PrimerServer2</a></li>
+        <li><a href="/caps/">CAPS/dCAPS</a></li>
+        <li><a href="/PfamSearch/">PfamSearch</a></li>
+        <li><a href="/idConvert/">IDConvert</a></li>
+        <li><a href="/HomologFinder/">HomologFinder</a></li>
+        <li><a href="/interval/">IntervalTool</a></li>
+        <li><a href="/expression/">GeneExpression</a></li>
+        <li><a href="/coexpression/index.html">Co-expression</a></li>
+        <li><a href="/wheatPPI/">WheatPPI</a></li>
+        <li><a href="/genes/">KnownGene</a></li>
+        <li><a href="/symap/index.html">SyntenySearch</a></li>
+        <li><a href="/syntenyview/">SynTenyView</a></li>
+        <li><a href="/preblast/">preBLAST</a></li>
+        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
+        <li><a href="/orthofinder/">OrthoFinder</a></li>
+        <li><a href="/VariantHub/">VariantHub</a></li>
+        <li><a href="DWGVa.html">DWGVa</a></li>
+        <li><a href="/scRNA/">scRNA</a></li>
+        <li><a href="/wheatPSP/">wheatPSP</a></li>
+        <li><a href="/wheatPTM/">wheatPTM</a></li>
+        <li><a href="/eqtl/">eQTL Atlas</a></li>
+        <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
+        <li><a href="/papers">Triticeae papers</a></li>
+      </ul>
+    </li>
+    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
+    <li><a href="/download.html"><span>Download Data</span></a></li>
+    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
+    <li><a href="#"><span>About</span></a>
+      <ul>
+        <li><a href="/help/contact.html">Contact</a></li>
+        <li><a href="/help/news.html">News</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div id="home_content">
+  <br><h5 class="card-title">Search wheat protein post-translational modifications</h5><br>
+
+  <div class="search-box">
+    <div class="row">
+      <div class="col-md-8">
+        <label><strong>Protein ID</strong></label>
+        <input type="text" id="protein-input" class="form-control" placeholder="TraesCS1A02G000100LC.1">
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <button id="search-btn" class="btn btn-primary" onclick="searchPTM()">Search</button>
+      </div>
+    </div>
+    <div id="error-msg" class="alert alert-danger"></div>
+  </div>
+
+  <div class="loading" id="loading-indicator">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted">Searching...</p>
+  </div>
+
+  <div id="result-area" style="display:none;">
+    <div class="search-box">
+      <div id="stat-summary" style="font-weight:bold;"></div>
+      <div class="stat-row" id="stat-row"></div>
+      <div class="mt-3">
+        <a id="download-btn" class="btn btn-success" href="#" target="_blank">Download CSV</a>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <h6>PTM sites along the protein sequence</h6>
+      <div id="ptm-chart"></div>
+    </div>
+
+    <div class="table-box">
+      <h6 id="table-title"></h6>
+      <div style="max-height:500px;overflow:auto;">
+        <table class="table table-bordered table-hover table-sm" id="ptm-table">
+          <thead><tr>
+            <th>Protein</th><th>Position</th><th>Residue</th><th>PTM type</th><th>Peptide</th><th>Score</th><th>Confidence</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="line" style="height:10px;background-color:white"></div>
+<div id="home_footer">
+  <center style="margin-top:5px">
+    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
+  </center>
+</div>
+
+<script>
+var PTM_COLORS = {
+  'Phosphorylation': '#e6194b',
+  'N-glycosylation': '#3cb44b',
+  'S-acylation': '#ffe119',
+  '2-hydroxyisobutyrylation': '#4363d8',
+  'Crotonylation': '#f58231',
+  'Succinylation': '#911eb4',
+  'Malonylation': '#46f0f0',
+  'Acetylation': '#f032e6',
+  'Ubiquitination': '#9a6324'
+};
+var chart = null;
+
+function searchPTM() {
+  var protein = $('#protein-input').val().trim();
+  if (!protein) { showError('Please enter a protein ID'); return; }
+
+  $('#error-msg').hide();
+  $('#result-area').hide();
+  $('#loading-indicator').show();
+
+  $.getJSON('/api/ptm/search', { protein: protein })
+    .done(function(resp) {
+      $('#loading-indicator').hide();
+      if (!resp || !resp.success) { showError('Search failed'); return; }
+      renderResult(resp.data);
+    })
+    .fail(function(jqXHR) {
+      $('#loading-indicator').hide();
+      showError(jqXHR.responseJSON ? (jqXHR.responseJSON.detail || jqXHR.responseJSON.error) : 'Search failed');
+    });
+}
+
+function renderResult(data) {
+  var protein = data.protein;
+  var sites = data.sites || [];
+  var stats = data.stats || [];
+
+  // 下载链接
+  $('#download-btn').attr('href', '/api/ptm/download?protein=' + encodeURIComponent(protein));
+
+  // 统计
+  $('#stat-summary').text(sites.length + ' PTM site(s) found for ' + protein);
+  var statHtml = '';
+  stats.forEach(function(s) {
+    var color = PTM_COLORS[s.label] || '#999';
+    statHtml += '<span class="stat-chip"><span class="dot" style="background:' + color + '"></span>' +
+      escapeHtml(s.label) + ': ' + s.count + '</span>';
+  });
+  $('#stat-row').html(statHtml);
+
+  // 表格
+  $('#table-title').text('PTM sites (' + sites.length + ')');
+  var tbody = '';
+  sites.forEach(function(s) {
+    tbody += '<tr>';
+    tbody += '<td>' + escapeHtml(s.Protein) + '</td>';
+    tbody += '<td>' + escapeHtml(s.Position) + '</td>';
+    tbody += '<td>' + escapeHtml(s.Residue) + '</td>';
+    tbody += '<td>' + escapeHtml(s.ptm_label) + '</td>';
+    tbody += '<td style="max-width:260px;word-break:break-all;">' + escapeHtml(s.Peptide) + '</td>';
+    tbody += '<td>' + (s.Score != null ? Number(s.Score).toFixed(4) : '') + '</td>';
+    tbody += '<td>' + escapeHtml(s.Confidence) + '</td>';
+    tbody += '</tr>';
+  });
+  $('#ptm-table tbody').html(tbody);
+
+  renderChart(sites);
+  $('#result-area').show();
+}
+
+function renderChart(sites) {
+  if (!sites.length) return;
+
+  // 按 PTM 类型分组
+  var groups = {};
+  sites.forEach(function(s) {
+    var label = s.ptm_label;
+    if (!groups[label]) groups[label] = [];
+    groups[label].push([Number(s.Position), Number(s.Score)]);
+  });
+
+  var series = [];
+  Object.keys(groups).forEach(function(label) {
+    series.push({
+      name: label,
+      type: 'scatter',
+      data: groups[label],
+      symbolSize: 8,
+      itemStyle: { color: PTM_COLORS[label] || '#999' }
+    });
+  });
+
+  var option = {
+    animation: false,
+    tooltip: {
+      trigger: 'item',
+      formatter: function(p) {
+        return p.seriesName + '<br>Position: ' + p.value[0] + '<br>Score: ' + p.value[1];
+      }
+    },
+    legend: { bottom: 0, type: 'scroll', textStyle: { fontSize: 12 } },
+    grid: { left: 60, right: 30, top: 30, bottom: 60 },
+    xAxis: { type: 'value', name: 'Position', nameLocation: 'middle', nameGap: 30 },
+    yAxis: { type: 'value', name: 'Score', nameLocation: 'middle', nameGap: 40, min: 0 },
+    series: series
+  };
+
+  if (chart) chart.dispose();
+  chart = echarts.init(document.getElementById('ptm-chart'));
+  chart.setOption(option);
+}
+
+function showError(msg) {
+  $('#error-msg').text(msg).show();
+  $('#loading-indicator').hide();
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// 支持深链接 /wheatPTM/?protein=XXX
+$(function() {
+  var q = new URLSearchParams(window.location.search).get('protein');
+  if (q) { $('#protein-input').val(q); searchPTM(); }
+  $('#protein-input').on('keydown', function(e) { if (e.key === 'Enter') searchPTM(); });
+});
+</script>
+</body>
+</html>

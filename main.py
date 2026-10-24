@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps, eqtl, scrna, wheatpsp, genome
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps, eqtl, scrna, wheatpsp, genome, ptm
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 from app.primerserver2.dependencies import verify_api_key
@@ -146,6 +146,7 @@ app.mount("/caps", StaticFiles(directory=Path(__file__).parent / "app" / "static
 app.mount("/eqtl", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "eqtl", html=True), name="eqtl")
 app.mount("/scRNA", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "scRNA", html=True), name="scRNA")
 app.mount("/wheatPSP", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "wheatPSP", html=True), name="wheatPSP")
+app.mount("/wheatPTM", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "wheatPTM", html=True), name="wheatPTM")
 # Built Vue SPA. The path must match base: '/PrimerServer2/' in the frontend's
 # vite.config.js, which also bakes it into the asset URLs.
 app.mount("/PrimerServer2", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "primerserver2", html=True), name="primerserver2")
@@ -218,6 +219,7 @@ for router in [
     scrna,
     wheatpsp,
     genome,
+    ptm,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)
 

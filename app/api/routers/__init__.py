@@ -23,3 +23,4 @@ from .eqtl import router as eqtl
 from .scrna import router as scrna
 from .wheatpsp import router as wheatpsp
 from .genome import router as genome
+from .ptm import router as ptm
