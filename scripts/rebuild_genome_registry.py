@@ -383,6 +383,10 @@ def main() -> int:
                 break
 
     # --- Genefunc_registry ---
+    GENEFUNC_KEY_OVERRIDES = {
+        "Genefunc_Triticum_turgidum_Svevo_table": "Triticum_turgidum_Svevo",
+        "Genefunc_AABB_Svevo_V2_table": "Svevo_V2",
+    }
     for row in src["genefunc"]:
         table = row["table_name"] or ""
         display = row["display_name"] or ""
@@ -391,7 +395,7 @@ def main() -> int:
             middle = middle[len("Genefunc_"):]
         if middle.endswith("_table"):
             middle = middle[: -len("_table")]
-        key = m.match(display) or m.match(middle) or m.match(table)
+        key = GENEFUNC_KEY_OVERRIDES.get(table) or m.match(display) or m.match(middle) or m.match(table)
         if not key:
             key = display or middle
         r = rec(key)
@@ -820,22 +824,29 @@ def main() -> int:
         "species": "Triticum turgidum L. ssp. durum",
         "cultivar_or_line": "Svevo",
         "common_name": "Durum wheat", "sample_type": "Free-threshing tetraploid wheat",
-        "notes": "Svevo 参考基因组（Maccaferri et al. 2019 Nat Genet 51:885-895；DOI 10.1038/s41588-019-0381-3）；JBrowse 浏览器：Durum_Wheat",
+        "doi": "10.1038/s41588-019-0381-3", "journal": "Nature Genetics", "publication_year": 2019,
+        "paper_title": "Durum wheat genome highlights past domestication signatures and future improvement targets",
+        "notes": "Svevo 参考基因组 v1（Maccaferri et al. 2019 Nat Genet 51:885-895）；JBrowse 浏览器：Durum_Wheat；BLAST 前缀 AABB_Durum_Wheat",
     }
     overrides["Svevo_V2"] = {
         "display_name": "Durum Wheat cv. Svevo V2 (AABB)",
         "species": "Triticum turgidum L. ssp. durum",
         "cultivar_or_line": "Svevo",
         "common_name": "Durum wheat", "sample_type": "Free-threshing tetraploid wheat",
-        "notes": "Svevo V2 组装（DOI 10.1111/pbi.70673）；独立 JBrowse 浏览器：Svevo_V2",
+        "assembly_level": "Chromosome",
+        "doi": "10.1111/pbi.70673", "journal": "Plant Biotechnology Journal", "publication_year": 2026,
+        "paper_title": "Durum Wheat cv. Svevo Reference Genome Rel.2.0: A Comprehensive Tool for Wheat Genomics",
+        "notes": "Svevo Rel.2.0（PBJ 2026, 24:5460-5479）；JBrowse 浏览器 Svevo_V2（14 chr / 10.39 Gb）；注意：网站当前仅装载 3,763 个 LRR-CR/NLR 基因模型，完整注释 68,154 个基因尚未导入",
     }
     overrides["Triticum_turgidum_Svevo"] = {
-        "display_name": "Svevo NLR gene set (3,763 genes)",
+        "display_name": "Svevo Rel.2.0 LRR-CR gene set (3,763 genes)",
         "species": "Triticum turgidum L. ssp. durum",
         "cultivar_or_line": "Svevo",
-        "common_name": "Durum wheat", "sample_type": "NLR gene set (annotation-only)",
+        "common_name": "Durum wheat", "sample_type": "LRR-CR gene set (annotation-only)",
+        "doi": "10.1111/pbi.70673", "journal": "Plant Biotechnology Journal", "publication_year": 2026,
+        "paper_title": "Durum Wheat cv. Svevo Reference Genome Rel.2.0: A Comprehensive Tool for Wheat Genomics",
         "visible": 0,
-        "notes": "annotation-only：仅 3,763 个 NLR/抗病基因的基因功能表（无 JBrowse/BLAST/序列层）；Svevo 基因组浏览器请用 Durum_Wheat（DOI 10.1038/s41588-019-0381-3）",
+        "notes": "annotation-only：Svevo Rel.2.0（Svevo_V2）的 3,763 个 LRR-CR/NLR 基因表，与 Genefunc_AABB_Svevo_V2_table 内容相同；无独立 JBrowse/BLAST。v1 基因组浏览器：Durum_Wheat；v2 浏览器：Svevo_V2",
     }
     overrides["Thinopyrum_ponticum_decaploid"] = {
         "species": "Thinopyrum ponticum", "ploidy": "PPPP",
