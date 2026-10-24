@@ -47,16 +47,16 @@ SITE_COLUMNS = [
 
 
 def _query_sites(protein: str) -> tuple[list[dict], list[dict]]:
-    like = f"%{protein}%"
     sites: list[dict] = []
     stats: list[dict] = []
     with mysql_connection(settings.DB_PTM) as conn:
         with conn.cursor() as cur:
             for table, label in PTM_TABLES:
+                # 精确匹配（用户输入完整蛋白 ID），配合 Protein 索引可走索引查找
                 cur.execute(
                     f"SELECT {', '.join('`' + c + '`' for c in SITE_COLUMNS)} "
-                    f"FROM `{table}` WHERE Protein LIKE %s",
-                    (like,),
+                    f"FROM `{table}` WHERE Protein = %s",
+                    (protein,),
                 )
                 rows = cur.fetchall()
                 for row in rows:
