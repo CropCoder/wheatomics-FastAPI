@@ -845,7 +845,11 @@ def main() -> int:
         "paper_title": "Durum Wheat cv. Svevo Reference Genome Rel.2.0: A Comprehensive Tool for Wheat Genomics",
         "blast_cds_db": "AABB_Svevo_V2", "blast_pep_db": "AABB_Svevo_V2",
         "gene_table": "Genefunc_AABB_Svevo_V2_table", "gene_function_ui": 1, "gene_count": 212425,
-        "notes": "Svevo Rel.2.0（PBJ 2026, 24:5460-5479）；完整注释已导入：GFF3 212,425 gene models / 299,913 transcripts（含 68,154 HC protein-coding genes）；BLAST CDS/PEP 299,913；基因表 299,913 行；JBrowse all_gene 已重建",
+        "annotation_source": "GrainGenes svevo2annotations.tar.gz (CB-GENANNO-526_Triticum_turgidum_Svevo_annotation_data_package_020523)",
+        "annotation_doi": "10.1111/pbi.70673",
+        "source_url": "https://graingenes.org/GG3/sites/default/files/svevo2/svevo2annotations.tar.gz",
+        "source_file": "/var/www/data/masw_data/Svevo_V2/annotation/extracted/structural_annotation_files/CB-GENANNO-526_Triticum_turgidum_Svevo_annotation_data_package_020523/TrturSVE_EIv2.0.annotation.gff3",
+        "notes": "Svevo Rel.2.0（PBJ 2026, 24:5460-5479）；完整注释已导入：GFF3 212,425 gene models / 299,913 transcripts（含 68,154 HC protein-coding genes）；EggNOG/Pfam 已回填（Description 226,526 行、Domain 163,280 行）；ChineseSpring02G 205,631 行；BLAST CDS/PEP 299,913（带 Description/02G）；基因表 299,913 行；JBrowse all_gene 已重建",
     }
     overrides["Thinopyrum_ponticum_decaploid"] = {
         "species": "Thinopyrum ponticum", "ploidy": "PPPP",
