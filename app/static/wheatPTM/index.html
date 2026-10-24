@@ -216,15 +216,15 @@ function renderResult(data) {
 function renderChart(sites, length) {
   if (!sites.length) return;
 
-  // 按 PTM 类型分组
+  // 按 PTM 类型分组，每个数据点带 [Position, Score, Confidence]
   var groups = {};
   sites.forEach(function(s) {
     var label = s.ptm_label;
     if (!groups[label]) groups[label] = [];
-    groups[label].push([Number(s.Position), Number(s.Score)]);
+    groups[label].push([Number(s.Position), Number(s.Score), s.Confidence]);
   });
 
-  // 每个 PTM 类型一个 custom series，画 lollipop（茎 + 圆点）
+  // 等高 lollipop：竖线从基线到固定高度，圆点在顶部，颜色按 PTM 类型
   var series = [];
   Object.keys(groups).forEach(function(label) {
     var color = PTM_COLORS[label] || '#999';
@@ -234,14 +234,13 @@ function renderChart(sites, length) {
       data: groups[label],
       renderItem: function(params, api) {
         var x = api.value(0);
-        var y = api.value(1);
-        var coord = api.coord([x, y]);
+        var head = api.coord([x, 1]);
         var base = api.coord([x, 0]);
         return {
           type: 'group',
           children: [
-            { type: 'line', shape: { x1: coord[0], y1: coord[1], x2: base[0], y2: base[1] }, style: { stroke: color, lineWidth: 1 } },
-            { type: 'circle', shape: { cx: coord[0], cy: coord[1], r: 4 }, style: { fill: color } }
+            { type: 'line', shape: { x1: head[0], y1: head[1], x2: base[0], y2: base[1] }, style: { stroke: color, lineWidth: 1 } },
+            { type: 'circle', shape: { cx: head[0], cy: head[1], r: 4 }, style: { fill: color } }
           ]
         };
       }
@@ -253,13 +252,15 @@ function renderChart(sites, length) {
     tooltip: {
       trigger: 'item',
       formatter: function(p) {
-        return p.seriesName + '<br>Position: ' + p.value[0] + '<br>Score: ' + p.value[1];
+        return p.seriesName + '<br>Position: ' + p.value[0] +
+               '<br>Score: ' + p.value[1] +
+               '<br>Confidence: ' + p.value[2];
       }
     },
     legend: { bottom: 0, type: 'scroll', textStyle: { fontSize: 12 } },
     grid: { left: 60, right: 30, top: 30, bottom: 60 },
     xAxis: { type: 'value', name: 'Position', nameLocation: 'middle', nameGap: 30, min: 0, max: length || undefined },
-    yAxis: { type: 'value', name: 'Score', nameLocation: 'middle', nameGap: 40 },
+    yAxis: { show: false, min: 0, max: 1 },
     series: series
   };
 
