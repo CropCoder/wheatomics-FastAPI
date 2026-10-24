@@ -870,15 +870,18 @@ def search_gene_interval(
                 gene_cols = ["Gene03G", "Gene02G"]
             else:
                 gene_cols = ["Gene"]
-            # Batched: strip version suffixes, then one IN(...) query per gene
-            # column (previously N queries, one per gene ID).
+            # Batched: match both the versioned and the version-stripped id.
+            # Older tables store `TraesCS1A03G0000100LC` while the pipeline
+            # tables (Abo, Svevo V2, ...) store `Abo1A000100.1`, so a single
+            # form never matches every table.
             base_ids = [re.sub(r"\.\d+$", "", gid) for gid in gene_ids]
-            placeholders = ",".join(["%s"] * len(base_ids))
+            candidates = list(dict.fromkeys(base_ids + gene_ids))
+            placeholders = ",".join(["%s"] * len(candidates))
             where_clause = " OR ".join(f"`{col}` IN ({placeholders})" for col in gene_cols)
             # One placeholder group per gene column: flatten the ids for pymysql
             # (a nested tuple of lists raised "not enough arguments for format string"
             # for any multi-ID batch query).
-            args = tuple(base_ids) * len(gene_cols)
+            args = tuple(candidates) * len(gene_cols)
             cursor.execute(f"SELECT * FROM `{table}` WHERE {where_clause}", args)
             for row in cursor.fetchall():
                 records.append(_make_function_record(row, table))
