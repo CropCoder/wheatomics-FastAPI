@@ -29,7 +29,13 @@
   .stat-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:14px; font-size:13px; background:#f1f5f9; color:#334155; }
   .stat-chip .dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
   .chart-box { background:#fff; border-radius:6px; padding:16px; margin-top:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
-  #ptm-chart { width:100%; height:420px; }
+  #ptm-chart { width:100%; height:480px; min-width:0; }
+  .chart-subtitle { color:#64748b; font-size:13px; margin:6px 0 0; }
+  .chart-box { min-width:0; overflow:hidden; }
+  @media (max-width: 768px) {
+    #ptm-chart { height:420px; }
+    .chart-box { padding:12px; }
+  }
   .table-box { background:#fff; border-radius:6px; padding:16px; margin-top:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
   .table-box table { font-size:13px; }
   .table-box th { position:sticky; top:0; background:#f8f9fa; white-space:nowrap; }
@@ -193,6 +199,9 @@ function renderResult(data) {
   });
   $('#stat-row').html(statHtml);
 
+  // 先显示结果容器，再初始化 ECharts；隐藏状态下初始化会得到 0 宽度。
+  $('#result-area').show();
+
   // 表格
   $('#table-title').text('PTM sites (' + sites.length + ')');
   var tbody = '';
@@ -210,63 +219,147 @@ function renderResult(data) {
   $('#ptm-table tbody').html(tbody);
 
   renderChart(sites, data.length);
-  $('#result-area').show();
+}
+
+function parsePosition(value) {
+  if (value == null) return NaN;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
+  var text = String(value).trim();
+  var direct = Number(text);
+  if (text !== '' && Number.isFinite(direct)) return direct;
+  // 兼容 "K123"、"123 (K)" 等位置格式。
+  var match = text.match(/\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : NaN;
+}
+
+function parseScore(value) {
+  if (value == null || String(value).trim() === '') return NaN;
+  var n = Number(value);
+  return Number.isFinite(n) ? n : NaN;
 }
 
 function renderChart(sites, length) {
-  if (!sites.length) return;
+  var chartEl = document.getElementById('ptm-chart');
+  if (!chartEl) return;
 
-  // 按 PTM 类型分组，每个数据点带 [Position, Score, Confidence]
   var groups = {};
-  sites.forEach(function(s) {
-    var label = s.ptm_label;
+  var maxPosition = 0;
+  var numericScores = [];
+  var missingScoreCount = 0;
+
+  (sites || []).forEach(function(s) {
+    var position = parsePosition(s.Position);
+    if (!Number.isFinite(position) || position < 0) return;
+    maxPosition = Math.max(maxPosition, position);
+    var score = parseScore(s.Score);
+    if (Number.isFinite(score)) numericScores.push(score);
+    else missingScoreCount++;
+
+    var label = s.ptm_label || 'Other';
     if (!groups[label]) groups[label] = [];
-    groups[label].push([Number(s.Position), Number(s.Score), s.Confidence]);
+    // 得分缺失时不伪造数值；有得分的位点绘制为可交互散点。
+    if (Number.isFinite(score)) {
+      groups[label].push({
+        value: [position, score, s.Confidence == null ? '' : s.Confidence],
+        residue: s.Residue == null ? '' : s.Residue,
+        peptide: s.Peptide == null ? '' : s.Peptide,
+        protein: s.Protein == null ? '' : s.Protein
+      });
+    }
   });
 
-  // 等高 lollipop：竖线从基线到固定高度，圆点在顶部，颜色按 PTM 类型
-  var series = [];
-  Object.keys(groups).forEach(function(label) {
-    var color = PTM_COLORS[label] || '#999';
-    series.push({
+  var reportedLength = parsePosition(length);
+  var xMax = Math.max(Number.isFinite(reportedLength) ? reportedLength : 0, maxPosition, 1);
+  var scoreMin = 0;
+  var scoreMax = 1;
+  if (numericScores.length && (Math.min.apply(null, numericScores) < 0 || Math.max.apply(null, numericScores) > 1)) {
+    var low = Math.min.apply(null, numericScores);
+    var high = Math.max.apply(null, numericScores);
+    var pad = (high - low) * 0.08 || Math.max(Math.abs(high) * 0.08, 0.1);
+    scoreMin = low - pad;
+    scoreMax = high + pad;
+  }
+
+  var series = Object.keys(groups).map(function(label) {
+    return {
       name: label,
-      type: 'custom',
+      type: 'scatter',
       data: groups[label],
-      renderItem: function(params, api) {
-        var x = api.value(0);
-        var head = api.coord([x, 1]);
-        var base = api.coord([x, 0]);
-        return {
-          type: 'group',
-          children: [
-            { type: 'line', shape: { x1: head[0], y1: head[1], x2: base[0], y2: base[1] }, style: { stroke: color, lineWidth: 1 } },
-            { type: 'circle', shape: { cx: head[0], cy: head[1], r: 4 }, style: { fill: color } }
-          ]
-        };
+      symbolSize: 10,
+      large: true,
+      largeThreshold: 500,
+      emphasis: { focus: 'series', scale: 1.5 },
+      itemStyle: {
+        color: PTM_COLORS[label] || '#64748b',
+        opacity: 0.85,
+        borderColor: '#ffffff',
+        borderWidth: 1
       }
-    });
+    };
   });
 
   var option = {
     animation: false,
     tooltip: {
       trigger: 'item',
+      confine: true,
+      backgroundColor: '#ffffff',
+      borderColor: '#dbe3ec',
+      borderWidth: 1,
+      textStyle: { color: '#243247' },
       formatter: function(p) {
-        return p.seriesName + '<br>Position: ' + p.value[0] +
-               '<br>Score: ' + p.value[1] +
-               '<br>Confidence: ' + p.value[2];
+        var d = p.data || {};
+        var v = d.value || [];
+        return '<strong>' + escapeHtml(p.seriesName) + '</strong>' +
+          '<br>Position: ' + escapeHtml(v[0]) +
+          '<br>Score: ' + escapeHtml(v[1]) +
+          '<br>Residue: ' + escapeHtml(d.residue || '-') +
+          '<br>Confidence: ' + escapeHtml(v[2] || '-') +
+          (d.peptide ? '<br>Peptide: ' + escapeHtml(d.peptide) : '');
       }
     },
-    legend: { bottom: 0, type: 'scroll', textStyle: { fontSize: 12 } },
-    grid: { left: 60, right: 30, top: 30, bottom: 60 },
-    xAxis: { type: 'value', name: 'Position', nameLocation: 'middle', nameGap: 30, min: 0, max: length || undefined },
-    yAxis: { show: false, min: 0, max: 1 },
+    legend: {
+      type: 'scroll', bottom: 8, left: 16, right: 16,
+      itemWidth: 12, itemHeight: 12,
+      textStyle: { fontSize: 12, color: '#475569' },
+      pageTextStyle: { color: '#64748b' }
+    },
+    grid: { left: 72, right: 30, top: 38, bottom: 100, containLabel: false },
+    xAxis: {
+      type: 'value', name: 'Position (aa)', nameLocation: 'middle', nameGap: 34,
+      min: 0, max: xMax,
+      axisLine: { lineStyle: { color: '#94a3b8' } },
+      axisTick: { lineStyle: { color: '#94a3b8' } },
+      axisLabel: { color: '#64748b', hideOverlap: true },
+      splitLine: { show: true, lineStyle: { color: '#edf1f5', type: 'dashed' } }
+    },
+    yAxis: {
+      type: 'value', name: 'Score', nameLocation: 'middle', nameGap: 48,
+      min: scoreMin, max: scoreMax,
+      axisLine: { show: true, lineStyle: { color: '#94a3b8' } },
+      axisTick: { show: true, lineStyle: { color: '#94a3b8' } },
+      axisLabel: { color: '#64748b' },
+      splitLine: { show: true, lineStyle: { color: '#edf1f5' } }
+    },
+    dataZoom: [
+      { type: 'inside', xAxisIndex: 0, filterMode: 'none' },
+      { type: 'slider', xAxisIndex: 0, height: 18, bottom: 52,
+        borderColor: '#dbe3ec', fillerColor: 'rgba(67, 99, 216, 0.14)',
+        handleStyle: { color: '#4363d8' } }
+    ],
+    graphic: numericScores.length ? [] : [{
+      type: 'text', left: 'center', top: 'middle',
+      style: { text: 'No numeric PTM scores available for plotting', fill: '#64748b', fontSize: 14 }
+    }],
     series: series
   };
 
-  if (chart) chart.dispose();
-  chart = echarts.init(document.getElementById('ptm-chart'));
-  chart.setOption(option);
+  if (!chart) chart = echarts.init(chartEl);
+  chart.setOption(option, true);
+  chart.resize();
+  if (missingScoreCount) {
+    console.info(missingScoreCount + ' PTM site(s) have no numeric score and are omitted from the scatter plot.');
+  }
 }
 
 function showError(msg) {
@@ -281,6 +374,7 @@ function escapeHtml(s) {
 
 // 支持深链接 /wheatPTM/?protein=XXX
 $(function() {
+  window.addEventListener('resize', function() { if (chart) chart.resize(); });
   var q = new URLSearchParams(window.location.search).get('protein');
   if (q) { $('#protein-input').val(q); searchPTM(); }
   $('#protein-input').on('keydown', function(e) { if (e.key === 'Enter') searchPTM(); });
