@@ -651,12 +651,14 @@ def list_genome_examples() -> dict:
     # the old hardcoded GENOME_EXAMPLES list only had 32 entries.
     # We use the legacy example_chr_id / example_gene_id columns
     # (not example_species_chr_id / example_cds_id) per user request.
-    # Note: Genefunc_registry has no `display_name` column; we alias
-    # table_name to display_name for the frontend (the /registry
-    # endpoint does the same thing).
+    # display_name is curated in the registry (e.g. "Chinese Spring 03G",
+    # "Durum Wheat cv. Svevo V2 (AABB)"); fall back to the polyploidy +
+    # table-name form only when it is empty.
     sql = """
-        SELECT table_name AS display_name, example_chr_id,
-               example_gene_id, COALESCE(Polyploidy, '') AS polyploidy
+        SELECT table_name,
+               COALESCE(NULLIF(display_name, ''), table_name) AS display_name,
+               example_chr_id, example_gene_id,
+               COALESCE(Polyploidy, '') AS polyploidy
         FROM Genefunc_registry
         WHERE visible = 1
         ORDER BY display_order, id
@@ -691,8 +693,9 @@ def list_genome_examples() -> dict:
     seen = set()
     examples = []
     for r in rows:
-        table_name = r.get("display_name")
-        display_name = _display_name(r.get("polyploidy") or None, table_name)
+        table_name = r.get("table_name")
+        display_name = (r.get("display_name") or "").strip() \
+            or _display_name(r.get("polyploidy") or None, table_name)
         if display_name in seen:
             continue
         seen.add(display_name)
