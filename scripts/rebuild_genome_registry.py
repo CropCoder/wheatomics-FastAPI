@@ -827,7 +827,10 @@ def main() -> int:
         "common_name": "Durum wheat", "sample_type": "Free-threshing tetraploid wheat",
         "doi": "10.1038/s41588-019-0381-3", "journal": "Nature Genetics", "publication_year": 2019,
         "paper_title": "Durum wheat genome highlights past domestication signatures and future improvement targets",
-        "notes": "Svevo 参考基因组 v1（Maccaferri et al. 2019 Nat Genet 51:885-895）；JBrowse 浏览器：Durum_Wheat；BLAST 前缀 AABB_Durum_Wheat",
+        "blast_genome_db": "AABB_Durum_Wheat_Svevo",
+        "blast_cds_db": "AABB_Durum_Wheat_Svevo",
+        "blast_pep_db": "AABB_Durum_Wheat_Svevo",
+        "notes": "Svevo 参考基因组 v1（Maccaferri et al. 2019 Nat Genet 51:885-895）；JBrowse 浏览器：Durum_Wheat；BLAST 前缀 AABB_Durum_Wheat_Svevo（2026-10-24 由 AABB_Durum_Wheat 更名）",
     }
     overrides["Svevo_V2"] = {
         "display_name": "Durum Wheat cv. Svevo V2 (AABB)",
@@ -1085,6 +1088,7 @@ def main() -> int:
         "Julius_PGSBv2": "Julius",
         "Norin61_PGSBv2": "Norin61",
         "Landmark_PGSBv2": "CDC_Landmark",
+        "AABB_Durum_Wheat_Svevo": "Durum_Wheat",
     }
 
     def _core_id(x: str) -> str:
