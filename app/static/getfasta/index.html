@@ -387,10 +387,10 @@ function loadDatabases() {
       var sel = $('#db-select').empty();
       databaseOptions = [];
       var presets = [
-        { value: 'all_genomes',       label: 'all_genomes — 所有染色体水平基因组（区间检索）' },
-        { value: 'all_genes',         label: 'all_genes — 所有转录本序列' },
-        { value: 'all_proteins',      label: 'all_proteins — 所有蛋白序列' },
-        { value: 'all_other_genomes', label: 'all_other_genomes — 其他非染色体水平基因组（合并）' }
+        { value: 'all_genomes',       label: 'all_genomes — all chromosome-level genomes (interval queries)' },
+        { value: 'all_genes',         label: 'all_genes — all transcript sequences' },
+        { value: 'all_proteins',      label: 'all_proteins — all protein sequences' },
+        { value: 'all_other_genomes', label: 'all_other_genomes — other non-chromosome-level genomes (merged)' }
       ];
       presets.forEach(function(p) {
         sel.append($('<option>').val(p.value).text(p.label));
