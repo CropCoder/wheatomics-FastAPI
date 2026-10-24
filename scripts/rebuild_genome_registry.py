@@ -843,8 +843,9 @@ def main() -> int:
         "assembly_level": "Chromosome",
         "doi": "10.1111/pbi.70673", "journal": "Plant Biotechnology Journal", "publication_year": 2026,
         "paper_title": "Durum Wheat cv. Svevo Reference Genome Rel.2.0: A Comprehensive Tool for Wheat Genomics",
-        "blast_cds_db": None, "blast_pep_db": None, "gene_table": None, "gene_function_ui": 0,
-        "notes": "Svevo Rel.2.0（PBJ 2026, 24:5460-5479）；仅保留 14 chr / 10.39 Gb 基因组浏览器；LRR-CR（3,763 个基因）子集已于 2026-10-24 撤下；完整 68,154 基因注释待导入",
+        "blast_cds_db": "AABB_Svevo_V2", "blast_pep_db": "AABB_Svevo_V2",
+        "gene_table": "Genefunc_AABB_Svevo_V2_table", "gene_function_ui": 1, "gene_count": 212425,
+        "notes": "Svevo Rel.2.0（PBJ 2026, 24:5460-5479）；完整注释已导入：GFF3 212,425 gene models / 299,913 transcripts（含 68,154 HC protein-coding genes）；BLAST CDS/PEP 299,913；基因表 299,913 行；JBrowse all_gene 已重建",
     }
     overrides["Thinopyrum_ponticum_decaploid"] = {
         "species": "Thinopyrum ponticum", "ploidy": "PPPP",
