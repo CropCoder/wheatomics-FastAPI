@@ -63,6 +63,18 @@ _SPECIES = {
     "thinopyrum ponticum": (10, "Thinopyrum ponticum"),
 }
 
+# Chinese Spring assemblies lead their group (and therefore the whole list).
+_CS_ORDER = [
+    "chinese spring 1.0",
+    "chinese spring 2.1",
+    "chinese spring 03g",
+    "cs iwgscv1.0",
+    "cs-cau",
+    "cs-cnau",
+    "cs-iaas",
+]
+_CS_RE = re.compile(r"^(chinese\s+spring|cs[-\s])", re.I)
+
 _GENOME_UNIT = re.compile(r"[A-Z][a-z]?")
 _PLOIDY_PREFIXES = sorted(_CANONICAL, key=len, reverse=True)
 
@@ -115,8 +127,35 @@ def infer_karyotype(table_name: str | None, polyploidy: str | None) -> str:
     return "Other"
 
 
+def _species_rank(karyotype: str) -> int:
+    """Species-level karyotypes (decaploid Thinopyrum) sort after the crops."""
+    return 1 if karyotype.strip().lower() in _SPECIES else 0
+
+
+def _cs_rank(display_name: str) -> tuple:
+    """Chinese Spring assemblies first inside their karyotype group."""
+    name = (display_name or "").strip()
+    low = name.casefold()
+    for rank, wanted in enumerate(_CS_ORDER):
+        if low == wanted:
+            return (0, rank)
+    if _CS_RE.match(name):
+        return (0, 50)
+    return (1, 0)
+
+
 def sort_key(item: dict) -> tuple:
-    """Sort key for example/registry items carrying karyotype + display_name."""
+    """Sort key for example/registry items carrying karyotype + display_name.
+
+    Order: crop genomes before species-level ones, then ploidy high -> low,
+    then karyotype, then Chinese Spring versions, then display name.
+    """
     karyotype = item.get("karyotype") or ""
     ploidy = karyotype_ploidy(karyotype)
-    return (-ploidy, karyotype.casefold(), (item.get("display_name") or "").casefold())
+    return (
+        _species_rank(karyotype),
+        -ploidy,
+        karyotype.casefold(),
+        _cs_rank(item.get("display_name") or ""),
+        (item.get("display_name") or "").casefold(),
+    )
