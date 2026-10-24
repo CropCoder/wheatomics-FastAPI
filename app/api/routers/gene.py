@@ -9,11 +9,23 @@ from fastapi import APIRouter, Query
 from app.core.config import settings
 from app.core.exceptions import ResourceNotFound, ValidationFailure
 from app.core.response import ok
-from app.core.security import GENE_FUNCTION_TABLES, ensure_allowed_table, ensure_gene_like, ensure_interval_like
+from app.core.security import (
+    GENE_FUNCTION_TABLES,
+    GENEFUNC_TABLE_ALIASES,
+    ensure_allowed_table,
+    ensure_gene_like,
+    ensure_interval_like,
+)
 
 def _validate_genefunc_table(table: str) -> str:
-    """Validate that a table exists in Genefuncdb. Replaces static allowlist."""
+    """Validate that a table exists in Genefuncdb. Replaces static allowlist.
+
+    Legacy ids from the CGI era (e.g. Genefunc_IWGSC03G_table, renamed to
+    Genefunc_CS_IWGSC03G_table) are resolved through GENEFUNC_TABLE_ALIASES so
+    old URLs keep returning data. Returns the canonical table name.
+    """
     from app.db.mysql import mysql_cursor
+    table = GENEFUNC_TABLE_ALIASES.get(table, table)
     with mysql_cursor(settings.DB_GENEFUNC) as cursor:
         cursor.execute("SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s",
                        (settings.DB_GENEFUNC, table))
