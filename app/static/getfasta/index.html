@@ -85,7 +85,7 @@
   /* ----- supported-genomes panel ----- */
   #genomes-groups { margin-top: 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 12px; }
   #genomes-groups .gg-group { margin-top: 0; }
-  #genomes-groups .gg-group-label { font-weight: 600; font-size: 12px; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  #genomes-groups .gg-group-label { font-weight: 600; font-size: 12px; color: #475569; margin-bottom: 4px; }
   #genomes-groups .gg-group-label .gg-count { color: #94a3b8; font-weight: 400; margin-left: 4px; }
   #genomes-groups .gg-body { padding: 4px 0; }
   #genomes-groups .gg-list { display: flex; flex-wrap: wrap; gap: 4px 6px; }
@@ -512,9 +512,16 @@ var KARYOTYPE_DISPLAY_OVERRIDES = {
 function formatKaryotype(raw) {
   if (!raw) return '?';
   if (Object.prototype.hasOwnProperty.call(KARYOTYPE_DISPLAY_OVERRIDES, raw)) {
-    return KARYOTYPE_DISPLAY_OVERRIDES[raw];
+    return escapeHtml(KARYOTYPE_DISPLAY_OVERRIDES[raw]);
   }
-  return raw;
+  // 核型代码（AABBDD / StStYYHH / NsNsXmXm …）保持数据库里的标准混合大小写，
+  // 不再由 CSS 强制转大写；物种名（含空格且含小写字母，如 Thinopyrum ponticum）
+  // 按植物学规范用斜体显示。返回值已做 HTML 转义，调用处不要再 escapeHtml。
+  var s = String(raw);
+  if (s.indexOf(' ') !== -1 && /[a-z]/.test(s)) {
+    return '<i>' + escapeHtml(s) + '</i>';
+  }
+  return escapeHtml(s);
 }
 
 function groupByKaryotype(records) {
@@ -542,7 +549,7 @@ function renderGenomes(records) {
   groups.forEach(function(g) {
     var groupEl = $('<div class="gg-group"></div>');
     var label = $('<div class="gg-group-label" style="cursor:pointer; user-select:none;">' +
-      '<span class="gg-arrow">▸</span> ' + escapeHtml(formatKaryotype(g.karyotype)) +
+      '<span class="gg-arrow">▸</span> ' + formatKaryotype(g.karyotype) +
       ' <span class="gg-count">(' + g.items.length + ')</span></div>');
     groupEl.append(label);
     var body = $('<div class="gg-body" style="display:none;"></div>');
