@@ -875,10 +875,11 @@ def search_gene_interval(
             base_ids = [re.sub(r"\.\d+$", "", gid) for gid in gene_ids]
             placeholders = ",".join(["%s"] * len(base_ids))
             where_clause = " OR ".join(f"`{col}` IN ({placeholders})" for col in gene_cols)
-            cursor.execute(
-                f"SELECT * FROM `{table}` WHERE {where_clause}",
-                tuple(base_ids for _ in gene_cols),
-            )
+            # One placeholder group per gene column: flatten the ids for pymysql
+            # (a nested tuple of lists raised "not enough arguments for format string"
+            # for any multi-ID batch query).
+            args = tuple(base_ids) * len(gene_cols)
+            cursor.execute(f"SELECT * FROM `{table}` WHERE {where_clause}", args)
             for row in cursor.fetchall():
                 records.append(_make_function_record(row, table))
         return ok({"table": table, "region": region, "count": len(records), "records": [record.model_dump() for record in records]})
@@ -889,8 +890,10 @@ def search_gene_interval(
     start_text, end_text = interval.split("-")
     start, end = int(start_text), int(end_text)
 
-    if end <= start or end - start > 30_000_000:
-        raise ValidationFailure("End number should be more than start number and region should not be more than 30Mb")
+    if end <= start:
+        raise ValidationFailure("End number should be more than start number")
+    if end - start > 30_000_000:
+        raise ValidationFailure("Region is too large: maximum interval is 30 Mb")
 
     with mysql_cursor(settings.DB_GENEFUNC) as cursor:
         cursor.execute(
