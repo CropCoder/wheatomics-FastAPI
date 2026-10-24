@@ -98,7 +98,7 @@
     <div class="row">
       <div class="col-md-8">
         <label><strong>Protein ID</strong></label>
-        <input type="text" id="protein-input" class="form-control" placeholder="TraesCS1A02G000100LC.1">
+        <input type="text" id="protein-input" class="form-control" placeholder="TraesCS1A02G000100.1">
       </div>
       <div class="col-md-4 d-flex align-items-end">
         <button id="search-btn" class="btn btn-primary" onclick="searchPTM()">Search</button>
@@ -324,7 +324,7 @@ function renderChart(sites, length) {
       textStyle: { fontSize: 12, color: '#475569' },
       pageTextStyle: { color: '#64748b' }
     },
-    grid: { left: 72, right: 30, top: 38, bottom: 100, containLabel: false },
+    grid: { left: 72, right: 30, top: 38, bottom: 76, containLabel: false },
     xAxis: {
       type: 'value', name: 'Position (aa)', nameLocation: 'middle', nameGap: 34,
       min: 0, max: xMax,
@@ -341,12 +341,6 @@ function renderChart(sites, length) {
       axisLabel: { color: '#64748b' },
       splitLine: { show: true, lineStyle: { color: '#edf1f5' } }
     },
-    dataZoom: [
-      { type: 'inside', xAxisIndex: 0, filterMode: 'none' },
-      { type: 'slider', xAxisIndex: 0, height: 18, bottom: 52,
-        borderColor: '#dbe3ec', fillerColor: 'rgba(67, 99, 216, 0.14)',
-        handleStyle: { color: '#4363d8' } }
-    ],
     graphic: numericScores.length ? [] : [{
       type: 'text', left: 'center', top: 'middle',
       style: { text: 'No numeric PTM scores available for plotting', fill: '#64748b', fontSize: 14 }
