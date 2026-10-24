@@ -209,11 +209,11 @@ function renderResult(data) {
   });
   $('#ptm-table tbody').html(tbody);
 
-  renderChart(sites);
+  renderChart(sites, data.length);
   $('#result-area').show();
 }
 
-function renderChart(sites) {
+function renderChart(sites, length) {
   if (!sites.length) return;
 
   // 按 PTM 类型分组
@@ -224,14 +224,27 @@ function renderChart(sites) {
     groups[label].push([Number(s.Position), Number(s.Score)]);
   });
 
+  // 每个 PTM 类型一个 custom series，画 lollipop（茎 + 圆点）
   var series = [];
   Object.keys(groups).forEach(function(label) {
+    var color = PTM_COLORS[label] || '#999';
     series.push({
       name: label,
-      type: 'scatter',
+      type: 'custom',
       data: groups[label],
-      symbolSize: 8,
-      itemStyle: { color: PTM_COLORS[label] || '#999' }
+      renderItem: function(params, api) {
+        var x = api.value(0);
+        var y = api.value(1);
+        var coord = api.coord([x, y]);
+        var base = api.coord([x, 0]);
+        return {
+          type: 'group',
+          children: [
+            { type: 'line', shape: { x1: coord[0], y1: coord[1], x2: base[0], y2: base[1] }, style: { stroke: color, lineWidth: 1 } },
+            { type: 'circle', shape: { cx: coord[0], cy: coord[1], r: 4 }, style: { fill: color } }
+          ]
+        };
+      }
     });
   });
 
@@ -245,7 +258,7 @@ function renderChart(sites) {
     },
     legend: { bottom: 0, type: 'scroll', textStyle: { fontSize: 12 } },
     grid: { left: 60, right: 30, top: 30, bottom: 60 },
-    xAxis: { type: 'value', name: 'Position', nameLocation: 'middle', nameGap: 30 },
+    xAxis: { type: 'value', name: 'Position', nameLocation: 'middle', nameGap: 30, min: 0, max: length || undefined },
     yAxis: { type: 'value', name: 'Score', nameLocation: 'middle', nameGap: 40 },
     series: series
   };

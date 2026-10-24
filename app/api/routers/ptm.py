@@ -67,6 +67,20 @@ def _query_sites(protein: str) -> tuple[list[dict], list[dict]]:
     return sites, stats
 
 
+def _query_length(protein: str) -> int | None:
+    """查蛋白序列长度（用于 lollipop 图的 x 轴 0~length）。"""
+    try:
+        with mysql_connection(settings.DB_PTM) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT length FROM protein_length WHERE Protein = %s", (protein,)
+                )
+                row = cur.fetchone()
+                return row["length"] if row else None
+    except Exception:
+        return None
+
+
 @router.get("/search")
 def search_ptm(
     protein: str = Query(..., min_length=1, description="Protein ID, e.g. TraesCS1A02G000100LC.1"),
@@ -81,8 +95,10 @@ def search_ptm(
         raise ValidationFailure("protein is required")
 
     sites, stats = _query_sites(protein)
+    length = _query_length(protein)
     return ok({
         "protein": protein,
+        "length": length,
         "total": len(sites),
         "stats": stats,
         "sites": sites,
