@@ -7,6 +7,7 @@ import re
 from fastapi import APIRouter, Query
 
 from app.core.config import settings
+from app.core.genome_ordering import infer_karyotype, sort_key as genome_sort_key
 from app.core.exceptions import ResourceNotFound, ValidationFailure
 from app.core.response import ok
 from app.core.security import (
@@ -702,6 +703,10 @@ def list_genome_examples() -> dict:
         examples.append({
             "table_name":   table_name,
             "display_name": display_name,
+            # Karyotype (subgenome composition) drives the dropdown grouping;
+            # computed from Polyploidy or the table prefix so new genomes sort
+            # themselves (see app/core/genome_ordering.py).
+            "karyotype":    infer_karyotype(table_name, r.get("polyploidy")),
             # Frontend keys are region / gene / pfam for backward compat.
             "region":       _ensure_range(r.get("example_chr_id")),
             "gene":         r.get("example_gene_id"),
@@ -712,6 +717,7 @@ def list_genome_examples() -> dict:
             # needs a `Domain` column).
             "columns":      cols_map.get(table_name, []),
         })
+    examples.sort(key=genome_sort_key)
     return ok({"examples": examples})
 @interval_router.get("/registry")
 def list_gene_function_registry() -> dict:

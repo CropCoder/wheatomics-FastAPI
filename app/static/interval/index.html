@@ -275,10 +275,19 @@ function loadTables() {
     .done(function(resp) {
       if (!resp.success) { showError('Failed to load genome data'); return; }
       var sel = $('#table-select').empty();
+      // Group by karyotype (subgenome composition). The API returns the items
+      // already ordered by ploidy high->low, so optgroups appear in that order.
+      var currentGroup = null;
+      var optgroup = null;
       resp.data.examples.forEach(function(item) {
         genomeExamples[item.table_name] = item;
-        var opt = $('<option>').val(item.table_name).text(item.display_name);
-        sel.append(opt);
+        var key = item.karyotype || 'Other';
+        if (key !== currentGroup) {
+          currentGroup = key;
+          optgroup = $('<optgroup>').attr('label', key);
+          sel.append(optgroup);
+        }
+        optgroup.append($('<option>').val(item.table_name).text(item.display_name));
       });
       // 默认选中中国春 v2.1 表
       if (sel.find('option[value="Genefunc_CS_IWGSC03G_table"]').length) {

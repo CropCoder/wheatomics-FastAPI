@@ -262,11 +262,19 @@ function loadTables() {
       if (!resp.success) { showError('Failed to load tables'); return; }
       var sel = $('#table-select').empty();
       var supported = 0;
+      var currentGroup = null;
+      var optgroup = null;
       resp.data.examples.forEach(function(t) {
         var cols = (t.columns || []).map(function(c) { return c.toLowerCase(); });
         if (cols.indexOf('domain') < 0) return;
         tableInfo[t.table_name] = t;
-        sel.append($('<option>').val(t.table_name).text(t.display_name));
+        var key = t.karyotype || 'Other';
+        if (key !== currentGroup) {
+          currentGroup = key;
+          optgroup = $('<optgroup>').attr('label', key);
+          sel.append(optgroup);
+        }
+        optgroup.append($('<option>').val(t.table_name).text(t.display_name));
         supported++;
       });
       if (supported === 0) {
