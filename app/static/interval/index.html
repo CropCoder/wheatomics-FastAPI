@@ -323,6 +323,26 @@ function useExample(type) {
   $('input[name="queryType"]').trigger('change');
 }
 
+function apiErrorMessage(jqXHR) {
+  // FastAPI returns {"detail": ...} for 4xx; jQuery 1.9 does not always populate
+  // responseJSON, so fall back to parsing responseText.
+  var detail = jqXHR.responseJSON ? jqXHR.responseJSON.detail : null;
+  if (!detail && jqXHR.responseText) {
+    try {
+      var parsed = JSON.parse(jqXHR.responseText);
+      detail = parsed.detail || parsed.error || parsed.message;
+    } catch (e) {
+      detail = jqXHR.responseText;
+    }
+  }
+  if (Array.isArray(detail)) {
+    detail = detail.map(function(d) {
+      return (d.loc ? d.loc.join('.') + ': ' : '') + (d.msg || JSON.stringify(d));
+    }).join('; ');
+  }
+  return detail || 'Query failed';
+}
+
 function showError(msg) {
   $('#error-msg').text(msg).show();
   $('#loading-indicator').hide();
@@ -372,7 +392,7 @@ function queryInterval() {
     })
     .fail(function(jqXHR) {
       $('#loading-indicator').hide();
-      showError(jqXHR.responseJSON ? jqXHR.responseJSON.detail : 'Query failed');
+      showError(apiErrorMessage(jqXHR));
     });
 }
 
