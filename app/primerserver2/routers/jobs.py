@@ -1,8 +1,10 @@
 import datetime
 import logging
+from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
+from ...core.config import settings as wheatomics_settings
 from ..config import PrimerServerConfig, get_primer_config
 from ..dependencies import PrimerServer2Settings, get_primerserver2_settings, verify_api_key, validate_job_id
 from ..models import (
@@ -65,6 +67,47 @@ def create_job(
                 f"例如 'Chr3B 569382161 5017 150 800'，而不是 'geneID:start-end' 格式。"
             ),
         )
+
+    # ---- 校验 template-regions（数据库模板必须有区间，且 TargetID 必须存在）----
+    if tmpl != "custom":
+        regions_text = (request.templateRegions or "").strip()
+        if not regions_text:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "selectTemplate 为数据库时必须提供 template-regions："
+                    "每行一个 'TargetID TargetPos TargetLength [ProductSizeMin] [ProductSizeMax]'，"
+                    "例如 'Chr3B_Chinese_Spring2.1 569382161 5017 150 800'。"
+                    f"可用 TargetID 见 GET /api/PrimerServer2/databases/{tmpl}/sequences"
+                ),
+            )
+        # TargetID 必须是模板数据库 .fai 里的序列名；否则流水线后面才会失败
+        # （perl 区间提取为空 -> primer3 退出码 253，错误信息对用户不可读）。
+        fai_path = Path(wheatomics_settings.BLAST_DB_PATH) / f"{tmpl}.fai"
+        if fai_path.exists():
+            available: list[str] = []
+            with fai_path.open("r", encoding="utf-8", errors="replace") as fh:
+                for line in fh:
+                    parts = line.rstrip("\n").split("\t")
+                    if len(parts) >= 2 and parts[0]:
+                        available.append(parts[0])
+            available_set = set(available)
+            requested = []
+            for line in regions_text.splitlines():
+                tokens = line.split()
+                if tokens:
+                    requested.append(tokens[0])
+            missing = [x for x in dict.fromkeys(requested) if x not in available_set]
+            if missing:
+                sample = ", ".join(available[:3]) if available else "(空)"
+                raise HTTPException(
+                    status_code=422,
+                    detail=(
+                        f"template-regions 中的 TargetID 不属于模板数据库 '{tmpl}': "
+                        f"{missing[:5]}。数据库中的序列名示例: {sample} …；"
+                        f"完整清单见 GET /api/PrimerServer2/databases/{tmpl}/sequences"
+                    ),
+                )
 
     # ---- 校验特异性检测数据库 ----
     for db_name in request.selectedDatabases:
