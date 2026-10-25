@@ -579,9 +579,9 @@ function renderGenomes(records) {
         // Curated rows: use the value exactly as it comes back from
         // /api/genes/functions/registry — it already includes any
         // "chr:start-end" range the genome owner wants to demo.
-        var val = '';
-        if (r.example_species_chr) val += r.example_species_chr;
-        if (r.example_cds)         val += (val ? '\n' : '') + r.example_cds;
+        // Fill the interval only: mixing an interval with a gene id turns the
+        // submit into a batch request, which cannot run against a genome DB.
+        var val = r.example_species_chr || '';
         if (!val) {
           // No curated example: derive a valid region from the real
           // chromosome names of the all_genomes DB.
@@ -755,7 +755,12 @@ function querySequence() {
     //   - all_protein    → protein only (skip CDS lookup)
     //   - other coding   → try CDS + protein in parallel
     var geneDb, protDb;
-    if (db === 'all_proteins') {
+    if (db === 'auto') {
+      // 'auto' only makes sense for intervals; a bare gene ID defaults to the
+      // standard CDS + protein databases.
+      geneDb = 'all_genes';
+      protDb = 'all_proteins';
+    } else if (db === 'all_proteins') {
       geneDb = null;       // skip CDS
       protDb = 'all_proteins';
     } else if (db === 'all_genes') {
