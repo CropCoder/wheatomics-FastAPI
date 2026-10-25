@@ -404,6 +404,15 @@ def get_gene_detail(gene_id: str) -> dict:
 
     return ok(detail.model_dump())
 
+_NULL_CS02G = {"", "-", ".", "null", "none", "na", "n/a"}
+
+
+def _clean_cs02g(value):
+    """Normalize placeholder values in ChineseSpring02G to None."""
+    text = normalize_text(value) or ""
+    return None if text.strip().lower() in _NULL_CS02G else text
+
+
 def _make_function_record(row, table):
     """Build a GeneFunctionRecord from a DB row, handling different table schemas."""
     # The IWGSC v1.0 (v2) tables only have Gene03G/Gene02G columns; every
@@ -421,7 +430,7 @@ def _make_function_record(row, table):
             strand=normalize_text(row["Strand"]) or None,
             description=normalize_text(row.get("Description") or row.get("description") or "") or None,
             domain=normalize_text(row["Domain"]) or None,
-            chinese_spring_02g=normalize_text(row.get("ChineseSpring02G") or row.get("Gene02G")) or None,
+            chinese_spring_02g=_clean_cs02g(row.get("ChineseSpring02G") or row.get("Gene02G")),
         )
     return GeneFunctionRecord(
         chromosome=str(row["Chrom"]),
@@ -431,7 +440,7 @@ def _make_function_record(row, table):
         strand=normalize_text(row["Strand"]) or None,
         description=normalize_text(row.get("Description") or row.get("description") or "") or None,
         domain=normalize_text(row["Domain"]) or None,
-        chinese_spring_02g=normalize_text(row.get("ChineseSpring02G")) or None,
+        chinese_spring_02g=_clean_cs02g(row.get("ChineseSpring02G")),
     )
 
 @pfam_router.get("/pfam")
