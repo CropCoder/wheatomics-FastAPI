@@ -388,6 +388,7 @@ function loadDatabases() {
       databaseOptions = [];
       var presets = [
         { value: 'all_genomes',       label: 'all_genomes — all chromosome-level genomes (interval queries)' },
+        { value: 'auto',              label: 'auto — any genome database (chromosome-level first, then scaffolds)' },
         { value: 'all_genes',         label: 'all_genes — all transcript sequences' },
         { value: 'all_proteins',      label: 'all_proteins — all protein sequences' },
         { value: 'all_other_genomes', label: 'all_other_genomes — other non-chromosome-level genomes (merged)' }
@@ -407,15 +408,18 @@ function loadDatabases() {
 
 function useExample(value, db) {
   $('#query-input').val(value);
+  // Let the mode detection set its default first, then force the requested db
+  // (e.g. chips use 'auto' so scaffold-level genomes resolve too).
+  autoDetectMode();
   if (db && databaseOptions.find(function(o) { return o.value === db; })) {
     $('#db-select').val(db);
+    userPickedDatabase = true;
   }
   // Make the fill visible: scroll the input into view, focus it, flash it.
   var inp = $('#query-input');
   inp.addClass('example-flash');
   try { inp[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
   setTimeout(function(){ inp.removeClass('example-flash'); }, 1400);
-  autoDetectMode();
 }
 
 // ----- supported genomes (loaded from /api/genes/functions/registry) -----
@@ -592,7 +596,7 @@ function renderGenomes(records) {
                 ALL_GENOMES_CHROMS = (resp && resp.data && resp.data.chromosomes) || [];
                 renderGenomesSummaryOnly(recordsRef);
                 var v2 = guessGenomeRegion(r);
-                if (v2) useExample(v2, 'all_genomes');
+                if (v2) useExample(v2, 'auto');
                 else $('#genomes-summary').text('No matching chromosome found for '
                   + (r.display_name || r.table_name));
               });
@@ -600,7 +604,7 @@ function renderGenomes(records) {
           }
           if (!val) val = null;
         }
-        if (val) useExample(val, 'all_genomes');
+        if (val) useExample(val, 'auto');
       });
       list.append(chip);
     });
