@@ -127,9 +127,17 @@ def infer_karyotype(table_name: str | None, polyploidy: str | None) -> str:
     return "Other"
 
 
-def _species_rank(karyotype: str) -> int:
-    """Species-level karyotypes (decaploid Thinopyrum) sort after the crops."""
-    return 1 if karyotype.strip().lower() in _SPECIES else 0
+def _group_rank(karyotype: str) -> int:
+    """Coarse group order: crops < species-level < unknown ("Other").
+
+    - 0: crop/relative genomes with a known karyotype
+    - 1: species-level karyotypes (decaploid Thinopyrum ponticum)
+    - 2: "Other" (unknown karyotype) -- always the last group
+    """
+    label = (karyotype or "").strip()
+    if label.casefold() in ("other", ""):
+        return 2
+    return 1 if label.casefold() in _SPECIES else 0
 
 
 def _cs_rank(display_name: str) -> tuple:
@@ -153,7 +161,7 @@ def sort_key(item: dict) -> tuple:
     karyotype = item.get("karyotype") or ""
     ploidy = karyotype_ploidy(karyotype)
     return (
-        _species_rank(karyotype),
+        _group_rank(karyotype),
         -ploidy,
         karyotype.casefold(),
         _cs_rank(item.get("display_name") or ""),
