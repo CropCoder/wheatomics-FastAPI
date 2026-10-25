@@ -186,6 +186,12 @@ def _blast_db_groups(nuc_dbs: List[str]) -> List[DatabaseGroup]:
     # The same rule then applies to genome and gene databases alike, so
     # newly imported genomes sort themselves without touching this file.
     # ------------------------------------------------------------
+    # list_dbs() is disk-cached for an hour, so a database removed from disk can
+    # linger in the picker (and then fail validation on submit). Re-check the
+    # index files here; it is a handful of stat() calls per database.
+    genome = [n for n in genome if blast_db_exists(n)]
+    gene = [n for n in gene if blast_db_exists(n)]
+
     def _db_core(name: str) -> str:
         for suffix in (
             ".genome",
