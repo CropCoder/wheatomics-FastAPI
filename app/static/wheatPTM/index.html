@@ -349,7 +349,7 @@ function scrollIntoViewSoon(selector) {
   // The page is long (overview + result); make the consequence of a search visible.
   setTimeout(function() {
     var el = document.querySelector(selector);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
   }, 150);
 }
 
