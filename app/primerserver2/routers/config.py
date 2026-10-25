@@ -214,7 +214,10 @@ def _blast_db_groups(nuc_dbs: List[str]) -> List[DatabaseGroup]:
         display = display.replace("_", " ")
         # "Spring2.1" -> "Spring 2.1" so the curated CS ordering applies.
         display = re.sub(r"(?<=[A-Za-z])(\d)", r" \1", display)
-        return genome_sort_key({"karyotype": karyotype, "display_name": display})
+        # Chinese Spring 2.1 stays the first entry (platform default reference
+        # for primer design); everything else follows the standard ordering.
+        default_first = 0 if core.upper().startswith("AABBDD_CHINESE_SPRING2.1") else 1
+        return (default_first,) + genome_sort_key({"karyotype": karyotype, "display_name": display})
 
     genome.sort(key=_db_sort_key)
     gene.sort(key=_db_sort_key)

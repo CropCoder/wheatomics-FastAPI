@@ -37,6 +37,8 @@ _CANONICAL = {
     "AABB": "AABB",
     "AAGG": "AAGG",
     "DDNN": "DDNN",
+    "MMUU": "MMUU",
+    "SSHH": "SSHH",
     "ATATGG": "AtAtGG",
     "NSNSXMXM": "NsNsXmXm",
     "STSTYYHH": "StStYYHH",
@@ -74,6 +76,15 @@ _CS_ORDER = [
     "cs-iaas",
 ]
 _CS_RE = re.compile(r"^(chinese\s+spring|cs[-\s])", re.I)
+
+# Prefixes that describe a wheat assembly under a non-karyotype name; map them
+# to the karyotype so the lists group/order them like every other wheat genome.
+_PREFIX_ALIASES = {
+    "AABBBDD": "AABBDD",   # typo for AABBDD (Chinese Spring 1.1)
+    "FANGENOME": "AABBDD",  # wheat pangenome database
+    "MIANYANG": "AABBDD",   # Mianyang wheat cultivar
+    "TAE": "AABBDD",        # Triticum aestivum gene set
+}
 
 _GENOME_UNIT = re.compile(r"[A-Z][a-z]?")
 _PLOIDY_PREFIXES = sorted(_CANONICAL, key=len, reverse=True)
@@ -121,9 +132,16 @@ def infer_karyotype(table_name: str | None, polyploidy: str | None) -> str:
         return ploid
     rest = re.sub(r"^Genefunc_", "", table_name or "")
     upper = rest.upper()
+    # Species names first: "Other_Thinopyrum_ponticum" would otherwise match the
+    # OTHER karyotype token and be filed as an unknown genome.
+    if "THINOPYRUM_PONTICUM" in upper:
+        return "Thinopyrum ponticum"
     for prefix in _PLOIDY_PREFIXES:
         if upper.startswith(prefix + "_"):
             return _CANONICAL[prefix]
+    for prefix, karyotype in _PREFIX_ALIASES.items():
+        if upper == prefix or upper.startswith(prefix + "_"):
+            return karyotype
     return "Other"
 
 
