@@ -1,0 +1,108 @@
+{
+  "generated_at": "2026-10-25",
+  "source": "PlantPTM predictions imported into the ptm MySQL database",
+  "proteins_indexed": 298774,
+  "totals": {
+    "sites": 45298412,
+    "ptm_calls": 10002676,
+    "non_ptm": 35295736
+  },
+  "confidence_counts": {
+    "Extremely high": 1906995,
+    "High": 1757876,
+    "Medium": 2941837,
+    "Low": 3395968,
+    "Non-PTM": 35295736
+  },
+  "types": [
+    {
+      "table": "pho",
+      "label": "Phosphorylation",
+      "sites": 13443656,
+      "ptm_calls": 2743366,
+      "non_ptm": 10700290
+    },
+    {
+      "table": "ngly",
+      "label": "N-glycosylation",
+      "sites": 3127316,
+      "ptm_calls": 604745,
+      "non_ptm": 2522571
+    },
+    {
+      "table": "sacy",
+      "label": "S-acylation",
+      "sites": 1774582,
+      "ptm_calls": 429966,
+      "non_ptm": 1344616
+    },
+    {
+      "table": "khib",
+      "label": "2-hydroxyisobutyrylation",
+      "sites": 4492143,
+      "ptm_calls": 316,
+      "non_ptm": 4491827
+    },
+    {
+      "table": "kcro",
+      "label": "Crotonylation",
+      "sites": 4492143,
+      "ptm_calls": 1730546,
+      "non_ptm": 2761597
+    },
+    {
+      "table": "ksucc",
+      "label": "Succinylation",
+      "sites": 4492143,
+      "ptm_calls": 1766087,
+      "non_ptm": 2726056
+    },
+    {
+      "table": "kmal",
+      "label": "Malonylation",
+      "sites": 4492143,
+      "ptm_calls": 1827033,
+      "non_ptm": 2665110
+    },
+    {
+      "table": "kac",
+      "label": "Acetylation",
+      "sites": 4492143,
+      "ptm_calls": 224132,
+      "non_ptm": 4268011
+    },
+    {
+      "table": "kub",
+      "label": "Ubiquitination",
+      "sites": 4492143,
+      "ptm_calls": 676485,
+      "non_ptm": 3815658
+    }
+  ],
+  "examples": [
+    {
+      "protein": "TraesCS5A02G444900.1",
+      "sites": 300
+    },
+    {
+      "protein": "TraesCS6B02G137300.1",
+      "sites": 299
+    },
+    {
+      "protein": "TraesCS1A02G028600LC.1",
+      "sites": 289
+    },
+    {
+      "protein": "TraesCS4D02G286100.1",
+      "sites": 288
+    },
+    {
+      "protein": "TraesCS3B02G128900.1",
+      "sites": 286
+    },
+    {
+      "protein": "TraesCS7D02G049000.3",
+      "sites": 280
+    }
+  ]
+}

@@ -91,6 +91,26 @@
   .loading { display:none; text-align:center; padding:60px; }
   .loading .spinner-border { width:3rem; height:3rem; }
 
+  /* ----- landing overview (dataset snapshot) ----- */
+  .ptm-hero { text-align:center; padding:2px 0 0; }
+  .ptm-hero p { max-width:920px; margin:0 auto; color:#64748b; font-size:15px; }
+  .ptm-stat-row { display:flex; flex-wrap:wrap; gap:14px; margin:16px 0 4px; justify-content:center; }
+  .ptm-stat-box { flex:1 1 0; min-width:165px; max-width:270px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:16px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+  .ptm-stat-box .num { font-size:30px; font-weight:bold; color:#0077b6; line-height:1.15; }
+  .ptm-stat-box .lbl { font-size:13px; color:#64748b; margin-top:2px; }
+  .ptm-stat-box .pct { font-size:12px; color:#0077b6; margin-top:2px; }
+  .ptm-conf-row { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+  .ptm-conf-box { flex:1 1 0; min-width:130px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 8px; text-align:center; }
+  .ptm-conf-box .num { font-size:21px; font-weight:bold; line-height:1.15; }
+  .ptm-conf-box .lbl { font-size:12px; color:#64748b; margin-top:2px; }
+  .ptm-example-row { display:flex; flex-wrap:wrap; gap:8px; }
+  .ptm-example-btn { font-size:12.5px; }
+  #ptm-overview-chart { width:100%; height:400px; min-width:0; }
+  @media (max-width: 768px) {
+    .ptm-stat-box { min-width:130px; max-width:none; }
+    #ptm-overview-chart { height:360px; }
+  }
+
   /* ----- visit stats footer ----- */
   .visit-stats { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; }
   .visit-stats .vs-pill {
@@ -155,7 +175,13 @@
 </div>
 
 <div id="home_content">
-  <br><h5 class="card-title">Search wheat protein post-translational modifications</h5><br>
+  <br><h5 class="card-title">Search wheat protein post-translational modifications</h5>
+
+  <div class="ptm-hero">
+    <p><strong>wheatPTM</strong> holds PlantPTM deep-learning predictions of nine post-translational
+      modification (PTM) types for wheat proteins. Search an exact protein ID to see its predicted
+      modification sites, their confidence class and prediction scores.</p>
+  </div>
 
   <div class="search-box">
     <div class="row">
@@ -169,6 +195,26 @@
     </div>
     <div class="form-text text-muted small">Exact protein ID, e.g. <code>TraesCS1A02G000100.1</code>. Both standard and <code>LC</code> protein models are indexed.</div>
     <div id="error-msg" class="alert alert-danger"></div>
+  </div>
+
+  <div class="search-box" id="overview-card" style="display:none;">
+    <div class="d-flex justify-content-between align-items-baseline flex-wrap">
+      <h6 class="mb-0">Dataset overview</h6>
+      <span class="text-muted small" id="overview-meta"></span>
+    </div>
+    <div class="ptm-stat-row" id="overview-stats"></div>
+
+    <h6 class="mt-4">Scored sites by modification type</h6>
+    <p class="chart-subtitle">Stacked bar: PTM calls (coloured by modification type) + Non-PTM predictions (grey). Hover a bar for counts and the PTM-call rate; search results show PTM calls by default.</p>
+    <div id="ptm-overview-chart"></div>
+
+    <h6 class="mt-4">Confidence distribution</h6>
+    <p class="chart-subtitle">Across all scored sites. <code>Non-PTM</code> is the prediction tools' negative class.</p>
+    <div class="ptm-conf-row" id="overview-confidence"></div>
+
+    <h6 class="mt-4">Example proteins</h6>
+    <p class="chart-subtitle">A few wheat proteins with moderate site counts &mdash; click to search.</p>
+    <div class="ptm-example-row" id="overview-examples"></div>
   </div>
 
   <div id="not-found-msg" class="alert alert-warning"></div>
@@ -274,6 +320,7 @@ var SCOPE_LABELS = {
   high: 'high-confidence calls only'
 };
 var chart = null;
+var overviewChart = null;
 var lastData = null;
 var currentScope = 'ptm';
 
@@ -298,6 +345,14 @@ function searchPTM() {
     });
 }
 
+function scrollIntoViewSoon(selector) {
+  // The page is long (overview + result); make the consequence of a search visible.
+  setTimeout(function() {
+    var el = document.querySelector(selector);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 150);
+}
+
 function renderResult(data) {
   lastData = data;
   var protein = data.protein;
@@ -310,6 +365,7 @@ function renderResult(data) {
       'Searches use exact protein IDs — check the ID, e.g. <code>TraesCS1A02G000100.1</code>, ' +
       'or an <code>LC</code> protein model such as <code>TraesCS1A02G000100LC.1</code>.'
     ).show();
+    scrollIntoViewSoon('#not-found-msg');
     return;
   }
 
@@ -327,6 +383,7 @@ function renderResult(data) {
   $('#table-box').show();
   $('#result-area').show();
   applyScope(currentScope);
+  scrollIntoViewSoon('#result-area');
 }
 
 function showNoSites(protein, length) {
@@ -344,6 +401,7 @@ function showNoSites(protein, length) {
   $('#no-sites-msg').text(
     'No PTM sites are recorded for ' + protein + '. Try searching another protein ID, or check the ID format.'
   ).show();
+  scrollIntoViewSoon('#result-area');
 }
 
 function inScope(site, scope) {
@@ -579,9 +637,172 @@ function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ---------- dataset overview (static snapshot at /wheatPTM/stats.json) ----------
+function fmtFull(n) {
+  return Number(n || 0).toLocaleString('en-US');
+}
+
+function fmtCompact(n) {
+  n = Number(n) || 0;
+  if (n >= 1000000) return (n / 1000000).toFixed(n >= 10000000 ? 1 : 2) + 'M';
+  if (n >= 10000) return (n / 1000).toFixed(1) + 'k';
+  return fmtFull(n);
+}
+
+function fmtAxis(n) {
+  n = Number(n) || 0;
+  if (n >= 1000000) {
+    var m = n / 1000000;
+    return (m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)) + 'M';
+  }
+  if (n >= 1000) {
+    var k = n / 1000;
+    return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'k';
+  }
+  return String(n);
+}
+
+function loadOverview() {
+  // The ptm tables hold ~45M rows, so the overview is a precomputed snapshot:
+  // scripts/build_ptm_stats.py regenerates app/static/wheatPTM/stats.json.
+  fetch('/wheatPTM/stats.json', { cache: 'no-cache' })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      return resp.json();
+    })
+    .then(function(data) { renderOverview(data); })
+    .catch(function(err) { console.warn('wheatPTM overview unavailable:', err); });
+}
+
+function overviewStatBox(num, label, sub, title) {
+  return '<div class="ptm-stat-box" title="' + escapeHtml(title || '') + '">' +
+    '<div class="num">' + escapeHtml(num) + '</div>' +
+    '<div class="lbl">' + escapeHtml(label) + '</div>' +
+    (sub ? '<div class="pct">' + escapeHtml(sub) + '</div>' : '') +
+    '</div>';
+}
+
+function renderOverview(data) {
+  var totals = data.totals || {};
+  var sites = Number(totals.sites) || 0;
+  var calls = Number(totals.ptm_calls) || 0;
+  var proteins = Number(data.proteins_indexed) || 0;
+  var types = data.types || [];
+  var callPct = sites ? (calls / sites * 100).toFixed(1) + '%' : '';
+
+  var meta = document.getElementById('overview-meta');
+  if (meta) {
+    meta.textContent = 'snapshot ' + (data.generated_at || '') + ' · ' +
+      fmtFull(proteins) + ' proteins screened · ' + fmtFull(sites) + ' scored sites';
+  }
+
+  var statsEl = document.getElementById('overview-stats');
+  if (statsEl) {
+    statsEl.innerHTML =
+      overviewStatBox(fmtCompact(calls), 'PTM calls', callPct + ' of scored sites', fmtFull(calls) + ' PTM calls') +
+      overviewStatBox(fmtCompact(sites), 'scored sites', '(PTM calls + Non-PTM)', fmtFull(sites) + ' scored sites') +
+      overviewStatBox(fmtFull(proteins), 'wheat proteins screened', '', fmtFull(proteins) + ' proteins') +
+      overviewStatBox(String(types.length), 'PTM types', '', types.map(function(t) { return t.label; }).join(', '));
+  }
+
+  var confEl = document.getElementById('overview-confidence');
+  if (confEl) {
+    var counts = data.confidence_counts || {};
+    var order = ['Extremely high', 'High', 'Medium', 'Low', 'Non-PTM'];
+    var colors = {
+      'Extremely high': '#14532d', 'High': '#16a34a', 'Medium': '#f59e0b',
+      'Low': '#f97316', 'Non-PTM': '#94a3b8'
+    };
+    confEl.innerHTML = order.map(function(label) {
+      var n = Number(counts[label]) || 0;
+      var pct = sites ? ' · ' + (n / sites * 100).toFixed(1) + '%' : '';
+      return '<div class="ptm-conf-box" title="' + fmtFull(n) + ' sites">' +
+        '<div class="num" style="color:' + (colors[label] || '#334155') + '">' + fmtCompact(n) + '</div>' +
+        '<div class="lbl">' + escapeHtml(label) + pct + '</div></div>';
+    }).join('');
+  }
+
+  var exEl = document.getElementById('overview-examples');
+  if (exEl) {
+    exEl.innerHTML = (data.examples || []).map(function(item) {
+      return '<button type="button" class="btn btn-sm btn-outline-primary ptm-example-btn" ' +
+        'onclick="searchExample(\'' + escapeHtml(item.protein) + '\')">' +
+        escapeHtml(item.protein) + ' <span class="badge badge-light">' + fmtFull(item.sites) + '</span></button>';
+    }).join('');
+  }
+
+  var card = document.getElementById('overview-card');
+  if (card) card.style.display = '';
+  renderOverviewChart(types);
+}
+
+function renderOverviewChart(types) {
+  var el = document.getElementById('ptm-overview-chart');
+  if (!el || !types.length) return;
+
+  var labels = types.map(function(t) { return t.label; });
+  var callSeries = types.map(function(t) {
+    return { value: t.ptm_calls, itemStyle: { color: PTM_COLORS[t.label] || '#64748b' } };
+  });
+  var nonPtmSeries = types.map(function(t) { return t.non_ptm; });
+  var narrow = window.innerWidth < 768;
+
+  var option = {
+    animation: false,
+    tooltip: {
+      trigger: 'axis', axisPointer: { type: 'shadow' }, confine: true,
+      backgroundColor: '#ffffff', borderColor: '#dbe3ec', borderWidth: 1,
+      textStyle: { color: '#243247' },
+      formatter: function(params) {
+        var t = types[params[0].dataIndex];
+        var total = Number(t.sites) || 0;
+        var pct = total ? (t.ptm_calls / total * 100).toFixed(1) : '0';
+        return '<strong>' + escapeHtml(t.label) + '</strong>' +
+          '<br>PTM calls: ' + fmtFull(t.ptm_calls) + ' (' + pct + '%)' +
+          '<br>Non-PTM: ' + fmtFull(t.non_ptm) +
+          '<br>Scored sites: ' + fmtFull(total);
+      }
+    },
+    legend: { show: false },
+    grid: { left: narrow ? 118 : 190, right: 24, top: 10, bottom: 18, containLabel: false },
+    xAxis: {
+      type: 'value',
+      axisLabel: { color: '#64748b', formatter: function(v) { return fmtAxis(v); } },
+      splitLine: { lineStyle: { color: '#edf1f5' } }
+    },
+    yAxis: {
+      type: 'category', inverse: true, data: labels,
+      axisLabel: {
+        color: '#475569', fontSize: narrow ? 10 : 12,
+        width: narrow ? 104 : 172, overflow: 'truncate'
+      },
+      axisLine: { lineStyle: { color: '#94a3b8' } },
+      axisTick: { show: false }
+    },
+    series: [
+      { name: 'PTM calls', type: 'bar', stack: 'total', barWidth: '62%', data: callSeries, emphasis: { focus: 'series' } },
+      { name: 'Non-PTM', type: 'bar', stack: 'total', itemStyle: { color: '#e2e8f0' }, data: nonPtmSeries }
+    ]
+  };
+
+  if (!overviewChart) overviewChart = echarts.init(el);
+  overviewChart.setOption(option, true);
+  overviewChart.resize();
+}
+
+function searchExample(protein) {
+  $('#protein-input').val(protein);
+  searchPTM();
+}
+
 // 支持深链接 /wheatPTM/?protein=XXX&scope=ptm|all|high
 $(function() {
-  window.addEventListener('resize', function() { if (chart) chart.resize(); });
+  window.addEventListener('resize', function() {
+    if (chart) chart.resize();
+    if (overviewChart) overviewChart.resize();
+  });
+
+  loadOverview();
 
   var params = new URLSearchParams(window.location.search);
   var q = params.get('protein');
