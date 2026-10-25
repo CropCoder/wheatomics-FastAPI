@@ -918,3 +918,70 @@ def search_gene_interval(
     return ok({"table": table, "region": region, "count": len(records), "records": [record.model_dump() for record in records]})
 
 
+
+
+@genehub_router.get("/resolve")
+def resolve_gene_id(
+    gene_id: str = Query(..., alias="ID"),
+) -> dict:
+    """跨 Genefunc 表解析基因 ID，并返回中国春 02G 对应关系。
+
+    用于 GeneHub 非中国春 ID 的兜底：按 Gene/Gene02G/Gene03G 列扫描所有
+    visible 的 Genefunc 表，返回命中记录及其 ChineseSpring02G 映射。
+    """
+    gene_id = (gene_id or "").strip()
+    if not re.match(r"^[A-Za-z0-9_.:-]{2,200}$", gene_id):
+        raise ValidationFailure("Invalid gene ID")
+    base_id = re.sub(r"\.\d+$", "", gene_id)
+    candidates = list(dict.fromkeys([gene_id, base_id]))
+
+    mappings: list[dict] = []
+    seen = set()
+    with mysql_cursor(settings.DB_GENEFUNC) as cursor:
+        cursor.execute(
+            "SELECT table_name, display_name, `Group`, Polyploidy "
+            "FROM Genefunc_registry WHERE visible=1 ORDER BY display_order, table_name"
+        )
+        registry = cursor.fetchall()
+        cursor.execute(
+            "SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS "
+            "WHERE TABLE_SCHEMA=%s AND COLUMN_NAME IN ('Gene','Gene02G','Gene03G')",
+            (settings.DB_GENEFUNC,),
+        )
+        table_columns: dict[str, list[str]] = {}
+        for row in cursor.fetchall():
+            table_columns.setdefault(row["TABLE_NAME"], []).append(row["COLUMN_NAME"])
+
+        for meta in registry:
+            table = str(meta.get("table_name") or "")
+            if not re.match(r"^Genefunc_[A-Za-z0-9_]+_table$", table):
+                continue
+            gene_columns = table_columns.get(table)
+            if not gene_columns:
+                continue
+            display = normalize_text(meta.get("display_name")) or table
+            for col in gene_columns:
+                try:
+                    cursor.execute(
+                        f"SELECT * FROM `{table}` WHERE `{col}` IN (%s,%s) LIMIT 10",
+                        (gene_id, base_id),
+                    )
+                    rows = cursor.fetchall() or []
+                except Exception:
+                    continue
+                for row in rows:
+                    record = _make_function_record(row, table)
+                    key = (table, record.gene_primary, record.chinese_spring_02g)
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    data = record.model_dump()
+                    data.update(
+                        table=table,
+                        dataset=display,
+                        group=normalize_text(meta.get("Group")) or None,
+                        ploidy=normalize_text(meta.get("Polyploidy")) or None,
+                    )
+                    mappings.append(data)
+
+    return ok({"query": gene_id, "count": len(mappings), "mappings": mappings})
