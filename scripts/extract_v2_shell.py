@@ -50,7 +50,11 @@ hr { border-top: 1px solid var(--line); }
 a { color: var(--leaf); }
 a:hover { color: var(--forest); }
 
-/* Cards ---------------------------------------------------------------- */
+/* Cards ----------------------------------------------------------------
+   The docroot copy of Bootstrap 4.5.3 is site-customised: .card-body has a
+   6px #1a659e top bar and .card-title is #00aadc + centered. Neutralise both. */
+.card-body { border-top: 0; }
+.card-title { color: var(--forest-deep); text-align: left; }
 .card {
   border: 1px solid var(--line);
   border-radius: 14px;
