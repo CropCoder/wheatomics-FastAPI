@@ -2147,8 +2147,12 @@ function fillDbList(listEl, idx) {
   var cat = state.categories[idx];
   if (!cat || listEl.getAttribute('data-filled') === '1') return;
   var allowChromosome = cat.id === 'aggregated';
-  var dbs = (cat.databases || []).filter(dbPassesFilters).filter(function (db) {
-    return allowChromosome || (dbMeta(db).kind || 'other') !== 'chromosome';
+  var dbs = (cat.databases || []).filter(function (db) {
+    var kind = dbMeta(db).kind || 'other';
+    // All-in-one: Other-group entries (e.g. the CS21 NLR chromosome collection)
+    // should remain visible when the Genome filter is active.
+    if (allowChromosome && state.kindFilter === 'genome' && kind === 'other') return true;
+    return dbPassesFilters(db) && (allowChromosome || kind !== 'chromosome');
   });
   var groups = {};
   dbs.forEach(function (db) {
