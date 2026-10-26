@@ -934,3 +934,72 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.htm
 - 2026-10-26 已删除旧库 70 个文件（13.0 GB），备份清单与 6 个小索引文件在
   `/var/www/data/masw_data/cs21_nlr_old_build_20261026_2143/`；新库保留并验证可打开
   （105 sequences / 55.8 Gb）。`DUPLICATE_ALIAS_DBS` 中保留旧名仅作防恢复的保险。
+
+---
+
+## 十二、SPA 统一 V2.0 外壳（按 `/V2.0/` 与 `/blast/blast.html` 风格改造）
+
+全站 SPA 采用同一套 V2.0 chrome：主题变量、固定 header + 大下拉导航、hero 区、深绿 footer（含
+访问统计）。样式和 header/footer 标记**只维护一份**，不再逐页复制。
+
+### 资产与来源
+
+| 路径 | 说明 |
+|---|---|
+| `app/static/_v2/shell.css` | V2.0 主题 + header/footer/hero 样式 + **Bootstrap 4 桥接**（`.card` / `.btn` / `.form-control` / `.table` / `.nav-tabs` / `.badge` / `.alert` / `.modal` / `.dropdown-menu` / `.pagination` / `.progress`、`h1–h4`、`.container`、`.text-muted`） |
+| `app/static/_v2/shell.js` | 注入 SVG sprite、header、footer；接管移动端菜单、下拉、Back to top、footer 访问统计；高亮当前模块导航 |
+| `app/static/_v2/template.html` | 转换模板（head + hero + main + footer 占位 + 脚本顺序） |
+| `app/static/_v2/README.md` | 逐页改造 checklist / 验证命令 / 页面清单 |
+| `scripts/extract_v2_shell.py` | 从 canonical BLAST 页（`app/static/blast2/index.html`，即线上 `/blast/blast.html`）重新抽取上述资产 |
+
+- 服务地址：**`/api/v2shell/shell.css|shell.js|template.html`**（`main.py` 里 `app.mount("/api/v2shell", …)`）。
+  放 `/api/` 前缀是有意为之：Apache 已把 `/api` 反代到 FastAPI，**新增挂载不需要改 Apache**。
+- 修改 chrome：改 canonical BLAST 页 → `python3 scripts/extract_v2_shell.py` → 提交生成物（勿手改 `_v2/shell.*`）。
+- docroot 的 Bootstrap 4.5.3 是站点定制版：`.card-body` 有 6px `#1a659e` 顶条、`.card-title` 是
+  `#00aadc` 居中。shell.css 的桥接已覆盖，老页面转换后不会串色。
+
+### 单页改造步骤（摘要，完整版见 `app/static/_v2/README.md`）
+
+1. head：保留页面原有本地资源（Bootstrap/jQuery/Plotly/Select2…），补 `viewport`、`title`、
+   `favicon`，在原有样式之后加载 `/api/v2shell/shell.css`；
+2. 删除旧框架：`#home_header`、`#header-tabs`、`#home_footer`、`#visit-stats`、以及每页各自的
+   `/api/track/visit` + `/api/track/stats` 脚本；
+3. body 改为 `<div id="v2-shell-header"></div>` + `<main id="main-content">`（`.news-hero` + `.news-body > .container`）
+   + `<div id="v2-shell-footer"></div>` + `<script src="/api/v2shell/shell.js"></script>`；
+4. 页面自有 CSS 改用 V2.0 token（`--forest/--leaf/--mist/--line/--muted/--page` 等），组件优先用共享 `.card/.btn/.form-control/.table/.nav-tabs`；
+5. **保留所有功能 id 与页面 JS**，只替换框架。
+
+### 验证（每页必做）
+
+```bash
+# 1) 静态自检
+node --check app/static/_v2/shell.js
+grep -c "api/v2shell/shell" app/static/<module>/index.html        # 期望 2
+grep -cE "home_header|header-tabs|home_footer|visit-stats" app/static/<module>/index.html   # 期望 0
+
+# 2) 本地渲染（/api/v2shell 指向本地副本，绕开 API 依赖）
+rm -rf /tmp/v2test && mkdir -p /tmp/v2test/<module> /tmp/v2test/api/v2shell
+cp app/static/<module>/index.html /tmp/v2test/<module>/
+cp app/static/_v2/shell.css app/static/_v2/shell.js /tmp/v2test/api/v2shell/
+(cd /tmp/v2test && python3 -m http.server 8011 >/dev/null 2>&1 &)
+bash scripts/spa_visual_check.sh http://127.0.0.1:8011/<module>/ --widths 390,768,1440
+
+# 3) 部署后线上验收（Lead 批量部署后执行）
+bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/<module>/ --widths 390,768,1440 --label v2-<module>
+```
+
+期望 `Result: PASS`；唯一可接受的 Warn 是 footer "Back to top ↑" 在 390px 下的小点击目标（主题自带，见第九节）。
+除渲染外还要在线上做一次功能冒烟：示例输入 → 提交 → 结果表/图出现。
+
+### 部署注意
+
+- 只改静态文件也要 `sudo -n systemctl restart wheatomics-api`（StaticFiles 目录内容会即时生效，
+  但 `/api/v2shell` 是 Python 侧挂载，需重启；重启后端口 8000 通常要 2–3 分钟才恢复监听，期间 Apache 返回 503 属正常）。
+- 批量改造时按批次提交/部署，每批部署后跑一遍该批的线上 `spa_visual_check`。
+
+### 进度清单
+
+- 已 V2.0：`blast2`（`/blast/blast.html` canonical）、`wheatPTM`、`preblast`、`primerserver2`
+- 待改造：`getfasta`、`interval`、`expression`、`coexpression`、`genes`、`caps`、`papers`、`sms2`、
+  `GO_KEGG`、`HomologFinder`、`PfamSearch`、`idConvert`、`neighborhood`、`orthofinder`、`wheatPPI`、
+  `eqtl`、`VariantHub`、`syntenyview`、`scRNA`、`wheatPSP`
