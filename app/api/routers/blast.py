@@ -56,6 +56,17 @@ _SYNC_POLL_INTERVAL_SECONDS = 0.5
 #: others legitimately take a while, so this is generous.
 _SYNC_POLL_TIMEOUT_SECONDS = 1100
 
+#: Aggregated "sequence retrieval" databases. They concatenate whole genome
+#: sets (all_genomes / all_other_genomes / all_Allohexaploid), so a BLAST search
+#: against them is prohibitively expensive. They are used by the sequence
+#: retrieval endpoints (e.g. /api/sequence/chromosomes?database=all_genomes)
+#: and must not be offered in the BLAST database picker.
+SEQUENCE_ONLY_DBS = frozenset({
+    "all_Allohexaploid",
+    "all_genomes",
+    "all_other_genomes",
+})
+
 # === BLAST 数据库分类体系 ===
 # 与 wheatomics.sdau.edu.cn 前端页面一致，按基因组倍性/物种分类
 # 通过数据库名关键词匹配自动归类，未匹配的归入 "Other"
@@ -408,10 +419,18 @@ async def blast_job_status(job_id: str):
 async def list_databases(
     program: Optional[str] = Query(None, description="blastp/blastn/blastx/tblastn/tblastx/留空=全部")
 ):
-    """列出可用数据库（按蛋白/核酸分组）"""
+    """列出可用 BLAST 数据库（按蛋白/核酸分组）。
+
+    仅用于取序列的超大聚合库（SEQUENCE_ONLY_DBS：all_genomes /
+    all_other_genomes / all_Allohexaploid）不在此列表中；它们仍可通过
+    /api/sequence/* 使用。
+    """
     db_type = _program_db_type(program) if program else None
     prot_dbs = list_dbs("blastp") if db_type in (None, "prot") else []
     nuc_dbs = list_dbs("blastn") if db_type in (None, "nuc") else []
+    # Sequence-retrieval-only aggregate DBs are not valid BLAST targets.
+    prot_dbs = [d for d in prot_dbs if d not in SEQUENCE_ONLY_DBS]
+    nuc_dbs = [d for d in nuc_dbs if d not in SEQUENCE_ONLY_DBS]
     # ---- 按分类组织（供 AI agent 选择数据库时参考） ----
     all_dbs = prot_dbs + nuc_dbs
     cat_map: dict[str, dict] = {}

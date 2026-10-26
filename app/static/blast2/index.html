@@ -1814,6 +1814,10 @@ var BLAST_API = {
 var BLAST_EXAMPLES = {"protein": {"label": "protein example", "program": "blastp", "fasta": ">TraesCS1A02G000100.1_protein\nMRVIALSAGVTPSLRIGLPMCKCRSHGTFLLFGLQSSHLNICYYHQDLPRRPLCPGSRPG\nFCSGRRALLLIGAWRSSRWPGVGRALMRVIALSAGVTPSLRIGLPMCKCRSHGTFLLFGL\nQSSHLNICYYHQDLPRRPLCPGSRPGFCSGRRALLLIGAWRSSRWPGVGRAL"}, "nucleotide": {"label": "CDS example", "program": "blastn", "fasta": ">TraesCS1A02G000100.1_CDS\nATGCGCGTGATCGCGCTATCTGCCGGGGTTACCCCGTCCCTTAGGATCGGCTTACCCATG\nTGCAAGTGCCGTTCACATGGAACCTTTCTCCTCTTCGGCCTTCAAAGTTCTCATTTGAAT\nATTTGCTACTACCACCAAGATCTGCCGCGACGGCCGCTCTGCCCGGGCTCGCGCCCCGGG\nTTTTGCAGCGGCCGCCGCGCCCTCCTACTCATCGGGGCATGGCGCTCGTCCAGATGGCCG\nGGTGTGGGTCGCGCGCTTTAGATGCGCGTGATCGCGCTATCTGCCGGGGTTACCCCGTCC\nCTTAGGATCGGCTTACCCATGTGCAAGTGCCGTTCACATGGAACCTTTCTCCTCTTCGGC\nCTTCAAAGTTCTCATTTGAATATTTGCTACTACCACCAAGATCTGCCGCGACGGCCGCTC\nTGCCCGGGCTCGCGCCCCGGGTTTTGCAGCGGCCGCCGCGCCCTCCTACTCATCGGGGCA\nTGGCGCTCGTCCAGATGGCCGGGTGTGGGTCGCGCGCTTTAG"}};
 var JOB_ID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 var DB_LIMIT = 20;
+// Sequence-retrieval-only aggregate DBs (mirrors SEQUENCE_ONLY_DBS in
+// app/api/routers/blast.py). Hidden defensively even if an older API build
+// still returns them.
+var SEQUENCE_ONLY_DBS = { 'all_Allohexaploid': 1, 'all_genomes': 1, 'all_other_genomes': 1 };
 var PROGRAM_INFO = {
   blastn:  { query: 'nucleotide', db: 'nucleotide', hint: 'Nucleotide query against nucleotide databases.' },
   blastp:  { query: 'protein',    db: 'protein',    hint: 'Protein query against protein databases.' },
@@ -1912,7 +1916,18 @@ function loadDatabases(program) {
 }
 
 function applyDatabases(data) {
-  state.categories = data.categories || [];
+  data.categories = (data.categories || []).map(function (cat) {
+    var dbs = (cat.databases || []).filter(function (db) { return !SEQUENCE_ONLY_DBS[db]; });
+    return $.extend({}, cat, { databases: dbs, count: dbs.length });
+  }).filter(function (cat) { return cat.count > 0; });
+  ['protein', 'nucleotide'].forEach(function (key) {
+    if (data[key] && data[key].databases) {
+      data[key].databases = data[key].databases.filter(function (db) { return !SEQUENCE_ONLY_DBS[db]; });
+      data[key].count = data[key].databases.length;
+    }
+  });
+  data.total = data.categories.reduce(function (a, cat) { return a + cat.count; }, 0);
+  state.categories = data.categories;
   state.dbNames = [];
   state.categories.forEach(function (cat) {
     (cat.databases || []).forEach(function (db) { state.dbNames.push(db); });

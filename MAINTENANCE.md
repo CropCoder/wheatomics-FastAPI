@@ -814,6 +814,9 @@ V2.0 设计语言、纯静态单页、复用现有 `/api/blast` 异步任务后�
 - 5 个 program（blastn/blastp/blastx/tblastn/tblastx），切换 program 自动重载对应类型的数据库；
 - 数据库选择器：按分类折叠（`/api/blast/databases?program=...`）、名称过滤、分类全选、快捷
   “All proteins/All genes (combined)”、已选 chips、上限 20 个（与 API 限制一致）；
+- 仅用于取序列的超大聚合库（`all_genomes` / `all_other_genomes` / `all_Allohexaploid`）
+  **不在 BLAST 数据库列表中展示**（后端 `SEQUENCE_ONLY_DBS` 过滤 + 前端防御性隐藏），
+  它们仍可通过 `/api/sequence/*` 和 getfasta 页面使用；
 - 查询输入：粘贴 FASTA 或多序列、上传 FASTA 文件（客户端读取，≤5 MB）、按 program 提供示例序列；
 - 参数：E-value、max target sequences、word size、matrix、输出格式（hits+alignments / 仅 TSV / 仅文本）；
 - 提交走 `POST /api/blast/search` 且 `wait=false`，立即进入结果视图并轮询
