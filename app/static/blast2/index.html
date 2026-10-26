@@ -1573,7 +1573,6 @@ Paste one or more FASTA sequences here…"></textarea>
                     <button type="button" class="blast-kind-chip" data-kind="genome">Genome</button>
                     <button type="button" class="blast-kind-chip" data-kind="cds">CDS</button>
                     <button type="button" class="blast-kind-chip" data-kind="protein">Protein</button>
-                    <label class="blast-check-label blast-chrom-only-label"><input type="checkbox" id="blast-chrom-only"> chromosome-level assemblies only</label>
                   </div>
                   <div class="blast-db-cats" id="blast-db-cats">
                     <div class="blast-empty"><span class="blast-spinner" aria-hidden="true"></span>Loading databases…</div>
@@ -1978,7 +1977,6 @@ function applyDatabases(data) {
   data.total = data.categories.reduce(function (a, cat) { return a + cat.count; }, 0);
   state.dbMeta = data.database_meta || {};
   state.kindFilter = state.kindFilter || '';
-  state.chromOnly = !!state.chromOnly;
   state.categories = data.categories;
   state.dbNames = [];
   state.categories.forEach(function (cat) {
@@ -2136,7 +2134,6 @@ function dbPassesFilters(db) {
   } else if (kind !== 'aggregate' && state.kindFilter && kind !== state.kindFilter) {
     return false;
   }
-  if (state.chromOnly && kind !== 'aggregate' && !meta.chromosome_level) return false;
   return true;
 }
 
@@ -2975,10 +2972,6 @@ function init() {
     if (!chip) return;
     var kind = chip.getAttribute('data-kind');
     state.kindFilter = state.kindFilter === kind ? '' : kind;
-    refreshDbLists();
-  });
-  $('#blast-chrom-only').addEventListener('change', function () {
-    state.chromOnly = this.checked;
     refreshDbLists();
   });
   $('#blast-db-cats').addEventListener('click', function (event) {
