@@ -75,10 +75,19 @@ LEGACY_ALIAS_DBS = frozenset({
     "all_Diploid",
     "all_OtherTriticeae",
     "all_tri6",
+    "all_Allohexaploid",
+    "all_Allotetraploid",
+    "all1_genomes", "all2_genomes", "all3_genomes", "all4_genomes",
+    "all5_genomes", "all6_genomes", "all7_genomes",
 })
 
+#: On-disk databases that are broken (blastdbcmd cannot open them) and must not
+#: be offered until they are re-indexed/removed. `Foma.pep` fails with
+#: `mdb_env_open`; it is also excluded from the getfasta aggregates upstream.
+BROKEN_DB_BASES = frozenset({"Foma.pep"})
+
 #: Databases that must never be advertised as BLAST targets.
-HIDDEN_BLAST_DBS = SEQUENCE_ONLY_DBS | LEGACY_ALIAS_DBS
+HIDDEN_BLAST_DBS = SEQUENCE_ONLY_DBS | LEGACY_ALIAS_DBS | BROKEN_DB_BASES
 
 # === BLAST 数据库分类体系 ===
 # 与 wheatomics.sdau.edu.cn 前端页面一致，按基因组倍性/物种分类

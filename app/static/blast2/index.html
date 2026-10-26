@@ -1819,8 +1819,13 @@ var DB_LIMIT = 20;
 // still returns them.
 var SEQUENCE_ONLY_DBS = { 'all_Allohexaploid': 1, 'all_genomes': 1, 'all_other_genomes': 1 };
 // Legacy alias databases whose members are dangling after the 2026-10 rename.
-var LEGACY_ALIAS_DBS = { 'all_Diploid': 1, 'all_OtherTriticeae': 1, 'all_tri6': 1 };
-var HIDDEN_BLAST_DBS = Object.assign({}, SEQUENCE_ONLY_DBS, LEGACY_ALIAS_DBS);
+var LEGACY_ALIAS_DBS = {
+  'all_Diploid': 1, 'all_OtherTriticeae': 1, 'all_tri6': 1, 'all_Allohexaploid': 1,
+  'all_Allotetraploid': 1, 'all1_genomes': 1, 'all2_genomes': 1, 'all3_genomes': 1,
+  'all4_genomes': 1, 'all5_genomes': 1, 'all6_genomes': 1, 'all7_genomes': 1
+};
+var BROKEN_DB_BASES = { 'Foma.pep': 1 };
+var HIDDEN_BLAST_DBS = Object.assign({}, SEQUENCE_ONLY_DBS, LEGACY_ALIAS_DBS, BROKEN_DB_BASES);
 var PROGRAM_INFO = {
   blastn:  { query: 'nucleotide', db: 'nucleotide', hint: 'Nucleotide query against nucleotide databases.' },
   blastp:  { query: 'protein',    db: 'protein',    hint: 'Protein query against protein databases.' },

@@ -814,9 +814,10 @@ V2.0 设计语言、纯静态单页、复用现有 `/api/blast` 异步任务后�
 - 5 个 program（blastn/blastp/blastx/tblastn/tblastx），切换 program 自动重载对应类型的数据库；
 - 数据库选择器：按分类折叠（`/api/blast/databases?program=...`）、名称过滤、分类全选、快捷
   “All proteins/All genes (combined)”、已选 chips、上限 20 个（与 API 限制一致）；
-- 仅用于取序列的超大聚合库（`all_genomes` / `all_other_genomes` / `all_Allohexaploid`）
-  **不在 BLAST 数据库列表中展示**（后端 `SEQUENCE_ONLY_DBS` 过滤 + 前端防御性隐藏），
-  它们仍可通过 `/api/sequence/*` 和 getfasta 页面使用；
+- 仅用于取序列的超大聚合库（`all_genomes` / `all_other_genomes`）以及所有失效的
+  legacy alias（`LEGACY_ALIAS_DBS`）和坏库（`BROKEN_DB_BASES`，如 `Foma.pep`）都
+  **不在 BLAST 数据库列表中展示**（后端过滤 + 前端防御性隐藏）；`all_genomes` 等仍可
+  通过 `/api/sequence/*` 和 getfasta 页面使用；
 - 查询输入：粘贴 FASTA 或多序列、上传 FASTA 文件（客户端读取，≤5 MB）、按 program 提供示例序列；
 - 参数：E-value、max target sequences、word size、matrix、输出格式（hits+alignments / 仅 TSV / 仅文本）；
 - 提交走 `POST /api/blast/search` 且 `wait=false`，立即进入结果视图并轮询
@@ -859,3 +860,46 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.htm
 - 老结果页 `/blast/blastresult2.php` 未重定向到新 SPA（历史链接兼容），未来可做旧 job 的跳转映射。
 - Acc. len（subject 全长）当前 TSV 不提供，暂以 Aln length + HSP 数替代；如需 NCBI 同款列，可让
   `/api/blast` 在 outfmt 中增加 `slen` 字段。
+
+---
+
+## 十一、BLAST 数据库体检 / 清理
+
+新增 `scripts/audit_blast_databases.py`（服务器上跑，需要 app 环境的 pymysql）：
+
+```bash
+# 只体检（推荐先跑；输出 JSON + Markdown）
+/home/fei/mambaforge/envs/zjw/bin/python scripts/audit_blast_databases.py \
+    --json /tmp/blast_audit/report.json --md /tmp/blast_audit/report.md
+
+# 快速复检（跳过逐库 blastdbcmd，只查 alias + registry）
+... --skip-base-scan
+
+# 备份式清理：把坏掉的 alias 文件（只移动 .nal/.pal，不动成员库）移到
+# /var/www/data/masw_data/blastdb_alias_backup_<timestamp>/
+... --apply-clean
+```
+
+体检项：
+1. `blastdbcmd -info` 逐个打开 BLAST_DB_PATH 下所有库（单卷/多卷，3126 个 base）；
+2. 解析所有含 `DBLIST` 的 alias 文件，检查成员是否悬空、alias 是否可打开；
+3. 四个维护中的 getfasta 聚合库（all_genomes / all_other_genomes / all_genes / all_proteins）；
+4. MySQL `genome_registry` 里 319 条 `blast_genome_db` 是否都有可打开的库文件
+   （registry 存的库名不带 `.genome`/`.add_Description.*` 后缀，脚本会自动解析）。
+
+### 2026-10-26 首次全量体检结果
+
+- 3,126 个数据库 base，**13 个打不开**：12 个 legacy alias + `Foma.pep`（mdb_env_open）；
+- alias 共 204 个，**12 个坏**：`all1_genomes`…`all7_genomes`（每库 305 个成员全部悬空）、
+  `all_Allohexaploid`（59 个成员悬空）、`all_Allotetraploid`（8 个）、`all_Diploid`（14 个）、
+  `all_OtherTriticeae`（26 个）、`all_tri6`（48 个成员悬空，`.nal`+`.pal`）；
+- 4 个维护聚合库全部正常；
+- registry 只有 1 条真缺失：`Triticum_aestivum_JM44` → `primer.Triticum_aestivum_JM44`
+  （primer 专用库未建，和 BLAST / getfasta 无关）；
+- **已清理 13 个 alias 文件**（含 all_tri6 的 `.nal` + `.pal`）→
+  `/var/www/data/masw_data/blastdb_alias_backup_20261026_155536/`（84K，回滚直接移回即可）；
+- `Foma.pep` 未删除文件，仅加入 `BROKEN_DB_BASES` 从列表隐藏，等后续重新建库或确认删除；
+- 清理后 BLAST 列表：blastn 2,926 → 2,918，blastp 194 → 193（Foma.pep）。
+
+**约定**：以后重命名/重建 BLAST 库后，必须同步重建或删除相关 alias（否则 alias 会指向旧名），
+并在发布前跑一次本脚本；`--apply-clean` 只移动 alias 文件，永远不会动成员库。
