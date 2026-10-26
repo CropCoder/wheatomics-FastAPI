@@ -95,7 +95,7 @@ HIDDEN_BLAST_DBS = SEQUENCE_ONLY_DBS | LEGACY_ALIAS_DBS | BROKEN_DB_BASES
 #: Per-chromosome split databases: `<assembly>.genome_Chr1A`, `<assembly>.genome_chr1H`, ...
 _DB_CHROM_RE = re.compile(r"\.genome_[Cc]hr([0-9]{1,2}[A-Za-z]{0,4})$")
 #: Legacy per-chromosome aliases without the `.genome_` infix: `all_Allohexaploidchr1A`.
-_DB_CHROM_ALT_RE = re.compile(r"(?:^|[._])[Cc]hr([0-9]{1,2}[A-Za-z]{0,4})$")
+_DB_CHROM_ALT_RE = re.compile(r"[Cc]hr([0-9]{1,2}[A-Za-z]{0,4})$")
 
 #: Annotation-level suffixes and their database kind.
 _DB_ANNOTATION_SUFFIXES = (
