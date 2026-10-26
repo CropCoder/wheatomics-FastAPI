@@ -1376,6 +1376,25 @@
       .blast-filter-field input, .blast-filter-field select { min-width: 88px; }
       .blast-result-actions { width: 100%; }
     }
+
+    /* ==================== database kind grouping / quality badges ==================== */
+    .blast-db-viewfilters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 0 0 12px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fbfdfb; }
+    .blast-kind-chip { min-height: 28px; padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: #3d564b; font-size: 10.5px; font-weight: 700; cursor: pointer; }
+    .blast-kind-chip:hover { border-color: rgba(17, 134, 83, .45); }
+    .blast-kind-chip.active { border-color: var(--forest); background: var(--forest); color: #fff; }
+    .blast-chrom-only-label { font-size: 10.5px; color: #3d564b; }
+    .blast-db-group { border-top: 1px dashed var(--line); }
+    .blast-db-group:first-child { border-top: 0; }
+    .blast-db-group-title { display: flex; align-items: center; gap: 8px; padding: 8px 12px 3px; color: var(--forest-deep); font-family: var(--display); font-size: 10.5px; font-weight: 700; }
+    .blast-db-group-title .blast-db-group-count { color: var(--muted); font-family: var(--utility); font-size: 9.5px; font-weight: 400; }
+    .blast-db-group-title button { margin-left: auto; min-height: 24px; padding: 2px 0; border: 0; background: none; color: var(--leaf); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .blast-db-group-list { padding-bottom: 4px; }
+    .blast-db-item > span:first-of-type { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .blast-db-badges { display: inline-flex; flex: none; gap: 4px; margin-left: auto; }
+    .blast-badge { padding: 1px 6px; border-radius: 999px; background: #eef5ee; color: #3d564b; font-family: var(--utility); font-size: 8.5px; font-weight: 400; white-space: nowrap; }
+    .blast-badge.chr { background: #eef1fa; color: #3d4f7a; }
+    .blast-badge.warn { background: #fdf2e3; color: #8a5a12; }
+    .blast-badge.agg { background: #eaf3ec; color: #2c5c3f; }
   </style>
 </head>
 <body>
@@ -1537,6 +1556,15 @@ Paste one or more FASTA sequences here…"></textarea>
                     <span class="blast-hint" id="blast-db-count"></span>
                   </div>
                   <div class="blast-presets" id="blast-presets"></div>
+                  <div class="blast-db-viewfilters" id="blast-db-viewfilters" hidden>
+                    <span class="blast-hint">Show:</span>
+                    <button type="button" class="blast-kind-chip active" data-kind="all">All</button>
+                    <button type="button" class="blast-kind-chip" data-kind="genome">Genome</button>
+                    <button type="button" class="blast-kind-chip" data-kind="chromosome">Per-chromosome</button>
+                    <button type="button" class="blast-kind-chip" data-kind="cds">CDS</button>
+                    <button type="button" class="blast-kind-chip" data-kind="protein">Protein</button>
+                    <label class="blast-check-label blast-chrom-only-label"><input type="checkbox" id="blast-chrom-only"> chromosome-level assemblies only</label>
+                  </div>
                   <div class="blast-db-cats" id="blast-db-cats">
                     <div class="blast-empty"><span class="blast-spinner" aria-hidden="true"></span>Loading databases…</div>
                   </div>
@@ -1936,12 +1964,19 @@ function applyDatabases(data) {
     }
   });
   data.total = data.categories.reduce(function (a, cat) { return a + cat.count; }, 0);
+  state.dbMeta = data.database_meta || {};
+  state.kindFilter = state.kindFilter || 'all';
+  state.chromOnly = !!state.chromOnly;
   state.categories = data.categories;
   state.dbNames = [];
   state.categories.forEach(function (cat) {
     (cat.databases || []).forEach(function (db) { state.dbNames.push(db); });
   });
-  $('#blast-db-count').textContent = fmtInt(data.total) + ' databases for ' + state.program;
+  var kc = data.kind_counts || {};
+  var countText = fmtInt(data.total) + ' databases for ' + state.program;
+  if (kc.genome) countText += ' · ' + fmtInt(kc.genome) + ' genome';
+  if (kc.chromosome) countText += ' · ' + fmtInt(kc.chromosome) + ' per-chromosome (collapsed)';
+  $('#blast-db-count').textContent = countText;
   var hero = $('[data-blast-db-total]');
   if (hero && data.total) hero.textContent = fmtInt(data.total);
   renderPresets(data);
@@ -1975,6 +2010,9 @@ function renderCategories() {
     box.innerHTML = '<div class="blast-empty">No databases available for ' + esc(state.program) + '.</div>';
     return;
   }
+  var filtersBox = $('#blast-db-viewfilters');
+  if (filtersBox) filtersBox.hidden = !state.dbNames.length;
+  updateKindChips();
   box.innerHTML = state.categories.map(function (cat, idx) {
     var open = (cat.count || 0) <= 60 && idx === 0;
     return '<div class="blast-cat' + (open ? ' open' : '') + '" data-cat="' + idx + '">' +
@@ -1992,17 +2030,73 @@ function renderCategories() {
   });
 }
 
+var DB_KIND_LABEL = { genome: 'genome', chromosome: 'per-chr', cds: 'CDS', protein: 'protein', aggregate: 'combined', other: 'other' };
+var DB_KIND_ORDER = [
+  { key: 'aggregate', label: 'Combined databases' },
+  { key: 'genome', label: 'Genome databases' },
+  { key: 'cds', label: 'CDS / transcript databases' },
+  { key: 'protein', label: 'Protein databases' },
+  { key: 'chromosome', label: 'Per-chromosome databases' },
+  { key: 'other', label: 'Other databases' }
+];
+
+function dbMeta(db) { return (state.dbMeta && state.dbMeta[db]) || {}; }
+
 function dbCheckbox(db) {
   var checked = state.selected.has(db) ? ' checked' : '';
+  var meta = dbMeta(db), kind = meta.kind || 'other';
+  var badges = '';
+  if (kind === 'aggregate') badges += '<span class="blast-badge agg">combined</span>';
+  else if (kind && kind !== 'genome') badges += '<span class="blast-badge' + (kind === 'chromosome' ? ' chr' : '') + '">' + esc(DB_KIND_LABEL[kind] || kind) + '</span>';
+  if (meta.assembly_level) badges += '<span class="blast-badge' + (meta.chromosome_level ? '' : ' warn') + '">' + esc(meta.assembly_level) + '</span>';
+  if (meta.chromosome) badges += '<span class="blast-badge chr">Chr' + esc(meta.chromosome) + '</span>';
   return '<label class="blast-db-item"><input type="checkbox" class="blast-db-check" value="' + esc(db) + '"' + checked + '>' +
-    '<span>' + esc(db) + '</span></label>';
+    '<span>' + esc(db) + '</span>' + (badges ? '<span class="blast-db-badges">' + badges + '</span>' : '') + '</label>';
+}
+
+function dbPassesFilters(db) {
+  var meta = dbMeta(db), kind = meta.kind || 'other';
+  if (state.kindFilter && state.kindFilter !== 'all' && kind !== state.kindFilter) return false;
+  if (state.chromOnly && kind !== 'aggregate' && !meta.chromosome_level) return false;
+  return true;
+}
+
+function updateKindChips() {
+  $$('#blast-db-viewfilters [data-kind]').forEach(function (chip) {
+    chip.classList.toggle('active', chip.getAttribute('data-kind') === (state.kindFilter || 'all'));
+  });
 }
 
 function fillDbList(listEl, idx) {
   var cat = state.categories[idx];
   if (!cat || listEl.getAttribute('data-filled') === '1') return;
-  listEl.innerHTML = (cat.databases || []).map(dbCheckbox).join('');
+  var dbs = (cat.databases || []).filter(dbPassesFilters);
+  var groups = {};
+  dbs.forEach(function (db) {
+    var kind = dbMeta(db).kind || 'other';
+    (groups[kind] = groups[kind] || []).push(db);
+  });
+  var html = '';
+  DB_KIND_ORDER.forEach(function (group) {
+    var items = groups[group.key] || [];
+    if (!items.length) return;
+    var collapsible = group.key === 'chromosome';
+    html += '<div class="blast-db-group" data-kind="' + group.key + '">' +
+      '<div class="blast-db-group-title">' + esc(group.label) +
+        ' <span class="blast-db-group-count">(' + fmtInt(items.length) + ')</span>' +
+        (collapsible ? '<button type="button" data-toggle-group="' + idx + ':' + group.key + '">show</button>' : '') +
+      '</div>' +
+      '<div class="blast-db-group-list"' + (collapsible ? ' hidden' : '') + '>' + items.map(dbCheckbox).join('') + '</div>' +
+    '</div>';
+  });
+  if (!dbs.length) html = '<div class="blast-empty" style="padding:12px;">No databases match the current type/quality filter.</div>';
+  listEl.innerHTML = html;
   listEl.setAttribute('data-filled', '1');
+}
+
+function refreshDbLists() {
+  renderCategories();
+  applyDbSearch();
 }
 
 function applyDbSearch() {
@@ -2012,7 +2106,9 @@ function applyDbSearch() {
   if (!q) { resultsBox.hidden = true; catsBox.hidden = false; return; }
   catsBox.hidden = true;
   resultsBox.hidden = false;
-  var matches = state.dbNames.filter(function (db) { return db.toLowerCase().indexOf(q) >= 0; });
+  var matches = state.dbNames.filter(function (db) {
+    return db.toLowerCase().indexOf(q) >= 0 && dbPassesFilters(db);
+  });
   var shown = matches.slice(0, 400);
   resultsBox.innerHTML = shown.map(dbCheckbox).join('') +
     (matches.length > shown.length ? '<div class="blast-hint" style="grid-column:1/-1;padding-top:8px;">Showing ' + shown.length + ' of ' + fmtInt(matches.length) + ' matches — refine the filter.</div>' : '') +
@@ -2774,6 +2870,25 @@ function init() {
   $('#blast-program').addEventListener('change', function () { setProgram(this.value); });
   $('#blast-form').addEventListener('submit', submitSearch);
   $('#blast-db-search').addEventListener('input', applyDbSearch);
+  $('#blast-db-viewfilters').addEventListener('click', function (event) {
+    var chip = event.target.closest('[data-kind]');
+    if (!chip) return;
+    state.kindFilter = chip.getAttribute('data-kind');
+    refreshDbLists();
+  });
+  $('#blast-chrom-only').addEventListener('change', function () {
+    state.chromOnly = this.checked;
+    refreshDbLists();
+  });
+  $('#blast-db-cats').addEventListener('click', function (event) {
+    var toggle = event.target.closest('[data-toggle-group]');
+    if (!toggle) return;
+    var group = toggle.closest('.blast-db-group');
+    var list = group && group.querySelector('.blast-db-group-list');
+    if (!list) return;
+    list.hidden = !list.hidden;
+    toggle.textContent = list.hidden ? 'show' : 'hide';
+  });
   $('#blast-db-cats').addEventListener('click', function (event) {
     var head = event.target.closest('[data-toggle-cat]');
     if (!head) return;

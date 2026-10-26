@@ -27,6 +27,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Form, HTTPException, Query
 
 from app.core.config import settings
+from app.db.mysql import mysql_cursor
 from app.services.blast_runner import (
     BLASTDBCMD, BLAST_FORMATTER, BLASTN, BLASTP, BLASTX,
     BLAST_PROG_MAP, DB_DIR, TBLASTN, TBLASTX,
@@ -89,6 +90,93 @@ BROKEN_DB_BASES = frozenset({"Foma.pep"})
 
 #: Databases that must never be advertised as BLAST targets.
 HIDDEN_BLAST_DBS = SEQUENCE_ONLY_DBS | LEGACY_ALIAS_DBS | BROKEN_DB_BASES
+
+# === BLAST 数据库元数据（类型 / 组装） ===
+#: Per-chromosome split databases: `<assembly>.genome_Chr1A`, `<assembly>.genome_chr1H`, ...
+_DB_CHROM_RE = re.compile(r"\.genome_[Cc]hr([0-9]{1,2}[A-Za-z]{0,4})$")
+
+#: Annotation-level suffixes and their database kind.
+_DB_ANNOTATION_SUFFIXES = (
+    (".add_Description.cds", "cds"),
+    (".add_Description.pep", "protein"),
+)
+
+#: assembly_level values that mean "chromosome-level assembly".
+CHROMOSOME_LEVELS = frozenset({
+    "Chromosome", "Complete Genome", "Complete genome",
+    "Partial chromosome", "draft chromosome level",
+})
+
+
+def _db_base_kind_chromosome(name: str) -> tuple[str, str, str | None]:
+    """Split a BLAST database name into (assembly base, kind, chromosome)."""
+    if name.startswith("all_"):
+        return name, "aggregate", None
+    m = _DB_CHROM_RE.search(name)
+    if m:
+        return name[: m.start()], "chromosome", m.group(1)
+    for suffix, kind in _DB_ANNOTATION_SUFFIXES:
+        if name.endswith(suffix):
+            return name[: -len(suffix)], kind, None
+    if name.endswith(".genome"):
+        return name[:-len(".genome")], "genome", None
+    if ".scaffold" in name:
+        base = re.sub(r"\.scaffold.*$", "", name)
+        return base or name, "genome", None
+    return name, "other", None
+
+
+def _assembly_level_map() -> dict[str, dict]:
+    """Map blast_* base names to registry info (assembly level, dataset id).
+
+    genome_registry stores base names without file suffix (``AABBDD_AK58``),
+    which matches the base derived from BLAST db names. Best effort: when MySQL
+    is unavailable the API still works, only quality badges/filtering go away.
+    """
+    try:
+        with mysql_cursor(settings.DB_LITERATURE) as cursor:
+            cursor.execute(
+                "SELECT dataset_id, blast_genome_db, blast_cds_db, blast_pep_db, "
+                "assembly_level, chromosome_count FROM genome_registry"
+            )
+            rows = cursor.fetchall()
+    except Exception:
+        return {}
+    out: dict[str, dict] = {}
+    for row in rows:
+        level = (row.get("assembly_level") or "").strip() or None
+        entry = {
+            "assembly_level": level,
+            "chromosome_level": level in CHROMOSOME_LEVELS,
+            "chromosome_count": row.get("chromosome_count"),
+            "dataset_id": row.get("dataset_id"),
+        }
+        for key in (row.get("blast_genome_db"), row.get("blast_cds_db"),
+                    row.get("blast_pep_db"), row.get("dataset_id")):
+            key = (key or "").strip()
+            if key:
+                out.setdefault(key, entry)
+    return out
+
+
+def _db_meta(name: str, level_map: dict[str, dict]) -> dict:
+    base, kind, chromosome = _db_base_kind_chromosome(name)
+    info = level_map.get(base) or level_map.get(name) or {}
+    if kind == "aggregate":
+        info = {}
+    level = info.get("assembly_level")
+    if not level and ".scaffold" in name.lower():
+        level = "Scaffold"
+    return {
+        "name": name,
+        "kind": kind,
+        "assembly": base,
+        "chromosome": chromosome,
+        "assembly_level": level,
+        "chromosome_level": bool(info.get("chromosome_level")) or level in CHROMOSOME_LEVELS,
+        "dataset_id": info.get("dataset_id"),
+    }
+
 
 # === BLAST 数据库分类体系 ===
 # 与 wheatomics.sdau.edu.cn 前端页面一致，按基因组倍性/物种分类
@@ -456,10 +544,22 @@ async def list_databases(
     nuc_dbs = [d for d in nuc_dbs if d not in HIDDEN_BLAST_DBS]
     # ---- 按分类组织（供 AI agent 选择数据库时参考） ----
     all_dbs = prot_dbs + nuc_dbs
+    level_map = _assembly_level_map()
+    database_meta = {db: _db_meta(db, level_map) for db in all_dbs}
+    kind_counts: dict[str, int] = {}
+    for meta in database_meta.values():
+        kind_counts[meta["kind"]] = kind_counts.get(meta["kind"], 0) + 1
     cat_map: dict[str, dict] = {}
     for cat in DB_CLASSIFICATION:
         cat_dbs = [d for d in all_dbs if _classify_db(d) == cat["id"]]
-        cat_map[cat["id"]] = {"label": cat["label"], "description": cat["description"], "count": len(cat_dbs), "databases": cat_dbs}
+        cat_kinds: dict[str, int] = {}
+        for db in cat_dbs:
+            kind = database_meta[db]["kind"]
+            cat_kinds[kind] = cat_kinds.get(kind, 0) + 1
+        cat_map[cat["id"]] = {
+            "label": cat["label"], "description": cat["description"],
+            "count": len(cat_dbs), "databases": cat_dbs, "kind_counts": cat_kinds,
+        }
     
     # 未匹配的归入 Other
     other_dbs = [d for d in all_dbs if _classify_db(d) == "other"]
@@ -474,6 +574,8 @@ async def list_databases(
         "protein": {"count": len(prot_dbs), "databases": prot_dbs},
         "nucleotide": {"count": len(nuc_dbs), "databases": nuc_dbs},
         "total": len(prot_dbs) + len(nuc_dbs),
+        "kind_counts": kind_counts,
+        "database_meta": database_meta,
         "categories": categories,
     }
 
