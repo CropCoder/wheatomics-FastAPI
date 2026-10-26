@@ -1324,6 +1324,58 @@
     .blast-page [hidden] { display: none !important; }
     .blast-table th.sorted::after { content: " " attr(data-arrow); color: var(--leaf); }
     .blast-status-row .blast-hint { margin: 0; }
+
+    /* ==================== NCBI-style result additions ==================== */
+    .blast-result-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .blast-card-head-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 18px; margin-bottom: 12px; }
+    .blast-panel-title { margin: 0; color: var(--forest-deep); font-family: var(--display); font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
+    .blast-graphic { display: grid; gap: 16px; }
+    .blast-graphic-block { border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 14px 16px; }
+    .blast-graphic-title { margin-bottom: 10px; color: var(--forest-deep); font-family: var(--display); font-size: 13px; font-weight: 700; }
+    .blast-graphic-title span { margin-left: 6px; color: var(--muted); font-family: var(--utility); font-size: 10px; font-weight: 400; }
+    .blast-graphic-row { display: grid; grid-template-columns: 180px minmax(0, 1fr) 56px; gap: 10px; align-items: center; padding: 3px 0; }
+    .blast-graphic-label { overflow: hidden; color: #3d564b; font-family: var(--utility); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .blast-graphic-track { position: relative; height: 14px; border-radius: 4px; background: #f1f6f2; }
+    .blast-graphic-hit { position: absolute; top: 2px; height: 10px; border-radius: 3px; cursor: pointer; opacity: .9; }
+    .blast-graphic-hit:hover { opacity: 1; outline: 1px solid rgba(7, 88, 61, .5); }
+    .blast-graphic-score { color: var(--muted); font-family: var(--utility); font-size: 10px; text-align: right; }
+    .blast-graphic-axis { position: relative; height: 16px; margin: 4px 0 0 190px; color: var(--muted); font-family: var(--utility); font-size: 9px; }
+    .blast-graphic-axis span { position: absolute; transform: translateX(-50%); }
+    .blast-graphic-axis span:first-child { transform: none; }
+    .blast-graphic-axis span:last-child { transform: translateX(-100%); }
+
+    .blast-filters { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: flex-end; margin-bottom: 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: #fbfdfb; }
+    .blast-filter-field { display: flex; flex-direction: column; gap: 5px; color: #3d564b; font-size: 10.5px; font-weight: 700; }
+    .blast-filter-field input, .blast-filter-field select { height: 34px; min-width: 110px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); font-size: 11.5px; }
+    .blast-filter-field input:focus, .blast-filter-field select:focus { outline: none; border-color: rgba(17, 134, 83, .45); }
+    .blast-filter-actions { display: flex; gap: 10px; align-items: center; }
+    .blast-selection-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 10px; color: #3d564b; font-size: 11px; }
+    .blast-check-label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+    .blast-check-label input { accent-color: var(--leaf); }
+    .blast-table th.sel, .blast-table td.sel { width: 26px; padding-right: 0; text-align: center; }
+    .blast-table td.sel input { cursor: pointer; accent-color: var(--leaf); }
+    .blast-table tr.query-group-title td { padding: 9px 12px; background: #f4f9f1; border-bottom: 1px solid var(--line); color: var(--forest-deep); font-family: var(--display); font-size: 12px; font-weight: 700; }
+    .blast-table tr.flash td { animation: blast-flash 1.4s ease; }
+    @keyframes blast-flash { 0%, 60% { background: #eaf7ea; } 100% { background: transparent; } }
+
+    .blast-aln-list { display: grid; gap: 12px; }
+    .blast-aln-card { border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow: hidden; }
+    .blast-aln-card > summary { display: flex; justify-content: space-between; gap: 12px; padding: 12px 16px; background: #fbfdfb; color: var(--forest-deep); font-size: 12px; font-weight: 700; cursor: pointer; }
+    .blast-aln-card > summary span { color: var(--muted); font-family: var(--utility); font-size: 10px; font-weight: 400; }
+    .blast-aln-body { padding: 10px 16px 16px; }
+    .blast-aln-meta { margin-bottom: 8px; color: #3d564b; font-family: var(--utility); font-size: 10.5px; line-height: 1.7; }
+    .blast-aln-pre { margin: 0; padding: 12px 14px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; background: #fbfdfb; color: #233a31; font-family: var(--utility); font-size: 10.5px; line-height: 1.55; white-space: pre; }
+    .blast-aln-pre .mx { color: #0b6b3a; font-weight: 700; }
+    .blast-aln-pre .pp { color: #a0661a; font-weight: 700; }
+    .blast-aln-pre .mm { background: #fde8e4; }
+    .blast-aln-empty { color: var(--muted); font-size: 11px; }
+
+    @media (max-width: 760px) {
+      .blast-graphic-row { grid-template-columns: 118px minmax(0, 1fr) 44px; }
+      .blast-graphic-axis { margin-left: 128px; }
+      .blast-filter-field input, .blast-filter-field select { min-width: 88px; }
+      .blast-result-actions { width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -1577,7 +1629,8 @@ MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLK..."></textarea>
               <h2 class="blast-result-title" id="result-title">—</h2>
               <p class="blast-hint" id="result-sub"></p>
             </div>
-            <div>
+            <div class="blast-result-actions">
+              <a class="secondary-button" id="result-download-tsv" href="#" target="_blank" rel="noopener" download hidden>Download TSV</a>
               <button class="secondary-button" type="button" id="result-new">← New search</button>
             </div>
           </div>
@@ -1585,45 +1638,76 @@ MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLK..."></textarea>
           <div class="blast-status-row">
             <span class="blast-status" id="result-status">pending</span>
             <span class="blast-hint" id="result-elapsed"></span>
+            <span class="blast-hint" id="result-expiry"></span>
           </div>
           <div id="result-error" class="blast-alert" role="alert"></div>
           <div class="blast-meta-grid" id="result-meta"></div>
 
           <div class="blast-tabs" id="result-tabs">
-            <button class="blast-tab active" type="button" data-tab="hits">Hits</button>
+            <button class="blast-tab active" type="button" data-tab="graphic">Graphic Summary</button>
+            <button class="blast-tab" type="button" data-tab="hits">Descriptions</button>
             <button class="blast-tab" type="button" data-tab="alignments">Alignments</button>
             <button class="blast-tab" type="button" data-tab="downloads">Downloads</button>
           </div>
 
-          <section class="blast-panel" id="tab-hits">
-            <div class="blast-toolbar">
-              <label class="blast-visually-hidden" for="hit-filter">Filter hits</label>
-              <input id="hit-filter" type="search" placeholder="Filter hits by subject or description…">
-              <label class="blast-visually-hidden" for="hit-sort">Sort hits</label>
-              <select id="hit-sort">
-                <option value="evalue">Sort: E-value (best first)</option>
-                <option value="bitscore">Sort: bitscore (high first)</option>
-                <option value="pident">Sort: identity (high first)</option>
-                <option value="subject">Sort: subject ID</option>
-              </select>
+          <section class="blast-panel" id="tab-graphic">
+            <div class="blast-card-head-row">
+              <h3 class="blast-panel-title">Graphic Summary</h3>
+              <span class="blast-hint">Each bar is an HSP along the query; colour = identity. Click a bar to open its description.</span>
+            </div>
+            <div id="graphic-summary" class="blast-graphic"></div>
+          </section>
+
+          <section class="blast-panel" id="tab-hits" hidden>
+            <div class="blast-filters" id="blast-filters">
+              <label class="blast-filter-field">
+                <span>Query</span>
+                <select id="filter-query"><option value="">All queries</option></select>
+              </label>
+              <label class="blast-filter-field">
+                <span>Percent identity ≥</span>
+                <input id="filter-ident" type="number" min="0" max="100" step="1" value="0">
+              </label>
+              <label class="blast-filter-field">
+                <span>E value ≤</span>
+                <input id="filter-evalue" type="number" min="0" step="any" placeholder="any">
+              </label>
+              <label class="blast-filter-field">
+                <span>Query cover ≥ (%)</span>
+                <input id="filter-cover" type="number" min="0" max="100" step="1" value="0">
+              </label>
+              <div class="blast-filter-actions">
+                <button class="secondary-button" type="button" id="filter-apply">Filter</button>
+                <button class="blast-link-btn" type="button" id="filter-reset">Reset</button>
+              </div>
+            </div>
+
+            <div class="blast-selection-bar">
+              <label class="blast-check-label"><input type="checkbox" id="select-all-hits"> select all</label>
+              <span class="blast-hint" id="selected-count">0 selected</span>
+              <button class="secondary-button" type="button" id="download-selected">Download selected (TSV)</button>
               <span class="blast-hint" id="hit-count"></span>
             </div>
+
             <div class="blast-table-wrap">
               <table class="blast-table" id="hit-table">
                 <thead><tr>
+                  <th class="sel"></th>
                   <th data-sort="index">#</th>
                   <th data-sort="subject">Subject</th>
                   <th>Description</th>
-                  <th data-sort="pident" class="num">Identity %</th>
-                  <th data-sort="ppos" class="num">Pos. %</th>
-                  <th data-sort="length" class="num">Length</th>
-                  <th data-sort="evalue" class="num">E-value</th>
-                  <th data-sort="bitscore" class="num">Bitscore</th>
+                  <th data-sort="maxscore" class="num">Max score</th>
+                  <th data-sort="totalscore" class="num">Total score</th>
+                  <th data-sort="coverage" class="num">Query cover</th>
+                  <th data-sort="evalue" class="num">E value</th>
+                  <th data-sort="pident" class="num">Per. ident</th>
+                  <th data-sort="length" class="num">Aln length</th>
+                  <th data-sort="hsp" class="num">HSPs</th>
                 </tr></thead>
                 <tbody></tbody>
               </table>
             </div>
-            <p class="blast-empty" id="hit-empty" hidden>No hits were returned. Try a lower E-value threshold, another database, or a different program.</p>
+            <p class="blast-empty" id="hit-empty" hidden>No hits were returned. Try a higher E-value threshold, another database, or a different program.</p>
             <button class="secondary-button" type="button" id="hit-more" hidden>Show more hits</button>
           </section>
 
@@ -1633,15 +1717,14 @@ MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLK..."></textarea>
               <span class="blast-hint" id="align-status"></span>
               <a class="secondary-button" id="align-download" href="#" target="_blank" rel="noopener" hidden>Download text</a>
             </div>
-            <pre class="blast-align-pre" id="align-pre" hidden></pre>
+            <div id="align-list" class="blast-aln-list"></div>
           </section>
 
           <section class="blast-panel" id="tab-downloads" hidden>
             <div class="blast-downloads" id="download-list"></div>
           </section>
         </div>
-      </div>
-    </section>
+
   </main>
   <footer class="site-footer">
     <div class="container footer-main">
@@ -2020,7 +2103,8 @@ function submitSearch(event) {
         queryHeader: (query.split(/\r?\n/)[0] || '').slice(0, 120),
         queryLength: queryStats(query).residues,
         evalue: Number(evalue), maxTargets: Number(maxTargets), outfmt: outfmt,
-        createdAt: Date.now(), urls: {}
+        createdAt: Date.now(), urls: {},
+        queries: parseFastaQueryList(query)
       };
       try { localStorage.setItem('blast2.job.' + ctx.id, JSON.stringify(ctx)); } catch (e) {}
       rememberJob(ctx);
@@ -2055,19 +2139,45 @@ function renderRecent() {
   }).join('');
 }
 
-// ---------- result view & polling ----------
+// ---------- result view & polling (NCBI-style) ----------
+function parseFastaQueryList(text) {
+  var out = [], cur = null;
+  (text || '').split(/\r?\n/).forEach(function (line) {
+    var s = line.trim();
+    if (!s) return;
+    if (s.charAt(0) === '>') {
+      cur = { id: s.slice(1).split(/\s+/)[0] || ('query' + (out.length + 1)), length: 0 };
+      out.push(cur);
+      return;
+    }
+    if (!cur) { cur = { id: 'query' + (out.length + 1), length: 0 }; out.push(cur); }
+    cur.length += s.replace(/\s+/g, '').length;
+  });
+  return out;
+}
+
 function showSearchView() {
   state.pollToken += 1;
   $('#view-search').hidden = false;
   $('#view-result').hidden = true;
   window.scrollTo(0, 0);
 }
+
 function showResultView(id) {
   state.pollToken += 1;
   state.job = id;
   state.hits = [];
+  state.subjects = [];
+  state.queries = [];
+  state.queryFilter = '';
+  state.filters = { ident: 0, evalue: null, cover: 0 };
+  state.selectedSubjects = new Set();
   state.alignLoaded = false;
+  state.alignHits = [];
   state.result = null;
+  state.shown = 100;
+  state.sortKey = 'evalue';
+  state.sortDir = 1;
   $('#view-search').hidden = true;
   $('#view-result').hidden = false;
   showResultError('');
@@ -2078,16 +2188,21 @@ function showResultView(id) {
   $('#result-sub').textContent = ctx
     ? (ctx.program + ' · ' + ctx.dbs.length + ' database' + (ctx.dbs.length === 1 ? '' : 's') + ' · ' + (ctx.queryHeader || '').slice(0, 70))
     : 'Waiting for job status…';
-  renderMeta(ctx);
-  setStatus('pending', 'Waiting for the job to start…', 0);
+  $('#result-expiry').textContent = '';
+  $('#result-download-tsv').hidden = true;
+  $('#graphic-summary').innerHTML = '';
   $('#hit-table tbody').innerHTML = '';
   $('#hit-empty').hidden = true;
   $('#hit-more').hidden = true;
-  $('#align-pre').hidden = true;
-  $('#align-pre').textContent = '';
+  $('#align-list').innerHTML = '';
   $('#align-status').textContent = '';
+  $('#align-download').hidden = true;
   $('#download-list').innerHTML = '';
-  switchTab('hits');
+  $('#selected-count').textContent = '0 selected';
+  $('#select-all-hits').checked = false;
+  renderMeta(ctx);
+  setStatus('pending', 'Waiting for the job to start…', 0);
+  switchTab('graphic');
   pollStatus(id);
   window.scrollTo(0, 0);
 }
@@ -2095,15 +2210,18 @@ function showResultView(id) {
 function renderMeta(ctx) {
   if (!ctx) { $('#result-meta').innerHTML = ''; return; }
   var dbText = ctx.dbs.length > 3 ? (ctx.dbs.slice(0, 3).join(', ') + ' +' + (ctx.dbs.length - 3)) : (ctx.dbs || []).join(', ');
+  var expires = ctx.createdAt ? new Date(ctx.createdAt + 7 * 86400000) : null;
   var items = [
     ['Program', ctx.program], ['Databases', dbText],
     ['E-value', String(ctx.evalue)], ['Max targets', fmtInt(ctx.maxTargets)],
     ['Output', ctx.outfmt], ['Query', ctx.queryHeader || '—'],
-    ['Job ID', ctx.id], ['Submitted', new Date(ctx.createdAt).toLocaleString()]
+    ['Job ID', ctx.id],
+    ['Submitted', new Date(ctx.createdAt).toLocaleString()]
   ];
   $('#result-meta').innerHTML = items.map(function (item) {
     return '<dl class="blast-meta-item"><dt>' + esc(item[0]) + '</dt><dd>' + esc(item[1]) + '</dd></dl>';
   }).join('');
+  if (expires) $('#result-expiry').textContent = 'Result files are kept for 7 days (until ' + expires.toLocaleDateString() + ').';
 }
 
 function setStatus(status, message, withElapsed) {
@@ -2150,14 +2268,15 @@ function loadResult(id, urls) {
     try { localStorage.setItem('blast2.job.' + id, JSON.stringify(state.result)); } catch (e) {}
   }
   renderDownloads(urls);
+  if (urls.tabular) {
+    $('#result-download-tsv').href = urls.tabular;
+    $('#result-download-tsv').hidden = false;
+  }
   var tabularUrl = urls.tabular;
   if (!tabularUrl) {
-    $('#hit-table tbody').innerHTML = '';
     var empty = $('#hit-empty');
     empty.hidden = false;
     empty.textContent = 'This job has no hit table (traditional output only). Open the Alignments tab.';
-    $('#align-download').href = urls.traditional || '#';
-    $('#align-download').hidden = !urls.traditional;
     switchTab('alignments');
     return;
   }
@@ -2165,9 +2284,11 @@ function loadResult(id, urls) {
     .then(function (resp) { if (!resp.ok) throw new Error('HTTP ' + resp.status); return resp.text(); })
     .then(function (text) {
       state.hits = parseTsv(text);
-      state.shown = 100;
-      renderHits();
-      switchTab('hits');
+      prepareQueries();
+      aggregateSubjects();
+      renderDescriptions();
+      renderGraphicSummary();
+      switchTab('graphic');
     })
     .catch(function (err) { showResultError('Could not load the hit table: ' + err.message); });
 }
@@ -2196,70 +2317,301 @@ function parseTsv(text) {
   return hits;
 }
 
-function filteredHits() {
-  var q = (state.filter || '').toLowerCase();
-  var list = state.hits;
-  if (q) list = list.filter(function (h) { return (h.sseqid + ' ' + h.stitle + ' ' + h.qseqid).toLowerCase().indexOf(q) >= 0; });
-  var key = state.sortKey, dir = state.sortDir;
-  return list.slice().sort(function (a, b) {
-    var va = a[key], vb = b[key];
-    if (typeof va === 'string' || typeof vb === 'string') return String(va).localeCompare(String(vb)) * dir;
-    return (va - vb) * dir;
+function queryLengthMap() {
+  var map = {};
+  (state.result && state.result.queries ? state.result.queries : []).forEach(function (q) {
+    if (q && q.id) map[q.id] = Number(q.length) || 0;
+  });
+  state.hits.forEach(function (h) {
+    var end = Math.max(h.qstart || 0, h.qend || 0);
+    if (!map[h.qseqid] || map[h.qseqid] < end) map[h.qseqid] = end;
+  });
+  return map;
+}
+
+function prepareQueries() {
+  var lengths = queryLengthMap();
+  var order = [];
+  if (state.result && state.result.queries && state.result.queries.length) {
+    state.result.queries.forEach(function (q) { if (q && q.id) order.push(q.id); });
+  }
+  state.hits.forEach(function (h) { if (order.indexOf(h.qseqid) < 0) order.push(h.qseqid); });
+  // The hit table is authoritative: drop ctx queries that produced no hits so
+  // the Graphic Summary never shows an empty track first.
+  var hitIds = [];
+  state.hits.forEach(function (h) { if (hitIds.indexOf(h.qseqid) < 0) hitIds.push(h.qseqid); });
+  if (hitIds.length) {
+    var ordered = [];
+    order.forEach(function (id) { if (hitIds.indexOf(id) >= 0) ordered.push(id); });
+    hitIds.forEach(function (id) { if (ordered.indexOf(id) < 0) ordered.push(id); });
+    order = ordered;
+  }
+  state.queries = order.map(function (id) { return { id: id, length: lengths[id] || 0 }; });
+  var sel = $('#filter-query');
+  var current = sel.value;
+  sel.innerHTML = '<option value="">All queries (' + state.queries.length + ')</option>' +
+    state.queries.map(function (q, i) {
+      return '<option value="' + esc(q.id) + '">Query ' + (i + 1) + ': ' + esc(q.id) + ' (' + fmtInt(q.length) + ')</option>';
+    }).join('');
+  if (current && state.queries.some(function (q) { return q.id === current; })) sel.value = current;
+  else state.queryFilter = '';
+}
+
+function aggregateSubjects() {
+  var groups = {};
+  state.hits.forEach(function (h) {
+    var key = h.qseqid + '\u0000' + h.sseqid;
+    if (!groups[key]) {
+      groups[key] = { key: key, qseqid: h.qseqid, sseqid: h.sseqid, stitle: h.stitle, region: h.region, description: h.description, hsps: [] };
+    }
+    groups[key].hsps.push(h);
+  });
+  var lengths = queryLengthMap();
+  state.subjects = Object.keys(groups).map(function (key) {
+    var g = groups[key], hsps = g.hsps;
+    var maxScore = Math.max.apply(null, hsps.map(function (h) { return h.bitscore; }));
+    var totalScore = hsps.reduce(function (a, h) { return a + h.bitscore; }, 0);
+    var evalue = Math.min.apply(null, hsps.map(function (h) { return h.evalue; }));
+    var pident = Math.max.apply(null, hsps.map(function (h) { return h.pident; }));
+    var length = Math.max.apply(null, hsps.map(function (h) { return h.length; }));
+    var intervals = hsps.map(function (h) { return [Math.min(h.qstart, h.qend), Math.max(h.qstart, h.qend)]; })
+      .sort(function (a, b) { return a[0] - b[0]; });
+    var covered = 0, curStart = null, curEnd = null;
+    intervals.forEach(function (iv) {
+      if (curStart === null) { curStart = iv[0]; curEnd = iv[1]; }
+      else if (iv[0] <= curEnd + 1) curEnd = Math.max(curEnd, iv[1]);
+      else { covered += curEnd - curStart + 1; curStart = iv[0]; curEnd = iv[1]; }
+    });
+    if (curStart !== null) covered += curEnd - curStart + 1;
+    var qlen = lengths[g.qseqid] || Math.max.apply(null, hsps.map(function (h) { return Math.max(h.qstart, h.qend); }));
+    return {
+      key: g.key, qseqid: g.qseqid, sseqid: g.sseqid, stitle: g.stitle, region: g.region,
+      description: g.description, hsps: hsps, hsp: hsps.length,
+      maxscore: maxScore, totalscore: totalScore, evalue: evalue, pident: pident,
+      length: length, coverage: qlen ? Math.min(100, covered / qlen * 100) : 0, qlength: qlen
+    };
   });
 }
 
-function renderHits() {
-  var list = filteredHits();
+function filteredSubjects() {
+  var f = state.filters || { ident: 0, evalue: null, cover: 0 };
+  var qf = state.queryFilter;
+  var list = state.subjects.filter(function (s) {
+    if (qf && s.qseqid !== qf) return false;
+    if (s.pident < f.ident) return false;
+    if (f.evalue != null && s.evalue > f.evalue) return false;
+    if (s.coverage < f.cover) return false;
+    return true;
+  });
+  var key = state.sortKey, dir = state.sortDir;
+  list.sort(function (a, b) {
+    if (key === 'subject') return String(a.sseqid).localeCompare(String(b.sseqid)) * dir;
+    if (key === 'index') return 0;
+    return ((a[key] || 0) - (b[key] || 0)) * dir;
+  });
+  return list;
+}
+
+function queryOrderIndex(qid) {
+  for (var i = 0; i < state.queries.length; i++) if (state.queries[i].id === qid) return i;
+  return -1;
+}
+
+function renderDescriptions() {
+  var list = filteredSubjects();
   var slice = list.slice(0, state.shown);
-  $('#hit-table tbody').innerHTML = slice.map(function (h, i) {
-    var subject = /^Traes/i.test(h.sseqid)
-      ? '<a href="/GeneHub/?search=' + encodeURIComponent(h.sseqid) + '" target="_blank" rel="noopener">' + esc(h.sseqid) + '</a>'
-      : esc(h.sseqid);
-    return '<tr class="data-row" data-hit="' + i + '">' +
+  var grouped = !state.queryFilter && state.queries.length > 1;
+  var rows = [];
+  var lastQuery = null;
+  slice.forEach(function (s, i) {
+    if (grouped && s.qseqid !== lastQuery) {
+      var qi = queryOrderIndex(s.qseqid);
+      rows.push('<tr class="query-group-title"><td colspan="11">Query ' + (qi + 1) + ': ' + esc(s.qseqid) +
+        ' (' + fmtInt(s.qlength) + ' letters)</td></tr>');
+      lastQuery = s.qseqid;
+    }
+    var subject = /^Traes/i.test(s.sseqid)
+      ? '<a href="/GeneHub/?search=' + encodeURIComponent(s.sseqid) + '" target="_blank" rel="noopener">' + esc(s.sseqid) + '</a>'
+      : esc(s.sseqid);
+    var checked = state.selectedSubjects.has(s.key) ? ' checked' : '';
+    rows.push('<tr class="data-row" data-key="' + esc(s.key) + '">' +
+      '<td class="sel"><input type="checkbox" class="hit-check" data-key="' + esc(s.key) + '"' + checked + '></td>' +
       '<td class="num">' + (i + 1) + '</td>' +
       '<td class="subject">' + subject + '</td>' +
-      '<td class="desc" title="' + esc(h.stitle) + '">' + esc(h.description || '—') + '</td>' +
-      '<td class="num">' + fmtFloat(h.pident, 1) + '</td>' +
-      '<td class="num">' + fmtFloat(h.ppos, 1) + '</td>' +
-      '<td class="num">' + fmtInt(h.length) + '</td>' +
-      '<td class="num">' + esc(fmtEvalue(h.evalue)) + '</td>' +
-      '<td class="num">' + fmtFloat(h.bitscore, 1) + '</td>' +
-    '</tr>';
-  }).join('');
+      '<td class="desc" title="' + esc(s.stitle) + '">' + esc(s.description || '—') + '</td>' +
+      '<td class="num">' + fmtFloat(s.maxscore, 1) + '</td>' +
+      '<td class="num">' + fmtFloat(s.totalscore, 1) + '</td>' +
+      '<td class="num">' + fmtFloat(s.coverage, 0) + '%</td>' +
+      '<td class="num">' + esc(fmtEvalue(s.evalue)) + '</td>' +
+      '<td class="num">' + fmtFloat(s.pident, 2) + '%</td>' +
+      '<td class="num">' + fmtInt(s.length) + '</td>' +
+      '<td class="num">' + fmtInt(s.hsp) + '</td>' +
+    '</tr>');
+  });
+  $('#hit-table tbody').innerHTML = rows.join('');
   $$('#hit-table th[data-sort]').forEach(function (th) {
     var key = th.getAttribute('data-sort');
     th.classList.toggle('sorted', key === state.sortKey);
     th.setAttribute('data-arrow', key === state.sortKey ? (state.sortDir === 1 ? '▲' : '▼') : '');
   });
-  $('#hit-count').textContent = list.length ? (Math.min(slice.length, list.length) + ' of ' + fmtInt(list.length) + ' hits shown') : '';
-  $('#hit-empty').hidden = list.length > 0;
+  $('#hit-count').textContent = list.length
+    ? (Math.min(slice.length, list.length) + ' of ' + fmtInt(list.length) + ' sequences shown')
+    : '';
+  var empty = $('#hit-empty');
+  empty.hidden = list.length > 0;
   if (!list.length) {
-    $('#hit-empty').textContent = state.hits.length ? 'No hits match the current filter.'
-      : 'No hits were returned. Try a higher E-value threshold, another database, or a different program.';
+    empty.textContent = state.hits.length ? 'No hits match the current filters.' :
+      'No hits were returned. Try a higher E-value threshold, another database, or a different program.';
   }
   $('#hit-more').hidden = list.length <= state.shown;
-  attachHitRows();
+  attachDescriptionRows();
+  updateSelectionUI();
 }
 
-function attachHitRows() {
+function attachDescriptionRows() {
   $$('#hit-table tr.data-row').forEach(function (row) {
-    row.addEventListener('click', function () {
+    row.addEventListener('click', function (event) {
+      if (event.target.closest('input, a')) return;
       var next = row.nextElementSibling;
       if (next && next.classList.contains('blast-detail-row')) { next.parentNode.removeChild(next); return; }
-      var idx = parseInt(row.getAttribute('data-hit'), 10);
-      var h = filteredHits()[idx];
-      if (!h) return;
+      var key = row.getAttribute('data-key');
+      var subj = null;
+      state.subjects.forEach(function (s) { if (s.key === key) subj = s; });
+      if (!subj) return;
+      var list = subj.hsps.map(function (h, i) {
+        return '<div class="blast-hsp"><strong>HSP ' + (i + 1) + '</strong> query ' + fmtInt(h.qstart) + '–' + fmtInt(h.qend) +
+          ' · subject ' + fmtInt(h.sstart) + '–' + fmtInt(h.send) + ' · E value ' + esc(fmtEvalue(h.evalue)) +
+          ' · bitscore ' + fmtFloat(h.bitscore, 1) + ' · identity ' + fmtFloat(h.pident, 2) + '% · length ' + fmtInt(h.length) +
+          '<span class="btop">' + esc(h.btop) + '</span></div>';
+      }).join('');
       var detail = document.createElement('tr');
       detail.className = 'blast-detail-row';
-      detail.innerHTML = '<td colspan="8">' +
-        '<strong>Query</strong> ' + esc(h.qseqid) + ' (' + fmtInt(h.qstart) + '–' + fmtInt(h.qend) + ') · ' +
-        '<strong>Subject</strong> ' + esc(h.sseqid) + ' (' + fmtInt(h.sstart) + '–' + fmtInt(h.send) + ') · ' +
-        '<strong>Mismatch</strong> ' + fmtInt(h.mismatch) + ' · <strong>Gap opens</strong> ' + fmtInt(h.gapopen) +
-        '<br><strong>Full title</strong> ' + esc(h.stitle) +
-        '<span class="btop">' + esc(h.btop) + '</span></td>';
+      detail.innerHTML = '<td colspan="11"><strong>Full title</strong> ' + esc(subj.stitle) + list + '</td>';
       row.parentNode.insertBefore(detail, row.nextSibling);
     });
   });
+}
+
+function updateSelectionUI() {
+  var count = state.selectedSubjects.size;
+  $('#selected-count').textContent = count + ' selected';
+  var visible = filteredSubjects();
+  var allChecked = visible.length > 0 && visible.every(function (s) { return state.selectedSubjects.has(s.key); });
+  var someChecked = visible.some(function (s) { return state.selectedSubjects.has(s.key); });
+  var box = $('#select-all-hits');
+  box.checked = allChecked;
+  box.indeterminate = !allChecked && someChecked;
+}
+
+function toggleSelectAll(checked) {
+  filteredSubjects().forEach(function (s) {
+    if (checked) state.selectedSubjects.add(s.key);
+    else state.selectedSubjects.delete(s.key);
+  });
+  renderDescriptions();
+}
+
+function downloadSelected() {
+  var list = filteredSubjects().filter(function (s) { return state.selectedSubjects.has(s.key); });
+  if (!list.length) { showResultError('Select at least one sequence in the Descriptions table first.'); return; }
+  showResultError('');
+  var header = ['query', 'subject', 'description', 'max_score', 'total_score', 'query_cover_pct', 'evalue', 'pident', 'aln_length', 'hsps'];
+  var lines = [header.join('\t')];
+  list.forEach(function (s) {
+    lines.push([s.qseqid, s.sseqid, (s.description || '').replace(/\s+/g, ' '), s.maxscore.toFixed(1),
+      s.totalscore.toFixed(1), s.coverage.toFixed(1), s.evalue, s.pident.toFixed(2), s.length, s.hsp].join('\t'));
+  });
+  var blob = new Blob([lines.join('\n') + '\n'], { type: 'text/tab-separated-values;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'blast2_selected_' + String(state.job || '').slice(0, 8) + '.tsv';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+function renderGraphicSummary() {
+  var box = $('#graphic-summary');
+  if (!state.hits.length) {
+    box.innerHTML = '<div class="blast-empty">No hits to visualise.</div>';
+    return;
+  }
+  var lengths = queryLengthMap();
+  var subjects = filteredSubjects();
+  var qids = state.queries.map(function (q) { return q.id; })
+    .filter(function (id) { return !state.queryFilter || id === state.queryFilter; });
+  var html = qids.map(function (qid, qi) {
+    var qlen = lengths[qid] || 1;
+    var list = subjects.filter(function (s) { return s.qseqid === qid; }).slice(0, 120);
+    var rows = list.map(function (s) {
+      var segs = s.hsps.map(function (h) {
+        var a = Math.min(h.qstart, h.qend), b = Math.max(h.qstart, h.qend);
+        var left = ((a - 1) / qlen) * 100;
+        var width = Math.max(((b - a + 1) / qlen) * 100, 0.6);
+        var hue = Math.round(Math.max(0, Math.min(1, (s.pident - 30) / 70)) * 120);
+        return '<span class="blast-graphic-hit" style="left:' + left.toFixed(3) + '%;width:' + width.toFixed(3) +
+          '%;background:hsl(' + hue + ',65%,40%)" data-key="' + esc(s.key) + '" ' +
+          'title="' + esc(s.sseqid + ' · ' + s.pident.toFixed(1) + '% identity · E ' + fmtEvalue(h.evalue) + ' (query ' + a + '–' + b + ')') + '"></span>';
+      }).join('');
+      return '<div class="blast-graphic-row" data-key="' + esc(s.key) + '">' +
+        '<span class="blast-graphic-label" title="' + esc(s.sseqid) + '">' + esc(s.sseqid) + '</span>' +
+        '<span class="blast-graphic-track">' + segs + '</span>' +
+        '<span class="blast-graphic-score">' + fmtFloat(s.pident, 1) + '%</span></div>';
+    }).join('');
+    var axis = '<div class="blast-graphic-axis"><span style="left:0">1</span>' +
+      '<span style="left:50%">' + fmtInt(Math.round(qlen / 2)) + '</span>' +
+      '<span style="left:100%">' + fmtInt(qlen) + '</span></div>';
+    return '<div class="blast-graphic-block"><div class="blast-graphic-title">Query ' + (qi + 1) + ': ' +
+      esc(qid) + '<span>' + fmtInt(qlen) + ' letters · ' + list.length + ' sequence(s) shown</span></div>' +
+      rows + axis + '</div>';
+  }).join('');
+  box.innerHTML = html;
+}
+
+function attachGraphicHandlers() {
+  $('#graphic-summary').addEventListener('click', function (event) {
+    var hit = event.target.closest('.blast-graphic-hit, .blast-graphic-row');
+    if (!hit) return;
+    var key = hit.getAttribute('data-key');
+    switchTab('hits');
+    if (state.filters.ident || state.filters.evalue != null || state.filters.cover || state.queryFilter) {
+      resetFilters();
+    }
+    var row = document.querySelector('#hit-table tr.data-row[data-key="' + key.replace(/"/g, '\\"') + '"]');
+    if (row) {
+      row.scrollIntoView({ block: 'center' });
+      row.classList.remove('flash');
+      void row.offsetWidth;
+      row.classList.add('flash');
+    }
+  });
+}
+
+function resetFilters() {
+  state.filters = { ident: 0, evalue: null, cover: 0 };
+  state.queryFilter = '';
+  $('#filter-ident').value = '0';
+  $('#filter-evalue').value = '';
+  $('#filter-cover').value = '0';
+  $('#filter-query').value = '';
+  state.shown = 100;
+  renderDescriptions();
+  renderGraphicSummary();
+}
+
+function applyFilters() {
+  var ident = parseFloat($('#filter-ident').value);
+  var evalue = $('#filter-evalue').value === '' ? null : parseFloat($('#filter-evalue').value);
+  var cover = parseFloat($('#filter-cover').value);
+  state.filters = {
+    ident: isFinite(ident) ? ident : 0,
+    evalue: evalue != null && isFinite(evalue) ? evalue : null,
+    cover: isFinite(cover) ? cover : 0
+  };
+  state.queryFilter = $('#filter-query').value || '';
+  state.shown = 100;
+  renderDescriptions();
+  renderGraphicSummary();
 }
 
 function renderDownloads(urls) {
@@ -2276,9 +2628,44 @@ function renderDownloads(urls) {
 function switchTab(tab) {
   state.tab = tab;
   $$('#result-tabs .blast-tab').forEach(function (btn) { btn.classList.toggle('active', btn.getAttribute('data-tab') === tab); });
+  $('#tab-graphic').hidden = tab !== 'graphic';
   $('#tab-hits').hidden = tab !== 'hits';
   $('#tab-alignments').hidden = tab !== 'alignments';
   $('#tab-downloads').hidden = tab !== 'downloads';
+}
+
+function parseTraditional(text) {
+  var lines = (text || '').replace(/\r\n/g, '\n').split('\n');
+  var hits = [], cur = null, hsp = null;
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    if (line.charAt(0) === '>') {
+      cur = { header: line.slice(1).trim(), hsps: [] };
+      hits.push(cur);
+      hsp = null;
+      continue;
+    }
+    if (!cur) continue;
+    if (/^\s*Score = /.test(line)) { hsp = { meta: [line.trim()], triplets: [] }; cur.hsps.push(hsp); continue; }
+    if (hsp && /^\s*(Identities|Gaps) = /.test(line)) { hsp.meta.push(line.trim()); continue; }
+    if (hsp && /^Query\s+\d+/.test(line) && lines[i + 2] !== undefined && /^Sbjct\s+\d+/.test(lines[i + 2])) {
+      hsp.triplets.push([line, lines[i + 1], lines[i + 2]]);
+      i += 2;
+    }
+  }
+  return hits.filter(function (h) { return h.hsps.some(function (s) { return s.triplets.length; }); });
+}
+
+function alignmentTripletHtml(t) {
+  var q = t[0], m = t[1], s = t[2];
+  var mid = '';
+  for (var i = 0; i < q.length; i++) {
+    var ch = m.charAt(i) || ' ';
+    if (ch === ' ') mid += '<span class="mm"> </span>';
+    else if (ch === '+') mid += '<span class="pp">+</span>';
+    else mid += '<span class="mx">' + esc(ch) + '</span>';
+  }
+  return esc(q) + '\n' + mid + '\n' + esc(s);
 }
 
 function loadAlignments() {
@@ -2292,17 +2679,28 @@ function loadAlignments() {
   fetch(url, { cache: 'no-store' })
     .then(function (resp) { if (!resp.ok) throw new Error('HTTP ' + resp.status); return resp.text(); })
     .then(function (text) {
-      var LIMIT = 2000000;
-      var shown = text.length > LIMIT ? text.slice(0, LIMIT) : text;
-      var pre = $('#align-pre');
-      pre.textContent = shown;
-      pre.hidden = false;
+      state.alignHits = parseTraditional(text);
+      state.alignLoaded = true;
+      var box = $('#align-list');
+      if (!state.alignHits.length) {
+        box.innerHTML = '<div class="blast-aln-empty">No pairwise alignments were found in the result file.</div>';
+      } else {
+        box.innerHTML = state.alignHits.slice(0, 50).map(function (h, i) {
+          var hsps = h.hsps.map(function (s, si) {
+            return '<div class="blast-aln-meta">HSP ' + (si + 1) + ': ' + s.meta.map(esc).join(' · ') + '</div>' +
+              s.triplets.map(function (t) { return '<pre class="blast-aln-pre">' + alignmentTripletHtml(t) + '</pre>'; }).join('');
+          }).join('');
+          return '<details class="blast-aln-card"' + (i < 3 ? ' open' : '') + '>' +
+            '<summary>' + esc(h.header.slice(0, 160)) + '<span>' + h.hsps.length + ' HSP' + (h.hsps.length === 1 ? '' : 's') + '</span></summary>' +
+            '<div class="blast-aln-body">' + hsps + '</div></details>';
+        }).join('');
+        if (state.alignHits.length > 50) {
+          box.innerHTML += '<p class="blast-hint">Showing the first 50 alignment records — use the download for the full file.</p>';
+        }
+      }
       $('#align-download').href = url;
       $('#align-download').hidden = false;
-      $('#align-status').textContent = text.length > LIMIT
-        ? 'Showing the first 2 MB of ' + fmtInt(text.length) + ' characters — download the full file.'
-        : fmtInt(text.length) + ' characters of pairwise alignments.';
-      state.alignLoaded = true;
+      $('#align-status').textContent = state.alignHits.length + ' alignment record(s), ' + fmtInt(text.length) + ' characters.';
     })
     .catch(function (err) { $('#align-status').textContent = 'Could not load alignments: ' + err.message; })
     .then(function () { btn.disabled = false; });
@@ -2385,12 +2783,21 @@ function init() {
     var btn = event.target.closest('[data-tab]');
     if (btn) switchTab(btn.getAttribute('data-tab'));
   });
-  $('#hit-filter').addEventListener('input', function () { state.filter = this.value; state.shown = 100; renderHits(); });
-  $('#hit-sort').addEventListener('change', function () {
-    var val = this.value;
-    state.sortKey = val;
-    state.sortDir = (val === 'evalue' || val === 'subject') ? 1 : -1;
-    renderHits();
+  $('#filter-apply').addEventListener('click', applyFilters);
+  $('#filter-reset').addEventListener('click', resetFilters);
+  $('#filter-query').addEventListener('change', applyFilters);
+  $('#filter-ident').addEventListener('change', applyFilters);
+  $('#filter-evalue').addEventListener('change', applyFilters);
+  $('#filter-cover').addEventListener('change', applyFilters);
+  $('#select-all-hits').addEventListener('change', function () { toggleSelectAll(this.checked); });
+  $('#download-selected').addEventListener('click', downloadSelected);
+  $('#hit-table tbody').addEventListener('change', function (event) {
+    var box = event.target.closest('.hit-check');
+    if (!box) return;
+    var key = box.getAttribute('data-key');
+    if (box.checked) state.selectedSubjects.add(key);
+    else state.selectedSubjects.delete(key);
+    updateSelectionUI();
   });
   $$('#hit-table th[data-sort]').forEach(function (th) {
     th.addEventListener('click', function () {
@@ -2398,11 +2805,12 @@ function init() {
       if (key === 'index') return;
       if (state.sortKey === key) state.sortDir *= -1;
       else { state.sortKey = key; state.sortDir = (key === 'evalue' || key === 'subject') ? 1 : -1; }
-      renderHits();
+      renderDescriptions();
     });
   });
-  $('#hit-more').addEventListener('click', function () { state.shown += 100; renderHits(); });
+  $('#hit-more').addEventListener('click', function () { state.shown += 100; renderDescriptions(); });
   $('#align-load').addEventListener('click', loadAlignments);
+  attachGraphicHandlers();
   $('#blast-recent').addEventListener('click', function (event) {
     var btn = event.target.closest('[data-job]');
     if (btn) location.hash = '#/job/' + btn.getAttribute('data-job');

@@ -820,12 +820,17 @@ V2.0 设计语言、纯静态单页、复用现有 `/api/blast` 异步任务后�
   `GET /api/blast/status/{job_id}`；
 - 最近任务存 localStorage，可一键重开；带浏览器端哈希路由（`#/job/<uuid>`）。
 
-**结果视图**
-- 状态 pill（pending/running/done/error）+ 已用时间 + 任务元信息（program、库、参数、job id）；
-- Hits 表：解析 `result.tsv`（outfmt 6 + ppos + btop + stitle 共 15 列），支持按 E-value/bitscore/
-  identity/subject 排序、文本过滤、点击行展开 query/subject 区间 + BTOP + 完整标题；
-- Alignments：懒加载 `result.txt`（outfmt 0），超过 2 MB 只展示前 2 MB 并提示下载；
+**结果视图**（参考 NCBI BLAST 结果页结构）
+- Job summary：program / 库 / 参数 / job id / 提交时间 / 结果过期日期；
+- 四个 tab：**Graphic Summary / Descriptions / Alignments / Downloads**；
+- Graphic Summary：按 query 画命中示意图，HSP 色块按 identity 着色，悬停看位置/E value，点击跳到对应描述行；
+- Descriptions：按 subject 聚合 HSP（跨 HSP 的 Max score、Total score、Query cover、E value、
+  Per. ident、Aln length、HSP 数）；支持 Graphic-style 表头排序、Filter Results（Query、identity ≥、
+  E value ≤、Query cover ≥）、勾选行并导出 selected TSV、点击行展开每个 HSP 的区间/BTOP/完整标题；
+- Alignments：懒加载 `result.txt`（outfmt 0），按 hit 解析成可折叠卡片，Query/中间行/Sbjct 三段
+  彩色渲染（相同=绿、positive=橙、错配=粉底）；
 - Downloads：直接给出 API 返回的 `download_urls`（tabular/traditional）。
+- 多 query 的 job 会按 Query 分组显示，并提供 query 过滤。
 
 ### 部署 / 校验
 
@@ -848,5 +853,6 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.htm
 - 若后续要把老结果页也重定向到新 SPA，需要单独的旧 job 兼容方案（不在本轮范围）。
 - 老 ViroBlast 的部分高级参数（soft mask、genetic code、alignment view 等）当前 `/api/blast`
   不提供，新版只暴露后端支持的参数子集。
-- 每个 hit 的“图形化命中图（graphic overview）”和逐 hit 可展开的 pairwise 对齐（而不是整页 pre）
-  尚未实现，可作为后续迭代。
+- 老结果页 `/blast/blastresult2.php` 未重定向到新 SPA（历史链接兼容），未来可做旧 job 的跳转映射。
+- Acc. len（subject 全长）当前 TSV 不提供，暂以 Aln length + HSP 数替代；如需 NCBI 同款列，可让
+  `/api/blast` 在 outfmt 中增加 `slen` 字段。
