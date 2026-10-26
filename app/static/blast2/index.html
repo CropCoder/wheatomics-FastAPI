@@ -1174,6 +1174,8 @@
       color: var(--forest); font-size: 10.5px; font-weight: 700; padding: 7px 12px; cursor: pointer;
     }
     .blast-preset:hover { border-color: rgba(17, 134, 83, .4); }
+    .blast-preset.active { border-color: var(--forest); background: var(--forest); color: #fff; }
+    .blast-preset.active::before { content: '✓ '; }
     .blast-db-cats { display: grid; gap: 8px; margin-top: 14px; }
     .blast-cat { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff; }
     .blast-cat-head {
@@ -1568,6 +1570,7 @@ Paste one or more FASTA sequences here…"></textarea>
                     <span class="blast-hint" id="blast-db-count"></span>
                   </div>
                   <div class="blast-presets" id="blast-presets"></div>
+                  <p class="blast-hint" id="blast-quick-hint" style="margin:6px 0 0;"></p>
                   <div class="blast-db-viewfilters" id="blast-db-viewfilters" hidden>
                     <span class="blast-hint">Show:</span>
                     <button type="button" class="blast-kind-chip" data-kind="genome">Genome</button>
@@ -2257,12 +2260,30 @@ function handleDbChange(event) {
   }
 }
 
+function updateQuickSelectFeedback() {
+  var hint = $('#blast-quick-hint');
+  var labels = [];
+  $$('#blast-presets .blast-preset').forEach(function (btn) {
+    var db = btn.getAttribute('data-db');
+    var on = state.selected.has(db) && state.selected.size === 1;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    if (on) labels.push(btn.textContent.trim());
+  });
+  if (hint) {
+    hint.textContent = labels.length
+      ? 'Quick select applied: ' + labels.join(', ') + '  (deselect it below or pick another database to change)'
+      : '';
+  }
+}
+
 function renderSelected() {
   $('#blast-selected-count').textContent = state.selected.size + ' / ' + DB_LIMIT;
   $('#blast-chips').innerHTML = Array.from(state.selected).map(function (db) {
     return '<span class="blast-chip">' + esc(db) + '<button type="button" data-remove-db="' + esc(db) + '" aria-label="Remove ' + esc(db) + '">×</button></span>';
   }).join('');
 }
+  updateQuickSelectFeedback();
 
 // ---------- query input ----------
 function queryStats(text) {
