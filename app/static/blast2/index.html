@@ -2129,9 +2129,10 @@ function dbCheckbox(db, label, minimal) {
 
 function dbPassesFilters(db) {
   var meta = dbMeta(db), kind = meta.kind || 'other';
+  if (kind === 'aggregate') return state.kindFilter !== 'genome';
   if (kind === 'chromosome') {
     if (state.kindFilter && state.kindFilter !== 'genome') return false;
-  } else if (kind !== 'aggregate' && state.kindFilter && kind !== state.kindFilter) {
+  } else if (state.kindFilter && kind !== state.kindFilter) {
     return false;
   }
   return true;
