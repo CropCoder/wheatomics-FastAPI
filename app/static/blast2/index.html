@@ -2282,6 +2282,7 @@ function renderSelected() {
   $('#blast-chips').innerHTML = Array.from(state.selected).map(function (db) {
     return '<span class="blast-chip">' + esc(db) + '<button type="button" data-remove-db="' + esc(db) + '" aria-label="Remove ' + esc(db) + '">×</button></span>';
   }).join('');
+  updateQuickSelectFeedback();
 }
   updateQuickSelectFeedback();
 
