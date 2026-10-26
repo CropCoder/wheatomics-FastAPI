@@ -88,8 +88,16 @@ LEGACY_ALIAS_DBS = frozenset({
 #: old backup is restored.
 BROKEN_DB_BASES = frozenset({"Foma.pep"})
 
+#: Superseded duplicate BLAST builds. `CS21_S1_S2_S3_All_NLR` is the 2024-08
+#: multi-volume build; `CS21_S1_S2_S3_All_NLR.fasta` is the 2026-09 rebuild of
+#: the very same 105 sequences (identical entry-list md5), so only the newer
+#: build is offered.
+DUPLICATE_ALIAS_DBS = frozenset({"CS21_S1_S2_S3_All_NLR"})
+
 #: Databases that must never be advertised as BLAST targets.
-HIDDEN_BLAST_DBS = SEQUENCE_ONLY_DBS | LEGACY_ALIAS_DBS | BROKEN_DB_BASES
+HIDDEN_BLAST_DBS = (
+    SEQUENCE_ONLY_DBS | LEGACY_ALIAS_DBS | BROKEN_DB_BASES | DUPLICATE_ALIAS_DBS
+)
 
 # === BLAST 数据库元数据（类型 / 组装） ===
 #: Per-chromosome split databases: `<assembly>.genome_Chr1A`, `<assembly>.genome_chr1H`, ...
