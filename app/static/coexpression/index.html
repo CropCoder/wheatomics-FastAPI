@@ -1,117 +1,39 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wheat Co-expression - WheatOmics</title>
+<title>Co-expression | WheatOmics 2.0</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
 
-<script>
-// ===== Visit tracking =====
-(function() {
-  var page = location.pathname || 'unknown';
-  try {
-    fetch('/api/track/visit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ page: page })
-    }).catch(function(){});
-  } catch (e) {}
 
-  function fmt(n) {
-    n = Number(n) || 0;
-    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
-    if (n >= 10000)   return (n / 1000).toFixed(3) + 'k';
-    return String(n);
-  }
-
-  function setHtml(html) {
-    var el = document.getElementById('visit-stats');
-    if (el) el.innerHTML = html;
-  }
-
-  fetch('/api/track/stats')
-    .then(function(r) { return r.json(); })
-    .then(function(resp) {
-      if (!resp || !resp.success) {
-        setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
-        return;
-      }
-      var d = resp.data;
-      var html =
-        '<span class="vs-pill vs-today" title="Today pageviews">' +
-          '<span class="vs-dot vs-dot-today"></span>' +
-          'Today <b>' + fmt(d.today.pv) + '</b></span>' +
-        '<span class="vs-pill vs-total" title="Total pageviews (since 2019-08-01)">' +
-          '<span class="vs-dot vs-dot-total"></span>' +
-          'Total <b>' + fmt(d.total.pv) + '</b></span>' +
-        '<span class="vs-pill vs-online" title="Visitors active in the last 15 minutes">' +
-          '<span class="vs-dot vs-dot-online"></span>' +
-          'Online <b>' + fmt(d.online) + '</b></span>';
-      setHtml(html);
-    })
-    .catch(function() {
-      setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
-    });
-})();
-</script>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+<link rel="stylesheet" href="/api/v2shell/shell.css">
 <style>
-  body { background: #f8f9fa; margin:0; padding:0; }
-  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
-  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
-  #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
-  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
-  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
-  #header-tabs li { display:inline-block !important; width:190px !important; }
-  #header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
-  #header-tabs a:hover { background:#98c1d9; color:#000000; }
-  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
-  #header-tabs ul li ul { display:none !important; position:absolute; }
-  #header-tabs ul li:hover ul { display:block !important; }
-  #header-tabs ul li ul a { border-radius:0; }
-  #home_content { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
-  .query-card { background:#fff; border-radius:6px; padding:20px; margin-top:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
-  .results-card { background:#fff; border-radius:6px; padding:20px; margin-top:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); display:none; }
-  .help-text { font-size:0.85rem; color:#6c757d; margin-top:4px; }
+  body { margin:0; padding:0; }
+  .query-card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; margin-top:20px; box-shadow:var(--shadow); }
+  .results-card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; margin-top:20px; box-shadow:var(--shadow); display:none; }
+  .help-text { font-size:0.85rem; color: var(--muted); margin-top:4px; }
   #error-msg { display:none; margin-top:10px; }
   #loading-indicator { display:none; text-align:center; padding:30px; }
-  #loading-indicator .spinner-border { width:2.5rem; height:2.5rem; }
-  .filter-radio { display:inline-block; margin-right:18px; font-size:14px; cursor:pointer; }
-  .filter-radio input { margin-right:5px; vertical-align:middle; cursor:pointer; }
-  .filter-block { padding:8px 12px; background:#f8f9fa; border-radius:4px; margin-top:6px; }
+  #loading-indicator .spinner-border { width:2.5rem; height:2.5rem; color: var(--leaf); }
+  .filter-radio { display:inline-flex; align-items:center; gap:6px; min-height:28px; margin-right:18px; font-size:14px; cursor:pointer; }
+  .filter-radio input { margin:0; vertical-align:middle; cursor:pointer; }
+  .filter-block { padding:8px 12px; background: var(--mist); border:1px solid var(--line); border-radius:8px; margin-top:6px; }
   .filter-block select { max-width:240px; }
-  .results-summary { font-size:13px; color:#6c757d; margin-bottom:10px; }
-  .results-table th { position:sticky; top:0; background:#f8f9fa; font-size:13px; }
+  .results-summary { font-size:13px; color: var(--muted); margin-bottom:10px; }
+  .results-table th { position:sticky; top:0; background: var(--mist); font-size:13px; }
   .results-table td { font-size:13px; }
   .results-table .pcc-cell { font-weight:600; }
-  .pcc-positive { color:#1d4ed8; }
-  .pcc-negative { color:#b91c1c; }
-  .db-desc { font-size:12px; color:#6c757d; margin-left:6px; }
+  .pcc-positive { color: var(--forest); }
+  .pcc-negative { color: #b4432f; }
+  .db-desc { font-size:12px; color: var(--muted); margin-left:6px; }
   .db-option { padding:4px 0; }
-  .citation-block { font-size:13px; color:#495057; margin-top:14px; line-height:1.55; }
+  .citation-block { font-size:13px; color: #42584d; margin-top:14px; line-height:1.55; }
+  .citation-block strong { color: var(--forest-deep); }
   .citation-block a { word-break:break-all; }
-
-  /* visit stats */
-  .visit-stats { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; }
-  .visit-stats .vs-pill {
-    display:inline-flex; align-items:center; gap:5px;
-    padding:3px 8px; border-radius:12px;
-    font-size:11px; line-height:1.4;
-    background:#f1f5f9; color:#334155;
-    border:1px solid #e2e8f0;
-  }
-  .visit-stats .vs-pill b { color:#0f172a; font-weight:600; }
-  .visit-stats .vs-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#94a3b8; }
-  .visit-stats .vs-dot-today  { background:#22c55e; box-shadow:0 0 0 2px rgba(34,197,94,0.18); }
-  .visit-stats .vs-dot-total  { background:#3b82f6; }
-  .visit-stats .vs-dot-online { background:#f59e0b; animation:vs-pulse 1.6s ease-in-out infinite; }
-  .visit-stats .vs-loading { color:#64748b; }
-  .visit-stats .vs-loading .vs-dot { animation:vs-pulse 1.6s ease-in-out infinite; }
-  .visit-stats .vs-error { background:#fef2f2; color:#b91c1c; border-color:#fecaca; }
-  @keyframes vs-pulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
 </style>
 
 <!-- Baidu Tongji (async) -->
@@ -126,62 +48,31 @@ var _hmt = _hmt || [];
 </script>
 </head>
 <body>
-<!-- header -->
-<div id="home_header">
-  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 2.0</span>
-</div>
+  <div id="v2-shell-header"></div>
 
-<!-- nav menu -->
-<div id="header-tabs">
-  <ul>
-    <li><a href="/"><span>Home</span></a></li>
-    <li><a href="#"><span>Tools/Browse</span></a>
-      <ul>
-        <li><a href="/getfasta/index.html">GetSequence</a></li>
-        <li><a href="/blast/blast.html">BLAST</a></li>
-        <li><a href="/PrimerServer">PrimerServer</a></li>
-        <li><a href="/PrimerServer2/">PrimerServer2</a></li>
-        <li><a href="/caps/">CAPS/dCAPS</a></li>
-        <li><a href="/PfamSearch/">PfamSearch</a></li>
-        <li><a href="/idConvert/">IDConvert</a></li>
-        <li><a href="/HomologFinder/">HomologFinder</a></li>
-        <li><a href="/interval/">IntervalTool</a></li>
-        <li><a href="/expression/">GeneExpression</a></li>
-        <li><a href="/coexpression/index.html">Co-expression</a></li>
-        <li><a href="/wheatPPI/">WheatPPI</a></li>
-        <li><a href="/genes/">KnownGene</a></li>
-        <li><a href="/symap/index.html">SyntenySearch</a></li>
-        <li><a href="/syntenyview/">SynTenyView</a></li>
-        <li><a href="/preblast/">preBLAST</a></li>
-        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
-        <li><a href="/orthofinder/">OrthoFinder</a></li>
-        <li><a href="/VariantHub/">VariantHub</a></li>
-        <li><a href="DWGVa.html">DWGVa</a></li>
-        <li><a href="/scRNA/">scRNA</a></li>
-        <li><a href="/wheatPSP/">wheatPSP</a></li>
-        <li><a href="/eqtl/">eQTL Atlas</a></li>
-        <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
-        <li><a href="/papers">Triticeae papers</a></li>
-      </ul>
-    </li>
-    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
-    <li><a href="/download.html"><span>Download Data</span></a></li>
-    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
-    <li><a href="#"><span>About</span></a>
-      <ul>
-        <li><a href="/help/contact.html">Contact</a></li>
-        <li><a href="/help/news.html">News</a></li>
-      </ul>
-    </li>
-  </ul>
-</div>
+  <main id="main-content">
+    <section class="news-hero">
+      <div class="container news-hero-inner">
+        <div>
+          <p class="news-kicker">WheatOmics 2.0 · Analysis tool</p>
+          <h1 class="news-title">Co-<em>expression</em></h1>
+          <p class="news-lead">Find genes co-expressed with your query genes in the Wheat grain and biotic-stress co-expression databases, filtered by PCC or Mutual Rank and exportable as TSV.</p>
+          <div class="news-stats">
+            <span class="news-stat"><strong>2</strong> co-expression databases</span>
+            <span class="news-stat">PCC / MR filters</span>
+            <span class="news-stat">TSV export</span>
+          </div>
+        </div>
+        <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-network"/></svg></div>
+      </div>
+    </section>
 
-<div id="home_content">
-  <div class="d-flex align-items-center justify-content-between" style="margin-top:18px;">
-    <h5 class="card-title" style="margin:0;">Retrieve co-expressed genes for your query genes</h5>
+    <section class="news-body">
+      <div class="container">
+
+  <div class="d-flex justify-content-end" style="margin-top:18px;margin-bottom:2px;">
     <a class="btn btn-link btn-sm" href="/coexpression/stats.html">📊 View bioproject stats</a>
   </div>
-  <br>
 
   <div class="query-card">
     <div class="row">
@@ -357,31 +248,13 @@ var _hmt = _hmt || [];
   </div>
 </div>
 
-<!-- footer -->
-<div class="line" style="height:10px;background-color:white"></div>
-<div id="home_footer">
-  <center style="margin-top:5px">
-    <table>
-      <tr>
-        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><div style="height:50px;width:15px;"></div></td>
-        <td>
-          <div id="visit-stats" class="visit-stats">
-            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
-          </div>
-        </td>
-      </tr>
-    </table>
-    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
-  </center>
-</div>
+      </div>
+    </section>
+  </main>
+
+  <div id="v2-shell-footer"></div>
+
+  <script src="/api/v2shell/shell.js"></script>
 
 <script>
 var PCC_OPTIONS = ['0.9', '0.8', '0.7', '0.6', '0.5', '0.4', '0.3', '0.2'];

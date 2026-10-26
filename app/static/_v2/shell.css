@@ -1151,6 +1151,14 @@ a:hover { color: var(--forest); }
 .btn-outline-primary:hover { color: #fff; background: var(--forest); border-color: var(--forest); }
 .btn-outline-secondary { color: var(--forest); border-color: var(--line); background: #fff; }
 .btn-outline-secondary:hover { color: var(--forest-deep); background: var(--mist); border-color: rgba(17,134,83,.35); }
+.btn-outline-success { color: var(--leaf); border-color: rgba(17,134,83,.45); background: #fff; }
+.btn-outline-success:hover { color: #fff; background: var(--leaf); border-color: var(--leaf); }
+.btn-outline-info { color: var(--forest); border-color: var(--line); background: #fff; }
+.btn-outline-info:hover { color: #fff; background: var(--forest); border-color: var(--forest); }
+.btn-outline-warning { color: #7a5a07; border-color: #ead08a; background: #fff; }
+.btn-outline-warning:hover { color: #5a4308; background: #f6e2ac; border-color: #e6c46a; }
+.btn-outline-danger { color: #b4432f; border-color: #e8b7ab; background: #fff; }
+.btn-outline-danger:hover { color: #fff; background: #b4432f; border-color: #b4432f; }
 .btn-danger { color: #fff; background: #b4432f; border-color: #b4432f; }
 .btn-sm { padding: 5px 12px; font-size: 12px; }
 .btn-lg { padding: 11px 24px; font-size: 15px; }
