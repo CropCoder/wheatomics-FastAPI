@@ -1122,6 +1122,7 @@
 
     /* ==================== wheatPTM tool page ==================== */
     .ptm-page { padding-top: 6px; }
+    .ptm-page .section-kicker { color: var(--muted); }
     .ptm-visually-hidden {
       position: absolute; width: 1px; height: 1px;
       margin: -1px; padding: 0; overflow: hidden;
@@ -1169,7 +1170,7 @@
       box-shadow: 0 0 0 4px rgba(17, 134, 83, .10);
     }
     .ptm-search-form .primary-button { min-height: 52px; padding-inline: 26px; white-space: nowrap; }
-    .ptm-hint { margin: 12px 0 0; color: #7a8c82; font-size: 11px; line-height: 1.7; }
+    .ptm-hint { margin: 12px 0 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
     .ptm-hint a { color: var(--leaf); }
     .ptm-hint a:hover { text-decoration: underline; }
 
@@ -1194,7 +1195,7 @@
     .ptm-section .section-heading { align-items: flex-end; }
     .ptm-section .section-title { font-size: clamp(22px, 2.6vw, 30px); }
     .ptm-meta {
-      margin: 0; max-width: 460px; color: #7a8c82; text-align: right;
+      margin: 0; max-width: 460px; color: var(--muted); text-align: right;
       font-family: var(--utility); font-size: 10.5px; line-height: 1.6;
     }
 
@@ -1210,7 +1211,7 @@
       font-size: clamp(24px, 2.5vw, 33px); font-weight: 800; letter-spacing: -.04em; line-height: 1;
     }
     .ptm-stat-label { margin-top: 9px; color: #3d564b; font-size: 12px; font-weight: 600; }
-    .ptm-stat-sub { margin-top: 4px; color: #7a8c82; font-size: 10.5px; line-height: 1.5; }
+    .ptm-stat-sub { margin-top: 4px; color: var(--muted); font-size: 10.5px; line-height: 1.5; }
 
     /* panels */
     .ptm-card {
@@ -1220,7 +1221,7 @@
     }
     .ptm-card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 20px; margin-bottom: 12px; }
     .ptm-card-head h3 { margin: 0; color: var(--forest-deep); font-family: var(--display); font-size: 16px; letter-spacing: -.02em; }
-    .ptm-card-head p { margin: 0; max-width: 660px; color: #7a8c82; font-size: 11px; line-height: 1.65; }
+    .ptm-card-head p { margin: 0; max-width: 660px; color: var(--muted); font-size: 11px; line-height: 1.65; }
     .ptm-chart { width: 100%; height: 420px; min-width: 0; }
     #ptm-chart { height: 460px; }
 
@@ -1271,13 +1272,13 @@
     .ptm-conf-card { padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: #fbfdfb; }
     .ptm-conf-card strong { display: block; color: var(--forest-deep); font-family: var(--display); font-size: 20px; letter-spacing: -.02em; line-height: 1.1; }
     .ptm-conf-card span { display: block; margin-top: 5px; color: #5d7267; font-size: 11px; }
-    .ptm-conf-card em { display: block; margin-top: 2px; color: #7a8c82; font-family: var(--utility); font-size: 9.5px; font-style: normal; }
+    .ptm-conf-card em { display: block; margin-top: 2px; color: var(--muted); font-family: var(--utility); font-size: 9.5px; font-style: normal; }
 
     /* example proteins */
     .ptm-example-list { display: flex; flex-wrap: wrap; gap: 10px; }
     .ptm-example {
       display: inline-flex; align-items: center; gap: 9px;
-      padding: 9px 15px; color: #2c4a3e; background: #fff;
+      min-height: 40px; padding: 9px 15px; color: #2c4a3e; background: #fff;
       border: 1px solid var(--line); border-radius: 999px;
       font-family: var(--utility); font-size: 11px; cursor: pointer;
       transition: 160ms ease;
@@ -1287,7 +1288,7 @@
       box-shadow: 0 8px 20px rgba(8, 69, 47, .08);
       transform: translateY(-1px);
     }
-    .ptm-example span { color: var(--leaf); font-family: var(--utility); font-size: 10px; }
+    .ptm-example span { color: var(--forest); font-family: var(--utility); font-size: 10px; }
 
     /* about + references */
     .ptm-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
@@ -2092,7 +2093,7 @@ function renderOverview(data) {
     var order = ['Extremely high', 'High', 'Medium', 'Low', 'Non-PTM'];
     var colors = {
       'Extremely high': '#07583d', 'High': '#118653', 'Medium': '#b7791f',
-      'Low': '#c07a2c', 'Non-PTM': '#9aaca1'
+      'Low': '#c07a2c', 'Non-PTM': '#66766e'
     };
     confEl.innerHTML = order.map(function(label) {
       var n = Number(counts[label]) || 0;

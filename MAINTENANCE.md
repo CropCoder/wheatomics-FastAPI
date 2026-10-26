@@ -719,6 +719,76 @@ curl -s https://wheatomics.sdau.edu.cn/api/<module>/<action> | head -c 200
 # 5. HTML 头部 6 件事齐
 curl -s http://127.0.0.1:8000/<module>/index.html | head -10
 # 期望：charset / viewport / title / favicon / bootstrap.css / jquery 都齐
+
+# 6. 多宽度渲染（见第九节；需要本机 ego-browser，无需 npm 安装任何东西）
+bash scripts/spa_visual_check.sh http://127.0.0.1:8000/<module>/
+# 期望：Result: PASS；再逐张看一下 w360 / w768 / w1440 截图
 ```
 
 **全部 ✓ 才算这个迭代完成**。
+
+---
+
+## 九、多宽度渲染检查（SPA 改造必跑）
+
+借鉴 Hallmark（`sloplint`）的"8 种宽度真实浏览器审查"思路，用本机已有的 `ego-browser`
+实现，**不安装任何 npm 依赖、不改生产环境**。目的不是替代人工 review，而是把
+"移动端/平板破版、对比度不足、异步加载没等到就截图"这类问题在 commit 前自动化掉。
+
+### 什么时候跑
+
+- 新增或改造 `app/static/<module>/index.html`（尤其像 wheatPTM 那样整页改版）之后、commit 之前；
+- 把截图贴到 PR / 聊天里一起 review；
+- 排查"线上某个宽度下有横向滚动条"之类的问题时，先跑一遍定位元素。
+
+### 用法
+
+```bash
+# 1) 纯落地页（本地 dev server 或线上 URL 都行）
+bash scripts/spa_visual_check.sh http://127.0.0.1:8000/wheatPTM/
+
+# 2) 需要交互的页面：填表 → 点搜索 → 等结果区，并额外截结果区
+bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/wheatPTM/ \
+  --label wheatptm-result \
+  --fill '#protein-input=TraesCS1A02G000100LC.1' \
+  --click '#search-btn' \
+  --wait '#result-area' \
+  --scroll-to '#result-area'
+
+# 3) 存量页面巡检（老 Bootstrap SPA 也能跑）
+bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/wheatPSP/ --label legacy-wheatpsp
+```
+
+默认宽度：`360,390,414,768,1024,1280,1440,1920`（≤480 用 844 高 + 触屏模拟）。
+常用参数：`--widths 390,768,1440`（只跑几档更快）、`--settle 1200`（慢接口页面）、
+`--out <dir>`（保存位置）、`--label <name>`（报告名/目录前缀）。
+
+### 判什么
+
+| 级别 | 检查项 | 说明 |
+|---|---|---|
+| **Floor（退出码 1）** | 横向溢出 | `scrollWidth > viewport`，并给出越界元素 selector + 坐标 |
+| | 图片加载失败 | `img.complete && naturalWidth === 0` |
+| | 页面 JS 错误 | 通过 CDP `Page.addScriptToEvaluateOnNewDocument` 注入捕获 |
+| | 缺 `meta viewport` | 移动端直接失效，老页面常见 |
+| | 文字对比度 < 3:1 | WCAG 可读性底线（跳过背景图/渐变上的文字） |
+| | `--wait` 选择器没出现 | 说明交互/异步状态没达到预期 |
+| **Warn（不失败）** | 对比度 3–4.5:1 | 逐条列出文字、颜色、背景、selector |
+| | 图片缺 alt、`<html lang>` 缺失 | 无障碍 |
+| | 小点击目标 | ≤480 宽下控件 <24px（正文内联链接按 WCAG 2.5.8 豁免，不报） |
+
+### 产出
+
+- 输出目录（默认 `$TMPDIR/spa-check/<label>-<时间戳>/`）：
+  `report.md`（人看）、`report.json`（机读/后续 CI）、`w360.png` … `w1920.png`
+  （每个宽度首屏截图；给了 `--scroll-to` 再加 `w*-section.png`）；
+- 终端直接打印 markdown 摘要：宽度 × 溢出/破图/JS 错误/对比度/小目标 的表格。
+
+### 依赖与边界
+
+- **需要 `ego-browser`**（本机已装，Agent 验收也在用）；服务端不装 Node，所以这是**本地开发期工具**，
+  不进生产链路、不进服务器；
+- 只检查"渲染与可访问性"，不检查数据/接口正确性（那仍按第八节 curl 自检）；
+- 对比度会跳过背景图/渐变上的文字（无法可靠计算），这类地方仍靠人眼；
+- 主题自带的问题（如 V2.0/outsitelink 的 "Back to top ↑" 在手机上是 72×15px）会作为
+  Warn 报出来，属于**仓库外主题**的问题，改主题时要一并修，不要在单个工具页里私改。
