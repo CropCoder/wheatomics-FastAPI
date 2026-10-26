@@ -326,8 +326,14 @@ const floor = [];
 const warnings = [];
 for (const row of results) {
   if (row.fatal) floor.push(`w${row.width}: ${row.fatal}`);
-  if (row.overflowPx > 1) floor.push(`w${row.width}: horizontal overflow ${row.overflowPx}px`);
-  if (row.brokenImages && row.brokenImages.length) floor.push(`w${row.width}: ${row.brokenImages.length} broken image(s)`);
+  if (row.overflowPx > 1) {
+    const where = (row.offenders || []).slice(0, 3)
+      .map((o) => `${o.path} (right ${o.right})`).join("; ");
+    floor.push(`w${row.width}: horizontal overflow ${row.overflowPx}px${where ? " — " + where : ""}`);
+  }
+  if (row.brokenImages && row.brokenImages.length) {
+    floor.push(`w${row.width}: ${row.brokenImages.length} broken image(s) — ${row.brokenImages.slice(0, 3).join(", ")}`);
+  }
   if (row.jsErrors && row.jsErrors.length) floor.push(`w${row.width}: ${row.jsErrors.length} JS error(s)`);
   if (row.hasViewportMeta === false) floor.push(`w${row.width}: missing <meta name="viewport">`);
   if (row.waitForMissing) floor.push(`w${row.width}: waitFor selector not found (${row.waitForMissing})`);
