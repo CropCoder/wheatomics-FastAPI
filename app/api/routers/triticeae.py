@@ -169,6 +169,10 @@ def _build_search(
     gene_name_exclude: str | None = None,
     pmid: str | None = None,
     pmid_exclude: str | None = None,
+    source_method: str | None = None,
+    source_method_exclude: str | None = None,
+    review_status: str | None = None,
+    review_status_exclude: str | None = None,
     functional_gene_flag: str | None = None,
     functional_gene_source: str | None = None,
     function_gene_flag: str | None = None,
@@ -211,6 +215,26 @@ def _build_search(
         if val:
             conditions.append(f"{sql_expr} = %s")
             params.append(val.strip())
+
+    # Annotation-level filters (functional_gene_annotations) via EXISTS so the
+    # papers query itself stays a single-table scan. Useful for finding papers
+    # whose LLM annotation failed: source_method=llm_error.
+    for field, positive, negative in (
+        ("source_method", source_method, source_method_exclude),
+        ("review_status", review_status, review_status_exclude),
+    ):
+        if positive:
+            conditions.append(
+                "EXISTS (SELECT 1 FROM functional_gene_annotations f "
+                f"WHERE f.pubmedid = p.pmid AND f.{field} = %s)"
+            )
+            params.append(positive)
+        if negative:
+            conditions.append(
+                "NOT EXISTS (SELECT 1 FROM functional_gene_annotations f "
+                f"WHERE f.pubmedid = p.pmid AND f.{field} = %s)"
+            )
+            params.append(negative)
 
     # Exact-match filters (exclude).
     for param_name, sql_expr in _EXACT_FILTER_MAP.items():
@@ -284,6 +308,10 @@ def search_papers(
     function_gene_tags_exclude: str | None = Query(None, description="功能基因标签排除"),
     gene_name: str | None = Query(None, description="基因名模糊匹配（papers.function_gene_tags + functional_gene_tags）"),
     gene_name_exclude: str | None = Query(None, description="基因名排除"),
+    source_method: str | None = Query(None, description="按 LLM 标注来源过滤（functional_gene_annotations.source_method，EXISTS 子查询），如 llm_error / rule+llm / seed_title_match"),
+    source_method_exclude: str | None = Query(None, description="排除某标注来源（NOT EXISTS）"),
+    review_status: str | None = Query(None, description="按标注审核状态过滤（EXISTS 子查询），如 negative / auto_pass / need_review"),
+    review_status_exclude: str | None = Query(None, description="排除某审核状态（NOT EXISTS）"),
     pmid: str | None = Query(None, description="PubMed ID 精确匹配（自动去除空白字符）"),
     pmid_exclude: str | None = Query(None, description="PubMed ID 精确排除"),
     functional_gene_flag: str | None = Query(None, description="论文级功能基因标记"),
