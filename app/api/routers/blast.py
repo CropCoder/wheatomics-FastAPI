@@ -94,6 +94,8 @@ HIDDEN_BLAST_DBS = SEQUENCE_ONLY_DBS | LEGACY_ALIAS_DBS | BROKEN_DB_BASES
 # === BLAST 数据库元数据（类型 / 组装） ===
 #: Per-chromosome split databases: `<assembly>.genome_Chr1A`, `<assembly>.genome_chr1H`, ...
 _DB_CHROM_RE = re.compile(r"\.genome_[Cc]hr([0-9]{1,2}[A-Za-z]{0,4})$")
+#: Legacy per-chromosome aliases without the `.genome_` infix: `all_Allohexaploidchr1A`.
+_DB_CHROM_ALT_RE = re.compile(r"(?:^|[._])[Cc]hr([0-9]{1,2}[A-Za-z]{0,4})$")
 
 #: Annotation-level suffixes and their database kind.
 _DB_ANNOTATION_SUFFIXES = (
@@ -110,11 +112,14 @@ CHROMOSOME_LEVELS = frozenset({
 
 def _db_base_kind_chromosome(name: str) -> tuple[str, str, str | None]:
     """Split a BLAST database name into (assembly base, kind, chromosome)."""
-    if name.startswith("all_"):
-        return name, "aggregate", None
     m = _DB_CHROM_RE.search(name)
     if m:
         return name[: m.start()], "chromosome", m.group(1)
+    m = _DB_CHROM_ALT_RE.search(name)
+    if m:
+        return name[: m.start()], "chromosome", m.group(1)
+    if name.startswith("all_"):
+        return name, "aggregate", None
     for suffix, kind in _DB_ANNOTATION_SUFFIXES:
         if name.endswith(suffix):
             return name[: -len(suffix)], kind, None

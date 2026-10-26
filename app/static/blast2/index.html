@@ -2013,8 +2013,11 @@ function renderCategories() {
   var filtersBox = $('#blast-db-viewfilters');
   if (filtersBox) filtersBox.hidden = !state.dbNames.length;
   updateKindChips();
+  var openIdx = $$('#blast-db-cats .blast-cat.open').map(function (c) {
+    return parseInt(c.getAttribute('data-cat'), 10);
+  }).filter(function (n) { return !isNaN(n); });
   box.innerHTML = state.categories.map(function (cat, idx) {
-    var open = (cat.count || 0) <= 60 && idx === 0;
+    var open = openIdx.indexOf(idx) >= 0 || (!openIdx.length && idx === 0 && (cat.count || 0) <= 60);
     return '<div class="blast-cat' + (open ? ' open' : '') + '" data-cat="' + idx + '">' +
       '<button type="button" class="blast-cat-head" data-toggle-cat="' + idx + '">' +
         '<span class="blast-cat-title">' + esc(cat.label) + '</span>' +
