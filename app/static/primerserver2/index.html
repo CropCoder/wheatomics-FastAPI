@@ -19,6 +19,18 @@
       #app .el-button--primary { background: var(--forest); border-color: var(--forest); border-radius: 999px; font-weight: 700; }
       #app .el-button--primary:hover, #app .el-button--primary:focus { background: var(--leaf); border-color: var(--leaf); }
       #app .el-button { border-radius: 999px; }
+      /* Element Plus default grey text is below WCAG contrast on white — darken it. */
+      #app .el-tabs__item { color: #4d6559; }
+      #app .el-select__placeholder, #app .el-select__selected-item,
+      #app .el-input__inner::placeholder, #app .el-textarea__inner::placeholder { color: #5e7268 !important; }
+      #app .el-alert__title { font-weight: 700; }
+      #app .el-alert--error { background: #fdf1ee !important; }
+      #app .el-alert--error .el-alert__title,
+      #app .el-alert--error .el-alert__description { color: #8a2318 !important; }
+      #app .el-alert--warning { background: #fdf6e3 !important; }
+      #app .el-alert--warning .el-alert__title { color: #6b4f07 !important; }
+      #app .el-alert--success { background: #edf8f1 !important; }
+      #app .el-alert--success .el-alert__title { color: #14543a !important; }
       #app .el-tabs__item.is-active { color: var(--forest); }
       #app .el-tabs__active-bar { background-color: var(--forest); }
       #app .el-radio__input.is-checked .el-radio__inner { background: var(--leaf); border-color: var(--leaf); }

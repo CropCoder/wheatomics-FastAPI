@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Sequence Toolkit — the Sequence Manipulation Suite (SMS2) on WheatOmics: 60+ browser-side tools for DNA, RNA and protein sequence analysis.">
+  <title>Sequence Toolkit | WheatOmics 2.0</title>
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="/api/v2shell/shell.css">
+  <style>
+    .sms-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    @media (max-width: 900px) { .sms-grid { grid-template-columns: 1fr; } }
+    .sms-group-title { margin: 0 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); font-family: var(--display); font-size: 16px; font-weight: 750; color: var(--forest-deep); }
+    .sms-links { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+    .sms-links a { display: block; padding: 6px 10px; border-radius: 8px; color: #3d564b; font-size: 13px; line-height: 1.45; }
+    .sms-links a:hover { color: var(--forest-deep); background: var(--mist); }
+    .sms-note { margin-top: 20px; padding: 13px 16px; background: var(--mist); border-left: 3px solid var(--leaf); border-radius: 0 10px 10px 0; color: #42584d; font-size: 12px; line-height: 1.7; }
+    .sms-note a { color: var(--forest); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div id="v2-shell-header"></div>
+
+  <main id="main-content">
+    <section class="news-hero">
+      <div class="container news-hero-inner">
+        <div>
+          <p class="news-kicker">WheatOmics 2.0 · Analysis tool</p>
+          <h1 class="news-title">Sequence <em>Toolkit</em></h1>
+          <p class="news-lead">The Sequence Manipulation Suite (SMS2): 60+ browser-side tools for DNA, RNA and protein sequences — convert formats, filter and extract regions, analyse composition, align sequences, design and check primers, and more.</p>
+          <div class="news-stats">
+            <span class="news-stat"><strong>60+</strong> tools</span>
+            <span class="news-stat">DNA · RNA · protein</span>
+            <span class="news-stat">Runs in the browser</span>
+          </div>
+        </div>
+        <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-sequence"/></svg></div>
+      </div>
+    </section>
+
+    <section class="news-body">
+      <div class="container">
+        <div class="sms-grid">
+          <div class="card sms-group">
+            <div class="card-body">
+              <h2 class="sms-group-title">Convert &amp; extract</h2>
+              <ul class="sms-links">
+            <li><a href="combine_fasta.html">Combine FASTA</a></li>
+            <li><a href="embl_fasta.html">EMBL to FASTA</a></li>
+            <li><a href="embl_feat.html">EMBL Feature Extractor</a></li>
+            <li><a href="embl_trans.html">EMBL Trans Extractor</a></li>
+            <li><a href="filter_dna.html">Filter DNA</a></li>
+            <li><a href="filter_protein.html">Filter Protein</a></li>
+            <li><a href="genbank_fasta.html">GenBank to FASTA</a></li>
+            <li><a href="genbank_feat.html">GenBank Feature Extractor</a></li>
+            <li><a href="genbank_trans.html">GenBank Trans Extractor</a></li>
+            <li><a href="one_to_three.html">One to Three</a></li>
+            <li><a href="range_extract_dna.html">Range Extractor DNA</a></li>
+            <li><a href="range_extract_protein.html">Range Extractor Protein</a></li>
+            <li><a href="rev_comp.html">Reverse Complement</a></li>
+            <li><a href="split_codons.html">Split Codons</a></li>
+            <li><a href="split_fasta.html">Split FASTA</a></li>
+            <li><a href="three_to_one.html">Three to One</a></li>
+            <li><a href="window_extract_dna.html">Window Extractor DNA</a></li>
+            <li><a href="window_extract_protein.html">Window Extractor Protein</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="card sms-group">
+            <div class="card-body">
+              <h2 class="sms-group-title">DNA analysis</h2>
+              <ul class="sms-links">
+            <li><a href="codon_plot.html">Codon Plot</a></li>
+            <li><a href="codon_usage.html">Codon Usage</a></li>
+            <li><a href="cpg_islands.html">CpG Islands</a></li>
+            <li><a href="dna_mw.html">DNA Molecular Weight</a></li>
+            <li><a href="dna_pattern.html">DNA Pattern Find</a></li>
+            <li><a href="dna_stats.html">DNA Stats</a></li>
+            <li><a href="fuzzy_search_dna.html">Fuzzy Search DNA</a></li>
+            <li><a href="fuzzy_search_protein.html">Fuzzy Search Protein</a></li>
+            <li><a href="ident_sim.html">Ident and Sim</a></li>
+            <li><a href="multi_rev_trans.html">Multi Rev Trans</a></li>
+            <li><a href="mutate_for_digest.html">Mutate for Digest</a></li>
+            <li><a href="orf_find.html">ORF Finder</a></li>
+            <li><a href="pairwise_align_codons.html">Pairwise Align Codons</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="card sms-group">
+            <div class="card-body">
+              <h2 class="sms-group-title">Alignment &amp; protein</h2>
+              <ul class="sms-links">
+            <li><a href="pairwise_align_dna.html">Pairwise Align DNA</a></li>
+            <li><a href="pairwise_align_protein.html">Pairwise Align Protein</a></li>
+            <li><a href="pcr_primer_stats.html">PCR Primer Stats</a></li>
+            <li><a href="pcr_products.html">PCR Products</a></li>
+            <li><a href="protein_gravy.html">Protein GRAVY</a></li>
+            <li><a href="protein_iep.html">Protein Isoelectric Point</a></li>
+            <li><a href="protein_mw.html">Protein Molecular Weight</a></li>
+            <li><a href="protein_pattern.html">Protein Pattern Find</a></li>
+            <li><a href="protein_stats.html">Protein Stats</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="card sms-group">
+            <div class="card-body">
+              <h2 class="sms-group-title">Restriction, translation &amp; PCR</h2>
+              <ul class="sms-links">
+            <li><a href="rest_digest.html">Restriction Digest</a></li>
+            <li><a href="rest_summary.html">Restriction Summary</a></li>
+            <li><a href="rev_trans.html">Reverse Translate</a></li>
+            <li><a href="translate.html">Translate</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="card sms-group">
+            <div class="card-body">
+              <h2 class="sms-group-title">Visualise &amp; manipulate</h2>
+              <ul class="sms-links">
+            <li><a href="color_align_cons.html">Color Align Conservation</a></li>
+            <li><a href="color_align_prop.html">Color Align Properties</a></li>
+            <li><a href="group_dna.html">Group DNA</a></li>
+            <li><a href="group_protein.html">Group Protein</a></li>
+            <li><a href="primer_map.html">Primer Map</a></li>
+            <li><a href="rest_map.html">Restriction Map</a></li>
+            <li><a href="trans_map.html">Translation Map</a></li>
+            <li><a href="mutate_dna.html">Mutate DNA</a></li>
+            <li><a href="mutate_protein.html">Mutate Protein</a></li>
+            <li><a href="random_coding_dna.html">Random Coding DNA</a></li>
+            <li><a href="random_dna.html">Random DNA Sequence</a></li>
+            <li><a href="random_dna_regions.html">Random DNA Regions</a></li>
+            <li><a href="random_protein.html">Random Protein Sequence</a></li>
+            <li><a href="random_protein_regions.html">Random Protein Regions</a></li>
+            <li><a href="sample_dna.html">Sample DNA</a></li>
+            <li><a href="sample_protein.html">Sample Protein</a></li>
+            <li><a href="shuffle_dna.html">Shuffle DNA</a></li>
+            <li><a href="shuffle_protein.html">Shuffle Protein</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="card sms-group">
+            <div class="card-body">
+              <h2 class="sms-group-title">Reference &amp; about</h2>
+              <ul class="sms-links">
+            <li><a href="iupac.html">IUPAC codes</a></li>
+            <li><a href="genetic_code.html">Genetic codes</a></li>
+            <li><a href="browser_compat.html">Browser compatibility</a></li>
+            <li><a href="mirror.html">Mirror this site</a></li>
+            <li><a href="about.html">About this site</a></li>
+            <li><a href="acknowledgments.html">Acknowledgments</a></li>
+            <li><a href="reference.html">Reference</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <p class="sms-note">The Sequence Manipulation Suite was written by Paul Stothard and is distributed under the <a href="reference.html">reference terms</a>. Utilities: <a href="about.html">about</a> · <a href="reference.html">reference</a> · <a href="browser_compat.html">browser compatibility</a> · <a href="mirror.html">mirror / off-line use</a> · <a href="http://bioinformatics.org/sms/">previous version</a> · feedback to <a href="mailto:stothard@ualberta.ca">stothard@ualberta.ca</a>.</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="v2-shell-footer"></div>
+  <script src="/api/v2shell/shell.js"></script>
+</body>
+</html>
