@@ -2137,7 +2137,7 @@ function fillDbList(listEl, idx) {
   DB_KIND_ORDER.forEach(function (group) {
     var items = groups[group.key] || [];
     if (!items.length) return;
-    var collapsible = group.key === 'chromosome';
+    var collapsible = group.key === 'chromosome' && !allowChromosome;
     var body = collapsible ? dbChromosomeGroups(items) : items.map(function (db) { return dbCheckbox(db); }).join('');
     html += '<div class="blast-db-group" data-kind="' + group.key + '">' +
       '<div class="blast-db-group-title">' + esc(group.label) +
