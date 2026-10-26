@@ -2074,6 +2074,8 @@ function dbLabel(db) {
   if (DB_LABELS[db]) return DB_LABELS[db];
   var m = /^all_Allohexaploidchr(\d+[A-Za-z]+)$/.exec(db);
   if (m) return 'Allohexaploid chr' + m[1] + ' genome';
+  m = /^all_Allotetraploidchr(\d+[A-Za-z]+)$/.exec(db);
+  if (m) return 'Allotetraploid chr' + m[1] + ' genome';
   return db;
 }
 
@@ -2152,16 +2154,33 @@ function fillDbList(listEl, idx) {
     var kind = dbMeta(db).kind || 'other';
     (groups[kind] = groups[kind] || []).push(db);
   });
-  var html = '';
+  var entries = [];
   DB_KIND_ORDER.forEach(function (group) {
-    var items = groups[group.key] || [];
+    if (group.key === 'chromosome') {
+      if (!allowChromosome) return;
+      var hexa = [], tetra = [], otherChr = [];
+      (groups.chromosome || []).forEach(function (db) {
+        if (db.indexOf('all_Allohexaploidchr') === 0) hexa.push(db);
+        else if (db.indexOf('all_Allotetraploidchr') === 0) tetra.push(db);
+        else otherChr.push(db);
+      });
+      if (hexa.length) entries.push({ kind: 'chromosome', label: 'Allohexaploid chr genome', items: hexa });
+      if (tetra.length) entries.push({ kind: 'chromosome', label: 'Allotetraploid chr genome', items: tetra });
+      if (otherChr.length) entries.push({ kind: 'chromosome', label: 'Other chromosome aggregates', items: otherChr });
+      return;
+    }
+    entries.push({ kind: group.key, label: group.label, items: groups[group.key] || [] });
+  });
+  var html = '';
+  entries.forEach(function (entry) {
+    var items = entry.items;
     if (!items.length) return;
-    var collapsible = group.key === 'chromosome' && !allowChromosome;
+    var collapsible = entry.kind === 'chromosome' && !allowChromosome;
     var body = collapsible ? dbChromosomeGroups(items) : items.map(function (db) { return dbCheckbox(db); }).join('');
-    html += '<div class="blast-db-group" data-kind="' + group.key + '">' +
-      '<div class="blast-db-group-title">' + esc(group.label) +
+    html += '<div class="blast-db-group" data-kind="' + entry.kind + '">' +
+      '<div class="blast-db-group-title">' + esc(entry.label) +
         ' <span class="blast-db-group-count">(' + fmtInt(items.length) + ')</span>' +
-        (collapsible ? '<button type="button" data-toggle-group="' + idx + ':' + group.key + '">show</button>' : '') +
+        (collapsible ? '<button type="button" data-toggle-group="' + idx + ':' + entry.kind + '">show</button>' : '') +
       '</div>' +
       '<div class="blast-db-group-list"' + (collapsible ? ' hidden' : '') + '>' + body + '</div>' +
     '</div>';
