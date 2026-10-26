@@ -2000,6 +2000,11 @@ function applyDatabases(data) {
   applyDbSearch();
 }
 
+function csVersionLabel(db, kind) {
+  var m = /Chinese_Spring(\d+(?:\.\d+)?)/.exec(db || '');
+  return 'Chinese Spring' + (m ? ' ' + m[1] : '') + ' ' + kind;
+}
+
 function pickPresetDb(list, candidates) {
   for (var i = 0; i < candidates.length; i++) {
     if (list.indexOf(candidates[i]) >= 0) return candidates[i];
@@ -2015,15 +2020,15 @@ function renderPresets(data) {
     var allProt = protein.indexOf('all_proteins') >= 0 ? 'all_proteins' : (protein.indexOf('all_protein') >= 0 ? 'all_protein' : null);
     if (allProt) presets.push({ db: allProt, label: 'All proteins (combined)' });
     var csPep = pickPresetDb(protein, ['AABBDD_Chinese_Spring2.1.add_Description.pep', 'AABBDD_CS-IAAS.add_Description.pep', 'AABBDD_CS-CAU.add_Description.pep']);
-    if (csPep) presets.push({ db: csPep, label: 'Chinese Spring protein' });
+    if (csPep) presets.push({ db: csPep, label: csVersionLabel(csPep, 'protein') });
   }
   if (nucleotide.length) {
     var allGene = nucleotide.indexOf('all_genes') >= 0 ? 'all_genes' : (nucleotide.indexOf('all_gene') >= 0 ? 'all_gene' : null);
     if (allGene) presets.push({ db: allGene, label: 'All genes (combined)' });
     var csGenome = pickPresetDb(nucleotide, ['AABBDD_Chinese_Spring2.1.genome', 'AABBDD_Chinese_Spring1.0.genome', 'AABBDD_CS-IAAS.genome', 'AABBDD_CS-CAU.genome']);
-    if (csGenome) presets.push({ db: csGenome, label: 'Chinese Spring genome' });
+    if (csGenome) presets.push({ db: csGenome, label: csVersionLabel(csGenome, 'genome') });
     var csCds = pickPresetDb(nucleotide, ['AABBDD_Chinese_Spring2.1.add_Description.cds', 'AABBDD_Chinese_Spring1.0.add_Description.cds', 'AABBDD_CS-CAU.add_Description.cds']);
-    if (csCds) presets.push({ db: csCds, label: 'Chinese Spring CDS' });
+    if (csCds) presets.push({ db: csCds, label: csVersionLabel(csCds, 'CDS') });
   }
   var box = $('#blast-presets');
   if (!presets.length) { box.innerHTML = ''; return; }
