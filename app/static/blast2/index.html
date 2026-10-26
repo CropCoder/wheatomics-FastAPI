@@ -1851,10 +1851,10 @@ var DB_LIMIT = 20;
 // Sequence-retrieval-only aggregate DBs (mirrors SEQUENCE_ONLY_DBS in
 // app/api/routers/blast.py). Hidden defensively even if an older API build
 // still returns them.
-var SEQUENCE_ONLY_DBS = { 'all_Allohexaploid': 1, 'all_genomes': 1, 'all_other_genomes': 1 };
+var SEQUENCE_ONLY_DBS = { 'all_genomes': 1, 'all_other_genomes': 1 };
 // Legacy alias databases whose members are dangling after the 2026-10 rename.
 var LEGACY_ALIAS_DBS = {
-  'all_Diploid': 1, 'all_OtherTriticeae': 1, 'all_tri6': 1, 'all_Allohexaploid': 1,
+  'all_Diploid': 1, 'all_OtherTriticeae': 1, 'all_tri6': 1,
   'all_Allotetraploid': 1, 'all1_genomes': 1, 'all2_genomes': 1, 'all3_genomes': 1,
   'all4_genomes': 1, 'all5_genomes': 1, 'all6_genomes': 1, 'all7_genomes': 1
 };

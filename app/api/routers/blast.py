@@ -63,7 +63,6 @@ _SYNC_POLL_TIMEOUT_SECONDS = 1100
 #: retrieval endpoints (e.g. /api/sequence/chromosomes?database=all_genomes)
 #: and must not be offered in the BLAST database picker.
 SEQUENCE_ONLY_DBS = frozenset({
-    "all_Allohexaploid",
     "all_genomes",
     "all_other_genomes",
 })
@@ -76,7 +75,6 @@ LEGACY_ALIAS_DBS = frozenset({
     "all_Diploid",
     "all_OtherTriticeae",
     "all_tri6",
-    "all_Allohexaploid",
     "all_Allotetraploid",
     "all1_genomes", "all2_genomes", "all3_genomes", "all4_genomes",
     "all5_genomes", "all6_genomes", "all7_genomes",
@@ -94,6 +92,10 @@ BROKEN_DB_BASES = frozenset({"Foma.pep"})
 #: build is offered.
 DUPLICATE_ALIAS_DBS = frozenset({"CS21_S1_S2_S3_All_NLR"})
 
+#: Maintained aggregate alias exposed in All-in-one: all chromosome-level
+#: AABBDD (hexaploid) genome assemblies (rebuilt 2026-10-26 from the current
+#: per-assembly .genome DBs; heavy target, ~52 assemblies).
+#:
 #: Legacy singular aggregate aliases. `all_gene` / `all_protein` are duplicates
 #: of the maintained `all_genes` / `all_proteins` (identical counts, total
 #: length and DBLIST members, rebuilt 2026-10-24), so only the plural aliases
