@@ -51,6 +51,8 @@ MANUAL_TABLES = {
 GFF_SOURCES = {
     'AABBDD_Kariega': '/var/www/data/tiantian_data/wheat_genome/gff/Kariega.gff3',
     'DD_tauschii_Luo': '/var/www/data/tiantian_data/wheat_genome/gff/tauschii_Luo.gff3',
+    'AA_TA10622': '/var/www/data/tiantian_data/wheat_genome/add_Description/gff3/AA_TA10622.add_eggnog_ChineseSpring02G.gff3',
+    'HH_Morex': '/var/www/data/tiantian_data/wheat_genome/add_Description/gff3/HH_Morex.add_eggnog_ChineseSpring02G.gff3',
 }
 
 
