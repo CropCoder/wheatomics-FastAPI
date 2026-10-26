@@ -82,8 +82,9 @@ LEGACY_ALIAS_DBS = frozenset({
 })
 
 #: On-disk databases that are broken (blastdbcmd cannot open them) and must not
-#: be offered until they are re-indexed/removed. `Foma.pep` fails with
-#: `mdb_env_open`; it is also excluded from the getfasta aggregates upstream.
+#: be offered until they are re-indexed/removed. `Foma.pep` (mdb_env_open
+#: failure) was deleted on 2026-10-26; the name stays here as a guard in case an
+#: old backup is restored.
 BROKEN_DB_BASES = frozenset({"Foma.pep"})
 
 #: Databases that must never be advertised as BLAST targets.

@@ -894,11 +894,15 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.htm
   `all_Allohexaploid`（59 个成员悬空）、`all_Allotetraploid`（8 个）、`all_Diploid`（14 个）、
   `all_OtherTriticeae`（26 个）、`all_tri6`（48 个成员悬空，`.nal`+`.pal`）；
 - 4 个维护聚合库全部正常；
-- registry 只有 1 条真缺失：`Triticum_aestivum_JM44` → `primer.Triticum_aestivum_JM44`
-  （primer 专用库未建，和 BLAST / getfasta 无关）；
+- registry 只有 1 条异常：`Triticum_aestivum_JM44` → `primer.Triticum_aestivum_JM44`
+  （该 primer 库已删除）；**2026-10-26 已修正**为实际库 `AABBDD_Triticum_aestivum_JM44`
+  （三个 `blast_*` 字段统一，旧行备份在
+  `/var/www/data/masw_data/genome_registry_jm44_backup_20261026_161514.json`），复检缺失=0；
 - **已清理 13 个 alias 文件**（含 all_tri6 的 `.nal` + `.pal`）→
   `/var/www/data/masw_data/blastdb_alias_backup_20261026_155536/`（84K，回滚直接移回即可）；
-- `Foma.pep` 未删除文件，仅加入 `BROKEN_DB_BASES` 从列表隐藏，等后续重新建库或确认删除；
+- `Foma.pep` **已于 2026-10-26 删除**：9 个文件（`.phr/.pin/.pjs/.pog/.pos/.pot/.psq/.ptf/.pto`）
+  备份到 `/var/www/data/masw_data/blastdb_removed_20261026_161514/`，`BROKEN_DB_BASES`
+  里保留名字仅作为旧备份恢复时的保险；
 - 清理后 BLAST 列表：blastn 2,926 → 2,918，blastp 194 → 193（Foma.pep）。
 
 **约定**：以后重命名/重建 BLAST 库后，必须同步重建或删除相关 alias（否则 alias 会指向旧名），
