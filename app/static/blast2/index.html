@@ -1566,7 +1566,6 @@ Paste one or more FASTA sequences here…"></textarea>
                   <div class="blast-presets" id="blast-presets"></div>
                   <div class="blast-db-viewfilters" id="blast-db-viewfilters" hidden>
                     <span class="blast-hint">Show:</span>
-                    <button type="button" class="blast-kind-chip active" data-kind="all">All</button>
                     <button type="button" class="blast-kind-chip" data-kind="genome">Genome</button>
                     <button type="button" class="blast-kind-chip" data-kind="cds">CDS</button>
                     <button type="button" class="blast-kind-chip" data-kind="protein">Protein</button>
@@ -1974,7 +1973,7 @@ function applyDatabases(data) {
   });
   data.total = data.categories.reduce(function (a, cat) { return a + cat.count; }, 0);
   state.dbMeta = data.database_meta || {};
-  state.kindFilter = state.kindFilter || 'all';
+  state.kindFilter = state.kindFilter || '';
   state.chromOnly = !!state.chromOnly;
   state.categories = data.categories;
   state.dbNames = [];
@@ -2110,14 +2109,14 @@ function dbCheckbox(db, label, minimal) {
 
 function dbPassesFilters(db) {
   var meta = dbMeta(db), kind = meta.kind || 'other';
-  if (state.kindFilter && state.kindFilter !== 'all' && kind !== state.kindFilter) return false;
+  if (state.kindFilter && kind !== state.kindFilter) return false;
   if (state.chromOnly && kind !== 'aggregate' && !meta.chromosome_level) return false;
   return true;
 }
 
 function updateKindChips() {
   $$('#blast-db-viewfilters [data-kind]').forEach(function (chip) {
-    chip.classList.toggle('active', chip.getAttribute('data-kind') === (state.kindFilter || 'all'));
+    chip.classList.toggle('active', chip.getAttribute('data-kind') === state.kindFilter);
   });
 }
 
@@ -2930,7 +2929,8 @@ function init() {
   $('#blast-db-viewfilters').addEventListener('click', function (event) {
     var chip = event.target.closest('[data-kind]');
     if (!chip) return;
-    state.kindFilter = chip.getAttribute('data-kind');
+    var kind = chip.getAttribute('data-kind');
+    state.kindFilter = state.kindFilter === kind ? '' : kind;
     refreshDbLists();
   });
   $('#blast-chrom-only').addEventListener('change', function () {
