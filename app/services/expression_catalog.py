@@ -25,12 +25,15 @@ def _fetch_all_projects() -> list[dict[str, Any]]:
                         labels_raw = []
                 projects.append({
                     "id": row["table_name"],
-                    "description": row["display_name"],
+                    # Normalise at fetch time: project_meta stores trailing "\r" and
+                    # stray spaces (e.g. display_name "... leaf "), which used to leak
+                    # into the flat API payload while the tree payload was stripped.
+                    "description": (row["display_name"] or "").strip(),
                     "categories": labels_raw or [],
-                    "citation": row.get("citation") or "",
-                    "group": row.get("group_name") or "Others",
-                    "subgroup": row.get("subgroup") or "",
-                    "sub_subgroup": row.get("sub_subgroup") or "",
+                    "citation": (row.get("citation") or "").strip(),
+                    "group": (row.get("group_name") or "Others").strip() or "Others",
+                    "subgroup": (row.get("subgroup") or "").strip(),
+                    "sub_subgroup": (row.get("sub_subgroup") or "").strip(),
                 })
     except Exception:
         pass
@@ -75,7 +78,7 @@ def list_projects() -> dict:
     # Build ordered list of groups
     group_order = [
         "wheat developmental tissues",
-        "wheat-biotic interaction",
+        "wheat biotic interaction",
         "wheat abiotic stresses",
         "wheat population",
         "wheat genetic material",

@@ -109,6 +109,15 @@
   .checkbox-controls { margin-bottom: 6px; }
   .checkbox-controls .btn-sm { font-size: 12px; padding: 2px 10px; }
 
+  /* ----- citation block (structured, readable) ----- */
+  .citation-box .citation-title { font-weight: 600; margin-bottom: 2px; }
+  .citation-box .citation-desc { margin-bottom: 2px; }
+  .citation-box .citation-pub { margin-bottom: 2px; }
+  .citation-box .citation-links { margin-top: 3px; }
+  .citation-box .citation-links a { text-decoration: underline; }
+  .project-result > h5 { margin-bottom: 6px; }
+  .checkbox-item span.item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
   /* ----- visit stats footer ----- */
   .visit-stats { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
   .visit-stats .vs-pill {
@@ -216,6 +225,7 @@ var _hmt = _hmt || [];
         <div style="margin-bottom:6px;font-size:13px;color:#6c757d;">Select one or more databases
           <button type="button" class="btn btn-sm btn-outline-secondary ml-2" onclick="clearAllProjects()" style="padding:2px 10px;font-size:12px;">Clear all</button>
         </div>
+        <div id="selected-summary" class="help-text" style="margin-bottom:6px;color:#6c757d;">Selected databases: 0</div>
         <div id="project-list" class="checkbox-list"></div>
       </div>
     </div>
@@ -268,6 +278,118 @@ function escapeHtml(s) {
   return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 }
 
+  // ---- display / citation helpers (format fixes) ----
+  function shortenText(text, maxLen) {
+    text = String(text || '');
+    return text.length > maxLen ? text.slice(0, maxLen - 1) + '…' : text;
+  }
+
+  // Keep 6 significant digits so small non-zero values are not rounded to "0.0"
+  function fmtExpr(v) {
+    if (v === null || v === undefined || v === '') return '-';
+    var n = Number(v);
+    if (!isFinite(n)) return '-';
+    if (n === 0) return '0';
+    if (Math.abs(n) < 0.0001) return n.toExponential(2);
+    return String(Number(n.toPrecision(6)));
+  }
+
+  // Map a dataset accession to its correct archive (CNCB CRA/PRJCA vs ENA vs NCBI)
+  function archiveUrl(acc) {
+    if (!acc) return '';
+    acc = String(acc).trim();
+    if (/^CRA/i.test(acc)) return 'https://ngdc.cncb.ac.cn/gsa/browse/' + acc;
+    if (/^PRJCA/i.test(acc)) return 'https://ngdc.cncb.ac.cn/bioproject/browse/' + acc;
+    if (/^PRJN[AE]/i.test(acc)) return 'https://www.ncbi.nlm.nih.gov/bioproject/' + acc;
+    if (/^(PRJEB|PRJDB|ERP|SRP|ERR|DRR)/i.test(acc)) return 'https://www.ebi.ac.uk/ena/browser/view/' + acc;
+    return '';
+  }
+
+  // Turn the raw citation string stored in project_meta into readable fields.
+  function parseCitation(raw, projectId) {
+    var out = { desc: '', pub: '', pubmed: '', doi: '', archiveAcc: '', archiveHref: '' };
+    var s = String(raw || '').trim();
+    if (!s) return out;
+    var a = /<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]*)<\/a>/i.exec(s);
+    if (a) {
+      out.archiveHref = a[1];
+      out.archiveAcc = (a[2] || '').trim();
+      s = s.replace(a[0], ' ');
+    }
+    var pm = /https?:\/\/(?:pubmed\.ncbi\.nlm\.nih\.gov\/\d+|pmc\.ncbi\.nlm\.nih\.gov\/articles\/PMC\d+)\/?/i.exec(s);
+    if (pm) { out.pubmed = pm[0]; s = s.replace(pm[0], ' '); }
+    var dm = /https?:\/\/(?:dx\.)?doi\.org\/10\.[^\s<;"']+/i.exec(s);
+    if (dm) {
+      out.doi = dm[0].replace(/^http:/i, 'https:');
+      s = s.replace(dm[0], ' ');
+    } else {
+      var bare = /\b10\.\d{4,9}\/[^\s<;"']+/i.exec(s);
+      if (bare) {
+        out.doi = 'https://doi.org/' + bare[0].replace(/[.;]+$/, '');
+        s = s.replace(bare[0], ' ');
+      }
+    }
+    var pi = s.search(/publication\s*[:：]/i);
+    if (pi >= 0) {
+      out.desc = s.slice(0, pi);
+      out.pub = s.slice(pi).replace(/^publication\s*[:：]\s*/i, '');
+    } else {
+      out.desc = s;
+    }
+    function scrub(t) {
+      return t.replace(/description\s*[:：]\s*/ig, ' ')
+              .replace(/publication\s*[:：]\s*/ig, ' ')
+              .replace(/pubmed\s*link\s*[:：]\s*/ig, ' ')
+              .replace(/doi\s*link\s*[:：]\s*/ig, ' ')
+              .replace(/https?:\/\/\S+/ig, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+    }
+    out.desc = scrub(out.desc);
+    out.pub = scrub(out.pub);
+    var pidAcc = (String(projectId || '').match(/^(PRJ[A-Z]{2}\d+|CRA\d+|ERP\d+)/i) || [])[0];
+    var acc = out.archiveAcc || pidAcc || '';
+    out.archiveAcc = acc;
+    var mapped = archiveUrl(acc);
+    if (mapped) out.archiveHref = mapped;
+    else if (!/^https?:\/\//i.test(out.archiveHref || '')) out.archiveHref = '';
+    return out;
+  }
+
+  function buildCitationBlock(projectId) {
+    var raw = projectCitations[projectId] || '';
+    if (!raw) return null;
+    var c = parseCitation(raw, projectId);
+    var $box = $('<div class="alert alert-info citation-box" style="font-size:13px;margin-bottom:12px;"></div>');
+    $box.append($('<div class="citation-title"></div>').text('Citation'));
+    if (c.desc) $box.append($('<div class="citation-desc"></div>').text(c.desc));
+    if (c.pub) $box.append($('<div class="citation-pub"></div>').text(c.pub));
+    var links = [];
+    if (c.pubmed) links.push({ label: 'PubMed', href: c.pubmed });
+    if (c.doi) links.push({ label: 'DOI', href: c.doi });
+    if (c.archiveAcc && c.archiveHref) links.push({ label: c.archiveAcc, href: c.archiveHref });
+    if (links.length) {
+      var $links = $('<div class="citation-links"></div>');
+      links.forEach(function (l, i) {
+        if (i) $links.append(document.createTextNode(' · '));
+        $links.append($('<a target="_blank" rel="noopener"></a>').attr('href', l.href).text(l.label));
+      });
+      $box.append($links);
+    }
+    return $box;
+  }
+
+  function updateSelectedSummary() {
+    var $el = $('#selected-summary');
+    if (!$el.length) return;
+    var $checked = $('#project-list input.proj-check:checked');
+    var n = $checked.length;
+    if (n === 0) { $el.text('Selected databases: 0'); return; }
+    var ids = [];
+    $checked.slice(0, 4).each(function () { ids.push($(this).val()); });
+    $el.text('Selected databases: ' + n + ' — ' + ids.join(', ') + (n > 4 ? ' …' : ''));
+  }
+
 function loadProjects() {
   $('#project-list').html('<span style="color:#999;">Loading...</span>');
   $.getJSON('/api/expression/projects')
@@ -281,65 +403,69 @@ function loadProjects() {
         projectCitations[p.id] = p.citation || '';
       });
 
-      // Render 3-level tree: group → subgroup → projects
-      if (data.groups) {
-        data.groups.forEach(function(group) {
-          var gId = 'grp-' + group.name.replace(/[^a-z0-9]/gi, '_');
-          var hasSubgroups = group.subgroups && group.subgroups.length > 0;
+      // Render project picker. Collapse redundant hierarchy levels when the
+      // group/subgroup/sub_subgroup names are identical (e.g. "wheat population" 3x).
+      function projectLabel(proj) {
+        var $label = $('<label class="checkbox-item"></label>').attr('title', proj.description || '');
+        var $cb = $('<input type="checkbox" class="proj-check">').val(proj.id);
+        if (proj.id === 'PRJEB5314_paired_tbl') $cb.prop('checked', true);
+        $label.append($cb).append(document.createTextNode(' ')).append(
+          $('<span class="item-name"></span>').text(proj.description || proj.id)
+        );
+        return $label;
+      }
+      function appendProjects($container, projects) {
+        (projects || []).slice().sort(function (a, b) {
+          return String(a.description || '').localeCompare(String(b.description || ''));
+        }).forEach(function (proj) { $container.append(projectLabel(proj)); });
+      }
+      function eachProject($body, group) {
+        var subs = group.subgroups || [];
+        var collapseGroup = subs.length === 1 && ((subs[0].name || '') === (group.name || ''));
+        if (collapseGroup) return emitSubgroup($body, subs[0]);
+        subs.forEach(function (subgroup) { emitSubgroup($body, subgroup); });
+      }
+      function emitSubgroup($parent, subgroup) {
+        var ssgs = subgroup.sub_subgroups || [];
+        var collapseSub = ssgs.length === 1 && ((!ssgs[0].name) || ((ssgs[0].name || '') === (subgroup.name || '')));
+        if (collapseSub) { appendProjects($parent, ssgs[0].projects); return; }
+        var sgId = $parent.attr('id') + '-sg-' + (subgroup.name || '__none').replace(/[^a-z0-9]/gi, '_');
+        var projCount = ssgs.reduce(function (acc, x) { return acc + ((x.projects || []).length); }, 0);
+        $parent.append(
+          '<div class="checkbox-subgroup-label" data-target="#' + sgId + '-body">' +
+          '<span class="arrow">▸</span> ' + escapeHtml(subgroup.name || '—') + ' (' + projCount + ')' +
+          '</div>'
+        );
+        var $sgBody = $('<div id="' + sgId + '-body" style="display:none;"></div>');
+        $parent.append($sgBody);
+        ssgs.forEach(function (ssg) {
+          var ssgId = sgId + '-ssg-' + (ssg.name || '__none').replace(/[^a-z0-9]/gi, '_');
+          $sgBody.append(
+            '<div class="checkbox-sub-subgroup-label" data-target="#' + ssgId + '-body">' +
+            '<span class="arrow">▸</span> ' + escapeHtml(ssg.name || '—') +
+            ' (' + ((ssg.projects || []).length) + ')' +
+            '</div>'
+          );
+          var $ssgBody = $('<div id="' + ssgId + '-body" style="display:none;"></div>');
+          $sgBody.append($ssgBody);
+          appendProjects($ssgBody, ssg.projects);
+        });
+      }
 
-          // Group-level label (no checkbox, arrow only)
+      if (data.groups) {
+        data.groups.forEach(function (group) {
+          var gId = 'grp-' + group.name.replace(/[^a-z0-9]/gi, '_');
           container.append(
             '<div class="checkbox-group-label" data-target="#' + gId + '-body">' +
-            '<span class="arrow">▸</span> ' +
-            escapeHtml(group.name) +
+            '<span class="arrow">▸</span> ' + escapeHtml(group.name) +
             '</div>'
           );
           var $body = $('<div id="' + gId + '-body" style="display:none;"></div>');
           container.append($body);
-
-          if (hasSubgroups) {
-            group.subgroups.forEach(function(subgroup) {
-              var sgId = gId + '-sg-' + (subgroup.name || '__none').replace(/[^a-z0-9]/gi, '_');
-              var sgName = subgroup.name || '—';
-              var subSubGroups = subgroup.sub_subgroups || [];
-              var projCount = subSubGroups.reduce(function(acc, ssg) { return acc + ssg.projects.length; }, 0);
-              // Subgroup label (no checkbox, arrow + count)
-              $body.append(
-                '<div class="checkbox-subgroup-label" data-target="#' + sgId + '-body">' +
-                '<span class="arrow">▸</span> ' +
-                escapeHtml(sgName) + ' (' + projCount + ')' +
-                '</div>'
-              );
-              var $sgBody = $('<div id="' + sgId + '-body" style="display:none;"></div>');
-              $body.append($sgBody);
-
-              subSubGroups.forEach(function(ssg) {
-                var ssgId = sgId + '-ssg-' + (ssg.name || '__none').replace(/[^a-z0-9]/gi, '_');
-                var ssgName = ssg.name || '—';
-                // sub_subgroup label (no checkbox, arrow + count)
-                $sgBody.append(
-                  '<div class="checkbox-sub-subgroup-label" data-target="#' + ssgId + '-body">' +
-                  '<span class="arrow">▸</span> ' +
-                  escapeHtml(ssgName) + ' (' + ssg.projects.length + ')' +
-                  '</div>'
-                );
-                var $ssgBody = $('<div id="' + ssgId + '-body" style="display:none;"></div>');
-                $sgBody.append($ssgBody);
-
-                ssg.projects.forEach(function(proj) {
-                  var checked = (proj.id === 'PRJEB5314_paired_tbl') ? ' checked' : '';
-                  $ssgBody.append(
-                    '<label class="checkbox-item" title="' + escapeHtml(proj.description) + '">' +
-                    '<input type="checkbox" value="' + proj.id + '" class="proj-check"' + checked + '> ' +
-                    escapeHtml(proj.description) +
-                    '</label>'
-                  );
-                });
-              });
-            });
-          }
+          eachProject($body, group);
         });
       }
+      updateSelectedSummary();
 
       // ---- Accordion toggle (click label → expand/collapse) ----
       $('#project-list').on('click', '.checkbox-group-label', function(e) {
@@ -385,9 +511,9 @@ function loadProjects() {
         }
       });
 
-      // ---- Parent → children propagation ----
+      // ---- Keep the selected-databases summary in sync ----
       $('#project-list').on('change', '.proj-check', function() {
-        // When all projects in a subgroup become checked/unchecked, nothing extra needed
+        updateSelectedSummary();
       });
     })
     .fail(function() {
@@ -398,16 +524,20 @@ function loadProjects() {
 function showError(msg) {
   $('#error-msg').text(msg).show();
   $('#loading-indicator').hide();
+  // Do not leave stale results from a previous query under a validation error
+  $('#result-area').empty().hide();
 }
 
 function clearAllProjects() {
   $('#project-list .proj-check').prop('checked', false);
+  updateSelectedSummary();
 }
 
 function queryExpression() {
   var projects = [];
-  $('#project-list input:checked').each(function() { projects.push($(this).val()); });
+  $('#project-list input.proj-check:checked').each(function() { projects.push($(this).val()); });
   var genesRaw = $('#gene-input').val().trim();
+  $('#error-msg').hide();
   if (!projects || projects.length === 0) { showError('Please select at least one expression project'); return; }
   if (!genesRaw) { showError('Please input gene ID(s)'); return; }
 
@@ -419,45 +549,60 @@ function queryExpression() {
   });
   if (genes.length === 0) { showError('No valid gene IDs'); return; }
 
-  $('#error-msg').hide();
-  $('#result-area').hide().empty();
+  $('#result-area').empty().show();
   $('#loading-indicator').show();
 
   var projectNames = {};
-  $('#project-list label').each(function() {
+  $('#project-list label.checkbox-item').each(function() {
     projectNames[$(this).find('input').val()] = $.trim($(this).text());
   });
 
   var geneIds = genes.join(',');
   var doneCount = 0;
   var total = projects.length;
+  var blocks = {};
+
+  // Pre-create result blocks in the user's selection order, so responses that
+  // complete out of order still render deterministically (instead of AJAX order).
+  projects.forEach(function(proj) {
+    var $block = $('<div class="project-result" style="margin-top:30px;"></div>');
+    var $h = $('<h5></h5>').text(projectNames[proj] || proj);
+    var $chart = $('<div class="chart-container"></div>');
+    var $table = $('<div class="data-table-container"></div>');
+    $block.append($h, $chart, $table);
+    $('#result-area').append($block);
+    blocks[proj] = { chart: $chart, table: $table };
+  });
+
+  function finishOne() {
+    doneCount++;
+    if (doneCount === total) {
+      $('#loading-indicator').hide();
+      var $first = $('#result-area .project-result').first();
+      if ($first.length) {
+        $('html, body').animate({ scrollTop: $first.offset().top - 20 }, 250);
+      }
+    }
+  }
 
   projects.forEach(function(proj) {
+    var b = blocks[proj];
     $.getJSON('/api/expression/query', { gene_ids: geneIds, project: proj })
       .done(function(resp) {
-        doneCount++;
-        if (doneCount === total) { $('#loading-indicator').hide(); }
-        var projDiv = $('<div>').addClass('project-result').css('margin-top', '30px');
-        $('#result-area').append(projDiv);
-        projDiv.append('<h5>' + (projectNames[proj] || proj) + '</h5>');
-        var chartDiv = $('<div>').addClass('chart-container');
-        var tableDiv = $('<div>').addClass('data-table-container');
-        projDiv.append(chartDiv);
-        projDiv.append(tableDiv);
         if (!resp || !resp.success || !resp.data) {
-          tableDiv.append('<div class="alert alert-danger">Failed to load: ' +
-            ((resp && resp.message) || 'unknown error') + '</div>');
-          return;
+          b.table.append($('<div class="alert alert-danger"></div>')
+            .text('Failed to load: ' + ((resp && resp.message) || 'unknown error')));
+        } else {
+          renderResults(resp.data, proj, projectNames[proj] || proj, genes, b.chart, b.table);
         }
-        renderResults(resp.data, proj, projectNames[proj] || proj, genes, chartDiv, tableDiv);
+        finishOne();
       })
       .fail(function(jqXHR) {
-        doneCount++;
-        if (doneCount === total) { $('#loading-indicator').hide(); }
-        $('#result-area').append(
-          '<div class="alert alert-danger">' + (projectNames[proj] || proj) + ': ' +
-          (jqXHR.responseJSON ? jqXHR.responseJSON.detail : jqXHR.statusText) + '</div>'
-        );
+        var msg = (jqXHR.responseJSON && (jqXHR.responseJSON.detail || jqXHR.responseJSON.message))
+                  || jqXHR.statusText || 'request failed';
+        b.table.append($('<div class="alert alert-danger"></div>')
+          .text((projectNames[proj] || proj) + ': ' + msg));
+        finishOne();
       });
   });
 }
@@ -465,22 +610,25 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
 
   // 基因版本转换信息
   if (resp.genes_converted && Object.keys(resp.genes_converted).length > 0) {
-    var convHtml = '<div class="alert alert-info"><small><strong>Gene ID Conversion:</strong><br>';
+    var $conv = $('<div class="alert alert-info"><small></small></div>');
+    $conv.find('small').append($('<strong></strong>').text('Gene ID Conversion:')).append('<br>');
     Object.keys(resp.genes_converted).forEach(function(k) {
-      convHtml += k + ' → ' + resp.genes_converted[k] + '<br>';
+      $conv.find('small').append(document.createTextNode(k + ' → ' + resp.genes_converted[k])).append('<br>');
     });
-    convHtml += '</small></div>';
-    tableDiv.append(convHtml);
+    tableDiv.append($conv);
   }
 
   // 未找到的基因
   if (resp.genes_not_found && resp.genes_not_found.length > 0) {
-    tableDiv.append('<div class="alert alert-warning"><small><strong>Not found:</strong> ' + resp.genes_not_found.join(', ') + '</small></div>');
+    var $nf = $('<div class="alert alert-warning"><small></small></div>');
+    $nf.find('small').append($('<strong></strong>').text('Not found: '))
+      .append(document.createTextNode(resp.genes_not_found.join(', ')));
+    tableDiv.append($nf);
   }
 
   if (!resp.results || resp.results.length === 0) {
-    tableDiv.append('<div class="alert alert-warning">No expression data found for the given genes in this project.</div>');
-    $('#result-area').show();
+    tableDiv.append($('<div class="alert alert-warning"></div>')
+      .text('No expression data found for the given genes in this project.'));
     return;
   }
 
@@ -641,6 +789,19 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
   });
 
 
+  // === 引用信息（结构化渲染，放在图表上方；不再直出原始 citation 字符串） ===
+  var citationBlock = buildCitationBlock(projectName);
+  if (citationBlock) chartDiv.append(citationBlock);
+
+  // 长描述不再整段作为图表标题（会压住绘图区/导出按钮）；完整描述已在块标题显示
+  // Full description is shown in the block <h5>; the chart title is shortened so it
+  // never covers the plot / Export button at supported widths (375 / 768 / 1440).
+  var titleMaxLen = window.innerWidth < 600 ? 34 : (window.innerWidth < 900 ? 55 : 80);
+  var chartTitleText = shortenText(projectDesc, titleMaxLen);
+  var approxCharsPerLine = Math.max(26, Math.floor((($(chartDiv).width() || 900)) / 8));
+  var titleLines = Math.max(1, Math.ceil(chartTitleText.length / approxCharsPerLine));
+  var dynamicMarginTop = 30 + titleLines * 20;
+
   var chartId =
     'expr-chart-' +
     Math.random().toString(36).substr(2, 6);
@@ -671,11 +832,11 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
        * 标签越长，整体图高度适当增加。
        */
       height: Math.min(
-        680,
-        Math.max(480, 420 + bottomMargin - 100)
+        720,
+        Math.max(480, 420 + bottomMargin - 100 + Math.max(0, dynamicMarginTop - 55))
       ),
 
-      marginTop: 55,
+      marginTop: dynamicMarginTop,
 
       marginBottom: bottomMargin,
 
@@ -698,7 +859,10 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
     },
 
     title: {
-      text: projectDesc
+      text: chartTitleText,
+      align: 'left',
+      x: 6,
+      style: { fontSize: (window.innerWidth < 600 ? '12px' : '14px'), fontWeight: '600' }
     },
 
     /*
@@ -743,7 +907,8 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
 
         rotation: -45,
 
-        step: 1,
+        // 宽样本面板（>80 个样本）抽稀显示，避免 638 个标签叠成黑带
+        step: labels.length > 80 ? Math.ceil(labels.length / 80) : 1,
 
         /*
          * 不允许标签互相覆盖
@@ -828,6 +993,8 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
 
     exporting: {
 
+      filename: 'expression_' + projectName,
+
       buttons: {
         contextButton: {
           text: 'Export data'
@@ -842,42 +1009,33 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
     chart.addSeries(s);
   });
 
-  // === 引用信息（在图表上方） ===
-  if (projectCitations[projectName] && projectCitations[projectName] !== '') {
-    chartDiv.append('<div class="alert alert-info" style="font-size:13px;margin-bottom:10px;"><strong>Citation:</strong> ' + projectCitations[projectName] + '</div>');
-  }
-
   // === 数据表格 ===
   var hasStd = resp.results[0].points.some(function(p) { return p.std !== null; });
 
-  var html = '<h6 class="mb-2">' + projectDesc + '</h6>';
-  html += '<div style="max-height:500px;overflow:auto;"><table class="table table-bordered table-hover table-sm" style="min-width:100%;white-space:nowrap;">';
+  var html = '<div style="max-height:500px;overflow:auto;"><table class="table table-bordered table-hover table-sm" style="min-width:100%;white-space:nowrap;">';
 
-  // 表头
+  // 表头（escape，避免标签里的 <>& 直接注入 HTML）
   html += '<thead><tr><th style="position:sticky;top:0;background:#f8f9fa;">Gene ID</th>';
-  labels.forEach(function(l) { html += '<th style="position:sticky;top:0;background:#f8f9fa;">' + l + '</th>'; });
+  labels.forEach(function(l) { html += '<th style="position:sticky;top:0;background:#f8f9fa;">' + escapeHtml(l) + '</th>'; });
   if (hasStd) {
-    labels.forEach(function(l) { html += '<th style="position:sticky;top:0;background:#f8f9fa;">' + l + ' (SD)</th>'; });
+    labels.forEach(function(l) { html += '<th style="position:sticky;top:0;background:#f8f9fa;">' + escapeHtml(l) + ' (SD)</th>'; });
   }
   html += '</tr></thead><tbody>';
 
   resp.results.forEach(function(gene) {
-    html += '<tr><td><strong>' + gene.gene_id + '</strong></td>';
+    html += '<tr><td><strong>' + escapeHtml(gene.gene_id) + '</strong></td>';
     gene.points.forEach(function(p) {
-      var v = parseFloat(p.value);
-      html += '<td>' + (isNaN(v) ? '-' : v.toFixed(1)) + '</td>';
+      html += '<td>' + fmtExpr(p.value) + '</td>';
     });
     if (hasStd) {
       gene.points.forEach(function(p) {
-        var s = p.std;
-        html += '<td>' + (s !== null && s !== undefined ? parseFloat(s).toFixed(2) : '-') + '</td>';
+        html += '<td>' + fmtExpr(p.std) + '</td>';
       });
     }
     html += '</tr>';
   });
   html += '</tbody></table></div>';
   tableDiv.append(html);
-  $('html, body').animate({ scrollTop: $('#result-area').offset().top - 20 }, 300);
 }
 </script>
 </body>
