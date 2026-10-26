@@ -1409,6 +1409,11 @@
     .blast-chr-group > summary::before { content: '▸'; color: var(--muted); font-size: 9px; }
     .blast-chr-group[open] > summary::before { content: '▾'; }
     .blast-chr-group .blast-db-group-list { padding-left: 10px; }
+
+    /* NCBI-style graphic summary legend */
+    .blast-graphic-legend { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-top: 14px; }
+    .blast-graphic-legend-item { display: inline-flex; align-items: center; gap: 6px; color: #3d564b; font-family: var(--utility); font-size: 11px; }
+    .blast-graphic-legend-item i { display: inline-block; width: 16px; height: 10px; border-radius: 2px; }
   </style>
 </head>
 <body>
@@ -1699,9 +1704,17 @@ Paste one or more FASTA sequences here…"></textarea>
           <section class="blast-panel" id="tab-graphic">
             <div class="blast-card-head-row">
               <h3 class="blast-panel-title">Graphic Summary</h3>
-              <span class="blast-hint">Each bar is an HSP along the query; colour = identity. Click a bar to open its description.</span>
+              <span class="blast-hint">Each bar is an HSP along the query; colour = alignment score (bitscore). Click a bar to open its description.</span>
             </div>
             <div id="graphic-summary" class="blast-graphic"></div>
+            <div class="blast-graphic-legend" id="graphic-legend">
+              <span class="blast-hint">Alignment score (bitscore):</span>
+              <span class="blast-graphic-legend-item"><i style="background:#252525"></i>&lt;40</span>
+              <span class="blast-graphic-legend-item"><i style="background:#3182bd"></i>40–50</span>
+              <span class="blast-graphic-legend-item"><i style="background:#31a354"></i>50–80</span>
+              <span class="blast-graphic-legend-item"><i style="background:#c51b8a"></i>80–200</span>
+              <span class="blast-graphic-legend-item"><i style="background:#d7301f"></i>≥200</span>
+            </div>
           </section>
 
           <section class="blast-panel" id="tab-hits" hidden>
@@ -2669,8 +2682,11 @@ function aggregateSubjects() {
     var maxScore = Math.max.apply(null, hsps.map(function (h) { return h.bitscore; }));
     var totalScore = hsps.reduce(function (a, h) { return a + h.bitscore; }, 0);
     var evalue = Math.min.apply(null, hsps.map(function (h) { return h.evalue; }));
-    var pident = Math.max.apply(null, hsps.map(function (h) { return h.pident; }));
-    var length = Math.max.apply(null, hsps.map(function (h) { return h.length; }));
+    // NCBI Descriptions principle: Per. ident comes from the highest-scoring
+    // HSP (best bitscore), not from the max identity among all HSPs.
+    var bestHsp = hsps.reduce(function (best, h) { return (!best || h.bitscore > best.bitscore) ? h : best; }, null);
+    var pident = bestHsp ? bestHsp.pident : 0;
+    var length = bestHsp ? bestHsp.length : 0;
     var intervals = hsps.map(function (h) { return [Math.min(h.qstart, h.qend), Math.max(h.qstart, h.qend)]; })
       .sort(function (a, b) { return a[0] - b[0]; });
     var covered = 0, curStart = null, curEnd = null;
@@ -2827,6 +2843,23 @@ function downloadSelected() {
   setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 
+// NCBI Graphic Summary: colour by alignment score (bitscore) bins.
+var BLAST_SCORE_BINS = [
+  { min: 200, color: '#d7301f', label: '≥200' },
+  { min: 80, max: 200, color: '#c51b8a', label: '80–200' },
+  { min: 50, max: 80, color: '#31a354', label: '50–80' },
+  { min: 40, max: 50, color: '#3182bd', label: '40–50' },
+  { min: -Infinity, max: 40, color: '#252525', label: '<40' }
+];
+function blastScoreColor(bitscore) {
+  var bits = Number(bitscore) || 0;
+  for (var i = 0; i < BLAST_SCORE_BINS.length; i++) {
+    var b = BLAST_SCORE_BINS[i];
+    if (bits >= b.min && (b.max == null || bits < b.max)) return b.color;
+  }
+  return '#252525';
+}
+
 function renderGraphicSummary() {
   var box = $('#graphic-summary');
   if (!state.hits.length) {
@@ -2845,10 +2878,9 @@ function renderGraphicSummary() {
         var a = Math.min(h.qstart, h.qend), b = Math.max(h.qstart, h.qend);
         var left = ((a - 1) / qlen) * 100;
         var width = Math.max(((b - a + 1) / qlen) * 100, 0.6);
-        var hue = Math.round(Math.max(0, Math.min(1, (s.pident - 30) / 70)) * 120);
         return '<span class="blast-graphic-hit" style="left:' + left.toFixed(3) + '%;width:' + width.toFixed(3) +
-          '%;background:hsl(' + hue + ',65%,40%)" data-key="' + esc(s.key) + '" ' +
-          'title="' + esc(s.sseqid + ' · ' + s.pident.toFixed(1) + '% identity · E ' + fmtEvalue(h.evalue) + ' (query ' + a + '–' + b + ')') + '"></span>';
+          '%;background:' + blastScoreColor(h.bitscore) + '" data-key="' + esc(s.key) + '" ' +
+          'title="' + esc(s.sseqid + ' · bitscore ' + fmtFloat(h.bitscore, 1) + ' · ' + h.pident.toFixed(1) + '% identity · E ' + fmtEvalue(h.evalue) + ' (query ' + a + '–' + b + ')') + '"></span>';
       }).join('');
       return '<div class="blast-graphic-row" data-key="' + esc(s.key) + '">' +
         '<span class="blast-graphic-label" title="' + esc(s.sseqid) + '">' + esc(s.sseqid) + '</span>' +
