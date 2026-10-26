@@ -1,0 +1,466 @@
+{
+ "AABBDD_ArinaLrFor": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_ArinaLrFor.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_CDC_Landmark": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_CDC_Landmark.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_CDC_Stanley": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_CDC_Stanley.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_CS-IAAS": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_CS-IAAS.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_CWI86942": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_CWI86942.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Chinese_Spring_Triticum_4.0": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Chinese_Spring_Triticum_4.0.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_JIN50": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_JIN50.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Jagger": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Jagger.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Julius": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Julius.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_LongReach_Lancer": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_LongReach_Lancer.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Mace": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Mace.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Mianyang": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Mianyang.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_NC99BGTAG11": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_NC99BGTAG11.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Norin61": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Norin61.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Renan": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Renan.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_SY_Mattis": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_SY_Mattis.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Triticum_aestivum_MOV": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Triticum_aestivum_MOV.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Triticum_aestivum_alchemy": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Triticum_aestivum_alchemy.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Triticum_spelta_PI190962": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABBDD_Triticum_spelta_PI190962.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "AABB_Chili": {
+  "assembly_level": "Scaffold",
+  "chromosome_count": null
+ },
+ "AABB_Chili.scaffold": {
+  "assembly_level": "Scaffold",
+  "chromosome_count": null
+ },
+ "AABB_IG77365": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_IG77365.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_IG99236": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_IG99236.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_Mahmoudi": {
+  "assembly_level": "Scaffold",
+  "chromosome_count": null
+ },
+ "AABB_Mahmoudi.scaffold": {
+  "assembly_level": "Scaffold",
+  "chromosome_count": null
+ },
+ "AABB_NU00021": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_NU00021.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_NU01905": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_NU01905.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_NU01954": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_NU01954.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_PI294478": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_PI294478.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_PI330553": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_PI330553.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_Wild_emmerV2": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_Wild_emmerV2.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_XM000719": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_XM000719.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_XM000834": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_XM000834.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_XM001097": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_XM001097.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_Zavitan": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_Zavitan.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_durum_PI192051": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AABB_durum_PI192051.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "AA_Triticum_urartu": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "AA_Triticum_urartu.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "DD_Aegilops_tauschii_Jia": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "DD_Aegilops_tauschii_Jia.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_Barley2": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_Barley2.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_Barley3": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_Barley3.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT11": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT11.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT144": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT144.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT262": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT262.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT286": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT286.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT333": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT333.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT628": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT628.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT67": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT67.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT880": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_FT880.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_Hordeum_erectifolium": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "HH_Hordeum_erectifolium.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "MMUU_Aegilops_geniculata": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "MMUU_Aegilops_geniculata.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "Other_Thinopyrum_ponticum": {
+  "assembly_level": "Scaffold",
+  "chromosome_count": null
+ },
+ "Other_Thinopyrum_ponticum.genome": {
+  "assembly_level": "Scaffold",
+  "chromosome_count": null
+ },
+ "RR_Secale_cereale": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "RR_Secale_cereale.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "RR_rye_Lo7": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "RR_rye_Lo7.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "RR_rye_weining2": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "RR_rye_weining2.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 7
+ },
+ "SSHH_Elymus_sibiricus_Gaomu": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "SSHH_Elymus_sibiricus_Gaomu.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "StStVVJJ_Thinopyrum_intermedium_PI440031": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "StStVVJJ_Thinopyrum_intermedium_PI440031.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "StStYYHH_Elymus_nutans": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "StStYYHH_Elymus_nutans.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "StStYYHH_Roegneria_kamoji": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "StStYYHH_Roegneria_kamoji.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "TT_Aegilops_mutica": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "TT_Aegilops_mutica.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 14
+ },
+ "fangenome_final": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ },
+ "fangenome_final.genome": {
+  "assembly_level": "Chromosome",
+  "chromosome_count": 21
+ }
+}
