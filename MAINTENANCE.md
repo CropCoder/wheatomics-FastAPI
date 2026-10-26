@@ -793,3 +793,55 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/wheatPSP/ --labe
 - 对比度会跳过背景图/渐变上的文字（无法可靠计算），这类地方仍靠人眼；
 - 主题自带的问题（如 V2.0/outsitelink 的 "Back to top ↑" 在手机上是 72×15px）会作为
   Warn 报出来，属于**仓库外主题**的问题，改主题时要一并修，不要在单个工具页里私改。
+
+---
+
+## 十、BLAST SPA（新版搜索页 + 结果页）
+
+ViroBlast 老页面（`/blast/blast.html` + `blastresult2.php`，Apache docroot，不在本仓库）的替代实现，
+V2.0 设计语言、纯静态单页、复用现有 `/api/blast` 异步任务后端。**源码在本仓库**：
+
+- 页面：`app/static/blast2/index.html`（单文件，内联 CSS/JS；主题与 header/footer 取自
+  `/outsitelink.html`，与 wheatPTM 页一致）
+- 部署脚本：`scripts/deploy_blast2_preview.py`（docroot 拷贝 + 时间戳备份，幂等）
+- 预览地址：**https://wheatomics.sdau.edu.cn/blast/blast2.html**
+- 结果深链接：`/blast/blast2.html#/job/<job-id>`（job 结果保留 7 天，过期由 API 返回 404）
+
+### 页面能力
+
+**搜索视图**
+- 5 个 program（blastn/blastp/blastx/tblastn/tblastx），切换 program 自动重载对应类型的数据库；
+- 数据库选择器：按分类折叠（`/api/blast/databases?program=...`）、名称过滤、分类全选、快捷
+  “All proteins/All genes (combined)”、已选 chips、上限 20 个（与 API 限制一致）；
+- 查询输入：粘贴 FASTA 或多序列、上传 FASTA 文件（客户端读取，≤5 MB）、按 program 提供示例序列；
+- 参数：E-value、max target sequences、word size、matrix、输出格式（hits+alignments / 仅 TSV / 仅文本）；
+- 提交走 `POST /api/blast/search` 且 `wait=false`，立即进入结果视图并轮询
+  `GET /api/blast/status/{job_id}`；
+- 最近任务存 localStorage，可一键重开；带浏览器端哈希路由（`#/job/<uuid>`）。
+
+**结果视图**
+- 状态 pill（pending/running/done/error）+ 已用时间 + 任务元信息（program、库、参数、job id）；
+- Hits 表：解析 `result.tsv`（outfmt 6 + ppos + btop + stitle 共 15 列），支持按 E-value/bitscore/
+  identity/subject 排序、文本过滤、点击行展开 query/subject 区间 + BTOP + 完整标题；
+- Alignments：懒加载 `result.txt`（outfmt 0），超过 2 MB 只展示前 2 MB 并提示下载；
+- Downloads：直接给出 API 返回的 `download_urls`（tabular/traditional）。
+
+### 部署 / 校验
+
+```bash
+# 部署预览（服务器上；会先备份原文件）
+python3 scripts/deploy_blast2_preview.py
+python3 scripts/deploy_blast2_preview.py --check   # 期望 [OK]，用于确认 docroot 与仓库一致
+
+# 改完页面后本地验收
+bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.html
+```
+
+### 现状与待办（重要）
+
+- 老页面 `/blast/blast.html` 和 `/blast/blastresult2.php` **保持原样**，新 SPA 目前是独立预览地址；
+  是否把 `/blast/blast.html` 重定向/替换到新页、以及是否更新全站导航里的 BLAST 指链，属于产品决策。
+- 老 ViroBlast 的部分高级参数（soft mask、genetic code、alignment view 等）当前 `/api/blast`
+  不提供，新版只暴露后端支持的参数子集。
+- 每个 hit 的“图形化命中图（graphic overview）”和逐 hit 可展开的 pairwise 对齐（而不是整页 pre）
+  尚未实现，可作为后续迭代。

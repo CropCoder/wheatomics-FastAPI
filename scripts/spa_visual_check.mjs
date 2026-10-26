@@ -190,7 +190,13 @@ function inPageAudit() {
     for (let i = 0; i < interactive.length && smallTargets.length < 8; i++) {
       const el = interactive[i];
       if (!isVisible(el)) continue;
-      const rect = el.getBoundingClientRect();
+      // A checkbox/radio inside a label is tapped through the label row, and a
+      // visually-hidden file input is opened by its label button: measure those
+      // wrappers instead of the raw input box.
+      let target = el;
+      if (el.tagName === "INPUT" && el.closest("label")) target = el.closest("label");
+      const rect = target.getBoundingClientRect();
+      if (rect.width <= 1 && rect.height <= 1) continue;
       if (rect.width < 24 || rect.height < 24) {
         smallTargets.push({
           path: pathOf(el),
