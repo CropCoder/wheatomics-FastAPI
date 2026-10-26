@@ -1652,9 +1652,13 @@ Paste one or more FASTA sequences here…"></textarea>
                 </section>
 
                 <section class="blast-card">
-                  <h2 class="blast-card-title">Recent jobs</h2>
-                  <p class="blast-card-sub">Jobs from this browser, kept for quick reopening. Result files expire after 7 days.</p>
-                  <div id="blast-recent" class="blast-recent"></div>
+                  <h2 class="blast-card-title">Open a result</h2>
+                  <p class="blast-card-sub">Paste a BLAST job ID (or a result URL) to reopen its result page. Jobs are not stored in this browser.</p>
+                  <div class="blast-db-toolbar">
+                    <label class="blast-visually-hidden" for="job-id-input">BLAST job ID</label>
+                    <input id="job-id-input" class="blast-db-search" type="text" placeholder="67d1424c-d2e7-49a5-b1d7-be66b52df315" spellcheck="false">
+                    <button id="job-id-open" class="secondary-button" type="button">Open</button>
+                  </div>
                 </section>
               </aside>
             </div>
@@ -1668,6 +1672,7 @@ Paste one or more FASTA sequences here…"></textarea>
               <p class="section-kicker">BLAST result</p>
               <h2 class="blast-result-title" id="result-title">—</h2>
               <p class="blast-hint" id="result-sub"></p>
+              <p class="blast-hint" id="result-share" title="Shareable result URL"></p>
             </div>
             <div class="blast-result-actions">
               <a class="secondary-button" id="result-download-tsv" href="#" target="_blank" rel="noopener" download hidden>Download TSV</a>
@@ -2380,8 +2385,7 @@ function submitSearch(event) {
         queries: parseFastaQueryList(query)
       };
       try { localStorage.setItem('blast2.job.' + ctx.id, JSON.stringify(ctx)); } catch (e) {}
-      rememberJob(ctx);
-      location.hash = '#/job/' + ctx.id;
+      navigateToJob(ctx.id);
     })
     .catch(function (err) {
       btn.disabled = false;
@@ -2390,28 +2394,24 @@ function submitSearch(event) {
     });
 }
 
-// ---------- recent jobs ----------
-function recentJobs() {
-  try { return JSON.parse(localStorage.getItem('blast2.recent') || '[]'); } catch (e) { return []; }
+// ---------- job links / routing helpers ----------
+function jobResultUrl(id) {
+  return location.origin + location.pathname + '?job=' + encodeURIComponent(id);
 }
-function rememberJob(ctx) {
-  var list = recentJobs().filter(function (item) { return item.id !== ctx.id; });
-  list.unshift({ id: ctx.id, program: ctx.program, dbs: ctx.dbs.length, queryHeader: ctx.queryHeader, createdAt: ctx.createdAt });
-  try { localStorage.setItem('blast2.recent', JSON.stringify(list.slice(0, 10))); } catch (e) {}
-  renderRecent();
+function parsedJobId(raw) {
+  var m = String(raw || '').trim().match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+  return m && JOB_ID_RE.test(m[0]) ? m[0] : null;
 }
-function renderRecent() {
-  var list = recentJobs();
-  var box = $('#blast-recent');
-  if (!list.length) { box.innerHTML = '<p class="blast-recent-empty">No jobs yet in this browser.</p>'; return; }
-  box.innerHTML = list.map(function (item) {
-    var when = new Date(item.createdAt || Date.now());
-    return '<button type="button" class="blast-recent-item" data-job="' + esc(item.id) + '">' +
-      '<strong>' + esc(item.program) + ' · ' + item.dbs + ' database' + (item.dbs === 1 ? '' : 's') + '</strong>' +
-      esc((item.queryHeader || '').slice(0, 60)) + '<br>' + esc(when.toLocaleString()) + '</button>';
-  }).join('');
+function navigateToJob(id) {
+  history.pushState({ job: id }, '', '?job=' + encodeURIComponent(id));
+  route();
 }
-
+function openJobById(raw) {
+  var id = parsedJobId(raw);
+  if (!id) { showFormError('That does not look like a BLAST job ID (expected a 36-character UUID).'); return; }
+  showFormError('');
+  navigateToJob(id);
+}
 // ---------- result view & polling (NCBI-style) ----------
 function parseFastaQueryList(text) {
   var out = [], cur = null;
@@ -2457,7 +2457,9 @@ function showResultView(id) {
   var ctx = null;
   try { ctx = JSON.parse(localStorage.getItem('blast2.job.' + id) || 'null'); } catch (e) {}
   if (ctx) state.result = ctx;
-  $('#result-title').textContent = 'BLAST job ' + id.slice(0, 8);
+  $('#result-title').textContent = 'BLAST job ID: ' + id;
+  var share = $('#result-share');
+  if (share) share.textContent = 'Result link: ' + jobResultUrl(id);
   $('#result-sub').textContent = ctx
     ? (ctx.program + ' · ' + ctx.dbs.length + ' database' + (ctx.dbs.length === 1 ? '' : 's') + ' · ' + (ctx.queryHeader || '').slice(0, 70))
     : 'Waiting for job status…';
@@ -2981,9 +2983,15 @@ function loadAlignments() {
 
 // ---------- routing & init ----------
 function route() {
+  var id = parsedJobId(new URLSearchParams(location.search).get('job') || '');
+  if (id) { showResultView(id); return; }
   var m = (location.hash || '').match(/^#\/job\/([0-9a-fA-F-]{36})$/);
-  if (m && JOB_ID_RE.test(m[1])) showResultView(m[1]);
-  else showSearchView();
+  if (m && JOB_ID_RE.test(m[1])) {
+    history.replaceState({ job: m[1] }, '', '?job=' + encodeURIComponent(m[1]));
+    showResultView(m[1]);
+    return;
+  }
+  showSearchView();
 }
 
 function init() {
@@ -3100,12 +3108,12 @@ function init() {
   $('#hit-more').addEventListener('click', function () { state.shown += 100; renderDescriptions(); });
   $('#align-load').addEventListener('click', loadAlignments);
   attachGraphicHandlers();
-  $('#blast-recent').addEventListener('click', function (event) {
-    var btn = event.target.closest('[data-job]');
-    if (btn) location.hash = '#/job/' + btn.getAttribute('data-job');
+  $('#job-id-open').addEventListener('click', function () { openJobById($('#job-id-input').value); });
+  $('#job-id-input').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') { event.preventDefault(); openJobById(this.value); }
   });
   window.addEventListener('hashchange', route);
-  renderRecent();
+  window.addEventListener('popstate', route);
   setProgram('blastn');
   updateQueryMeta();
   route();
