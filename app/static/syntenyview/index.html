@@ -1,160 +1,116 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SynTeny Viewer - WheatOmics (MySQL)</title>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="SynTeny Viewer — explore homoeologous neighbourhood synteny of a wheat gene across selected target genomes.">
+<title>SynTeny Viewer | WheatOmics 2.0</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/api/v2shell/shell.css">
 <style>
-:root{--green:#26734d;--green2:#2e8b57;--blue:#2563eb;--soft:#f7f8fa;--line:#e5e7eb;--text:#111827;--muted:#64748b}
+:root{--green:#07583d;--green2:#118653;--blue:#118653;--soft:#fff;--line:#dfe9e2;--text:#163128;--muted:#66766e}
 *{box-sizing:border-box}
-body{font-family:-apple-system,Segoe UI,Arial,sans-serif;margin:0;background:var(--soft);color:var(--text)}
-#home_header{height:100px;line-height:100px;vertical-align:middle;margin:0 auto;padding:0;background:#0077b6;text-align:center}
-#logo_style{width:80px;height:80px;vertical-align:middle;margin-right:10px}
-#home_header span{font-size:28px;font-weight:bold;color:#fff}
-#header-tabs{background-color:#007DBC;text-align:center;padding-top:10px}
-#header-tabs ul{margin:0!important;padding:0!important;list-style:none!important}
-#header-tabs li{display:inline-block!important;width:190px!important}
-#header-tabs a{background:#0077b6;font-size:13pt;color:#fff!important;display:block;padding:8px;font-weight:bold;text-decoration:none!important;border-radius:5px 5px 0 0}
-#header-tabs a:hover{background:#98c1d9;color:#000!important}
-#header-tabs ul li{display:inline-block;list-style:none;position:relative}
-#header-tabs ul li ul{display:none!important;position:absolute}
-#header-tabs ul li:hover ul{display:block!important}
-#header-tabs ul li ul a{border-radius:0}
-#home_content{max-width:98%;margin:20px auto 30px auto;padding:0 10px}
-.tool-card{background:#fff;border-radius:10px;padding:18px 22px;box-shadow:0 3px 16px rgba(0,0,0,.10)}
-h5.card-title{margin-top:0}
+body{font-family:var(--body);margin:0;background:#fff;color:var(--ink)}
 .bar{display:grid;grid-template-columns:1fr;gap:10px;padding:8px 0 16px 0;border-bottom:1px solid var(--line)}
 .control-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
 .field{display:flex;flex-direction:column;gap:5px}
-.field label{font-size:12px;color:#334155;font-weight:700}
-.bar input,.bar select{padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;background:#fff;color:#111827}
-.bar button,.panel button{padding:8px 18px;border:0;border-radius:6px;background:var(--green);color:#fff;cursor:pointer;font-size:14px;font-weight:600}
-.bar button.secondary,.panel button.secondary{background:#475569}
-.bar button.small,.panel button.small{padding:7px 10px;font-size:12px;width:100%}
-.bar button:disabled,.panel button:disabled{background:#94a3b8;cursor:not-allowed}
-#status{padding:4px 0;color:#555;font-size:13px;line-height:1.5}
-#share{padding:4px 0 8px 0;color:#555;font-size:13px}
-#share a{color:#2563eb;text-decoration:none;font-weight:600}
+.field label{font-size:12px;color:var(--forest-deep);font-weight:700}
+.bar input,.bar select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:#fbfdfb;color:var(--ink)}
+.bar button,.panel button{padding:8px 18px;border:1px solid var(--forest);border-radius:999px;background:var(--forest);color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit}
+.bar button.secondary,.panel button.secondary{background:var(--mist);color:var(--forest);border-color:var(--line)}
+.bar button.small,.panel button.small{padding:7px 12px;font-size:12px;width:100%}
+.bar button:disabled,.panel button:disabled{background:#e9f1eb;color:#96a79d;border-color:var(--line);cursor:not-allowed}
+#status{padding:4px 0;color:var(--muted);font-size:13px;line-height:1.5;min-height:22px}
+#share{padding:4px 0 8px 0;color:var(--muted);font-size:13px}
+#share a{color:var(--leaf);text-decoration:none;font-weight:600}
 #share a:hover{text-decoration:underline}
 #canvas{overflow:visible;padding:6px 0 0 0}
 #svg{display:block;width:100%;height:auto;overflow:visible;background:transparent}
-.track-label{font-size:11px;fill:#111827;font-weight:700}
-.track-region{font-size:10px;fill:#64748b;font-weight:400}
-.tree-label{font-size:10px;fill:#0f172a;font-weight:700}
+.track-label{font-size:11px;fill:#163128;font-weight:700}
+.track-region{font-size:10px;fill:#66766e;font-weight:400}
+.tree-label{font-size:10px;fill:#163128;font-weight:700}
 .tree-line{fill:none;stroke:#475569;stroke-width:1.1;stroke-opacity:.85}
-.tree-title{font-size:11px;fill:#0f172a;font-weight:700}
+.tree-title{font-size:11px;fill:#163128;font-weight:700}
 .query-track-gene-label{font-size:10px;fill:#111;font-weight:600}
-.query-track-gene-label.search-gene{fill:var(--blue);font-weight:800}
+.query-track-gene-label.search-gene{fill:var(--leaf);font-weight:800}
 .gene{cursor:pointer;stroke:none;stroke-width:0}
 .link{fill:none;stroke-opacity:.28;stroke-width:1.1}
 .tip{position:fixed;background:#111;color:#fff;padding:6px 9px;border-radius:5px;font-size:12px;pointer-events:none;display:none;z-index:9;max-width:420px;line-height:1.35}
 .target-panel{display:grid;grid-template-columns:minmax(240px,0.95fr) minmax(440px,1.4fr) 150px;gap:14px;align-items:start;width:100%}
-.target-box{border:1px solid #cbd5e1;border-radius:8px;background:#fff;min-height:174px;max-height:235px;overflow:auto;padding:6px}
+.target-box{border:1px solid var(--line);border-radius:10px;background:#fff;min-height:174px;max-height:235px;overflow:auto;padding:6px}
 .target-filter{width:100%;box-sizing:border-box;margin-bottom:7px}
 .available-box button.genome-item{display:flex;width:100%}
 .selected-grid{display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start}
 .selected-grid button.genome-item{width:max-content;max-width:100%}
-.bar button.genome-item{display:inline-flex;align-items:center;justify-content:flex-start;gap:4px;box-sizing:border-box;padding:6px 8px;margin:1px 0;border:0;border-radius:5px;background:transparent!important;color:#000!important;cursor:pointer;text-align:left;font-size:13px;font-weight:700;box-shadow:none;white-space:nowrap;max-width:100%}
-.bar button.genome-item:hover{background:#f1f5f9!important;color:#000!important;text-decoration:underline}
+.bar button.genome-item{display:inline-flex;align-items:center;justify-content:flex-start;gap:4px;box-sizing:border-box;padding:6px 8px;margin:1px 0;border:0;border-radius:5px;background:transparent!important;color:var(--ink)!important;cursor:pointer;text-align:left;font-size:13px;font-weight:700;box-shadow:none;white-space:nowrap;max-width:100%}
+.bar button.genome-item:hover{background:var(--mist)!important;color:var(--forest-deep)!important;text-decoration:underline}
 .bar button.genome-item .name{overflow:hidden;text-overflow:ellipsis;min-width:0}
-.bar button.genome-item .remove{font-weight:900;color:#000;font-size:14px;line-height:1;margin-left:3px;flex:0 0 auto}
-.empty{padding:18px 10px;color:#94a3b8;font-size:13px;text-align:center}
+.bar button.genome-item .remove{font-weight:900;color:var(--muted);font-size:14px;line-height:1;margin-left:3px;flex:0 0 auto}
+.empty{padding:18px 10px;color:#5b6d63;font-size:13px;text-align:center}
 .target-actions{display:flex;flex-direction:column;gap:7px;min-width:145px}
-}
 .sg-group{margin-bottom:4px}
-.sg-group-label{font-size:12px;font-weight:700;color:#334155;padding:6px 10px;cursor:pointer;user-select:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px}
-.sg-group-label:hover{background:#e2e8f0}
+.sg-group-label{font-size:12px;font-weight:700;color:#42584d;padding:6px 10px;cursor:pointer;user-select:none;background:var(--mist);border:1px solid var(--line);border-radius:8px}
+.sg-group-label:hover{background:#e8f3ea}
 .sg-group-label .sg-arrow{display:inline-block;width:16px;font-size:12px;transition:transform 0.15s}
 .sg-group-label .sg-arrow.open{transform:rotate(90deg)}
 .sg-group-body{padding:2px 0 2px 0;display:none}
 .sg-group-body .genome-item{padding-left:14px}
-.panel{margin:6px auto 0 auto;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:visible}
-.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid var(--line);background:#f8fafc;flex-wrap:wrap}
-.panel-title{font-size:14px;font-weight:700;color:#111827}
-.panel-note{font-size:12px;color:#64748b;font-weight:400;margin-left:8px}
-.heatmap-wrap{overflow:auto;padding:14px 10px 12px 10px;display:flex;justify-content:center;align-items:flex-start;width:100%}
+.panel{overflow:hidden}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--mist);flex-wrap:wrap}
+.panel-title{font-family:var(--display);font-size:15px;font-weight:750;color:var(--forest-deep)}
+.panel-note{font-size:12px;color:#52665c;font-weight:400;margin-left:8px}
+.heatmap-wrap{overflow:auto;padding:14px 20px 16px 20px;display:flex;justify-content:center;align-items:flex-start;width:100%}
 .heatmap-scroll{display:inline-block;margin:0 auto;max-width:100%}
 #heatmapTable{border-collapse:collapse;width:auto;max-width:100%;font-size:12px;table-layout:fixed}
 #heatmapTable th,#heatmapTable td{text-align:center;vertical-align:middle}
 #heatmapTable th.corner{background:#fff;width:150px;min-width:150px;padding:6px 8px;text-align:right;white-space:nowrap;position:sticky;left:0;z-index:3}
 #heatmapTable th.x-label{background:#fff;padding:0;height:96px;overflow:visible;border-bottom:1px solid var(--line);vertical-align:bottom}
-#heatmapTable th.x-label .xl-wrap{display:inline-block;transform:rotate(-15deg);transform-origin:bottom left;white-space:nowrap;font-size:11px;color:#111827;font-weight:700;padding-bottom:4px}
-#heatmapTable th.y-label{background:#fff;width:150px;min-width:150px;padding:6px 8px;text-align:right;font-size:12px;color:#111827;font-weight:700;white-space:nowrap;position:sticky;left:0;z-index:2;border-right:1px solid var(--line)}
-#heatmapTable td.heat-cell{width:46px;min-width:46px;height:30px;font-size:12px;font-weight:700;color:#111827;border:1px solid #fff}
-#heatmapTable td.heat-cell.empty-cell{border:1px solid #e5e7eb}
+#heatmapTable th.x-label .xl-wrap{display:inline-block;transform:rotate(-15deg);transform-origin:bottom left;white-space:nowrap;font-size:11px;color:var(--ink);font-weight:700;padding-bottom:4px}
+#heatmapTable th.y-label{background:#fff;width:150px;min-width:150px;padding:6px 8px;text-align:right;font-size:12px;color:var(--ink);font-weight:700;white-space:nowrap;position:sticky;left:0;z-index:2;border-right:1px solid var(--line)}
+#heatmapTable td.heat-cell{width:46px;min-width:46px;height:30px;font-size:12px;font-weight:700;color:var(--ink);border:1px solid #fff}
+#heatmapTable td.heat-cell.empty-cell{border:1px solid var(--line)}
 #heatmapTable tbody tr td:first-child{border-left:0}
-.heat-legend{display:flex;gap:6px;align-items:center;font-size:12px;color:#0f172a}
-.heat-gradient{display:inline-block;width:120px;height:13px;border-radius:10px;border:1px solid #cbd5e1;background:linear-gradient(90deg,#f8fafc,#2c7a3f)}
-#heatmapEmpty,#tableEmpty{padding:18px 12px;color:#94a3b8;font-size:13px;text-align:center}
+.heat-legend{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--ink)}
+.heat-gradient{display:inline-block;width:120px;height:13px;border-radius:10px;border:1px solid var(--line);background:linear-gradient(90deg,#f3f8f4,var(--leaf))}
+#heatmapEmpty,#tableEmpty{padding:18px 12px;color:#5b6d63;font-size:13px;text-align:center}
 .table-wrap{overflow:auto;max-height:none}
 #syntenyTable{border-collapse:collapse;width:100%;min-width:1200px;font-size:12px}
-#syntenyTable th,#syntenyTable td{border-bottom:1px solid var(--line);padding:7px 9px;text-align:left;white-space:nowrap;vertical-align:top}
-#syntenyTable th{position:sticky;top:0;background:#f1f5f9;color:#111827;font-weight:700;z-index:1}
-#syntenyTable tr.query-row{background:#fff7ed}
-#syntenyTable tr.no-og-row{color:#64748b}
+#syntenyTable th,#syntenyTable td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;white-space:nowrap;vertical-align:top}
+#syntenyTable th{position:sticky;top:0;background:var(--mist);color:#4d6559;font-family:var(--utility);font-size:10px;letter-spacing:.05em;text-transform:uppercase;z-index:1}
+#syntenyTable tr.query-row{background:#f1f8f2}
+#syntenyTable tr.no-og-row{color:var(--muted)}
 .table-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.table-actions button{padding:7px 12px;border:0;border-radius:6px;background:#475569;color:#fff;cursor:pointer;font-size:12px}
-.visit-stats{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
-.visit-stats .vs-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:12px;font-size:11px;line-height:1.4;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;transition:background 0.15s}
-.visit-stats .vs-pill b{color:#0f172a;font-weight:600}
-.visit-stats .vs-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#94a3b8}
-.visit-stats .vs-dot-today{background:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.18)}
-.visit-stats .vs-dot-total{background:#3b82f6}
-.visit-stats .vs-dot-online{background:#f59e0b;animation:vs-pulse 1.6s ease-in-out infinite}
-.visit-stats .vs-loading{color:#64748b}
-.visit-stats .vs-loading .vs-dot{animation:vs-pulse 1.6s ease-in-out infinite}
-.visit-stats .vs-error{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
-@keyframes vs-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.table-actions button{padding:7px 14px;border:1px solid var(--line);border-radius:999px;background:var(--mist);color:var(--forest);cursor:pointer;font-size:12px;font-weight:700}
+.table-actions button:disabled{color:#96a79d;cursor:not-allowed}
 @media (max-width:1100px){.target-panel{grid-template-columns:1fr}.target-actions{flex-direction:row;flex-wrap:wrap}.bar button.small{width:auto}}
-</style></head><body>
-<div id="home_header"><span><img src="/css/logo.jpg" id="logo_style">WheatOmics 2.0</span></div>
-<div id="header-tabs">
-  <ul>
-    <li><a href="/"><span>Home</span></a></li>
-    <li><a href="#"><span>Tools/Browse</span></a>
-      <ul>
-        <li><a href="/getfasta/index.html">GetSequence</a></li>
-        <li><a href="/blast/blast.html">BLAST</a></li>
-        <li><a href="/PrimerServer">PrimerServer</a></li>
-        <li><a href="/PrimerServer2/">PrimerServer2</a></li>
-        <li><a href="/caps/">CAPS/dCAPS</a></li>
-        <li><a href="/PfamSearch/">PfamSearch</a></li>
-        <li><a href="/idConvert/">IDConvert</a></li>
-        <li><a href="/HomologFinder/">HomologFinder</a></li>
-        <li><a href="/interval/">IntervalTool</a></li>
-        <li><a href="/expression/">GeneExpression</a></li>
-        <li><a href="/coexpression/index.html">Co-expression</a></li>
-        <li><a href="/wheatPPI/">WheatPPI</a></li>
-        <li><a href="/genes/">KnownGene</a></li>
-        <li><a href="/symap/index.html">SyntenySearch</a></li>
-        <li><a href="/syntenyview/">SynTenyView</a></li>
-        <li><a href="/preblast/">preBLAST</a></li>
-        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
-        <li><a href="/orthofinder/">OrthoFinder</a></li>
-        <li><a href="/VariantHub/">VariantHub</a></li>
-        <li><a href="DWGVa.html">DWGVa</a></li>
-        <li><a href="/scRNA/">scRNA</a></li>
-        <li><a href="/wheatPSP/">wheatPSP</a></li>
-        <li><a href="/eqtl/">eQTL Atlas</a></li>
-        <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
-        <li><a href="/papers">Triticeae papers</a></li>
-      </ul>
-    </li>
-    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
-    <li><a href="/download.html"><span>Download Data</span></a></li>
-    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
-    <li><a href="#"><span>About</span></a>
-      <ul>
-        <li><a href="/help/contact.html">Contact</a></li>
-        <li><a href="/help/news.html">News</a></li>
-      </ul>
-    </li>
-  </ul>
-</div>
+  </style>
+</head>
+<body>
+<div id="v2-shell-header"></div>
 
-<div id="home_content"><div class="tool-card">
-<h5 class="card-title">SynTeny Viewer — Homoeologous Neighborhood Synteny</h5>
-<p class="text-muted">Search a gene ID directly from the MySQL BED database, automatically resolve its reference genome, choose upstream/downstream neighbors, and display orthogroup synteny across selected target genomes.</p>
-<div class="bar">
+<main id="main-content">
+  <section class="news-hero">
+    <div class="container news-hero-inner">
+      <div>
+        <p class="news-kicker">WheatOmics 2.0 · Comparative genomics</p>
+        <h1 class="news-title">SynTeny <em>Viewer</em></h1>
+        <p class="news-lead">Search a gene ID in the MySQL BED index, resolve its reference genome automatically, choose upstream/downstream neighbours, and compare orthogroup synteny across selected target genomes.</p>
+        <div class="news-stats">
+          <span class="news-stat"><strong>MySQL</strong> BED index</span>
+          <span class="news-stat">Upstream / downstream windows</span>
+          <span class="news-stat">Homolog-count heatmap</span>
+          <span class="news-stat">SVG / PNG export</span>
+        </div>
+      </div>
+      <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-network"/></svg></div>
+    </div>
+  </section>
+
+  <section class="news-body">
+    <div class="container">
+      <div class="card">
+        <div class="card-body">
+        <div class="bar">
   <div class="control-row">
     <div class="field">
       <label for="gene">Reference gene ID</label>
@@ -195,8 +151,10 @@ h5.card-title{margin-top:0}
 <div id="status"></div>
 <div id="share"></div>
 <div id="canvas"><svg id="svg" width="1600" height="200"></svg></div>
+        </div>
+      </div>
 
-<div class="panel" id="heatmapPanel">
+<div class="card panel" id="heatmapPanel">
   <div class="panel-head">
     <div>
       <span class="panel-title">Homolog count heatmap</span>
@@ -209,7 +167,7 @@ h5.card-title{margin-top:0}
     <div class="heatmap-scroll"><table id="heatmapTable" style="display:none"></table></div>
   </div>
 </div>
-<div class="panel" id="tablePanel" style="margin-bottom:26px">
+<div class="card panel" id="tablePanel">
   <div class="panel-head">
     <div>
       <span class="panel-title">Drawn OG / gene table</span>
@@ -234,32 +192,14 @@ h5.card-title{margin-top:0}
     </table>
   </div>
 </div>
-</div></div>
 
-<div class="line" style="height:10px;background-color:white"></div>
-<div id="home_footer">
-  <center style="margin-top:5px">
-    <table>
-      <tr>
-        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><div style="height:50px;width:15px;"></div></td>
-        <td>
-          <div id="visit-stats" class="visit-stats">
-            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
-          </div>
-        </td>
-      </tr>
-    </table>
-    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
-  </center>
-</div>
+    </div>
+  </section>
+</main>
+
+<div id="v2-shell-footer"></div>
+
+<script src="/api/v2shell/shell.js"></script>
 
 <div class="tip" id="tip"></div>
 <script>
@@ -921,15 +861,6 @@ function downloadPng(){
 }
 function tip(e,html){var t=document.getElementById("tip");t.innerHTML=html;t.style.display="block";t.style.left=(e.clientX+12)+"px";t.style.top=(e.clientY+12)+"px";}
 
-// ---- Visit tracking (WheatOmics footer) ----
-(function(){
-  try{fetch('/api/track/visit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({page:location.pathname||'unknown'})}).catch(function(){});}catch(e){}
-  function fmt(n){n=Number(n)||0;if(n>=1e6)return(n/1e6).toFixed(3)+'M';if(n>=1e4)return(n/1e3).toFixed(3)+'k';return String(n);}
-  function setHtml(html){var el=document.getElementById('visit-stats');if(el)el.innerHTML=html;}
-  fetch('/api/track/stats').then(function(r){return r.json();}).then(function(resp){
-    if(!resp||!resp.success){setHtml('<span class="vs-pill vs-error">stats unavailable</span>');return;}
-    var d=resp.data;
-    setHtml('<span class="vs-pill vs-today" title="Today pageviews"><span class="vs-dot vs-dot-today"></span>Today <b>'+fmt(d.today.pv)+'</b></span><span class="vs-pill vs-total" title="Total pageviews (since 2019-08-01)"><span class="vs-dot vs-dot-total"></span>Total <b>'+fmt(d.total.pv)+'</b></span><span class="vs-pill vs-online" title="Visitors active in the last 15 minutes"><span class="vs-dot vs-dot-online"></span>Online <b>'+fmt(d.online)+'</b></span>');
-  }).catch(function(){setHtml('<span class="vs-pill vs-error">stats unavailable</span>');});
-})();
-</script></body></html>
+</script>
+</body>
+</html>
