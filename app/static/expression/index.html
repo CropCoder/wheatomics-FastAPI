@@ -598,8 +598,16 @@ function queryExpression() {
         finishOne();
       })
       .fail(function(jqXHR) {
-        var msg = (jqXHR.responseJSON && (jqXHR.responseJSON.detail || jqXHR.responseJSON.message))
-                  || jqXHR.statusText || 'request failed';
+        // jQuery 1.9 does not populate jqXHR.responseJSON for HTTP error responses,
+        // so parse responseText to surface the API's JSON {detail: ...} message.
+        var detail = jqXHR.responseJSON && (jqXHR.responseJSON.detail || jqXHR.responseJSON.message);
+        if (!detail && jqXHR.responseText) {
+          try {
+            var body = JSON.parse(jqXHR.responseText);
+            detail = body.detail || body.message;
+          } catch (e) { /* non-JSON error body */ }
+        }
+        var msg = detail || jqXHR.statusText || 'request failed';
         b.table.append($('<div class="alert alert-danger"></div>')
           .text((projectNames[proj] || proj) + ': ' + msg));
         finishOne();
