@@ -1198,6 +1198,14 @@ textarea.form-control { height: auto; min-height: 96px; padding: 10px 12px; }
 .table-hover tbody tr:hover { background: #f1f8f2; }
 .table-bordered, .table-bordered td, .table-bordered th { border: 1px solid var(--line); }
 
+/* Header nav active state (shell.js adds .active / aria-current) ---------- */
+.main-nav a.active { color: var(--forest); }
+.main-nav a.active::after { right: 0; left: 0; }
+.main-nav .nav-trigger.active::after { right: 0; left: 0; }
+.main-nav .nav-trigger.active { color: var(--forest); }
+
+/* Inline code used by result tables / helper text ---------------------- */
+code, kbd, samp { color: var(--forest-deep); background: var(--mist); border-radius: 4px; padding: 1px 4px; font-family: var(--utility); font-size: 90%; }
 /* Tabs ----------------------------------------------------------------- */
 .nav-tabs { border-bottom: 1px solid var(--line); }
 .nav-tabs .nav-link {

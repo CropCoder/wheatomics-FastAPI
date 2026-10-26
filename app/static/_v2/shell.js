@@ -49,13 +49,14 @@
               <li><a href="https://wheatomics.sdau.edu.cn/blast/blast.html">BLAST</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/GeneHub/">GeneHub</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/genes/">KnownGene</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/tools/proteinfamily.html">PfamSearch</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/neighborhood/">Neighborhood</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/PfamSearch/">PfamSearch</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/PrimerServer/">PrimerServer</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/idConvert/">IDConverter</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/homologtools/index.html">HomologFinder</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/HomologFinder/">HomologFinder</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/expression/index.html">GeneExpression</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/coexpression/index.html">Co-expression</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/tools/intervalTools.html">IntervalTool</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/interval/">IntervalTool</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/symap/index.html">SyntenySearch</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/caps/">CAPS/dCAPS</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/preblast/">preBLAST</a></li>
@@ -186,27 +187,46 @@
             }).catch(function(){});
         })();
 
-    /* Mark the nav entry of the current module as active. */
+    /* Mark the nav entry of the current module as active. Nav labels are the
+       module names, but several hrefs still point at the legacy pages
+       (homologtools/…, tools/proteinfamily.html, …), so match on label text
+       and href instead of relying on an exact path alias. */
     try {
-      var path = location.pathname;
-      var aliases = [
-        ['/blast/', '/blast/'], ['/getfasta/', '/getfasta/'], ['/genes/', '/genes/'],
-        ['/expression/', '/expression/'], ['/coexpression/', '/coexpression/'],
-        ['/interval/', '/interval/'], ['/PfamSearch/', '/PfamSearch/'],
-        ['/idConvert/', '/idConvert/'], ['/HomologFinder/', '/HomologFinder/'],
-        ['/caps/', '/caps/'], ['/preblast/', '/preblast/'], ['/sms2/', '/sms2/'],
-        ['/VariantHub/', '/VariantHub/'], ['/eqtl/', '/eqtl/'],
-        ['/GO_KEGG/', '/GO_KEGG/'], ['/syntenyview/', '/syntenyview/'],
-        ['/orthofinder/', '/orthofinder/'], ['/scRNA/', '/scRNA/'],
-        ['/wheatPPI/', '/wheatPPI/'], ['/wheatPSP/', '/wheatPSP/'],
-        ['/papers/', '/papers/'], ['/wheatPTM/', '/wheatPTM/']
-      ];
-      var current = aliases.find(function (pair) { return path.indexOf(pair[0]) === 0; });
-      if (current) {
-        var link = document.querySelector('.main-nav a[href*="' + current[1] + '"]');
-        if (link) {
-          link.setAttribute('aria-current', 'page');
-          link.classList.add('is-current');
+      var segment = (location.pathname.split('/')[1] || '');
+      var norm = function (value) {
+        return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      };
+      var slug = norm(segment);
+      if (slug) {
+        var matched = null;
+        var links = document.querySelectorAll('.main-nav a');
+        var pairs = [];
+        for (var i = 0; i < links.length; i++) {
+          pairs.push({
+            link: links[i],
+            text: norm(links[i].textContent),
+            href: norm(links[i].getAttribute('href'))
+          });
+        }
+        // pass 1: exact label / href match (preBLAST must beat BLAST)
+        for (var j = 0; j < pairs.length && !matched; j++) {
+          if (pairs[j].text === slug || pairs[j].href === slug) { matched = pairs[j].link; }
+        }
+        // pass 2: href-contains / label-contains (legacy URLs, "Triticeae Papers" …)
+        for (var k = 0; k < pairs.length && !matched; k++) {
+          var pair = pairs[k];
+          if (pair.href.indexOf(slug) >= 0 ||
+              (pair.text && (slug.indexOf(pair.text) >= 0 || pair.text.indexOf(slug) >= 0)) ||
+              (slug.length >= 5 && pair.text.slice(0, 5) === slug.slice(0, 5))) {
+            matched = pair.link;
+          }
+        }
+        if (matched) {
+          matched.classList.add('active');
+          matched.setAttribute('aria-current', 'page');
+          var item = matched.closest('.nav-item');
+          var trigger = item && item.querySelector('.nav-trigger');
+          if (trigger) { trigger.classList.add('active'); }
         }
       }
     } catch (err) { /* non-fatal */ }
