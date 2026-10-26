@@ -2126,7 +2126,7 @@ function fillDbList(listEl, idx) {
     var items = groups[group.key] || [];
     if (!items.length) return;
     var collapsible = group.key === 'chromosome';
-    var body = collapsible ? dbChromosomeGroups(items) : items.map(dbCheckbox).join('');
+    var body = collapsible ? dbChromosomeGroups(items) : items.map(function (db) { return dbCheckbox(db); }).join('');
     html += '<div class="blast-db-group" data-kind="' + group.key + '">' +
       '<div class="blast-db-group-title">' + esc(group.label) +
         ' <span class="blast-db-group-count">(' + fmtInt(items.length) + ')</span>' +
@@ -2156,7 +2156,7 @@ function applyDbSearch() {
     return db.toLowerCase().indexOf(q) >= 0 && dbPassesFilters(db);
   });
   var shown = matches.slice(0, 400);
-  resultsBox.innerHTML = shown.map(dbCheckbox).join('') +
+  resultsBox.innerHTML = shown.map(function (db) { return dbCheckbox(db); }).join('') +
     (matches.length > shown.length ? '<div class="blast-hint" style="grid-column:1/-1;padding-top:8px;">Showing ' + shown.length + ' of ' + fmtInt(matches.length) + ' matches — refine the filter.</div>' : '') +
     (!matches.length ? '<div class="blast-empty" style="grid-column:1/-1;">No database matches “' + esc(q) + '”.</div>' : '');
 }
