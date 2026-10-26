@@ -1918,7 +1918,7 @@ function loadDatabases(program) {
 function applyDatabases(data) {
   data.categories = (data.categories || []).map(function (cat) {
     var dbs = (cat.databases || []).filter(function (db) { return !SEQUENCE_ONLY_DBS[db]; });
-    return $.extend({}, cat, { databases: dbs, count: dbs.length });
+    return Object.assign({}, cat, { databases: dbs, count: dbs.length });
   }).filter(function (cat) { return cat.count > 0; });
   ['protein', 'nucleotide'].forEach(function (key) {
     if (data[key] && data[key].databases) {
