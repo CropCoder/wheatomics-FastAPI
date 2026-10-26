@@ -2097,8 +2097,11 @@ function dbCheckbox(db, label, minimal) {
   var badges = '';
   if (kind === 'aggregate') badges += '<span class="blast-badge agg">combined</span>';
   else if (!minimal && kind && kind !== 'genome') badges += '<span class="blast-badge' + (kind === 'chromosome' ? ' chr' : '') + '">' + esc(DB_KIND_LABEL[kind] || kind) + '</span>';
-  if (meta.assembly_level) badges += '<span class="blast-badge' + (meta.chromosome_level ? '' : ' warn') + '">' + esc(meta.assembly_level) + '</span>';
-  if (kind === 'genome' && meta.chromosome_count) badges += '<span class="blast-badge">' + fmtInt(meta.chromosome_count) + ' chr</span>';
+  // Chromosome-level assemblies are the norm: hide the "Chromosome" and
+  // "21 chr" badges, keep only non-chromosome quality hints (Scaffold/Contig/...).
+  if (meta.assembly_level && meta.assembly_level !== 'Chromosome') {
+    badges += '<span class="blast-badge warn">' + esc(meta.assembly_level) + '</span>';
+  }
   if (!minimal && meta.chromosome) badges += '<span class="blast-badge chr">Chr' + esc(meta.chromosome) + '</span>';
   return '<label class="blast-db-item" title="' + esc(db) + '"><input type="checkbox" class="blast-db-check" value="' + esc(db) + '"' + checked + '>' +
     '<span>' + esc(label || db) + '</span>' + (badges ? '<span class="blast-db-badges">' + badges + '</span>' : '') + '</label>';

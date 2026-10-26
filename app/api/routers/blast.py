@@ -117,6 +117,15 @@ CHROMOSOME_LEVELS = frozenset({
     "Partial chromosome", "draft chromosome level",
 })
 
+#: Display normalisation: every chromosome-level flavour is reported as
+#: "Chromosome" (the picker does not show the Chromosome badge anyway).
+CHROMOSOME_LEVEL_ALIASES = {
+    "Complete Genome": "Chromosome",
+    "Complete genome": "Chromosome",
+    "Partial chromosome": "Chromosome",
+    "draft chromosome level": "Chromosome",
+}
+
 
 def _db_base_kind_chromosome(name: str) -> tuple[str, str, str | None]:
     """Split a BLAST database name into (assembly base, kind, chromosome)."""
@@ -217,6 +226,7 @@ def _db_meta(name: str, level_map: dict[str, dict]) -> dict:
     if kind == "aggregate":
         info = {}
     level = info.get("assembly_level")
+    level = CHROMOSOME_LEVEL_ALIASES.get(level, level)
     if not level and ".scaffold" in name.lower():
         level = "Scaffold"
     meta = {
