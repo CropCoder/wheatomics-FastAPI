@@ -1188,7 +1188,7 @@
     .blast-cat-chevron { color: var(--muted); font-size: 10px; transition: transform .15s ease; }
     .blast-cat.open .blast-cat-chevron { transform: rotate(180deg); }
     .blast-db-list {
-      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px 16px;
+      display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px 16px;
       max-height: 264px; overflow: auto; padding: 11px 15px 14px; border-top: 1px solid var(--line);
     }
     .blast-db-item {
@@ -1197,6 +1197,8 @@
     }
     .blast-db-item input { margin: 2px 0 0; accent-color: var(--leaf); flex: none; }
     .blast-db-item:hover { color: var(--forest); }
+    .blast-db-group-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1px 22px; }
+    #blast-db-search-results { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .blast-selected { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line); }
     .blast-selected-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; color: #3d564b; font-size: 12px; font-weight: 700; }
     .blast-selected-head span { color: var(--muted); font-family: var(--utility); font-size: 10px; font-weight: 400; }
@@ -1312,6 +1314,7 @@
     @media (max-width: 980px) {
       .blast-layout { grid-template-columns: 1fr; }
       .blast-db-list { grid-template-columns: 1fr; }
+      .blast-db-group-list { grid-template-columns: 1fr; }
       .blast-param-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
@@ -2112,13 +2115,13 @@ function dbCheckbox(db, label, minimal) {
   var meta = dbMeta(db), kind = meta.kind || 'other';
   var badges = '';
   if (kind === 'aggregate') badges += '<span class="blast-badge agg">combined</span>';
-  else if (!minimal && kind && kind !== 'genome') badges += '<span class="blast-badge' + (kind === 'chromosome' ? ' chr' : '') + '">' + esc(DB_KIND_LABEL[kind] || kind) + '</span>';
+  else if (!minimal && kind && kind !== 'genome' && kind !== 'chromosome') badges += '<span class="blast-badge">' + esc(DB_KIND_LABEL[kind] || kind) + '</span>';
   // Chromosome-level assemblies are the norm: hide the "Chromosome" and
   // "21 chr" badges, keep only non-chromosome quality hints (Scaffold/Contig/...).
   if (meta.assembly_level && meta.assembly_level !== 'Chromosome') {
     badges += '<span class="blast-badge warn">' + esc(meta.assembly_level) + '</span>';
   }
-  if (!minimal && meta.chromosome) badges += '<span class="blast-badge chr">Chr' + esc(meta.chromosome) + '</span>';
+
   return '<label class="blast-db-item" title="' + esc(db) + '"><input type="checkbox" class="blast-db-check" value="' + esc(db) + '"' + checked + '>' +
     '<span>' + esc(label || dbLabel(db)) + '</span>' + (badges ? '<span class="blast-db-badges">' + badges + '</span>' : '') + '</label>';
 }
