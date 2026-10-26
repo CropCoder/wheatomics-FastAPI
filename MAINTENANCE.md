@@ -997,9 +997,16 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/<module>/ --widt
   但 `/api/v2shell` 是 Python 侧挂载，需重启；重启后端口 8000 通常要 2–3 分钟才恢复监听，期间 Apache 返回 503 属正常）。
 - 批量改造时按批次提交/部署，每批部署后跑一遍该批的线上 `spa_visual_check`。
 
-### 进度清单
+### 进度清单（2026-10-27 全部完成）
 
-- 已 V2.0：`blast2`（`/blast/blast.html` canonical）、`wheatPTM`、`preblast`、`primerserver2`
-- 待改造：`getfasta`、`interval`、`expression`、`coexpression`、`genes`、`caps`、`papers`、`sms2`、
-  `GO_KEGG`、`HomologFinder`、`PfamSearch`、`idConvert`、`neighborhood`、`orthofinder`、`wheatPPI`、
-  `eqtl`、`VariantHub`、`syntenyview`、`scRNA`、`wheatPSP`
+- 已 V2.0：`blast2`（`/blast/blast.html` canonical）、`wheatPTM`、`preblast`、`primerserver2`、
+  `getfasta`、`interval`、`expression`、`coexpression`、`genes`、`caps`、`papers`、`eqtl`、`GO_KEGG`、
+  `HomologFinder`、`idConvert`、`neighborhood`、`orthofinder`、`PfamSearch`、`wheatPPI`、`VariantHub`、
+  `syntenyview`、`scRNA`、`wheatPSP`、`sms2`（入口页）。
+- 线上验收：每页 `spa_visual_check.sh --widths 390,768,1440` → PASS（仅 footer Back to top 小目标 Warn）；
+  另做了一次功能冒烟（示例输入 → 结果表/图/下载出现）。
+- 仓库外遗留：`/sms2/*.html` 的第三方工具页（docroot 自带，`.gitignore` 只放行 `app/static/sms2/index.html`）、
+  老 CGI 页（`/symap/`、`/tools/*.html` 等）不在本轮「SPA」范围。
+- ⚠️ `/neighborhood/` 的 Apache vhost **没有** `ProxyPass`，线上用 docroot 符号链接指向仓库目录：
+  `ln -s /var/www/FastAPI_backend_Port8000/app/static/neighborhood /var/www/html/neighborhood`
+  （`/var/www/html` 开了 `FollowSymLinks`，`git pull` 后自动生效；若以后补 ProxyPass 记得删符号链接）。

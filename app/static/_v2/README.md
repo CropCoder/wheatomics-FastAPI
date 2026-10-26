@@ -133,8 +133,25 @@ no horizontal overflow at 390/768/1440, no JS errors, no broken `<img>`.
 
 ## Page inventory
 
+All SPAs shipped in this repo use the shared V2.0 shell (last conversion
+2026-10-27, live-checked at 390/768/1440):
+
 | state | pages |
 |---|---|
-| V2.0 already | `blast2` (live at `/blast/blast.html`), `wheatPTM` |
-| converted | `preblast` |
-| pending | `getfasta`, `interval`, `expression`, `coexpression`, `genes`, `caps`, `papers`, `sms2`, `GO_KEGG`, `HomologFinder`, `PfamSearch`, `idConvert`, `neighborhood`, `orthofinder`, `wheatPPI`, `eqtl`, `VariantHub`, `syntenyview`, `scRNA`, `wheatPSP`, `primerserver2` |
+| V2.0 already | `blast2` (canonical `/blast/blast.html`), `wheatPTM` |
+| converted | `preblast`, `primerserver2`, `getfasta`, `interval`, `expression`, `coexpression`, `genes`, `caps`, `papers`, `eqtl`, `GO_KEGG`, `HomologFinder`, `idConvert`, `neighborhood`, `orthofinder`, `PfamSearch`, `wheatPPI`, `VariantHub`, `syntenyview`, `scRNA`, `wheatPSP`, `sms2` (entry page) |
+| legacy / out of repo | the Sequence Manipulation Suite tool pages under `/sms2/*.html` (third-party XHTML, shipped with the server docroot; `.gitignore` only un-ignores the converted `app/static/sms2/index.html`), the old CGI pages (`/symap/`, `/tools/*.html`, …) |
+
+### Serving note: `/neighborhood/`
+
+Apache's vhost has no `ProxyPass /neighborhood`, so that module is served
+straight from the docroot through a symlink to the repo directory (works because
+`/var/www/html` allows `FollowSymLinks`):
+
+```bash
+ln -s /var/www/FastAPI_backend_Port8000/app/static/neighborhood /var/www/html/neighborhood
+```
+
+Do NOT copy the page into `/var/www/html/neighborhood/`: the symlink keeps the
+docroot copy in sync with `git pull`. If a real `ProxyPass` is added later,
+delete the symlink.
