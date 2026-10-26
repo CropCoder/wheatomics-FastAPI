@@ -2024,9 +2024,6 @@ function renderPresets(data) {
     if (csGenome) presets.push({ db: csGenome, label: 'Chinese Spring genome' });
     var csCds = pickPresetDb(nucleotide, ['AABBDD_Chinese_Spring2.1.add_Description.cds', 'AABBDD_Chinese_Spring1.0.add_Description.cds', 'AABBDD_CS-CAU.add_Description.cds']);
     if (csCds) presets.push({ db: csCds, label: 'Chinese Spring CDS' });
-  } else if (protein.length) {
-    var csPep = pickPresetDb(protein, ['AABBDD_Chinese_Spring2.1.add_Description.pep', 'AABBDD_CS-IAAS.add_Description.pep', 'AABBDD_CS-CAU.add_Description.pep']);
-    if (csPep) presets.push({ db: csPep, label: 'Chinese Spring protein' });
   }
   var box = $('#blast-presets');
   if (!presets.length) { box.innerHTML = ''; return; }
