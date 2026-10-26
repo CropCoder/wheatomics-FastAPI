@@ -1513,7 +1513,7 @@
                   <p class="blast-card-sub">Paste one or more FASTA sequences, or load a FASTA file. The backend validates sequences for the selected program.</p>
                   <label class="blast-visually-hidden" for="blast-query">Query sequences in FASTA format</label>
                   <textarea id="blast-query" class="blast-query" spellcheck="false" placeholder=">my_query
-MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLK..."></textarea>
+Paste one or more FASTA sequences here…"></textarea>
                   <div class="blast-query-meta">
                     <span id="blast-query-meta">No sequence loaded.</span>
                     <span id="blast-query-type">nucleotide query</span>
@@ -1901,6 +1901,7 @@ function setProgram(program) {
   $('#blast-program-hint').textContent = PROGRAM_INFO[program].hint;
   $('#blast-query-type').textContent = PROGRAM_INFO[program].query + ' query';
   renderExamples();
+  updateQueryPlaceholder();
   renderSelected();
   loadDatabases(program);
 }
@@ -2067,6 +2068,17 @@ function updateQueryMeta() {
   $('#blast-query-meta').textContent = text.trim()
     ? (st.seqs + ' sequence' + (st.seqs === 1 ? '' : 's') + ' · ' + fmtInt(st.residues) + ' residues')
     : 'No sequence loaded.';
+}
+
+function updateQueryPlaceholder() {
+  var info = PROGRAM_INFO[state.program];
+  var example = BLAST_EXAMPLES[info.query];
+  var preview = '';
+  if (example) {
+    var lines = example.fasta.split(/\r?\n/);
+    preview = (lines[1] || '').slice(0, 60);
+  }
+  $('#blast-query').setAttribute('placeholder', '>my_query\n' + (preview ? preview + '...' : 'Paste one or more FASTA sequences here…'));
 }
 
 function renderExamples() {

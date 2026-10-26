@@ -819,6 +819,7 @@ V2.0 设计语言、纯静态单页、复用现有 `/api/blast` 异步任务后�
   **不在 BLAST 数据库列表中展示**（后端过滤 + 前端防御性隐藏）；`all_genomes` 等仍可
   通过 `/api/sequence/*` 和 getfasta 页面使用；
 - 查询输入：粘贴 FASTA 或多序列、上传 FASTA 文件（客户端读取，≤5 MB）、按 program 提供示例序列；
+  输入框 placeholder 会随 program 切换显示核酸/蛋白示例预览，避免在 blastn 下误把蛋白序列当核酸；
 - 参数：E-value、max target sequences、word size、matrix、输出格式（hits+alignments / 仅 TSV / 仅文本）；
 - 提交走 `POST /api/blast/search` 且 `wait=false`，立即进入结果视图并轮询
   `GET /api/blast/status/{job_id}`；
