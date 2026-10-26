@@ -814,9 +814,14 @@ V2.0 设计语言、纯静态单页、复用现有 `/api/blast` 异步任务后�
 - 5 个 program（blastn/blastp/blastx/tblastn/tblastx），切换 program 自动重载对应类型的数据库；
 - 数据库选择器：按分类折叠（`/api/blast/databases?program=...`）、名称过滤、分类全选、快捷
   “All proteins/All genes (combined)”、已选 chips、上限 20 个（与 API 限制一致）；
-- 分类内再按**库类型分组**（combined / genome / CDS / protein / per-chromosome），
-  单染色体拆分库默认折叠，展开后再按染色体（Chr1A / Chr1B / …）分子类，
-  同一染色体下汇总所有组装的库；提供类型筛选 chips 和 “chromosome-level assemblies only” 开关；
+- 分类内再按**库类型分组**（combined / genome / CDS / protein）；每组的 **Genome** 只列
+  整基因组库（库内包含该组装的全部染色体，如 21/14/7 条），并显示 `21 chr` 等 badge；
+  **单染色体拆分库不在分类里展示，仅在搜索框中出现**；提供类型筛选 chips 和
+  “chromosome-level assemblies only” 开关；
+- 组装质量标签以数据库实际内容校准：`app/services/data/blast_db_levels.json` 是对
+  `genome_registry` 的覆盖表（由 `scripts/audit_assembly_levels.py` →
+  `scripts/make_level_overrides.py` 生成），修正了 scaffold/contig 误标、缺失的染色体级
+  组装（如 Jagger/Julius/Mace/Renan/Barley2/rye Lo7/T. urartu 等）；
   每条库显示类型与组装质量 badge。元数据来自 API 的 `database_meta`
   （`kind` / `assembly` / `chromosome` / `assembly_level`，由 `genome_registry` 的
   `blast_*` 基名 + `assembly_level` 关联得到），前端仅作为兜底；

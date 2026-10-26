@@ -1568,7 +1568,6 @@ Paste one or more FASTA sequences here…"></textarea>
                     <span class="blast-hint">Show:</span>
                     <button type="button" class="blast-kind-chip active" data-kind="all">All</button>
                     <button type="button" class="blast-kind-chip" data-kind="genome">Genome</button>
-                    <button type="button" class="blast-kind-chip" data-kind="chromosome">Per-chromosome</button>
                     <button type="button" class="blast-kind-chip" data-kind="cds">CDS</button>
                     <button type="button" class="blast-kind-chip" data-kind="protein">Protein</button>
                     <label class="blast-check-label blast-chrom-only-label"><input type="checkbox" id="blast-chrom-only"> chromosome-level assemblies only</label>
@@ -1984,8 +1983,13 @@ function applyDatabases(data) {
   var kc = data.kind_counts || {};
   var countText = fmtInt(data.total) + ' databases for ' + state.program;
   if (kc.genome) countText += ' · ' + fmtInt(kc.genome) + ' genome';
-  if (kc.chromosome) countText += ' · ' + fmtInt(kc.chromosome) + ' per-chromosome (collapsed)';
+  if (kc.chromosome) countText += ' · ' + fmtInt(kc.chromosome) + ' per-chromosome (search to access)';
   $('#blast-db-count').textContent = countText;
+  data.categories.forEach(function (cat) {
+    cat.visible_count = (cat.databases || []).filter(function (db) {
+      return (dbMeta(db).kind || 'other') !== 'chromosome';
+    }).length;
+  });
   var hero = $('[data-blast-db-total]');
   if (hero && data.total) hero.textContent = fmtInt(data.total);
   renderPresets(data);
@@ -2031,7 +2035,7 @@ function renderCategories() {
       '<button type="button" class="blast-cat-head" data-toggle-cat="' + idx + '">' +
         '<span class="blast-cat-title">' + esc(cat.label) + '</span>' +
         '<span class="blast-cat-desc">' + esc(cat.description || '') + '</span>' +
-        '<span class="blast-cat-count">' + fmtInt(cat.count) + '</span>' +
+        '<span class="blast-cat-count">' + fmtInt(cat.visible_count || cat.count) + '</span>' +
         '<span class="blast-cat-chevron" aria-hidden="true">▾</span>' +
       '</button>' +
       '<div class="blast-db-list" data-list="' + idx + '"' + (open ? '' : ' hidden') + '></div>' +
@@ -2046,7 +2050,6 @@ var DB_KIND_LABEL = { genome: 'genome', chromosome: 'per-chr', cds: 'CDS', prote
 var DB_KIND_ORDER = [
   { key: 'aggregate', label: 'Combined databases' },
   { key: 'genome', label: 'Genome databases' },
-  { key: 'chromosome', label: 'Per-chromosome databases' },
   { key: 'cds', label: 'CDS / transcript databases' },
   { key: 'protein', label: 'Protein databases' },
   { key: 'other', label: 'Other databases' }
@@ -2095,6 +2098,7 @@ function dbCheckbox(db, label, minimal) {
   if (kind === 'aggregate') badges += '<span class="blast-badge agg">combined</span>';
   else if (!minimal && kind && kind !== 'genome') badges += '<span class="blast-badge' + (kind === 'chromosome' ? ' chr' : '') + '">' + esc(DB_KIND_LABEL[kind] || kind) + '</span>';
   if (meta.assembly_level) badges += '<span class="blast-badge' + (meta.chromosome_level ? '' : ' warn') + '">' + esc(meta.assembly_level) + '</span>';
+  if (kind === 'genome' && meta.chromosome_count) badges += '<span class="blast-badge">' + fmtInt(meta.chromosome_count) + ' chr</span>';
   if (!minimal && meta.chromosome) badges += '<span class="blast-badge chr">Chr' + esc(meta.chromosome) + '</span>';
   return '<label class="blast-db-item" title="' + esc(db) + '"><input type="checkbox" class="blast-db-check" value="' + esc(db) + '"' + checked + '>' +
     '<span>' + esc(label || db) + '</span>' + (badges ? '<span class="blast-db-badges">' + badges + '</span>' : '') + '</label>';
@@ -2116,7 +2120,9 @@ function updateKindChips() {
 function fillDbList(listEl, idx) {
   var cat = state.categories[idx];
   if (!cat || listEl.getAttribute('data-filled') === '1') return;
-  var dbs = (cat.databases || []).filter(dbPassesFilters);
+  var dbs = (cat.databases || []).filter(dbPassesFilters).filter(function (db) {
+    return (dbMeta(db).kind || 'other') !== 'chromosome';
+  });
   var groups = {};
   dbs.forEach(function (db) {
     var kind = dbMeta(db).kind || 'other';
