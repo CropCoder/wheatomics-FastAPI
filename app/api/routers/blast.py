@@ -248,6 +248,10 @@ def _db_meta(name: str, level_map: dict[str, dict]) -> dict:
     }
     if kind == "genome" and info.get("chromosome_count"):
         meta["chromosome_count"] = info["chromosome_count"]
+    if kind == "chromosome" and name.startswith(("all_Allohexaploidchr", "all_Allotetraploidchr")):
+        # Per-chromosome aggregates of chromosome-level assemblies.
+        meta["assembly_level"] = "Chromosome"
+        meta["chromosome_level"] = True
     return meta
 
 
