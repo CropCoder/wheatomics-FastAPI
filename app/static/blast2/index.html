@@ -1860,7 +1860,8 @@ var LEGACY_ALIAS_DBS = {
   'all4_genomes': 1, 'all5_genomes': 1, 'all6_genomes': 1, 'all7_genomes': 1
 };
 var BROKEN_DB_BASES = { 'Foma.pep': 1 };
-var DUPLICATE_ALIAS_DBS = { 'CS21_S1_S2_S3_All_NLR': 1 };
+var DUPLICATE_ALIAS_DBS = { 'CS21_S1_S2_S3_All_NLR': 1,
+  'all_gene': 1, 'all_protein': 1 };
 var HIDDEN_BLAST_DBS = Object.assign({}, SEQUENCE_ONLY_DBS, LEGACY_ALIAS_DBS, BROKEN_DB_BASES, DUPLICATE_ALIAS_DBS);
 var PROGRAM_INFO = {
   blastn:  { query: 'nucleotide', db: 'nucleotide', hint: 'Nucleotide query against nucleotide databases.' },

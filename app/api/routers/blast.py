@@ -94,9 +94,16 @@ BROKEN_DB_BASES = frozenset({"Foma.pep"})
 #: build is offered.
 DUPLICATE_ALIAS_DBS = frozenset({"CS21_S1_S2_S3_All_NLR"})
 
+#: Legacy singular aggregate aliases. `all_gene` / `all_protein` are duplicates
+#: of the maintained `all_genes` / `all_proteins` (identical counts, total
+#: length and DBLIST members, rebuilt 2026-10-24), so only the plural aliases
+#: are offered in the picker.
+LEGACY_AGGREGATE_ALIASES = frozenset({"all_gene", "all_protein"})
+
 #: Databases that must never be advertised as BLAST targets.
 HIDDEN_BLAST_DBS = (
-    SEQUENCE_ONLY_DBS | LEGACY_ALIAS_DBS | BROKEN_DB_BASES | DUPLICATE_ALIAS_DBS
+    SEQUENCE_ONLY_DBS | LEGACY_ALIAS_DBS | BROKEN_DB_BASES
+    | DUPLICATE_ALIAS_DBS | LEGACY_AGGREGATE_ALIASES
 )
 
 # === BLAST 数据库元数据（类型 / 组装） ===

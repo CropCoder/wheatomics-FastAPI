@@ -925,6 +925,9 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.htm
 - `CS21_S1_S2_S3_All_NLR`（2024-08 建，16 卷，13.0 GB）与
   `CS21_S1_S2_S3_All_NLR.fasta`（2026-09 重建，5 卷）索引的是同一套 105 条序列
   （条目清单 md5 一致、总长 55,798,255,760 bp 一致），旧库已确认无引用。
+- 另有重复的 legacy 聚合 alias：`all_gene` / `all_protein` 与维护中的
+  `all_genes` / `all_proteins` 序列数、总长、DBLIST 成员完全一致（2026-10-24 重建），
+  已从 BLAST 选择器隐藏，只保留复数版本；直接 API 仍可用旧名。
 - 2026-10-26 已删除旧库 70 个文件（13.0 GB），备份清单与 6 个小索引文件在
   `/var/www/data/masw_data/cs21_nlr_old_build_20261026_2143/`；新库保留并验证可打开
   （105 sequences / 55.8 Gb）。`DUPLICATE_ALIAS_DBS` 中保留旧名仅作防恢复的保险。
