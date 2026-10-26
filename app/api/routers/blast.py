@@ -67,6 +67,19 @@ SEQUENCE_ONLY_DBS = frozenset({
     "all_other_genomes",
 })
 
+#: Legacy BLAST alias databases whose DBLIST entries predate the 2026-10 database
+#: renaming (ploidy prefix + .add_Description suffix). Every member is dangling,
+#: so blastdbcmd fails on them; they are kept on disk for reference only and
+#: must not be offered in the picker.
+LEGACY_ALIAS_DBS = frozenset({
+    "all_Diploid",
+    "all_OtherTriticeae",
+    "all_tri6",
+})
+
+#: Databases that must never be advertised as BLAST targets.
+HIDDEN_BLAST_DBS = SEQUENCE_ONLY_DBS | LEGACY_ALIAS_DBS
+
 # === BLAST 数据库分类体系 ===
 # 与 wheatomics.sdau.edu.cn 前端页面一致，按基因组倍性/物种分类
 # 通过数据库名关键词匹配自动归类，未匹配的归入 "Other"
@@ -429,8 +442,8 @@ async def list_databases(
     prot_dbs = list_dbs("blastp") if db_type in (None, "prot") else []
     nuc_dbs = list_dbs("blastn") if db_type in (None, "nuc") else []
     # Sequence-retrieval-only aggregate DBs are not valid BLAST targets.
-    prot_dbs = [d for d in prot_dbs if d not in SEQUENCE_ONLY_DBS]
-    nuc_dbs = [d for d in nuc_dbs if d not in SEQUENCE_ONLY_DBS]
+    prot_dbs = [d for d in prot_dbs if d not in HIDDEN_BLAST_DBS]
+    nuc_dbs = [d for d in nuc_dbs if d not in HIDDEN_BLAST_DBS]
     # ---- 按分类组织（供 AI agent 选择数据库时参考） ----
     all_dbs = prot_dbs + nuc_dbs
     cat_map: dict[str, dict] = {}
