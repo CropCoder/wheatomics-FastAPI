@@ -804,7 +804,8 @@ V2.0 设计语言、纯静态单页、复用现有 `/api/blast` 异步任务后�
 - 页面：`app/static/blast2/index.html`（单文件，内联 CSS/JS；主题与 header/footer 取自
   `/outsitelink.html`，与 wheatPTM 页一致）
 - 部署脚本：`scripts/deploy_blast2_preview.py`（docroot 拷贝 + 时间戳备份，幂等）
-- 预览地址：**https://wheatomics.sdau.edu.cn/blast/blast2.html**
+- 线上地址：**https://wheatomics.sdau.edu.cn/blast/blast.html**（canonical，替换原 ViroBlast 表单页）
+  · 别名/预览：https://wheatomics.sdau.edu.cn/blast/blast2.html（同一文件）
 - 结果深链接：`/blast/blast2.html#/job/<job-id>`（job 结果保留 7 天，过期由 API 返回 404）
 
 ### 页面能力
@@ -829,9 +830,10 @@ V2.0 设计语言、纯静态单页、复用现有 `/api/blast` 异步任务后�
 ### 部署 / 校验
 
 ```bash
-# 部署预览（服务器上；会先备份原文件）
+# 发布/更新（服务器上；canonical + 别名一起，内容相同；会先备份原文件）
 python3 scripts/deploy_blast2_preview.py
-python3 scripts/deploy_blast2_preview.py --check   # 期望 [OK]，用于确认 docroot 与仓库一致
+python3 scripts/deploy_blast2_preview.py --check   # 期望全 [ok]，用于确认 docroot 与仓库一致
+python3 scripts/deploy_blast2_preview.py --canonical-only   # 只更新 /blast/blast.html
 
 # 改完页面后本地验收
 bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.html
@@ -839,8 +841,11 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.htm
 
 ### 现状与待办（重要）
 
-- 老页面 `/blast/blast.html` 和 `/blast/blastresult2.php` **保持原样**，新 SPA 目前是独立预览地址；
-  是否把 `/blast/blast.html` 重定向/替换到新页、以及是否更新全站导航里的 BLAST 指链，属于产品决策。
+- **已替换 canonical 表单页**：`/blast/blast.html` 现在就是本 SPA（老 ViroBlast 页在 docroot 留有
+  `blast.html.bak-<时间戳>`，回滚只需 cp 回来）；全站导航/书签无需改动。
+- 老结果查看器 `/blast/blastresult2.php` **保持原样**，历史结果链接仍可用；新任务的“结果页”是本 SPA 的
+  `#/job/<uuid>` 视图。
+- 若后续要把老结果页也重定向到新 SPA，需要单独的旧 job 兼容方案（不在本轮范围）。
 - 老 ViroBlast 的部分高级参数（soft mask、genetic code、alignment view 等）当前 `/api/blast`
   不提供，新版只暴露后端支持的参数子集。
 - 每个 hit 的“图形化命中图（graphic overview）”和逐 hit 可展开的 pairwise 对齐（而不是整页 pre）
