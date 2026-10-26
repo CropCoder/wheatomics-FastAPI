@@ -1197,7 +1197,8 @@
     }
     .blast-db-item input { margin: 2px 0 0; accent-color: var(--leaf); flex: none; }
     .blast-db-item:hover { color: var(--forest); }
-    .blast-db-group-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1px 22px; }
+    .blast-db-group-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px 22px; }
+    @media (max-width: 1100px) { .blast-db-group-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     #blast-db-search-results { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .blast-selected { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line); }
     .blast-selected-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; color: #3d564b; font-size: 12px; font-weight: 700; }
