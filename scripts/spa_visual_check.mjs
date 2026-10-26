@@ -44,6 +44,10 @@ const ERROR_COLLECTOR = [
 const task = await taskSpace(`spa visual check ${label} ${Date.now()}`);
 const page = await task.newPage();
 await page.cdp("Page.addScriptToEvaluateOnNewDocument", { source: ERROR_COLLECTOR });
+// Re-check a page right after a deploy: without this the browser may serve the
+// previous HTML from its HTTP cache.
+await page.cdp("Network.enable").catch(() => {});
+await page.cdp("Network.setCacheDisabled", { cacheDisabled: true }).catch(() => {});
 
 // ---------------------------------------------------------------------------
 // In-page audit. Self-contained: every helper lives inside the page.

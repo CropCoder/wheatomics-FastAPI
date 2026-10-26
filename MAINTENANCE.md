@@ -789,6 +789,7 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/wheatPSP/ --labe
 - **需要 `ego-browser`**（本机已装，Agent 验收也在用）；服务端不装 Node，所以这是**本地开发期工具**，
   不进生产链路、不进服务器；
 - 只检查"渲染与可访问性"，不检查数据/接口正确性（那仍按第八节 curl 自检）；
+- 检查时通过 CDP 禁用浏览器 HTTP 缓存，刚部署完直接跑也能看到新页面；
 - 对比度会跳过背景图/渐变上的文字（无法可靠计算），这类地方仍靠人眼；
 - 主题自带的问题（如 V2.0/outsitelink 的 "Back to top ↑" 在手机上是 72×15px）会作为
   Warn 报出来，属于**仓库外主题**的问题，改主题时要一并修，不要在单个工具页里私改。
