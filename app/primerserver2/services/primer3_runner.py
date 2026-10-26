@@ -172,7 +172,16 @@ def run_primer3(
     cmd.append(str(input_path))
 
     with open(output_path, "w", encoding="utf-8") as out_fh:
-        subprocess.run(cmd, stdout=out_fh, stderr=subprocess.PIPE, text=True, check=True)
+        try:
+            subprocess.run(cmd, stdout=out_fh, stderr=subprocess.PIPE, text=True, check=True)
+        except subprocess.CalledProcessError as exc:
+            detail = (exc.stderr or "").strip()
+            raise RuntimeError(
+                f"primer3_core failed with exit {exc.returncode}"
+                + (f": {detail}" if detail else "")
+            ) from exc
+        except FileNotFoundError as exc:
+            raise RuntimeError(f"primer3_core not found: {primer3bin}") from exc
 
 
 def parse_primer3_output(
@@ -239,6 +248,12 @@ def run(
     simple_table = outputdir / "primer3output.simple.table.txt"
 
     generate_primer3_input(regions, sequences, region_type, primer3_input)
+    if not primer3_input.exists() or primer3_input.stat().st_size == 0:
+        raise RuntimeError(
+            "No template sequences were retrieved for primer3. "
+            "For custom templates, ensure the FASTA IDs match template-regions "
+            "and that the requested region has sequence."
+        )
     run_primer3(primer3_input, primer3_output, primer3bin, primer3setting)
     parse_primer3_output(primer3_output, simple_table)
 

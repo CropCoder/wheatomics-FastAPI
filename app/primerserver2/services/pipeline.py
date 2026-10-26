@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from pathlib import Path
@@ -12,6 +13,7 @@ from ..config import PrimerServerConfig, blast_db_exists
 from ..dependencies import PrimerServer2Settings
 from ..models import CheckJobRequest, DesignJobRequest, JobResultResponse, JobStatus
 from . import pipeline_design, selection_runner, specificity_runner
+from .fasta_utils import ensure_plain_fasta_index
 from .storage import JobManager
 
 logger = logging.getLogger(__name__)
@@ -100,12 +102,42 @@ class PipelineRunner:
         job_dir: Path,
         request: DesignJobRequest,
     ) -> None:
-        """Write custom template/database FASTA files if requested."""
+        """Write and index custom template/database FASTA files if requested.
+
+        Primer3 needs a .fai index for custom templates (samtools faidx), and
+        blastn needs a BLAST index for a custom specificity database. Without
+        these, primer3_core receives an empty template and exits 253.
+        """
         if request.selectTemplate == "custom" and request.customTemplateSequences:
-            self._write_text(job_dir / "custom", request.customTemplateSequences)
+            custom_path = job_dir / "custom"
+            self._write_text(custom_path, request.customTemplateSequences)
+            if not ensure_plain_fasta_index(custom_path, self.config.samtools):
+                raise RuntimeError(
+                    "Could not index custom template FASTA with samtools faidx. "
+                    "Check that the FASTA is valid and sequence IDs are unique/simple."
+                )
 
         if "custom" in request.selectedDatabases and request.customDbSequences:
-            self._write_text(job_dir / "customdb", request.customDbSequences)
+            custom_db = job_dir / "customdb"
+            self._write_text(custom_db, request.customDbSequences)
+            try:
+                subprocess.run(
+                    [
+                        self.config.makeblastdb,
+                        "-in", str(custom_db),
+                        "-dbtype", "nucl",
+                        "-out", str(custom_db),
+                    ],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=True,
+                )
+            except subprocess.CalledProcessError as exc:
+                detail = (exc.stderr or exc.stdout or "").strip()
+                raise RuntimeError(
+                    f"makeblastdb failed for custom specificity database: {detail or exc}"
+                ) from exc
 
     def _validate_design_limits(self, request: DesignJobRequest) -> None:
         if self.config.limit_site > 0:

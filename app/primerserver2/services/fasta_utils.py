@@ -62,6 +62,41 @@ def normalize_region(region: str) -> str:
     return f"{chrom}:{start}-{end}"
 
 
+
+def ensure_plain_fasta_index(db: Path, samtools: str = "samtools") -> bool:
+    """Create a .fai for a plain FASTA file when samtools is available.
+
+    PrimerServer2 custom templates are written as plain FASTA files (no .fai).
+    Without this step faidx_fetch refuses to use samtools and falls back to
+    blastdbcmd, which cannot read plain FASTA, so no primer3 template is
+    produced (primer3_core then exits 253).
+    """
+    db = Path(db)
+    fai = Path(f"{db}.fai")
+    if fai.exists():
+        return True
+    if not db.is_file():
+        return False
+    try:
+        with db.open("r", encoding="utf-8", errors="ignore") as fh:
+            first = ""
+            for line in fh:
+                if line.strip():
+                    first = line.strip()
+                    break
+        if not first.startswith(">"):
+            return False
+        subprocess.run(
+            [samtools, "faidx", str(db)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True,
+        )
+        return fai.exists()
+    except (FileNotFoundError, subprocess.CalledProcessError, OSError):
+        return False
+
 def _blastdbcmd_fetch(db: Path, chrom: str, start: int, end: int, blastdbcmd: str) -> str:
     """Fetch one region from a BLAST database via blastdbcmd (no FASTA needed)."""
     cmd = [
@@ -110,7 +145,7 @@ def faidx_fetch(
     normalized_regions = [normalize_region(r) for r in regions]
     sequences: Dict[str, str] = {}
 
-    use_samtools = samtools and Path(f"{db}.fai").exists()
+    use_samtools = bool(samtools) and ensure_plain_fasta_index(Path(db), samtools)
     if use_samtools:
         for i in range(0, len(normalized_regions), batch_size):
             batch = normalized_regions[i : i + batch_size]
