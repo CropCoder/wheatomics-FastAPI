@@ -67,6 +67,12 @@ SEQUENCE_ONLY_DBS = frozenset({
     "all_other_genomes",
 })
 
+#: Whole-genome hexaploid aggregate alias. The user-facing aggregate is the set
+#: of 21 per-chromosome aggregate DBs (all_Allohexaploidchr1A ... chr7D), shown
+#: in All-in-one; BLAST 2.12 cannot alias those 21 aliases again (file-handle
+#: limit), so this whole-genome alias is hidden.
+HIDDEN_AGGREGATE_ALIASES = frozenset({"all_Allohexaploid"})
+
 #: Legacy BLAST alias databases whose DBLIST entries predate the 2026-10 database
 #: renaming (ploidy prefix + .add_Description suffix). Every member is dangling,
 #: so blastdbcmd fails on them; they are kept on disk for reference only and
@@ -92,10 +98,6 @@ BROKEN_DB_BASES = frozenset({"Foma.pep"})
 #: build is offered.
 DUPLICATE_ALIAS_DBS = frozenset({"CS21_S1_S2_S3_All_NLR"})
 
-#: Maintained aggregate alias exposed in All-in-one: all chromosome-level
-#: AABBDD (hexaploid) genome assemblies (rebuilt 2026-10-26 from the current
-#: per-assembly .genome DBs; heavy target, ~52 assemblies).
-#:
 #: Legacy singular aggregate aliases. `all_gene` / `all_protein` are duplicates
 #: of the maintained `all_genes` / `all_proteins` (identical counts, total
 #: length and DBLIST members, rebuilt 2026-10-24), so only the plural aliases
@@ -105,7 +107,7 @@ LEGACY_AGGREGATE_ALIASES = frozenset({"all_gene", "all_protein"})
 #: Databases that must never be advertised as BLAST targets.
 HIDDEN_BLAST_DBS = (
     SEQUENCE_ONLY_DBS | LEGACY_ALIAS_DBS | BROKEN_DB_BASES
-    | DUPLICATE_ALIAS_DBS | LEGACY_AGGREGATE_ALIASES
+    | DUPLICATE_ALIAS_DBS | LEGACY_AGGREGATE_ALIASES | HIDDEN_AGGREGATE_ALIASES
 )
 
 # === BLAST 数据库元数据（类型 / 组装） ===

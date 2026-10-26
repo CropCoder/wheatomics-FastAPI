@@ -1851,7 +1851,7 @@ var DB_LIMIT = 20;
 // Sequence-retrieval-only aggregate DBs (mirrors SEQUENCE_ONLY_DBS in
 // app/api/routers/blast.py). Hidden defensively even if an older API build
 // still returns them.
-var SEQUENCE_ONLY_DBS = { 'all_genomes': 1, 'all_other_genomes': 1 };
+var SEQUENCE_ONLY_DBS = { 'all_genomes': 1, 'all_other_genomes': 1, 'all_Allohexaploid': 1 };
 // Legacy alias databases whose members are dangling after the 2026-10 rename.
 var LEGACY_ALIAS_DBS = {
   'all_Diploid': 1, 'all_OtherTriticeae': 1, 'all_tri6': 1,
@@ -1987,7 +1987,7 @@ function applyDatabases(data) {
   $('#blast-db-count').textContent = countText;
   data.categories.forEach(function (cat) {
     cat.visible_count = (cat.databases || []).filter(function (db) {
-      return (dbMeta(db).kind || 'other') !== 'chromosome';
+      return cat.id === 'aggregated' || (dbMeta(db).kind || 'other') !== 'chromosome';
     }).length;
   });
   var hero = $('[data-blast-db-total]');
@@ -2050,6 +2050,7 @@ var DB_KIND_LABEL = { genome: 'genome', chromosome: 'per-chr', cds: 'CDS', prote
 var DB_KIND_ORDER = [
   { key: 'aggregate', label: 'Combined databases' },
   { key: 'genome', label: 'Genome databases' },
+  { key: 'chromosome', label: 'Hexaploid chromosome aggregates' },
   { key: 'cds', label: 'CDS / transcript databases' },
   { key: 'protein', label: 'Protein databases' },
   { key: 'other', label: 'Other databases' }
@@ -2123,8 +2124,9 @@ function updateKindChips() {
 function fillDbList(listEl, idx) {
   var cat = state.categories[idx];
   if (!cat || listEl.getAttribute('data-filled') === '1') return;
+  var allowChromosome = cat.id === 'aggregated';
   var dbs = (cat.databases || []).filter(dbPassesFilters).filter(function (db) {
-    return (dbMeta(db).kind || 'other') !== 'chromosome';
+    return allowChromosome || (dbMeta(db).kind || 'other') !== 'chromosome';
   });
   var groups = {};
   dbs.forEach(function (db) {
