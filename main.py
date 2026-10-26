@@ -147,6 +147,11 @@ app.mount("/eqtl", StaticFiles(directory=Path(__file__).parent / "app" / "static
 app.mount("/scRNA", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "scRNA", html=True), name="scRNA")
 app.mount("/wheatPSP", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "wheatPSP", html=True), name="wheatPSP")
 app.mount("/wheatPTM", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "wheatPTM", html=True), name="wheatPTM")
+# Shared WheatOmics 2.0 chrome (theme CSS + injected header/footer) used by
+# the converted SPAs. Deliberately mounted under /api/ because Apache already
+# proxies /api to the backend — a new top-level mount would need an extra
+# ProxyPass rule. See scripts/extract_v2_shell.py and app/static/_v2/template.html.
+app.mount("/api/v2shell", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "_v2"), name="v2shell")
 # Built Vue SPA. The path must match base: '/PrimerServer2/' in the frontend's
 # vite.config.js, which also bakes it into the asset URLs.
 app.mount("/PrimerServer2", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "primerserver2", html=True), name="primerserver2")
