@@ -173,13 +173,10 @@ def _db_meta(name: str, level_map: dict[str, dict]) -> dict:
     if not level and ".scaffold" in name.lower():
         level = "Scaffold"
     return {
-        "name": name,
         "kind": kind,
-        "assembly": base,
         "chromosome": chromosome,
         "assembly_level": level,
         "chromosome_level": bool(info.get("chromosome_level")) or level in CHROMOSOME_LEVELS,
-        "dataset_id": info.get("dataset_id"),
     }
 
 
