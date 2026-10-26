@@ -1395,6 +1395,14 @@
     .blast-badge.chr { background: #eef1fa; color: #3d4f7a; }
     .blast-badge.warn { background: #fdf2e3; color: #8a5a12; }
     .blast-badge.agg { background: #eaf3ec; color: #2c5c3f; }
+
+    .blast-chr-group { border-top: 1px dotted var(--line); }
+    .blast-chr-group:first-child { border-top: 0; }
+    .blast-chr-group > summary { display: flex; align-items: center; gap: 7px; min-height: 28px; padding: 6px 12px 4px 22px; color: #3d564b; font-family: var(--display); font-size: 10px; font-weight: 700; cursor: pointer; list-style: none; }
+    .blast-chr-group > summary::-webkit-details-marker { display: none; }
+    .blast-chr-group > summary::before { content: '▸'; color: var(--muted); font-size: 9px; }
+    .blast-chr-group[open] > summary::before { content: '▾'; }
+    .blast-chr-group .blast-db-group-list { padding-left: 10px; }
   </style>
 </head>
 <body>
@@ -2045,16 +2053,50 @@ var DB_KIND_ORDER = [
 
 function dbMeta(db) { return (state.dbMeta && state.dbMeta[db]) || {}; }
 
-function dbCheckbox(db) {
+function shortAssemblyName(db) {
+  return db.replace(/\.genome_[Cc]hr[0-9A-Za-z]+$/, '')
+           .replace(/[Cc]hr[0-9][0-9A-Za-z]*$/, '')
+           .replace(/[._]$/, '') || db;
+}
+
+function chromosomeSortKey(ch) {
+  var m = /^(\d+)(.*)$/.exec(ch || '');
+  return m ? [parseInt(m[1], 10), m[2].toUpperCase(), ''] : [999, (ch || '?').toUpperCase(), ''];
+}
+
+function dbChromosomeGroups(dbs) {
+  var byChr = {};
+  dbs.forEach(function (db) {
+    var ch = dbMeta(db).chromosome || 'Unknown';
+    (byChr[ch] = byChr[ch] || []).push(db);
+  });
+  var keys = Object.keys(byChr).sort(function (a, b) {
+    var ka = chromosomeSortKey(a), kb = chromosomeSortKey(b);
+    return ka[0] - kb[0] || ka[1].localeCompare(kb[1]);
+  });
+  var html = keys.map(function (ch) {
+    var items = byChr[ch].slice().sort(function (a, b) {
+      return shortAssemblyName(a).localeCompare(shortAssemblyName(b), 'en', { numeric: true });
+    });
+    return '<details class="blast-chr-group"><summary>Chr' + esc(ch) +
+      ' <span class="blast-db-group-count">(' + fmtInt(items.length) + ')</span></summary>' +
+      '<div class="blast-db-group-list">' +
+        items.map(function (db) { return dbCheckbox(db, shortAssemblyName(db), true); }).join('') +
+      '</div></details>';
+  }).join('');
+  return html;
+}
+
+function dbCheckbox(db, label, minimal) {
   var checked = state.selected.has(db) ? ' checked' : '';
   var meta = dbMeta(db), kind = meta.kind || 'other';
   var badges = '';
   if (kind === 'aggregate') badges += '<span class="blast-badge agg">combined</span>';
-  else if (kind && kind !== 'genome') badges += '<span class="blast-badge' + (kind === 'chromosome' ? ' chr' : '') + '">' + esc(DB_KIND_LABEL[kind] || kind) + '</span>';
+  else if (!minimal && kind && kind !== 'genome') badges += '<span class="blast-badge' + (kind === 'chromosome' ? ' chr' : '') + '">' + esc(DB_KIND_LABEL[kind] || kind) + '</span>';
   if (meta.assembly_level) badges += '<span class="blast-badge' + (meta.chromosome_level ? '' : ' warn') + '">' + esc(meta.assembly_level) + '</span>';
-  if (meta.chromosome) badges += '<span class="blast-badge chr">Chr' + esc(meta.chromosome) + '</span>';
-  return '<label class="blast-db-item"><input type="checkbox" class="blast-db-check" value="' + esc(db) + '"' + checked + '>' +
-    '<span>' + esc(db) + '</span>' + (badges ? '<span class="blast-db-badges">' + badges + '</span>' : '') + '</label>';
+  if (!minimal && meta.chromosome) badges += '<span class="blast-badge chr">Chr' + esc(meta.chromosome) + '</span>';
+  return '<label class="blast-db-item" title="' + esc(db) + '"><input type="checkbox" class="blast-db-check" value="' + esc(db) + '"' + checked + '>' +
+    '<span>' + esc(label || db) + '</span>' + (badges ? '<span class="blast-db-badges">' + badges + '</span>' : '') + '</label>';
 }
 
 function dbPassesFilters(db) {
@@ -2084,12 +2126,13 @@ function fillDbList(listEl, idx) {
     var items = groups[group.key] || [];
     if (!items.length) return;
     var collapsible = group.key === 'chromosome';
+    var body = collapsible ? dbChromosomeGroups(items) : items.map(dbCheckbox).join('');
     html += '<div class="blast-db-group" data-kind="' + group.key + '">' +
       '<div class="blast-db-group-title">' + esc(group.label) +
         ' <span class="blast-db-group-count">(' + fmtInt(items.length) + ')</span>' +
         (collapsible ? '<button type="button" data-toggle-group="' + idx + ':' + group.key + '">show</button>' : '') +
       '</div>' +
-      '<div class="blast-db-group-list"' + (collapsible ? ' hidden' : '') + '>' + items.map(dbCheckbox).join('') + '</div>' +
+      '<div class="blast-db-group-list"' + (collapsible ? ' hidden' : '') + '>' + body + '</div>' +
     '</div>';
   });
   if (!dbs.length) html = '<div class="blast-empty" style="padding:12px;">No databases match the current type/quality filter.</div>';

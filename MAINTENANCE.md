@@ -815,7 +815,8 @@ V2.0 设计语言、纯静态单页、复用现有 `/api/blast` 异步任务后�
 - 数据库选择器：按分类折叠（`/api/blast/databases?program=...`）、名称过滤、分类全选、快捷
   “All proteins/All genes (combined)”、已选 chips、上限 20 个（与 API 限制一致）；
 - 分类内再按**库类型分组**（combined / genome / CDS / protein / per-chromosome），
-  单染色体拆分库默认折叠；提供类型筛选 chips 和 “chromosome-level assemblies only” 开关；
+  单染色体拆分库默认折叠，展开后再按染色体（Chr1A / Chr1B / …）分子类，
+  同一染色体下汇总所有组装的库；提供类型筛选 chips 和 “chromosome-level assemblies only” 开关；
   每条库显示类型与组装质量 badge。元数据来自 API 的 `database_meta`
   （`kind` / `assembly` / `chromosome` / `assembly_level`，由 `genome_registry` 的
   `blast_*` 基名 + `assembly_level` 关联得到），前端仅作为兜底；
