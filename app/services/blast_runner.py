@@ -203,6 +203,9 @@ def count_active_jobs() -> int:
     return n
 
 
+#: Width of the pairwise alignment blocks in outfmt 0 (BLAST default is 60).
+ALIGNMENT_LINE_LENGTH = 100
+
 # ---------------------------------------------------------------------------
 # Execution
 # ---------------------------------------------------------------------------
@@ -246,6 +249,7 @@ def _base_cmd(blast_path: str, program: str, dbs: list[str], outfmt: str,
         "-evalue", str(evalue),
         "-max_target_seqs", str(max_targets),
         "-num_threads", "4",
+        "-line_length", str(ALIGNMENT_LINE_LENGTH),
     ]
     if word_size is not None:
         cmd += ["-word_size", str(word_size)]
@@ -337,11 +341,11 @@ def execute_blast_job(job_id: str, params: Optional[dict] = None) -> dict:
             for name in names:
                 oflag, ext = fmt_defs[name]
                 out_path = jd / f"result{ext}"
-                subprocess.run(
-                    [BLAST_FORMATTER, "-archive", str(archive_path),
-                     "-outfmt", oflag, "-out", str(out_path)],
-                    timeout=120,
-                )
+                fmt_cmd = [BLAST_FORMATTER, "-archive", str(archive_path),
+                           "-outfmt", oflag, "-out", str(out_path)]
+                if oflag == "0":
+                    fmt_cmd += ["-line_length", str(ALIGNMENT_LINE_LENGTH)]
+                subprocess.run(fmt_cmd, timeout=120)
                 download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}/result{ext}"
 
             archive_path.unlink(missing_ok=True)
