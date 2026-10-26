@@ -630,6 +630,7 @@ async def list_databases(
             kind = database_meta[db]["kind"]
             cat_kinds[kind] = cat_kinds.get(kind, 0) + 1
         cat_map[cat["id"]] = {
+            "id": cat["id"],
             "label": cat["label"], "description": cat["description"],
             "count": len(cat_dbs), "databases": cat_dbs, "kind_counts": cat_kinds,
         }
