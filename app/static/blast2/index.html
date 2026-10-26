@@ -1656,9 +1656,10 @@ Paste one or more FASTA sequences here…"></textarea>
                   <p class="blast-card-sub">Paste a BLAST job ID (or a result URL) to reopen its result page. Jobs are not stored in this browser.</p>
                   <div class="blast-db-toolbar">
                     <label class="blast-visually-hidden" for="job-id-input">BLAST job ID</label>
-                    <input id="job-id-input" class="blast-db-search" type="text" placeholder="67d1424c-d2e7-49a5-b1d7-be66b52df315" spellcheck="false">
+                    <input id="job-id-input" class="blast-db-search" type="text" placeholder="e.g. 67d1424c-d2e7-49a5-b1d7-be66b52df315 — or paste a result URL" spellcheck="false">
                     <button id="job-id-open" class="secondary-button" type="button">Open</button>
                   </div>
+                  <div id="job-id-error" class="blast-alert" role="alert"></div>
                 </section>
               </aside>
             </div>
@@ -2406,9 +2407,30 @@ function navigateToJob(id) {
   history.pushState({ job: id }, '', '?job=' + encodeURIComponent(id));
   route();
 }
+function showJobIdError(message) {
+  var box = $('#job-id-error');
+  var input = $('#job-id-input');
+  if (box) {
+    box.textContent = message || '';
+    box.classList.toggle('error', !!message);
+  } else if (message) {
+    showFormError(message);
+  }
+  if (message && input) input.focus();
+}
+
 function openJobById(raw) {
-  var id = parsedJobId(raw);
-  if (!id) { showFormError('That does not look like a BLAST job ID (expected a 36-character UUID).'); return; }
+  var value = String(raw == null ? ($('#job-id-input').value || '') : raw).trim();
+  if (!value) {
+    showJobIdError('Paste a BLAST job ID (or a result URL) first — the grey example is only a placeholder.');
+    return;
+  }
+  var id = parsedJobId(value);
+  if (!id) {
+    showJobIdError('That does not look like a BLAST job ID (expected a 36-character UUID, e.g. 67d1424c-d2e7-49a5-b1d7-be66b52df315).');
+    return;
+  }
+  showJobIdError('');
   showFormError('');
   navigateToJob(id);
 }
@@ -3112,6 +3134,7 @@ function init() {
   $('#job-id-input').addEventListener('keydown', function (event) {
     if (event.key === 'Enter') { event.preventDefault(); openJobById(this.value); }
   });
+  $('#job-id-input').addEventListener('input', function () { showJobIdError(''); });
   window.addEventListener('hashchange', route);
   window.addEventListener('popstate', route);
   setProgram('blastn');
