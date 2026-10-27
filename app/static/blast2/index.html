@@ -1437,6 +1437,14 @@
 
     .blast-aln-chevron { display: inline-block; width: 16px; color: var(--muted); font-size: 12px; line-height: 1; transition: transform .15s ease; }
     .blast-aln-card[open] > summary .blast-aln-chevron { transform: rotate(90deg); }
+
+    .blast-aln-getseq { margin-left: 14px; min-height: 26px; padding: 2px 11px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--leaf); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .blast-aln-getseq:hover { border-color: rgba(17, 134, 83, .45); }
+    .blast-getseq-panel { margin: 4px 0 14px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 12px; background: #fbfdfb; }
+    .blast-getseq-fields { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-end; }
+    .blast-getseq-fields label { display: flex; flex-direction: column; gap: 4px; color: #3d564b; font-size: 10px; font-weight: 700; }
+    .blast-getseq-fields input { height: 30px; min-width: 130px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 11px; }
+    .blast-getseq-out { margin: 10px 0 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-family: var(--utility); font-size: 10.5px; white-space: pre-wrap; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -3048,6 +3056,18 @@ function parseTraditional(text) {
       i += 2;
     }
   }
+  hits.forEach(function (hit) {
+    hit.hsps.forEach(function (hsp) {
+      var sm = /Score\s*=\s*([\d.]+)/.exec((hsp.meta || []).join(' '));
+      hsp.score = sm ? parseFloat(sm[1]) : 0;
+      var firstS = hsp.triplets.length ? hsp.triplets[0][2] : '';
+      var lastS = hsp.triplets.length ? hsp.triplets[hsp.triplets.length - 1][2] : '';
+      var a = /^Sbjct\s+(\d+)/.exec(firstS);
+      var b = /^Sbjct\s+\S+\s+(\d+)/.exec(lastS);
+      hsp.sstart = a ? parseInt(a[1], 10) : null;
+      hsp.send = b ? parseInt(b[1], 10) : null;
+    });
+  });
   return hits.filter(function (h) { return h.hsps.some(function (s) { return s.triplets.length; }); });
 }
 
@@ -3082,6 +3102,78 @@ function alignmentTripletHtml(t) {
   return esc(q) + '\n' + mid + '\n' + esc(s);
 }
 
+function handleAlignmentGetSeq(event) {
+  var toggle = event.target.closest('.blast-aln-getseq');
+  if (toggle) {
+    event.preventDefault();
+    event.stopPropagation();
+    var idx = parseInt(toggle.getAttribute('data-align-index'), 10);
+    var hit = state.alignHits[idx];
+    if (!hit) return;
+    var card = toggle.closest('.blast-aln-card');
+    var body = card.querySelector('.blast-aln-body');
+    if (card.querySelector('.blast-getseq-panel')) { card.querySelector('.blast-getseq-panel').remove(); return; }
+    var best = hit.hsps.reduce(function (a, b) { return ((b.score || 0) > (a.score || 0)) ? b : a; }, hit.hsps[0]);
+    var s1 = (best && best.sstart) ? Math.min(best.sstart, best.send) : 1;
+    var s2 = (best && best.sstart) ? Math.max(best.sstart, best.send) : 60;
+    var seqId = hit.header.split(/\s+/)[0];
+    var db = (state.result && state.result.dbs && state.result.dbs[0]) || 'all_genomes';
+    var panel = document.createElement('div');
+    panel.className = 'blast-getseq-panel';
+    panel.innerHTML =
+      '<div class="blast-getseq-fields">' +
+        '<label>Target ID<input class="blast-getseq-id" value="' + esc(seqId) + '" readonly></label>' +
+        '<label>Start<input class="blast-getseq-start" type="number" min="1" value="' + s1 + '"></label>' +
+        '<label>End<input class="blast-getseq-end" type="number" min="1" value="' + s2 + '"></label>' +
+        '<label>Database<input class="blast-getseq-db" value="' + esc(db) + '"></label>' +
+        '<button type="button" class="secondary-button blast-getseq-fetch">Fetch sequence</button>' +
+        '<button type="button" class="blast-link-btn blast-getseq-close">Close</button>' +
+      '</div><div class="blast-getseq-status blast-hint"></div><pre class="blast-getseq-out" hidden></pre>';
+    body.insertBefore(panel, body.firstChild);
+    card.open = true;
+    return;
+  }
+  var close = event.target.closest('.blast-getseq-close');
+  if (close) { close.closest('.blast-getseq-panel').remove(); return; }
+  var fetchBtn = event.target.closest('.blast-getseq-fetch');
+  if (!fetchBtn) return;
+  event.preventDefault();
+  event.stopPropagation();
+  var panel = fetchBtn.closest('.blast-getseq-panel');
+  var seqId = panel.querySelector('.blast-getseq-id').value.trim();
+  var start = parseInt(panel.querySelector('.blast-getseq-start').value, 10);
+  var end = parseInt(panel.querySelector('.blast-getseq-end').value, 10);
+  var status = panel.querySelector('.blast-getseq-status');
+  var out = panel.querySelector('.blast-getseq-out');
+  if (!seqId || !isFinite(start) || !isFinite(end) || start < 1 || end < start) {
+    status.textContent = 'Enter a valid target ID and interval (start >= 1, end >= start).';
+    return;
+  }
+  var dbs = [panel.querySelector('.blast-getseq-db').value.trim()];
+  if (state.result && state.result.dbs) dbs = dbs.concat(state.result.dbs);
+  dbs.push('all_genomes');
+  dbs = dbs.filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+  status.textContent = 'Fetching sequence…';
+  out.hidden = true;
+  var attempt = function (k) {
+    if (k >= dbs.length) { status.textContent = 'Sequence not found in the tried databases — adjust the database or interval.'; return; }
+    var db = dbs[k];
+    var region = seqId + ':' + start + '-' + end;
+    fetch('/api/sequence/by-interval?region=' + encodeURIComponent(region) + '&database=' + encodeURIComponent(db), { cache: 'no-store' })
+      .then(function (resp) { return resp.json(); })
+      .then(function (json) {
+        var fasta = json && json.data && json.data.fasta;
+        if (json && json.success && fasta) {
+          out.textContent = fasta;
+          out.hidden = false;
+          status.textContent = 'Sequence from database "' + (json.data.database || db) + '" (' + region + ').';
+        } else { attempt(k + 1); }
+      })
+      .catch(function () { attempt(k + 1); });
+  };
+  attempt(0);
+}
+
 function loadAlignments() {
   var ctx = state.result;
   var url = ctx && ctx.urls && ctx.urls.traditional;
@@ -3106,6 +3198,7 @@ function loadAlignments() {
           }).join('');
           return '<details class="blast-aln-card" data-align-index="' + i + '"' + (i < 3 ? ' open' : '') + '>' +
             '<summary>' + esc(h.header.slice(0, 160)) +
+              '<button type="button" class="blast-aln-getseq" data-align-index="' + i + '" title="Fetch target sequence for the highest-scoring HSP">Get sequence</button>' +
               '<span class="blast-aln-actions"><span class="blast-aln-hspcount">' + h.hsps.length + ' HSP' + (h.hsps.length === 1 ? '' : 's') + '</span>' +
               '<button type="button" class="blast-aln-copy" title="Copy this target: HSP info + pairwise alignment">Copy</button>' +
               '<span class="blast-aln-chevron" aria-hidden="true" title="Expand / collapse">▸</span></span></summary>' +
@@ -3277,6 +3370,7 @@ function init() {
     else fail();
   });
   attachGraphicHandlers();
+  $('#align-list').addEventListener('click', handleAlignmentGetSeq);
   $('#job-id-open').addEventListener('click', function () { openJobById($('#job-id-input').value); });
   $('#job-id-input').addEventListener('keydown', function (event) {
     if (event.key === 'Enter') { event.preventDefault(); openJobById(this.value); }
