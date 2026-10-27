@@ -1445,6 +1445,10 @@
     .blast-getseq-fields label { display: flex; flex-direction: column; gap: 4px; color: #3d564b; font-size: 10px; font-weight: 700; }
     .blast-getseq-fields input { height: 30px; min-width: 130px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 11px; }
     .blast-getseq-out { margin: 10px 0 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-family: var(--utility); font-size: 10.5px; white-space: pre-wrap; word-break: break-all; }
+
+    .blast-row-align { margin-left: 6px; padding: 1px 8px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--leaf); font-family: var(--utility); font-size: 9px; font-weight: 700; cursor: pointer; }
+    .blast-row-align:hover { border-color: rgba(17, 134, 83, .45); }
+    .blast-aln-card.flash > summary { background: #eaf7ea; }
   </style>
 </head>
 <body>
@@ -2813,7 +2817,7 @@ function renderDescriptions() {
     rows.push('<tr class="data-row" data-key="' + esc(s.key) + '">' +
       '<td class="sel"><input type="checkbox" class="hit-check" data-key="' + esc(s.key) + '"' + checked + '></td>' +
       '<td class="num">' + (i + 1) + '</td>' +
-      '<td class="subject">' + subject + '</td>' +
+      '<td class="subject">' + subject + ' <button type="button" class="blast-row-align" data-sseqid="' + esc(s.sseqid) + '" title="Jump to this target alignment">alignment</button></td>' +
       '<td class="desc" title="' + esc(s.stitle) + '">' + esc(s.description || '—') + '</td>' +
       '<td class="num">' + fmtFloat(s.maxscore, 1) + '</td>' +
       '<td class="num">' + fmtFloat(s.totalscore, 1) + '</td>' +
@@ -2847,7 +2851,7 @@ function renderDescriptions() {
 function attachDescriptionRows() {
   $$('#hit-table tr.data-row').forEach(function (row) {
     row.addEventListener('click', function (event) {
-      if (event.target.closest('input, a')) return;
+      if (event.target.closest('input, a, button')) return;
       var next = row.nextElementSibling;
       if (next && next.classList.contains('blast-detail-row')) { next.parentNode.removeChild(next); return; }
       var key = row.getAttribute('data-key');
@@ -2989,6 +2993,7 @@ function resetFilters() {
   state.shown = 100;
   renderDescriptions();
   renderGraphicSummary();
+  if (state.alignLoaded) renderAlignments();
 }
 
 function applyFilters() {
@@ -3004,6 +3009,7 @@ function applyFilters() {
   state.shown = 100;
   renderDescriptions();
   renderGraphicSummary();
+  if (state.alignLoaded) renderAlignments();
 }
 
 function renderDownloads(urls) {
@@ -3102,6 +3108,75 @@ function alignmentTripletHtml(t) {
   return esc(q) + '\n' + mid + '\n' + esc(s);
 }
 
+function renderAlignments() {
+  var box = $('#align-list');
+  if (!state.alignLoaded) return;
+  if (!state.alignHits.length) {
+    box.innerHTML = '<div class="blast-aln-empty">No pairwise alignments were found in the result file.</div>';
+    $('#align-status').textContent = '0 alignment records.';
+    return;
+  }
+  var visible = filteredSubjects();
+  var keep = {};
+  visible.forEach(function (s) { keep[s.sseqid] = 1; });
+  var hits = state.alignHits.filter(function (h) { return keep[h.header.split(/\s+/)[0]]; });
+  if (!hits.length) {
+    box.innerHTML = '<div class="blast-aln-empty">No alignment records match the current filters.</div>';
+  } else {
+    box.innerHTML = hits.slice(0, 50).map(function (h, i) {
+      var hsps = h.hsps.map(function (s, si) {
+        return '<div class="blast-aln-meta">HSP ' + (si + 1) + ': ' + s.meta.map(esc).join(' · ') + '</div>' +
+          s.triplets.map(function (t) { return '<pre class="blast-aln-pre">' + alignmentTripletHtml(t) + '</pre>'; }).join('');
+      }).join('');
+      return '<details class="blast-aln-card" data-align-index="' + state.alignHits.indexOf(h) + '" data-subject="' +
+        esc(h.header.split(/\s+/)[0]) + '"' + (i < 3 ? ' open' : '') + '>' +
+        '<summary>' + esc(h.header.slice(0, 160)) +
+          '<button type="button" class="blast-aln-getseq" data-align-index="' + state.alignHits.indexOf(h) + '" title="Fetch target sequence for the highest-scoring HSP">Get sequence</button>' +
+          '<span class="blast-aln-actions"><span class="blast-aln-hspcount">' + h.hsps.length + ' HSP' + (h.hsps.length === 1 ? '' : 's') + '</span>' +
+          '<button type="button" class="blast-aln-copy" title="Copy this target: HSP info + pairwise alignment">Copy</button>' +
+          '<span class="blast-aln-chevron" aria-hidden="true" title="Expand / collapse">▸</span></span></summary>' +
+        '<div class="blast-aln-body">' + hsps + '</div></details>';
+    }).join('');
+    if (hits.length > 50) box.innerHTML += '<p class="blast-hint">Showing the first 50 matching records — use the download for the full file.</p>';
+  }
+  $('#align-status').textContent = hits.length + ' of ' + state.alignHits.length + ' alignment record(s) shown' +
+    (state.alignChars ? ', ' + fmtInt(state.alignChars) + ' characters' : '') + '.';
+}
+
+function scrollAlignToSubject() {
+  var id = state.pendingAlignSubject;
+  if (!id) return;
+  var cards = $$('#align-list .blast-aln-card');
+  var found = null;
+  cards.forEach(function (c) {
+    if (!found && c.getAttribute('data-subject') === id) found = c;
+  });
+  if (!found) {
+    cards.forEach(function (c) {
+      var sid = c.getAttribute('data-subject') || '';
+      if (!found && sid && (sid.indexOf(id) === 0 || id.indexOf(sid) === 0)) found = c;
+    });
+  }
+  if (!found) {
+    $('#align-status').textContent = 'Alignment for ' + id + ' is not shown' +
+      ((state.filters.ident || state.filters.evalue != null || state.filters.cover || state.queryFilter) ? ' (hidden by the current filters — click Reset).' : '.');
+    return;
+  }
+  found.open = true;
+  found.scrollIntoView({ block: 'center' });
+  found.classList.remove('flash');
+  void found.offsetWidth;
+  found.classList.add('flash');
+  setTimeout(function () { found.classList.remove('flash'); }, 1500);
+}
+
+function openAlignmentForSubject(sseqid) {
+  state.pendingAlignSubject = sseqid;
+  switchTab('alignments');
+  if (state.alignLoaded) { scrollAlignToSubject(); state.pendingAlignSubject = null; }
+  else loadAlignments();
+}
+
 function handleAlignmentGetSeq(event) {
   var toggle = event.target.closest('.blast-aln-getseq');
   if (toggle) {
@@ -3188,30 +3263,11 @@ function loadAlignments() {
     .then(function (text) {
       state.alignHits = parseTraditional(text);
       state.alignLoaded = true;
-      var box = $('#align-list');
-      if (!state.alignHits.length) {
-        box.innerHTML = '<div class="blast-aln-empty">No pairwise alignments were found in the result file.</div>';
-      } else {
-        box.innerHTML = state.alignHits.slice(0, 50).map(function (h, i) {
-          var hsps = h.hsps.map(function (s, si) {
-            return '<div class="blast-aln-meta">HSP ' + (si + 1) + ': ' + s.meta.map(esc).join(' · ') + '</div>' +
-              s.triplets.map(function (t) { return '<pre class="blast-aln-pre">' + alignmentTripletHtml(t) + '</pre>'; }).join('');
-          }).join('');
-          return '<details class="blast-aln-card" data-align-index="' + i + '"' + (i < 3 ? ' open' : '') + '>' +
-            '<summary>' + esc(h.header.slice(0, 160)) +
-              '<button type="button" class="blast-aln-getseq" data-align-index="' + i + '" title="Fetch target sequence for the highest-scoring HSP">Get sequence</button>' +
-              '<span class="blast-aln-actions"><span class="blast-aln-hspcount">' + h.hsps.length + ' HSP' + (h.hsps.length === 1 ? '' : 's') + '</span>' +
-              '<button type="button" class="blast-aln-copy" title="Copy this target: HSP info + pairwise alignment">Copy</button>' +
-              '<span class="blast-aln-chevron" aria-hidden="true" title="Expand / collapse">▸</span></span></summary>' +
-            '<div class="blast-aln-body">' + hsps + '</div></details>';
-        }).join('');
-        if (state.alignHits.length > 50) {
-          box.innerHTML += '<p class="blast-hint">Showing the first 50 alignment records — use the download for the full file.</p>';
-        }
-      }
+      state.alignChars = text.length;
+      renderAlignments();
       $('#align-download').href = url;
       $('#align-download').hidden = false;
-      $('#align-status').textContent = state.alignHits.length + ' alignment record(s), ' + fmtInt(text.length) + ' characters.';
+      if (state.pendingAlignSubject) { scrollAlignToSubject(); state.pendingAlignSubject = null; }
     })
     .catch(function (err) { $('#align-status').textContent = 'Could not load alignments: ' + err.message; })
     .then(function () { btn.disabled = false; });
@@ -3372,6 +3428,13 @@ function init() {
   });
   attachGraphicHandlers();
   $('#align-list').addEventListener('click', handleAlignmentGetSeq);
+  $('#hit-table tbody').addEventListener('click', function (event) {
+    var b = event.target.closest('.blast-row-align');
+    if (!b) return;
+    event.preventDefault();
+    event.stopPropagation();
+    openAlignmentForSubject(b.getAttribute('data-sseqid'));
+  });
   $('#job-id-open').addEventListener('click', function () { openJobById($('#job-id-input').value); });
   $('#job-id-input').addEventListener('keydown', function (event) {
     if (event.key === 'Enter') { event.preventDefault(); openJobById(this.value); }
