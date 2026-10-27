@@ -1773,6 +1773,7 @@ Paste one or more FASTA sequences here…"></textarea>
           <section class="blast-panel" id="tab-alignments" hidden>
             <div class="blast-toolbar">
               <button class="secondary-button" type="button" id="align-load">Load pairwise alignments</button>
+              <button class="secondary-button" type="button" id="align-copy">Copy alignments</button>
               <span class="blast-hint" id="align-status"></span>
               <a class="secondary-button" id="align-download" href="#" target="_blank" rel="noopener" hidden>Download text</a>
             </div>
@@ -2987,6 +2988,15 @@ function parseTraditional(text) {
 
 function alignmentTripletHtml(t) {
   var q = t[0], m = t[1], s = t[2];
+  // Fixed two-space gutter between the coordinate numbers and the aligned
+  // residues, so terminal gaps/mismatches do not butt against "Query 311".
+  var pm = /^(\S+\s+\d+\s+)/.exec(q || s);
+  if (pm) {
+    var n = pm[1].length;
+    q = q.slice(0, n) + '  ' + q.slice(n);
+    if (s) s = s.slice(0, n) + '  ' + s.slice(n);
+    if (m) m = m.slice(0, n) + '  ' + m.slice(n);
+  }
   // Only spaces *inside* the aligned segment are mismatches; the leading and
   // trailing spaces under the coordinate numbers must keep the normal
   // background (no pink blocks at the edges).
@@ -3171,6 +3181,20 @@ function init() {
   });
   $('#hit-more').addEventListener('click', function () { state.shown += 100; renderDescriptions(); });
   $('#align-load').addEventListener('click', loadAlignments);
+  $('#align-copy').addEventListener('click', function () {
+    var blocks = Array.prototype.map.call(document.querySelectorAll('#align-list .blast-aln-pre'), function (p) { return p.textContent; });
+    if (!blocks.length) { $('#align-status').textContent = 'Load the pairwise alignments first.'; return; }
+    var text = blocks.join('\n\n');
+    var done = function () { $('#align-status').textContent = 'Copied ' + text.length + ' characters of alignments.'; };
+    var fail = function () {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { $('#align-status').textContent = 'Copy failed — select the text manually.'; }
+      ta.remove();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fail);
+    else fail();
+  });
   attachGraphicHandlers();
   $('#job-id-open').addEventListener('click', function () { openJobById($('#job-id-input').value); });
   $('#job-id-input').addEventListener('keydown', function (event) {
