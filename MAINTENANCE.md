@@ -991,6 +991,23 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/<module>/ --widt
 期望 `Result: PASS`；唯一可接受的 Warn 是 footer "Back to top ↑" 在 390px 下的小点击目标（主题自带，见第九节）。
 除渲染外还要在线上做一次功能冒烟：示例输入 → 提交 → 结果表/图出现。
 
+### 仓库外页面收编（2026-10-27 起）
+
+站点还有一批不是 SPA、也不在任何 ProxyPass 前缀下的 docroot 页面。它们现在由
+`app/static/docpages/` + `scripts/deploy_doc_pages.py` 管理（repo 为源，脚本负责带时间戳备份地
+发布到 `/var/www/html`；不需要改 Apache、不需要重启服务；支持 `--check/--dry-run/--only`）。
+覆盖页面：`/jbrowse.html`、`/download.html`、`/help/contact.html`、`/help/news.html`、
+`/outsitelink.html`、`/GeneHub/index.html`，以及 GeneHub 结果 CGI `/cgi-bin/geneDetail.py`
+（该 CGI 目标文件属 root，需执行一次 sudo 安装，命令见 `app/static/docpages/README.md`）。
+
+- `/PrimerServer/`（v1）与 `/PrimerServer3/`（裸 Vite 入口副本）已从 docroot 移走，备份在
+  `/var/www/data/masw_data/backup_primerserver_20261027/`；导航 Tools、`/V2.0/` 和根首页的
+  PrimerServer 链接统一指向 `/PrimerServer2/`。
+- 仍在 docroot、暂未收编的运行时依赖：`/V2.0/news.json`（新闻 feed，被 `help_news.html` 运行时读取）、
+  `/css/wheat.jpeg`（outsitelink hero）、`/cite.html`（jbrowse 引文块）、`/V2.0/` 图片。
+- `/GeneHub/index.html` 的部署目标目录属 fei，可直接发布；`/cgi-bin/*` 属 root/www-data，
+  需要 sudo（见上）。
+
 ### 部署注意
 
 - 只改静态文件也要 `sudo -n systemctl restart wheatomics-api`（StaticFiles 目录内容会即时生效，
