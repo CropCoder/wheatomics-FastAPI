@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Download WheatOmics data: genome assemblies, TACO transcripts, co-expression tables, 660K genotype data and JBrowse track documentation.">
+  <title>Download Data | WheatOmics 2.0</title>
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="/api/v2shell/shell.css">
+  <style>
+    .dl-card p { margin: 0 0 12px; color: #4d6258; font-size: 14px; line-height: 1.75; }
+    .dl-card p:last-child { margin-bottom: 0; }
+    .dl-card h2 { margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line); font-family: var(--display); font-size: 17px; font-weight: 750; color: var(--forest-deep); }
+    .dl-card a { color: var(--leaf); font-weight: 700; }
+    .dl-card a:hover { color: var(--forest); }
+    .dl-card img { max-width: 100%; border: 1px solid var(--line); border-radius: 10px; margin: 10px 0 4px; }
+    .dl-pw { display: inline-block; padding: 1px 7px; color: var(--forest-deep); background: var(--mist); border-radius: 5px; font-family: var(--utility); font-size: 12px; }
+    .dl-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .dl-card.wide { grid-column: 1 / -1; }
+    @media (max-width: 900px) { .dl-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div id="v2-shell-header"></div>
+
+  <main id="main-content">
+    <section class="news-hero">
+      <div class="container news-hero-inner">
+        <div>
+          <p class="news-kicker">WheatOmics 2.0 · Resources</p>
+          <h1 class="news-title">Download <em>data</em></h1>
+          <p class="news-lead">Genome assemblies, transcript sets, co-expression tables, 660K genotype data and JBrowse track documentation — everything behind the WheatOmics analyses.</p>
+          <div class="news-stats">
+            <span class="news-stat"><strong>Genomes</strong> from published assemblies</span>
+            <span class="news-stat">TACO transcripts</span>
+            <span class="news-stat">660K genotypes</span>
+          </div>
+        </div>
+        <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-book"/></svg></div>
+      </div>
+    </section>
+
+    <section class="news-body">
+      <div class="container">
+        <div class="dl-grid">
+          <div class="card dl-card wide">
+            <div class="card-body">
+              <h2>1. Genome sequences</h2>
+              <p>All genomes were downloaded from published papers; you can get them from the <a href="https://www.ncbi.nlm.nih.gov/assembly/?term=triticeae" target="_blank" rel="noopener">NCBI Assembly database</a>. The published papers are also listed in the <a href="/blast/blast.html">BLAST</a>, <a href="/getfasta/">GetSequence</a>, <a href="/PrimerServer2/">PrimerServer 2</a> and <a href="/jbrowse.html">JBrowse</a> pages.</p>
+            </div>
+          </div>
+
+          <div class="card dl-card">
+            <div class="card-body">
+              <h2>2. Transcripts generated from published data</h2>
+              <p>We downloaded the published transcriptome data from the NCBI SRA database, mapped reads to the Chinese Spring genome, and merged the assemblies with the TACO pipeline. The resulting transcript sequences are available as <a href="https://pan.baidu.com/s/1QeNtvThO1-EH7KEIfudCcQ" target="_blank" rel="noopener">TACOv1.tar.gz</a> with password <span class="dl-pw">1q6k</span>.</p>
+            </div>
+          </div>
+
+          <div class="card dl-card">
+            <div class="card-body">
+              <h2>4. Co-expression tables</h2>
+              <p>The co-expression tables (wheat grain and multiple tissues) can be downloaded <a href="https://pan.baidu.com/s/12mmenmEVKoQScH0sVC_5Vg" target="_blank" rel="noopener">here</a> with password <span class="dl-pw">wuw3</span>.</p>
+            </div>
+          </div>
+
+          <div class="card dl-card wide">
+            <div class="card-body">
+              <h2>3. Omics data in JBrowse</h2>
+              <p>Open the <a href="/jbrowse.html">JBrowse gateway</a> and read the "About this track" panel for details of each track. Contact us at <a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a> if you have a question about the JBrowse data.</p>
+              <p><img src="/css/about_tracks.png" alt="Where to find the 'About this track' panel in JBrowse" loading="lazy"></p>
+              <p>The order information for the EMS mutants (<i>Jimai 22</i> and <i>Cadenza</i>/<i>Kronos</i>) is available by right-clicking the mutation.</p>
+              <p><img src="/css/mutant.png" alt="Right-click menu of an EMS mutation in JBrowse" loading="lazy"></p>
+            </div>
+          </div>
+
+          <div class="card dl-card wide">
+            <div class="card-body">
+              <h2>5. Wheat 660K genotype for 343 common wheat accessions</h2>
+              <p>The genotype data can be downloaded <a href="https://pan.baidu.com/s/1YKZNeaiERVm8XCH5QqMXPQ?pwd=vn7m" target="_blank" rel="noopener">here</a> with password <span class="dl-pw">vn7m</span>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="v2-shell-footer"></div>
+  <script src="/api/v2shell/shell.js"></script>
+</body>
+</html>

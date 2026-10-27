@@ -51,7 +51,7 @@
               <li><a href="https://wheatomics.sdau.edu.cn/genes/">KnownGene</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/neighborhood/">Neighborhood</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/PfamSearch/">PfamSearch</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/PrimerServer/">PrimerServer</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/PrimerServer2/">PrimerServer 2</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/idConvert/">IDConverter</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/HomologFinder/">HomologFinder</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/expression/index.html">GeneExpression</a></li>
