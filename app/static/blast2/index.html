@@ -1715,6 +1715,30 @@ Paste one or more FASTA sequences here…"></textarea>
           <div id="result-error" class="blast-alert" role="alert"></div>
           <div class="blast-meta-grid" id="result-meta"></div>
 
+            <div class="blast-filters" id="blast-filters">
+              <label class="blast-filter-field">
+                <span>Query</span>
+                <select id="filter-query"><option value="">All queries</option></select>
+              </label>
+              <label class="blast-filter-field">
+                <span>Percent identity ≥</span>
+                <input id="filter-ident" type="number" min="0" max="100" step="1" value="0">
+              </label>
+              <label class="blast-filter-field">
+                <span>E value ≤</span>
+                <input id="filter-evalue" type="number" min="0" step="any" placeholder="any">
+              </label>
+              <label class="blast-filter-field">
+                <span>Query cover ≥ (%)</span>
+                <input id="filter-cover" type="number" min="0" max="100" step="1" value="0">
+              </label>
+              <div class="blast-filter-actions">
+                <button class="secondary-button" type="button" id="filter-apply">Filter</button>
+                <button class="blast-link-btn" type="button" id="filter-reset">Reset</button>
+              </div>
+            </div>
+
+
           <div class="blast-tabs" id="result-tabs">
             <button class="blast-tab active" type="button" data-tab="graphic">Graphic Summary</button>
             <button class="blast-tab" type="button" data-tab="hits">Descriptions</button>
@@ -1739,29 +1763,6 @@ Paste one or more FASTA sequences here…"></textarea>
           </section>
 
           <section class="blast-panel" id="tab-hits" hidden>
-            <div class="blast-filters" id="blast-filters">
-              <label class="blast-filter-field">
-                <span>Query</span>
-                <select id="filter-query"><option value="">All queries</option></select>
-              </label>
-              <label class="blast-filter-field">
-                <span>Percent identity ≥</span>
-                <input id="filter-ident" type="number" min="0" max="100" step="1" value="0">
-              </label>
-              <label class="blast-filter-field">
-                <span>E value ≤</span>
-                <input id="filter-evalue" type="number" min="0" step="any" placeholder="any">
-              </label>
-              <label class="blast-filter-field">
-                <span>Query cover ≥ (%)</span>
-                <input id="filter-cover" type="number" min="0" max="100" step="1" value="0">
-              </label>
-              <div class="blast-filter-actions">
-                <button class="secondary-button" type="button" id="filter-apply">Filter</button>
-                <button class="blast-link-btn" type="button" id="filter-reset">Reset</button>
-              </div>
-            </div>
-
             <div class="blast-selection-bar">
               <label class="blast-check-label"><input type="checkbox" id="select-all-hits"> select all</label>
               <span class="blast-hint" id="selected-count">0 selected</span>
