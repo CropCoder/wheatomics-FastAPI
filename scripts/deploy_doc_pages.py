@@ -76,16 +76,17 @@ def publish(key: str, src: Path, dest: Path, desc: str, *, check: bool, dry_run:
         print(f"[dry-run] would publish {dest}  <- {src.relative_to(REPO)}  ({desc})")
         return True
 
+    # copy2/copystat can fail with EPERM when the docroot filesystem refuses
+    # utime changes (seen on /var/www/html); copy the bytes ourselves.
     if dest.is_file():
         backup = dest.with_name(dest.name + ".bak-" + datetime.now().strftime("%Y%m%d_%H%M%S"))
-        shutil.copy2(dest, backup)
+        shutil.copyfile(dest, backup)
         print(f"[updated] {key}: {dest}  ({desc})")
         print(f"          backup: {backup}")
     else:
         print(f"[created] {key}: {dest}  ({desc})")
-    shutil.copy2(src, dest)
-    if dest.suffix == ".py":
-        dest.chmod(0o755)
+    shutil.copyfile(src, dest)
+    dest.chmod(0o755 if dest.suffix == ".py" else 0o644)
     print(f"          size={dest.stat().st_size} sha256={digest(dest)}")
     return True
 
