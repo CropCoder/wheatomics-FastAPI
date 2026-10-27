@@ -1456,6 +1456,10 @@
     .blast-alert.success { background: #edf8f0; border-color: #b8dfc8; color: #12805c; }
     .blast-danger-button { color: #b42318; border-color: #f0c5bd; }
     .blast-danger-button:hover { background: #fdf0ee; }
+
+    .blast-preset-label { align-self: center; color: var(--forest-deep); font-family: var(--display); font-size: 13px; font-weight: 800; letter-spacing: .01em; }
+    .blast-preset-reset { border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--leaf); font-size: 10.5px; font-weight: 700; padding: 7px 14px; cursor: pointer; }
+    .blast-preset-reset:hover { border-color: rgba(17, 134, 83, .45); background: var(--mist); }
   </style>
 </head>
 <body>
@@ -2117,9 +2121,9 @@ function renderPresets(data) {
   }
   var box = $('#blast-presets');
   if (!presets.length) { box.innerHTML = ''; return; }
-  box.innerHTML = '<span class="blast-hint">Quick select:</span>' + presets.map(function (p) {
+  box.innerHTML = '<span class="blast-preset-label">Quick select:</span>' + presets.map(function (p) {
     return '<button type="button" class="blast-preset" data-db="' + esc(p.db) + '">' + esc(p.label) + '</button>';
-  }).join('');
+  }).join('') + '<button type="button" class="blast-preset-reset" id="blast-preset-reset" title="Clear the selected databases">Reset</button>';
 }
 
 function renderCategories() {
@@ -3439,6 +3443,14 @@ function init() {
   $('#blast-db-cats').addEventListener('change', handleDbChange);
   $('#blast-db-search-results').addEventListener('change', handleDbChange);
   $('#blast-presets').addEventListener('click', function (event) {
+    if (event.target.closest('#blast-preset-reset')) {
+      state.selected.clear();
+      renderSelected();
+      renderCategories();
+      applyDbSearch();
+      showFormError('');
+      return;
+    }
     var btn = event.target.closest('[data-db]');
     if (!btn) return;
     state.selected.clear();
