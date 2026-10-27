@@ -318,6 +318,9 @@ DB_CLASSIFICATION = [
             "multiovary", "z8425b", "ym33",
             "jin50", "jm44", "sumai3", "nc99bgtag11",
             "triticum_aestivum_alchemy",
+            # scaffold-assembly cultivars whose registry row has no ploidy/species
+            "paragon", "robigus", "weebill", "cadenza", "claire",
+            "arinalrfor",
         ],
     },
     {
