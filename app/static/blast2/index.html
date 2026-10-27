@@ -1452,6 +1452,10 @@
 
     .blast-aln-query-title { margin: 16px 0 8px; padding: 6px 12px; border-left: 3px solid var(--leaf); background: #f4f9f1; border-radius: 6px; color: var(--forest-deep); font-family: var(--display); font-size: 12px; font-weight: 700; }
     .blast-aln-query-title span { color: var(--muted); font-family: var(--utility); font-size: 10px; font-weight: 400; }
+
+    .blast-alert.success { background: #edf8f0; border-color: #b8dfc8; color: #12805c; }
+    .blast-danger-button { color: #b42318; border-color: #f0c5bd; }
+    .blast-danger-button:hover { background: #fdf0ee; }
   </style>
 </head>
 <body>
@@ -1720,6 +1724,7 @@ Paste one or more FASTA sequences here…"></textarea>
             </div>
             <div class="blast-result-actions">
               <a class="secondary-button" id="result-download-tsv" href="#" target="_blank" rel="noopener" download hidden>Download TSV</a>
+              <button class="secondary-button blast-danger-button" type="button" id="result-delete">Delete result</button>
               <button class="secondary-button" type="button" id="result-new">← New search</button>
             </div>
           </div>
@@ -1973,16 +1978,34 @@ function fmtFloat(v, digits) {
 function showFormError(msg) {
   var el = $('#blast-form-error');
   if (!el) return;
-  if (!msg) { el.textContent = ''; el.classList.remove('error'); return; }
+  if (!msg) { el.textContent = ''; el.classList.remove('error'); el.classList.remove('success'); return; }
   el.textContent = msg;
+  el.classList.remove('success');
   el.classList.add('error');
+}
+
+function showFormNotice(msg) {
+  var el = $('#blast-form-error');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.classList.toggle('success', !!msg);
+  el.classList.remove('error');
 }
 function showResultError(msg) {
   var el = $('#result-error');
   if (!el) return;
-  if (!msg) { el.textContent = ''; el.classList.remove('error'); return; }
+  if (!msg) { el.textContent = ''; el.classList.remove('error'); el.classList.remove('success'); return; }
   el.textContent = msg;
+  el.classList.remove('success');
   el.classList.add('error');
+}
+
+function showFormNotice(msg) {
+  var el = $('#blast-form-error');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.classList.toggle('success', !!msg);
+  el.classList.remove('error');
 }
 function apiDetail(payload, fallback) {
   if (!payload) return fallback;
@@ -2510,6 +2533,26 @@ function showSearchView() {
   window.scrollTo(0, 0);
 }
 
+function deleteCurrentResult() {
+  var id = state.job;
+  if (!id) return;
+  if (!window.confirm('Delete this BLAST result permanently? This cannot be undone.')) return;
+  var btn = $('#result-delete');
+  if (btn) btn.disabled = true;
+  fetch('/api/blast/job/' + encodeURIComponent(id), { method: 'DELETE', cache: 'no-store' })
+    .then(function (resp) { return resp.json().then(function (json) { return { ok: resp.ok, json: json }; }).catch(function () { return { ok: resp.ok, json: null }; }); })
+    .then(function (res) {
+      if (btn) btn.disabled = false;
+      if (!res.ok || !res.json || !res.json.success) throw new Error(apiDetail(res.json, 'The server refused to delete this result.'));
+      try { localStorage.removeItem('blast2.job.' + id); } catch (e) {}
+      state.job = null;
+      history.replaceState({}, '', location.pathname);
+      showSearchView();
+      showFormNotice('BLAST result deleted.');
+    })
+    .catch(function (err) { if (btn) btn.disabled = false; showResultError('Could not delete result: ' + err.message); });
+}
+
 function showResultView(id) {
   state.pollToken += 1;
   state.job = id;
@@ -2581,6 +2624,8 @@ function fmtDuration(seconds) {
 }
 
 function setStatus(status, message, withElapsed) {
+  var delBtn = $('#result-delete');
+  if (delBtn) delBtn.disabled = (status === 'pending' || status === 'running');
   var pill = $('#result-status');
   var row = $('#result-status-row');
   var icon = $('#result-status-icon');
@@ -3407,6 +3452,7 @@ function init() {
     if (location.hash) location.hash = '';
     showSearchView();
   });
+  $('#result-delete').addEventListener('click', deleteCurrentResult);
   $('#result-tabs').addEventListener('click', function (event) {
     var btn = event.target.closest('[data-tab]');
     if (btn) switchTab(btn.getAttribute('data-tab'));

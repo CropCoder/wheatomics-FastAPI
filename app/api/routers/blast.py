@@ -19,6 +19,7 @@ WheatOmics BLAST API 端点
 import asyncio
 import os
 import re
+import shutil
 import subprocess
 import time as _time
 import uuid
@@ -682,6 +683,31 @@ async def database_example(db: str = Query(...)):
         except ValueError:
             seq_len = 0
     return {"success": True, "db": db, "example": seq_name, "length": seq_len}
+
+
+@router.delete("/job/{job_id}")
+async def delete_blast_job(job_id: str):
+    """Delete a finished BLAST job and its result files.
+
+    The job UUID acts as the capability (result URLs are public and there are no
+    user accounts); running/queued jobs cannot be deleted.
+    """
+    if not _JOB_ID_RE.fullmatch(job_id):
+        raise HTTPException(status_code=400, detail="Invalid job id")
+    result_dir = os.path.abspath(settings.BLAST_RESULT_DIR)
+    job_dir = os.path.abspath(os.path.join(result_dir, job_id))
+    if os.path.dirname(job_dir) != result_dir:
+        raise HTTPException(status_code=400, detail="Invalid job id")
+    if not os.path.isdir(job_dir):
+        raise HTTPException(status_code=404, detail="Job not found (already deleted or expired).")
+    data = read_status(job_id) or {}
+    if data.get("status") in ("pending", "running"):
+        raise HTTPException(status_code=409, detail="This BLAST job is still running; delete it after it finishes.")
+    try:
+        shutil.rmtree(job_dir)
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"Could not delete job: {exc}")
+    return {"success": True, "job_id": job_id, "message": "BLAST job deleted."}
 
 
 @router.get("/status")
