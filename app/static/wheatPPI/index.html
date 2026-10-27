@@ -176,17 +176,14 @@ var _hmt = _hmt || [];
     <div class="col-md-4">
       <div class="form-group">
         <label><strong>PPI Database</strong></label>
-        <select id="table-select" class="form-control">
-          <option value="PPI_result">WheatPPI</option>
+        <select id="table-select" class="form-control" onchange="onTableChange()">
+          <option value="PPI_result">WheatPPI (CF-MS)</option>
+          <option value="PPI_poppin">Wheat PoppIn (predicted)</option>
         </select>
       </div>
       <div class="form-group">
-        <label><strong>Filter by CF-MS score</strong></label>
-        <select id="score-select" class="form-control">
-          <option value="0.5">&gt; 0.5 (high confidence)</option>
-          <option value="0.2">&gt; 0.2 (medium confidence)</option>
-          <option value="0">all</option>
-        </select>
+        <label><strong id="score-label">Filter by CF-MS score</strong></label>
+        <select id="score-select" class="form-control"></select>
       </div>
     </div>
     <div class="col-md-8">
@@ -198,7 +195,7 @@ var _hmt = _hmt || [];
     </div>
   </div>
 
-  <div class="info-box">
+  <div class="info-box" id="about-box">
     <strong>About this data:</strong> The protein interaction data was downloaded from
     <a href="http://plants.proteincomplexes.org" target="_blank">plant.MAP</a>.
     We mapped wheat UniProt IDs to IWGSC RefSeq v1.1 annotation.
@@ -206,7 +203,7 @@ var _hmt = _hmt || [];
     scores &gt; 0.2 correspond to ~50% true positive rate.
   </div>
 
-  <div class="info-box">
+  <div class="info-box" id="citation-box">
     <strong>Citation:</strong><br>
     McWhite, C. D., Papoulas, O., Drew, K., Cox, R. M., June, V., Dong, O. X., Kwon, T., Wan, C., Salmi, M. L., Roux, S. J., Browning, K. S., Chen, Z. J., Ronald, P. C., &amp; Marcotte, E. M. (2020). A Pan-plant Protein Complex Map Reveals Deep Conservation and Novel Assemblies. Cell, S0092-8674(20)30226-9.<br>
     <a href="https://doi.org/10.1016/j.cell.2020.02.049" target="_blank">https://doi.org/10.1016/j.cell.2020.02.049</a>
@@ -250,6 +247,73 @@ var _hmt = _hmt || [];
 </div>
 
 <script>
+// Per-dataset metadata. The backend returns the same 7 result fields for every
+// table (wheat_id1/2, eggnog_id1/2, score, annotation1/2); only the meaning and
+// labels differ, so the UI is re-rendered from this config on table change.
+var DATASETS = {
+  PPI_result: {
+    scoreLabel: 'Filter by CF-MS score',
+    scoreOptions: [
+      { value: '0.5', text: '> 0.5 (high confidence)' },
+      { value: '0.2', text: '> 0.2 (medium confidence)' },
+      { value: '0', text: 'all' }
+    ],
+    headers: ['WheatID1', 'WheatID2', 'eggNOGID1', 'eggNOGID2', 'Score', 'Annotation1', 'Annotation2'],
+    scoreDecimals: 4,
+    about: '<strong>About this data:</strong> The protein interaction data was downloaded from ' +
+      '<a href="http://plants.proteincomplexes.org" target="_blank">plant.MAP</a>. ' +
+      'We mapped wheat UniProt IDs to IWGSC RefSeq v1.1 annotation. ' +
+      'According to McWhite et.al, CF-MS scores &gt; 0.5 correspond to ~90% true positive rate; ' +
+      'scores &gt; 0.2 correspond to ~50% true positive rate.',
+    citation: '<strong>Citation:</strong><br>' +
+      'McWhite, C. D., Papoulas, O., Drew, K., Cox, R. M., June, V., Dong, O. X., Kwon, T., ' +
+      'Wan, C., Salmi, M. L., Roux, S. J., Browning, K. S., Chen, Z. J., Ronald, P. C., &amp; ' +
+      'Marcotte, E. M. (2020). A Pan-plant Protein Complex Map Reveals Deep Conservation and ' +
+      'Novel Assemblies. Cell, S0092-8674(20)30226-9.<br>' +
+      '<a href="https://doi.org/10.1016/j.cell.2020.02.049" target="_blank">' +
+      'https://doi.org/10.1016/j.cell.2020.02.049</a>'
+  },
+  PPI_poppin: {
+    scoreLabel: 'Filter by supporting edges',
+    scoreOptions: [
+      { value: '2', text: '&ge; 2 supporting edges' },
+      { value: '1', text: 'all (&ge; 1)' }
+    ],
+    headers: ['WheatID1', 'WheatID2', 'Subgenome1', 'Subgenome2', 'Supporting edges', 'Rice homolog pair', 'Identity'],
+    scoreDecimals: 0,
+    about: '<strong>About this data:</strong> PoppIn predicts wheat protein&ndash;protein ' +
+      'interactions by transferring curated rice (<em>Oryza sativa</em>) interactions onto wheat ' +
+      'proteins through ortholog mapping. <em>Supporting edges</em> is the number of independent ' +
+      'rice-supported mappings behind a pair; <em>Rice homolog pair</em> is the underlying rice ' +
+      'interaction and <em>Identity</em> is the best rice&rarr;wheat mapping identity. ' +
+      'These interactions are <strong>computationally predicted</strong>, not experimentally measured.',
+    citation: '<strong>Citation:</strong><br>' +
+      'PoppIn wheat interaction predictions (rice&rarr;wheat ortholog transfer). ' +
+      'Please cite the PoppIn method paper when using this dataset.'
+  }
+};
+
+function currentDataset() {
+  return DATASETS[$('#table-select').val()] || DATASETS.PPI_result;
+}
+
+function onTableChange() {
+  var ds = currentDataset();
+  $('#score-label').text(ds.scoreLabel);
+
+  var sel = $('#score-select').empty();
+  ds.scoreOptions.forEach(function(o) {
+    sel.append($('<option>').val(o.value).html(o.text));
+  });
+
+  $('#about-box').html(ds.about);
+  $('#citation-box').html(ds.citation);
+
+  // 数据集切换后，旧结果不再对应当前数据集
+  $('#result-area').hide();
+  $('#table-container').empty();
+}
+
 function queryPPI() {
   var geneInput = $('#gene-input').val().trim();
   if (!geneInput) { showError('Please enter at least one gene ID'); return; }
@@ -271,7 +335,7 @@ function queryPPI() {
   .done(function(resp) {
     $('#loading-indicator').hide();
     if (!resp.success) { showError('Query failed'); return; }
-    renderResults(resp.data.interactions || []);
+    renderResults(resp.data.interactions || [], table);
   })
   .fail(function(jqXHR) {
     $('#loading-indicator').hide();
@@ -279,17 +343,22 @@ function queryPPI() {
   });
 }
 
-function renderResults(interactions) {
+function renderResults(interactions, table) {
   if (interactions.length === 0) {
     $('#table-container').html('<div class="alert alert-warning">No interactions found matching your query.</div>');
     $('#result-area').show();
     return;
   }
 
+  var ds = DATASETS[table] || DATASETS.PPI_result;
+  var decimals = ds.scoreDecimals;
+
   var html = '<h6>' + interactions.length + ' interaction(s) found</h6>';
   html += '<div style="max-height:600px;overflow-y:auto;">';
   html += '<table class="table table-bordered table-hover table-sm">';
-  html += '<thead><tr><th>WheatID1</th><th>WheatID2</th><th>eggNOGID1</th><th>eggNOGID2</th><th>Score</th><th>Annotation1</th><th>Annotation2</th></tr></thead><tbody>';
+  html += '<thead><tr>';
+  ds.headers.forEach(function(h) { html += '<th>' + escapeHtml(h) + '</th>'; });
+  html += '</tr></thead><tbody>';
 
   interactions.forEach(function(r) {
     var w1 = (r.wheat_id1 || []).join(', ');
@@ -299,7 +368,7 @@ function renderResults(interactions) {
     html += '<td style="max-width:200px;word-break:break-all;">' + escapeHtml(w2) + '</td>';
     html += '<td>' + escapeHtml(r.eggnog_id1 || '') + '</td>';
     html += '<td>' + escapeHtml(r.eggnog_id2 || '') + '</td>';
-    html += '<td>' + (r.score != null ? r.score.toFixed(4) : '') + '</td>';
+    html += '<td>' + (r.score != null ? Number(r.score).toFixed(decimals) : '') + '</td>';
     html += '<td style="max-width:300px;word-break:break-word;font-size:12px;">' + escapeHtml(r.annotation1 || '') + '</td>';
     html += '<td style="max-width:300px;word-break:break-word;font-size:12px;">' + escapeHtml(r.annotation2 || '') + '</td>';
     html += '</tr>';
@@ -318,6 +387,9 @@ function showError(msg) {
 function escapeHtml(s) {
   return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 }
+
+// Populate the score filter / info boxes for the initially selected dataset.
+$(onTableChange);
 </script>
 </body>
 </html>

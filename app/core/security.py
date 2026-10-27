@@ -30,6 +30,7 @@ ID_CONVERSION_TABLES = {
 
 PPI_TABLES: dict[str, str] = {
     "PPI_result": "Wheat PPI CF-MS data",
+    "PPI_poppin": "Wheat PoppIn (rice-homology predicted)",
 }
 SYNTENY_TABLES = {"CSsymaptbl"}
 BLASTP_TABLES: dict[str, str] = {
