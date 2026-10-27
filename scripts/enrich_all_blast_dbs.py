@@ -16,6 +16,7 @@ old BLAST DB is replaced.
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
 import re
@@ -49,10 +50,11 @@ MANUAL_TABLES = {
 }
 
 GFF_SOURCES = {
-    'AABBDD_Kariega': '/var/www/data/tiantian_data/wheat_genome/gff/Kariega.gff3',
+    'AABBDD_Kariega': '/var/www/data/tiantian_data/wheat_genome/extra_annotations/Kariega_v1_annotations/Kariega_v1.gff3',
     'DD_tauschii_Luo': '/var/www/data/tiantian_data/wheat_genome/gff/tauschii_Luo.gff3',
-    'AA_TA10622': '/var/www/data/tiantian_data/wheat_genome/add_Description/gff3/AA_TA10622.add_eggnog_ChineseSpring02G.gff3',
-    'HH_Morex': '/var/www/data/tiantian_data/wheat_genome/add_Description/gff3/HH_Morex.add_eggnog_ChineseSpring02G.gff3',
+    'AA_TA10622': '/var/www/data/tiantian_data/wheat_genome/extra_annotations/TA10622/T_monococcum_TA10622_LC.gff3',
+    'HH_Morex': '/var/www/data/tiantian_data/wheat_genome/extra_annotations/Morex_barpg2_all.s.gff.gz',
+    'AABBDD_ae.stanley_PGSBv2.2': '/var/www/data/tiantian_data/wheat_genome/gff/Stanley.ensembl.gff3.gz',
 }
 
 
@@ -159,6 +161,9 @@ def _gff_attrs(text: str) -> dict[str, str]:
 
 
 def _gff_token_variants(text: str) -> set[str]:
+    text = text.strip()
+    if ':' in text:
+        text = text.split(':', 1)[1]
     out = {text}
     for token in re.findall(r'(?:XP|NP|XM|XR)_\d+\.\d+', text):
         out.add(token)
@@ -171,7 +176,8 @@ def load_gff_annotations(path: Path) -> dict[str, dict]:
     out: dict[str, dict] = {}
     # Aggregate CDS segments per parent feature.
     cds_span: dict[str, list] = {}
-    with path.open(encoding='utf-8', errors='ignore') as fh:
+    opener = gzip.open if path.suffix == '.gz' else open
+    with opener(path, 'rt', encoding='utf-8', errors='ignore') as fh:
         for line in fh:
             if not line or line.startswith('#'):
                 continue
@@ -186,11 +192,11 @@ def load_gff_annotations(path: Path) -> dict[str, dict]:
             description = clean(attrs.get('product') or attrs.get('description') or attrs.get('Note'))
             cs02g = clean(attrs.get('ChineseSpring02G'))
             keys = set()
-            for k in ('ID', 'Name', 'protein_id', 'gene', 'Parent'):
+            for k in ('ID', 'Name', 'protein_id', 'gene', 'Parent', 'transcript_id', 'gene_id'):
                 v = attrs.get(k)
                 if v:
                     keys.update(_gff_token_variants(v))
-            ann = {'Chrom': chrom, 'Start1': start_i - 1, 'End1': end_i,
+            ann = {'Chrom': chrom, 'Start1': start_i, 'End1': end_i,
                    'Strand': strand, 'Description': description, 'ChineseSpring02G': cs02g,
                    '_start_offset': 0}
             for key in keys:
@@ -205,7 +211,7 @@ def load_gff_annotations(path: Path) -> dict[str, dict]:
     # Prefer the aggregated CDS span over a single CDS segment.
     for parent, span in cds_span.items():
         chrom, start_i, end_i, strand, description, cs02g, keys = span
-        ann = {'Chrom': chrom, 'Start1': start_i - 1, 'End1': end_i, 'Strand': strand,
+        ann = {'Chrom': chrom, 'Start1': start_i, 'End1': end_i, 'Strand': strand,
                'Description': description, 'ChineseSpring02G': cs02g, '_start_offset': 0}
         for key in keys | {parent}:
             out[key] = ann
