@@ -1414,6 +1414,10 @@
     .blast-graphic-legend { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-top: 14px; }
     .blast-graphic-legend-item { display: inline-flex; align-items: center; gap: 6px; color: #3d564b; font-family: var(--utility); font-size: 11px; }
     .blast-graphic-legend-item i { display: inline-block; width: 16px; height: 10px; border-radius: 2px; }
+
+    .blast-aln-actions { display: inline-flex; gap: 10px; align-items: center; margin-left: auto; }
+    .blast-aln-copy { min-height: 26px; padding: 3px 11px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--leaf); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .blast-aln-copy:hover { border-color: rgba(17, 134, 83, .45); }
   </style>
 </head>
 <body>
@@ -1773,7 +1777,6 @@ Paste one or more FASTA sequences here…"></textarea>
           <section class="blast-panel" id="tab-alignments" hidden>
             <div class="blast-toolbar">
               <button class="secondary-button" type="button" id="align-load">Load pairwise alignments</button>
-              <button class="secondary-button" type="button" id="align-copy">Copy alignments</button>
               <span class="blast-hint" id="align-status"></span>
               <a class="secondary-button" id="align-download" href="#" target="_blank" rel="noopener" hidden>Download text</a>
             </div>
@@ -3039,8 +3042,10 @@ function loadAlignments() {
             return '<div class="blast-aln-meta">HSP ' + (si + 1) + ': ' + s.meta.map(esc).join(' · ') + '</div>' +
               s.triplets.map(function (t) { return '<pre class="blast-aln-pre">' + alignmentTripletHtml(t) + '</pre>'; }).join('');
           }).join('');
-          return '<details class="blast-aln-card"' + (i < 3 ? ' open' : '') + '>' +
-            '<summary>' + esc(h.header.slice(0, 160)) + '<span>' + h.hsps.length + ' HSP' + (h.hsps.length === 1 ? '' : 's') + '</span></summary>' +
+          return '<details class="blast-aln-card" data-align-index="' + i + '"' + (i < 3 ? ' open' : '') + '>' +
+            '<summary>' + esc(h.header.slice(0, 160)) +
+              '<span class="blast-aln-actions"><span class="blast-aln-hspcount">' + h.hsps.length + ' HSP' + (h.hsps.length === 1 ? '' : 's') + '</span>' +
+              '<button type="button" class="blast-aln-copy" title="Copy this target: HSP info + pairwise alignment">Copy</button></span></summary>' +
             '<div class="blast-aln-body">' + hsps + '</div></details>';
         }).join('');
         if (state.alignHits.length > 50) {
@@ -3181,11 +3186,24 @@ function init() {
   });
   $('#hit-more').addEventListener('click', function () { state.shown += 100; renderDescriptions(); });
   $('#align-load').addEventListener('click', loadAlignments);
-  $('#align-copy').addEventListener('click', function () {
-    var blocks = Array.prototype.map.call(document.querySelectorAll('#align-list .blast-aln-pre'), function (p) { return p.textContent; });
-    if (!blocks.length) { $('#align-status').textContent = 'Load the pairwise alignments first.'; return; }
-    var text = blocks.join('\n\n');
-    var done = function () { $('#align-status').textContent = 'Copied ' + text.length + ' characters of alignments.'; };
+  $('#align-list').addEventListener('click', function (event) {
+    var btn = event.target.closest('.blast-aln-copy');
+    if (!btn) return;
+    event.preventDefault();
+    event.stopPropagation();
+    var card = btn.closest('.blast-aln-card');
+    if (!card) return;
+    var idx = parseInt(card.getAttribute('data-align-index'), 10);
+    var hit = state.alignHits[idx];
+    var body = card.querySelector('.blast-aln-body');
+    var parts = [hit ? '>' + hit.header : (card.querySelector('summary') || {}).textContent || ''];
+    if (body) {
+      Array.prototype.forEach.call(body.querySelectorAll('.blast-aln-meta, .blast-aln-pre'), function (el) {
+        parts.push(el.textContent);
+      });
+    }
+    var text = parts.join('\n') + '\n';
+    var done = function () { $('#align-status').textContent = 'Copied target alignment (' + fmtInt(text.length) + ' characters).'; };
     var fail = function () {
       var ta = document.createElement('textarea');
       ta.value = text; document.body.appendChild(ta); ta.select();
