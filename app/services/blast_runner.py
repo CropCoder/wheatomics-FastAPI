@@ -32,6 +32,7 @@ so params.json does not expose anything the result files do not already.
 from __future__ import annotations
 
 import json
+import gzip
 import os
 import shutil
 import subprocess
@@ -210,6 +211,14 @@ ALIGNMENT_LINE_LENGTH = 100
 # Execution
 # ---------------------------------------------------------------------------
 
+def _write_gzip(src_path: Path) -> Path:
+    """Write <src>.gz next to the result file (used by the Downloads tab)."""
+    gz_path = src_path.with_name(src_path.name + ".gz")
+    with open(src_path, "rb") as src, gzip.open(gz_path, "wb", compresslevel=6) as dst:
+        shutil.copyfileobj(src, dst)
+    return gz_path
+
+
 def _spawn_blast(cmd: list[str]) -> subprocess.Popen:
     """Spawn a blast subprocess with stdin piped and stdout to devnull.
 
@@ -347,6 +356,8 @@ def execute_blast_job(job_id: str, params: Optional[dict] = None) -> dict:
                     fmt_cmd += ["-line_length", str(ALIGNMENT_LINE_LENGTH)]
                 subprocess.run(fmt_cmd, timeout=120)
                 download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}/result{ext}"
+                gz_path = _write_gzip(out_path)
+                download_urls[f"{name}_gz"] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}/{gz_path.name}"
 
             archive_path.unlink(missing_ok=True)
         else:
@@ -367,6 +378,8 @@ def execute_blast_job(job_id: str, params: Optional[dict] = None) -> dict:
                     raise BlastExecutionError(500, f"BLAST 执行错误: {err.strip()}")
 
                 download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}/{fname}"
+                gz_path = _write_gzip(filepath)
+                download_urls[f"{name}_gz"] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}/{gz_path.name}"
 
         write_status(job_id, status="done", download_urls=download_urls,
                      created_at=created_at, started_at=started_at,

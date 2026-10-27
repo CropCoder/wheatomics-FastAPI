@@ -2948,7 +2948,12 @@ function applyFilters() {
 }
 
 function renderDownloads(urls) {
-  var labels = { tabular: 'Hit table (TSV, outfmt 6 + ppos/btop)', traditional: 'Pairwise alignments (text, outfmt 0)' };
+  var labels = {
+    tabular: 'Hit table (TSV, outfmt 6 + ppos/btop)',
+    tabular_gz: 'Hit table — compressed (.tsv.gz)',
+    traditional: 'Pairwise alignments (text, outfmt 0)',
+    traditional_gz: 'Pairwise alignments — compressed (.txt.gz)'
+  };
   var keys = Object.keys(urls || {});
   if (!keys.length) { $('#download-list').innerHTML = '<div class="blast-empty">No result files were reported for this job.</div>'; return; }
   $('#download-list').innerHTML = keys.map(function (key) {
