@@ -2173,9 +2173,9 @@ var DB_LABELS = {
 function dbLabel(db) {
   if (DB_LABELS[db]) return DB_LABELS[db];
   var m = /^all_Allohexaploidchr(\d+[A-Za-z]+)$/.exec(db);
-  if (m) return 'Allohexaploid chr' + m[1] + ' genome';
+  if (m) return 'Allohexaploid Chr' + m[1] + ' genome';
   m = /^all_Allotetraploidchr(\d+[A-Za-z]+)$/.exec(db);
-  if (m) return 'Allotetraploid chr' + m[1] + ' genome';
+  if (m) return 'Allotetraploid Chr' + m[1] + ' genome';
   return db;
 }
 
