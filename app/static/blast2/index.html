@@ -1811,7 +1811,6 @@ Paste one or more FASTA sequences here…"></textarea>
             <div class="blast-toolbar">
               <button class="secondary-button" type="button" id="align-load">Load pairwise alignments</button>
               <span class="blast-hint" id="align-status"></span>
-              <a class="secondary-button" id="align-download" href="#" target="_blank" rel="noopener" hidden>Download text</a>
             </div>
             <div id="align-list" class="blast-aln-list"></div>
           </section>
@@ -2543,7 +2542,6 @@ function showResultView(id) {
   $('#hit-more').hidden = true;
   $('#align-list').innerHTML = '';
   $('#align-status').textContent = '';
-  $('#align-download').hidden = true;
   $('#download-list').innerHTML = '';
   $('#selected-count').textContent = '0 selected';
   $('#select-all-hits').checked = false;
@@ -3265,8 +3263,6 @@ function loadAlignments() {
       state.alignLoaded = true;
       state.alignChars = text.length;
       renderAlignments();
-      $('#align-download').href = url;
-      $('#align-download').hidden = false;
       if (state.pendingAlignSubject) { scrollAlignToSubject(); state.pendingAlignSubject = null; }
     })
     .catch(function (err) { $('#align-status').textContent = 'Could not load alignments: ' + err.message; })
