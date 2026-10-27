@@ -3063,7 +3063,7 @@ function parseTraditional(text) {
       var firstS = hsp.triplets.length ? hsp.triplets[0][2] : '';
       var lastS = hsp.triplets.length ? hsp.triplets[hsp.triplets.length - 1][2] : '';
       var a = /^Sbjct\s+(\d+)/.exec(firstS);
-      var b = /^Sbjct\s+\S+\s+(\d+)/.exec(lastS);
+      var b = /^Sbjct\s+\d+\s+\S+\s+(\d+)\s*$/.exec(lastS);
       hsp.sstart = a ? parseInt(a[1], 10) : null;
       hsp.send = b ? parseInt(b[1], 10) : null;
     });
@@ -3114,8 +3114,9 @@ function handleAlignmentGetSeq(event) {
     var body = card.querySelector('.blast-aln-body');
     if (card.querySelector('.blast-getseq-panel')) { card.querySelector('.blast-getseq-panel').remove(); return; }
     var best = hit.hsps.reduce(function (a, b) { return ((b.score || 0) > (a.score || 0)) ? b : a; }, hit.hsps[0]);
-    var s1 = (best && best.sstart) ? Math.min(best.sstart, best.send) : 1;
-    var s2 = (best && best.sstart) ? Math.max(best.sstart, best.send) : 60;
+    var hasRange = !!(best && best.sstart && best.send);
+    var s1 = hasRange ? Math.min(best.sstart, best.send) : 1;
+    var s2 = hasRange ? Math.max(best.sstart, best.send) : 60;
     var seqId = hit.header.split(/\s+/)[0];
     var db = (state.result && state.result.dbs && state.result.dbs[0]) || 'all_genomes';
     var panel = document.createElement('div');
