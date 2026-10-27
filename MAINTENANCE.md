@@ -1007,6 +1007,10 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/<module>/ --widt
   另做了一次功能冒烟（示例输入 → 结果表/图/下载出现）。
 - 仓库外遗留：`/sms2/*.html` 的第三方工具页（docroot 自带，`.gitignore` 只放行 `app/static/sms2/index.html`）、
   老 CGI 页（`/symap/`、`/tools/*.html` 等）不在本轮「SPA」范围。
+- **站点根路径已切换为 V2.0 首页（2026-10-27）**：`/var/www/html/index.html` 现在是 `/V2.0/index.html`
+  内容（仅把 `home.png` / `footer-plot.png` / `Logo-small.png` 改成 `/V2.0/…` 绝对路径），旧首页备份在
+  `/var/www/html/index.html.bak-20261027_081021`；`/V2.0/` 目录保留兼容旧书签。同步把 shell / BLAST 页的
+  Home、brand、`#tools`/`#data`/`#citation` 链接从 `/V2.0/` 改成 `/`。
 - ⚠️ `/neighborhood/` 的 Apache vhost **没有** `ProxyPass`，线上用 docroot 符号链接指向仓库目录：
   `ln -s /var/www/FastAPI_backend_Port8000/app/static/neighborhood /var/www/html/neighborhood`
   （`/var/www/html` 开了 `FollowSymLinks`，`git pull` 后自动生效；若以后补 ProxyPass 记得删符号链接）。

@@ -142,6 +142,14 @@ All SPAs shipped in this repo use the shared V2.0 shell (last conversion
 | converted | `preblast`, `primerserver2`, `getfasta`, `interval`, `expression`, `coexpression`, `genes`, `caps`, `papers`, `eqtl`, `GO_KEGG`, `HomologFinder`, `idConvert`, `neighborhood`, `orthofinder`, `PfamSearch`, `wheatPPI`, `VariantHub`, `syntenyview`, `scRNA`, `wheatPSP`, `sms2` (entry page) |
 | legacy / out of repo | the Sequence Manipulation Suite tool pages under `/sms2/*.html` (third-party XHTML, shipped with the server docroot; `.gitignore` only un-ignores the converted `app/static/sms2/index.html`), the old CGI pages (`/symap/`, `/tools/*.html`, …) |
 
+### Homepage
+
+Since 2026-10-27 the site root `/` serves the V2.0 homepage (a copy of
+`/V2.0/index.html` with its three relative image paths rewritten to `/V2.0/…`;
+the previous homepage is kept as `/var/www/html/index.html.bak-20261027_081021`).
+The shell header therefore links the logo and Home to `/`, and the footer
+anchors to `/#tools` and `/#data`. `/V2.0/` stays online for old bookmarks.
+
 ### Serving note: `/neighborhood/`
 
 Apache's vhost has no `ProxyPass /neighborhood`, so that module is served
