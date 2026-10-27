@@ -998,7 +998,8 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/<module>/ --widt
 发布到 `/var/www/html`；不需要改 Apache、不需要重启服务；支持 `--check/--dry-run/--only`）。
 覆盖页面：`/jbrowse.html`、`/download.html`、`/help/contact.html`、`/help/news.html`、
 `/outsitelink.html`、`/GeneHub/index.html`，以及 GeneHub 结果 CGI `/cgi-bin/geneDetail.py`
-（该 CGI 目标文件属 root，需执行一次 sudo 安装，命令见 `app/static/docpages/README.md`）。
+（该 CGI 目标文件属 root：2026-10-27 已通过 docker root 步骤安装并上线，安装/回滚方式见
+`app/static/docpages/README.md`；以后更新这个 CGI 仍需一次 root/docker 操作）。
 
 - `/PrimerServer/`（v1）与 `/PrimerServer3/`（裸 Vite 入口副本）已从 docroot 移走，备份在
   `/var/www/data/masw_data/backup_primerserver_20261027/`；导航 Tools、`/V2.0/` 和根首页的
@@ -1006,7 +1007,7 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/<module>/ --widt
 - 仍在 docroot、暂未收编的运行时依赖：`/V2.0/news.json`（新闻 feed，被 `help_news.html` 运行时读取）、
   `/css/wheat.jpeg`（outsitelink hero）、`/cite.html`（jbrowse 引文块）、`/V2.0/` 图片。
 - `/GeneHub/index.html` 的部署目标目录属 fei，可直接发布；`/cgi-bin/*` 属 root/www-data，
-  需要 sudo（见上）。
+  更新时需要 sudo 或 `docker run -u 0`（见 `app/static/docpages/README.md`）。
 
 ### 部署注意
 

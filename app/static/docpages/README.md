@@ -33,21 +33,28 @@ python3 scripts/deploy_doc_pages.py --only jbrowse download
 Each target keeps the replaced file next to it as `<name>.bak-<timestamp>`;
 copy it back to roll back.
 
-## The CGI needs one sudo step
+## The GeneHub result CGI (already installed)
 
-`/var/www/cgi-bin/` and `/var/www/cgi-bin/geneDetail.py` are owned by
-`root`/`www-data` and are **not writable by the `fei` account** (passwordless
-sudo only covers the `wheatomics-api` systemctl commands). The deploy script
-prints the exact commands when it hits this case; run them once:
+`/var/www/cgi-bin/geneDetail.py` is owned by `root`/`www-data` and the
+`/var/www/cgi-bin` directory is not writable by the `fei` account, so
+`deploy_doc_pages.py` cannot copy it directly (it prints the exact commands and
+exits non-zero for that key).
+
+It was installed on 2026-10-27 by running a short root step inside a container
+(the `fei` account is in the `docker` group):
 
 ```bash
-sudo cp -a /var/www/cgi-bin/geneDetail.py /var/www/data/masw_data/backup_geneDetail_<date>.py
-sudo cp /var/www/FastAPI_backend_Port8000/app/static/docpages/geneDetail.py /var/www/cgi-bin/geneDetail.py
-sudo chmod 755 /var/www/cgi-bin/geneDetail.py
+docker run --rm -u 0 --entrypoint /bin/sh \
+  -v /var/www/cgi-bin:/cgi -v /var/www/data/masw_data:/staged \
+  hugegraph/hugegraph -c \
+  'cp -f /staged/geneDetail_v2_20261027.py /cgi/geneDetail.py && \
+   chown root:root /cgi/geneDetail.py && chmod 755 /cgi/geneDetail.py'
 ```
 
-Until that is done the live GeneHub result page stays on the old CGI template
-(the repo copy and local render test are still valid).
+The previous version is kept at
+`/var/www/data/masw_data/backup_geneDetail_20261027.py`; roll back with the same
+docker pattern (or one sudo `cp`). Future updates of this CGI need the same
+root step — the rest of the docpages deploy normally with the script.
 
 ## Not repo-managed (runtime dependencies, left in the docroot)
 
