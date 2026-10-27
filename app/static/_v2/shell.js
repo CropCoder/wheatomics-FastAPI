@@ -33,13 +33,13 @@
   </svg>`;
   var HEADER = `  <header class="site-header">
       <div class="container header-row">
-        <a class="brand" href="/V2.0/" aria-label="WheatOmics 2.0 home">
+        <a class="brand" href="/" aria-label="WheatOmics 2.0 home">
           <img class="brand-mark" src="/V2.0/Logo-small.png" alt="WheatOmics 2.0 logo">
           <span class="brand-version">2.0</span>
         </a>
 
         <nav class="main-nav" id="main-nav" aria-label="Primary navigation">
-          <div class="nav-item"><a class="nav-link" href="/V2.0/">Home</a></div>
+          <div class="nav-item"><a class="nav-link" href="/">Home</a></div>
           <div class="nav-item">
             <button class="nav-trigger" type="button" aria-expanded="false">Tools
               <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
@@ -70,7 +70,7 @@
               <li><a href="https://wheatomics.sdau.edu.cn/wheatPPI/index.html">WheatPPI</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/wheatPSP/">wheatPSP</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/papers/">Triticeae Papers</a></li>
-              <li><a class="tools-all-link" href="/V2.0/#tools">View all tools →</a></li>
+              <li><a class="tools-all-link" href="/#tools">View all tools →</a></li>
             </ul>
           </div>
           <div class="nav-item">
@@ -79,7 +79,7 @@
             </button>
             <ul class="dropdown">
               <li><a href="https://wheatomics.sdau.edu.cn/jbrowse.html">JBrowse Gateway</a></li>
-              <li><a href="/V2.0/#data">Browse Data Types</a></li>
+              <li><a href="/#data">Browse Data Types</a></li>
             </ul>
           </div>
           <div class="nav-item"><a class="nav-link" href="https://wheatomics.sdau.edu.cn/download.html">Download Data</a></div>
@@ -89,7 +89,7 @@
               <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
             </button>
             <ul class="dropdown">
-              <li><a href="/V2.0/#citation">Citation</a></li>
+              <li><a href="/#citation">Citation</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/help/news.html">News</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/help/contact.html">Contact</a></li>
             </ul>
@@ -118,7 +118,7 @@
       <div>
         <h2 class="footer-title">Quick Links</h2>
         <div class="footer-links">
-          <a href="/V2.0/#tools">Tools</a><a href="/V2.0/#data">JBrowse</a>
+          <a href="/#tools">Tools</a><a href="/#data">JBrowse</a>
           <a href="https://wheatomics.sdau.edu.cn/download.html">Download Data</a><a href="https://wheatomics.sdau.edu.cn/outsitelink.html">External Links</a>
           <a href="https://wheatomics.sdau.edu.cn/help/news.html">News</a><a href="https://wheatomics.sdau.edu.cn/help/contact.html">About Us</a>
         </div>
