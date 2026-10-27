@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
 from app.core.config import settings
 from app.core.exceptions import ResourceNotFound
@@ -170,8 +170,20 @@ def query_expression(
 
     with mysql_cursor(settings.DB_GENE_EXPRESSION) as cursor:
         # 探测表结构：找基因 ID 列名和数据列
-        cursor.execute(f"DESCRIBE `{project}`")
-        columns = cursor.fetchall()
+        try:
+            cursor.execute(f"DESCRIBE `{project}`")
+            columns = cursor.fetchall()
+        except Exception as exc:
+            # Some project_meta rows point at data tables that do not exist (or are
+            # unreadable). Return a clear JSON 503 instead of letting the connection
+            # drop / a generic 500 bubble up (14 projects currently hit this path).
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    f"Expression data for project '{project}' is currently unavailable "
+                    f"(data table missing or unreadable: {type(exc).__name__})."
+                ),
+            )
         gene_id_column = "GeneID"
         data_columns = []
 
@@ -188,7 +200,7 @@ def query_expression(
                 cname = (col.get("Field") or col[0]).strip()
                 ctype = (col.get("Type") or col[1]).lower()
                 if any(t in ctype for t in ("varchar", "char", "text")):
-                    if cname.lower() not in ("id", "iWGSCV1_1_id", "name"):
+                    if cname.lower() not in ("id", "iwgscv1_1_id", "name"):
                         gene_id_column = cname
                         break
 
@@ -198,7 +210,7 @@ def query_expression(
             ctype = (col.get("Type") or col[1]).lower()
             if any(t in ctype for t in ("varchar", "char", "text")):
                 continue
-            if cname.lower() not in ("id", "geneid", "iWGSCV1_1_id", "name"):
+            if cname.lower() not in ("id", "geneid", "iwgscv1_1_id", "name"):
                 data_columns.append(cname)
 
         # labels 优先用 project_meta 定义，否则用数据列名
@@ -238,6 +250,13 @@ def query_expression(
                     std_values.append(None)
 
             points = []
+            # Positional pairing is only safe when both sides have the same length.
+            # A numeric IWGSCV1_1_id column (or a stale project_meta.labels list) can
+            # make len(labels) != len(values); fall back to the real column names so
+            # that labels and values stay aligned instead of silently shifting.
+            if len(labels) != len(values):
+                labels = list(ordered_keys)
+
             for label, value, std_value in zip(labels, values, std_values):
                 error_bar = None
                 if std_value is not None:

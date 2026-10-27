@@ -388,6 +388,19 @@ def sequence_by_interval(
     if end <= start or end - start > 5_000_000:
         raise ValidationFailure("Region length must be > 0 and <= 5,000,000 bp")
 
+    if database == "auto":
+        # Chips/examples that belong to scaffold-level assemblies live in
+        # all_other_genomes, not all_genomes. Try chromosome-level first, then
+        # the scaffold aggregate, and report which one served the sequence.
+        last_error: Exception | None = None
+        for candidate in ("all_genomes", "all_other_genomes"):
+            try:
+                fasta = _try_interval(settings.BLAST_DB_PATH / candidate, chrom, start, end)
+                return ok({"region": region, "database": candidate, "fasta": fasta})
+            except ValidationFailure as exc:
+                last_error = exc
+        raise last_error or ValidationFailure("No genome database contained this region.")
+
     fasta = _try_interval(settings.BLAST_DB_PATH / database, chrom, start, end)
     return ok({"region": region, "database": database, "fasta": fasta})
 

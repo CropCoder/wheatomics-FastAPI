@@ -1,237 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>scRNA - WheatOmics</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="scRNA Atlas — explore single-cell marker-gene expression across Chinese Spring root and Kronos spike clusters as interactive dot plots.">
+<title>scRNA Atlas | WheatOmics 2.0</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
 <script src="/js/echarts.min.js"></script>
-
-<script>
-// ===== Visit tracking =====
-(function() {
-  var page = location.pathname || 'unknown';
-  try {
-    fetch('/api/track/visit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ page: page })
-    }).catch(function(){});
-  } catch (e) {}
-
-  function fmt(n) {
-    n = Number(n) || 0;
-    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
-    if (n >= 10000)   return (n / 1000).toFixed(3) + 'k';
-    return String(n);
-  }
-
-  function setHtml(html) {
-    var el = document.getElementById('visit-stats');
-    if (el) el.innerHTML = html;
-  }
-
-  fetch('/api/track/stats')
-    .then(function(r) { return r.json(); })
-    .then(function(resp) {
-      if (!resp || !resp.success) {
-        setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
-        return;
-      }
-      var d = resp.data;
-      var html =
-        '<span class="vs-pill vs-today" title="Today pageviews">' +
-          '<span class="vs-dot vs-dot-today"></span>' +
-          'Today <b>' + fmt(d.today.pv) + '</b></span>' +
-        '<span class="vs-pill vs-total" title="Total pageviews (since 2019-08-01)">' +
-          '<span class="vs-dot vs-dot-total"></span>' +
-          'Total <b>' + fmt(d.total.pv) + '</b></span>' +
-        '<span class="vs-pill vs-online" title="Visitors active in the last 15 minutes">' +
-          '<span class="vs-dot vs-dot-online"></span>' +
-          'Online <b>' + fmt(d.online) + '</b></span>';
-      setHtml(html);
-    })
-    .catch(function() {
-      setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
-    });
-})();</script>
+<link rel="stylesheet" href="/api/v2shell/shell.css">
 <style>
-html, body { margin: 0; padding: 0; background: #f2f2f2; font-family: Arial, Helvetica, sans-serif; font-size: 16px; }
+html, body { margin: 0; padding: 0; background: #fff; font-family: var(--body); font-size: 15px; }
 * { box-sizing: border-box; }
 a { text-decoration: none; }
 a:hover { text-decoration: none; }
 
-#wo_header { width: 100%; background: #0785bc; position: relative; z-index: 9999; }
-#wo_title { height: 88px; text-align: center; color: #fff; font-size: 36px; line-height: 88px; font-weight: normal; }
-#wo_title img { height: 70px; width: auto; vertical-align: middle; margin-right: 14px; }
-#wo_nav { height: 42px; background: #0785bc; text-align: center; white-space: nowrap; }
-#wo_nav ul { margin: 0; padding: 0; list-style: none; }
-#wo_nav > ul > li { display: inline-block; position: relative; vertical-align: top; width: 190px; height: 42px; line-height: 42px; background: #0785bc; border-radius: 4px 4px 0 0; }
-#wo_nav > ul > li > a { display: block; color: #fff; font-size: 16px; font-weight: bold; width: 100%; height: 42px; line-height: 42px; }
-#wo_nav > ul > li:hover > a, #wo_nav > ul > li.active > a { background: #94c1da; color: #000; border-radius: 4px 4px 0 0; }
-#wo_nav li ul { display: none; position: absolute; top: 42px; left: 0; width: 190px; margin: 0; padding: 0; background: #0785bc; z-index: 10000; }
-#wo_nav li:hover ul { display: block; }
-#wo_nav li ul li { display: block; width: 190px; height: 42px; line-height: 42px; background: #0785bc; }
-#wo_nav li ul li a { display: block; width: 190px; height: 42px; line-height: 42px; color: #fff; font-size: 16px; font-weight: bold; text-align: center; }
-#wo_nav li ul li a:hover { background: #006fa3; color: #fff; }
-#wo_header ul, #wo_header li { list-style: none; }
-
-#main_content { width: 86%; max-width: 1450px; min-height: 420px; margin: 0 auto; background: #fff; padding: 45px 60px 55px 60px; border-left: 2px solid #d7ebff; border-right: 2px solid #d7ebff; }
-#main_content h2 { text-align: center; font-size: 30px; margin: 0 0 36px 0; color: #000; }
-
-.search-box { width: 860px; max-width: 100%; margin: 0 auto 30px auto; text-align: left; }
-.search-row { margin-bottom: 18px; }
-.search-row label { display: block; font-weight: bold; margin-bottom: 6px; color: #333; }
-.search-row select, .search-row textarea, .search-row input[type="file"] { width: 100%; font-size: 16px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 3px; }
+.sc-search-card { width: 900px; max-width: 100%; margin: 0 auto 20px; }
+.search-box { width: 100%; max-width: 100%; margin: 0 auto 4px auto; text-align: left; }
+.search-row { margin-bottom: 16px; }
+.search-row label { display: block; margin-bottom: 6px; }
 .search-row textarea { height: 105px; resize: vertical; }
-.search-help { font-size: 13px; color: #666; margin-top: 5px; }
-.search-action { text-align: center; margin-top: 22px; }
-.search-action button { font-size: 16px; padding: 8px 32px; }
+.search-help { font-size: 12px; color: var(--muted); margin-top: 5px; }
+.search-action { text-align: center; margin-top: 18px; }
 
-.dataset-description { width: 920px; max-width: 100%; margin: 25px auto 35px auto; padding: 16px 20px; background: #f6fbff; border-left: 4px solid #0785bc; color: #333; font-size: 15px; line-height: 1.7; }
+.dataset-description { margin: 22px auto 30px auto; max-width: 100%; padding: 14px 18px; background: var(--mist); border-left: 3px solid var(--leaf); border-radius: 0 10px 10px 0; color: #42584d; font-size: 13px; line-height: 1.7; }
 
-.annotation-box { margin: 25px auto 35px auto; width: 100%; }
-.annotation-box h3 { text-align: center; font-size: 22px; margin-bottom: 16px; }
-.table-controls { text-align: right; margin-bottom: 10px; font-size: 14px; }
-.table-controls select { padding: 4px 8px; font-size: 14px; }
-.table-wrapper { width: 100%; overflow-x: auto; border: 1px solid #ddd; }
-.annotation-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
-.annotation-table th { background: #0785bc; color: #fff; padding: 8px; border: 1px solid #ddd; white-space: nowrap; }
-.annotation-table td { padding: 7px 8px; border: 1px solid #ddd; white-space: nowrap; }
-.annotation-table tr:nth-child(even) { background: #f7f7f7; }
-.pagination-box { text-align: center; margin-top: 14px; font-size: 14px; }
-.pagination-box a, .pagination-box span { display: inline-block; margin: 0 3px; padding: 5px 10px; border: 1px solid #ccc; color: #0785bc; background: #fff; cursor: pointer; }
-.pagination-box span.current { background: #0785bc; color: #fff; border-color: #0785bc; }
+.annotation-box { margin: 10px auto 30px; width: 100%; }
+.annotation-box h3 { font-size: 19px; margin: 0 0 14px; }
+.table-controls { text-align: right; margin-bottom: 10px; font-size: 12px; color: var(--muted); }
+.table-controls select { padding: 4px 8px; font-size: 12px; }
+.table-wrapper { width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+.annotation-table { width: 100%; border-collapse: collapse; font-size: 12px; background: #fff; }
+.annotation-table th { background: var(--mist); color: #4d6559; padding: 9px 10px; border: 1px solid var(--line); white-space: nowrap; font-family: var(--utility); font-size: 10px; letter-spacing: .05em; text-transform: uppercase; }
+.annotation-table td { padding: 7px 10px; border: 1px solid var(--line); white-space: nowrap; }
+.annotation-table tbody tr:nth-child(even) { background: #fbfdfb; }
+.pagination-box { text-align: center; margin-top: 14px; font-size: 12px; }
+.pagination-box a, .pagination-box span { display: inline-block; margin: 0 3px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--forest); background: #fff; cursor: pointer; }
+.pagination-box span.current { background: var(--forest); color: #fff; border-color: var(--forest); }
 
-/* #results 是 dotplot 结果容器，不再作为锚点限高 */
-.result-header { margin-top: 10px; margin-bottom: 35px; }
-.info { font-size: 18px; text-align: center; margin: 8px 0; }
-.section { margin-top: 55px; text-align: center; padding-top: 20px; border-top: 1px solid #eee; }
-.result-meta { text-align: center; font-size: 18px; margin-bottom: 18px; }
-.result-meta a { color: #007bff; }
+/* dotplot results */
+.result-header { margin-top: 10px; margin-bottom: 30px; }
+.info { font-size: 14px; text-align: center; margin: 6px 0; color: #42584d; }
+.section { margin-top: 40px; text-align: center; padding-top: 20px; border-top: 1px solid var(--line); }
+.result-meta { text-align: center; font-size: 16px; margin-bottom: 16px; }
+.result-meta a { color: var(--leaf); }
 .result-meta a:hover { text-decoration: underline; }
-.result-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 12px auto 16px auto; }
-.stat-box { display: inline-block; background: #f6fbff; border: 1px solid #cfe7ff; color: #333; padding: 8px 14px; border-radius: 4px; font-size: 14px; }
-.missing-box { width: 960px; max-width: 100%; margin: 12px auto; text-align: left; background: #fff8f0; border-left: 4px solid #ff9800; padding: 12px 16px; color: #333; font-size: 14px; line-height: 1.6; }
+.result-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 12px auto 16px auto; }
+.stat-box { display: inline-block; background: var(--mist); border: 1px solid var(--line); color: #42584d; padding: 8px 14px; border-radius: 10px; font-size: 13px; }
+.missing-box { width: 960px; max-width: 100%; margin: 12px auto; text-align: left; background: #fdf6e3; border-left: 3px solid var(--wheat); padding: 12px 16px; color: #6b4f07; font-size: 13px; line-height: 1.6; }
 .chart-toolbar { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin: 12px 0 10px 0; }
-.chart-toolbar input, .chart-toolbar select { padding: 6px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 14px; }
-.download-toolbar { display: flex; flex-wrap: nowrap; justify-content: center; align-items: center; gap: 12px; margin: 8px 0 18px 0; }
+.chart-toolbar input, .chart-toolbar select { padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; background: #fbfdfb; }
+.download-toolbar { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin: 8px 0 18px 0; }
 .download-toolbar .btn { min-width: 130px; }
 .chart-box-wrapper { width: 100%; overflow-x: auto; padding-bottom: 8px; }
-.chart-box { margin: 0 auto; border: 1px solid #000; background: #fff; min-height: 500px; }
-.btn { margin: 4px 4px; font-size: 15px; }
-.result-note { width: 980px; max-width: 100%; margin: 45px auto 20px auto; padding: 15px 18px; background: #fafafa; border-left: 4px solid #28a745; text-align: left; font-size: 14px; line-height: 1.7; color: #333; }
+.chart-box { margin: 0 auto; border: 1px solid var(--line); border-radius: 12px; background: #fff; min-height: 500px; }
+.btn { margin: 4px; font-size: 13px; }
+.result-note { width: 980px; max-width: 100%; margin: 40px auto 20px auto; padding: 14px 18px; background: var(--mist); border-left: 3px solid var(--leaf); border-radius: 0 10px 10px 0; text-align: left; font-size: 13px; line-height: 1.7; color: #42584d; }
 .result-note p { margin: 8px 0; }
-.back-search { text-align: center; margin-top: 30px; margin-bottom: 10px; }
-
-#home_footer { width: 100%; background-color: #d9d9d9; text-align: center; font-size: 12px; color: #000; padding: 0 0 8px 0; margin: 0; border-top: 1px solid #ccc; }
-#home_footer center { margin-top: 5px; }
-#home_footer table { margin: 0 auto; border-collapse: collapse; }
-#home_footer td { vertical-align: middle; padding: 0; }
-#home_footer img { width: auto; vertical-align: middle; display: inline-block; margin: 0; }
-#home_footer a { color: #007bff; }
-#home_footer a:hover { text-decoration: underline; }
-.line { display: block; }
-
-/* ----- visit stats footer ----- */
-.visit-stats { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.visit-stats .vs-pill {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 8px; border-radius: 12px;
-    font-size: 11px; line-height: 1.4;
-    background: #f1f5f9; color: #334155;
-    border: 1px solid #e2e8f0;
-    transition: background 0.15s;
-}
-.visit-stats .vs-pill b { color: #0f172a; font-weight: 600; }
-.visit-stats .vs-dot {
-    display: inline-block; width: 6px; height: 6px;
-    border-radius: 50%; background: #94a3b8;
-}
-.visit-stats .vs-dot-today  { background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.18); }
-.visit-stats .vs-dot-total  { background: #3b82f6; }
-.visit-stats .vs-dot-online { background: #f59e0b; animation: vs-pulse 1.6s ease-in-out infinite; }
-.visit-stats .vs-loading { color: #64748b; }
-.visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
-.visit-stats .vs-error   { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
-@keyframes vs-pulse {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.35; }
-}
+.back-search { text-align: center; margin-top: 24px; margin-bottom: 10px; }
 </style>
 </head>
 
 <body>
 
-<div id="wo_header">
-    <div id="wo_title">
-        <img src="/css/LOGO_footer.jpg" alt="WheatOmics" onerror="this.style.display='none'">
-        WheatOmics 2.0
-    </div>
-    <div id="wo_nav">
-        <ul>
-            <li><a href="/">Home</a></li>
-            <li class="active"><a href="#">Tools/Browse</a>
-                <ul>
-                    <li><a href="/getfasta/index.html">GetSequence</a></li>
-                    <li><a href="/blast/blast.html">BLAST</a></li>
-                    <li><a href="/PrimerServer">PrimerServer</a></li>
-                    <li><a href="/PrimerServer2/">PrimerServer2</a></li>
-                    <li><a href="/caps/">CAPS/dCAPS</a></li>
-                    <li><a href="/PfamSearch/">PfamSearch</a></li>
-                    <li><a href="/idConvert/">IDConvert</a></li>
-                    <li><a href="/HomologFinder/">HomologFinder</a></li>
-                    <li><a href="/interval/">IntervalTool</a></li>
-                    <li><a href="/expression/">GeneExpression</a></li>
-                    <li><a href="/coexpression/index.html">Co-expression</a></li>
-                    <li><a href="/wheatPPI/">WheatPPI</a></li>
-                    <li><a href="/genes/">KnownGene</a></li>
-                    <li><a href="/symap/index.html">SyntenySearch</a></li>
-                    <li><a href="/preblast/">preBLAST</a></li>
-                    <li><a href="/sms2/index.html">SequenceToolkit</a></li>
-                    <li><a href="/orthofinder/">OrthoFinder</a></li>
-                    <li><a href="/VariantHub/">VariantHub</a></li>
-                    <li><a href="/scRNA/">scRNA</a></li>
-                    <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
-                    <li><a href="/papers">Triticeae papers</a></li>
-                </ul>
-            </li>
-            <li><a href="/jbrowse.html">JBrowse</a></li>
-            <li><a href="/download.html">Download Data</a></li>
-            <li><a href="/outsitelink.html">External Links</a></li>
-            <li><a href="#">About</a>
-                <ul>
-                    <li><a href="/help/contact.html">Contact</a></li>
-                    <li><a href="/help/news.html">News</a></li>
-                </ul>
-            </li>
-        </ul>
-    </div>
-</div>
+<div id="v2-shell-header"></div>
 
-<div id="main_content">
-    <h2>Gene Expression Viewer</h2>
+<main id="main-content">
+  <section class="news-hero">
+    <div class="container news-hero-inner">
+      <div>
+        <p class="news-kicker">WheatOmics 2.0 · Single-cell atlas</p>
+        <h1 class="news-title">scRNA <em>Atlas</em></h1>
+        <p class="news-lead">Search single-cell marker genes in Chinese Spring root and Kronos spike datasets and render their cluster-level expression as interactive dot plots.</p>
+        <div class="news-stats">
+          <span class="news-stat"><strong>2</strong> single-cell genomes</span>
+          <span class="news-stat">Marker-gene preview</span>
+          <span class="news-stat">Interactive dot plots</span>
+          <span class="news-stat">PNG / PDF export</span>
+        </div>
+      </div>
+      <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-cells"/></svg></div>
+    </div>
+  </section>
 
-    <div class="search-box">
+  <section class="news-body">
+    <div class="container">
+      <div class="card sc-search-card">
+        <div class="card-body">
+          <div class="search-box">
         <div class="search-row">
             <label for="genome">Select Genome</label>
-            <select name="genome" id="genome"></select>
+            <select name="genome" id="genome" class="form-control"></select>
         </div>
         <div class="search-row">
             <label for="gene">Enter Gene Name</label>
-            <textarea name="gene" id="gene" placeholder="Enter one or more gene IDs. Multiple genes can be separated by comma, space, semicolon, or new line."></textarea>
+            <textarea name="gene" id="gene" class="form-control" placeholder="Enter one or more gene IDs. Multiple genes can be separated by comma, space, semicolon, or new line."></textarea>
             <div class="search-help">Example: TraesCSU03G0001100, TraesCSU03G0002800, TraesCSU03G0002900LC</div>
         </div>
         <div class="search-row">
             <label for="gene_file_upload">Upload Gene List File</label>
-            <input type="file" id="gene_file_upload" multiple>
+            <input type="file" id="gene_file_upload" class="form-control" multiple>
             <div class="search-help">The uploaded file should contain one gene ID per line, or gene IDs in the first column of a TXT/CSV/TSV file.</div>
         </div>
         <div class="search-action">
             <button class="btn btn-primary" type="button" onclick="searchDotplot()">Search</button>
         </div>
     </div>
+        </div>
+      </div>
 
     <div class="dataset-description">
         The current website supports single-cell search for two genomes, including Chinese Spring and Kronos.
@@ -259,34 +136,15 @@ a:hover { text-decoration: none; }
         <div class="pagination-box" id="annotation-pagination"></div>
     </div>
 
+    
     <div id="results"></div>
-</div>
+    </div>
+  </section>
+</main>
 
-<div class="line" style="height: 10px;background-color:white"></div>
+<div id="v2-shell-footer"></div>
 
-<div id="home_footer">
-    <center style="margin-top:5px">
-        <table>
-            <tr>
-                <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
-                <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-                <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
-                <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-                <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
-                <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-                <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
-                <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-                <td><div class="line" style="height:50px;width:15px;"></div></td>
-                <td>
-                    <div id="visit-stats" class="visit-stats">
-                        <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
-                    </div>
-                </td>
-            </tr>
-        </table>
-        For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
-    </center>
-</div>
+<script src="/api/v2shell/shell.js"></script>
 
 <script>
 var API_BASE = "/api/scrna";

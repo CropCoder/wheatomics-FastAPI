@@ -3,48 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Known Genes - WheatOmics</title>
+<title>KnownGene | WheatOmics 2.0</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
 
-<script>
-// ===== Visit tracking =====
-(function() {
-  var page = location.pathname || 'unknown';
-  try {
-    fetch('/api/track/visit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ page: page })
-    }).catch(function(){});
-  } catch (e) {}
-  function fmt(n) {
-    n = Number(n) || 0;
-    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
-    if (n >= 1000)    return (n / 1000).toFixed(1) + 'k';
-    return String(n);
-  }
-  function renderVisitStats(data) {
-    var el = document.getElementById('visit-stats');
-    if (!el || !data) return;
-    var today  = (data.today && data.today.pv != null) ? fmt(data.today.pv) : '—';
-    var total  = (data.total && data.total.pv != null) ? fmt(data.total.pv) : '—';
-    var online = data.online != null ? data.online : '—';
-    el.innerHTML =
-      '<span class="vs-pill"><span class="vs-dot vs-dot-today"></span>today <b>' + today + '</b></span>' +
-      '<span class="vs-pill"><span class="vs-dot vs-dot-total"></span>total <b>' + total + '</b></span>' +
-      '<span class="vs-pill"><span class="vs-dot vs-dot-online"></span>online <b>' + online + '</b></span>';
-  }
-  fetch('/api/track/stats').then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(resp){
-      if (resp && resp.success && resp.data) renderVisitStats(resp.data);
-    })
-    .catch(function(){});
-})();
-</script>
+
 
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.bundle.js"></script>
+<link rel="stylesheet" href="/api/v2shell/shell.css">
 
 <!-- Baidu Tongji (async) -->
 <script>
@@ -58,93 +25,61 @@ var _hmt = _hmt || [];
 </script>
 
 <style>
-html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-serif; }
-#home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
-#logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
-#home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
-#header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
-#header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
-#header-tabs li { display:inline-block !important; width:190px !important; }
-#header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
-#header-tabs a:hover { background:#98c1d9; color:#000000; }
-#header-tabs ul li { display:inline-block; list-style:none; position:relative; }
-#header-tabs ul li ul { display:none !important; position:absolute; z-index:1000; background:#0077b6; }
-#header-tabs ul li:hover ul { display:block !important; }
-#header-tabs ul li ul a { border-radius:0; }
-#home_footer { margin:0 auto; padding:5px 0 10px 0; text-align:center; width:100%; background:#d9d9d9; }
-#home_footer table { margin:0 auto; }
-#home_footer .line { display:inline-block; height:30px; width:2px; background:#000; vertical-align:middle; margin:5px; }
-#home_footer .visit-stats { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; vertical-align:middle; margin-left:15px; }
-.visit-stats .vs-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:11px; line-height:1.4; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; }
-.visit-stats .vs-pill b { color:#0f172a; font-weight:600; }
-.visit-stats .vs-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#94a3b8; }
-.visit-stats .vs-dot-today  { background:#22c55e; }
-.visit-stats .vs-dot-total  { background:#3b82f6; }
-.visit-stats .vs-dot-online { background:#f59e0b; }
-.visit-stats .vs-loading { color:#64748b; }
-.visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
-@keyframes vs-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
-
-.container-main { max-width: 1180px; width: 96%; margin: 18px auto 26px; }
-.page-title-wrap { max-width: 1180px; width: 96%; margin: 18px auto 10px; }
-.page-title-wrap h2 { font-size: 28px; font-weight: 700; margin: 0 0 6px 0; line-height: 1.25; color: #222; }
-.page-title-wrap p { margin: 0; color: #555; font-size: 14px; }
-.page-title-wrap .card-title {
-  display: inline-block;
-  font-size: 22px;
-  font-weight: 600;
-  margin: 0 0 4px 0;
-  padding: 0;
-  color: #222;
-  border-bottom: 2px solid #0077b6;
-  padding-bottom: 4px;
-}
+html, body { margin:0; padding:0; }
+.container-main { max-width: 1180px; width: 96%; margin: 0 auto; }
+.page-title-wrap { max-width: 1180px; width: 96%; margin: 0 auto 10px; }
+.page-title-wrap h2 { font-size: 28px; font-weight: 700; margin: 0 0 6px 0; line-height: 1.25; color: var(--forest-deep); }
+.page-title-wrap p { margin: 0; color: var(--muted); font-size: 14px; }
 
 .filter-block {
   background: #fff;
-  border: 1px solid #e6e6e6;
-  border-radius: 4px;
-  padding: 12px 15px;
-  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
 }
-.filter-block h5 { font-size: 16px; font-weight: 700; margin: 0 0 10px 0; color: #222; }
-.small-label { font-size: 12px; color: #555; margin-bottom: 4px; }
-.helper-text { font-size: 12px; color: #888; }
+.filter-block h5 { font-size: 16px; font-weight: 700; margin: 0 0 10px 0; color: var(--forest-deep); }
+.small-label { font-size: 12px; color: var(--forest-deep); font-weight: 700; margin-bottom: 4px; }
+.helper-text { font-size: 12px; color: var(--muted); }
 
 .results-row { margin-top: 0; }
 
 /* gene result cards */
 .gene-card {
   background:#fff;
-  border:1px solid #e6e6e6;
-  border-left:4px solid #0077b6;
-  border-radius:4px;
+  border:1px solid var(--line);
+  border-left:4px solid var(--leaf);
+  border-radius:10px;
   padding:14px 16px;
   margin-bottom:10px;
+  transition: 160ms ease;
 }
+.gene-card:hover { border-color: rgba(17,134,83,.34); box-shadow: 0 10px 26px rgba(8,69,47,.07); }
 .gene-card-head { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
 .gene-card-head .gene-name {
-  font-size:16px; font-weight:700; color:#222;
+  font-size:16px; font-weight:700; color: var(--forest-deep);
   font-style:italic;
 }
 .gene-card-head .gene-id {
-  font-size:12px; color:#1f5f9f;
-  text-decoration:none; font-family:Menlo,Consolas,monospace;
+  font-size:12px; color: var(--forest);
+  text-decoration:none; font-family: var(--utility);
 }
 .gene-card-head .gene-id:hover { text-decoration:underline; }
-.gene-card-body { margin-top:6px; font-size:13px; color:#555; display:flex; flex-wrap:wrap; gap:14px; }
+.gene-card-body { margin-top:6px; font-size:13px; color: #4d6559; display:flex; flex-wrap:wrap; gap:14px; }
 .gene-card-body .badge { font-size:11px; }
+.text-info { color: var(--forest) !important; }
+.btn:disabled, .btn.disabled { opacity: 1; color: #4d6559; background: var(--mist); border-color: var(--line); }
 
 /* stats tab */
 #stats-loading, #stats-error { padding:40px; text-align:center; }
-.kpi-card { background:#fff; border:1px solid #e6e6e6; border-radius:4px; padding:18px; text-align:center; height:100%; }
-.kpi-card .kpi-label { font-size:12px; color:#777; text-transform:uppercase; letter-spacing:0.5px; }
-.kpi-card .kpi-value { font-size:24px; font-weight:700; color:#1f5f9f; margin-top:4px; }
+.kpi-card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px; text-align:center; height:100%; }
+.kpi-card .kpi-label { font-size:12px; color: var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+.kpi-card .kpi-value { font-size:24px; font-weight:700; color: var(--forest); margin-top:4px; font-family: var(--utility); }
 .bar-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:13px; }
-.bar-row .bar-label { width:200px; min-width:200px; max-width:200px; color:#333; overflow-wrap:break-word; line-height:1.3; }
-.bar-row .bar-track { flex:1; background:#eef2f7; height:18px; border-radius:2px; position:relative; overflow:hidden; }
-.bar-row .bar-fill { background:#1f5f9f; height:100%; }
-.bar-row .bar-count { width:50px; text-align:right; color:#555; font-variant-numeric:tabular-nums; }
+.bar-row .bar-label { width:200px; min-width:200px; max-width:200px; color: var(--ink); overflow-wrap:break-word; line-height:1.3; }
+.bar-row .bar-track { flex:1; background: var(--mist); height:18px; border-radius:999px; position:relative; overflow:hidden; }
+.bar-row .bar-fill { background: var(--leaf); height:100%; }
+.bar-row .bar-count { width:50px; text-align:right; color: #4d6559; font-variant-numeric:tabular-nums; }
 
 /* Vertical (column) bar chart — used for chromosome and phenotype breakdowns.
    Labels wrap on whitespace and break-all so long phenotype strings
@@ -153,66 +88,34 @@ html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-ser
 .vbar { display:flex; align-items:flex-end; gap:6px; overflow-x:auto; padding:6px 4px 0; }
 .vbar .vbar-col { display:flex; flex-direction:column; align-items:center; flex:0 0 60px; }
 .vbar .vbar-stack { display:flex; flex-direction:column; justify-content:flex-end; height:220px; width:32px; }
-.vbar .vbar-fill { width:100%; background:#1f5f9f; border-radius:2px 2px 0 0; min-height:1px; }
-.vbar .vbar-count { font-size:11px; color:#555; margin-bottom:4px; font-variant-numeric:tabular-nums; }
-.vbar .vbar-label { font-size:11px; color:#333; margin-top:6px; text-align:center; line-height:1.3; max-width:60px; word-break:break-word; }
-.vbar .vbar-empty { color:#bbb; font-style:italic; }
+.vbar .vbar-fill { width:100%; background: var(--leaf); border-radius:4px 4px 0 0; min-height:1px; }
+.vbar .vbar-count { font-size:11px; color: #4d6559; margin-bottom:4px; font-variant-numeric:tabular-nums; }
+.vbar .vbar-label { font-size:11px; color: var(--ink); margin-top:6px; text-align:center; line-height:1.3; max-width:60px; word-break:break-word; }
+.vbar .vbar-empty { color: #9aaca1; font-style:italic; }
 </style>
 </head>
 <body>
+  <div id="v2-shell-header"></div>
 
-<div id="home_header">
-  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 2.0</span>
-</div>
-<div id="header-tabs">
-  <ul>
-    <li><a href="/"><span>Home</span></a></li>
-    <li><a href="#"><span>Tools/Browse</span></a>
-      <ul>
-        <li><a href="/getfasta/index.html">GetSequence</a></li>
-        <li><a href="/blast/blast.html">BLAST</a></li>
-        <li><a href="/PrimerServer">PrimerServer</a></li>
-        <li><a href="/PrimerServer2/">PrimerServer2</a></li>
-        <li><a href="/caps/">CAPS/dCAPS</a></li>
-        <li><a href="/PfamSearch/">PfamSearch</a></li>
-        <li><a href="/idConvert/">IDConvert</a></li>
-        <li><a href="/HomologFinder/">HomologFinder</a></li>
-        <li><a href="/interval/">IntervalTool</a></li>
-        <li><a href="/expression/">GeneExpression</a></li>
-        <li><a href="/coexpression/index.html">Co-expression</a></li>
-        <li><a href="/wheatPPI/">WheatPPI</a></li>
-        <li><a href="/genes/">KnownGene</a></li>
-        <li><a href="/symap/index.html">SyntenySearch</a></li>
-        <li><a href="/syntenyview/">SynTenyView</a></li>
-        <li><a href="/preblast/">preBLAST</a></li>
-        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
-        <li><a href="/orthofinder/">OrthoFinder</a></li>
-        <li><a href="/VariantHub/">VariantHub</a></li>
-        <li><a href="DWGVa.html">DWGVa</a></li>
-        <li><a href="/scRNA/">scRNA</a></li>
-        <li><a href="/wheatPSP/">wheatPSP</a></li>
-        <li><a href="/eqtl/">eQTL Atlas</a></li>
-        <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
-        <li><a href="/papers">Triticeae papers</a></li>
-      </ul>
-    </li>
-    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
-    <li><a href="/download.html"><span>Download Data</span></a></li>
-    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
-    <li><a href="#"><span>About</span></a>
-      <ul>
-        <li><a href="/help/contact.html">Contact</a></li>
-        <li><a href="/help/news.html">News</a></li>
-      </ul>
-    </li>
-  </ul>
-</div>
+  <main id="main-content">
+    <section class="news-hero">
+      <div class="container news-hero-inner">
+        <div>
+          <p class="news-kicker">WheatOmics 2.0 · Data resource</p>
+          <h1 class="news-title">Known <em>Genes</em></h1>
+          <p class="news-lead">Curated functional-gene annotations for wheat and its relatives. Search by gene ID, gene name, chromosome, phenotype or species, and browse dataset statistics.</p>
+          <div class="news-stats">
+            <span class="news-stat"><strong>6</strong> search fields</span>
+            <span class="news-stat">Curated annotations</span>
+            <span class="news-stat">Dataset statistics</span>
+          </div>
+        </div>
+        <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-gene"/></svg></div>
+      </div>
+    </section>
 
-<main class="container-main">
-  <div class="page-title-wrap">
-    <span class="card-title">Known Wheat Genes</span>
-    <p>Curated functional-gene annotations for wheat and its relatives. Search by gene ID, name, chromosome, phenotype, or species.</p>
-  </div>
+    <section class="news-body">
+      <div class="container">
 
   <ul class="nav nav-tabs mb-3" role="tablist">
     <li class="nav-item">
@@ -320,30 +223,13 @@ html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-ser
   </div><!-- /.tab-content -->
 </main>
 
-<div class="line" style="height:10px;background-color:white"></div>
-<div id="home_footer">
-  <center style="margin-top:5px">
-    <table>
-      <tr>
-        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><div style="height:50px;width:15px;"></div></td>
-        <td>
-          <div id="visit-stats" class="visit-stats">
-            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
-          </div>
-        </td>
-      </tr>
-    </table>
-    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
-  </center>
-</div>
+      </div>
+    </section>
+  </main>
+
+  <div id="v2-shell-footer"></div>
+
+  <script src="/api/v2shell/shell.js"></script>
 
 <script>
 // =====================================================================

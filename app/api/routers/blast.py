@@ -19,6 +19,7 @@ WheatOmics BLAST API 端点
 import asyncio
 import os
 import re
+import shutil
 import subprocess
 import time as _time
 import uuid
@@ -27,6 +28,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Form, HTTPException, Query
 
 from app.core.config import settings
+from app.db.mysql import mysql_cursor
 from app.services.blast_runner import (
     BLASTDBCMD, BLAST_FORMATTER, BLASTN, BLASTP, BLASTX,
     BLAST_PROG_MAP, DB_DIR, TBLASTN, TBLASTX,
@@ -55,6 +57,228 @@ _SYNC_POLL_INTERVAL_SECONDS = 0.5
 #: gunicorn's worker timeout=1200 (gunicorn.conf.py); jobs queued behind
 #: others legitimately take a while, so this is generous.
 _SYNC_POLL_TIMEOUT_SECONDS = 1100
+
+#: Aggregated "sequence retrieval" databases. They concatenate whole genome
+#: sets (all_genomes / all_other_genomes / all_Allohexaploid), so a BLAST search
+#: against them is prohibitively expensive. They are used by the sequence
+#: retrieval endpoints (e.g. /api/sequence/chromosomes?database=all_genomes)
+#: and must not be offered in the BLAST database picker.
+SEQUENCE_ONLY_DBS = frozenset({
+    "all_genomes",
+    "all_other_genomes",
+})
+
+#: Whole-genome hexaploid aggregate alias. The user-facing aggregate is the set
+#: of 21 per-chromosome aggregate DBs (all_Allohexaploidchr1A ... chr7D), shown
+#: in All-in-one; BLAST 2.12 cannot alias those 21 aliases again (file-handle
+#: limit), so this whole-genome alias is hidden.
+HIDDEN_AGGREGATE_ALIASES = frozenset({"all_Allohexaploid"})
+
+#: Legacy BLAST alias databases whose DBLIST entries predate the 2026-10 database
+#: renaming (ploidy prefix + .add_Description suffix). Every member is dangling,
+#: so blastdbcmd fails on them; they are kept on disk for reference only and
+#: must not be offered in the picker.
+LEGACY_ALIAS_DBS = frozenset({
+    "all_Diploid",
+    "all_OtherTriticeae",
+    "all_tri6",
+    "all_Allotetraploid",
+    "all1_genomes", "all2_genomes", "all3_genomes", "all4_genomes",
+    "all5_genomes", "all6_genomes", "all7_genomes",
+})
+
+#: On-disk databases that are broken (blastdbcmd cannot open them) and must not
+#: be offered until they are re-indexed/removed. `Foma.pep` (mdb_env_open
+#: failure) was deleted on 2026-10-26; the name stays here as a guard in case an
+#: old backup is restored.
+BROKEN_DB_BASES = frozenset({"Foma.pep"})
+
+#: Superseded duplicate BLAST builds. `CS21_S1_S2_S3_All_NLR` is the 2024-08
+#: multi-volume build; `CS21_S1_S2_S3_All_NLR.fasta` is the 2026-09 rebuild of
+#: the very same 105 sequences (identical entry-list md5), so only the newer
+#: build is offered.
+DUPLICATE_ALIAS_DBS = frozenset({"CS21_S1_S2_S3_All_NLR"})
+
+#: Legacy singular aggregate aliases. `all_gene` / `all_protein` are duplicates
+#: of the maintained `all_genes` / `all_proteins` (identical counts, total
+#: length and DBLIST members, rebuilt 2026-10-24), so only the plural aliases
+#: are offered in the picker.
+LEGACY_AGGREGATE_ALIASES = frozenset({"all_gene", "all_protein"})
+
+#: Databases that must never be advertised as BLAST targets.
+HIDDEN_BLAST_DBS = (
+    SEQUENCE_ONLY_DBS | LEGACY_ALIAS_DBS | BROKEN_DB_BASES
+    | DUPLICATE_ALIAS_DBS | LEGACY_AGGREGATE_ALIASES | HIDDEN_AGGREGATE_ALIASES
+)
+
+# === BLAST 数据库元数据（类型 / 组装） ===
+#: Per-chromosome split databases: `<assembly>.genome_Chr1A`, `<assembly>.genome_chr1H`, ...
+_DB_CHROM_RE = re.compile(r"\.genome_[Cc]hr([0-9]{1,2}[A-Za-z]{0,4})$")
+#: Legacy per-chromosome aliases without the `.genome_` infix: `all_Allohexaploidchr1A`.
+_DB_CHROM_ALT_RE = re.compile(r"[Cc]hr([0-9]{1,2}[A-Za-z]{0,4})$")
+
+#: Annotation-level suffixes and their database kind.
+_DB_ANNOTATION_SUFFIXES = (
+    (".add_Description.cds", "cds"),
+    (".add_Description.pep", "protein"),
+)
+
+#: assembly_level values that mean "chromosome-level assembly".
+CHROMOSOME_LEVELS = frozenset({
+    "Chromosome", "Complete Genome", "Complete genome",
+    "Partial chromosome", "draft chromosome level",
+})
+
+#: Display normalisation: every chromosome-level flavour is reported as
+#: "Chromosome" (the picker does not show the Chromosome badge anyway).
+CHROMOSOME_LEVEL_ALIASES = {
+    "Complete Genome": "Chromosome",
+    "Complete genome": "Chromosome",
+    "Partial chromosome": "Chromosome",
+    "draft chromosome level": "Chromosome",
+}
+
+
+def _db_base_kind_chromosome(name: str) -> tuple[str, str, str | None]:
+    """Split a BLAST database name into (assembly base, kind, chromosome)."""
+    m = _DB_CHROM_RE.search(name)
+    if m:
+        return name[: m.start()], "chromosome", m.group(1)
+    m = _DB_CHROM_ALT_RE.search(name)
+    if m:
+        return name[: m.start()], "chromosome", m.group(1)
+    if name.startswith("all_"):
+        return name, "aggregate", None
+    for suffix, kind in _DB_ANNOTATION_SUFFIXES:
+        if name.endswith(suffix):
+            return name[: -len(suffix)], kind, None
+    if name.endswith(".genome"):
+        return name[:-len(".genome")], "genome", None
+    if ".scaffold" in name:
+        base = re.sub(r"\.scaffold.*$", "", name)
+        return base or name, "genome", None
+    return name, "other", None
+
+
+#: Content-derived assembly-level overrides for DBs whose genome_registry row is
+#: missing or wrong (Scaffold/Contig/Draft rows that are actually 21/14/7
+#: chromosome assemblies etc.). Regenerated by scripts/make_level_overrides.py.
+_DB_LEVELS_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "services", "data", "blast_db_levels.json",
+)
+_DB_LEVELS_CACHE: dict[str, object] = {"mtime": None, "map": {}}
+
+
+def _db_level_overrides() -> dict[str, dict]:
+    try:
+        mtime = os.path.getmtime(_DB_LEVELS_FILE)
+    except OSError:
+        return {}
+    if _DB_LEVELS_CACHE.get("mtime") != mtime:
+        try:
+            import json
+            with open(_DB_LEVELS_FILE, encoding="utf-8") as fh:
+                data = json.load(fh)
+            if isinstance(data, dict):
+                _DB_LEVELS_CACHE["map"] = data
+                _DB_LEVELS_CACHE["mtime"] = mtime
+        except (OSError, ValueError):
+            return _DB_LEVELS_CACHE.get("map") or {}
+    return _DB_LEVELS_CACHE.get("map") or {}
+
+
+def _registry_category(row: dict) -> str | None:
+    """Species category id from genome_registry (ploidy/species), not keywords."""
+    ploidy = (row.get("ploidy") or "").strip().upper()
+    text = ((row.get("species") or "") + " " + (row.get("common_name") or "")).lower()
+    if "hordeum" in text or "barley" in text:
+        return "barley"
+    if "ponticum" in text:
+        return "thinopyrum_ponticum"
+    if ploidy == "AABBRR":
+        return "triticale"
+    if "AABBDD" in ploidy:
+        return "hexaploid_wheat"
+    if ploidy == "AABB":
+        return "tetraploid_wheat"
+    if ploidy in ("AA", "DD"):
+        return "diploid_wheat"
+    if ploidy:
+        return "other_triticeae"
+    return None
+
+
+def _assembly_level_map() -> dict[str, dict]:
+    """Map blast_* base names to registry info (assembly level, dataset id).
+
+    genome_registry stores base names without file suffix (``AABBDD_AK58``),
+    which matches the base derived from BLAST db names. Best effort: when MySQL
+    is unavailable the API still works, only quality badges/filtering go away.
+    """
+    try:
+        with mysql_cursor(settings.DB_LITERATURE) as cursor:
+            cursor.execute(
+                "SELECT dataset_id, blast_genome_db, blast_cds_db, blast_pep_db, "
+                "assembly_level, chromosome_count, species, common_name, ploidy "
+                "FROM genome_registry"
+            )
+            rows = cursor.fetchall()
+    except Exception:
+        return {}
+    out: dict[str, dict] = {}
+    for row in rows:
+        level = (row.get("assembly_level") or "").strip() or None
+        entry = {
+            "assembly_level": level,
+            "chromosome_level": level in CHROMOSOME_LEVELS,
+            "chromosome_count": row.get("chromosome_count"),
+            "dataset_id": row.get("dataset_id"),
+            "category": _registry_category(row),
+        }
+        for key in (row.get("blast_genome_db"), row.get("blast_cds_db"),
+                    row.get("blast_pep_db"), row.get("dataset_id")):
+            key = (key or "").strip()
+            if key:
+                out.setdefault(key, entry)
+    for base, override in _db_level_overrides().items():
+        base = (base or "").strip()
+        level = (override or {}).get("assembly_level") or None
+        if not base or not level:
+            continue
+        out[base] = {
+            "assembly_level": level,
+            "chromosome_level": level in CHROMOSOME_LEVELS,
+            "chromosome_count": (override or {}).get("chromosome_count"),
+            "dataset_id": (out.get(base) or {}).get("dataset_id"),
+            "category": (out.get(base) or {}).get("category"),
+        }
+    return out
+
+
+def _db_meta(name: str, level_map: dict[str, dict]) -> dict:
+    base, kind, chromosome = _db_base_kind_chromosome(name)
+    info = level_map.get(base) or level_map.get(name) or {}
+    if kind == "aggregate":
+        info = {}
+    level = info.get("assembly_level")
+    level = CHROMOSOME_LEVEL_ALIASES.get(level, level)
+    if not level and ".scaffold" in name.lower():
+        level = "Scaffold"
+    meta = {
+        "kind": kind,
+        "chromosome": chromosome,
+        "assembly_level": level,
+        "chromosome_level": bool(info.get("chromosome_level")) or level in CHROMOSOME_LEVELS,
+    }
+    if kind == "genome" and info.get("chromosome_count"):
+        meta["chromosome_count"] = info["chromosome_count"]
+    if kind == "chromosome" and name.startswith(("all_Allohexaploidchr", "all_Allotetraploidchr")):
+        # Per-chromosome aggregates of chromosome-level assemblies.
+        meta["assembly_level"] = "Chromosome"
+        meta["chromosome_level"] = True
+    return meta
+
 
 # === BLAST 数据库分类体系 ===
 # 与 wheatomics.sdau.edu.cn 前端页面一致，按基因组倍性/物种分类
@@ -408,19 +632,45 @@ async def blast_job_status(job_id: str):
 async def list_databases(
     program: Optional[str] = Query(None, description="blastp/blastn/blastx/tblastn/tblastx/留空=全部")
 ):
-    """列出可用数据库（按蛋白/核酸分组）"""
+    """列出可用 BLAST 数据库（按蛋白/核酸分组）。
+
+    仅用于取序列的超大聚合库（SEQUENCE_ONLY_DBS：all_genomes /
+    all_other_genomes / all_Allohexaploid）不在此列表中；它们仍可通过
+    /api/sequence/* 使用。
+    """
     db_type = _program_db_type(program) if program else None
     prot_dbs = list_dbs("blastp") if db_type in (None, "prot") else []
     nuc_dbs = list_dbs("blastn") if db_type in (None, "nuc") else []
+    # Sequence-retrieval-only aggregate DBs are not valid BLAST targets.
+    prot_dbs = [d for d in prot_dbs if d not in HIDDEN_BLAST_DBS]
+    nuc_dbs = [d for d in nuc_dbs if d not in HIDDEN_BLAST_DBS]
     # ---- 按分类组织（供 AI agent 选择数据库时参考） ----
     all_dbs = prot_dbs + nuc_dbs
+    level_map = _assembly_level_map()
+    database_meta = {db: _db_meta(db, level_map) for db in all_dbs}
+    kind_counts: dict[str, int] = {}
+    for meta in database_meta.values():
+        kind_counts[meta["kind"]] = kind_counts.get(meta["kind"], 0) + 1
+    def _category_for(db: str) -> str:
+        base, _kind, _chrom = _db_base_kind_chromosome(db)
+        info = level_map.get(base) or level_map.get(db) or {}
+        return info.get("category") or _classify_db(db)
+
     cat_map: dict[str, dict] = {}
     for cat in DB_CLASSIFICATION:
-        cat_dbs = [d for d in all_dbs if _classify_db(d) == cat["id"]]
-        cat_map[cat["id"]] = {"label": cat["label"], "description": cat["description"], "count": len(cat_dbs), "databases": cat_dbs}
+        cat_dbs = [d for d in all_dbs if _category_for(d) == cat["id"]]
+        cat_kinds: dict[str, int] = {}
+        for db in cat_dbs:
+            kind = database_meta[db]["kind"]
+            cat_kinds[kind] = cat_kinds.get(kind, 0) + 1
+        cat_map[cat["id"]] = {
+            "id": cat["id"],
+            "label": cat["label"], "description": cat["description"],
+            "count": len(cat_dbs), "databases": cat_dbs, "kind_counts": cat_kinds,
+        }
     
     # 未匹配的归入 Other
-    other_dbs = [d for d in all_dbs if _classify_db(d) == "other"]
+    other_dbs = [d for d in all_dbs if _category_for(d) == "other"]
     categories = [cat_map[c["id"]] for c in DB_CLASSIFICATION if cat_map[c["id"]]["count"] > 0]
     if other_dbs:
         categories.append({"id": "other", "label": "Other / Unclassified", "description": "Databases that could not be automatically classified", "count": len(other_dbs), "databases": other_dbs})
@@ -432,6 +682,8 @@ async def list_databases(
         "protein": {"count": len(prot_dbs), "databases": prot_dbs},
         "nucleotide": {"count": len(nuc_dbs), "databases": nuc_dbs},
         "total": len(prot_dbs) + len(nuc_dbs),
+        "kind_counts": kind_counts,
+        "database_meta": database_meta,
         "categories": categories,
     }
 
@@ -460,6 +712,32 @@ async def database_example(db: str = Query(...)):
         except ValueError:
             seq_len = 0
     return {"success": True, "db": db, "example": seq_name, "length": seq_len}
+
+
+@router.post("/job/{job_id}/delete")
+@router.delete("/job/{job_id}")
+async def delete_blast_job(job_id: str):
+    """Delete a finished BLAST job and its result files.
+
+    The job UUID acts as the capability (result URLs are public and there are no
+    user accounts); running/queued jobs cannot be deleted.
+    """
+    if not _JOB_ID_RE.fullmatch(job_id):
+        raise HTTPException(status_code=400, detail="Invalid job id")
+    result_dir = os.path.abspath(settings.BLAST_RESULT_DIR)
+    job_dir = os.path.abspath(os.path.join(result_dir, job_id))
+    if os.path.dirname(job_dir) != result_dir:
+        raise HTTPException(status_code=400, detail="Invalid job id")
+    if not os.path.isdir(job_dir):
+        raise HTTPException(status_code=404, detail="Job not found (already deleted or expired).")
+    data = read_status(job_id) or {}
+    if data.get("status") in ("pending", "running"):
+        raise HTTPException(status_code=409, detail="This BLAST job is still running; delete it after it finishes.")
+    try:
+        shutil.rmtree(job_dir)
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"Could not delete job: {exc}")
+    return {"success": True, "job_id": job_id, "message": "BLAST job deleted."}
 
 
 @router.get("/status")

@@ -29,7 +29,9 @@ CHROM_LEVELS = {"Chromosome", "Complete Genome", "draft chromosome level", "Chro
 
 # 已知有问题的 BLAST 库（blastdbcmd 打不开，放进 alias 会让整个库不可用）
 INVALID_DB_MEMBERS = {
-    "Foma.pep",  # 2026-10-23: blastdbcmd -info 报 mdb_env_open，排除出 all_proteins
+    # 2026-10-26: Foma.pep 已从 blastdb 删除（mdb_env_open 损坏）；保留此条目
+    # 仅用于防止旧备份恢复后又被合并进 all_proteins。
+    "Foma.pep",
 }
 OVERRIDES = {
     # 数据库名: chromosome-level?

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Backfill the ChineseSpring02G column in Genefunc_* tables from bed files.
 
-Input: fix.txt with one "<table_name><TAB><bed_file>" per line. The bed files
-have 10 columns; column 6 is the gene ID (matches the table's `Gene` column)
-and column 10 is the Chinese Spring 02G ID.
+Input: fix.txt with one "<table_name><TAB><bed_file>" per line. Supported bed
+layouts:
+  * legacy 10-column add_Description bed (gene col 6, CS02G col 10);
+  * new-genome 8-column bed (Chrom, Start, End, Gene, Strand, Description,
+    Domain, ChineseSpring02G; gene col 4, CS02G col 8).
 
 For each table the script:
   1. adds a `ChineseSpring02G` column if missing,
@@ -89,8 +91,17 @@ def read_fix(fix_path: str) -> list[tuple[str, str]]:
     return rows
 
 
+def bed_gene_and_cs_indexes(cols: list[str]) -> tuple[int, int] | None:
+    """Return (gene_index, cs_index) for legacy 10-col or new 8-col beds."""
+    if len(cols) >= 10:
+        return 5, 9
+    if len(cols) >= 8:
+        return 3, 7
+    return None
+
+
 def load_bed(bed_path: Path) -> dict:
-    """Return {gene_id: cs_02g} from a 10-column bed (col 6 gene, col 10 cs)."""
+    """Return {gene_id: cs_02g}; supports 10-column and 8-column beds."""
     mapping = {}
     with open(bed_path, encoding="utf-8", errors="ignore") as f:
         for line in f:
@@ -98,10 +109,11 @@ def load_bed(bed_path: Path) -> dict:
             if not line.strip():
                 continue
             cols = line.split("\t")
-            if len(cols) < 10:
+            indexes = bed_gene_and_cs_indexes(cols)
+            if indexes is None:
                 continue
-            gene_id = cols[5].strip()
-            cs = cols[9].strip()
+            gene_id = cols[indexes[0]].strip()
+            cs = cols[indexes[1]].strip()
             if gene_id and cs and cs.lower() not in _NULL_VALUES:
                 mapping[gene_id] = cs
     return mapping

@@ -13,6 +13,7 @@ build/
 .vscode/
 .claude/
 app/static/*/_ref/
-app/static/sms2/
+app/static/sms2/*
+!app/static/sms2/index.html
 bioprojects.sql
 scripts/xlsx_to_sample_meta.py

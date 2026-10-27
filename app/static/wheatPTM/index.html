@@ -1,171 +1,1700 @@
-<!DOCTYPE html>
+<!doctype html>
+<!--
+  wheatPTM tool page, styled after the WheatOmics 2.0 pages
+  (/V2.0/index.html and /outsitelink.html, maintained outside this repo).
+  The inline theme, header and footer are copied from /outsitelink.html;
+  keep them in sync when those standalone pages change.
+-->
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>wheatPTM - WheatOmics</title>
-<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
-<script src="/js/jquery/1.9.1/jquery.min.js"></script>
-<script src="/js/echarts.min.js"></script>
-<style>
-  body { background:#f8f9fa; margin:0; padding:0; }
-  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
-  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
-  #home_header span { font-size:28px; font-weight:bold; color:#fff; }
-  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
-  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
-  #header-tabs li { display:inline-block !important; width:190px !important; }
-  #header-tabs a { background:#0077b6; font-size:13pt; color:#fff !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
-  #header-tabs a:hover { background:#98c1d9; color:#000; }
-  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
-  #header-tabs ul li ul { display:none !important; position:absolute; }
-  #header-tabs ul li:hover ul { display:block !important; }
-  #header-tabs ul li ul a { border-radius:0; }
-  #home_content { max-width:1200px; margin:0 auto; padding:0 15px; }
-  .card-title { color:#333; border-left:4px solid #007bff; padding-left:12px; }
-  .search-box { background:#fff; border-radius:6px; padding:20px; margin-top:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
-  .stat-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
-  .stat-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:14px; font-size:13px; background:#f1f5f9; color:#334155; }
-  .stat-chip .dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
-  .chart-box { background:#fff; border-radius:6px; padding:16px; margin-top:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
-  #ptm-chart { width:100%; height:480px; min-width:0; }
-  .chart-subtitle { color:#64748b; font-size:13px; margin:6px 0 0; }
-  .chart-box { min-width:0; overflow:hidden; }
-  @media (max-width: 768px) {
-    #ptm-chart { height:420px; }
-    .chart-box { padding:12px; }
-  }
-  .table-box { background:#fff; border-radius:6px; padding:16px; margin-top:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
-  .table-box table { font-size:13px; }
-  .table-box th { position:sticky; top:0; background:#f8f9fa; white-space:nowrap; }
-  #error-msg { display:none; margin-top:10px; }
-  .loading { display:none; text-align:center; padding:60px; }
-  .loading .spinner-border { width:3rem; height:3rem; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="wheatPTM — PlantPTM deep-learning predictions of nine protein post-translational modification types in wheat, searchable by protein ID.">
+  <title>wheatPTM | WheatOmics 2.0</title>
+  <style>
+    /* ==================== 视觉变量与基础样式 ==================== */
+    :root {
+      --forest: #07583d;
+      --forest-deep: #033f2d;
+      --leaf: #118653;
+      --sprout: #77b941;
+      --wheat: #e6b94a;
+      --mist: #f3f8f4;
+      --ink: #163128;
+      --muted: #66766e;
+      --line: #dfe9e2;
+      --white: #ffffff;
+      --shadow: 0 12px 36px rgba(8, 69, 47, 0.09);
+      --display: "Avenir Next", "Segoe UI", Arial, sans-serif;
+      --body: Arial, Helvetica, sans-serif;
+      --utility: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+      --page: min(1400px, calc(100% - 48px));
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #fff;
+      font-family: var(--body);
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body.nav-open { overflow: hidden; }
+
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    svg { display: block; }
+
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid rgba(230, 185, 74, 0.65);
+      outline-offset: 3px;
+    }
+
+    .skip-link {
+      position: fixed;
+      z-index: 1000;
+      top: 12px;
+      left: 12px;
+      padding: 10px 14px;
+      color: var(--white);
+      background: var(--forest-deep);
+      border-radius: 8px;
+      transform: translateY(-160%);
+      transition: transform 180ms ease;
+    }
+
+    .skip-link:focus { transform: translateY(0); }
+
+    .container {
+      width: var(--page);
+      margin-inline: auto;
+    }
+
+    .icon {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ==================== 英雄区与导航 ==================== */
+    .hero {
+      position: relative;
+      min-height: 720px;
+      overflow: hidden;
+      isolation: isolate;
+      background: #fff;
+    }
+
+    /* 背景图容器：宽度与页面主体一致，水平居中，内部做 Ken Burns 动态缩放平移 */
+    .hero-bg {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: var(--page);
+      z-index: -2;
+      overflow: hidden;
+    }
+
+    .hero-bg::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("home.png");
+      background-position: center;
+      background-size: cover;
+      animation: hero-kenburns 26s ease-in-out infinite alternate;
+    }
+
+    @keyframes hero-kenburns {
+      0%   { transform: scale(1.02) translate(0, 0); }
+      50%  { transform: scale(1.12) translate(-1.5%, -1%); }
+      100% { transform: scale(1.06) translate(1.5%, 1%); }
+    }
+
+    .site-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+      border-bottom: 1px solid rgba(7, 88, 61, 0.10);
+      background: #fff;
+    }
+
+    .header-row {
+      min-height: 88px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 34px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-mark { height: 40px; width: auto; flex: none; }
+
+    .brand-name {
+      display: block;
+      color: var(--forest);
+      font-family: var(--display);
+      font-size: 21px;
+      font-weight: 750;
+      letter-spacing: -0.7px;
+      line-height: 1.05;
+    }
+
+    .brand-name em {
+      color: #21a552;
+      font-style: normal;
+    }
+
+    .brand-tagline {
+      display: block;
+      margin-top: 5px;
+      color: #65736c;
+      font-size: 9px;
+      letter-spacing: 0.03em;
+      line-height: 1.3;
+    }
+
+    .main-nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 25px;
+    }
+
+    .nav-item { position: relative; }
+
+    .nav-link,
+    .nav-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      min-height: 42px;
+      border: 0;
+      padding: 0;
+      color: #243e34;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .nav-link::after,
+    .nav-trigger::after {
+      content: "";
+      position: absolute;
+      right: 50%;
+      bottom: 0;
+      left: 50%;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--leaf);
+      transition: inset 180ms ease;
+    }
+
+    .nav-link:hover::after,
+    .nav-link.active::after,
+    .nav-trigger:hover::after { right: 0; left: 0; }
+
+    .nav-chevron {
+      width: 12px;
+      height: 12px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+    }
+
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: -18px;
+      min-width: 210px;
+      margin: 0;
+      border: 1px solid rgba(7,88,61,0.12);
+      padding: 9px;
+      list-style: none;
+      background: rgba(255,255,255,0.98);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px);
+      transition: 160ms ease;
+    }
+
+    .nav-item:hover .dropdown,
+    .nav-item:focus-within .dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .dropdown a {
+      display: block;
+      padding: 9px 10px;
+      border-radius: 8px;
+      color: #355147;
+      font-size: 13px;
+    }
+
+    .dropdown a:hover { color: var(--forest); background: var(--mist); }
+
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+
+    .header-search {
+      position: relative;
+      width: 240px;
+    }
+
+    .header-search input {
+      width: 100%;
+      height: 38px;
+      border: 1px solid rgba(7,88,61,0.15);
+      padding: 0 42px 0 15px;
+      color: var(--ink);
+      background: rgba(255,255,255,0.9);
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .header-search button {
+      position: absolute;
+      top: 50%;
+      right: 6px;
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      padding: 0;
+      color: var(--forest);
+      background: transparent;
+      border-radius: 50%;
+      cursor: pointer;
+      transform: translateY(-50%);
+    }
+
+    .header-search .icon { width: 16px; height: 16px; }
+
+    .contact-button,
+    .primary-button,
+    .secondary-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 42px;
+      border: 1px solid transparent;
+      padding: 0 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+    }
+
+    .contact-button,
+    .primary-button {
+      color: var(--white);
+      background: var(--forest);
+      box-shadow: 0 8px 20px rgba(7,88,61,0.18);
+    }
+
+    .contact-button:hover,
+    .primary-button:hover {
+      background: #087249;
+      box-shadow: 0 10px 24px rgba(7,88,61,0.25);
+      transform: translateY(-2px);
+    }
+
+    .contact-button { min-height: 38px; padding-inline: 16px; font-size: 12px; }
+
+    .secondary-button {
+      color: var(--forest);
+      border-color: rgba(7,88,61,0.18);
+      background: rgba(255,255,255,0.87);
+    }
+
+    .secondary-button:hover { background: var(--white); transform: translateY(-2px); }
+
+    .button-arrow { font-size: 16px; line-height: 1; }
+
+    .menu-toggle {
+      position: relative;
+      display: none;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border: 1px solid rgba(7,88,61,0.16);
+      padding: 0;
+      background: rgba(255,255,255,0.8);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .menu-toggle span,
+    .menu-toggle::before,
+    .menu-toggle::after {
+      content: "";
+      position: absolute;
+      left: 11px;
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--forest);
+      border-radius: 3px;
+      transition: 180ms ease;
+    }
+
+    .menu-toggle::before { top: 14px; }
+    .menu-toggle span { top: 20px; }
+    .menu-toggle::after { top: 26px; }
+
+    .hero-inner {
+      min-height: 632px;
+      display: flex;
+      align-items: center;
+      padding-block: 146px 50px;
+    }
+
+    .hero-copy { position: relative; z-index: 3; max-width: 620px; padding-left: 32px; text-align: left; }
+
+    .hero h1 {
+      margin: 0;
+      color: var(--forest-deep);
+      font-family: var(--display);
+      font-size: clamp(58px, 5.4vw, 92px);
+      font-weight: 760;
+      letter-spacing: -0.065em;
+      line-height: 0.9;
+    }
+
+    .hero h1 span { display: block; color: #1b9b4b; }
+
+    .hero-lead {
+      max-width: 560px;
+      margin: 26px 0 0;
+      color: #29493d;
+      font-size: 18px;
+      line-height: 1.55;
+    }
+
+    .stats-panel {
+      width: min(100%, 610px);
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      margin-top: 26px;
+      border: 1px solid rgba(255,255,255,0.86);
+      background: rgba(255,255,255,0.80);
+      border-radius: 12px;
+      box-shadow: 0 16px 44px rgba(45,89,60,0.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .stat {
+      position: relative;
+      min-width: 0;
+      padding: 15px 8px 14px;
+      text-align: center;
+    }
+
+    .stat + .stat::before {
+      content: "";
+      position: absolute;
+      top: 18px;
+      bottom: 18px;
+      left: 0;
+      width: 1px;
+      background: rgba(7,88,61,0.10);
+    }
+
+    .stat .icon {
+      width: 18px;
+      height: 18px;
+      margin: 0 auto 6px;
+      color: var(--leaf);
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--forest);
+      font-family: var(--display);
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 6px;
+      color: #5e7167;
+      font-size: 9px;
+      line-height: 1.2;
+    }
+
+    .hero-buttons { display: flex; gap: 12px; margin-top: 23px; }
+
+    /* ==================== 引用与公告 ==================== */
+    main { position: relative; background: var(--white); }
+
+    .citation-wrap {
+      position: relative;
+      z-index: 5;
+      margin-top: -1px;
+      padding: 24px 0 0;
+      background: var(--white);
+      border-radius: 24px 24px 0 0;
+    }
+
+    .citation-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2.25fr) minmax(280px, 0.75fr);
+      gap: 18px;
+    }
+
+    .citation-card,
+    .call-card {
+      min-height: 142px;
+      border: 1px solid var(--line);
+      background: #fbfdfb;
+      border-radius: 14px;
+    }
+
+    .citation-card {
+      display: block;
+      padding: 23px 25px;
+    }
+
+    .citation-label {
+      margin: 0 0 7px;
+      color: var(--forest);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .citation-text {
+      margin: 0;
+      color: #53635c;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .citation-title {
+      display: block;
+      margin-top: 6px;
+      color: var(--forest-deep);
+      font-weight: 700;
+    }
+
+    .call-card {
+      position: relative;
+      overflow: hidden;
+      padding: 22px 112px 20px 22px;
+      background: linear-gradient(135deg, #f8fbf7, #eef6ec);
+    }
+
+    .call-card::after {
+      content: "";
+      position: absolute;
+      right: -24px;
+      bottom: -33px;
+      width: 145px;
+      height: 165px;
+      opacity: 0.16;
+      background-image: url("home.png");
+      background-position: 80% center;
+      background-size: auto 100%;
+      border-radius: 60% 0 0 0;
+      filter: saturate(0.6);
+    }
+
+    .call-card strong { display: block; color: var(--forest-deep); font-size: 13px; }
+    .call-card p { margin: 7px 0 11px; color: #30483f; font-size: 12px; line-height: 1.45; }
+
+    .text-link {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--forest);
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    .news-bar {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 18px;
+      min-height: 50px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .news-labels { display: flex; gap: 6px; }
+
+    .news-tab {
+      border: 0;
+      padding: 5px 11px;
+      color: #718078;
+      background: transparent;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .news-tab.active { color: var(--white); background: var(--leaf); }
+
+    .news-items { position: relative; min-width: 0; height: 22px; overflow: hidden; }
+
+    .news-item {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: 220ms ease;
+      pointer-events: none;
+    }
+
+    .news-item.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .news-date { color: var(--forest); font-family: var(--utility); font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .news-item a { min-width: 0; overflow: hidden; color: #52635b; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+    .news-more { color: var(--forest); font-size: 11px; font-weight: 700; white-space: nowrap; }
+
+    /* ==================== 内容区标题与搜索 ==================== */
+    .content-section { padding: 44px 0 10px; }
+    .data-section { padding-top: 34px; padding-bottom: 26px; }
+
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+
+    .section-title { margin: 0; color: var(--forest-deep); font-family: var(--display); font-size: 24px; letter-spacing: -0.04em; }
+
+    .section-title::after {
+      content: "";
+      display: block;
+      width: 34px;
+      height: 2px;
+      margin-top: 9px;
+      background: var(--leaf);
+      border-radius: 2px;
+    }
+
+    .section-kicker { margin: 0 0 5px; color: #7b8a82; font-family: var(--utility); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+    .tool-filter {
+      position: relative;
+      width: min(400px, 40vw);
+    }
+
+    .tool-filter input {
+      width: 100%;
+      height: 40px;
+      border: 1px solid var(--line);
+      padding: 0 52px 0 17px;
+      color: var(--ink);
+      background: var(--white);
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .filter-button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 48px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      padding: 0;
+      color: var(--white);
+      background: var(--leaf);
+      border-radius: 0 999px 999px 0;
+      cursor: pointer;
+    }
+
+    .filter-button .icon { width: 17px; height: 17px; }
+
+    /* ==================== 工具与数据卡片 ==================== */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .tool-card,
+    .data-card {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, #fff 10%, #fbfdfb 100%);
+      border-radius: 10px;
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .tool-card {
+      min-height: 91px;
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      align-items: center;
+      gap: 11px;
+      padding: 14px 13px;
+    }
+
+    .tool-card:hover,
+    .data-card:hover {
+      border-color: rgba(17,134,83,0.35);
+      box-shadow: 0 13px 28px rgba(11,91,59,0.09);
+      transform: translateY(-3px);
+    }
+
+    .tool-icon,
+    .data-icon {
+      position: relative;
+      display: grid;
+      place-items: center;
+      color: var(--leaf);
+      background: #f0f8f1;
+      border-radius: 8px;
+    }
+
+    .tool-icon { width: 40px; height: 40px; }
+    .tool-icon::after {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border: 1px solid rgba(17,134,83,0.12);
+      border-radius: 5px;
+    }
+
+    .tool-icon .icon { position: relative; z-index: 1; width: 22px; height: 22px; }
+    .tool-card h3, .data-card h3 { margin: 0; color: var(--forest-deep); font-family: var(--display); font-size: 13px; letter-spacing: -0.015em; line-height: 1.2; }
+    .tool-card p, .data-card p { margin: 5px 0 0; color: #6b7972; font-size: 9px; line-height: 1.35; }
+    .tool-card[hidden] { display: none; }
+
+    .empty-state {
+      display: none;
+      border: 1px dashed var(--line);
+      padding: 28px;
+      color: var(--muted);
+      background: var(--mist);
+      border-radius: 10px;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .empty-state.visible { display: block; }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 13px;
+    }
+
+    .data-card {
+      min-height: 116px;
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 20px;
+    }
+
+    .data-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: #eef7ef;
+    }
+
+    .data-icon .icon { width: 29px; height: 29px; }
+    .data-card h3 { font-size: 14px; }
+    .data-card p { max-width: 290px; font-size: 10px; }
+
+    /* ==================== 平台能力与页脚 ==================== */
+    .value-strip {
+      margin-top: 10px;
+      margin-bottom: 38px;
+      padding: 22px 24px;
+      background: linear-gradient(100deg, #f4f9f1, #f8fbf7 55%, #eff7ed);
+      border-radius: 12px;
+    }
+
+    .value-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+
+    .value-item {
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      align-items: center;
+      gap: 15px;
+      padding: 0 24px;
+    }
+
+    .value-item + .value-item { border-left: 1px solid rgba(7,88,61,0.10); }
+    .value-art { width: 58px; height: 58px; display: grid; place-items: center; color: var(--sprout); }
+    .value-art .icon { width: 48px; height: 48px; stroke-width: 1.15; }
+    .value-item h3 { margin: 0; color: var(--forest-deep); font-family: var(--display); font-size: 14px; }
+    .value-item p { margin: 5px 0 0; color: #65756d; font-size: 10px; line-height: 1.4; }
+
+    .site-footer { color: rgba(255,255,255,0.82); background: var(--forest-deep); }
+
+    .footer-main {
+      display: grid;
+      grid-template-columns: 1.4fr 0.8fr 1fr;
+      gap: 70px;
+      padding-block: 44px 38px;
+    }
+
+    .footer-brand .brand-name { color: var(--white); }
+    .footer-brand .brand-name em { color: #79d18c; }
+    .footer-brand .brand-tagline { color: rgba(255,255,255,0.55); }
+    .footer-wordmark { display: inline-block; }
+    .footer-wordmark .brand-name { display: block; }
+    .footer-wordmark .brand-tagline { display: block; margin-top: 5px; }
+    .footer-note { max-width: 310px; margin: 18px 0 0; color: rgba(255,255,255,0.58); font-size: 11px; line-height: 1.65; }
+
+    .footer-plot {
+      display: block;
+      width: min(860px, 100%);
+      height: auto;
+      margin: 26px auto 22px;
+    }
+
+    .footer-title { margin: 0 0 14px; color: var(--white); font-family: var(--display); font-size: 13px; }
+    .footer-links { display: grid; grid-template-columns: repeat(2, minmax(100px, 1fr)); gap: 8px 18px; }
+    .footer-links a, .contact-line { color: rgba(255,255,255,0.68); font-size: 11px; }
+    .footer-links a:hover { color: var(--white); }
+    .contact-line { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 10px; }
+    .contact-line .icon { width: 15px; height: 15px; flex: none; margin-top: 1px; color: #8ad39b; }
+
+    .footer-bottom {
+      min-height: 44px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 20px;
+      border-top: 1px solid rgba(255,255,255,0.09);
+      color: rgba(255,255,255,0.42);
+      font-family: var(--utility);
+      font-size: 9px;
+    }
+
+    .footer-bottom .copyright { justify-self: start; }
+    .footer-bottom .icp { justify-self: center; text-align: center; white-space: nowrap; }
+    .footer-bottom .back-top { justify-self: end; }
+
+    .back-top {
+      border: 0;
+      padding: 0;
+      color: rgba(255,255,255,0.55);
+      background: transparent;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    /* ==================== 响应式适配 ==================== */
+    @media (max-width: 1240px) {
+      :root { --page: min(1160px, calc(100% - 40px)); }
+      .main-nav { gap: 16px; }
+      .header-search { display: none; }
+      .tools-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .hero h1 { font-size: clamp(60px, 7.2vw, 88px); }
+      .value-item { padding-inline: 15px; }
+    }
+
+    @media (max-width: 980px) {
+      :root { --page: min(860px, calc(100% - 34px)); }
+      .site-header {
+        background: #fff;
+      }
+      .header-row { grid-template-columns: 1fr auto; }
+      .menu-toggle { display: grid; }
+      .header-actions .contact-button { display: none; }
+      .header-actions { position: absolute; right: 52px; }
+
+      .main-nav {
+        position: fixed;
+        z-index: 100;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(390px, 88vw);
+        display: block;
+        overflow-y: auto;
+        padding: 94px 28px 30px;
+        background: rgba(250,253,250,0.98);
+        box-shadow: -20px 0 50px rgba(4,63,45,0.13);
+        transform: translateX(105%);
+        transition: transform 240ms ease;
+      }
+
+      .nav-open .main-nav { transform: translateX(0); }
+      .nav-item { border-bottom: 1px solid var(--line); }
+      .nav-link, .nav-trigger { width: 100%; min-height: 52px; justify-content: space-between; font-size: 14px; }
+      .nav-link::after, .nav-trigger::after { display: none; }
+      .dropdown { position: static; display: none; min-width: 0; margin: 0 0 10px; border: 0; padding: 0 0 0 10px; box-shadow: none; opacity: 1; visibility: visible; transform: none; }
+      .nav-item:focus-within .dropdown, .nav-item.dropdown-open .dropdown { display: block; }
+      .nav-open .menu-toggle { position: fixed; z-index: 120; top: 22px; right: 18px; }
+      .nav-open .menu-toggle span { opacity: 0; }
+      .nav-open .menu-toggle::before { transform: translateY(6px) rotate(45deg); }
+      .nav-open .menu-toggle::after { transform: translateY(-6px) rotate(-45deg); }
+
+      .hero-inner { padding-block: 124px 56px; }
+      .hero-copy { max-width: 640px; }
+      .citation-grid { grid-template-columns: 1fr; }
+      .call-card { min-height: 122px; }
+      .tools-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .value-grid { grid-template-columns: repeat(2, 1fr); gap: 24px 0; }
+      .value-item:nth-child(3) { border-left: 0; }
+      .footer-main { gap: 36px; }
+    }
+
+    @media (max-width: 720px) {
+      :root { --page: calc(100% - 28px); }
+      .header-row { min-height: 76px; }
+      .brand { min-width: 0; }
+      .brand-name { font-size: 18px; }
+      .brand-tagline { display: none; }
+      .brand-mark { height: 30px; width: auto; }
+      .hero-inner { padding-block: 118px 52px; }
+      .hero h1 { font-size: clamp(44px, 13vw, 60px); }
+      .hero-lead { max-width: 480px; font-size: 16px; }
+      .stats-panel { grid-template-columns: repeat(3, 1fr); max-width: 440px; }
+      .stat:nth-child(4)::before { display: none; }
+      .stat:nth-child(-n+3) { border-bottom: 1px solid rgba(7,88,61,0.10); }
+      .hero-buttons { flex-wrap: wrap; }
+
+      .citation-wrap { border-radius: 16px 16px 0 0; }
+      .citation-card { padding: 20px 18px; }
+      .call-card { padding-right: 92px; }
+      .news-bar { grid-template-columns: 1fr auto; padding-block: 10px; }
+      .news-labels { display: none; }
+      .news-items { grid-column: 1; }
+
+      .content-section { padding-top: 34px; }
+      .section-heading { display: block; }
+      .tool-filter { width: 100%; margin-top: 16px; }
+      .tools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tool-card { min-height: 88px; }
+      .data-grid { grid-template-columns: 1fr; }
+      .value-grid { grid-template-columns: 1fr; gap: 0; }
+      .value-item, .value-item:nth-child(3) { border-left: 0; border-top: 1px solid rgba(7,88,61,0.10); padding: 18px 6px; }
+      .value-item:first-child { border-top: 0; }
+      .footer-main { grid-template-columns: 1fr; gap: 28px; }
+      .footer-links { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 460px) {
+      .tools-grid { grid-template-columns: 1fr; }
+      .tool-card { min-height: 78px; }
+      .footer-links { grid-template-columns: repeat(2, 1fr); }
+      .footer-bottom { grid-template-columns: 1fr; justify-items: start; padding-block: 14px; }
+      .footer-bottom .copyright,
+      .footer-bottom .icp,
+      .footer-bottom .back-top { justify-self: start; text-align: left; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
+  
+    /* ==================== News page ==================== */
+    main { padding-top: 88px; }
+    .news-hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--line); background:
+      radial-gradient(circle at 88% 10%, rgba(119,185,65,.20), transparent 34%),
+      linear-gradient(135deg, #fbfdfb 0%, #eef7f0 100%); }
+    .news-hero::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(7,88,61,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(7,88,61,.035) 1px, transparent 1px);
+      background-size: 46px 46px; mask-image: linear-gradient(to bottom, rgba(0,0,0,.55), transparent 82%); }
+    .news-hero-inner { position: relative; display: grid; grid-template-columns: minmax(0,1.45fr) minmax(220px,.55fr); align-items: center; gap: 44px; padding-block: 52px 10px; }
+    .news-kicker { margin: 0 0 14px; color: var(--leaf); font-family: var(--utility); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .news-title { margin: 0 0 14px; color: var(--forest-deep); font-family: var(--display); font-size: clamp(24px, 4.2vw, 52px); font-weight: 800; letter-spacing: -.055em; line-height: 1; }
+    .news-title em { color: var(--leaf); font-style: normal; }
+    .news-lead { max-width: 680px; margin: 0; color: #52665c; font-size: 15px; line-height: 1.8; }
+    .news-hero-mark { justify-self: center; width: 190px; height: 190px; display: grid; place-items: center; border-radius: 50%;
+      color: var(--forest); background: radial-gradient(circle at 35% 30%, #fff, #e2f0e5 58%, #cfe3d4); border: 1px solid rgba(7,88,61,.12);
+      box-shadow: 0 24px 60px rgba(8,69,47,.12); transform: rotate(-7deg); }
+    .news-hero-mark .icon { width: 86px; height: 86px; stroke-width: 1.15; }
+    .news-stats { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+    .news-stat { display: inline-flex; align-items: baseline; gap: 7px; padding: 9px 13px; color: #476057; background: rgba(255,255,255,.78); border: 1px solid rgba(7,88,61,.12); border-radius: 999px; font-size: 12px; }
+    .news-stat strong { color: var(--forest); font-family: var(--utility); font-size: 14px; }
+    .news-body { padding-block: 14px 64px; background: #fff; }
+    .news-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+    .news-toolbar-note { margin: 0; color: #60756a; font-size: 12px; }
+    .news-toolbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; }
+    .news-search { position: relative; width: min(330px, 100%); }
+    .news-search input { width: 100%; height: 42px; border: 1px solid var(--line); padding: 0 42px 0 15px; color: var(--ink); background: #fbfdfb; border-radius: 999px; font-size: 12px; }
+    .news-search .icon { position: absolute; top: 50%; right: 14px; width: 16px; height: 16px; color: var(--leaf); transform: translateY(-50%); pointer-events: none; }
+    .news-jump { display: inline-flex; align-items: center; gap: 7px; height: 42px; padding: 0 16px; color: var(--forest); border: 1px solid var(--line); border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--mist); }
+    .news-jump:hover { border-color: rgba(17,134,83,.35); }
+    .news-year-block { margin-top: 36px; }
+    .news-year-block:first-child { margin-top: 0; }
+    .news-year-head { display: flex; align-items: baseline; gap: 12px; margin: 0 0 16px; }
+    .news-year-head h2 { margin: 0; color: var(--forest-deep); font-family: var(--display); font-size: 25px; letter-spacing: -.04em; }
+    .news-year-head span { color: #7a8c82; font-family: var(--utility); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
+    .news-list { display: grid; gap: 12px; }
+    .news-card { display: grid; grid-template-columns: 108px minmax(0,1fr); gap: 24px; padding: 23px 25px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(145deg, #fff, #fcfefd); transition: 180ms ease; }
+    .news-card:hover { border-color: rgba(17,134,83,.34); box-shadow: 0 14px 32px rgba(8,69,47,.075); transform: translateY(-2px); }
+    .news-card-date { padding-top: 2px; color: var(--forest); font-family: var(--utility); font-size: 11px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+    .news-card-date span { display: block; margin-top: 5px; color: #8a9b91; font-size: 9px; font-weight: 500; }
+    .news-card h3 { margin: 0 0 8px; color: var(--forest-deep); font-family: var(--display); font-size: 17px; font-weight: 750; letter-spacing: -.02em; line-height: 1.35; }
+    .news-card p { margin: 0 0 10px; color: #5e7268; font-size: 13px; line-height: 1.7; }
+    .news-card-link { display: inline-flex; align-items: center; gap: 6px; color: var(--leaf); font-size: 11px; font-weight: 750; }
+    .news-card-link:hover { color: var(--forest); }
+    .news-state { padding: 28px; color: #61756a; border: 1px dashed var(--line); border-radius: 14px; font-size: 13px; }
+    .news-state.error { color: #9b3c2f; border-color: #edc9c1; background: #fff8f6; }
+    .archive { margin-top: 54px; border-top: 1px solid var(--line); padding-top: 8px; }
+    .archive > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; color: var(--forest-deep); cursor: pointer; font-family: var(--display); font-size: 19px; font-weight: 750; letter-spacing: -.03em; list-style: none; }
+    .archive > summary::-webkit-details-marker { display: none; }
+    .archive > summary span { color: #7a8c82; font-family: var(--utility); font-size: 10px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
+    .archive > summary .archive-caret { display: inline-grid; place-items: center; width: 30px; height: 30px; margin-left: auto; border: 1px solid var(--line); border-radius: 50%; color: var(--forest); transition: transform 180ms ease; }
+    .archive[open] > summary .archive-caret { transform: rotate(180deg); }
+    .archive-list { display: grid; gap: 0; padding-bottom: 20px; }
+    .archive-item { display: grid; grid-template-columns: 108px minmax(0,1fr); gap: 24px; padding: 19px 0; border-top: 1px solid var(--line); }
+    .archive-date { color: #71857a; font-family: var(--utility); font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .archive-copy { color: #5e7268; font-size: 12px; line-height: 1.75; overflow-wrap: anywhere; }
+    .archive-copy p { margin: 0 0 8px; }
+    .archive-copy p:last-child { margin-bottom: 0; }
+    .archive-copy a { color: var(--leaf); text-decoration: underline; text-underline-offset: 2px; }
+    .archive-copy a:hover { color: var(--forest); }
+    .news-footer-note { margin: 32px 0 0; color: #7a8c82; font-size: 11px; }
+    @media (max-width: 980px) {
+      .news-hero-inner { grid-template-columns: 1fr; padding-block: 54px 44px; }
+      .news-hero-mark { display: none; }
+    }
+    @media (max-width: 640px) {
+      .news-body { padding-block: 30px 58px; }
+      .news-card, .archive-item { grid-template-columns: 1fr; gap: 9px; padding-inline: 18px; }
+      .archive-item { padding-inline: 0; }
+      .news-card-date span { display: none; }
+      .news-toolbar { align-items: stretch; }
+      .news-toolbar-right { width: 100%; flex-wrap: wrap; }
+      .news-search { width: 100%; }
+      .news-jump { justify-content: center; }
+    }
+
+    /* ==================== Tools/Browse mega dropdown ==================== */
+    .dropdown.tools-dropdown {
+      min-width: 520px;
+      max-height: min(72vh, 590px);
+      overflow-y: auto;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-content: start;
+      column-gap: 8px;
+      scrollbar-width: thin;
+    }
+    .tools-dropdown li { min-width: 0; }
+    .tools-dropdown .dropdown-heading {
+      grid-column: 1 / -1;
+      padding: 7px 10px 5px;
+      color: #7b8a82;
+      font-family: var(--utility);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .tools-dropdown .dropdown-heading:first-child { padding-top: 2px; }
+    .tools-dropdown a {
+      padding: 7px 10px;
+      font-size: 12px;
+    }
+    .tools-dropdown .tools-all-link {
+      grid-column: 1 / -1;
+      margin-top: 5px;
+      color: var(--leaf);
+      font-weight: 750;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+    }
+
+  
+    /* ==================== Footer visit counter ==================== */
+    .footer-visits {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 8px;
+      margin-left: 10px;
+      color: rgba(255,255,255,0.42);
+      font-family: var(--utility);
+      font-size: 9px;
+      white-space: nowrap;
+    }
+    .footer-visits strong { color: rgba(255,255,255,0.78); font-weight: 600; }
+    .footer-visits .visit-sep { color: rgba(255,255,255,0.18); }
+    .footer-visit-item { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+    .footer-visits .footer-visit-item .icon { width: 12px; height: 12px; stroke-width: 1.8; opacity: .58; }
+
+    @media (max-width: 640px) {
+      .footer-visits { margin-left: 0; display: flex; }
+    }
+
+  
+    .brand-version {
+      margin-left: 4px;
+      color: #21a552;
+      font-family: var(--display);
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -.04em;
+      line-height: 1;
+      align-self: center;
+      transform: translateY(7px);
+    }
+
+  
+    .ext-count { margin-left: 8px; color: #7a8c82; font-family: var(--utility); font-size: 10px; letter-spacing: .06em; }
+    .ext-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 26px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+    .ext-toolbar p { margin: 0; color: #60756a; font-size: 12px; }
+    .ext-search { position: relative; width: min(330px, 100%); }
+    .ext-search input { width: 100%; height: 42px; border: 1px solid var(--line); padding: 0 42px 0 15px; color: var(--ink); background: #fbfdfb; border-radius: 999px; font-size: 12px; }
+    .ext-search .icon { position: absolute; top: 50%; right: 14px; width: 16px; height: 16px; color: var(--leaf); transform: translateY(-50%); pointer-events: none; }
+    .ext-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .ext-card { display: flex; flex-direction: column; min-height: 174px; padding: 20px 22px 18px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(145deg, #fff, #fcfefd); transition: 180ms ease; }
+    .ext-card:hover { border-color: rgba(17,134,83,.34); box-shadow: 0 14px 32px rgba(8,69,47,.075); transform: translateY(-2px); }
+    .ext-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; }
+    .ext-index { color: #9aaca1; font-family: var(--utility); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+    .ext-external { color: var(--leaf); font-size: 17px; line-height: 1; }
+    .ext-card h3 { margin: 0 0 8px; color: var(--forest-deep); font-family: var(--display); font-size: 17px; font-weight: 750; letter-spacing: -.02em; line-height: 1.3; }
+    .ext-card h3 a:hover { color: var(--leaf); }
+    .ext-card p { margin: 0 0 15px; color: #5e7268; font-size: 12px; line-height: 1.7; flex: 1; }
+    .ext-card p a { color: var(--leaf); text-decoration: underline; text-underline-offset: 2px; }
+    .ext-open { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; color: var(--leaf); font-size: 11px; font-weight: 750; }
+    .ext-open:hover { color: var(--forest); }
+    .ext-empty { display: none; padding: 30px; color: #61756a; border: 1px dashed var(--line); border-radius: 14px; font-size: 13px; }
+    .ext-empty.visible { display: block; }
+    @media (max-width: 760px) { .ext-grid { grid-template-columns: 1fr; } .ext-toolbar { align-items: stretch; } .ext-search { width: 100%; } }
+
+    /* ==================== External Links hero wheat photo ==================== */
+    .news-hero {
+      background-image:
+        linear-gradient(90deg, rgba(251,253,251,.97) 0%, rgba(251,253,251,.92) 30%, rgba(251,253,251,.66) 46%, rgba(251,253,251,.18) 56%, rgba(251,253,251,0) 65%, rgba(251,253,251,0) 100%),
+        url('/css/wheat.jpeg');
+      background-position: center, center 58%;
+      background-size: cover, cover;
+      background-repeat: no-repeat;
+    }
+    .news-hero::before { opacity: .28; }
+    @media (max-width: 760px) {
+      .news-hero {
+        background-image:
+          linear-gradient(180deg, rgba(251,253,251,.96) 0%, rgba(251,253,251,.90) 60%, rgba(248,251,248,.82) 100%),
+          url('/css/wheat.jpeg');
+        background-position: center, center 62%;
+      }
+    }
+
+  
+    .news-hero-inner { grid-template-columns: 1fr; }
+
+    /* ==================== wheatPTM tool page ==================== */
+    .ptm-page { padding-top: 6px; }
+    .ptm-page .section-kicker { color: var(--muted); }
+    .ptm-visually-hidden {
+      position: absolute; width: 1px; height: 1px;
+      margin: -1px; padding: 0; overflow: hidden;
+      clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+
+    /* search panel */
+    .ptm-search-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+      align-items: center;
+      gap: 30px;
+      margin-top: 10px;
+      padding: 26px 30px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(145deg, #fff, #fbfefb);
+      box-shadow: var(--shadow);
+    }
+    .ptm-panel-kicker {
+      margin: 0 0 7px; color: var(--leaf);
+      font-family: var(--utility); font-size: 10px; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+    }
+    .ptm-panel-title {
+      margin: 0 0 9px; color: var(--forest-deep);
+      font-family: var(--display); font-size: 24px; font-weight: 800;
+      letter-spacing: -.045em; line-height: 1.1;
+    }
+    .ptm-panel-copy { margin: 0; color: #5d7267; font-size: 12.5px; line-height: 1.75; }
+    .ptm-panel-copy code, .ptm-hint code, .ptm-card-head code, .ptm-info-card code {
+      color: var(--forest); font-family: var(--utility); font-size: 11px;
+    }
+    .ptm-search-form { display: flex; flex-wrap: wrap; gap: 10px; }
+    .ptm-search-form input {
+      flex: 1 1 240px; min-width: 0; height: 52px;
+      padding: 0 20px; color: var(--ink); background: #fff;
+      border: 1px solid var(--line); border-radius: 999px;
+      font-size: 14px; font-family: var(--utility);
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+    .ptm-search-form input::placeholder { color: #9aaca1; font-family: var(--body); }
+    .ptm-search-form input:focus {
+      outline: none; border-color: rgba(17, 134, 83, .45);
+      box-shadow: 0 0 0 4px rgba(17, 134, 83, .10);
+    }
+    .ptm-search-form .primary-button { min-height: 52px; padding-inline: 26px; white-space: nowrap; }
+    .ptm-hint { margin: 12px 0 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+    .ptm-hint a { color: var(--leaf); }
+    .ptm-hint a:hover { text-decoration: underline; }
+
+    /* alerts + loading */
+    .ptm-alert { display: none; margin-top: 14px; padding: 13px 17px; border-radius: 13px; font-size: 12.5px; line-height: 1.65; }
+    .ptm-alert.error { color: #8f3527; background: #fff7f5; border: 1px solid #efc9c0; }
+    .ptm-alert.warning { color: #7a5312; background: #fffaf0; border: 1px solid #eed9a8; }
+    .ptm-alert.info { color: #22543d; background: #f4faf5; border: 1px solid #cfe4d5; }
+    .ptm-alert code { font-family: var(--utility); font-size: 11px; }
+    .ptm-loading { display: none; padding: 40px 0; color: #61756a; font-size: 12px; text-align: center; }
+    .ptm-spinner {
+      display: inline-block; width: 15px; height: 15px; margin-right: 9px;
+      vertical-align: -3px; border: 2px solid rgba(7, 88, 61, .16);
+      border-top-color: var(--leaf); border-radius: 50%;
+      animation: ptm-spin .8s linear infinite;
+    }
+    @keyframes ptm-spin { to { transform: rotate(360deg); } }
+
+    /* sections */
+    .ptm-section { margin-top: 46px; scroll-margin-top: 106px; }
+    #error-msg, #not-found-msg { scroll-margin-top: 106px; }
+    .ptm-section .section-heading { align-items: flex-end; }
+    .ptm-section .section-title { font-size: clamp(22px, 2.6vw, 30px); }
+    .ptm-meta {
+      margin: 0; max-width: 460px; color: var(--muted); text-align: right;
+      font-family: var(--utility); font-size: 10.5px; line-height: 1.6;
+    }
+
+    /* overview stat cards */
+    .ptm-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+    .ptm-stat-card {
+      padding: 20px 20px 18px; border: 1px solid var(--line); border-radius: 16px;
+      background: linear-gradient(150deg, #fff, #fbfefb);
+      box-shadow: 0 10px 26px rgba(8, 69, 47, .05);
+    }
+    .ptm-stat-value {
+      color: var(--forest); font-family: var(--display);
+      font-size: clamp(24px, 2.5vw, 33px); font-weight: 800; letter-spacing: -.04em; line-height: 1;
+    }
+    .ptm-stat-label { margin-top: 9px; color: #3d564b; font-size: 12px; font-weight: 600; }
+    .ptm-stat-sub { margin-top: 4px; color: var(--muted); font-size: 10.5px; line-height: 1.5; }
+
+    /* panels */
+    .ptm-card {
+      margin-top: 18px; padding: 22px 24px 24px;
+      border: 1px solid var(--line); border-radius: 18px;
+      background: #fff; box-shadow: 0 10px 30px rgba(8, 69, 47, .045);
+    }
+    .ptm-card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 20px; margin-bottom: 12px; }
+    .ptm-card-head h3 { margin: 0; color: var(--forest-deep); font-family: var(--display); font-size: 16px; letter-spacing: -.02em; }
+    .ptm-card-head p { margin: 0; max-width: 660px; color: var(--muted); font-size: 11px; line-height: 1.65; }
+    .ptm-chart { width: 100%; height: 420px; min-width: 0; }
+    #ptm-chart { height: 460px; }
+
+    /* per-type chips */
+    .ptm-chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .ptm-chip {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 6px 12px; color: #3d564b; background: var(--mist);
+      border: 1px solid var(--line); border-radius: 999px; font-size: 11.5px;
+    }
+    .ptm-chip-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; }
+    .ptm-chip strong { color: var(--forest); font-family: var(--utility); font-size: 11px; font-weight: 700; }
+
+    /* result controls */
+    .ptm-controls {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+      margin-top: 18px; padding: 14px 16px;
+      background: #fbfdfb; border: 1px solid var(--line); border-radius: 14px;
+    }
+    .ptm-select-wrap { display: flex; align-items: center; gap: 10px; margin: 0; color: #3d564b; font-size: 12px; font-weight: 600; }
+    .ptm-select {
+      height: 40px; padding: 0 38px 0 15px; color: var(--ink);
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='m2.5 4.5 3.5 3 3.5-3' fill='none' stroke='%23118653' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center / 12px 12px;
+      border: 1px solid var(--line); border-radius: 999px;
+      font-size: 12px; appearance: none; -webkit-appearance: none; cursor: pointer;
+    }
+    .ptm-select:focus { outline: none; border-color: rgba(17, 134, 83, .45); box-shadow: 0 0 0 4px rgba(17, 134, 83, .10); }
+    .ptm-controls .secondary-button { margin-left: auto; min-height: 40px; font-size: 12px; }
+
+    /* results table */
+    .ptm-table-wrap { max-height: 540px; overflow: auto; border: 1px solid var(--line); border-radius: 14px; }
+    .ptm-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    .ptm-table th {
+      position: sticky; top: 0; z-index: 1; padding: 11px 13px;
+      color: #3d564b; background: var(--mist); border-bottom: 1px solid var(--line);
+      font-family: var(--utility); font-size: 9.5px; font-weight: 700;
+      letter-spacing: .06em; text-align: left; text-transform: uppercase; white-space: nowrap;
+    }
+    .ptm-table td { padding: 10px 13px; color: #33483f; border-bottom: 1px solid #eef4ef; vertical-align: top; }
+    .ptm-table tbody tr:hover { background: #fbfdfb; }
+    .ptm-table tbody tr:last-child td { border-bottom: 0; }
+    .ptm-table .ptm-peptide { max-width: 300px; word-break: break-all; font-family: var(--utility); font-size: 10.5px; color: #5d7267; }
+    .ptm-table .ptm-score { font-family: var(--utility); }
+    .ptm-table-empty { padding: 26px !important; color: #7a8c82 !important; text-align: center; }
+
+    /* confidence distribution */
+    .ptm-conf-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+    .ptm-conf-card { padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: #fbfdfb; }
+    .ptm-conf-card strong { display: block; color: var(--forest-deep); font-family: var(--display); font-size: 20px; letter-spacing: -.02em; line-height: 1.1; }
+    .ptm-conf-card span { display: block; margin-top: 5px; color: #5d7267; font-size: 11px; }
+    .ptm-conf-card em { display: block; margin-top: 2px; color: var(--muted); font-family: var(--utility); font-size: 9.5px; font-style: normal; }
+
+    /* example proteins */
+    .ptm-example-list { display: flex; flex-wrap: wrap; gap: 10px; }
+    .ptm-example {
+      display: inline-flex; align-items: center; gap: 9px;
+      min-height: 40px; padding: 9px 15px; color: #2c4a3e; background: #fff;
+      border: 1px solid var(--line); border-radius: 999px;
+      font-family: var(--utility); font-size: 11px; cursor: pointer;
+      transition: 160ms ease;
+    }
+    .ptm-example:hover {
+      border-color: rgba(17, 134, 83, .4);
+      box-shadow: 0 8px 20px rgba(8, 69, 47, .08);
+      transform: translateY(-1px);
+    }
+    .ptm-example span { color: var(--forest); font-family: var(--utility); font-size: 10px; }
+
+    /* about + references */
+    .ptm-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+    .ptm-info-card {
+      padding: 24px 26px; border: 1px solid var(--line); border-radius: 18px;
+      background: linear-gradient(150deg, #fff, #fbfefb);
+    }
+    .ptm-info-card h3 { margin: 0 0 12px; color: var(--forest-deep); font-family: var(--display); font-size: 16px; letter-spacing: -.02em; }
+    .ptm-info-card ul, .ptm-info-card ol { margin: 0; padding-left: 18px; color: #5d7267; font-size: 12px; line-height: 1.75; }
+    .ptm-info-card li + li { margin-top: 7px; }
+    .ptm-info-card li strong { color: #33483f; }
+    .ptm-info-card a { color: var(--leaf); }
+    .ptm-info-card a:hover { text-decoration: underline; }
+
+    /* responsive */
+    @media (max-width: 980px) {
+      .ptm-search-panel { grid-template-columns: 1fr; gap: 20px; padding: 22px; }
+      .ptm-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .ptm-conf-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .ptm-info-grid { grid-template-columns: 1fr; }
+      .ptm-meta { text-align: left; }
+    }
+    @media (max-width: 640px) {
+      .ptm-stat-grid { grid-template-columns: 1fr; }
+      .ptm-conf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .ptm-card { padding: 18px; }
+      .ptm-chart, #ptm-chart { height: 340px; }
+      .ptm-controls .secondary-button { margin-left: 0; }
+      .ptm-search-form .primary-button { width: 100%; }
+    }
+  </style>
 </head>
 <body>
-<div id="home_header"><span><img src="/css/logo.jpg" id="logo_style">WheatOmics 2.0</span></div>
-<div id="header-tabs">
-  <ul>
-    <li><a href="/"><span>Home</span></a></li>
-    <li><a href="#"><span>Tools/Browse</span></a>
-      <ul>
-        <li><a href="/getfasta/index.html">GetSequence</a></li>
-        <li><a href="/blast/blast.html">BLAST</a></li>
-        <li><a href="/PrimerServer">PrimerServer</a></li>
-        <li><a href="/PrimerServer2/">PrimerServer2</a></li>
-        <li><a href="/caps/">CAPS/dCAPS</a></li>
-        <li><a href="/PfamSearch/">PfamSearch</a></li>
-        <li><a href="/idConvert/">IDConvert</a></li>
-        <li><a href="/HomologFinder/">HomologFinder</a></li>
-        <li><a href="/interval/">IntervalTool</a></li>
-        <li><a href="/expression/">GeneExpression</a></li>
-        <li><a href="/coexpression/index.html">Co-expression</a></li>
-        <li><a href="/wheatPPI/">WheatPPI</a></li>
-        <li><a href="/genes/">KnownGene</a></li>
-        <li><a href="/symap/index.html">SyntenySearch</a></li>
-        <li><a href="/syntenyview/">SynTenyView</a></li>
-        <li><a href="/preblast/">preBLAST</a></li>
-        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
-        <li><a href="/orthofinder/">OrthoFinder</a></li>
-        <li><a href="/VariantHub/">VariantHub</a></li>
-        <li><a href="DWGVa.html">DWGVa</a></li>
-        <li><a href="/scRNA/">scRNA</a></li>
-        <li><a href="/wheatPSP/">wheatPSP</a></li>
-        <li><a href="/wheatPTM/">wheatPTM</a></li>
-        <li><a href="/eqtl/">eQTL Atlas</a></li>
-        <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
-        <li><a href="/papers">Triticeae papers</a></li>
-      </ul>
-    </li>
-    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
-    <li><a href="/download.html"><span>Download Data</span></a></li>
-    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
-    <li><a href="#"><span>About</span></a>
-      <ul>
-        <li><a href="/help/contact.html">Contact</a></li>
-        <li><a href="/help/news.html">News</a></li>
-      </ul>
-    </li>
-  </ul>
-</div>
 
-<div id="home_content">
-  <br><h5 class="card-title">Search wheat protein post-translational modifications</h5><br>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <svg aria-hidden="true" width="0" height="0" style="position:absolute;overflow:hidden">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.7"/><path d="m16 16 4.2 4.2"/></symbol>
+    <symbol id="i-dna" viewBox="0 0 24 24"><path d="M6 2c0 7 12 13 12 20M18 2C18 9 6 15 6 22M8 5h8M7 10h10M7 15h10M8 20h8"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M20 4C11 4 5 8 5 15c0 3 2 5 5 5 7 0 10-7 10-16Z"/><path d="M4 21c3-6 7-9 13-12"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="i-sequence" viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h16"/><circle cx="7" cy="6" r="1.6"/><circle cx="17" cy="12" r="1.6"/><circle cx="12" cy="18" r="1.6"/></symbol>
+    <symbol id="i-network" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.3"/><circle cx="5" cy="18" r="2.3"/><circle cx="19" cy="18" r="2.3"/><path d="m10.7 7-4.4 8.8M13.3 7l4.4 8.8M7.3 18h9.4"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4.5 19A1.4 1.4 0 0 0 5.7 21h12.6a1.4 1.4 0 0 0 1.2-2L14 9V3"/><path d="M7 16h10"/></symbol>
+    <symbol id="i-chromosome" viewBox="0 0 24 24"><path d="M8 3c4 2 4 6 0 9s-4 7 0 9M16 3c-4 2-4 6 0 9s4 7 0 9M8 7h8M8 17h8"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 12h3l2-7 3 14 3-11 3 8 2-4h4"/></symbol>
+    <symbol id="i-marker" viewBox="0 0 24 24"><path d="M5 21V9M12 21V4M19 21V12"/><circle cx="5" cy="6" r="3"/><circle cx="12" cy="2.5" r="2"/><circle cx="19" cy="9" r="3"/></symbol>
+    <symbol id="i-gene" viewBox="0 0 24 24"><path d="M4 17c4-8 12-8 16 0M4 7c4 8 12 8 16 0"/><path d="M7 8v8M12 10v4M17 8v8"/></symbol>
+    <symbol id="i-nodes" viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="12" cy="10" r="2"/><path d="m7 6 3.4 3M17 6l-3.4 3M12 12v4"/></symbol>
+    <symbol id="i-primer" viewBox="0 0 24 24"><path d="M6 4c5 0 5 5 5 8s0 8 7 8M18 4c-5 0-5 5-5 8s0 8-7 8"/><path d="M4 4h4M16 4h4M4 20h4M16 20h4"/></symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><path d="M8 9h8M8 12h8M8 15h5"/></symbol>
+    <symbol id="i-helix" viewBox="0 0 24 24"><path d="M7 3c0 6 10 12 10 18M17 3C17 9 7 15 7 21M8 6h8M7 12h10M8 18h8"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22V5.5ZM20 5.5A2.5 2.5 0 0 0 17.5 3H13v17h4.5A2.5 2.5 0 0 1 20 22V5.5Z"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 4 6 4 9s-1 6-4 9M12 3c-3 3-4 6-4 9s1 6 4 9"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V9M10 20V4M16 20v-7M22 20V7"/><path d="M2 20h21"/></symbol>
+    <symbol id="i-cells" viewBox="0 0 24 24"><circle cx="8" cy="8" r="4"/><circle cx="16" cy="15" r="5"/><circle cx="17" cy="5" r="2"/><path d="m6.5 8 2-1M14 14l3 2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3 8 8 10 5-2 8-5 8-10V6l-8-3Z"/><path d="m8.5 12 2.2 2.2 4.8-5"/></symbol>
+    <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="7" r="3"/><circle cx="6" cy="17" r="3"/><path d="m8.5 8.5 11 8.5M8.5 15.5 19.5 7"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  </svg>
+  <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/V2.0/" aria-label="WheatOmics 2.0 home">
+          <img class="brand-mark" src="/V2.0/Logo-small.png" alt="WheatOmics 2.0 logo">
+          <span class="brand-version">2.0</span>
+        </a>
 
-  <div class="search-box">
-    <div class="row">
-      <div class="col-md-8">
-        <label><strong>Protein ID</strong></label>
-        <input type="text" id="protein-input" class="form-control" placeholder="TraesCS1A02G000100.1">
+        <nav class="main-nav" id="main-nav" aria-label="Primary navigation">
+          <div class="nav-item"><a class="nav-link" href="/V2.0/">Home</a></div>
+          <div class="nav-item">
+            <button class="nav-trigger" type="button" aria-expanded="false">Tools
+              <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
+            </button>
+                        <ul class="dropdown tools-dropdown">
+              <li><a href="https://wheatomics.sdau.edu.cn/getfasta/">GetSequence</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/blast/blast.html">BLAST</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/GeneHub/">GeneHub</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/genes/">KnownGene</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/tools/proteinfamily.html">PfamSearch</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/PrimerServer/">PrimerServer</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/idConvert/">IDConverter</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/homologtools/index.html">HomologFinder</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/expression/index.html">GeneExpression</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/coexpression/index.html">Co-expression</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/tools/intervalTools.html">IntervalTool</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/symap/index.html">SyntenySearch</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/caps/">CAPS/dCAPS</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/preblast/">preBLAST</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/sms2/">SequenceToolkit</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/VariantHub/">VariantHub</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/eqtl/">eQTL Atlas</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/GO_KEGG/">GO/KEGG Enrichment</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/syntenyview/">Collinearity</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/orthofinder/">OrthoFinder</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/scRNA/">scRNA</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/wheatPPI/index.html">WheatPPI</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/wheatPSP/">wheatPSP</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/wheatPTM/">wheatPTM</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/papers/">Triticeae Papers</a></li>
+              <li><a class="tools-all-link" href="/V2.0/#tools">View all tools →</a></li>
+            </ul>
+          </div>
+          <div class="nav-item">
+            <button class="nav-trigger" type="button" aria-expanded="false">JBrowse
+              <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
+            </button>
+            <ul class="dropdown">
+              <li><a href="https://wheatomics.sdau.edu.cn/jbrowse.html">JBrowse Gateway</a></li>
+              <li><a href="/V2.0/#data">Browse Data Types</a></li>
+            </ul>
+          </div>
+          <div class="nav-item"><a class="nav-link" href="https://wheatomics.sdau.edu.cn/download.html">Download Data</a></div>
+          <div class="nav-item"><a class="nav-link" href="https://wheatomics.sdau.edu.cn/outsitelink.html">External Links</a></div>
+          <div class="nav-item">
+            <button class="nav-trigger" type="button" aria-expanded="false">About
+              <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
+            </button>
+            <ul class="dropdown">
+              <li><a href="/V2.0/#citation">Citation</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/help/news.html">News</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/help/contact.html">Contact</a></li>
+            </ul>
+          </div>
+        </nav>
+
+        <div class="header-actions">
+          <form class="header-search" action="https://wheatomics.sdau.edu.cn/GeneHub/" method="get">
+            <label for="header-gene" hidden>Search Gene ID or keyword</label>
+            <input id="header-gene" name="search" type="search" placeholder="Search any gene ID (GeneHub)...">
+            <button type="submit" aria-label="Search"><svg class="icon"><use href="#i-search"/></svg></button>
+          </form>
+          <a class="contact-button" href="mailto:shengweima@icloud.com">Contact Us <span aria-hidden="true">↗</span></a>
+        </div>
+
+        <button class="menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Open navigation"><span></span></button>
       </div>
-      <div class="col-md-4 d-flex align-items-end">
-        <button id="search-btn" class="btn btn-primary" onclick="searchPTM()">Search</button>
+    </header>
+
+  <main id="main-content">
+    <section class="news-hero">
+      <div class="container news-hero-inner">
+        <div>
+          <p class="news-kicker">WheatOmics 2.0 · Analysis tool</p>
+          <h1 class="news-title">wheat<em>PTM</em></h1>
+          <p class="news-lead">PlantPTM deep-learning predictions of nine post-translational modification (PTM) types for wheat proteins. Search an exact protein ID to explore predicted modification sites, their confidence class and prediction scores.</p>
+          <div class="news-stats">
+            <span class="news-stat"><strong data-ptm-total-calls>&mdash;</strong> PTM calls</span>
+            <span class="news-stat"><strong data-ptm-total-sites>&mdash;</strong> scored sites</span>
+            <span class="news-stat"><strong data-ptm-proteins>&mdash;</strong> proteins screened</span>
+            <span class="news-stat">9 PTM types</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="news-body">
+      <div class="container ptm-page">
+
+        <section class="ptm-search-panel" aria-labelledby="ptm-search-title">
+          <div>
+            <p class="ptm-panel-kicker">Protein lookup</p>
+            <h2 class="ptm-panel-title" id="ptm-search-title">Search by protein ID</h2>
+            <p class="ptm-panel-copy">Enter an exact protein ID &mdash; both standard gene-model proteins and <code>LC</code> models are indexed. Results list predicted sites with confidence classes and scores; Non-PTM predictions are hidden by default.</p>
+          </div>
+          <div>
+            <form class="ptm-search-form" id="ptm-search-form" role="search">
+              <label class="ptm-visually-hidden" for="protein-input">Protein ID</label>
+              <input id="protein-input" type="text" name="protein" placeholder="TraesCS1A02G000100.1" autocomplete="off" spellcheck="false">
+              <button id="search-btn" class="primary-button" type="submit">Search <span class="button-arrow" aria-hidden="true">&rarr;</span></button>
+            </form>
+            <p class="ptm-hint">Example: <code>TraesCS1A02G000100.1</code> &middot; <a href="#overview-card">dataset overview &darr;</a></p>
+          </div>
+        </section>
+
+        <div id="error-msg" class="ptm-alert error" role="alert"></div>
+        <div id="not-found-msg" class="ptm-alert warning" role="alert"></div>
+        <div id="loading-indicator" class="ptm-loading" aria-live="polite"><span class="ptm-spinner" aria-hidden="true"></span>Searching wheatPTM&hellip;</div>
+
+        <section id="overview-card" class="ptm-section" style="display:none;">
+          <div class="section-heading ptm-section-heading">
+            <div>
+              <p class="section-kicker">Dataset snapshot</p>
+              <h2 class="section-title">Overview</h2>
+            </div>
+            <p class="ptm-meta" id="overview-meta"></p>
+          </div>
+          <div class="ptm-stat-grid" id="overview-stats"></div>
+
+          <div class="ptm-card">
+            <div class="ptm-card-head">
+              <h3>Scored sites by modification type</h3>
+              <p>Stacked bars: PTM calls (coloured by type) and Non-PTM predictions (grey). Hover a bar for counts and the PTM-call rate.</p>
+            </div>
+            <div id="ptm-overview-chart" class="ptm-chart"></div>
+          </div>
+
+          <div class="ptm-card">
+            <div class="ptm-card-head">
+              <h3>Confidence distribution</h3>
+              <p>Across all scored sites. <code>Non-PTM</code> is the prediction tools&rsquo; negative class.</p>
+            </div>
+            <div class="ptm-conf-grid" id="overview-confidence"></div>
+          </div>
+
+          <div class="ptm-card">
+            <div class="ptm-card-head">
+              <h3>Example proteins</h3>
+              <p>A few wheat proteins with moderate site counts &mdash; click to load.</p>
+            </div>
+            <div class="ptm-example-list" id="overview-examples"></div>
+          </div>
+        </section>
+
+        <section id="result-area" class="ptm-section" style="display:none;">
+          <div class="section-heading ptm-section-heading">
+            <div>
+              <p class="section-kicker">Search result</p>
+              <h2 class="section-title" id="stat-summary"></h2>
+            </div>
+            <p class="ptm-meta" id="stat-note"></p>
+          </div>
+
+          <div class="ptm-chip-row" id="stat-row"></div>
+
+          <div class="ptm-controls" id="controls-row">
+            <label class="ptm-select-wrap" for="scope-select">
+              <span>Show</span>
+              <select id="scope-select" class="ptm-select">
+                <option value="ptm" selected>PTM calls only (exclude Non-PTM)</option>
+                <option value="all">All predictions (incl. Non-PTM)</option>
+                <option value="high">High confidence only (High / Extremely high)</option>
+              </select>
+            </label>
+            <a id="download-btn" class="secondary-button" href="#" target="_blank" rel="noopener">Download CSV</a>
+          </div>
+
+          <div id="no-sites-msg" class="ptm-alert info" role="status"></div>
+
+          <div class="ptm-card" id="chart-box">
+            <div class="ptm-card-head">
+              <h3>PTM sites along the protein sequence</h3>
+              <p>Scores are prediction scores from the source tools: N-glycosylation uses e-values (smaller = stronger), other types use 0&ndash;1 scores (larger = stronger). Scores of different PTM types are not directly comparable.</p>
+            </div>
+            <div id="ptm-chart" class="ptm-chart"></div>
+          </div>
+
+          <div class="ptm-card" id="table-box">
+            <div class="ptm-card-head">
+              <h3 id="table-title"></h3>
+            </div>
+            <div class="ptm-table-wrap">
+              <table class="ptm-table" id="ptm-table">
+                <thead><tr>
+                  <th>Protein</th><th>Position</th><th>Residue</th><th>PTM type</th><th>Peptide</th><th>Score</th><th>Confidence</th>
+                </tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="ptm-section">
+          <div class="ptm-info-grid">
+            <article class="ptm-info-card" id="about-card">
+              <h3>About this dataset</h3>
+              <ul>
+                <li><strong>Coverage:</strong> 9 PTM types &mdash; phosphorylation, N-glycosylation, S-acylation, 2-hydroxyisobutyrylation, crotonylation, succinylation, malonylation, acetylation and ubiquitination.</li>
+                <li><strong>Predictions &amp; confidence:</strong> rows are model predictions; <code>Confidence</code> is the source tool&rsquo;s confidence class. <code>Non-PTM</code> rows are the negative class and are hidden by default &mdash; use the <em>Show</em> selector to include them.</li>
+                <li><strong>Scores:</strong> tool-specific. N-glycosylation scores are e-values (smaller = stronger); other types report 0&ndash;1 scores (larger = stronger). Do not compare scores across PTM types.</li>
+                <li><strong>Protein IDs:</strong> exact match only. Standard gene-model proteins (e.g. <code>TraesCS1A02G000100.1</code>) and <code>LC</code> protein models (e.g. <code>TraesCS1A02G000100LC.1</code>) are indexed separately.</li>
+                <li><strong>Data source:</strong> predictions generated with <strong>PlantPTM</strong> (Dou et al., <em>Molecular Plant</em> 2026) and imported from its output CSV files (<code>all_pho.csv</code>, <code>all_NGly.csv</code>, &hellip;). The CSV download follows the current <em>Show</em> selection.</li>
+                <li><strong>Interpretation:</strong> every row is a computational prediction, not an experimental observation &mdash; use the confidence classes when prioritising sites.</li>
+              </ul>
+            </article>
+
+            <article class="ptm-info-card" id="references-card">
+              <h3>References &amp; data sources</h3>
+              <ol>
+                <li>Dou G., Wang K., Qin Z., Zhang M., Zhang W., Miao C., Li J., Chen Z.
+                  <em>PlantPTM: A deep-learning framework integrating protein language models with multi-view features for predicting diverse post-translational modification sites in plants.</em>
+                  Molecular Plant 19(10): 1979&ndash;1995 (2026). doi:
+                  <a href="https://doi.org/10.1016/j.molp.2026.08.002" target="_blank" rel="noopener">10.1016/j.molp.2026.08.002</a></li>
+                <li>PlantPTM web server: <a href="https://ai4bio.online/PlantPTM" target="_blank" rel="noopener">https://ai4bio.online/PlantPTM</a>
+                  &middot; source code: <a href="https://github.com/wky0422/PlantPTM" target="_blank" rel="noopener">https://github.com/wky0422/PlantPTM</a></li>
+              </ol>
+            </article>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-main">
+      <div class="footer-brand">
+        <span class="footer-wordmark"><span class="brand-name">WheatOmics <em>2.0</em></span><span class="brand-tagline">AI Agent-Powered Wheat Pan-Omics Platform</span></span>
+        <p class="footer-note">An open wheat multi-omics knowledgebase supporting functional genomics, crop improvement and next-generation breeding.</p>
+      </div>
+
+      <div>
+        <h2 class="footer-title">Quick Links</h2>
+        <div class="footer-links">
+          <a href="/V2.0/#tools">Tools</a><a href="/V2.0/#data">JBrowse</a>
+          <a href="https://wheatomics.sdau.edu.cn/download.html">Download Data</a><a href="https://wheatomics.sdau.edu.cn/outsitelink.html">External Links</a>
+          <a href="https://wheatomics.sdau.edu.cn/help/news.html">News</a><a href="https://wheatomics.sdau.edu.cn/help/contact.html">About Us</a>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="footer-title">Contact Us</h2>
+        <a class="contact-line" href="mailto:shengweima@icloud.com"><svg class="icon"><use href="#i-mail"/></svg><span>shengweima@icloud.com</span></a>
       </div>
     </div>
-    <div id="error-msg" class="alert alert-danger"></div>
-  </div>
-
-  <div class="loading" id="loading-indicator">
-    <div class="spinner-border text-primary" role="status"></div>
-    <p class="mt-2 text-muted">Searching...</p>
-  </div>
-
-  <div id="result-area" style="display:none;">
-    <div class="search-box">
-      <div id="stat-summary" style="font-weight:bold;"></div>
-      <div class="stat-row" id="stat-row"></div>
-      <div class="mt-3">
-        <a id="download-btn" class="btn btn-success" href="#" target="_blank">Download CSV</a>
-      </div>
+    <img class="footer-plot" src="/V2.0/footer-plot.png?v=20261025lab" alt="WheatOmics data overview plot">
+    <div class="container footer-bottom">
+      <span class="copyright">© 2026 WheatOmics. All rights reserved. <span class="footer-visits" aria-label="WheatOmics visit statistics"><span class="footer-visit-item"><svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg>Visits <strong data-visit-total>—</strong></span><span class="visit-sep">/</span><span class="footer-visit-item"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Today <strong data-visit-today>—</strong></span><span class="visit-sep">/</span><span class="footer-visit-item"><svg class="icon" aria-hidden="true"><use href="#i-wave"/></svg>Online <strong data-visit-online>—</strong></span></span></span>
+      <span class="icp">鲁公网安备 37090202000305号 ｜ 鲁ICP备05002369号-1</span>
+      <button class="back-top" type="button">Back to top ↑</button>
     </div>
+  </footer>
+  <script src="/js/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/js/echarts.min.js"></script>
+  <script>
+const menuToggle = document.querySelector('.menu-toggle');
+    const nav = document.querySelector('.main-nav');
+    const navTriggers = document.querySelectorAll('.nav-trigger');
+    if (menuToggle && nav) {
+      menuToggle.addEventListener('click', () => {
+        const isOpen = document.body.classList.toggle('nav-open');
+        menuToggle.setAttribute('aria-expanded', String(isOpen));
+        menuToggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
+      });
+      nav.addEventListener('click', (event) => {
+        if (event.target.closest('a') && window.innerWidth <= 980) {
+          document.body.classList.remove('nav-open');
+          menuToggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+    navTriggers.forEach((trigger) => {
+      trigger.addEventListener('click', () => {
+        if (window.innerWidth > 980) return;
+        const item = trigger.closest('.nav-item');
+        const isOpen = item.classList.toggle('dropdown-open');
+        trigger.setAttribute('aria-expanded', String(isOpen));
+      });
+    });
+    document.querySelector('.back-top')?.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 
-    <div class="chart-box">
-      <h6>PTM sites along the protein sequence</h6>
-      <div id="ptm-chart"></div>
-    </div>
-
-    <div class="table-box">
-      <h6 id="table-title"></h6>
-      <div style="max-height:500px;overflow:auto;">
-        <table class="table table-bordered table-hover table-sm" id="ptm-table">
-          <thead><tr>
-            <th>Protein</th><th>Position</th><th>Residue</th><th>PTM type</th><th>Peptide</th><th>Score</th><th>Confidence</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="line" style="height:10px;background-color:white"></div>
-<div id="home_footer">
-  <center style="margin-top:5px">
-    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
-  </center>
-</div>
-
-<script>
+/* Visit tracking and footer stats */
+    try {
+      fetch('/api/track/visit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ page: location.pathname || 'outsitelink.html' }) }).catch(function(){});
+    } catch (e) {}
+    (function () {
+      function fmt(n) { n = Number(n) || 0; return n.toLocaleString('en-US'); }
+      fetch('/api/track/stats', { cache: 'no-store' })
+        .then(r => r.ok ? r.json() : null)
+        .then(resp => {
+          if (!resp || !resp.success || !resp.data) return;
+          const d = resp.data;
+          const total = document.querySelector('[data-visit-total]');
+          const today = document.querySelector('[data-visit-today]');
+          const online = document.querySelector('[data-visit-online]');
+          if (total) total.textContent = d.total && d.total.pv != null ? fmt(d.total.pv) : '—';
+          if (today) today.textContent = d.today && d.today.pv != null ? fmt(d.today.pv) : '—';
+          if (online) online.textContent = d.online != null ? fmt(d.online) : '—';
+        }).catch(function(){});
+    })();
+  </script>
+  <script>
+// ==================== wheatPTM tool logic ====================
 var PTM_COLORS = {
-  'Phosphorylation': '#e6194b',
-  'N-glycosylation': '#3cb44b',
-  'S-acylation': '#ffe119',
-  '2-hydroxyisobutyrylation': '#4363d8',
-  'Crotonylation': '#f58231',
-  'Succinylation': '#911eb4',
-  'Malonylation': '#46f0f0',
-  'Acetylation': '#f032e6',
-  'Ubiquitination': '#9a6324'
+  'Phosphorylation': '#118653',
+  'N-glycosylation': '#77b941',
+  'S-acylation': '#e6b94a',
+  '2-hydroxyisobutyrylation': '#07583d',
+  'Crotonylation': '#b7791f',
+  'Succinylation': '#2f7f7a',
+  'Malonylation': '#8ab17d',
+  'Acetylation': '#a0522d',
+  'Ubiquitination': '#4a6572'
+};
+var PTM_FALLBACK_COLOR = '#66766e';
+var CHART_FONT = 'Arial, Helvetica, sans-serif';
+var CHART_INK = '#33483f';
+var CHART_MUTED = '#66766e';
+var CHART_LINE = '#dfe9e2';
+var CHART_GRID = '#eef4ef';
+
+var SCOPE_LABELS = {
+  ptm: 'PTM calls only',
+  all: 'all predicted sites',
+  high: 'high-confidence calls only'
 };
 var chart = null;
+var overviewChart = null;
+var lastData = null;
+var currentScope = 'ptm';
 
 function searchPTM() {
   var protein = $('#protein-input').val().trim();
   if (!protein) { showError('Please enter a protein ID'); return; }
 
   $('#error-msg').hide();
+  $('#not-found-msg').hide();
   $('#result-area').hide();
   $('#loading-indicator').show();
 
@@ -181,44 +1710,146 @@ function searchPTM() {
     });
 }
 
+function scrollIntoViewSoon(selector) {
+  // The page is long (overview + result); make the consequence of a search visible.
+  setTimeout(function() {
+    var el = document.querySelector(selector);
+    if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+  }, 150);
+}
+
 function renderResult(data) {
+  lastData = data;
   var protein = data.protein;
-  var sites = data.sites || [];
-  var stats = data.stats || [];
 
-  // 下载链接
-  $('#download-btn').attr('href', '/api/ptm/download?protein=' + encodeURIComponent(protein));
+  // Protein not in the dataset: explain it, do not open the result area or offer an empty CSV.
+  if (!data.known) {
+    $('#result-area').hide();
+    $('#not-found-msg').html(
+      'Protein <code>' + escapeHtml(protein) + '</code> is not in the wheatPTM dataset. ' +
+      'Searches use exact protein IDs &mdash; check the ID, e.g. <code>TraesCS1A02G000100.1</code>, ' +
+      'or an <code>LC</code> protein model such as <code>TraesCS1A02G000100LC.1</code>.'
+    ).show();
+    scrollIntoViewSoon('#not-found-msg');
+    return;
+  }
 
-  // 统计
-  $('#stat-summary').text(sites.length + ' PTM site(s) found for ' + protein);
-  var statHtml = '';
-  stats.forEach(function(s) {
-    var color = PTM_COLORS[s.label] || '#999';
-    statHtml += '<span class="stat-chip"><span class="dot" style="background:' + color + '"></span>' +
-      escapeHtml(s.label) + ': ' + s.count + '</span>';
-  });
-  $('#stat-row').html(statHtml);
+  $('#not-found-msg').hide();
 
-  // 先显示结果容器，再初始化 ECharts；隐藏状态下初始化会得到 0 宽度。
+  // Protein is indexed but has no predicted sites in the database.
+  if (!data.total) {
+    showNoSites(protein, data.length);
+    return;
+  }
+
+  $('#no-sites-msg').hide();
+  $('#controls-row').show();
+  $('#chart-box').show();
+  $('#table-box').show();
   $('#result-area').show();
+  applyScope(currentScope);
+  scrollIntoViewSoon('#result-area');
+}
 
-  // 表格
-  $('#table-title').text('PTM sites (' + sites.length + ')');
-  var tbody = '';
-  sites.forEach(function(s) {
-    tbody += '<tr>';
-    tbody += '<td>' + escapeHtml(s.Protein) + '</td>';
-    tbody += '<td>' + escapeHtml(s.Position) + '</td>';
-    tbody += '<td>' + escapeHtml(s.Residue) + '</td>';
-    tbody += '<td>' + escapeHtml(s.ptm_label) + '</td>';
-    tbody += '<td style="max-width:260px;word-break:break-all;">' + escapeHtml(s.Peptide) + '</td>';
-    tbody += '<td>' + (s.Score != null ? Number(s.Score).toFixed(4) : '') + '</td>';
-    tbody += '<td>' + escapeHtml(s.Confidence) + '</td>';
-    tbody += '</tr>';
+function showNoSites(protein, length) {
+  $('#result-area').show();
+  $('#controls-row').hide();
+  $('#chart-box').hide();
+  $('#table-box').hide();
+  $('#download-btn').hide();
+  $('#stat-summary').text('No PTM sites recorded for ' + protein);
+  $('#stat-note').text(
+    (length ? 'The protein is indexed in wheatPTM (' + length + ' aa) ' : 'The protein is indexed in wheatPTM ') +
+    'but no PTM predictions were imported for it.'
+  );
+  $('#stat-row').html('');
+  $('#no-sites-msg').text(
+    'No PTM sites are recorded for ' + protein + '. Try searching another protein ID, or check the ID format.'
+  ).show();
+  scrollIntoViewSoon('#result-area');
+}
+
+function inScope(site, scope) {
+  var confidence = (site.Confidence == null ? '' : String(site.Confidence)).trim();
+  if (scope === 'ptm') return confidence !== 'Non-PTM';
+  if (scope === 'high') return confidence === 'High' || confidence === 'Extremely high';
+  return true;
+}
+
+function applyScope(scope) {
+  if (!lastData) return;
+  currentScope = SCOPE_LABELS[scope] ? scope : 'ptm';
+  $('#scope-select').val(currentScope);
+
+  var all = lastData.sites || [];
+  var view = all.filter(function(site) { return inScope(site, currentScope); });
+  var counts = lastData.confidence_counts || {};
+  var nonPtm = counts['Non-PTM'] || 0;
+  var ptmCalls = all.length - nonPtm;
+  var protein = lastData.protein;
+
+  var summary;
+  var note;
+  if (currentScope === 'ptm') {
+    summary = view.length + ' PTM call(s) for ' + protein;
+    note = nonPtm > 0
+      ? nonPtm + ' Non-PTM prediction(s) are hidden. Choose "All predictions" to show every predicted site.'
+      : 'Every prediction for this protein carries a PTM confidence call.';
+  } else if (currentScope === 'all') {
+    summary = all.length + ' predicted site(s) for ' + protein;
+    note = ptmCalls + ' PTM call(s), ' + nonPtm + ' Non-PTM prediction(s).';
+  } else {
+    summary = view.length + ' high-confidence call(s) for ' + protein;
+    note = 'Only Confidence = High or Extremely high.';
+  }
+  $('#stat-summary').text(summary);
+  $('#stat-note').text(note);
+
+  renderChips(view);
+  renderTable(view);
+  renderChart(view, lastData.length);
+
+  $('#download-btn')
+    .attr('href', '/api/ptm/download?protein=' + encodeURIComponent(protein) + '&scope=' + currentScope)
+    .attr('title', 'Download CSV — ' + SCOPE_LABELS[currentScope])
+    .toggle(view.length > 0);
+}
+
+function renderChips(view) {
+  var labels = (lastData.stats || []).map(function(s) { return s.label; });
+  if (!labels.length) labels = Object.keys(PTM_COLORS);
+  var counts = {};
+  view.forEach(function(site) {
+    var label = site.ptm_label || 'Other';
+    counts[label] = (counts[label] || 0) + 1;
   });
-  $('#ptm-table tbody').html(tbody);
+  var html = labels.map(function(label) {
+    var color = PTM_COLORS[label] || PTM_FALLBACK_COLOR;
+    var count = counts[label] || 0;
+    return '<span class="ptm-chip"><span class="ptm-chip-dot" style="background:' + color + '"></span>' +
+      escapeHtml(label) + ' <strong>' + count + '</strong></span>';
+  }).join('');
+  $('#stat-row').html(html);
+}
 
-  renderChart(sites, data.length);
+function renderTable(view) {
+  $('#table-title').text('Sites in this view (' + view.length + ')');
+  var html = '';
+  view.forEach(function(s) {
+    html += '<tr>';
+    html += '<td>' + escapeHtml(s.Protein) + '</td>';
+    html += '<td>' + escapeHtml(s.Position) + '</td>';
+    html += '<td>' + escapeHtml(s.Residue) + '</td>';
+    html += '<td>' + escapeHtml(s.ptm_label) + '</td>';
+    html += '<td class="ptm-peptide">' + escapeHtml(s.Peptide) + '</td>';
+    html += '<td class="ptm-score">' + (s.Score != null ? Number(s.Score).toFixed(4) : '') + '</td>';
+    html += '<td>' + escapeHtml(s.Confidence) + '</td>';
+    html += '</tr>';
+  });
+  if (!html) {
+    html = '<tr><td colspan="7" class="ptm-table-empty">No sites in this view.</td></tr>';
+  }
+  $('#ptm-table tbody').html(html);
 }
 
 function parsePosition(value) {
@@ -227,7 +1858,7 @@ function parsePosition(value) {
   var text = String(value).trim();
   var direct = Number(text);
   if (text !== '' && Number.isFinite(direct)) return direct;
-  // 兼容 "K123"、"123 (K)" 等位置格式。
+  // Be tolerant of "K123" / "123 (K)" style positions.
   var match = text.match(/\d+(?:\.\d+)?/);
   return match ? Number(match[0]) : NaN;
 }
@@ -236,6 +1867,17 @@ function parseScore(value) {
   if (value == null || String(value).trim() === '') return NaN;
   var n = Number(value);
   return Number.isFinite(n) ? n : NaN;
+}
+
+function chartTooltipStyle() {
+  return {
+    confine: true,
+    backgroundColor: '#ffffff',
+    borderColor: CHART_LINE,
+    borderWidth: 1,
+    padding: [10, 13],
+    textStyle: { color: CHART_INK, fontFamily: CHART_FONT, fontSize: 12 }
+  };
 }
 
 function renderChart(sites, length) {
@@ -257,7 +1899,7 @@ function renderChart(sites, length) {
 
     var label = s.ptm_label || 'Other';
     if (!groups[label]) groups[label] = [];
-    // 得分缺失时不伪造数值；有得分的位点绘制为可交互散点。
+    // Missing scores are not faked; scored sites become interactive dots.
     if (Number.isFinite(score)) {
       groups[label].push({
         value: [position, score, s.Confidence == null ? '' : s.Confidence],
@@ -290,60 +1932,64 @@ function renderChart(sites, length) {
       largeThreshold: 500,
       emphasis: { focus: 'series', scale: 1.5 },
       itemStyle: {
-        color: PTM_COLORS[label] || '#64748b',
-        opacity: 0.85,
+        color: PTM_COLORS[label] || PTM_FALLBACK_COLOR,
+        opacity: 0.88,
         borderColor: '#ffffff',
         borderWidth: 1
       }
     };
   });
 
+  var emptyMessage = 'No sites in the current view';
+  if (sites && sites.length && !numericScores.length) {
+    emptyMessage = 'No numeric PTM scores available for the sites in this view';
+  }
+
   var option = {
     animation: false,
-    tooltip: {
+    textStyle: { fontFamily: CHART_FONT, color: CHART_INK },
+    tooltip: $.extend({}, chartTooltipStyle(), {
       trigger: 'item',
-      confine: true,
-      backgroundColor: '#ffffff',
-      borderColor: '#dbe3ec',
-      borderWidth: 1,
-      textStyle: { color: '#243247' },
       formatter: function(p) {
         var d = p.data || {};
         var v = d.value || [];
-        return '<strong>' + escapeHtml(p.seriesName) + '</strong>' +
+        return '<strong style="color:' + (PTM_COLORS[p.seriesName] || CHART_INK) + '">' +
+          escapeHtml(p.seriesName) + '</strong>' +
           '<br>Position: ' + escapeHtml(v[0]) +
           '<br>Score: ' + escapeHtml(v[1]) +
           '<br>Residue: ' + escapeHtml(d.residue || '-') +
           '<br>Confidence: ' + escapeHtml(v[2] || '-') +
-          (d.peptide ? '<br>Peptide: ' + escapeHtml(d.peptide) : '');
+          (d.peptide ? '<br><span style="color:' + CHART_MUTED + '">Peptide: ' + escapeHtml(d.peptide) + '</span>' : '');
       }
-    },
+    }),
     legend: {
-      type: 'scroll', bottom: 8, left: 16, right: 16,
-      itemWidth: 12, itemHeight: 12,
-      textStyle: { fontSize: 12, color: '#475569' },
-      pageTextStyle: { color: '#64748b' }
+      type: 'scroll', bottom: 2, left: 12, right: 12,
+      itemWidth: 10, itemHeight: 10, itemGap: 14,
+      textStyle: { fontSize: 11, color: CHART_MUTED, fontFamily: CHART_FONT },
+      pageTextStyle: { color: CHART_MUTED }
     },
-    grid: { left: 72, right: 30, top: 38, bottom: 76, containLabel: false },
+    grid: { left: 66, right: 26, top: 36, bottom: 66, containLabel: false },
     xAxis: {
-      type: 'value', name: 'Position (aa)', nameLocation: 'middle', nameGap: 34,
+      type: 'value', name: 'Position (aa)', nameLocation: 'middle', nameGap: 32,
+      nameTextStyle: { color: CHART_MUTED, fontFamily: CHART_FONT, fontSize: 11 },
       min: 0, max: xMax,
-      axisLine: { lineStyle: { color: '#94a3b8' } },
-      axisTick: { lineStyle: { color: '#94a3b8' } },
-      axisLabel: { color: '#64748b', hideOverlap: true },
-      splitLine: { show: true, lineStyle: { color: '#edf1f5', type: 'dashed' } }
+      axisLine: { lineStyle: { color: CHART_LINE } },
+      axisTick: { lineStyle: { color: CHART_LINE } },
+      axisLabel: { color: CHART_MUTED, hideOverlap: true, fontFamily: CHART_FONT },
+      splitLine: { show: true, lineStyle: { color: CHART_GRID, type: 'dashed' } }
     },
     yAxis: {
-      type: 'value', name: 'Score', nameLocation: 'middle', nameGap: 48,
+      type: 'value', name: 'Score', nameLocation: 'middle', nameGap: 46,
+      nameTextStyle: { color: CHART_MUTED, fontFamily: CHART_FONT, fontSize: 11 },
       min: scoreMin, max: scoreMax,
-      axisLine: { show: true, lineStyle: { color: '#94a3b8' } },
-      axisTick: { show: true, lineStyle: { color: '#94a3b8' } },
-      axisLabel: { color: '#64748b' },
-      splitLine: { show: true, lineStyle: { color: '#edf1f5' } }
+      axisLine: { show: true, lineStyle: { color: CHART_LINE } },
+      axisTick: { show: true, lineStyle: { color: CHART_LINE } },
+      axisLabel: { color: CHART_MUTED, fontFamily: CHART_FONT },
+      splitLine: { show: true, lineStyle: { color: CHART_GRID } }
     },
-    graphic: numericScores.length ? [] : [{
+    graphic: (sites && sites.length && numericScores.length) ? [] : [{
       type: 'text', left: 'center', top: 'middle',
-      style: { text: 'No numeric PTM scores available for plotting', fill: '#64748b', fontSize: 14 }
+      style: { text: emptyMessage, fill: CHART_MUTED, fontSize: 13, fontFamily: CHART_FONT }
     }],
     series: series
   };
@@ -366,13 +2012,205 @@ function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// 支持深链接 /wheatPTM/?protein=XXX
+// ---------- dataset overview (static snapshot at /wheatPTM/stats.json) ----------
+function fmtFull(n) {
+  return Number(n || 0).toLocaleString('en-US');
+}
+
+function fmtCompact(n) {
+  n = Number(n) || 0;
+  if (n >= 1000000) return (n / 1000000).toFixed(n >= 10000000 ? 1 : 2) + 'M';
+  if (n >= 10000) return (n / 1000).toFixed(1) + 'k';
+  return fmtFull(n);
+}
+
+function fmtAxis(n) {
+  n = Number(n) || 0;
+  if (n >= 1000000) {
+    var m = n / 1000000;
+    return (m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)) + 'M';
+  }
+  if (n >= 1000) {
+    var k = n / 1000;
+    return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'k';
+  }
+  return String(n);
+}
+
+function loadOverview() {
+  // The ptm tables hold ~45M rows, so the overview is a precomputed snapshot:
+  // scripts/build_ptm_stats.py regenerates app/static/wheatPTM/stats.json.
+  fetch('/wheatPTM/stats.json', { cache: 'no-cache' })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      return resp.json();
+    })
+    .then(function(data) { renderOverview(data); })
+    .catch(function(err) { console.warn('wheatPTM overview unavailable:', err); });
+}
+
+function overviewStatCard(value, label, sub, title) {
+  return '<div class="ptm-stat-card" title="' + escapeHtml(title || '') + '">' +
+    '<div class="ptm-stat-value">' + escapeHtml(value) + '</div>' +
+    '<div class="ptm-stat-label">' + escapeHtml(label) + '</div>' +
+    (sub ? '<div class="ptm-stat-sub">' + escapeHtml(sub) + '</div>' : '') +
+    '</div>';
+}
+
+function renderOverview(data) {
+  var totals = data.totals || {};
+  var sites = Number(totals.sites) || 0;
+  var calls = Number(totals.ptm_calls) || 0;
+  var proteins = Number(data.proteins_indexed) || 0;
+  var types = data.types || [];
+  var callPct = sites ? (calls / sites * 100).toFixed(1) + '%' : '';
+
+  var heroCalls = document.querySelector('[data-ptm-total-calls]');
+  var heroSites = document.querySelector('[data-ptm-total-sites]');
+  var heroProteins = document.querySelector('[data-ptm-proteins]');
+  if (heroCalls) heroCalls.textContent = fmtCompact(calls);
+  if (heroSites) heroSites.textContent = fmtCompact(sites);
+  if (heroProteins) heroProteins.textContent = fmtFull(proteins);
+
+  var meta = document.getElementById('overview-meta');
+  if (meta) {
+    meta.textContent = 'snapshot ' + (data.generated_at || '') + ' · ' +
+      fmtFull(proteins) + ' proteins screened · ' + fmtFull(sites) + ' scored sites';
+  }
+
+  var statsEl = document.getElementById('overview-stats');
+  if (statsEl) {
+    statsEl.innerHTML =
+      overviewStatCard(fmtCompact(calls), 'PTM calls', callPct + ' of scored sites', fmtFull(calls) + ' PTM calls') +
+      overviewStatCard(fmtCompact(sites), 'scored sites', '(PTM calls + Non-PTM)', fmtFull(sites) + ' scored sites') +
+      overviewStatCard(fmtFull(proteins), 'wheat proteins screened', '', fmtFull(proteins) + ' proteins') +
+      overviewStatCard(String(types.length), 'PTM types', '', types.map(function(t) { return t.label; }).join(', '));
+  }
+
+  var confEl = document.getElementById('overview-confidence');
+  if (confEl) {
+    var counts = data.confidence_counts || {};
+    var order = ['Extremely high', 'High', 'Medium', 'Low', 'Non-PTM'];
+    var colors = {
+      'Extremely high': '#07583d', 'High': '#118653', 'Medium': '#b7791f',
+      'Low': '#c07a2c', 'Non-PTM': '#66766e'
+    };
+    confEl.innerHTML = order.map(function(label) {
+      var n = Number(counts[label]) || 0;
+      var pct = sites ? (n / sites * 100).toFixed(1) + '% of sites' : '';
+      return '<div class="ptm-conf-card" title="' + fmtFull(n) + ' sites">' +
+        '<strong style="color:' + (colors[label] || '#33483f') + '">' + fmtCompact(n) + '</strong>' +
+        '<span>' + escapeHtml(label) + '</span>' +
+        (pct ? '<em>' + pct + '</em>' : '') + '</div>';
+    }).join('');
+  }
+
+  var exEl = document.getElementById('overview-examples');
+  if (exEl) {
+    exEl.innerHTML = (data.examples || []).map(function(item) {
+      return '<button type="button" class="ptm-example" onclick="searchExample(\'' + escapeHtml(item.protein) + '\')">' +
+        escapeHtml(item.protein) + ' <span>' + fmtFull(item.sites) + ' sites</span></button>';
+    }).join('');
+  }
+
+  var card = document.getElementById('overview-card');
+  if (card) card.style.display = '';
+  renderOverviewChart(types);
+}
+
+function renderOverviewChart(types) {
+  var el = document.getElementById('ptm-overview-chart');
+  if (!el || !types.length) return;
+
+  var labels = types.map(function(t) { return t.label; });
+  var callSeries = types.map(function(t) {
+    return { value: t.ptm_calls, itemStyle: { color: PTM_COLORS[t.label] || PTM_FALLBACK_COLOR } };
+  });
+  var nonPtmSeries = types.map(function(t) { return t.non_ptm; });
+  var narrow = window.innerWidth < 768;
+
+  var option = {
+    animation: false,
+    textStyle: { fontFamily: CHART_FONT, color: CHART_INK },
+    tooltip: $.extend({}, chartTooltipStyle(), {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(7,88,61,0.05)' } },
+      formatter: function(params) {
+        var t = types[params[0].dataIndex];
+        var total = Number(t.sites) || 0;
+        var pct = total ? (t.ptm_calls / total * 100).toFixed(1) : '0';
+        return '<strong style="color:' + (PTM_COLORS[t.label] || CHART_INK) + '">' + escapeHtml(t.label) + '</strong>' +
+          '<br>PTM calls: ' + fmtFull(t.ptm_calls) + ' (' + pct + '%)' +
+          '<br>Non-PTM: ' + fmtFull(t.non_ptm) +
+          '<br>Scored sites: ' + fmtFull(total);
+      }
+    }),
+    legend: { show: false },
+    grid: { left: narrow ? 118 : 196, right: 28, top: 12, bottom: 22, containLabel: false },
+    xAxis: {
+      type: 'value',
+      axisLabel: { color: CHART_MUTED, fontFamily: CHART_FONT, formatter: function(v) { return fmtAxis(v); } },
+      splitLine: { lineStyle: { color: CHART_GRID } },
+      axisLine: { show: false },
+      axisTick: { show: false }
+    },
+    yAxis: {
+      type: 'category', inverse: true, data: labels,
+      axisLabel: {
+        color: CHART_INK, fontSize: narrow ? 10 : 12, fontFamily: CHART_FONT,
+        width: narrow ? 104 : 176, overflow: 'truncate'
+      },
+      axisLine: { lineStyle: { color: CHART_LINE } },
+      axisTick: { show: false }
+    },
+    series: [
+      {
+        name: 'PTM calls', type: 'bar', stack: 'total', barWidth: '58%', data: callSeries,
+        itemStyle: { borderRadius: [6, 0, 0, 6] }, emphasis: { focus: 'series' }
+      },
+      {
+        name: 'Non-PTM', type: 'bar', stack: 'total', data: nonPtmSeries,
+        itemStyle: { color: '#e8efe9', borderRadius: [0, 6, 6, 0] }
+      }
+    ]
+  };
+
+  if (!overviewChart) overviewChart = echarts.init(el);
+  overviewChart.setOption(option, true);
+  overviewChart.resize();
+}
+
+function searchExample(protein) {
+  $('#protein-input').val(protein);
+  searchPTM();
+}
+
+// Deep link: /wheatPTM/?protein=XXX&scope=ptm|all|high
 $(function() {
-  window.addEventListener('resize', function() { if (chart) chart.resize(); });
-  var q = new URLSearchParams(window.location.search).get('protein');
+  window.addEventListener('resize', function() {
+    if (chart) chart.resize();
+    if (overviewChart) overviewChart.resize();
+  });
+
+  loadOverview();
+
+  var params = new URLSearchParams(window.location.search);
+  var q = params.get('protein');
+  var scope = params.get('scope');
+  if (scope && SCOPE_LABELS[scope]) {
+    currentScope = scope;
+    $('#scope-select').val(scope);
+  }
+
+  $('#ptm-search-form').on('submit', function(event) {
+    event.preventDefault();
+    searchPTM();
+  });
+  $('#scope-select').on('change', function() { applyScope(this.value); });
+
   if (q) { $('#protein-input').val(q); searchPTM(); }
-  $('#protein-input').on('keydown', function(e) { if (e.key === 'Enter') searchPTM(); });
 });
-</script>
+
+  </script>
 </body>
 </html>

@@ -2,13 +2,17 @@
 """Drop and rebuild Genefunc_* tables from add_Description bed files.
 
 For each "<table><TAB><bed_file>" in the fix file, DROP the existing table and
-recreate it from the bed. The bed has 10 tab-separated columns:
+recreate it from the bed. Two bed layouts are supported:
 
-  0 species  1 karyotype  2 Chrom  3 Start1  4 End1
-  5 Gene     6 Strand     7 Description  8 Domain  9 ChineseSpring02G
+  * legacy 10-column add_Description bed:
+      0 species  1 karyotype  2 Chrom  3 Start1  4 End1
+      5 Gene     6 Strand     7 Description  8 Domain  9 ChineseSpring02G
+  * new-genome 8-column bed:
+      0 Chrom  1 Start1  2 End1  3 Gene  4 Strand
+      5 Description  6 Domain  7 ChineseSpring02G
 
-Columns 0 and 1 are not stored; the rest map onto the standard cultivar table
-schema (same as the already-imported Genefunc_AABBDD_norin61_PGSBv2_1_table).
+Columns outside the table schema are ignored; ChineseSpring02G is always
+loaded so newly added genomes keep their 02G mapping.
 
 DESTRUCTIVE — DROP TABLE on every listed table. Dry-run by default; pass
 --apply to actually drop/recreate/insert. Use --only for a smoke test.
@@ -109,21 +113,25 @@ def parse_bed(bed_path: Path) -> list[tuple]:
             if not line.strip():
                 continue
             cols = line.split("\t")
-            if len(cols) < 10:
+            if len(cols) >= 10:
+                c_chrom, c_start, c_end, c_gene, c_strand, c_desc, c_domain, c_cs = 2, 3, 4, 5, 6, 7, 8, 9
+            elif len(cols) >= 8:
+                c_chrom, c_start, c_end, c_gene, c_strand, c_desc, c_domain, c_cs = 0, 1, 2, 3, 4, 5, 6, 7
+            else:
                 continue
-            gene = cols[5].strip()
-            chrom = cols[2].strip()
+            gene = cols[c_gene].strip()
+            chrom = cols[c_chrom].strip()
             if not gene or not chrom:
                 continue
             try:
-                start = int(cols[3])
-                end = int(cols[4])
+                start = int(cols[c_start])
+                end = int(cols[c_end])
             except ValueError:
                 continue
-            strand = _nullable(cols[6])
-            desc = _nullable(cols[7])
-            domain = _nullable(cols[8])
-            cs = _nullable(cols[9])
+            strand = _nullable(cols[c_strand])
+            desc = _nullable(cols[c_desc])
+            domain = _nullable(cols[c_domain])
+            cs = _nullable(cols[c_cs])
             rows.append((gene, chrom, start, end, strand, desc, domain, cs))
     return rows
 

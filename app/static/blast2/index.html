@@ -1,0 +1,3539 @@
+<!doctype html>
+<!--
+  wheatBLAST SPA (new BLAST search + result pages), styled after the
+  WheatOmics 2.0 pages (/V2.0/index.html and /outsitelink.html, maintained
+  outside this repo). Search and results are views of this single page; they
+  are connected to /api/blast (async jobs) and can be deep-linked as
+  /blast/blast2.html#/job/<job-id>.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Triticeae WebBLAST — asynchronous BLAST searches against wheat and Triticeae genome, transcript and protein databases.">
+  <title>Triticeae WebBLAST | WheatOmics 2.0</title>
+  <style>
+    /* ==================== 视觉变量与基础样式 ==================== */
+    :root {
+      --forest: #07583d;
+      --forest-deep: #033f2d;
+      --leaf: #118653;
+      --sprout: #77b941;
+      --wheat: #e6b94a;
+      --mist: #f3f8f4;
+      --ink: #163128;
+      --muted: #66766e;
+      --line: #dfe9e2;
+      --white: #ffffff;
+      --shadow: 0 12px 36px rgba(8, 69, 47, 0.09);
+      --display: "Avenir Next", "Segoe UI", Arial, sans-serif;
+      --body: Arial, Helvetica, sans-serif;
+      --utility: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+      --page: min(1400px, calc(100% - 48px));
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #fff;
+      font-family: var(--body);
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body.nav-open { overflow: hidden; }
+
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    svg { display: block; }
+
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid rgba(230, 185, 74, 0.65);
+      outline-offset: 3px;
+    }
+
+    .skip-link {
+      position: fixed;
+      z-index: 1000;
+      top: 12px;
+      left: 12px;
+      padding: 10px 14px;
+      color: var(--white);
+      background: var(--forest-deep);
+      border-radius: 8px;
+      transform: translateY(-160%);
+      transition: transform 180ms ease;
+    }
+
+    .skip-link:focus { transform: translateY(0); }
+
+    .container {
+      width: var(--page);
+      margin-inline: auto;
+    }
+
+    .icon {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ==================== 英雄区与导航 ==================== */
+    .hero {
+      position: relative;
+      min-height: 720px;
+      overflow: hidden;
+      isolation: isolate;
+      background: #fff;
+    }
+
+    /* 背景图容器：宽度与页面主体一致，水平居中，内部做 Ken Burns 动态缩放平移 */
+    .hero-bg {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: var(--page);
+      z-index: -2;
+      overflow: hidden;
+    }
+
+    .hero-bg::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("home.png");
+      background-position: center;
+      background-size: cover;
+      animation: hero-kenburns 26s ease-in-out infinite alternate;
+    }
+
+    @keyframes hero-kenburns {
+      0%   { transform: scale(1.02) translate(0, 0); }
+      50%  { transform: scale(1.12) translate(-1.5%, -1%); }
+      100% { transform: scale(1.06) translate(1.5%, 1%); }
+    }
+
+    .site-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+      border-bottom: 1px solid rgba(7, 88, 61, 0.10);
+      background: #fff;
+    }
+
+    .header-row {
+      min-height: 88px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 34px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-mark { height: 40px; width: auto; flex: none; }
+
+    .brand-name {
+      display: block;
+      color: var(--forest);
+      font-family: var(--display);
+      font-size: 21px;
+      font-weight: 750;
+      letter-spacing: -0.7px;
+      line-height: 1.05;
+    }
+
+    .brand-name em {
+      color: #21a552;
+      font-style: normal;
+    }
+
+    .brand-tagline {
+      display: block;
+      margin-top: 5px;
+      color: #65736c;
+      font-size: 9px;
+      letter-spacing: 0.03em;
+      line-height: 1.3;
+    }
+
+    .main-nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 25px;
+    }
+
+    .nav-item { position: relative; }
+
+    .nav-link,
+    .nav-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      min-height: 42px;
+      border: 0;
+      padding: 0;
+      color: #243e34;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .nav-link::after,
+    .nav-trigger::after {
+      content: "";
+      position: absolute;
+      right: 50%;
+      bottom: 0;
+      left: 50%;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--leaf);
+      transition: inset 180ms ease;
+    }
+
+    .nav-link:hover::after,
+    .nav-link.active::after,
+    .nav-trigger:hover::after { right: 0; left: 0; }
+
+    .nav-chevron {
+      width: 12px;
+      height: 12px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+    }
+
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: -18px;
+      min-width: 210px;
+      margin: 0;
+      border: 1px solid rgba(7,88,61,0.12);
+      padding: 9px;
+      list-style: none;
+      background: rgba(255,255,255,0.98);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px);
+      transition: 160ms ease;
+    }
+
+    .nav-item:hover .dropdown,
+    .nav-item:focus-within .dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .dropdown a {
+      display: block;
+      padding: 9px 10px;
+      border-radius: 8px;
+      color: #355147;
+      font-size: 13px;
+    }
+
+    .dropdown a:hover { color: var(--forest); background: var(--mist); }
+
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+
+    .header-search {
+      position: relative;
+      width: 240px;
+    }
+
+    .header-search input {
+      width: 100%;
+      height: 38px;
+      border: 1px solid rgba(7,88,61,0.15);
+      padding: 0 42px 0 15px;
+      color: var(--ink);
+      background: rgba(255,255,255,0.9);
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .header-search button {
+      position: absolute;
+      top: 50%;
+      right: 6px;
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      padding: 0;
+      color: var(--forest);
+      background: transparent;
+      border-radius: 50%;
+      cursor: pointer;
+      transform: translateY(-50%);
+    }
+
+    .header-search .icon { width: 16px; height: 16px; }
+
+    .contact-button,
+    .primary-button,
+    .secondary-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 42px;
+      border: 1px solid transparent;
+      padding: 0 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+    }
+
+    .contact-button,
+    .primary-button {
+      color: var(--white);
+      background: var(--forest);
+      box-shadow: 0 8px 20px rgba(7,88,61,0.18);
+    }
+
+    .contact-button:hover,
+    .primary-button:hover {
+      background: #087249;
+      box-shadow: 0 10px 24px rgba(7,88,61,0.25);
+      transform: translateY(-2px);
+    }
+
+    .contact-button { min-height: 38px; padding-inline: 16px; font-size: 12px; }
+
+    .secondary-button {
+      color: var(--forest);
+      border-color: rgba(7,88,61,0.18);
+      background: rgba(255,255,255,0.87);
+    }
+
+    .secondary-button:hover { background: var(--white); transform: translateY(-2px); }
+
+    .button-arrow { font-size: 16px; line-height: 1; }
+
+    .menu-toggle {
+      position: relative;
+      display: none;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border: 1px solid rgba(7,88,61,0.16);
+      padding: 0;
+      background: rgba(255,255,255,0.8);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .menu-toggle span,
+    .menu-toggle::before,
+    .menu-toggle::after {
+      content: "";
+      position: absolute;
+      left: 11px;
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--forest);
+      border-radius: 3px;
+      transition: 180ms ease;
+    }
+
+    .menu-toggle::before { top: 14px; }
+    .menu-toggle span { top: 20px; }
+    .menu-toggle::after { top: 26px; }
+
+    .hero-inner {
+      min-height: 632px;
+      display: flex;
+      align-items: center;
+      padding-block: 146px 50px;
+    }
+
+    .hero-copy { position: relative; z-index: 3; max-width: 620px; padding-left: 32px; text-align: left; }
+
+    .hero h1 {
+      margin: 0;
+      color: var(--forest-deep);
+      font-family: var(--display);
+      font-size: clamp(58px, 5.4vw, 92px);
+      font-weight: 760;
+      letter-spacing: -0.065em;
+      line-height: 0.9;
+    }
+
+    .hero h1 span { display: block; color: #1b9b4b; }
+
+    .hero-lead {
+      max-width: 560px;
+      margin: 26px 0 0;
+      color: #29493d;
+      font-size: 18px;
+      line-height: 1.55;
+    }
+
+    .stats-panel {
+      width: min(100%, 610px);
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      margin-top: 26px;
+      border: 1px solid rgba(255,255,255,0.86);
+      background: rgba(255,255,255,0.80);
+      border-radius: 12px;
+      box-shadow: 0 16px 44px rgba(45,89,60,0.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .stat {
+      position: relative;
+      min-width: 0;
+      padding: 15px 8px 14px;
+      text-align: center;
+    }
+
+    .stat + .stat::before {
+      content: "";
+      position: absolute;
+      top: 18px;
+      bottom: 18px;
+      left: 0;
+      width: 1px;
+      background: rgba(7,88,61,0.10);
+    }
+
+    .stat .icon {
+      width: 18px;
+      height: 18px;
+      margin: 0 auto 6px;
+      color: var(--leaf);
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--forest);
+      font-family: var(--display);
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 6px;
+      color: #5e7167;
+      font-size: 9px;
+      line-height: 1.2;
+    }
+
+    .hero-buttons { display: flex; gap: 12px; margin-top: 23px; }
+
+    /* ==================== 引用与公告 ==================== */
+    main { position: relative; background: var(--white); }
+
+    .citation-wrap {
+      position: relative;
+      z-index: 5;
+      margin-top: -1px;
+      padding: 24px 0 0;
+      background: var(--white);
+      border-radius: 24px 24px 0 0;
+    }
+
+    .citation-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2.25fr) minmax(280px, 0.75fr);
+      gap: 18px;
+    }
+
+    .citation-card,
+    .call-card {
+      min-height: 142px;
+      border: 1px solid var(--line);
+      background: #fbfdfb;
+      border-radius: 14px;
+    }
+
+    .citation-card {
+      display: block;
+      padding: 23px 25px;
+    }
+
+    .citation-label {
+      margin: 0 0 7px;
+      color: var(--forest);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .citation-text {
+      margin: 0;
+      color: #53635c;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .citation-title {
+      display: block;
+      margin-top: 6px;
+      color: var(--forest-deep);
+      font-weight: 700;
+    }
+
+    .call-card {
+      position: relative;
+      overflow: hidden;
+      padding: 22px 112px 20px 22px;
+      background: linear-gradient(135deg, #f8fbf7, #eef6ec);
+    }
+
+    .call-card::after {
+      content: "";
+      position: absolute;
+      right: -24px;
+      bottom: -33px;
+      width: 145px;
+      height: 165px;
+      opacity: 0.16;
+      background-image: url("home.png");
+      background-position: 80% center;
+      background-size: auto 100%;
+      border-radius: 60% 0 0 0;
+      filter: saturate(0.6);
+    }
+
+    .call-card strong { display: block; color: var(--forest-deep); font-size: 13px; }
+    .call-card p { margin: 7px 0 11px; color: #30483f; font-size: 12px; line-height: 1.45; }
+
+    .text-link {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--forest);
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    .news-bar {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 18px;
+      min-height: 50px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .news-labels { display: flex; gap: 6px; }
+
+    .news-tab {
+      border: 0;
+      padding: 5px 11px;
+      color: #718078;
+      background: transparent;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .news-tab.active { color: var(--white); background: var(--leaf); }
+
+    .news-items { position: relative; min-width: 0; height: 22px; overflow: hidden; }
+
+    .news-item {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: 220ms ease;
+      pointer-events: none;
+    }
+
+    .news-item.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .news-date { color: var(--forest); font-family: var(--utility); font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .news-item a { min-width: 0; overflow: hidden; color: #52635b; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+    .news-more { color: var(--forest); font-size: 11px; font-weight: 700; white-space: nowrap; }
+
+    /* ==================== 内容区标题与搜索 ==================== */
+    .content-section { padding: 44px 0 10px; }
+    .data-section { padding-top: 34px; padding-bottom: 26px; }
+
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+
+    .section-title { margin: 0; color: var(--forest-deep); font-family: var(--display); font-size: 24px; letter-spacing: -0.04em; }
+
+    .section-title::after {
+      content: "";
+      display: block;
+      width: 34px;
+      height: 2px;
+      margin-top: 9px;
+      background: var(--leaf);
+      border-radius: 2px;
+    }
+
+    .section-kicker { margin: 0 0 5px; color: #7b8a82; font-family: var(--utility); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+    .tool-filter {
+      position: relative;
+      width: min(400px, 40vw);
+    }
+
+    .tool-filter input {
+      width: 100%;
+      height: 40px;
+      border: 1px solid var(--line);
+      padding: 0 52px 0 17px;
+      color: var(--ink);
+      background: var(--white);
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .filter-button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 48px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      padding: 0;
+      color: var(--white);
+      background: var(--leaf);
+      border-radius: 0 999px 999px 0;
+      cursor: pointer;
+    }
+
+    .filter-button .icon { width: 17px; height: 17px; }
+
+    /* ==================== 工具与数据卡片 ==================== */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .tool-card,
+    .data-card {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, #fff 10%, #fbfdfb 100%);
+      border-radius: 10px;
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .tool-card {
+      min-height: 91px;
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      align-items: center;
+      gap: 11px;
+      padding: 14px 13px;
+    }
+
+    .tool-card:hover,
+    .data-card:hover {
+      border-color: rgba(17,134,83,0.35);
+      box-shadow: 0 13px 28px rgba(11,91,59,0.09);
+      transform: translateY(-3px);
+    }
+
+    .tool-icon,
+    .data-icon {
+      position: relative;
+      display: grid;
+      place-items: center;
+      color: var(--leaf);
+      background: #f0f8f1;
+      border-radius: 8px;
+    }
+
+    .tool-icon { width: 40px; height: 40px; }
+    .tool-icon::after {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border: 1px solid rgba(17,134,83,0.12);
+      border-radius: 5px;
+    }
+
+    .tool-icon .icon { position: relative; z-index: 1; width: 22px; height: 22px; }
+    .tool-card h3, .data-card h3 { margin: 0; color: var(--forest-deep); font-family: var(--display); font-size: 13px; letter-spacing: -0.015em; line-height: 1.2; }
+    .tool-card p, .data-card p { margin: 5px 0 0; color: #6b7972; font-size: 9px; line-height: 1.35; }
+    .tool-card[hidden] { display: none; }
+
+    .empty-state {
+      display: none;
+      border: 1px dashed var(--line);
+      padding: 28px;
+      color: var(--muted);
+      background: var(--mist);
+      border-radius: 10px;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .empty-state.visible { display: block; }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 13px;
+    }
+
+    .data-card {
+      min-height: 116px;
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 20px;
+    }
+
+    .data-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: #eef7ef;
+    }
+
+    .data-icon .icon { width: 29px; height: 29px; }
+    .data-card h3 { font-size: 14px; }
+    .data-card p { max-width: 290px; font-size: 10px; }
+
+    /* ==================== 平台能力与页脚 ==================== */
+    .value-strip {
+      margin-top: 10px;
+      margin-bottom: 38px;
+      padding: 22px 24px;
+      background: linear-gradient(100deg, #f4f9f1, #f8fbf7 55%, #eff7ed);
+      border-radius: 12px;
+    }
+
+    .value-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+
+    .value-item {
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      align-items: center;
+      gap: 15px;
+      padding: 0 24px;
+    }
+
+    .value-item + .value-item { border-left: 1px solid rgba(7,88,61,0.10); }
+    .value-art { width: 58px; height: 58px; display: grid; place-items: center; color: var(--sprout); }
+    .value-art .icon { width: 48px; height: 48px; stroke-width: 1.15; }
+    .value-item h3 { margin: 0; color: var(--forest-deep); font-family: var(--display); font-size: 14px; }
+    .value-item p { margin: 5px 0 0; color: #65756d; font-size: 10px; line-height: 1.4; }
+
+    .site-footer { color: rgba(255,255,255,0.82); background: var(--forest-deep); }
+
+    .footer-main {
+      display: grid;
+      grid-template-columns: 1.4fr 0.8fr 1fr;
+      gap: 70px;
+      padding-block: 44px 38px;
+    }
+
+    .footer-brand .brand-name { color: var(--white); }
+    .footer-brand .brand-name em { color: #79d18c; }
+    .footer-brand .brand-tagline { color: rgba(255,255,255,0.55); }
+    .footer-wordmark { display: inline-block; }
+    .footer-wordmark .brand-name { display: block; }
+    .footer-wordmark .brand-tagline { display: block; margin-top: 5px; }
+    .footer-note { max-width: 310px; margin: 18px 0 0; color: rgba(255,255,255,0.58); font-size: 11px; line-height: 1.65; }
+
+    .footer-plot {
+      display: block;
+      width: min(860px, 100%);
+      height: auto;
+      margin: 26px auto 22px;
+    }
+
+    .footer-title { margin: 0 0 14px; color: var(--white); font-family: var(--display); font-size: 13px; }
+    .footer-links { display: grid; grid-template-columns: repeat(2, minmax(100px, 1fr)); gap: 8px 18px; }
+    .footer-links a, .contact-line { color: rgba(255,255,255,0.68); font-size: 11px; }
+    .footer-links a:hover { color: var(--white); }
+    .contact-line { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 10px; }
+    .contact-line .icon { width: 15px; height: 15px; flex: none; margin-top: 1px; color: #8ad39b; }
+
+    .footer-bottom {
+      min-height: 44px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 20px;
+      border-top: 1px solid rgba(255,255,255,0.09);
+      color: rgba(255,255,255,0.42);
+      font-family: var(--utility);
+      font-size: 9px;
+    }
+
+    .footer-bottom .copyright { justify-self: start; }
+    .footer-bottom .icp { justify-self: center; text-align: center; white-space: nowrap; }
+    .footer-bottom .back-top { justify-self: end; }
+
+    .back-top {
+      border: 0;
+      padding: 0;
+      color: rgba(255,255,255,0.55);
+      background: transparent;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    /* ==================== 响应式适配 ==================== */
+    @media (max-width: 1240px) {
+      :root { --page: min(1160px, calc(100% - 40px)); }
+      .main-nav { gap: 16px; }
+      .header-search { display: none; }
+      .tools-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .hero h1 { font-size: clamp(60px, 7.2vw, 88px); }
+      .value-item { padding-inline: 15px; }
+    }
+
+    @media (max-width: 980px) {
+      :root { --page: min(860px, calc(100% - 34px)); }
+      .site-header {
+        background: #fff;
+      }
+      .header-row { grid-template-columns: 1fr auto; }
+      .menu-toggle { display: grid; }
+      .header-actions .contact-button { display: none; }
+      .header-actions { position: absolute; right: 52px; }
+
+      .main-nav {
+        position: fixed;
+        z-index: 100;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(390px, 88vw);
+        display: block;
+        overflow-y: auto;
+        padding: 94px 28px 30px;
+        background: rgba(250,253,250,0.98);
+        box-shadow: -20px 0 50px rgba(4,63,45,0.13);
+        transform: translateX(105%);
+        transition: transform 240ms ease;
+      }
+
+      .nav-open .main-nav { transform: translateX(0); }
+      .nav-item { border-bottom: 1px solid var(--line); }
+      .nav-link, .nav-trigger { width: 100%; min-height: 52px; justify-content: space-between; font-size: 14px; }
+      .nav-link::after, .nav-trigger::after { display: none; }
+      .dropdown { position: static; display: none; min-width: 0; margin: 0 0 10px; border: 0; padding: 0 0 0 10px; box-shadow: none; opacity: 1; visibility: visible; transform: none; }
+      .nav-item:focus-within .dropdown, .nav-item.dropdown-open .dropdown { display: block; }
+      .nav-open .menu-toggle { position: fixed; z-index: 120; top: 22px; right: 18px; }
+      .nav-open .menu-toggle span { opacity: 0; }
+      .nav-open .menu-toggle::before { transform: translateY(6px) rotate(45deg); }
+      .nav-open .menu-toggle::after { transform: translateY(-6px) rotate(-45deg); }
+
+      .hero-inner { padding-block: 124px 56px; }
+      .hero-copy { max-width: 640px; }
+      .citation-grid { grid-template-columns: 1fr; }
+      .call-card { min-height: 122px; }
+      .tools-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .value-grid { grid-template-columns: repeat(2, 1fr); gap: 24px 0; }
+      .value-item:nth-child(3) { border-left: 0; }
+      .footer-main { gap: 36px; }
+    }
+
+    @media (max-width: 720px) {
+      :root { --page: calc(100% - 28px); }
+      .header-row { min-height: 76px; }
+      .brand { min-width: 0; }
+      .brand-name { font-size: 18px; }
+      .brand-tagline { display: none; }
+      .brand-mark { height: 30px; width: auto; }
+      .hero-inner { padding-block: 118px 52px; }
+      .hero h1 { font-size: clamp(44px, 13vw, 60px); }
+      .hero-lead { max-width: 480px; font-size: 16px; }
+      .stats-panel { grid-template-columns: repeat(3, 1fr); max-width: 440px; }
+      .stat:nth-child(4)::before { display: none; }
+      .stat:nth-child(-n+3) { border-bottom: 1px solid rgba(7,88,61,0.10); }
+      .hero-buttons { flex-wrap: wrap; }
+
+      .citation-wrap { border-radius: 16px 16px 0 0; }
+      .citation-card { padding: 20px 18px; }
+      .call-card { padding-right: 92px; }
+      .news-bar { grid-template-columns: 1fr auto; padding-block: 10px; }
+      .news-labels { display: none; }
+      .news-items { grid-column: 1; }
+
+      .content-section { padding-top: 34px; }
+      .section-heading { display: block; }
+      .tool-filter { width: 100%; margin-top: 16px; }
+      .tools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tool-card { min-height: 88px; }
+      .data-grid { grid-template-columns: 1fr; }
+      .value-grid { grid-template-columns: 1fr; gap: 0; }
+      .value-item, .value-item:nth-child(3) { border-left: 0; border-top: 1px solid rgba(7,88,61,0.10); padding: 18px 6px; }
+      .value-item:first-child { border-top: 0; }
+      .footer-main { grid-template-columns: 1fr; gap: 28px; }
+      .footer-links { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 460px) {
+      .tools-grid { grid-template-columns: 1fr; }
+      .tool-card { min-height: 78px; }
+      .footer-links { grid-template-columns: repeat(2, 1fr); }
+      .footer-bottom { grid-template-columns: 1fr; justify-items: start; padding-block: 14px; }
+      .footer-bottom .copyright,
+      .footer-bottom .icp,
+      .footer-bottom .back-top { justify-self: start; text-align: left; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
+  
+    /* ==================== News page ==================== */
+    main { padding-top: 88px; }
+    .news-hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--line); background:
+      radial-gradient(circle at 88% 10%, rgba(119,185,65,.20), transparent 34%),
+      linear-gradient(135deg, #fbfdfb 0%, #eef7f0 100%); }
+    .news-hero::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(7,88,61,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(7,88,61,.035) 1px, transparent 1px);
+      background-size: 46px 46px; mask-image: linear-gradient(to bottom, rgba(0,0,0,.55), transparent 82%); }
+    .news-hero-inner { position: relative; display: grid; grid-template-columns: minmax(0,1.45fr) minmax(220px,.55fr); align-items: center; gap: 44px; padding-block: 52px 10px; }
+    .news-kicker { margin: 0 0 14px; color: var(--leaf); font-family: var(--utility); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .news-title { margin: 0 0 14px; color: var(--forest-deep); font-family: var(--display); font-size: clamp(24px, 4.2vw, 52px); font-weight: 800; letter-spacing: -.055em; line-height: 1; }
+    .news-title em { color: var(--leaf); font-style: normal; }
+    .news-lead { max-width: 680px; margin: 0; color: #52665c; font-size: 15px; line-height: 1.8; }
+    .news-hero-mark { justify-self: center; width: 190px; height: 190px; display: grid; place-items: center; border-radius: 50%;
+      color: var(--forest); background: radial-gradient(circle at 35% 30%, #fff, #e2f0e5 58%, #cfe3d4); border: 1px solid rgba(7,88,61,.12);
+      box-shadow: 0 24px 60px rgba(8,69,47,.12); transform: rotate(-7deg); }
+    .news-hero-mark .icon { width: 86px; height: 86px; stroke-width: 1.15; }
+    .news-stats { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+    .news-stat { display: inline-flex; align-items: baseline; gap: 7px; padding: 9px 13px; color: #476057; background: rgba(255,255,255,.78); border: 1px solid rgba(7,88,61,.12); border-radius: 999px; font-size: 12px; }
+    .news-stat strong { color: var(--forest); font-family: var(--utility); font-size: 14px; }
+    .news-body { padding-block: 14px 64px; background: #fff; }
+    .news-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+    .news-toolbar-note { margin: 0; color: #60756a; font-size: 12px; }
+    .news-toolbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; }
+    .news-search { position: relative; width: min(330px, 100%); }
+    .news-search input { width: 100%; height: 42px; border: 1px solid var(--line); padding: 0 42px 0 15px; color: var(--ink); background: #fbfdfb; border-radius: 999px; font-size: 12px; }
+    .news-search .icon { position: absolute; top: 50%; right: 14px; width: 16px; height: 16px; color: var(--leaf); transform: translateY(-50%); pointer-events: none; }
+    .news-jump { display: inline-flex; align-items: center; gap: 7px; height: 42px; padding: 0 16px; color: var(--forest); border: 1px solid var(--line); border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--mist); }
+    .news-jump:hover { border-color: rgba(17,134,83,.35); }
+    .news-year-block { margin-top: 36px; }
+    .news-year-block:first-child { margin-top: 0; }
+    .news-year-head { display: flex; align-items: baseline; gap: 12px; margin: 0 0 16px; }
+    .news-year-head h2 { margin: 0; color: var(--forest-deep); font-family: var(--display); font-size: 25px; letter-spacing: -.04em; }
+    .news-year-head span { color: #7a8c82; font-family: var(--utility); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
+    .news-list { display: grid; gap: 12px; }
+    .news-card { display: grid; grid-template-columns: 108px minmax(0,1fr); gap: 24px; padding: 23px 25px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(145deg, #fff, #fcfefd); transition: 180ms ease; }
+    .news-card:hover { border-color: rgba(17,134,83,.34); box-shadow: 0 14px 32px rgba(8,69,47,.075); transform: translateY(-2px); }
+    .news-card-date { padding-top: 2px; color: var(--forest); font-family: var(--utility); font-size: 11px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+    .news-card-date span { display: block; margin-top: 5px; color: #8a9b91; font-size: 9px; font-weight: 500; }
+    .news-card h3 { margin: 0 0 8px; color: var(--forest-deep); font-family: var(--display); font-size: 17px; font-weight: 750; letter-spacing: -.02em; line-height: 1.35; }
+    .news-card p { margin: 0 0 10px; color: #5e7268; font-size: 13px; line-height: 1.7; }
+    .news-card-link { display: inline-flex; align-items: center; gap: 6px; color: var(--leaf); font-size: 11px; font-weight: 750; }
+    .news-card-link:hover { color: var(--forest); }
+    .news-state { padding: 28px; color: #61756a; border: 1px dashed var(--line); border-radius: 14px; font-size: 13px; }
+    .news-state.error { color: #9b3c2f; border-color: #edc9c1; background: #fff8f6; }
+    .archive { margin-top: 54px; border-top: 1px solid var(--line); padding-top: 8px; }
+    .archive > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; color: var(--forest-deep); cursor: pointer; font-family: var(--display); font-size: 19px; font-weight: 750; letter-spacing: -.03em; list-style: none; }
+    .archive > summary::-webkit-details-marker { display: none; }
+    .archive > summary span { color: #7a8c82; font-family: var(--utility); font-size: 10px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
+    .archive > summary .archive-caret { display: inline-grid; place-items: center; width: 30px; height: 30px; margin-left: auto; border: 1px solid var(--line); border-radius: 50%; color: var(--forest); transition: transform 180ms ease; }
+    .archive[open] > summary .archive-caret { transform: rotate(180deg); }
+    .archive-list { display: grid; gap: 0; padding-bottom: 20px; }
+    .archive-item { display: grid; grid-template-columns: 108px minmax(0,1fr); gap: 24px; padding: 19px 0; border-top: 1px solid var(--line); }
+    .archive-date { color: #71857a; font-family: var(--utility); font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .archive-copy { color: #5e7268; font-size: 12px; line-height: 1.75; overflow-wrap: anywhere; }
+    .archive-copy p { margin: 0 0 8px; }
+    .archive-copy p:last-child { margin-bottom: 0; }
+    .archive-copy a { color: var(--leaf); text-decoration: underline; text-underline-offset: 2px; }
+    .archive-copy a:hover { color: var(--forest); }
+    .news-footer-note { margin: 32px 0 0; color: #7a8c82; font-size: 11px; }
+    @media (max-width: 980px) {
+      .news-hero-inner { grid-template-columns: 1fr; padding-block: 54px 44px; }
+      .news-hero-mark { display: none; }
+    }
+    @media (max-width: 640px) {
+      .news-body { padding-block: 30px 58px; }
+      .news-card, .archive-item { grid-template-columns: 1fr; gap: 9px; padding-inline: 18px; }
+      .archive-item { padding-inline: 0; }
+      .news-card-date span { display: none; }
+      .news-toolbar { align-items: stretch; }
+      .news-toolbar-right { width: 100%; flex-wrap: wrap; }
+      .news-search { width: 100%; }
+      .news-jump { justify-content: center; }
+    }
+
+    /* ==================== Tools/Browse mega dropdown ==================== */
+    .dropdown.tools-dropdown {
+      min-width: 520px;
+      max-height: min(72vh, 590px);
+      overflow-y: auto;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-content: start;
+      column-gap: 8px;
+      scrollbar-width: thin;
+    }
+    .tools-dropdown li { min-width: 0; }
+    .tools-dropdown .dropdown-heading {
+      grid-column: 1 / -1;
+      padding: 7px 10px 5px;
+      color: #7b8a82;
+      font-family: var(--utility);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .tools-dropdown .dropdown-heading:first-child { padding-top: 2px; }
+    .tools-dropdown a {
+      padding: 7px 10px;
+      font-size: 12px;
+    }
+    .tools-dropdown .tools-all-link {
+      grid-column: 1 / -1;
+      margin-top: 5px;
+      color: var(--leaf);
+      font-weight: 750;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+    }
+
+  
+    /* ==================== Footer visit counter ==================== */
+    .footer-visits {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 8px;
+      margin-left: 10px;
+      color: rgba(255,255,255,0.42);
+      font-family: var(--utility);
+      font-size: 9px;
+      white-space: nowrap;
+    }
+    .footer-visits strong { color: rgba(255,255,255,0.78); font-weight: 600; }
+    .footer-visits .visit-sep { color: rgba(255,255,255,0.18); }
+    .footer-visit-item { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+    .footer-visits .footer-visit-item .icon { width: 12px; height: 12px; stroke-width: 1.8; opacity: .58; }
+
+    @media (max-width: 640px) {
+      .footer-visits { margin-left: 0; display: flex; }
+    }
+
+  
+    .brand-version {
+      margin-left: 4px;
+      color: #21a552;
+      font-family: var(--display);
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -.04em;
+      line-height: 1;
+      align-self: center;
+      transform: translateY(7px);
+    }
+
+  
+    .ext-count { margin-left: 8px; color: #7a8c82; font-family: var(--utility); font-size: 10px; letter-spacing: .06em; }
+    .ext-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 26px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+    .ext-toolbar p { margin: 0; color: #60756a; font-size: 12px; }
+    .ext-search { position: relative; width: min(330px, 100%); }
+    .ext-search input { width: 100%; height: 42px; border: 1px solid var(--line); padding: 0 42px 0 15px; color: var(--ink); background: #fbfdfb; border-radius: 999px; font-size: 12px; }
+    .ext-search .icon { position: absolute; top: 50%; right: 14px; width: 16px; height: 16px; color: var(--leaf); transform: translateY(-50%); pointer-events: none; }
+    .ext-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .ext-card { display: flex; flex-direction: column; min-height: 174px; padding: 20px 22px 18px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(145deg, #fff, #fcfefd); transition: 180ms ease; }
+    .ext-card:hover { border-color: rgba(17,134,83,.34); box-shadow: 0 14px 32px rgba(8,69,47,.075); transform: translateY(-2px); }
+    .ext-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; }
+    .ext-index { color: #9aaca1; font-family: var(--utility); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+    .ext-external { color: var(--leaf); font-size: 17px; line-height: 1; }
+    .ext-card h3 { margin: 0 0 8px; color: var(--forest-deep); font-family: var(--display); font-size: 17px; font-weight: 750; letter-spacing: -.02em; line-height: 1.3; }
+    .ext-card h3 a:hover { color: var(--leaf); }
+    .ext-card p { margin: 0 0 15px; color: #5e7268; font-size: 12px; line-height: 1.7; flex: 1; }
+    .ext-card p a { color: var(--leaf); text-decoration: underline; text-underline-offset: 2px; }
+    .ext-open { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; color: var(--leaf); font-size: 11px; font-weight: 750; }
+    .ext-open:hover { color: var(--forest); }
+    .ext-empty { display: none; padding: 30px; color: #61756a; border: 1px dashed var(--line); border-radius: 14px; font-size: 13px; }
+    .ext-empty.visible { display: block; }
+    @media (max-width: 760px) { .ext-grid { grid-template-columns: 1fr; } .ext-toolbar { align-items: stretch; } .ext-search { width: 100%; } }
+
+    /* ==================== External Links hero wheat photo ==================== */
+    .news-hero {
+      background-image:
+        linear-gradient(90deg, rgba(251,253,251,.97) 0%, rgba(251,253,251,.92) 30%, rgba(251,253,251,.66) 46%, rgba(251,253,251,.18) 56%, rgba(251,253,251,0) 65%, rgba(251,253,251,0) 100%),
+        url('/css/wheat.jpeg');
+      background-position: center, center 58%;
+      background-size: cover, cover;
+      background-repeat: no-repeat;
+    }
+    .news-hero::before { opacity: .28; }
+    @media (max-width: 760px) {
+      .news-hero {
+        background-image:
+          linear-gradient(180deg, rgba(251,253,251,.96) 0%, rgba(251,253,251,.90) 60%, rgba(248,251,248,.82) 100%),
+          url('/css/wheat.jpeg');
+        background-position: center, center 62%;
+      }
+    }
+
+  
+    .news-hero-inner { grid-template-columns: 1fr; }
+
+    /* ==================== BLAST tool page ==================== */
+    .blast-page { padding-top: 6px; }
+    .blast-visually-hidden {
+      position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+    .blast-layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; align-items: start; }
+    .blast-primary { display: grid; gap: 18px; min-width: 0; }
+    .blast-side { display: grid; gap: 18px; min-width: 0; }
+    .blast-card {
+      border: 1px solid var(--line); border-radius: 18px; padding: 22px 24px;
+      background: linear-gradient(150deg, #fff, #fbfefb);
+      box-shadow: 0 10px 30px rgba(8, 69, 47, .045);
+    }
+    .blast-card-title {
+      margin: 0 0 4px; color: var(--forest-deep);
+      font-family: var(--display); font-size: 16px; font-weight: 800; letter-spacing: -.02em;
+    }
+    .blast-card-sub { margin: 0 0 12px; color: var(--muted); font-size: 11px; line-height: 1.65; }
+    .blast-field { display: flex; flex-direction: column; gap: 6px; margin-top: 13px; }
+    .blast-field > span { color: #3d564b; font-size: 11.5px; font-weight: 700; }
+    .blast-field small { color: var(--muted); font-size: 10.5px; font-weight: 400; }
+    .blast-input, .blast-select, .blast-query {
+      width: 100%; color: var(--ink); background: #fff;
+      border: 1px solid var(--line); border-radius: 10px; font-size: 12.5px;
+    }
+    .blast-input, .blast-select { height: 38px; padding: 0 12px; }
+    .blast-query { min-height: 190px; padding: 12px 14px; resize: vertical; font-family: var(--utility); font-size: 11px; line-height: 1.6; }
+    .blast-input:focus, .blast-select:focus, .blast-query:focus {
+      outline: none; border-color: rgba(17, 134, 83, .45); box-shadow: 0 0 0 4px rgba(17, 134, 83, .10);
+    }
+    .blast-query-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 14px; margin-top: 8px; color: var(--muted); font-size: 10.5px; }
+    .blast-file-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
+    .blast-file-row label.secondary-button { cursor: pointer; min-height: 36px; font-size: 11px; }
+    .blast-examples { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; color: var(--muted); font-size: 10.5px; }
+    .blast-example {
+      border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px;
+      background: #fff; color: var(--forest); font-size: 10.5px; font-weight: 700; cursor: pointer;
+    }
+    .blast-example:hover { border-color: rgba(17, 134, 83, .4); background: var(--mist); }
+    .blast-link-btn { border: 0; min-height: 26px; padding: 4px 2px; background: none; color: var(--leaf); font-size: 10.5px; font-weight: 700; cursor: pointer; }
+    .blast-link-btn:hover { text-decoration: underline; }
+
+    /* databases */
+    .blast-db-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+    .blast-db-search { flex: 1 1 240px; height: 38px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); font-size: 12px; }
+    .blast-db-search:focus { outline: none; border-color: rgba(17, 134, 83, .45); box-shadow: 0 0 0 4px rgba(17, 134, 83, .10); }
+    .blast-presets { display: flex; gap: 8px; flex-wrap: wrap; }
+    .blast-preset {
+      border: 1px solid var(--line); border-radius: 999px; background: var(--mist);
+      color: var(--forest); font-size: 10.5px; font-weight: 700; padding: 7px 12px; cursor: pointer;
+    }
+    .blast-preset:hover { border-color: rgba(17, 134, 83, .4); }
+    .blast-preset.active { border-color: var(--forest); background: var(--forest); color: #fff; }
+    .blast-preset.active::before { content: '✓ '; }
+    .blast-db-cats { display: grid; gap: 8px; margin-top: 14px; }
+    .blast-cat { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff; }
+    .blast-cat-head {
+      display: flex; align-items: baseline; gap: 10px; width: 100%;
+      border: 0; padding: 12px 15px; text-align: left; cursor: pointer;
+      background: #fbfdfb; color: var(--forest-deep);
+    }
+    .blast-cat-head:hover { background: var(--mist); }
+    .blast-cat-title { font-size: 12.5px; font-weight: 700; }
+    .blast-cat-desc { flex: 1; color: var(--muted); font-size: 11.5px; font-weight: 400; }
+    .blast-cat-count { color: var(--muted); font-family: var(--utility); font-size: 12px; }
+    .blast-cat-chevron { color: var(--muted); font-size: 13px; transition: transform .15s ease; }
+    .blast-cat.open .blast-cat-chevron { transform: rotate(180deg); }
+    .blast-db-list {
+      display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px 16px;
+      max-height: 264px; overflow: auto; padding: 11px 15px 14px; border-top: 1px solid var(--line);
+    }
+    .blast-db-item {
+      display: flex; align-items: flex-start; gap: 7px; padding: 4px 0;
+      color: #3d564b; font-size: 11px; font-family: var(--utility); word-break: break-all; cursor: pointer;
+    }
+    .blast-db-item input { margin: 2px 0 0; accent-color: var(--leaf); flex: none; }
+    .blast-db-item:hover { color: var(--forest); }
+    .blast-db-group-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px 22px; }
+    @media (max-width: 1100px) { .blast-db-group-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    #blast-db-search-results { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .blast-selected { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line); }
+    .blast-selected-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; color: #3d564b; font-size: 12px; font-weight: 700; }
+    .blast-selected-head span { color: var(--muted); font-family: var(--utility); font-size: 11.5px; font-weight: 400; }
+    .blast-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+    .blast-chip {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+      border: 1px solid var(--line); border-radius: 999px; background: var(--mist);
+      color: #33483f; font-family: var(--utility); font-size: 10.5px;
+    }
+    .blast-chip button { border: 0; padding: 0; background: none; color: #7a8c82; font-size: 13px; line-height: 1; cursor: pointer; }
+    .blast-chip button:hover { color: #a0522d; }
+    .blast-param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 13px; }
+    .blast-param-grid .blast-field { margin-top: 0; }
+    .blast-advanced { margin-top: 12px; border: 1px dashed var(--line); border-radius: 12px; padding: 10px 12px; }
+    .blast-advanced summary { cursor: pointer; color: #3d564b; font-size: 11.5px; font-weight: 700; }
+    .blast-actions { display: grid; gap: 9px; margin-top: 15px; }
+    .blast-actions .primary-button { width: 100%; min-height: 48px; }
+    .blast-actions .primary-button[disabled] { opacity: .6; cursor: wait; transform: none; }
+    .blast-hint { color: var(--muted); font-size: 11.5px; line-height: 1.65; }
+    .blast-alert { display: none; margin-top: 12px; padding: 11px 14px; border-radius: 12px; font-size: 11.5px; line-height: 1.65; }
+    .blast-alert.error { display: block; color: #8f3527; background: #fff7f5; border: 1px solid #efc9c0; }
+    .blast-alert.warn { display: block; color: #7a5312; background: #fffaf0; border: 1px solid #eed9a8; }
+    .blast-alert code { font-family: var(--utility); font-size: 10.5px; }
+
+    /* recent jobs */
+    .blast-recent { display: grid; gap: 8px; margin-top: 10px; }
+    .blast-recent-item {
+      display: block; width: 100%; text-align: left; cursor: pointer;
+      border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+      background: #fbfdfb; color: #3d564b; font-size: 10.5px;
+    }
+    .blast-recent-item:hover { border-color: rgba(17, 134, 83, .35); background: #fff; }
+    .blast-recent-item strong { display: block; margin-bottom: 2px; color: var(--forest-deep); font-family: var(--display); font-size: 12px; }
+    .blast-recent-empty { color: var(--muted); font-size: 10.5px; }
+
+    /* results */
+    .blast-result-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 18px; margin-top: 28px; }
+    .blast-result-title { margin: 0; color: var(--forest-deep); font-family: var(--display); font-size: clamp(20px, 2.6vw, 28px); font-weight: 800; letter-spacing: -.04em; }
+    .blast-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 12px; }
+    .blast-status {
+      display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px;
+      border: 1px solid var(--line); border-radius: 999px; background: #f1f5f9;
+      color: #334155; font-family: var(--utility); font-size: 10px; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+    .blast-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; }
+    .blast-status.pending, .blast-status.running { background: #fffaf0; border-color: #eed9a8; color: #7a5312; }
+    .blast-status.pending::before, .blast-status.running::before { background: var(--wheat); animation: blast-pulse 1.4s ease-in-out infinite; }
+    .blast-status.done { background: #f4faf5; border-color: #cfe4d5; color: #22543d; }
+    .blast-status.done::before { background: var(--leaf); }
+    .blast-status.error, .blast-status.stale { background: #fff7f5; border-color: #efc9c0; color: #8f3527; }
+    .blast-status.error::before, .blast-status.stale::before { background: #c0523a; }
+    @keyframes blast-pulse { 50% { opacity: .35; } }
+    .blast-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 16px; }
+    .blast-meta-item { border: 1px solid var(--line); border-radius: 12px; padding: 10px 13px; background: #fbfdfb; min-width: 0; }
+    .blast-meta-item dt { margin: 0; color: var(--muted); font-family: var(--utility); font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
+    .blast-meta-item dd { margin: 4px 0 0; color: #33483f; font-size: 11.5px; word-break: break-word; }
+    .blast-tabs { display: flex; gap: 2px; margin-top: 24px; border-bottom: 1px solid var(--line); }
+    .blast-tab {
+      border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
+      padding: 10px 16px; background: none; color: var(--muted);
+      font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .blast-tab:hover { color: var(--forest); }
+    .blast-tab.active { color: var(--forest); border-bottom-color: var(--leaf); }
+    .blast-panel { padding-top: 18px; }
+    .blast-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+    .blast-toolbar input, .blast-toolbar select {
+      height: 38px; border: 1px solid var(--line); border-radius: 999px;
+      padding: 0 14px; background: #fff; color: var(--ink); font-size: 11.5px;
+    }
+    .blast-toolbar input:focus, .blast-toolbar select:focus { outline: none; border-color: rgba(17, 134, 83, .45); }
+    .blast-toolbar input { flex: 1 1 230px; }
+    .blast-table-wrap { max-height: min(62vh, 660px); overflow: auto; border: 1px solid var(--line); border-radius: 14px; }
+    .blast-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .blast-table th {
+      position: sticky; top: 0; z-index: 1; padding: 9px 11px; text-align: left;
+      background: var(--mist); border-bottom: 1px solid var(--line);
+      color: #3d564b; font-family: var(--utility); font-size: 9px; letter-spacing: .05em;
+      text-transform: uppercase; white-space: nowrap; cursor: pointer; user-select: none;
+    }
+    .blast-table th.sorted { color: var(--forest); }
+    .blast-table td { padding: 8px 11px; border-bottom: 1px solid #eef4ef; color: #33483f; vertical-align: top; }
+    .blast-table tbody tr.data-row { cursor: pointer; }
+    .blast-table tbody tr.data-row:hover { background: #fbfdfb; }
+    .blast-table .num { text-align: right; font-family: var(--utility); white-space: nowrap; }
+    .blast-table .subject { font-family: var(--utility); font-size: 10.5px; white-space: nowrap; }
+    .blast-table .subject a { color: var(--leaf); }
+    .blast-table .subject a:hover { text-decoration: underline; }
+    .blast-table .desc { max-width: 360px; color: #5d7267; font-size: 10.5px; }
+    .blast-detail-row td { background: #f8fbf9; padding: 10px 14px; font-size: 10.5px; color: #446055; }
+    .blast-detail-row .btop { display: block; margin-top: 6px; font-family: var(--utility); font-size: 10px; word-break: break-all; color: #3d564b; }
+    .blast-empty { padding: 28px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 14px; font-size: 12px; }
+    .blast-align-pre {
+      max-height: 66vh; overflow: auto; margin: 0; padding: 16px;
+      border: 1px solid var(--line); border-radius: 14px; background: #fbfdfb;
+      color: #233a31; font-family: var(--utility); font-size: 10.5px; line-height: 1.55; white-space: pre;
+    }
+    .blast-downloads { display: grid; gap: 10px; }
+    .blast-download {
+      display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center;
+      border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: #fbfdfb;
+      font-size: 11.5px; color: #3d564b;
+    }
+    .blast-download strong { color: var(--forest-deep); font-family: var(--display); font-size: 13px; }
+    .blast-spinner {
+      display: inline-block; width: 14px; height: 14px; margin-right: 7px; vertical-align: -2px;
+      border: 2px solid rgba(7, 88, 61, .16); border-top-color: var(--leaf);
+      border-radius: 50%; animation: blast-spin .8s linear infinite;
+    }
+    @keyframes blast-spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 980px) {
+      .blast-layout { grid-template-columns: 1fr; }
+      .blast-db-list { grid-template-columns: 1fr; }
+      .blast-db-group-list { grid-template-columns: 1fr; }
+      .blast-param-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .blast-card { padding: 18px; }
+      .blast-result-head { align-items: flex-start; }
+      .blast-table .desc { max-width: 200px; }
+    }
+
+    /* hidden must win over component display rules inside this page */
+    .blast-page [hidden] { display: none !important; }
+    .blast-table th.sorted::after { content: " " attr(data-arrow); color: var(--leaf); }
+    .blast-status-row .blast-hint { margin: 0; }
+
+    /* ==================== NCBI-style result additions ==================== */
+    .blast-result-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .blast-card-head-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 18px; margin-bottom: 12px; }
+    .blast-panel-title { margin: 0; color: var(--forest-deep); font-family: var(--display); font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
+    .blast-graphic { display: grid; gap: 16px; }
+    .blast-graphic-block { border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 14px 16px; }
+    .blast-graphic-title { margin-bottom: 10px; color: var(--forest-deep); font-family: var(--display); font-size: 13px; font-weight: 700; }
+    .blast-graphic-title span { margin-left: 6px; color: var(--muted); font-family: var(--utility); font-size: 10px; font-weight: 400; }
+    .blast-graphic-row { display: grid; grid-template-columns: 180px minmax(0, 1fr) 56px; gap: 10px; align-items: center; padding: 3px 0; }
+    .blast-graphic-label { overflow: hidden; color: #3d564b; font-family: var(--utility); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .blast-graphic-track { position: relative; height: 14px; border-radius: 4px; background: #f1f6f2; }
+    .blast-graphic-hit { position: absolute; top: 2px; height: 10px; border-radius: 3px; cursor: pointer; opacity: .9; }
+    .blast-graphic-hit:hover { opacity: 1; outline: 1px solid rgba(7, 88, 61, .5); }
+    .blast-graphic-score { color: var(--muted); font-family: var(--utility); font-size: 10px; text-align: right; }
+    .blast-graphic-axis { position: relative; height: 16px; margin: 4px 0 0 190px; color: var(--muted); font-family: var(--utility); font-size: 9px; }
+    .blast-graphic-axis span { position: absolute; transform: translateX(-50%); }
+    .blast-graphic-axis span:first-child { transform: none; }
+    .blast-graphic-axis span:last-child { transform: translateX(-100%); }
+
+    .blast-filters { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: flex-end; margin-bottom: 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: #fbfdfb; }
+    .blast-filter-field { display: flex; flex-direction: column; gap: 5px; color: #3d564b; font-size: 10.5px; font-weight: 700; }
+    .blast-filter-field input, .blast-filter-field select { height: 34px; min-width: 110px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); font-size: 11.5px; }
+    .blast-filter-field input:focus, .blast-filter-field select:focus { outline: none; border-color: rgba(17, 134, 83, .45); }
+    .blast-filter-actions { display: flex; gap: 10px; align-items: center; }
+    .blast-selection-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 10px; color: #3d564b; font-size: 11px; }
+    .blast-check-label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+    .blast-check-label input { accent-color: var(--leaf); }
+    .blast-table th.sel, .blast-table td.sel { width: 26px; padding-right: 0; text-align: center; }
+    .blast-table td.sel input { cursor: pointer; accent-color: var(--leaf); }
+    .blast-table tr.query-group-title td { padding: 9px 12px; background: #f4f9f1; border-bottom: 1px solid var(--line); color: var(--forest-deep); font-family: var(--display); font-size: 12px; font-weight: 700; }
+    .blast-table tr.flash td { animation: blast-flash 1.4s ease; }
+    @keyframes blast-flash { 0%, 60% { background: #eaf7ea; } 100% { background: transparent; } }
+
+    .blast-aln-list { display: grid; gap: 12px; }
+    .blast-aln-card { border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow: hidden; }
+    .blast-aln-card > summary { display: flex; justify-content: space-between; gap: 12px; padding: 12px 16px; background: #fbfdfb; color: var(--forest-deep); font-size: 12px; font-weight: 700; cursor: pointer; }
+    .blast-aln-card > summary span { color: var(--muted); font-family: var(--utility); font-size: 10px; font-weight: 400; }
+    .blast-aln-body { padding: 10px 16px 16px; }
+    .blast-aln-meta { margin-bottom: 8px; color: #3d564b; font-family: var(--utility); font-size: 10.5px; line-height: 1.7; }
+    .blast-aln-pre { margin: 0; padding: 12px 14px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; background: #fbfdfb; color: #233a31; font-family: var(--utility); font-size: 10.5px; line-height: 1.55; white-space: pre; }
+    .blast-aln-pre .mx { color: #0b6b3a; font-weight: 700; }
+    .blast-aln-pre .pp { color: #a0661a; font-weight: 700; }
+    .blast-aln-pre .mm { background: #fde8e4; }
+    .blast-aln-empty { color: var(--muted); font-size: 11px; }
+
+    @media (max-width: 760px) {
+      .blast-graphic-row { grid-template-columns: 118px minmax(0, 1fr) 44px; }
+      .blast-graphic-axis { margin-left: 128px; }
+      .blast-filter-field input, .blast-filter-field select { min-width: 88px; }
+      .blast-result-actions { width: 100%; }
+    }
+
+    /* ==================== database kind grouping / quality badges ==================== */
+    .blast-db-viewfilters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 0 0 12px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fbfdfb; }
+    .blast-kind-chip { min-height: 28px; padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: #3d564b; font-size: 10.5px; font-weight: 700; cursor: pointer; }
+    .blast-kind-chip:hover { border-color: rgba(17, 134, 83, .45); }
+    .blast-kind-chip.active { border-color: var(--forest); background: var(--forest); color: #fff; }
+    .blast-chrom-only-label { align-items: center; min-height: 28px; padding: 2px 0; font-size: 10.5px; color: #3d564b; }
+    .blast-db-group { border-top: 1px dashed var(--line); }
+    .blast-db-group:first-child { border-top: 0; }
+    .blast-db-group-title { display: flex; align-items: center; gap: 8px; padding: 8px 12px 3px; color: var(--forest-deep); font-family: var(--display); font-size: 10.5px; font-weight: 700; }
+    .blast-db-group-title .blast-db-group-count { color: var(--muted); font-family: var(--utility); font-size: 11.5px; font-weight: 400; }
+    .blast-db-group-title button { margin-left: auto; min-height: 24px; padding: 2px 0; border: 0; background: none; color: var(--leaf); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .blast-db-group-list { padding-bottom: 4px; }
+    .blast-db-item > span:first-of-type { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .blast-db-badges { display: inline-flex; flex: none; gap: 4px; margin-left: auto; }
+    .blast-badge { padding: 1px 6px; border-radius: 999px; background: #eef5ee; color: #3d564b; font-family: var(--utility); font-size: 8.5px; font-weight: 400; white-space: nowrap; }
+    .blast-badge.chr { background: #eef1fa; color: #3d4f7a; }
+    .blast-badge.warn { background: #fdf2e3; color: #8a5a12; }
+    .blast-badge.agg { background: #eaf3ec; color: #2c5c3f; }
+
+    .blast-chr-group { border-top: 1px dotted var(--line); }
+    .blast-chr-group:first-child { border-top: 0; }
+    .blast-chr-group > summary { display: flex; align-items: center; gap: 7px; min-height: 28px; padding: 6px 12px 4px 22px; color: #3d564b; font-family: var(--display); font-size: 10px; font-weight: 700; cursor: pointer; list-style: none; }
+    .blast-chr-group > summary::-webkit-details-marker { display: none; }
+    .blast-chr-group > summary::before { content: '▸'; color: var(--muted); font-size: 9px; }
+    .blast-chr-group[open] > summary::before { content: '▾'; }
+    .blast-chr-group .blast-db-group-list { padding-left: 10px; }
+
+    /* NCBI-style graphic summary legend */
+    .blast-graphic-legend { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-top: 14px; }
+    .blast-graphic-legend-item { display: inline-flex; align-items: center; gap: 6px; color: #3d564b; font-family: var(--utility); font-size: 11px; }
+    .blast-graphic-legend-item i { display: inline-block; width: 16px; height: 10px; border-radius: 2px; }
+
+    .blast-aln-actions { display: inline-flex; gap: 10px; align-items: center; margin-left: auto; }
+    .blast-aln-copy { min-height: 26px; padding: 3px 11px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--leaf); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .blast-aln-copy:hover { border-color: rgba(17, 134, 83, .45); }
+
+    /* prominent BLAST job status banner */
+    .blast-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 16px 0 18px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 14px; background: #fbfdfb; }
+    .blast-status-row.status-pending { background: #fff8e8; border-color: #efd9a8; }
+    .blast-status-row.status-running { background: #eef6ff; border-color: #bcd7f2; }
+    .blast-status-row.status-done { background: #edf8f0; border-color: #b8dfc8; }
+    .blast-status-row.status-error, .blast-status-row.status-stale { background: #fdf0ee; border-color: #f0c5bd; }
+    .blast-status { padding: 6px 14px; border-radius: 999px; color: #fff; font-size: 13px; font-weight: 800; letter-spacing: .08em; }
+    .blast-status.pending { background: #b7791f; }
+    .blast-status.running { background: #1d6fa5; }
+    .blast-status.done { background: #12805c; }
+    .blast-status.error, .blast-status.stale { background: #b42318; }
+    .blast-status-icon { width: 20px; text-align: center; color: #3d564b; font-size: 18px; font-weight: 800; }
+    .blast-status-icon.spinner { width: 16px; height: 16px; border: 2px solid #bcd7f2; border-top-color: #1d6fa5; border-radius: 50%; font-size: 0; animation: blast-spin .8s linear infinite; }
+    @keyframes blast-spin { to { transform: rotate(360deg); } }
+    .blast-status-message { color: var(--forest-deep); font-size: 13px; font-weight: 600; }
+
+    .blast-aln-chevron { display: inline-block; width: 16px; color: var(--muted); font-size: 12px; line-height: 1; transition: transform .15s ease; }
+    .blast-aln-card[open] > summary .blast-aln-chevron { transform: rotate(90deg); }
+
+    .blast-aln-getseq { margin-left: 14px; min-height: 26px; padding: 2px 11px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--leaf); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .blast-aln-getseq:hover { border-color: rgba(17, 134, 83, .45); }
+    .blast-getseq-panel { margin: 4px 0 14px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 12px; background: #fbfdfb; }
+    .blast-getseq-fields { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-end; }
+    .blast-getseq-fields label { display: flex; flex-direction: column; gap: 4px; color: #3d564b; font-size: 10px; font-weight: 700; }
+    .blast-getseq-fields input { height: 30px; min-width: 130px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 11px; }
+    .blast-getseq-out { margin: 10px 0 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-family: var(--utility); font-size: 10.5px; white-space: pre-wrap; word-break: break-all; }
+
+    .blast-row-align { margin-left: 6px; padding: 1px 8px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--leaf); font-family: var(--utility); font-size: 9px; font-weight: 700; cursor: pointer; }
+    .blast-row-align:hover { border-color: rgba(17, 134, 83, .45); }
+    .blast-aln-card.flash > summary { background: #eaf7ea; }
+
+    .blast-aln-query-title { margin: 16px 0 8px; padding: 6px 12px; border-left: 3px solid var(--leaf); background: #f4f9f1; border-radius: 6px; color: var(--forest-deep); font-family: var(--display); font-size: 12px; font-weight: 700; }
+    .blast-aln-query-title span { color: var(--muted); font-family: var(--utility); font-size: 10px; font-weight: 400; }
+
+    .blast-alert.success { background: #edf8f0; border-color: #b8dfc8; color: #12805c; }
+    .blast-danger-button { color: #b42318; border-color: #f0c5bd; }
+    .blast-danger-button:hover { background: #fdf0ee; }
+  </style>
+</head>
+<body>
+
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <svg aria-hidden="true" width="0" height="0" style="position:absolute;overflow:hidden">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.7"/><path d="m16 16 4.2 4.2"/></symbol>
+    <symbol id="i-dna" viewBox="0 0 24 24"><path d="M6 2c0 7 12 13 12 20M18 2C18 9 6 15 6 22M8 5h8M7 10h10M7 15h10M8 20h8"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M20 4C11 4 5 8 5 15c0 3 2 5 5 5 7 0 10-7 10-16Z"/><path d="M4 21c3-6 7-9 13-12"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="i-sequence" viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h16"/><circle cx="7" cy="6" r="1.6"/><circle cx="17" cy="12" r="1.6"/><circle cx="12" cy="18" r="1.6"/></symbol>
+    <symbol id="i-network" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.3"/><circle cx="5" cy="18" r="2.3"/><circle cx="19" cy="18" r="2.3"/><path d="m10.7 7-4.4 8.8M13.3 7l4.4 8.8M7.3 18h9.4"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4.5 19A1.4 1.4 0 0 0 5.7 21h12.6a1.4 1.4 0 0 0 1.2-2L14 9V3"/><path d="M7 16h10"/></symbol>
+    <symbol id="i-chromosome" viewBox="0 0 24 24"><path d="M8 3c4 2 4 6 0 9s-4 7 0 9M16 3c-4 2-4 6 0 9s4 7 0 9M8 7h8M8 17h8"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 12h3l2-7 3 14 3-11 3 8 2-4h4"/></symbol>
+    <symbol id="i-marker" viewBox="0 0 24 24"><path d="M5 21V9M12 21V4M19 21V12"/><circle cx="5" cy="6" r="3"/><circle cx="12" cy="2.5" r="2"/><circle cx="19" cy="9" r="3"/></symbol>
+    <symbol id="i-gene" viewBox="0 0 24 24"><path d="M4 17c4-8 12-8 16 0M4 7c4 8 12 8 16 0"/><path d="M7 8v8M12 10v4M17 8v8"/></symbol>
+    <symbol id="i-nodes" viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="12" cy="10" r="2"/><path d="m7 6 3.4 3M17 6l-3.4 3M12 12v4"/></symbol>
+    <symbol id="i-primer" viewBox="0 0 24 24"><path d="M6 4c5 0 5 5 5 8s0 8 7 8M18 4c-5 0-5 5-5 8s0 8-7 8"/><path d="M4 4h4M16 4h4M4 20h4M16 20h4"/></symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><path d="M8 9h8M8 12h8M8 15h5"/></symbol>
+    <symbol id="i-helix" viewBox="0 0 24 24"><path d="M7 3c0 6 10 12 10 18M17 3C17 9 7 15 7 21M8 6h8M7 12h10M8 18h8"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22V5.5ZM20 5.5A2.5 2.5 0 0 0 17.5 3H13v17h4.5A2.5 2.5 0 0 1 20 22V5.5Z"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 4 6 4 9s-1 6-4 9M12 3c-3 3-4 6-4 9s1 6 4 9"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V9M10 20V4M16 20v-7M22 20V7"/><path d="M2 20h21"/></symbol>
+    <symbol id="i-cells" viewBox="0 0 24 24"><circle cx="8" cy="8" r="4"/><circle cx="16" cy="15" r="5"/><circle cx="17" cy="5" r="2"/><path d="m6.5 8 2-1M14 14l3 2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3 8 8 10 5-2 8-5 8-10V6l-8-3Z"/><path d="m8.5 12 2.2 2.2 4.8-5"/></symbol>
+    <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="7" r="3"/><circle cx="6" cy="17" r="3"/><path d="m8.5 8.5 11 8.5M8.5 15.5 19.5 7"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  </svg>
+  <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/V2.0/" aria-label="WheatOmics 2.0 home">
+          <img class="brand-mark" src="/V2.0/Logo-small.png" alt="WheatOmics 2.0 logo">
+          <span class="brand-version">2.0</span>
+        </a>
+
+        <nav class="main-nav" id="main-nav" aria-label="Primary navigation">
+          <div class="nav-item"><a class="nav-link" href="/V2.0/">Home</a></div>
+          <div class="nav-item">
+            <button class="nav-trigger" type="button" aria-expanded="false">Tools
+              <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
+            </button>
+                        <ul class="dropdown tools-dropdown">
+              <li><a href="https://wheatomics.sdau.edu.cn/getfasta/">GetSequence</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/blast/blast.html">BLAST</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/GeneHub/">GeneHub</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/genes/">KnownGene</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/tools/proteinfamily.html">PfamSearch</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/PrimerServer/">PrimerServer</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/idConvert/">IDConverter</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/homologtools/index.html">HomologFinder</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/expression/index.html">GeneExpression</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/coexpression/index.html">Co-expression</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/tools/intervalTools.html">IntervalTool</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/symap/index.html">SyntenySearch</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/caps/">CAPS/dCAPS</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/preblast/">preBLAST</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/sms2/">SequenceToolkit</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/VariantHub/">VariantHub</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/eqtl/">eQTL Atlas</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/GO_KEGG/">GO/KEGG Enrichment</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/syntenyview/">Collinearity</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/orthofinder/">OrthoFinder</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/scRNA/">scRNA</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/wheatPPI/index.html">WheatPPI</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/wheatPSP/">wheatPSP</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/papers/">Triticeae Papers</a></li>
+              <li><a class="tools-all-link" href="/V2.0/#tools">View all tools →</a></li>
+            </ul>
+          </div>
+          <div class="nav-item">
+            <button class="nav-trigger" type="button" aria-expanded="false">JBrowse
+              <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
+            </button>
+            <ul class="dropdown">
+              <li><a href="https://wheatomics.sdau.edu.cn/jbrowse.html">JBrowse Gateway</a></li>
+              <li><a href="/V2.0/#data">Browse Data Types</a></li>
+            </ul>
+          </div>
+          <div class="nav-item"><a class="nav-link" href="https://wheatomics.sdau.edu.cn/download.html">Download Data</a></div>
+          <div class="nav-item"><a class="nav-link" href="https://wheatomics.sdau.edu.cn/outsitelink.html">External Links</a></div>
+          <div class="nav-item">
+            <button class="nav-trigger" type="button" aria-expanded="false">About
+              <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
+            </button>
+            <ul class="dropdown">
+              <li><a href="/V2.0/#citation">Citation</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/help/news.html">News</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/help/contact.html">Contact</a></li>
+            </ul>
+          </div>
+        </nav>
+
+        <div class="header-actions">
+          <form class="header-search" action="https://wheatomics.sdau.edu.cn/GeneHub/" method="get">
+            <label for="header-gene" hidden>Search Gene ID or keyword</label>
+            <input id="header-gene" name="search" type="search" placeholder="Search any gene ID (GeneHub)...">
+            <button type="submit" aria-label="Search"><svg class="icon"><use href="#i-search"/></svg></button>
+          </form>
+          <a class="contact-button" href="mailto:shengweima@icloud.com">Contact Us <span aria-hidden="true">↗</span></a>
+        </div>
+
+        <button class="menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Open navigation"><span></span></button>
+      </div>
+    </header>
+
+  <main id="main-content">
+    <section class="news-hero">
+      <div class="container news-hero-inner">
+        <div>
+          <p class="news-kicker">WheatOmics 2.0 · Analysis tool</p>
+          <h1 class="news-title">Triticeae <em>WebBLAST</em></h1>
+          <p class="news-lead">Search wheat and Triticeae genomes, transcript sets and protein sets with NCBI BLAST+. Every search runs as an asynchronous job: start it, follow its progress, and share the result link.</p>
+          <div class="news-stats">
+            <span class="news-stat"><strong>5</strong> programs</span>
+            <span class="news-stat"><strong data-blast-db-total>3,000+</strong> databases</span>
+            <span class="news-stat">Async job queue</span>
+            <span class="news-stat">Results kept 7 days</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="news-body">
+      <div class="container blast-page">
+
+        <!-- ==================== search view ==================== -->
+        <div id="view-search">
+          <form id="blast-form" autocomplete="off" novalidate>
+            <div class="blast-layout">
+              <div class="blast-primary">
+                <section class="blast-card">
+                  <h2 class="blast-card-title">1 · Input sequences</h2>
+                  <p class="blast-card-sub">Paste one or more FASTA sequences, or load a FASTA file. The backend validates sequences for the selected program.</p>
+                  <label class="blast-visually-hidden" for="blast-query">Query sequences in FASTA format</label>
+                  <textarea id="blast-query" class="blast-query" spellcheck="false" placeholder=">my_query
+Paste one or more FASTA sequences here…"></textarea>
+                  <div class="blast-query-meta">
+                    <span id="blast-query-meta">No sequence loaded.</span>
+                    <span id="blast-query-type">nucleotide query</span>
+                  </div>
+                  <div class="blast-file-row">
+                    <label class="secondary-button" for="blast-file">Load FASTA file</label>
+                    <input id="blast-file" class="blast-visually-hidden" type="file" accept=".fa,.fasta,.faa,.fna,.txt,.seq">
+                    <span class="blast-hint">Plain text, up to ~100,000 characters.</span>
+                  </div>
+                  <div class="blast-examples" id="blast-examples">
+                    <span>Examples:</span>
+                  </div>
+                </section>
+
+                <section class="blast-card">
+                  <h2 class="blast-card-title">2 · Databases</h2>
+                  <p class="blast-card-sub">Databases are filtered for the selected program. Up to 20 databases can be combined in one search.</p>
+                  <div class="blast-db-toolbar">
+                    <label class="blast-visually-hidden" for="blast-db-search">Filter databases</label>
+                    <input id="blast-db-search" class="blast-db-search" type="search" placeholder="Filter databases by name…">
+                    <span class="blast-hint" id="blast-db-count"></span>
+                  </div>
+                  <div class="blast-presets" id="blast-presets"></div>
+                  <p class="blast-hint" id="blast-quick-hint" style="margin:6px 0 0;"></p>
+                  <div class="blast-db-viewfilters" id="blast-db-viewfilters" hidden>
+                    <span class="blast-hint">Show:</span>
+                    <button type="button" class="blast-kind-chip" data-kind="genome">Genome</button>
+                    <button type="button" class="blast-kind-chip" data-kind="cds">CDS</button>
+                    <button type="button" class="blast-kind-chip" data-kind="protein">Protein</button>
+                  </div>
+                  <div class="blast-db-cats" id="blast-db-cats">
+                    <div class="blast-empty"><span class="blast-spinner" aria-hidden="true"></span>Loading databases…</div>
+                  </div>
+                  <div class="blast-db-list" id="blast-db-search-results" hidden></div>
+                  <div class="blast-selected">
+                    <div class="blast-selected-head">
+                      <span class="blast-card-title" style="font-size:12px;margin:0;">Selected databases</span>
+                      <span id="blast-selected-count">0 / 20</span>
+                      <button type="button" class="blast-link-btn" id="blast-clear-dbs">Clear all</button>
+                    </div>
+                    <div class="blast-chips" id="blast-chips"></div>
+                  </div>
+                </section>
+              </div>
+
+              <aside class="blast-side">
+                <section class="blast-card">
+                  <h2 class="blast-card-title">3 · Program &amp; parameters</h2>
+                  <div class="blast-field">
+                    <span>Program</span>
+                    <select id="blast-program" class="blast-select">
+                      <option value="blastn" selected>blastn — nucleotide vs nucleotide</option>
+                      <option value="blastp">blastp — protein vs protein</option>
+                      <option value="blastx">blastx — translated nucleotide vs protein</option>
+                      <option value="tblastn">tblastn — protein vs translated nucleotide</option>
+                      <option value="tblastx">tblastx — translated nucleotide vs translated nucleotide</option>
+                    </select>
+                    <small id="blast-program-hint">Nucleotide query against nucleotide databases.</small>
+                  </div>
+                  <div class="blast-param-grid">
+                    <div class="blast-field">
+                      <span>E-value</span>
+                      <input id="blast-evalue" class="blast-input" type="number" min="0" max="1000" step="any" value="10">
+                    </div>
+                    <div class="blast-field">
+                      <span>Max target sequences</span>
+                      <input id="blast-maxtargets" class="blast-input" type="number" min="1" max="50000" step="1" value="100">
+                    </div>
+                  </div>
+                  <details class="blast-advanced">
+                    <summary>Advanced parameters</summary>
+                    <div class="blast-param-grid">
+                      <div class="blast-field">
+                        <span>Word size <small>(auto if empty)</small></span>
+                        <input id="blast-word" class="blast-input" type="number" min="2" max="11" step="1" placeholder="auto">
+                      </div>
+                      <div class="blast-field">
+                        <span>Matrix <small>(protein only)</small></span>
+                        <select id="blast-matrix" class="blast-select">
+                          <option value="">Default</option>
+                          <option value="BLOSUM62">BLOSUM62</option>
+                          <option value="BLOSUM45">BLOSUM45</option>
+                          <option value="BLOSUM80">BLOSUM80</option>
+                          <option value="PAM30">PAM30</option>
+                          <option value="PAM70">PAM70</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="blast-field">
+                      <span>Output</span>
+                      <select id="blast-outfmt" class="blast-select">
+                        <option value="both" selected>Hits + pairwise alignments</option>
+                        <option value="tabular">Hits only (TSV)</option>
+                        <option value="traditional">Pairwise alignments only</option>
+                      </select>
+                    </div>
+                  </details>
+                  <div class="blast-actions">
+                    <button id="blast-submit" class="primary-button" type="submit">Run BLAST <span class="button-arrow" aria-hidden="true">→</span></button>
+                    <p class="blast-hint" id="blast-submit-hint">The job is queued and executed by the BLAST worker; this page follows its progress automatically.</p>
+                  </div>
+                  <div id="blast-form-error" class="blast-alert" role="alert"></div>
+                </section>
+
+                <section class="blast-card">
+                  <h2 class="blast-card-title">Open a result</h2>
+                  <p class="blast-card-sub">Paste a BLAST job ID (or a result URL) to reopen its result page. Jobs are not stored in this browser; result files are kept for 7 days after the search.</p>
+                  <div class="blast-db-toolbar">
+                    <label class="blast-visually-hidden" for="job-id-input">BLAST job ID</label>
+                    <input id="job-id-input" class="blast-db-search" type="text" placeholder="e.g. 67d1424c-d2e7-49a5-b1d7-be66b52df315 — or paste a result URL" spellcheck="false">
+                    <button id="job-id-open" class="secondary-button" type="button">Open</button>
+                  </div>
+                  <div id="job-id-error" class="blast-alert" role="alert"></div>
+                </section>
+              </aside>
+            </div>
+          </form>
+        </div>
+
+        <!-- ==================== result view ==================== -->
+        <div id="view-result" hidden>
+          <div class="blast-result-head">
+            <div>
+              <p class="section-kicker">BLAST result</p>
+              <h2 class="blast-result-title" id="result-title">—</h2>
+              <p class="blast-hint" id="result-sub"></p>
+              <p class="blast-hint" id="result-share" title="Shareable result URL"></p>
+            </div>
+            <div class="blast-result-actions">
+              <a class="secondary-button" id="result-download-tsv" href="#" target="_blank" rel="noopener" download hidden>Download TSV</a>
+              <button class="secondary-button blast-danger-button" type="button" id="result-delete">Delete result</button>
+              <button class="secondary-button" type="button" id="result-new">← New search</button>
+            </div>
+          </div>
+
+          <div class="blast-status-row" id="result-status-row">
+            <span class="blast-status-icon" id="result-status-icon" aria-hidden="true"></span>
+            <span class="blast-status" id="result-status">PENDING</span>
+            <span class="blast-status-message" id="result-elapsed"></span>
+            <span class="blast-hint" id="result-expiry"></span>
+          </div>
+          <div id="result-error" class="blast-alert" role="alert"></div>
+          <div class="blast-meta-grid" id="result-meta"></div>
+
+            <div class="blast-filters" id="blast-filters">
+              <label class="blast-filter-field">
+                <span>Query</span>
+                <select id="filter-query"><option value="">All queries</option></select>
+              </label>
+              <label class="blast-filter-field">
+                <span>Percent identity ≥</span>
+                <input id="filter-ident" type="number" min="0" max="100" step="1" value="0">
+              </label>
+              <label class="blast-filter-field">
+                <span>E value ≤</span>
+                <input id="filter-evalue" type="number" min="0" step="any" placeholder="any">
+              </label>
+              <label class="blast-filter-field">
+                <span>Query cover ≥ (%)</span>
+                <input id="filter-cover" type="number" min="0" max="100" step="1" value="0">
+              </label>
+              <div class="blast-filter-actions">
+                <button class="secondary-button" type="button" id="filter-apply">Filter</button>
+                <button class="blast-link-btn" type="button" id="filter-reset">Reset</button>
+              </div>
+            </div>
+
+
+          <div class="blast-tabs" id="result-tabs">
+            <button class="blast-tab active" type="button" data-tab="graphic">Graphic Summary</button>
+            <button class="blast-tab" type="button" data-tab="hits">Descriptions</button>
+            <button class="blast-tab" type="button" data-tab="alignments">Alignments</button>
+            <button class="blast-tab" type="button" data-tab="downloads">Downloads</button>
+          </div>
+
+          <section class="blast-panel" id="tab-graphic">
+            <div class="blast-card-head-row">
+              <h3 class="blast-panel-title">Graphic Summary</h3>
+              <span class="blast-hint">Each bar is an HSP along the query; colour = alignment score (bitscore). Click a bar to open its description.</span>
+            </div>
+            <div id="graphic-summary" class="blast-graphic"></div>
+            <div class="blast-graphic-legend" id="graphic-legend">
+              <span class="blast-hint">Alignment score (bitscore):</span>
+              <span class="blast-graphic-legend-item"><i style="background:#252525"></i>&lt;40</span>
+              <span class="blast-graphic-legend-item"><i style="background:#3182bd"></i>40–50</span>
+              <span class="blast-graphic-legend-item"><i style="background:#31a354"></i>50–80</span>
+              <span class="blast-graphic-legend-item"><i style="background:#c51b8a"></i>80–200</span>
+              <span class="blast-graphic-legend-item"><i style="background:#d7301f"></i>≥200</span>
+            </div>
+          </section>
+
+          <section class="blast-panel" id="tab-hits" hidden>
+            <div class="blast-selection-bar">
+              <label class="blast-check-label"><input type="checkbox" id="select-all-hits"> select all</label>
+              <span class="blast-hint" id="selected-count">0 selected</span>
+              <button class="secondary-button" type="button" id="download-selected">Download selected (TSV)</button>
+              <span class="blast-hint" id="hit-count"></span>
+            </div>
+
+            <div class="blast-table-wrap">
+              <table class="blast-table" id="hit-table">
+                <thead><tr>
+                  <th class="sel"></th>
+                  <th data-sort="index">#</th>
+                  <th data-sort="subject">Subject</th>
+                  <th>Description</th>
+                  <th data-sort="maxscore" class="num">Max score</th>
+                  <th data-sort="totalscore" class="num">Total score</th>
+                  <th data-sort="coverage" class="num">Query cover</th>
+                  <th data-sort="evalue" class="num">E value</th>
+                  <th data-sort="pident" class="num">Per. ident</th>
+                  <th data-sort="length" class="num">Aln length</th>
+                  <th data-sort="hsp" class="num">HSPs</th>
+                </tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <p class="blast-empty" id="hit-empty" hidden>No hits were returned. Try a higher E-value threshold, another database, or a different program.</p>
+            <button class="secondary-button" type="button" id="hit-more" hidden>Show more hits</button>
+          </section>
+
+          <section class="blast-panel" id="tab-alignments" hidden>
+            <div class="blast-toolbar">
+              <button class="secondary-button" type="button" id="align-load">Load pairwise alignments</button>
+              <span class="blast-hint" id="align-status"></span>
+            </div>
+            <div id="align-list" class="blast-aln-list"></div>
+          </section>
+
+          <section class="blast-panel" id="tab-downloads" hidden>
+            <div class="blast-downloads" id="download-list"></div>
+          </section>
+        </div>
+
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-main">
+      <div class="footer-brand">
+        <span class="footer-wordmark"><span class="brand-name">WheatOmics <em>2.0</em></span><span class="brand-tagline">AI Agent-Powered Wheat Pan-Omics Platform</span></span>
+        <p class="footer-note">An open wheat multi-omics knowledgebase supporting functional genomics, crop improvement and next-generation breeding.</p>
+      </div>
+
+      <div>
+        <h2 class="footer-title">Quick Links</h2>
+        <div class="footer-links">
+          <a href="/V2.0/#tools">Tools</a><a href="/V2.0/#data">JBrowse</a>
+          <a href="https://wheatomics.sdau.edu.cn/download.html">Download Data</a><a href="https://wheatomics.sdau.edu.cn/outsitelink.html">External Links</a>
+          <a href="https://wheatomics.sdau.edu.cn/help/news.html">News</a><a href="https://wheatomics.sdau.edu.cn/help/contact.html">About Us</a>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="footer-title">Contact Us</h2>
+        <a class="contact-line" href="mailto:shengweima@icloud.com"><svg class="icon"><use href="#i-mail"/></svg><span>shengweima@icloud.com</span></a>
+      </div>
+    </div>
+    <img class="footer-plot" src="/V2.0/footer-plot.png?v=20261025lab" alt="WheatOmics data overview plot">
+    <div class="container footer-bottom">
+      <span class="copyright">© 2026 WheatOmics. All rights reserved. <span class="footer-visits" aria-label="WheatOmics visit statistics"><span class="footer-visit-item"><svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg>Visits <strong data-visit-total>—</strong></span><span class="visit-sep">/</span><span class="footer-visit-item"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Today <strong data-visit-today>—</strong></span><span class="visit-sep">/</span><span class="footer-visit-item"><svg class="icon" aria-hidden="true"><use href="#i-wave"/></svg>Online <strong data-visit-online>—</strong></span></span></span>
+      <span class="icp">鲁公网安备 37090202000305号 ｜ 鲁ICP备05002369号-1</span>
+      <button class="back-top" type="button">Back to top ↑</button>
+    </div>
+  </footer>
+  <script src="/js/jquery/1.9.1/jquery.min.js"></script>
+  <script>
+const menuToggle = document.querySelector('.menu-toggle');
+    const nav = document.querySelector('.main-nav');
+    const navTriggers = document.querySelectorAll('.nav-trigger');
+    if (menuToggle && nav) {
+      menuToggle.addEventListener('click', () => {
+        const isOpen = document.body.classList.toggle('nav-open');
+        menuToggle.setAttribute('aria-expanded', String(isOpen));
+        menuToggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
+      });
+      nav.addEventListener('click', (event) => {
+        if (event.target.closest('a') && window.innerWidth <= 980) {
+          document.body.classList.remove('nav-open');
+          menuToggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+    navTriggers.forEach((trigger) => {
+      trigger.addEventListener('click', () => {
+        if (window.innerWidth > 980) return;
+        const item = trigger.closest('.nav-item');
+        const isOpen = item.classList.toggle('dropdown-open');
+        trigger.setAttribute('aria-expanded', String(isOpen));
+      });
+    });
+    document.querySelector('.back-top')?.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+/* Visit tracking and footer stats */
+    try {
+      fetch('/api/track/visit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ page: location.pathname || 'outsitelink.html' }) }).catch(function(){});
+    } catch (e) {}
+    (function () {
+      function fmt(n) { n = Number(n) || 0; return n.toLocaleString('en-US'); }
+      fetch('/api/track/stats', { cache: 'no-store' })
+        .then(r => r.ok ? r.json() : null)
+        .then(resp => {
+          if (!resp || !resp.success || !resp.data) return;
+          const d = resp.data;
+          const total = document.querySelector('[data-visit-total]');
+          const today = document.querySelector('[data-visit-today]');
+          const online = document.querySelector('[data-visit-online]');
+          if (total) total.textContent = d.total && d.total.pv != null ? fmt(d.total.pv) : '—';
+          if (today) today.textContent = d.today && d.today.pv != null ? fmt(d.today.pv) : '—';
+          if (online) online.textContent = d.online != null ? fmt(d.online) : '—';
+        }).catch(function(){});
+    })();
+  </script>
+  <script>
+// ==================== wheatBLAST SPA ====================
+var BLAST_API = {
+  databases: function (program) { return '/api/blast/databases?program=' + encodeURIComponent(program); },
+  search: '/api/blast/search',
+  status: function (id) { return '/api/blast/status/' + encodeURIComponent(id); }
+};
+var BLAST_EXAMPLES = {"protein": {"label": "protein example", "program": "blastp", "fasta": ">TraesCS1A02G000100.1_protein\nMRVIALSAGVTPSLRIGLPMCKCRSHGTFLLFGLQSSHLNICYYHQDLPRRPLCPGSRPG\nFCSGRRALLLIGAWRSSRWPGVGRALMRVIALSAGVTPSLRIGLPMCKCRSHGTFLLFGL\nQSSHLNICYYHQDLPRRPLCPGSRPGFCSGRRALLLIGAWRSSRWPGVGRAL", "source": "TraesCS1A02G000100.1 (protein example)"}, "nucleotide": {"label": "CDS example (FT-D1)", "program": "blastn", "fasta": ">TraesCS7D02G111600.1_CDS FT-D1 (VRN-D3) chr7D:68415945-68417871\nATGGCCGGGAGGGACAGAGACCCGCTGGTGGTTGGCAGGGTTGTGGGGGACGTGCTGGAC\nCCCTTCATCCGGACCACCAACCTCAGGGTGACCTTCGGGAACAGGACCGTGTCCAACGGC\nTGCGAGCTCAAGCCGTCCATGGTCGCCCAGCAGCCCAGGGTTGAGGTGGGCGGCAATGAG\nATGAGGACCTTCTACACACTCGTGATGGTAGACCCAGATGCTCCAAGTCCAAGCGATCCC\nAACCTTAGGGAGTATCTCCACTGGCTTGTGACAGATATCCCCGGTACAACTGGTGCATCC\nTTCGGGCAGGAGGTGATGTGCTACGAGAGCCCTCGTCCGACCATGGGGATCCATCGCTTC\nGTGCTCGTGCTCTTCCAGCAGCTCGGCCGGCAGACCGTGTACGCTCCCGGGTGGCGCCAG\nAACTTCAACACCAGGGACTTCGCCGAGCTCTACAACCTCGGCCCGCCTGTCGCCGCCGTC\nTACTTCAACTGCCAGCGTGAGGCCGGCTCCGGCGGCAGGAGGATGTACAATTGA\n", "source": "TraesCS7D02G111600 (FT-D1 / VRN-D3, chr7D)"}};
+var JOB_ID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+var DB_LIMIT = 20;
+// Sequence-retrieval-only aggregate DBs (mirrors SEQUENCE_ONLY_DBS in
+// app/api/routers/blast.py). Hidden defensively even if an older API build
+// still returns them.
+var SEQUENCE_ONLY_DBS = { 'all_genomes': 1, 'all_other_genomes': 1, 'all_Allohexaploid': 1 };
+// Legacy alias databases whose members are dangling after the 2026-10 rename.
+var LEGACY_ALIAS_DBS = {
+  'all_Diploid': 1, 'all_OtherTriticeae': 1, 'all_tri6': 1,
+  'all_Allotetraploid': 1, 'all1_genomes': 1, 'all2_genomes': 1, 'all3_genomes': 1,
+  'all4_genomes': 1, 'all5_genomes': 1, 'all6_genomes': 1, 'all7_genomes': 1
+};
+var BROKEN_DB_BASES = { 'Foma.pep': 1 };
+var DUPLICATE_ALIAS_DBS = { 'CS21_S1_S2_S3_All_NLR': 1,
+  'all_gene': 1, 'all_protein': 1 };
+var HIDDEN_BLAST_DBS = Object.assign({}, SEQUENCE_ONLY_DBS, LEGACY_ALIAS_DBS, BROKEN_DB_BASES, DUPLICATE_ALIAS_DBS);
+var PROGRAM_INFO = {
+  blastn:  { query: 'nucleotide', db: 'nucleotide', hint: 'Nucleotide query against nucleotide databases.' },
+  blastp:  { query: 'protein',    db: 'protein',    hint: 'Protein query against protein databases.' },
+  blastx:  { query: 'nucleotide', db: 'protein',    hint: 'Nucleotide query translated against protein databases.' },
+  tblastn: { query: 'protein',    db: 'nucleotide', hint: 'Protein query against translated nucleotide databases.' },
+  tblastx: { query: 'nucleotide', db: 'nucleotide', hint: 'Translated nucleotide query against translated nucleotide databases.' }
+};
+var state = {
+  program: 'blastn',
+  databasesByProgram: {},
+  categories: [],
+  dbNames: [],
+  selected: new Set(),
+  job: null,
+  hits: [],
+  sortKey: 'evalue',
+  sortDir: 1,
+  filter: '',
+  shown: 100,
+  pollToken: 0,
+  tab: 'hits',
+  alignLoaded: false,
+  result: null
+};
+
+function $(sel, root) { return (root || document).querySelector(sel); }
+function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+function esc(v) {
+  if (v == null) return '';
+  return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function fmtInt(n) { return Number(n || 0).toLocaleString('en-US'); }
+function fmtEvalue(v) {
+  var n = Number(v);
+  if (!isFinite(n)) return '—';
+  if (n === 0) return '0.0';
+  if (n < 0.001 || n >= 1000) return n.toExponential(1).replace('e+', 'e');
+  return String(Number(n.toPrecision(3)));
+}
+function fmtFloat(v, digits) {
+  var n = Number(v);
+  return isFinite(n) ? n.toFixed(digits == null ? 1 : digits) : '—';
+}
+function showFormError(msg) {
+  var el = $('#blast-form-error');
+  if (!el) return;
+  if (!msg) { el.textContent = ''; el.classList.remove('error'); el.classList.remove('success'); return; }
+  el.textContent = msg;
+  el.classList.remove('success');
+  el.classList.add('error');
+}
+
+function showFormNotice(msg) {
+  var el = $('#blast-form-error');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.classList.toggle('success', !!msg);
+  el.classList.remove('error');
+}
+function showResultError(msg) {
+  var el = $('#result-error');
+  if (!el) return;
+  if (!msg) { el.textContent = ''; el.classList.remove('error'); el.classList.remove('success'); return; }
+  el.textContent = msg;
+  el.classList.remove('success');
+  el.classList.add('error');
+}
+
+function showFormNotice(msg) {
+  var el = $('#blast-form-error');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.classList.toggle('success', !!msg);
+  el.classList.remove('error');
+}
+function apiDetail(payload, fallback) {
+  if (!payload) return fallback;
+  var d = payload.detail;
+  if (typeof d === 'string') return d;
+  if (Array.isArray(d) && d.length) return d.map(function (item) { return item.msg || JSON.stringify(item); }).join('; ');
+  return payload.error || payload.message || fallback;
+}
+
+// ---------- database picker ----------
+function setProgram(program) {
+  if (!PROGRAM_INFO[program]) program = 'blastn';
+  state.program = program;
+  state.selected.clear();
+  $('#blast-program').value = program;
+  $('#blast-program-hint').textContent = PROGRAM_INFO[program].hint;
+  $('#blast-query-type').textContent = PROGRAM_INFO[program].query + ' query';
+  renderExamples();
+  updateQueryPlaceholder();
+  renderSelected();
+  loadDatabases(program);
+}
+
+function loadDatabases(program) {
+  var cached = state.databasesByProgram[program];
+  if (cached) { applyDatabases(cached); return; }
+  var box = $('#blast-db-cats');
+  box.innerHTML = '<div class="blast-empty"><span class="blast-spinner" aria-hidden="true"></span>Loading databases…</div>';
+  fetch(BLAST_API.databases(program), { cache: 'no-cache' })
+    .then(function (resp) { return resp.json().then(function (json) { return { ok: resp.ok, json: json }; }); })
+    .then(function (res) {
+      if (!res.ok || !res.json || res.json.success === false) throw new Error(apiDetail(res.json, 'Could not load the database list.'));
+      state.databasesByProgram[program] = res.json;
+      applyDatabases(res.json);
+    })
+    .catch(function (err) {
+      box.innerHTML = '<div class="blast-empty">Could not load databases: ' + esc(err.message) + '</div>';
+      showFormError('Could not load the BLAST database list: ' + err.message);
+    });
+}
+
+function applyDatabases(data) {
+  data.categories = (data.categories || []).map(function (cat) {
+    var dbs = (cat.databases || []).filter(function (db) { return !HIDDEN_BLAST_DBS[db]; });
+    return Object.assign({}, cat, { databases: dbs, count: dbs.length });
+  }).filter(function (cat) { return cat.count > 0; });
+  ['protein', 'nucleotide'].forEach(function (key) {
+    if (data[key] && data[key].databases) {
+      data[key].databases = data[key].databases.filter(function (db) { return !HIDDEN_BLAST_DBS[db]; });
+      data[key].count = data[key].databases.length;
+    }
+  });
+  data.total = data.categories.reduce(function (a, cat) { return a + cat.count; }, 0);
+  state.dbMeta = data.database_meta || {};
+  state.kindFilter = state.kindFilter || '';
+  state.categories = data.categories;
+  state.dbNames = [];
+  state.categories.forEach(function (cat) {
+    (cat.databases || []).forEach(function (db) { state.dbNames.push(db); });
+  });
+  var kc = data.kind_counts || {};
+  var countText = fmtInt(data.total) + ' databases for ' + state.program;
+  if (kc.genome) countText += ' · ' + fmtInt(kc.genome) + ' genome';
+  if (kc.chromosome) countText += ' · ' + fmtInt(kc.chromosome) + ' per-chromosome (search to access)';
+  $('#blast-db-count').textContent = countText;
+  data.categories.forEach(function (cat) {
+    cat.visible_count = (cat.databases || []).filter(function (db) {
+      return cat.id === 'aggregated' || (dbMeta(db).kind || 'other') !== 'chromosome';
+    }).length;
+  });
+  var hero = $('[data-blast-db-total]');
+  if (hero && data.total) hero.textContent = fmtInt(data.total);
+  renderPresets(data);
+  renderCategories();
+  renderSelected();
+  applyDbSearch();
+}
+
+function csVersionLabel(db, kind) {
+  var m = /Chinese_Spring(\d+(?:\.\d+)?)/.exec(db || '');
+  return 'Chinese Spring' + (m ? ' ' + m[1] : '') + ' ' + kind;
+}
+
+function pickPresetDb(list, candidates) {
+  for (var i = 0; i < candidates.length; i++) {
+    if (list.indexOf(candidates[i]) >= 0) return candidates[i];
+  }
+  return null;
+}
+
+function renderPresets(data) {
+  var protein = (data.protein && data.protein.databases) || [];
+  var nucleotide = (data.nucleotide && data.nucleotide.databases) || [];
+  var presets = [];
+  if (protein.length) {
+    var allProt = protein.indexOf('all_proteins') >= 0 ? 'all_proteins' : (protein.indexOf('all_protein') >= 0 ? 'all_protein' : null);
+    if (allProt) presets.push({ db: allProt, label: 'All proteins (combined)' });
+    var csPep = pickPresetDb(protein, ['AABBDD_Chinese_Spring2.1.add_Description.pep', 'AABBDD_CS-IAAS.add_Description.pep', 'AABBDD_CS-CAU.add_Description.pep']);
+    if (csPep) presets.push({ db: csPep, label: csVersionLabel(csPep, 'protein') });
+  }
+  if (nucleotide.length) {
+    var allGene = nucleotide.indexOf('all_genes') >= 0 ? 'all_genes' : (nucleotide.indexOf('all_gene') >= 0 ? 'all_gene' : null);
+    if (allGene) presets.push({ db: allGene, label: 'All genes (combined)' });
+    var csGenome = pickPresetDb(nucleotide, ['AABBDD_Chinese_Spring2.1.genome', 'AABBDD_Chinese_Spring1.0.genome', 'AABBDD_CS-IAAS.genome', 'AABBDD_CS-CAU.genome']);
+    if (csGenome) presets.push({ db: csGenome, label: csVersionLabel(csGenome, 'genome') });
+    var csCds = pickPresetDb(nucleotide, ['AABBDD_Chinese_Spring2.1.add_Description.cds', 'AABBDD_Chinese_Spring1.0.add_Description.cds', 'AABBDD_CS-CAU.add_Description.cds']);
+    if (csCds) presets.push({ db: csCds, label: csVersionLabel(csCds, 'CDS') });
+  }
+  var box = $('#blast-presets');
+  if (!presets.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<span class="blast-hint">Quick select:</span>' + presets.map(function (p) {
+    return '<button type="button" class="blast-preset" data-db="' + esc(p.db) + '">' + esc(p.label) + '</button>';
+  }).join('');
+}
+
+function renderCategories() {
+  var box = $('#blast-db-cats');
+  if (!state.categories.length) {
+    box.innerHTML = '<div class="blast-empty">No databases available for ' + esc(state.program) + '.</div>';
+    return;
+  }
+  var filtersBox = $('#blast-db-viewfilters');
+  if (filtersBox) filtersBox.hidden = !state.dbNames.length;
+  updateKindChips();
+  var openIdx = $$('#blast-db-cats .blast-cat.open').map(function (c) {
+    return parseInt(c.getAttribute('data-cat'), 10);
+  }).filter(function (n) { return !isNaN(n); });
+  box.innerHTML = state.categories.map(function (cat, idx) {
+    var open = openIdx.indexOf(idx) >= 0 || (!openIdx.length && idx === 0 && (cat.count || 0) <= 60);
+    return '<div class="blast-cat' + (open ? ' open' : '') + '" data-cat="' + idx + '">' +
+      '<button type="button" class="blast-cat-head" data-toggle-cat="' + idx + '">' +
+        '<span class="blast-cat-title">' + esc(cat.label) + '</span>' +
+        '<span class="blast-cat-desc">' + esc(cat.description || '') + '</span>' +
+        '<span class="blast-cat-count">' + fmtInt(cat.visible_count || cat.count) + '</span>' +
+        '<span class="blast-cat-chevron" aria-hidden="true">▾</span>' +
+      '</button>' +
+      '<div class="blast-db-list" data-list="' + idx + '"' + (open ? '' : ' hidden') + '></div>' +
+    '</div>';
+  }).join('');
+  $$('.blast-cat.open .blast-db-list').forEach(function (list) {
+    fillDbList(list, parseInt(list.getAttribute('data-list'), 10));
+  });
+}
+
+var DB_KIND_LABEL = { genome: 'genome', chromosome: 'per-chr', cds: 'CDS', protein: 'protein', aggregate: 'combined', other: 'other' };
+var DB_KIND_ORDER = [
+  { key: 'aggregate', label: 'Combined databases' },
+  { key: 'genome', label: 'Genome databases' },
+  { key: 'chromosome', label: 'Allohexaploid chr genome' },
+  { key: 'cds', label: 'CDS / transcript databases' },
+  { key: 'protein', label: 'Protein databases' },
+  { key: 'other', label: 'Other databases' }
+];
+
+function dbMeta(db) { return (state.dbMeta && state.dbMeta[db]) || {}; }
+
+// Human-readable labels in the style of the legacy ViroBlast group list.
+var DB_LABELS = {
+  all_genes: 'All genes (combined)',
+  all_gene: 'All genes (by genome)',
+  all_proteins: 'All proteins (combined)',
+  all_protein: 'All proteins (by genome)',
+  'CS21_S1_S2_S3_All_NLR.fasta': 'CS21 / S1 / S2 / S3 all NLR chromosomes'
+};
+function dbLabel(db) {
+  if (DB_LABELS[db]) return DB_LABELS[db];
+  var m = /^all_Allohexaploidchr(\d+[A-Za-z]+)$/.exec(db);
+  if (m) return 'Allohexaploid Chr' + m[1] + ' genome';
+  m = /^all_Allotetraploidchr(\d+[A-Za-z]+)$/.exec(db);
+  if (m) return 'Allotetraploid Chr' + m[1] + ' genome';
+  return db;
+}
+
+function shortAssemblyName(db) {
+  return db.replace(/\.genome_[Cc]hr[0-9A-Za-z]+$/, '')
+           .replace(/[Cc]hr[0-9][0-9A-Za-z]*$/, '')
+           .replace(/[._]$/, '') || db;
+}
+
+function chromosomeSortKey(ch) {
+  var m = /^(\d+)(.*)$/.exec(ch || '');
+  return m ? [parseInt(m[1], 10), m[2].toUpperCase(), ''] : [999, (ch || '?').toUpperCase(), ''];
+}
+
+function dbChromosomeGroups(dbs) {
+  var byChr = {};
+  dbs.forEach(function (db) {
+    var ch = dbMeta(db).chromosome || 'Unknown';
+    (byChr[ch] = byChr[ch] || []).push(db);
+  });
+  var keys = Object.keys(byChr).sort(function (a, b) {
+    var ka = chromosomeSortKey(a), kb = chromosomeSortKey(b);
+    return ka[0] - kb[0] || ka[1].localeCompare(kb[1]);
+  });
+  var html = keys.map(function (ch) {
+    var items = byChr[ch].slice().sort(function (a, b) {
+      return shortAssemblyName(a).localeCompare(shortAssemblyName(b), 'en', { numeric: true });
+    });
+    return '<details class="blast-chr-group"><summary>Chr' + esc(ch) +
+      ' <span class="blast-db-group-count">(' + fmtInt(items.length) + ')</span></summary>' +
+      '<div class="blast-db-group-list">' +
+        items.map(function (db) { return dbCheckbox(db, shortAssemblyName(db), true); }).join('') +
+      '</div></details>';
+  }).join('');
+  return html;
+}
+
+function dbCheckbox(db, label, minimal) {
+  var checked = state.selected.has(db) ? ' checked' : '';
+  var meta = dbMeta(db), kind = meta.kind || 'other';
+  var badges = '';
+  if (kind === 'aggregate') badges += '<span class="blast-badge agg">combined</span>';
+  else if (!minimal && kind && kind !== 'genome' && kind !== 'chromosome') badges += '<span class="blast-badge">' + esc(DB_KIND_LABEL[kind] || kind) + '</span>';
+  // Chromosome-level assemblies are the norm: hide the "Chromosome" and
+  // "21 chr" badges, keep only non-chromosome quality hints (Scaffold/Contig/...).
+  if (meta.assembly_level && meta.assembly_level !== 'Chromosome') {
+    badges += '<span class="blast-badge warn">' + esc(meta.assembly_level) + '</span>';
+  }
+
+  return '<label class="blast-db-item" title="' + esc(db) + '"><input type="checkbox" class="blast-db-check" value="' + esc(db) + '"' + checked + '>' +
+    '<span>' + esc(label || dbLabel(db)) + '</span>' + (badges ? '<span class="blast-db-badges">' + badges + '</span>' : '') + '</label>';
+}
+
+function dbPassesFilters(db) {
+  var meta = dbMeta(db), kind = meta.kind || 'other';
+  if (kind === 'aggregate') return state.kindFilter !== 'genome';
+  if (kind === 'chromosome') {
+    if (state.kindFilter && state.kindFilter !== 'genome') return false;
+  } else if (state.kindFilter && kind !== state.kindFilter) {
+    return false;
+  }
+  return true;
+}
+
+function updateKindChips() {
+  $$('#blast-db-viewfilters [data-kind]').forEach(function (chip) {
+    chip.classList.toggle('active', chip.getAttribute('data-kind') === state.kindFilter);
+  });
+}
+
+function fillDbList(listEl, idx) {
+  var cat = state.categories[idx];
+  if (!cat || listEl.getAttribute('data-filled') === '1') return;
+  var allowChromosome = cat.id === 'aggregated';
+  var dbs = (cat.databases || []).filter(function (db) {
+    var kind = dbMeta(db).kind || 'other';
+    // All-in-one: Other-group entries (e.g. the CS21 NLR chromosome collection)
+    // should remain visible when the Genome filter is active.
+    if (allowChromosome && state.kindFilter === 'genome' && kind === 'other') return true;
+    return dbPassesFilters(db) && (allowChromosome || kind !== 'chromosome');
+  });
+  var groups = {};
+  dbs.forEach(function (db) {
+    var kind = dbMeta(db).kind || 'other';
+    (groups[kind] = groups[kind] || []).push(db);
+  });
+  var entries = [];
+  DB_KIND_ORDER.forEach(function (group) {
+    if (group.key === 'chromosome') {
+      if (!allowChromosome) return;
+      var hexa = [], tetra = [], otherChr = [];
+      (groups.chromosome || []).forEach(function (db) {
+        if (db.indexOf('all_Allohexaploidchr') === 0) hexa.push(db);
+        else if (db.indexOf('all_Allotetraploidchr') === 0) tetra.push(db);
+        else otherChr.push(db);
+      });
+      if (hexa.length) entries.push({ kind: 'chromosome', label: 'Allohexaploid chr genome', items: hexa });
+      if (tetra.length) entries.push({ kind: 'chromosome', label: 'Allotetraploid chr genome', items: tetra });
+      if (otherChr.length) entries.push({ kind: 'chromosome', label: 'Other chromosome aggregates', items: otherChr });
+      return;
+    }
+    entries.push({ kind: group.key, label: group.label, items: groups[group.key] || [] });
+  });
+  var html = '';
+  entries.forEach(function (entry) {
+    var items = entry.items;
+    if (!items.length) return;
+    var collapsible = entry.kind === 'chromosome' && !allowChromosome;
+    var body = collapsible ? dbChromosomeGroups(items) : items.map(function (db) { return dbCheckbox(db); }).join('');
+    html += '<div class="blast-db-group" data-kind="' + entry.kind + '">' +
+      '<div class="blast-db-group-title">' + esc(entry.label) +
+        ' <span class="blast-db-group-count">(' + fmtInt(items.length) + ')</span>' +
+        (collapsible ? '<button type="button" data-toggle-group="' + idx + ':' + entry.kind + '">show</button>' : '') +
+      '</div>' +
+      '<div class="blast-db-group-list"' + (collapsible ? ' hidden' : '') + '>' + body + '</div>' +
+    '</div>';
+  });
+  if (!dbs.length) html = '<div class="blast-empty" style="padding:12px;">No databases match the current type/quality filter.</div>';
+  listEl.innerHTML = html;
+  listEl.setAttribute('data-filled', '1');
+}
+
+function refreshDbLists() {
+  renderCategories();
+  applyDbSearch();
+}
+
+function applyDbSearch() {
+  var q = ($('#blast-db-search').value || '').trim().toLowerCase();
+  var catsBox = $('#blast-db-cats');
+  var resultsBox = $('#blast-db-search-results');
+  if (!q) { resultsBox.hidden = true; catsBox.hidden = false; return; }
+  catsBox.hidden = true;
+  resultsBox.hidden = false;
+  var matches = state.dbNames.filter(function (db) {
+    return db.toLowerCase().indexOf(q) >= 0 && dbPassesFilters(db);
+  });
+  var shown = matches.slice(0, 400);
+  resultsBox.innerHTML = shown.map(function (db) { return dbCheckbox(db); }).join('') +
+    (matches.length > shown.length ? '<div class="blast-hint" style="grid-column:1/-1;padding-top:8px;">Showing ' + shown.length + ' of ' + fmtInt(matches.length) + ' matches — refine the filter.</div>' : '') +
+    (!matches.length ? '<div class="blast-empty" style="grid-column:1/-1;">No database matches “' + esc(q) + '”.</div>' : '');
+}
+
+function toggleDb(db, checked) {
+  if (checked) {
+    if (state.selected.size >= DB_LIMIT) return false;
+    state.selected.add(db);
+  } else {
+    state.selected.delete(db);
+  }
+  showFormError('');
+  renderSelected();
+  return true;
+}
+
+function handleDbChange(event) {
+  var input = event.target;
+  if (!input.classList || !input.classList.contains('blast-db-check')) return;
+  var ok = toggleDb(input.value, input.checked);
+  if (!ok) {
+    input.checked = false;
+    showFormError('A search can combine at most ' + DB_LIMIT + ' databases. Remove one first.');
+  }
+}
+
+function updateQuickSelectFeedback() {
+  var hint = $('#blast-quick-hint');
+  var labels = [];
+  $$('#blast-presets .blast-preset').forEach(function (btn) {
+    var db = btn.getAttribute('data-db');
+    var on = state.selected.has(db) && state.selected.size === 1;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    if (on) labels.push(btn.textContent.trim());
+  });
+  if (hint) {
+    hint.textContent = labels.length
+      ? 'Quick select applied: ' + labels.join(', ') + '  (deselect it below or pick another database to change)'
+      : '';
+  }
+}
+
+function renderSelected() {
+  $('#blast-selected-count').textContent = state.selected.size + ' / ' + DB_LIMIT;
+  $('#blast-chips').innerHTML = Array.from(state.selected).map(function (db) {
+    return '<span class="blast-chip">' + esc(db) + '<button type="button" data-remove-db="' + esc(db) + '" aria-label="Remove ' + esc(db) + '">×</button></span>';
+  }).join('');
+  updateQuickSelectFeedback();
+}
+  updateQuickSelectFeedback();
+
+// ---------- query input ----------
+function queryStats(text) {
+  var lines = (text || '').split(/\r?\n/);
+  var seqs = 0, residues = 0;
+  lines.forEach(function (line) {
+    var s = line.trim();
+    if (!s) return;
+    if (s.charAt(0) === '>') { seqs += 1; return; }
+    residues += s.replace(/\s+/g, '').length;
+  });
+  if (seqs === 0 && residues > 0) seqs = 1;
+  return { seqs: seqs, residues: residues };
+}
+
+function updateQueryMeta() {
+  var text = $('#blast-query').value;
+  var st = queryStats(text);
+  $('#blast-query-meta').textContent = text.trim()
+    ? (st.seqs + ' sequence' + (st.seqs === 1 ? '' : 's') + ' · ' + fmtInt(st.residues) + ' residues')
+    : 'No sequence loaded.';
+}
+
+function updateQueryPlaceholder() {
+  var info = PROGRAM_INFO[state.program];
+  var example = BLAST_EXAMPLES[info.query];
+  var preview = '';
+  if (example) {
+    var lines = example.fasta.split(/\r?\n/);
+    preview = (lines[1] || '').slice(0, 60);
+  }
+  $('#blast-query').setAttribute('placeholder', '>my_query\n' + (preview ? preview + '...' : 'Paste one or more FASTA sequences here…'));
+}
+
+function renderExamples() {
+  var type = PROGRAM_INFO[state.program].query;
+  var example = BLAST_EXAMPLES[type];
+  var box = $('#blast-examples');
+  if (!example) { box.innerHTML = ''; return; }
+  box.innerHTML = '<span>Example:</span><button type="button" class="blast-example" data-example="' + type + '">' + esc(example.label) + '</button>' +
+    '<span class="blast-hint">from ' + esc(example.source || (example.fasta.split(/\r?\n/)[0] || '').replace(/^>/, '').split(/[\s_]/)[0]) + '</span>';
+}
+
+// ---------- submit ----------
+function submitSearch(event) {
+  if (event) event.preventDefault();
+  showFormError('');
+  var query = $('#blast-query').value.trim();
+  var dbs = Array.from(state.selected).join(',');
+  if (!query) { showFormError('Paste or load at least one query sequence first.'); return; }
+  if (!dbs) { showFormError('Select at least one database.'); return; }
+  var evalue = $('#blast-evalue').value;
+  var maxTargets = $('#blast-maxtargets').value;
+  var wordSize = $('#blast-word').value;
+  var matrix = $('#blast-matrix').value;
+  var outfmt = $('#blast-outfmt').value;
+  var btn = $('#blast-submit');
+  var original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="blast-spinner" aria-hidden="true"></span>Submitting…';
+  var form = new URLSearchParams();
+  form.append('program', state.program);
+  form.append('database', dbs);
+  form.append('query', query);
+  form.append('evalue', evalue);
+  form.append('max_target_seqs', maxTargets);
+  form.append('outfmt', outfmt);
+  form.append('wait', 'false');
+  if (wordSize) form.append('word_size', wordSize);
+  if (matrix) form.append('matrix', matrix);
+
+  fetch(BLAST_API.search, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: form.toString()
+  })
+    .then(function (resp) {
+      return resp.json().then(function (json) { return { ok: resp.ok, json: json }; }).catch(function () {
+        return { ok: resp.ok, json: null };
+      });
+    })
+    .then(function (res) {
+      btn.disabled = false;
+      btn.innerHTML = original;
+      if (!res.ok || !res.json || !res.json.job_id) throw new Error(apiDetail(res.json, 'The BLAST server rejected the job.'));
+      var ctx = {
+        id: res.json.job_id, program: state.program,
+        dbs: Array.from(state.selected),
+        queryHeader: (query.split(/\r?\n/)[0] || '').slice(0, 120),
+        queryLength: queryStats(query).residues,
+        evalue: Number(evalue), maxTargets: Number(maxTargets), outfmt: outfmt,
+        createdAt: Date.now(), urls: {},
+        queries: parseFastaQueryList(query)
+      };
+      try { localStorage.setItem('blast2.job.' + ctx.id, JSON.stringify(ctx)); } catch (e) {}
+      navigateToJob(ctx.id);
+    })
+    .catch(function (err) {
+      btn.disabled = false;
+      btn.innerHTML = original;
+      showFormError('Could not submit the BLAST job: ' + err.message);
+    });
+}
+
+// ---------- job links / routing helpers ----------
+function jobResultUrl(id) {
+  return location.origin + location.pathname + '?job=' + encodeURIComponent(id);
+}
+function parsedJobId(raw) {
+  var m = String(raw || '').trim().match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+  return m && JOB_ID_RE.test(m[0]) ? m[0] : null;
+}
+function navigateToJob(id) {
+  history.pushState({ job: id }, '', '?job=' + encodeURIComponent(id));
+  route();
+}
+function showJobIdError(message) {
+  var box = $('#job-id-error');
+  var input = $('#job-id-input');
+  if (box) {
+    box.textContent = message || '';
+    box.classList.toggle('error', !!message);
+  } else if (message) {
+    showFormError(message);
+  }
+  if (message && input) input.focus();
+}
+
+function openJobById(raw) {
+  var value = String(raw == null ? ($('#job-id-input').value || '') : raw).trim();
+  if (!value) {
+    showJobIdError('Paste a BLAST job ID (or a result URL) first — the grey example is only a placeholder.');
+    return;
+  }
+  var id = parsedJobId(value);
+  if (!id) {
+    showJobIdError('That does not look like a BLAST job ID (expected a 36-character UUID, e.g. 67d1424c-d2e7-49a5-b1d7-be66b52df315).');
+    return;
+  }
+  showJobIdError('');
+  showFormError('');
+  navigateToJob(id);
+}
+// ---------- result view & polling (NCBI-style) ----------
+function parseFastaQueryList(text) {
+  var out = [], cur = null;
+  (text || '').split(/\r?\n/).forEach(function (line) {
+    var s = line.trim();
+    if (!s) return;
+    if (s.charAt(0) === '>') {
+      cur = { id: s.slice(1).split(/\s+/)[0] || ('query' + (out.length + 1)), length: 0 };
+      out.push(cur);
+      return;
+    }
+    if (!cur) { cur = { id: 'query' + (out.length + 1), length: 0 }; out.push(cur); }
+    cur.length += s.replace(/\s+/g, '').length;
+  });
+  return out;
+}
+
+function showSearchView() {
+  state.pollToken += 1;
+  $('#view-search').hidden = false;
+  $('#view-result').hidden = true;
+  window.scrollTo(0, 0);
+}
+
+function deleteCurrentResult() {
+  var id = state.job;
+  if (!id) return;
+  if (!window.confirm('Delete this BLAST result permanently? This cannot be undone.')) return;
+  var btn = $('#result-delete');
+  if (btn) btn.disabled = true;
+  fetch('/api/blast/job/' + encodeURIComponent(id) + '/delete', { method: 'POST', cache: 'no-store' })
+    .then(function (resp) { return resp.json().then(function (json) { return { ok: resp.ok, json: json }; }).catch(function () { return { ok: resp.ok, json: null }; }); })
+    .then(function (res) {
+      if (btn) btn.disabled = false;
+      if (!res.ok || !res.json || !res.json.success) throw new Error(apiDetail(res.json, 'The server refused to delete this result.'));
+      try { localStorage.removeItem('blast2.job.' + id); } catch (e) {}
+      state.job = null;
+      history.replaceState({}, '', location.pathname);
+      showSearchView();
+      showFormNotice('BLAST result deleted.');
+    })
+    .catch(function (err) { if (btn) btn.disabled = false; showResultError('Could not delete result: ' + err.message); });
+}
+
+function showResultView(id) {
+  state.pollToken += 1;
+  state.job = id;
+  state.hits = [];
+  state.subjects = [];
+  state.queries = [];
+  state.queryFilter = '';
+  state.filters = { ident: 0, evalue: null, cover: 0 };
+  state.selectedSubjects = new Set();
+  state.alignLoaded = false;
+  state.alignHits = [];
+  state.result = null;
+  state.shown = 100;
+  state.sortKey = 'evalue';
+  state.sortDir = 1;
+  $('#view-search').hidden = true;
+  $('#view-result').hidden = false;
+  showResultError('');
+  var ctx = null;
+  try { ctx = JSON.parse(localStorage.getItem('blast2.job.' + id) || 'null'); } catch (e) {}
+  if (ctx) state.result = ctx;
+  $('#result-title').textContent = 'BLAST job ID: ' + id;
+  var share = $('#result-share');
+  if (share) share.textContent = 'Result link: ' + jobResultUrl(id);
+  $('#result-sub').textContent = ctx
+    ? (ctx.program + ' · ' + ctx.dbs.length + ' database' + (ctx.dbs.length === 1 ? '' : 's') + ' · ' + (ctx.queryHeader || '').slice(0, 70))
+    : 'Waiting for job status…';
+  $('#result-expiry').textContent = '';
+  $('#result-download-tsv').hidden = true;
+  $('#graphic-summary').innerHTML = '';
+  $('#hit-table tbody').innerHTML = '';
+  $('#hit-empty').hidden = true;
+  $('#hit-more').hidden = true;
+  $('#align-list').innerHTML = '';
+  $('#align-status').textContent = '';
+  $('#download-list').innerHTML = '';
+  $('#selected-count').textContent = '0 selected';
+  $('#select-all-hits').checked = false;
+  renderMeta(ctx);
+  setStatus('pending', 'Waiting for the job to start…', 0);
+  switchTab('graphic');
+  pollStatus(id);
+  window.scrollTo(0, 0);
+}
+
+function renderMeta(ctx) {
+  if (!ctx) { $('#result-meta').innerHTML = ''; return; }
+  var dbText = ctx.dbs.length > 3 ? (ctx.dbs.slice(0, 3).join(', ') + ' +' + (ctx.dbs.length - 3)) : (ctx.dbs || []).join(', ');
+  var expires = ctx.createdAt ? new Date(ctx.createdAt + 7 * 86400000) : null;
+  var items = [
+    ['Program', ctx.program], ['Databases', dbText],
+    ['E-value', String(ctx.evalue)], ['Max targets', fmtInt(ctx.maxTargets)],
+    ['Output', ctx.outfmt], ['Query', ctx.queryHeader || '—'],
+    ['Job ID', ctx.id],
+    ['Submitted', new Date(ctx.createdAt).toLocaleString()]
+  ];
+  $('#result-meta').innerHTML = items.map(function (item) {
+    return '<dl class="blast-meta-item"><dt>' + esc(item[0]) + '</dt><dd>' + esc(item[1]) + '</dd></dl>';
+  }).join('');
+  if (expires) $('#result-expiry').textContent = 'Result files are kept for 7 days (until ' + expires.toLocaleDateString() + ').';
+}
+
+function fmtDuration(seconds) {
+  seconds = Math.max(0, Math.round(seconds));
+  if (seconds < 60) return seconds + 's';
+  var m = Math.floor(seconds / 60), s = seconds % 60;
+  if (m < 60) return m + 'm' + (s ? ' ' + s + 's' : '');
+  return Math.floor(m / 60) + 'h' + (m % 60 ? ' ' + (m % 60) + 'm' : '');
+}
+
+function setStatus(status, message, withElapsed) {
+  var delBtn = $('#result-delete');
+  if (delBtn) delBtn.disabled = (status === 'pending' || status === 'running');
+  var pill = $('#result-status');
+  var row = $('#result-status-row');
+  var icon = $('#result-status-icon');
+  pill.className = 'blast-status ' + status;
+  pill.textContent = (status || '').toUpperCase();
+  if (row) row.className = 'blast-status-row status-' + status;
+  if (icon) {
+    icon.textContent = status === 'done' ? '✓' : (status === 'error' || status === 'stale' ? '!' : '');
+    icon.className = 'blast-status-icon' + (status === 'running' ? ' spinner' : '');
+  }
+  var text = message || '';
+  if (withElapsed) {
+    var ctx = state.result;
+    if (status === 'done') {
+      if (ctx && ctx.finishedAt && ctx.createdAt) {
+        text = 'Finished in ' + fmtDuration((ctx.finishedAt - ctx.createdAt) / 1000) + '.';
+      } else {
+        text = 'Finished.';
+      }
+    } else {
+      var start = (ctx && ctx.createdAt) ? ctx.createdAt : Date.now();
+      text += (text ? ' · ' : '') + fmtDuration((Date.now() - start) / 1000) + ' elapsed';
+    }
+  }
+  $('#result-elapsed').textContent = text;
+}
+
+function pollStatus(id) {
+  var token = state.pollToken;
+  fetch(BLAST_API.status(id), { cache: 'no-store' })
+    .then(function (resp) { return resp.json().then(function (json) { return { ok: resp.ok, json: json }; }).catch(function () { return { ok: resp.ok, json: null }; }); })
+    .then(function (res) {
+      if (token !== state.pollToken) return;
+      if (!res.ok) throw new Error(apiDetail(res.json, 'Job not found (it may have expired).'));
+      var json = res.json;
+      var status = json.status || 'pending';
+      if (status === 'pending') { setStatus(status, 'Queued — waiting for a BLAST worker.', true); schedulePoll(id); }
+      else if (status === 'running') { setStatus(status, 'BLAST is running…', true); schedulePoll(id); }
+      else if (status === 'done') {
+        if (state.result && !state.result.finishedAt) {
+          state.result.finishedAt = Date.now();
+          try { localStorage.setItem('blast2.job.' + id, JSON.stringify(state.result)); } catch (e) {}
+        }
+        setStatus('done', '', true);
+        loadResult(id, json.download_urls || {});
+      }
+      else { setStatus(status, '', false); showResultError(json.message || 'The BLAST job ended with status "' + status + '".'); }
+    })
+    .catch(function (err) {
+      if (token !== state.pollToken) return;
+      setStatus('error', '', false);
+      showResultError('Could not read the job status: ' + err.message);
+    });
+}
+function schedulePoll(id) {
+  var token = state.pollToken;
+  setTimeout(function () { if (token === state.pollToken) pollStatus(id); }, 1500);
+}
+
+function loadResult(id, urls) {
+  if (state.result) {
+    state.result.urls = urls;
+    try { localStorage.setItem('blast2.job.' + id, JSON.stringify(state.result)); } catch (e) {}
+  }
+  renderDownloads(urls);
+  if (urls.tabular) {
+    $('#result-download-tsv').href = urls.tabular;
+    $('#result-download-tsv').hidden = false;
+  }
+  var tabularUrl = urls.tabular;
+  if (!tabularUrl) {
+    var empty = $('#hit-empty');
+    empty.hidden = false;
+    empty.textContent = 'This job has no hit table (traditional output only). Open the Alignments tab.';
+    switchTab('alignments');
+    return;
+  }
+  fetch(tabularUrl, { cache: 'no-store' })
+    .then(function (resp) { if (!resp.ok) throw new Error('HTTP ' + resp.status); return resp.text(); })
+    .then(function (text) {
+      state.hits = parseTsv(text);
+      prepareQueries();
+      aggregateSubjects();
+      renderDescriptions();
+      renderGraphicSummary();
+      switchTab('graphic');
+    })
+    .catch(function (err) { showResultError('Could not load the hit table: ' + err.message); });
+}
+
+function parseTsv(text) {
+  var hits = [];
+  (text || '').split(/\r?\n/).forEach(function (line) {
+    if (!line.trim()) return;
+    var c = line.split('\t');
+    if (c.length < 15) return;
+    var stitle = c.slice(14).join('\t');
+    var region = '';
+    var m = stitle.match(/^(\S+:\d+[-–]\d+)/);
+    if (m) region = m[1];
+    hits.push({
+      qseqid: c[0], sseqid: c[1],
+      pident: parseFloat(c[2]), ppos: parseFloat(c[3]),
+      length: parseInt(c[4], 10), mismatch: parseInt(c[5], 10), gapopen: parseInt(c[6], 10),
+      qstart: parseInt(c[7], 10), qend: parseInt(c[8], 10),
+      sstart: parseInt(c[9], 10), send: parseInt(c[10], 10),
+      evalue: parseFloat(c[11]), bitscore: parseFloat(c[12]),
+      btop: c[13], stitle: stitle, region: region,
+      description: stitle.replace(region, '').replace(/^[\s\-–]+/, '').slice(0, 400)
+    });
+  });
+  return hits;
+}
+
+function queryLengthMap() {
+  var map = {};
+  (state.result && state.result.queries ? state.result.queries : []).forEach(function (q) {
+    if (q && q.id) map[q.id] = Number(q.length) || 0;
+  });
+  state.hits.forEach(function (h) {
+    var end = Math.max(h.qstart || 0, h.qend || 0);
+    if (!map[h.qseqid] || map[h.qseqid] < end) map[h.qseqid] = end;
+  });
+  return map;
+}
+
+function prepareQueries() {
+  var lengths = queryLengthMap();
+  var order = [];
+  if (state.result && state.result.queries && state.result.queries.length) {
+    state.result.queries.forEach(function (q) { if (q && q.id) order.push(q.id); });
+  }
+  state.hits.forEach(function (h) { if (order.indexOf(h.qseqid) < 0) order.push(h.qseqid); });
+  // The hit table is authoritative: drop ctx queries that produced no hits so
+  // the Graphic Summary never shows an empty track first.
+  var hitIds = [];
+  state.hits.forEach(function (h) { if (hitIds.indexOf(h.qseqid) < 0) hitIds.push(h.qseqid); });
+  if (hitIds.length) {
+    var ordered = [];
+    order.forEach(function (id) { if (hitIds.indexOf(id) >= 0) ordered.push(id); });
+    hitIds.forEach(function (id) { if (ordered.indexOf(id) < 0) ordered.push(id); });
+    order = ordered;
+  }
+  state.queries = order.map(function (id) { return { id: id, length: lengths[id] || 0 }; });
+  var sel = $('#filter-query');
+  var current = sel.value;
+  sel.innerHTML = '<option value="">All queries (' + state.queries.length + ')</option>' +
+    state.queries.map(function (q, i) {
+      return '<option value="' + esc(q.id) + '">Query ' + (i + 1) + ': ' + esc(q.id) + ' (' + fmtInt(q.length) + ')</option>';
+    }).join('');
+  if (current && state.queries.some(function (q) { return q.id === current; })) sel.value = current;
+  else state.queryFilter = '';
+}
+
+function aggregateSubjects() {
+  var groups = {};
+  state.hits.forEach(function (h) {
+    var key = h.qseqid + '\u0000' + h.sseqid;
+    if (!groups[key]) {
+      groups[key] = { key: key, qseqid: h.qseqid, sseqid: h.sseqid, stitle: h.stitle, region: h.region, description: h.description, hsps: [] };
+    }
+    groups[key].hsps.push(h);
+  });
+  var lengths = queryLengthMap();
+  state.subjects = Object.keys(groups).map(function (key) {
+    var g = groups[key], hsps = g.hsps;
+    var maxScore = Math.max.apply(null, hsps.map(function (h) { return h.bitscore; }));
+    var totalScore = hsps.reduce(function (a, h) { return a + h.bitscore; }, 0);
+    var evalue = Math.min.apply(null, hsps.map(function (h) { return h.evalue; }));
+    // NCBI Descriptions principle: Per. ident comes from the highest-scoring
+    // HSP (best bitscore), not from the max identity among all HSPs.
+    var bestHsp = hsps.reduce(function (best, h) { return (!best || h.bitscore > best.bitscore) ? h : best; }, null);
+    var pident = bestHsp ? bestHsp.pident : 0;
+    var length = bestHsp ? bestHsp.length : 0;
+    var intervals = hsps.map(function (h) { return [Math.min(h.qstart, h.qend), Math.max(h.qstart, h.qend)]; })
+      .sort(function (a, b) { return a[0] - b[0]; });
+    var covered = 0, curStart = null, curEnd = null;
+    intervals.forEach(function (iv) {
+      if (curStart === null) { curStart = iv[0]; curEnd = iv[1]; }
+      else if (iv[0] <= curEnd + 1) curEnd = Math.max(curEnd, iv[1]);
+      else { covered += curEnd - curStart + 1; curStart = iv[0]; curEnd = iv[1]; }
+    });
+    if (curStart !== null) covered += curEnd - curStart + 1;
+    var qlen = lengths[g.qseqid] || Math.max.apply(null, hsps.map(function (h) { return Math.max(h.qstart, h.qend); }));
+    return {
+      key: g.key, qseqid: g.qseqid, sseqid: g.sseqid, stitle: g.stitle, region: g.region,
+      description: g.description, hsps: hsps, hsp: hsps.length,
+      maxscore: maxScore, totalscore: totalScore, evalue: evalue, pident: pident,
+      length: length, coverage: qlen ? Math.min(100, covered / qlen * 100) : 0, qlength: qlen
+    };
+  });
+}
+
+function filteredSubjects() {
+  var f = state.filters || { ident: 0, evalue: null, cover: 0 };
+  var qf = state.queryFilter;
+  var list = state.subjects.filter(function (s) {
+    if (qf && s.qseqid !== qf) return false;
+    if (s.pident < f.ident) return false;
+    if (f.evalue != null && s.evalue > f.evalue) return false;
+    if (s.coverage < f.cover) return false;
+    return true;
+  });
+  var key = state.sortKey, dir = state.sortDir;
+  list.sort(function (a, b) {
+    if (key === 'subject') return String(a.sseqid).localeCompare(String(b.sseqid)) * dir;
+    if (key === 'index') return 0;
+    return ((a[key] || 0) - (b[key] || 0)) * dir;
+  });
+  return list;
+}
+
+function queryOrderIndex(qid) {
+  for (var i = 0; i < state.queries.length; i++) if (state.queries[i].id === qid) return i;
+  return -1;
+}
+
+function renderDescriptions() {
+  var list = filteredSubjects();
+  var slice = list.slice(0, state.shown);
+  var grouped = !state.queryFilter && state.queries.length > 1;
+  var rows = [];
+  var lastQuery = null;
+  slice.forEach(function (s, i) {
+    if (grouped && s.qseqid !== lastQuery) {
+      var qi = queryOrderIndex(s.qseqid);
+      rows.push('<tr class="query-group-title"><td colspan="11">Query ' + (qi + 1) + ': ' + esc(s.qseqid) +
+        ' (' + fmtInt(s.qlength) + ' letters)</td></tr>');
+      lastQuery = s.qseqid;
+    }
+    var subject = /^Traes/i.test(s.sseqid)
+      ? '<a href="/GeneHub/?search=' + encodeURIComponent(s.sseqid) + '" target="_blank" rel="noopener">' + esc(s.sseqid) + '</a>'
+      : esc(s.sseqid);
+    var checked = state.selectedSubjects.has(s.key) ? ' checked' : '';
+    rows.push('<tr class="data-row" data-key="' + esc(s.key) + '">' +
+      '<td class="sel"><input type="checkbox" class="hit-check" data-key="' + esc(s.key) + '"' + checked + '></td>' +
+      '<td class="num">' + (i + 1) + '</td>' +
+      '<td class="subject">' + subject + ' <button type="button" class="blast-row-align" data-sseqid="' + esc(s.sseqid) + '" title="Jump to this target alignment">alignment</button></td>' +
+      '<td class="desc" title="' + esc(s.stitle) + '">' + esc(s.description || '—') + '</td>' +
+      '<td class="num">' + fmtFloat(s.maxscore, 1) + '</td>' +
+      '<td class="num">' + fmtFloat(s.totalscore, 1) + '</td>' +
+      '<td class="num">' + fmtFloat(s.coverage, 0) + '%</td>' +
+      '<td class="num">' + esc(fmtEvalue(s.evalue)) + '</td>' +
+      '<td class="num">' + fmtFloat(s.pident, 2) + '%</td>' +
+      '<td class="num">' + fmtInt(s.length) + '</td>' +
+      '<td class="num">' + fmtInt(s.hsp) + '</td>' +
+    '</tr>');
+  });
+  $('#hit-table tbody').innerHTML = rows.join('');
+  $$('#hit-table th[data-sort]').forEach(function (th) {
+    var key = th.getAttribute('data-sort');
+    th.classList.toggle('sorted', key === state.sortKey);
+    th.setAttribute('data-arrow', key === state.sortKey ? (state.sortDir === 1 ? '▲' : '▼') : '');
+  });
+  $('#hit-count').textContent = list.length
+    ? (Math.min(slice.length, list.length) + ' of ' + fmtInt(list.length) + ' sequences shown')
+    : '';
+  var empty = $('#hit-empty');
+  empty.hidden = list.length > 0;
+  if (!list.length) {
+    empty.textContent = state.hits.length ? 'No hits match the current filters.' :
+      'No hits were returned. Try a higher E-value threshold, another database, or a different program.';
+  }
+  $('#hit-more').hidden = list.length <= state.shown;
+  attachDescriptionRows();
+  updateSelectionUI();
+}
+
+function attachDescriptionRows() {
+  $$('#hit-table tr.data-row').forEach(function (row) {
+    row.addEventListener('click', function (event) {
+      if (event.target.closest('input, a, button')) return;
+      var next = row.nextElementSibling;
+      if (next && next.classList.contains('blast-detail-row')) { next.parentNode.removeChild(next); return; }
+      var key = row.getAttribute('data-key');
+      var subj = null;
+      state.subjects.forEach(function (s) { if (s.key === key) subj = s; });
+      if (!subj) return;
+      var list = subj.hsps.map(function (h, i) {
+        return '<div class="blast-hsp"><strong>HSP ' + (i + 1) + '</strong> query ' + fmtInt(h.qstart) + '–' + fmtInt(h.qend) +
+          ' · subject ' + fmtInt(h.sstart) + '–' + fmtInt(h.send) + ' · E value ' + esc(fmtEvalue(h.evalue)) +
+          ' · bitscore ' + fmtFloat(h.bitscore, 1) + ' · identity ' + fmtFloat(h.pident, 2) + '% · length ' + fmtInt(h.length) +
+          '<span class="btop">' + esc(h.btop) + '</span></div>';
+      }).join('');
+      var detail = document.createElement('tr');
+      detail.className = 'blast-detail-row';
+      detail.innerHTML = '<td colspan="11"><strong>Full title</strong> ' + esc(subj.stitle) + list + '</td>';
+      row.parentNode.insertBefore(detail, row.nextSibling);
+    });
+  });
+}
+
+function updateSelectionUI() {
+  var count = state.selectedSubjects.size;
+  $('#selected-count').textContent = count + ' selected';
+  var visible = filteredSubjects();
+  var allChecked = visible.length > 0 && visible.every(function (s) { return state.selectedSubjects.has(s.key); });
+  var someChecked = visible.some(function (s) { return state.selectedSubjects.has(s.key); });
+  var box = $('#select-all-hits');
+  box.checked = allChecked;
+  box.indeterminate = !allChecked && someChecked;
+}
+
+function toggleSelectAll(checked) {
+  filteredSubjects().forEach(function (s) {
+    if (checked) state.selectedSubjects.add(s.key);
+    else state.selectedSubjects.delete(s.key);
+  });
+  renderDescriptions();
+}
+
+function downloadSelected() {
+  var list = filteredSubjects().filter(function (s) { return state.selectedSubjects.has(s.key); });
+  if (!list.length) { showResultError('Select at least one sequence in the Descriptions table first.'); return; }
+  showResultError('');
+  var header = ['query', 'subject', 'description', 'max_score', 'total_score', 'query_cover_pct', 'evalue', 'pident', 'aln_length', 'hsps'];
+  var lines = [header.join('\t')];
+  list.forEach(function (s) {
+    lines.push([s.qseqid, s.sseqid, (s.description || '').replace(/\s+/g, ' '), s.maxscore.toFixed(1),
+      s.totalscore.toFixed(1), s.coverage.toFixed(1), s.evalue, s.pident.toFixed(2), s.length, s.hsp].join('\t'));
+  });
+  var blob = new Blob([lines.join('\n') + '\n'], { type: 'text/tab-separated-values;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'blast2_selected_' + String(state.job || '').slice(0, 8) + '.tsv';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+// NCBI Graphic Summary: colour by alignment score (bitscore) bins.
+var BLAST_SCORE_BINS = [
+  { min: 200, color: '#d7301f', label: '≥200' },
+  { min: 80, max: 200, color: '#c51b8a', label: '80–200' },
+  { min: 50, max: 80, color: '#31a354', label: '50–80' },
+  { min: 40, max: 50, color: '#3182bd', label: '40–50' },
+  { min: -Infinity, max: 40, color: '#252525', label: '<40' }
+];
+function blastScoreColor(bitscore) {
+  var bits = Number(bitscore) || 0;
+  for (var i = 0; i < BLAST_SCORE_BINS.length; i++) {
+    var b = BLAST_SCORE_BINS[i];
+    if (bits >= b.min && (b.max == null || bits < b.max)) return b.color;
+  }
+  return '#252525';
+}
+
+function renderGraphicSummary() {
+  var box = $('#graphic-summary');
+  if (!state.hits.length) {
+    box.innerHTML = '<div class="blast-empty">No hits to visualise.</div>';
+    return;
+  }
+  var lengths = queryLengthMap();
+  var subjects = filteredSubjects();
+  var qids = state.queries.map(function (q) { return q.id; })
+    .filter(function (id) { return !state.queryFilter || id === state.queryFilter; });
+  var html = qids.map(function (qid, qi) {
+    var qlen = lengths[qid] || 1;
+    var list = subjects.filter(function (s) { return s.qseqid === qid; }).slice(0, 120);
+    var rows = list.map(function (s) {
+      var segs = s.hsps.map(function (h) {
+        var a = Math.min(h.qstart, h.qend), b = Math.max(h.qstart, h.qend);
+        var left = ((a - 1) / qlen) * 100;
+        var width = Math.max(((b - a + 1) / qlen) * 100, 0.6);
+        return '<span class="blast-graphic-hit" style="left:' + left.toFixed(3) + '%;width:' + width.toFixed(3) +
+          '%;background:' + blastScoreColor(h.bitscore) + '" data-key="' + esc(s.key) + '" ' +
+          'title="' + esc(s.sseqid + ' · bitscore ' + fmtFloat(h.bitscore, 1) + ' · ' + h.pident.toFixed(1) + '% identity · E ' + fmtEvalue(h.evalue) + ' (query ' + a + '–' + b + ')') + '"></span>';
+      }).join('');
+      return '<div class="blast-graphic-row" data-key="' + esc(s.key) + '">' +
+        '<span class="blast-graphic-label" title="' + esc(s.sseqid) + '">' + esc(s.sseqid) + '</span>' +
+        '<span class="blast-graphic-track">' + segs + '</span>' +
+        '<span class="blast-graphic-score">' + fmtFloat(s.pident, 1) + '%</span></div>';
+    }).join('');
+    var axis = '<div class="blast-graphic-axis"><span style="left:0">1</span>' +
+      '<span style="left:50%">' + fmtInt(Math.round(qlen / 2)) + '</span>' +
+      '<span style="left:100%">' + fmtInt(qlen) + '</span></div>';
+    return '<div class="blast-graphic-block"><div class="blast-graphic-title">Query ' + (qi + 1) + ': ' +
+      esc(qid) + '<span>' + fmtInt(qlen) + ' letters · ' + list.length + ' sequence(s) shown</span></div>' +
+      rows + axis + '</div>';
+  }).join('');
+  box.innerHTML = html;
+}
+
+function attachGraphicHandlers() {
+  $('#graphic-summary').addEventListener('click', function (event) {
+    var hit = event.target.closest('.blast-graphic-hit, .blast-graphic-row');
+    if (!hit) return;
+    var key = hit.getAttribute('data-key');
+    switchTab('hits');
+    if (state.filters.ident || state.filters.evalue != null || state.filters.cover || state.queryFilter) {
+      resetFilters();
+    }
+    var row = document.querySelector('#hit-table tr.data-row[data-key="' + key.replace(/"/g, '\\"') + '"]');
+    if (row) {
+      row.scrollIntoView({ block: 'center' });
+      row.classList.remove('flash');
+      void row.offsetWidth;
+      row.classList.add('flash');
+    }
+  });
+}
+
+function resetFilters() {
+  state.filters = { ident: 0, evalue: null, cover: 0 };
+  state.queryFilter = '';
+  $('#filter-ident').value = '0';
+  $('#filter-evalue').value = '';
+  $('#filter-cover').value = '0';
+  $('#filter-query').value = '';
+  state.shown = 100;
+  renderDescriptions();
+  renderGraphicSummary();
+  if (state.alignLoaded) renderAlignments();
+}
+
+function applyFilters() {
+  var ident = parseFloat($('#filter-ident').value);
+  var evalue = $('#filter-evalue').value === '' ? null : parseFloat($('#filter-evalue').value);
+  var cover = parseFloat($('#filter-cover').value);
+  state.filters = {
+    ident: isFinite(ident) ? ident : 0,
+    evalue: evalue != null && isFinite(evalue) ? evalue : null,
+    cover: isFinite(cover) ? cover : 0
+  };
+  state.queryFilter = $('#filter-query').value || '';
+  state.shown = 100;
+  renderDescriptions();
+  renderGraphicSummary();
+  if (state.alignLoaded) renderAlignments();
+}
+
+function renderDownloads(urls) {
+  var labels = {
+    tabular: 'Hit table (TSV, outfmt 6 + ppos/btop)',
+    tabular_gz: 'Hit table — compressed (.tsv.gz)',
+    traditional: 'Pairwise alignments (text, outfmt 0)',
+    traditional_gz: 'Pairwise alignments — compressed (.txt.gz)'
+  };
+  var allKeys = Object.keys(urls || {});
+  // Prefer the compressed file when both are available; keep plain files for
+  // old jobs that predate the .gz generation.
+  var keys = allKeys.filter(function (key) {
+    if (key.slice(-3) === '_gz') return true;
+    return allKeys.indexOf(key + '_gz') < 0;
+  });
+  if (!keys.length) { $('#download-list').innerHTML = '<div class="blast-empty">No result files were reported for this job.</div>'; return; }
+  $('#download-list').innerHTML = keys.map(function (key) {
+    return '<div class="blast-download"><span><strong>' + esc(labels[key] || key) + '</strong><br>' +
+      '<span class="blast-hint">' + esc(urls[key]) + '</span></span>' +
+      '<a class="secondary-button" href="' + esc(urls[key]) + '" target="_blank" rel="noopener" download>Download</a></div>';
+  }).join('');
+}
+
+function switchTab(tab) {
+  state.tab = tab;
+  $$('#result-tabs .blast-tab').forEach(function (btn) { btn.classList.toggle('active', btn.getAttribute('data-tab') === tab); });
+  $('#tab-graphic').hidden = tab !== 'graphic';
+  $('#tab-hits').hidden = tab !== 'hits';
+  $('#tab-alignments').hidden = tab !== 'alignments';
+  $('#tab-downloads').hidden = tab !== 'downloads';
+}
+
+function parseTraditional(text) {
+  var lines = (text || '').replace(/\r\n/g, '\n').split('\n');
+  var hits = [], cur = null, hsp = null, currentQuery = null;
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var qm = /^Query=\s*(\S+)/.exec(line);
+    if (qm) { currentQuery = qm[1]; continue; }
+    if (line.charAt(0) === '>') {
+      cur = { header: line.slice(1).trim(), query: currentQuery, hsps: [] };
+      hits.push(cur);
+      hsp = null;
+      continue;
+    }
+    if (!cur) continue;
+    if (/^\s*Score = /.test(line)) { hsp = { meta: [line.trim()], triplets: [] }; cur.hsps.push(hsp); continue; }
+    if (hsp && /^\s*(Identities|Gaps) = /.test(line)) { hsp.meta.push(line.trim()); continue; }
+    if (hsp && /^Query\s+\d+/.test(line) && lines[i + 2] !== undefined && /^Sbjct\s+\d+/.test(lines[i + 2])) {
+      hsp.triplets.push([line, lines[i + 1], lines[i + 2]]);
+      i += 2;
+    }
+  }
+  hits.forEach(function (hit) {
+    hit.hsps.forEach(function (hsp) {
+      var sm = /Score\s*=\s*([\d.]+)/.exec((hsp.meta || []).join(' '));
+      hsp.score = sm ? parseFloat(sm[1]) : 0;
+      var firstS = hsp.triplets.length ? hsp.triplets[0][2] : '';
+      var lastS = hsp.triplets.length ? hsp.triplets[hsp.triplets.length - 1][2] : '';
+      var a = /^Sbjct\s+(\d+)/.exec(firstS);
+      var b = /^Sbjct\s+\d+\s+\S+\s+(\d+)\s*$/.exec(lastS);
+      hsp.sstart = a ? parseInt(a[1], 10) : null;
+      hsp.send = b ? parseInt(b[1], 10) : null;
+    });
+  });
+  return hits.filter(function (h) { return h.hsps.some(function (s) { return s.triplets.length; }); });
+}
+
+function alignmentTripletHtml(t) {
+  var q = t[0], m = t[1], s = t[2];
+  // Fixed two-space gutter between the coordinate numbers and the aligned
+  // residues, so terminal gaps/mismatches do not butt against "Query 311".
+  var pm = /^(\S+\s+\d+\s+)/.exec(q || s);
+  if (pm) {
+    var n = pm[1].length;
+    q = q.slice(0, n) + '  ' + q.slice(n);
+    if (s) s = s.slice(0, n) + '  ' + s.slice(n);
+    if (m) m = m.slice(0, n) + '  ' + m.slice(n);
+  }
+  // Only spaces *inside* the aligned segment are mismatches; the leading and
+  // trailing spaces under the coordinate numbers must keep the normal
+  // background (no pink blocks at the edges).
+  var start = 0, end = m.length - 1;
+  while (start <= end && m.charAt(start) === ' ') start++;
+  while (end >= start && m.charAt(end) === ' ') end--;
+  var mid = '';
+  for (var i = 0; i < q.length; i++) {
+    var ch = m.charAt(i) || ' ';
+    if (ch === ' ') {
+      mid += (i < start || i > end) ? ' ' : '<span class="mm"> </span>';
+    } else if (ch === '+') {
+      mid += '<span class="pp">+</span>';
+    } else {
+      mid += '<span class="mx">' + esc(ch) + '</span>';
+    }
+  }
+  return esc(q) + '\n' + mid + '\n' + esc(s);
+}
+
+function alignmentCardHtml(h) {
+  var idx = state.alignHits.indexOf(h);
+  var hsps = h.hsps.map(function (s, si) {
+    return '<div class="blast-aln-meta">HSP ' + (si + 1) + ': ' + s.meta.map(esc).join(' · ') + '</div>' +
+      s.triplets.map(function (t) { return '<pre class="blast-aln-pre">' + alignmentTripletHtml(t) + '</pre>'; }).join('');
+  }).join('');
+  return '<details class="blast-aln-card" data-align-index="' + idx + '" data-subject="' +
+    esc(h.header.split(/\s+/)[0]) + '" data-query="' + esc(h.query || '') + '">' +
+    '<summary>' + esc(h.header.slice(0, 160)) +
+      '<button type="button" class="blast-aln-getseq" data-align-index="' + idx + '" title="Fetch target sequence for the highest-scoring HSP">Get sequence</button>' +
+      '<span class="blast-aln-actions"><span class="blast-aln-hspcount">' + h.hsps.length + ' HSP' + (h.hsps.length === 1 ? '' : 's') + '</span>' +
+      '<button type="button" class="blast-aln-copy" title="Copy this target: HSP info + pairwise alignment">Copy</button>' +
+      '<span class="blast-aln-chevron" aria-hidden="true" title="Expand / collapse">▸</span></span></summary>' +
+    '<div class="blast-aln-body">' + hsps + '</div></details>';
+}
+
+function renderAlignments() {
+  var box = $('#align-list');
+  if (!state.alignLoaded) return;
+  if (!state.alignHits.length) {
+    box.innerHTML = '<div class="blast-aln-empty">No pairwise alignments were found in the result file.</div>';
+    $('#align-status').textContent = '0 alignment records.';
+    return;
+  }
+  var visible = filteredSubjects();
+  var keep = {};
+  visible.forEach(function (s) { keep[s.qseqid + '\u0000' + s.sseqid] = 1; });
+  var hits = state.alignHits.filter(function (h) {
+    var sid = h.header.split(/\s+/)[0];
+    if (h.query) return keep[h.query + '\u0000' + sid] === 1;
+    var matched = false;
+    visible.forEach(function (s) { if (s.sseqid === sid) matched = true; });
+    return matched;
+  });
+  if (!hits.length) {
+    box.innerHTML = '<div class="blast-aln-empty">No alignment records match the current filters.</div>';
+    $('#align-status').textContent = '0 of ' + state.alignHits.length + ' alignment record(s) shown.';
+    return;
+  }
+  var qOrder = state.queries.map(function (q) { return q.id; });
+  var groups = {};
+  hits.forEach(function (h) { var q = h.query || ''; (groups[q] = groups[q] || []).push(h); });
+  var qs = Object.keys(groups).sort(function (a, b) {
+    var ia = qOrder.indexOf(a), ib = qOrder.indexOf(b);
+    if (ia < 0) ia = 999;
+    if (ib < 0) ib = 999;
+    return ia - ib || a.localeCompare(b);
+  });
+  var multi = state.queries.length > 1 || qs.length > 1;
+  var html = '';
+  var shown = 0;
+  qs.forEach(function (q) {
+    var arr = groups[q];
+    var qi = qOrder.indexOf(q);
+    if (multi) {
+      html += '<div class="blast-aln-query-title">' + (qi >= 0 ? 'Query ' + (qi + 1) : 'Query') +
+        ': ' + esc(q || 'unknown') + ' <span>(' + arr.length + ' alignment record' + (arr.length === 1 ? '' : 's') + ')</span></div>';
+    }
+    var take = arr.slice(0, Math.max(0, 100 - shown));
+    shown += take.length;
+    html += take.map(alignmentCardHtml).join('');
+  });
+  box.innerHTML = html + (shown < hits.length ? '<p class="blast-hint">Showing the first ' + shown + ' matching records — use the download for the full file.</p>' : '');
+  $('#align-status').textContent = hits.length + ' of ' + state.alignHits.length + ' alignment record(s) shown' +
+    (state.alignChars ? ', ' + fmtInt(state.alignChars) + ' characters' : '') + '.';
+}
+
+function scrollAlignToSubject() {
+  var pending = state.pendingAlignSubject;
+  if (!pending) return;
+  var id = (typeof pending === 'string') ? pending : pending.sseqid;
+  var qid = (typeof pending === 'string') ? '' : (pending.qseqid || '');
+  if (!id) return;
+  var cards = $$('#align-list .blast-aln-card');
+  var found = null;
+  cards.forEach(function (c) {
+    if (!found && c.getAttribute('data-subject') === id && (!qid || c.getAttribute('data-query') === qid)) found = c;
+  });
+  if (!found) {
+    cards.forEach(function (c) { if (!found && c.getAttribute('data-subject') === id) found = c; });
+  }
+  if (!found) {
+    cards.forEach(function (c) {
+      var sid = c.getAttribute('data-subject') || '';
+      if (!found && sid && (sid.indexOf(id) === 0 || id.indexOf(sid) === 0)) found = c;
+    });
+  }
+  if (!found) {
+    $('#align-status').textContent = 'Alignment for ' + id + ' is not shown' +
+      ((state.filters.ident || state.filters.evalue != null || state.filters.cover || state.queryFilter) ? ' (hidden by the current filters — click Reset).' : '.');
+    return;
+  }
+  found.open = true;
+  found.scrollIntoView({ block: 'center' });
+  found.classList.remove('flash');
+  void found.offsetWidth;
+  found.classList.add('flash');
+  setTimeout(function () { found.classList.remove('flash'); }, 1500);
+}
+
+function openAlignmentForSubject(sseqid, qseqid) {
+  state.pendingAlignSubject = { sseqid: sseqid, qseqid: qseqid || '' };
+  switchTab('alignments');
+  if (state.alignLoaded) { scrollAlignToSubject(); state.pendingAlignSubject = null; }
+  else loadAlignments();
+}
+
+function handleAlignmentGetSeq(event) {
+  var toggle = event.target.closest('.blast-aln-getseq');
+  if (toggle) {
+    event.preventDefault();
+    event.stopPropagation();
+    var idx = parseInt(toggle.getAttribute('data-align-index'), 10);
+    var hit = state.alignHits[idx];
+    if (!hit) return;
+    var card = toggle.closest('.blast-aln-card');
+    var body = card.querySelector('.blast-aln-body');
+    if (card.querySelector('.blast-getseq-panel')) { card.querySelector('.blast-getseq-panel').remove(); return; }
+    var best = hit.hsps.reduce(function (a, b) { return ((b.score || 0) > (a.score || 0)) ? b : a; }, hit.hsps[0]);
+    var hasRange = !!(best && best.sstart && best.send);
+    var s1 = hasRange ? Math.min(best.sstart, best.send) : 1;
+    var s2 = hasRange ? Math.max(best.sstart, best.send) : 60;
+    var seqId = hit.header.split(/\s+/)[0];
+    var db = (state.result && state.result.dbs && state.result.dbs[0]) || 'all_genomes';
+    var panel = document.createElement('div');
+    panel.className = 'blast-getseq-panel';
+    panel.innerHTML =
+      '<div class="blast-getseq-fields">' +
+        '<label>Target ID<input class="blast-getseq-id" value="' + esc(seqId) + '" readonly></label>' +
+        '<label>Start<input class="blast-getseq-start" type="number" min="1" value="' + s1 + '"></label>' +
+        '<label>End<input class="blast-getseq-end" type="number" min="1" value="' + s2 + '"></label>' +
+        '<label>Database<input class="blast-getseq-db" value="' + esc(db) + '"></label>' +
+        '<button type="button" class="secondary-button blast-getseq-fetch">Fetch sequence</button>' +
+        '<button type="button" class="blast-link-btn blast-getseq-close">Close</button>' +
+      '</div><div class="blast-getseq-status blast-hint"></div><pre class="blast-getseq-out" hidden></pre>';
+    body.insertBefore(panel, body.firstChild);
+    card.open = true;
+    return;
+  }
+  var close = event.target.closest('.blast-getseq-close');
+  if (close) { close.closest('.blast-getseq-panel').remove(); return; }
+  var fetchBtn = event.target.closest('.blast-getseq-fetch');
+  if (!fetchBtn) return;
+  event.preventDefault();
+  event.stopPropagation();
+  var panel = fetchBtn.closest('.blast-getseq-panel');
+  var seqId = panel.querySelector('.blast-getseq-id').value.trim();
+  var start = parseInt(panel.querySelector('.blast-getseq-start').value, 10);
+  var end = parseInt(panel.querySelector('.blast-getseq-end').value, 10);
+  var status = panel.querySelector('.blast-getseq-status');
+  var out = panel.querySelector('.blast-getseq-out');
+  if (!seqId || !isFinite(start) || !isFinite(end) || start < 1 || end < start) {
+    status.textContent = 'Enter a valid target ID and interval (start >= 1, end >= start).';
+    return;
+  }
+  var dbs = [panel.querySelector('.blast-getseq-db').value.trim()];
+  if (state.result && state.result.dbs) dbs = dbs.concat(state.result.dbs);
+  dbs.push('all_genomes');
+  dbs = dbs.filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+  status.textContent = 'Fetching sequence…';
+  out.hidden = true;
+  var attempt = function (k) {
+    if (k >= dbs.length) { status.textContent = 'Sequence not found in the tried databases — adjust the database or interval.'; return; }
+    var db = dbs[k];
+    var region = seqId + ':' + start + '-' + end;
+    fetch('/api/sequence/by-interval?region=' + encodeURIComponent(region) + '&database=' + encodeURIComponent(db), { cache: 'no-store' })
+      .then(function (resp) { return resp.json(); })
+      .then(function (json) {
+        var fasta = json && json.data && json.data.fasta;
+        if (json && json.success && fasta) {
+          out.textContent = fasta;
+          out.hidden = false;
+          status.textContent = 'Sequence from database "' + (json.data.database || db) + '" (' + region + ').';
+        } else { attempt(k + 1); }
+      })
+      .catch(function () { attempt(k + 1); });
+  };
+  attempt(0);
+}
+
+function loadAlignments() {
+  var ctx = state.result;
+  var url = ctx && ctx.urls && ctx.urls.traditional;
+  if (!url) { $('#align-status').textContent = 'This job has no pairwise alignment file.'; return; }
+  if (state.alignLoaded) return;
+  var btn = $('#align-load');
+  btn.disabled = true;
+  $('#align-status').textContent = 'Loading alignments…';
+  fetch(url, { cache: 'no-store' })
+    .then(function (resp) { if (!resp.ok) throw new Error('HTTP ' + resp.status); return resp.text(); })
+    .then(function (text) {
+      state.alignHits = parseTraditional(text);
+      state.alignLoaded = true;
+      state.alignChars = text.length;
+      renderAlignments();
+      if (state.pendingAlignSubject) { scrollAlignToSubject(); state.pendingAlignSubject = null; }
+    })
+    .catch(function (err) { $('#align-status').textContent = 'Could not load alignments: ' + err.message; })
+    .then(function () { btn.disabled = false; });
+}
+
+// ---------- routing & init ----------
+function route() {
+  var id = parsedJobId(new URLSearchParams(location.search).get('job') || '');
+  if (id) { showResultView(id); return; }
+  var m = (location.hash || '').match(/^#\/job\/([0-9a-fA-F-]{36})$/);
+  if (m && JOB_ID_RE.test(m[1])) {
+    history.replaceState({ job: m[1] }, '', '?job=' + encodeURIComponent(m[1]));
+    showResultView(m[1]);
+    return;
+  }
+  showSearchView();
+}
+
+function init() {
+  $('#blast-query').addEventListener('input', updateQueryMeta);
+  $('#blast-file').addEventListener('change', function (event) {
+    var file = event.target.files && event.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { showFormError('The FASTA file is larger than 5 MB.'); return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      $('#blast-query').value = String(reader.result || '');
+      updateQueryMeta();
+      showFormError('');
+    };
+    reader.readAsText(file);
+  });
+  $('#blast-examples').addEventListener('click', function (event) {
+    var btn = event.target.closest('[data-example]');
+    if (!btn) return;
+    var example = BLAST_EXAMPLES[btn.getAttribute('data-example')];
+    if (!example) return;
+    $('#blast-query').value = example.fasta;
+    updateQueryMeta();
+    showFormError('');
+  });
+  $('#blast-program').addEventListener('change', function () { setProgram(this.value); });
+  $('#blast-form').addEventListener('submit', submitSearch);
+  $('#blast-db-search').addEventListener('input', applyDbSearch);
+  $('#blast-db-viewfilters').addEventListener('click', function (event) {
+    var chip = event.target.closest('[data-kind]');
+    if (!chip) return;
+    var kind = chip.getAttribute('data-kind');
+    state.kindFilter = state.kindFilter === kind ? '' : kind;
+    refreshDbLists();
+  });
+  $('#blast-db-cats').addEventListener('click', function (event) {
+    var toggle = event.target.closest('[data-toggle-group]');
+    if (!toggle) return;
+    var group = toggle.closest('.blast-db-group');
+    var list = group && group.querySelector('.blast-db-group-list');
+    if (!list) return;
+    list.hidden = !list.hidden;
+    toggle.textContent = list.hidden ? 'show' : 'hide';
+  });
+  $('#blast-db-cats').addEventListener('click', function (event) {
+    var head = event.target.closest('[data-toggle-cat]');
+    if (!head) return;
+    var cat = head.closest('.blast-cat');
+    var list = cat.querySelector('.blast-db-list');
+    var open = cat.classList.toggle('open');
+    list.hidden = !open;
+    if (open) fillDbList(list, parseInt(list.getAttribute('data-list'), 10));
+  });
+  $('#blast-db-cats').addEventListener('change', handleDbChange);
+  $('#blast-db-search-results').addEventListener('change', handleDbChange);
+  $('#blast-presets').addEventListener('click', function (event) {
+    var btn = event.target.closest('[data-db]');
+    if (!btn) return;
+    state.selected.clear();
+    state.selected.add(btn.getAttribute('data-db'));
+    renderSelected();
+    renderCategories();
+    applyDbSearch();
+    showFormError('');
+  });
+  $('#blast-chips').addEventListener('click', function (event) {
+    var btn = event.target.closest('[data-remove-db]');
+    if (!btn) return;
+    state.selected.delete(btn.getAttribute('data-remove-db'));
+    renderSelected();
+    renderCategories();
+    applyDbSearch();
+  });
+  $('#blast-clear-dbs').addEventListener('click', function () {
+    state.selected.clear();
+    renderSelected();
+    renderCategories();
+    applyDbSearch();
+    showFormError('');
+  });
+  $('#result-new').addEventListener('click', function () {
+    if (location.hash) location.hash = '';
+    showSearchView();
+  });
+  $('#result-delete').addEventListener('click', deleteCurrentResult);
+  $('#result-tabs').addEventListener('click', function (event) {
+    var btn = event.target.closest('[data-tab]');
+    if (btn) switchTab(btn.getAttribute('data-tab'));
+  });
+  $('#filter-apply').addEventListener('click', applyFilters);
+  $('#filter-reset').addEventListener('click', resetFilters);
+  $('#filter-query').addEventListener('change', applyFilters);
+  $('#filter-ident').addEventListener('change', applyFilters);
+  $('#filter-evalue').addEventListener('change', applyFilters);
+  $('#filter-cover').addEventListener('change', applyFilters);
+  $('#select-all-hits').addEventListener('change', function () { toggleSelectAll(this.checked); });
+  $('#download-selected').addEventListener('click', downloadSelected);
+  $('#hit-table tbody').addEventListener('change', function (event) {
+    var box = event.target.closest('.hit-check');
+    if (!box) return;
+    var key = box.getAttribute('data-key');
+    if (box.checked) state.selectedSubjects.add(key);
+    else state.selectedSubjects.delete(key);
+    updateSelectionUI();
+  });
+  $$('#hit-table th[data-sort]').forEach(function (th) {
+    th.addEventListener('click', function () {
+      var key = th.getAttribute('data-sort');
+      if (key === 'index') return;
+      if (state.sortKey === key) state.sortDir *= -1;
+      else { state.sortKey = key; state.sortDir = (key === 'evalue' || key === 'subject') ? 1 : -1; }
+      renderDescriptions();
+    });
+  });
+  $('#hit-more').addEventListener('click', function () { state.shown += 100; renderDescriptions(); });
+  $('#align-load').addEventListener('click', loadAlignments);
+  $('#align-list').addEventListener('click', function (event) {
+    var btn = event.target.closest('.blast-aln-copy');
+    if (!btn) return;
+    event.preventDefault();
+    event.stopPropagation();
+    var card = btn.closest('.blast-aln-card');
+    if (!card) return;
+    var idx = parseInt(card.getAttribute('data-align-index'), 10);
+    var hit = state.alignHits[idx];
+    var body = card.querySelector('.blast-aln-body');
+    var parts = [hit ? '>' + hit.header : (card.querySelector('summary') || {}).textContent || ''];
+    if (body) {
+      Array.prototype.forEach.call(body.querySelectorAll('.blast-aln-meta, .blast-aln-pre'), function (el) {
+        parts.push(el.textContent);
+      });
+    }
+    var text = parts.join('\n') + '\n';
+    var done = function () { $('#align-status').textContent = 'Copied target alignment (' + fmtInt(text.length) + ' characters).'; };
+    var fail = function () {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { $('#align-status').textContent = 'Copy failed — select the text manually.'; }
+      ta.remove();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fail);
+    else fail();
+  });
+  attachGraphicHandlers();
+  $('#align-list').addEventListener('click', handleAlignmentGetSeq);
+  $('#hit-table tbody').addEventListener('click', function (event) {
+    var b = event.target.closest('.blast-row-align');
+    if (!b) return;
+    event.preventDefault();
+    event.stopPropagation();
+    openAlignmentForSubject(b.getAttribute('data-sseqid'), b.getAttribute('data-qseqid'));
+  });
+  $('#job-id-open').addEventListener('click', function () { openJobById($('#job-id-input').value); });
+  $('#job-id-input').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') { event.preventDefault(); openJobById(this.value); }
+  });
+  $('#job-id-input').addEventListener('input', function () { showJobIdError(''); });
+  window.addEventListener('hashchange', route);
+  window.addEventListener('popstate', route);
+  setProgram('blastn');
+  updateQueryMeta();
+  route();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+  </script>
+</body>
+</html>

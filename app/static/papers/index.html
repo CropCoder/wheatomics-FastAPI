@@ -3,248 +3,138 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Triticeae Papers - WheatOmics</title>
+<title>Triticeae Papers | WheatOmics 2.0</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
 
-<script>
-// ===== Visit tracking =====
-(function() {
-  var page = location.pathname || 'unknown';
-  try {
-    fetch('/api/track/visit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ page: page })
-    }).catch(function(){});
-  } catch (e) {}
-  function fmt(n) {
-    n = Number(n) || 0;
-    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
-    return String(n);
-  }
-  function renderVisitStats(data) {
-    var el = document.getElementById('visit-stats');
-    if (!el || !data) return;
-    var today = (data.today && data.today.pv != null) ? fmt(data.today.pv) : '—';
-    var total = (data.total && data.total.pv != null) ? fmt(data.total.pv) : '—';
-    var online = data.online != null ? data.online : '—';
-    el.innerHTML =
-      '<span class="vs-pill"><span class="vs-dot vs-dot-today"></span>today <b>' + today + '</b></span>' +
-      '<span class="vs-pill"><span class="vs-dot vs-dot-total"></span>total <b>' + total + '</b></span>' +
-      '<span class="vs-pill"><span class="vs-dot vs-dot-online"></span>online <b>' + online + '</b></span>';
-  }
-  fetch('/api/track/stats').then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(resp){
-      if (resp && resp.success && resp.data) renderVisitStats(resp.data);
-    })
-    .catch(function(){});
-})();
-</script>
+
 
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.bundle.js"></script>
+<link rel="stylesheet" href="/api/v2shell/shell.css">
 
 <style>
-/* ============================================================
-   WheatOmics chrome (top bar + nav) — same as other SPAs
-   ============================================================ */
 html, body { margin:0; padding:0; }
-#home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
-#logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
-#home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
-#header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
-#header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
-#header-tabs li { display:inline-block !important; width:190px !important; }
-#header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
-#header-tabs a:hover { background:#98c1d9; color:#000000; }
-#header-tabs ul li { display:inline-block; list-style:none; position:relative; }
-#header-tabs ul li ul { display:none !important; position:absolute; }
-#header-tabs ul li:hover ul { display:block !important; }
-#header-tabs ul li ul a { border-radius:0; }
-#line { height:10px; background-color:#fff; }
-#home_footer { margin:0 auto; padding:5px 0 10px 0; text-align:center; width:100%; background:#d9d9d9; }
-#home_footer table { margin:0 auto; }
-#home_footer .line { display:inline-block; height:30px; width:2px; background:#000; vertical-align:middle; margin:5px; }
-#home_footer .visit-stats { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; vertical-align:middle; margin-left:15px; }
-.visit-stats .vs-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:11px; line-height:1.4; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; }
-.visit-stats .vs-pill b { color:#0f172a; font-weight:600; }
-.visit-stats .vs-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#94a3b8; }
-.visit-stats .vs-dot-today  { background:#22c55e; }
-.visit-stats .vs-dot-total  { background:#3b82f6; }
-.visit-stats .vs-dot-online { background:#f59e0b; }
-.visit-stats .vs-loading { color:#64748b; }
-.visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
-@keyframes vs-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 
 /* ============================================================
-   Literature-style project theme — copied verbatim from
-   https://wheatomics.sdau.edu.cn/literature_auto/literature.html
-   (MHTML offline archive, 2026-07-06). Only fields renamed for
-   triticeae; layout, fonts, colors unchanged.
+   Literature list — V2.0 theme
    ============================================================ */
-.container-main { max-width: 1180px; width: 96%; margin: 18px auto 26px; }
-.page-title-wrap { max-width: 1180px; width: 96%; margin: 18px auto 10px; }
-.page-title-wrap h2 { font-size: 28px; font-weight: 700; margin: 0 0 6px 0; line-height: 1.25; color: #222; }
-.page-title-wrap p { margin: 0; color: #555; font-size: 14px; }
-.page-title-wrap .card-title {
-  display: inline-block;
-  font-size: 22px;
-  font-weight: 600;
-  margin: 0 0 4px 0;
-  padding: 0;
-  color: #222;
-  border-bottom: 2px solid #0077b6;
-  padding-bottom: 4px;
-}
-
-/* ----- top-bottom layout ----- */
 .search-row { margin-bottom: 18px; }
 .results-row { margin-top: 0; }
 
 .filter-block {
   background: #fff;
-  border: 1px solid #e6e6e6;
-  border-radius: 4px;
-  padding: 12px 15px;
-  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
 }
-.filter-block-main { padding: 14px 16px; }
-.filter-block h5 { font-size: 16px; font-weight: 700; margin: 0 0 10px 0; color: #222; }
+.filter-block-main { padding: 16px 18px; }
+.filter-block h5 { font-size: 16px; font-weight: 700; margin: 0 0 10px 0; color: var(--forest-deep); }
 .filter-row { display: flex; flex-wrap: wrap; gap: 12px; }
 .filter-block-quarter { flex: 1 1 calc(25% - 9px); min-width: 220px; }
 
-.sidebar-section { background: #fff; border: 1px solid #e6e6e6; border-radius: 4px; padding: 15px; margin-bottom: 18px; }
-.sidebar-section h5 { font-size: 18px; font-weight: 700; margin-bottom: 14px; color: #222; }
+.sidebar-section { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 15px; margin-bottom: 18px; }
+.sidebar-section h5 { font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--forest-deep); }
 
-/* status pills removed (commit <drop-loading-pill>); the search
-   results-row res-info now reports search state inline. */
+.small-label { font-size: 12px; color: var(--forest-deep); font-weight: 700; margin-bottom: 4px; }
+.helper-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
 
-.small-label { font-size: 12px; color: #555; font-weight: 600; margin-bottom: 4px; }
-.helper-text { font-size: 12px; color: #666; line-height: 1.5; }
-
-.chart-box { background: #fafafa; border: 1px solid #ececec; border-radius: 4px; padding: 12px; margin-bottom: 14px; }
-.chart-title { font-size: 12px; font-weight: 700; color: #666; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
-.year-chart-shell { border: 1px solid #efefef; background: #fff; padding: 8px 8px 2px; }
+.chart-box { background: var(--mist); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 14px; }
+.chart-title { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+.year-chart-shell { border: 1px solid var(--line); background: #fff; padding: 8px 8px 2px; }
 #yearChart { width: 100%; height: 120px; display: block; background: #fff; }
-.chart-endpoints { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #333; margin-top: 2px; padding: 0 2px; }
+.chart-endpoints { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink); margin-top: 2px; padding: 0 2px; }
 .year-slider-wrap { margin-top: 12px; }
-.year-selected-text { font-size: 12px; color: #333; font-weight: 600; margin-bottom: 8px; }
+.year-selected-text { font-size: 12px; color: var(--ink); font-weight: 600; margin-bottom: 8px; }
 .range-wrap { position: relative; height: 34px; }
-.range-track { position: absolute; left: 0; right: 0; top: 13px; height: 3px; background: #cfd6dc; border-radius: 999px; }
-.range-selected { position: absolute; top: 13px; height: 3px; background: #7fd6c6; border-radius: 999px; }
+.range-track { position: absolute; left: 0; right: 0; top: 13px; height: 3px; background: var(--line); border-radius: 999px; }
+.range-selected { position: absolute; top: 13px; height: 3px; background: var(--sprout); border-radius: 999px; }
 .range-wrap input[type=range] { position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; -webkit-appearance: none; background: none; height: 34px; margin: 0; }
-.range-wrap input[type=range]::-webkit-slider-thumb { pointer-events: auto; -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid #33bfa6; cursor: pointer; box-shadow: 0 0 0 1px rgba(0,0,0,0.05); margin-top: -6px; }
-.range-wrap input[type=range]::-moz-range-thumb { pointer-events: auto; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid #33bfa6; cursor: pointer; box-shadow: 0 0 0 1px rgba(0,0,0,0.05); }
+.range-wrap input[type=range]::-webkit-slider-thumb { pointer-events: auto; -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid var(--leaf); cursor: pointer; box-shadow: 0 0 0 1px rgba(0,0,0,0.05); margin-top: -6px; }
+.range-wrap input[type=range]::-moz-range-thumb { pointer-events: auto; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid var(--leaf); cursor: pointer; box-shadow: 0 0 0 1px rgba(0,0,0,0.05); }
 .range-wrap input[type=range]::-webkit-slider-runnable-track { height: 3px; background: transparent; }
 .range-wrap input[type=range]::-moz-range-track { height: 3px; background: transparent; }
-.year-values { display: flex; justify-content: space-between; font-size: 12px; color: #333; margin-top: 6px; }
+.year-values { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink); margin-top: 6px; }
 
-#res-info { margin-bottom: 12px; color: #666; font-size: 13px; }
+#res-info { margin-bottom: 12px; color: var(--muted); font-size: 13px; }
 #list-content { min-height: 600px; }
 
-.paper-item { padding-bottom: 18px; margin-bottom: 20px; border-bottom: 1px solid #ececec; }
+.paper-item { padding-bottom: 18px; margin-bottom: 20px; border-bottom: 1px solid var(--line); }
 .paper-item:last-child { border-bottom: none; margin-bottom: 0; }
 
-.journal-meta { color: #666; font-size: 12px; line-height: 1.5; margin-bottom: 4px; }
-.paper-title { color: #007bff; font-size: 19px; font-weight: 700; line-height: 1.4; text-decoration: none; }
-.paper-title:hover { color: #0056b3; text-decoration: underline; }
-.id-link { color: #007bff; font-size: 12px; }
-.authors-full { font-size: 13px; color: #444; line-height: 1.6; white-space: normal; word-break: break-word; }
+.journal-meta { color: var(--muted); font-size: 12px; line-height: 1.5; margin-bottom: 4px; }
+.paper-title { color: var(--forest); font-size: 19px; font-weight: 700; line-height: 1.4; text-decoration: none; }
+.paper-title:hover { color: var(--leaf); text-decoration: underline; }
+.id-link { color: var(--forest); font-size: 12px; font-weight: 700; }
+.authors-full { font-size: 13px; color: #42584d; line-height: 1.6; white-space: normal; word-break: break-word; }
 
-.abstract-box { display: none; background: #f8f9fa; border-left: 4px solid #007bff; padding: 10px 12px; margin-top: 6px; color: #444; line-height: 1.6; border-radius: 2px; }
+.abstract-box { display: none; background: var(--mist); border-left: 3px solid var(--leaf); padding: 10px 12px; margin-top: 6px; color: #42584d; line-height: 1.6; border-radius: 0 8px 8px 0; }
 .abstract-box.open { display: block; }
 
-.badge-tag { display: inline-block; background: #eef5fc; color: #2b5f91; border: 1px solid #d5e4f2; border-radius: 999px; padding: 3px 8px; font-size: 11px; margin-right: 5px; margin-bottom: 5px; cursor: pointer; }
-.badge-tag:hover { background: #ddeefe; }
-.badge-tag-red    { background: #d93a49; color: #fff; border-color: #c92a3a; font-weight: 600; }
-.badge-tag-green  { background: #28a745; color: #fff; border-color: #1e7e34; font-weight: 600; }
-.badge-tag-yellow { background: #f5c518; color: #4a3b00; border-color: #e0b400; font-weight: 600; }
+.badge-tag { display: inline-block; background: var(--mist); color: var(--forest); border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; font-size: 11px; font-weight: 700; margin-right: 5px; margin-bottom: 5px; cursor: pointer; }
+.badge-tag:hover { background: #e8f3ea; border-color: rgba(17,134,83,.35); }
+.badge-tag-red    { background: #b4432f; color: #fff; border-color: #9d3826; font-weight: 700; }
+.badge-tag-green  { background: var(--forest); color: #fff; border-color: var(--forest-deep); font-weight: 700; }
+.badge-tag-yellow { background: #f6e2ac; color: #5a4308; border-color: #e0c884; font-weight: 700; }
 
-.tag-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 9px; border-radius: 4px; border: 1px solid #ededed; background: #fafafa; margin-bottom: 6px; cursor: pointer; }
-.tag-item:hover { background: #f0f7ff; }
-.tag-item span { font-size: 13px; color: #333; word-break: break-word; padding-right: 8px; }
-.tag-item small { color: #777; background: #fff; border: 1px solid #e1e1e1; border-radius: 10px; padding: 1px 6px; min-width: 24px; text-align: center; }
+.tag-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: #fbfdfb; margin-bottom: 6px; cursor: pointer; min-height: 34px; }
+.tag-item:hover { background: var(--mist); border-color: rgba(17,134,83,.3); }
+.tag-item span { font-size: 13px; color: var(--ink); word-break: break-word; padding-right: 8px; }
+.tag-item small { color: var(--muted); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; min-width: 24px; text-align: center; }
 
-.paper-filter-box { background: #fafafa; border: 1px solid #ececec; border-radius: 4px; padding: 12px; margin-bottom: 14px; }
-.paper-filter-title { font-size: 12px; font-weight: 700; color: #666; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+.paper-filter-box { background: var(--mist); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 14px; }
+.paper-filter-title { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
 
 .journal-check-list { max-height: 240px; overflow-y: auto; padding-right: 4px; }
-.journal-check-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border: 1px solid #e7e7e7; border-radius: 4px; background: #fff; margin-bottom: 6px; font-size: 13px; }
+.journal-check-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: #fff; margin-bottom: 6px; font-size: 13px; min-height: 34px; }
 .journal-check-item label { margin: 0; cursor: pointer; flex: 1 1 0%; padding-left: 6px; padding-right: 8px; word-break: break-word; }
 .journal-check-item input { cursor: pointer; }
-.journal-count { display: inline-block; min-width: 28px; text-align: center; font-size: 12px; color: #666; border: 1px solid #e0e0e0; border-radius: 999px; padding: 1px 6px; background: #fafafa; }
+.journal-count { display: inline-block; min-width: 28px; text-align: center; font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; background: var(--mist); }
 
 .pagination-container { gap: 10px; }
 .row.align-items-start { align-items: flex-start !important; }
 
+/* Bootstrap helpers on coloured backgrounds */
+.text-primary { color: var(--forest) !important; }
+.btn:disabled, .btn.disabled { opacity: 1; color: #4d6559; background: var(--mist); border-color: var(--line); }
+#advanced-toggle { display: inline-flex; align-items: center; min-height: 28px; padding: 0 !important; }
+.annotation-box > div { background: var(--mist) !important; border-left: 3px solid var(--leaf) !important; }
+
+/* Year chart SVG (generated by JS): re-colour the blue palette to V2.0 */
+#year-histogram svg path[fill="rgba(0,119,182,0.12)"] { fill: rgba(17,134,83,0.12); }
+#year-histogram svg path[stroke="#0077b6"] { stroke: var(--forest); }
+#year-histogram svg circle[fill="#0077b6"] { fill: var(--forest); }
+
 @media (max-width: 767px) {
-  .container-main, .page-title-wrap { width: 98%; }
   .paper-title { font-size: 17px; }
   .id-link { display: block; margin-top: 4px; float: none !important; }
 }
 </style>
 </head>
 <body>
+  <div id="v2-shell-header"></div>
 
-<div id="home_header">
-  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 2.0</span>
-</div>
-<div id="header-tabs">
-  <ul>
-    <li><a href="/"><span>Home</span></a></li>
-    <li><a href="#"><span>Tools/Browse</span></a>
-      <ul>
-        <li><a href="/getfasta/index.html">GetSequence</a></li>
-        <li><a href="/blast/blast.html">BLAST</a></li>
-        <li><a href="/PrimerServer">PrimerServer</a></li>
-        <li><a href="/PrimerServer2/">PrimerServer2</a></li>
-        <li><a href="/caps/">CAPS/dCAPS</a></li>
-        <li><a href="/PfamSearch/">PfamSearch</a></li>
-        <li><a href="/idConvert/">IDConvert</a></li>
-        <li><a href="/HomologFinder/">HomologFinder</a></li>
-        <li><a href="/interval/">IntervalTool</a></li>
-        <li><a href="/expression/">GeneExpression</a></li>
-        <li><a href="/coexpression/index.html">Co-expression</a></li>
-        <li><a href="/wheatPPI/">WheatPPI</a></li>
-        <li><a href="/genes/">KnownGene</a></li>
-        <li><a href="/symap/index.html">SyntenySearch</a></li>
-        <li><a href="/syntenyview/">SynTenyView</a></li>
-        <li><a href="/preblast/">preBLAST</a></li>
-        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
-        <li><a href="/orthofinder/">OrthoFinder</a></li>
-        <li><a href="/VariantHub/">VariantHub</a></li>
-        <li><a href="DWGVa.html">DWGVa</a></li>
-        <li><a href="/scRNA/">scRNA</a></li>
-        <li><a href="/wheatPSP/">wheatPSP</a></li>
-        <li><a href="/eqtl/">eQTL Atlas</a></li>
-        <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
-        <li><a href="/papers">Triticeae papers</a></li>
-      </ul>
-    </li>
-    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
-    <li><a href="/download.html"><span>Download Data</span></a></li>
-    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
-    <li><a href="#"><span>About</span></a>
-      <ul>
-        <li><a href="/help/contact.html">Contact</a></li>
-        <li><a href="/help/news.html">News</a></li>
-      </ul>
-    </li>
-  </ul>
-</div>
+  <main id="main-content">
+    <section class="news-hero">
+      <div class="container news-hero-inner">
+        <div>
+          <p class="news-kicker">WheatOmics 2.0 · Literature resource</p>
+          <h1 class="news-title">Triticeae <em>Papers</em></h1>
+          <p class="news-lead">Explore LLM-tagged papers across Triticeae crops (wheat, barley, rye and relatives). Filter by keyword, date range, author, journal or trait tag, and export the matching records as TSV.</p>
+          <div class="news-stats">
+            <span class="news-stat">LLM-tagged abstracts</span>
+            <span class="news-stat">Keyword · journal · trait filters</span>
+            <span class="news-stat">TSV export</span>
+          </div>
+        </div>
+        <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-book"/></svg></div>
+      </div>
+    </section>
 
-<div class="page-title-wrap">
-  <div class="d-flex justify-content-between align-items-start">
-    <div>
-      <h5 class="card-title">Triticeae Papers</h5>
-      <p>Explore LLM-tagged papers across Triticeae crops (wheat, barley, rye, relatives). Filter by keyword, date range, author, journal, or trait tag.</p>
-    </div>
-  </div>
-</div>
+    <section class="news-body">
+      <div class="container">
 
-<main class="container-main">
 
   <!-- ============= TAB NAV: Search / Stats ============= -->
   <ul class="nav nav-tabs mb-3" role="tablist">
@@ -444,37 +334,13 @@ html, body { margin:0; padding:0; }
   </div><!-- /#tab-stats -->
 
   </div><!-- /.tab-content -->
-</main>
+      </div>
+    </section>
+  </main>
 
-<div class="line" id="line"></div>
-<div id="home_footer">
-  <center style="margin-top:5px">
-    <table>
-      <tr>
-        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><div style="height:50px;width:15px;"></div></td>
-        <td>
-          <div id="visit-stats" class="visit-stats">
-            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
-          </div>
-        </td>
-      </tr>
-    </table>
-    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
-  </center>
-</div>
-      </td>
-    </tr>
-  </table>
-  <div>For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a></div>
-</div>
+  <div id="v2-shell-footer"></div>
+
+  <script src="/api/v2shell/shell.js"></script>
 
 <script>
 /* ============================================================

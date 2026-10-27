@@ -1,0 +1,53 @@
+<!doctype html>
+<!--
+  Reference skeleton for a converted WheatOmics SPA.
+  Copy the head/hero/main structure below and keep the page's own JS at the
+  bottom. The header, footer, sprite, mobile menu and visit statistics come
+  from /api/v2shell/shell.js — do not paste header/footer markup again.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MODULE | WheatOmics 2.0</title>
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="/api/v2shell/shell.css">
+  <style>
+    /* page-specific styles on top of the shared shell */
+  </style>
+</head>
+<body>
+  <div id="v2-shell-header"></div>
+
+  <main id="main-content">
+    <section class="news-hero">
+      <div class="container news-hero-inner">
+        <div>
+          <p class="news-kicker">WheatOmics 2.0 · Analysis tool</p>
+          <h1 class="news-title">MODULE</h1>
+          <p class="news-lead">One-sentence description of what this tool does and what the user gets back.</p>
+          <div class="news-stats">
+            <span class="news-stat"><strong>N</strong> databases</span>
+            <span class="news-stat">Async job queue</span>
+          </div>
+        </div>
+        <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-search"/></svg></div>
+      </div>
+    </section>
+
+    <section class="news-body">
+      <div class="container">
+        <!-- page content goes here -->
+      </div>
+    </section>
+  </main>
+
+  <div id="v2-shell-footer"></div>
+
+  <script src="/js/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/api/v2shell/shell.js"></script>
+  <script>
+    /* page JS */
+  </script>
+</body>
+</html>

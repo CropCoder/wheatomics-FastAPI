@@ -7,13 +7,26 @@ import re
 from fastapi import APIRouter, Query
 
 from app.core.config import settings
+from app.core.genome_ordering import infer_karyotype, sort_key as genome_sort_key
 from app.core.exceptions import ResourceNotFound, ValidationFailure
 from app.core.response import ok
-from app.core.security import GENE_FUNCTION_TABLES, ensure_allowed_table, ensure_gene_like, ensure_interval_like
+from app.core.security import (
+    GENE_FUNCTION_TABLES,
+    GENEFUNC_TABLE_ALIASES,
+    ensure_allowed_table,
+    ensure_gene_like,
+    ensure_interval_like,
+)
 
 def _validate_genefunc_table(table: str) -> str:
-    """Validate that a table exists in Genefuncdb. Replaces static allowlist."""
+    """Validate that a table exists in Genefuncdb. Replaces static allowlist.
+
+    Legacy ids from the CGI era (e.g. Genefunc_IWGSC03G_table, renamed to
+    Genefunc_CS_IWGSC03G_table) are resolved through GENEFUNC_TABLE_ALIASES so
+    old URLs keep returning data. Returns the canonical table name.
+    """
     from app.db.mysql import mysql_cursor
+    table = GENEFUNC_TABLE_ALIASES.get(table, table)
     with mysql_cursor(settings.DB_GENEFUNC) as cursor:
         cursor.execute("SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s",
                        (settings.DB_GENEFUNC, table))
@@ -391,6 +404,15 @@ def get_gene_detail(gene_id: str) -> dict:
 
     return ok(detail.model_dump())
 
+_NULL_CS02G = {"", "-", ".", "null", "none", "na", "n/a"}
+
+
+def _clean_cs02g(value):
+    """Normalize placeholder values in ChineseSpring02G to None."""
+    text = normalize_text(value) or ""
+    return None if text.strip().lower() in _NULL_CS02G else text
+
+
 def _make_function_record(row, table):
     """Build a GeneFunctionRecord from a DB row, handling different table schemas."""
     # The IWGSC v1.0 (v2) tables only have Gene03G/Gene02G columns; every
@@ -408,7 +430,7 @@ def _make_function_record(row, table):
             strand=normalize_text(row["Strand"]) or None,
             description=normalize_text(row.get("Description") or row.get("description") or "") or None,
             domain=normalize_text(row["Domain"]) or None,
-            chinese_spring_02g=normalize_text(row.get("ChineseSpring02G") or row.get("Gene02G")) or None,
+            chinese_spring_02g=_clean_cs02g(row.get("ChineseSpring02G") or row.get("Gene02G")),
         )
     return GeneFunctionRecord(
         chromosome=str(row["Chrom"]),
@@ -418,7 +440,7 @@ def _make_function_record(row, table):
         strand=normalize_text(row["Strand"]) or None,
         description=normalize_text(row.get("Description") or row.get("description") or "") or None,
         domain=normalize_text(row["Domain"]) or None,
-        chinese_spring_02g=normalize_text(row.get("ChineseSpring02G")) or None,
+        chinese_spring_02g=_clean_cs02g(row.get("ChineseSpring02G")),
     )
 
 @pfam_router.get("/pfam")
@@ -639,12 +661,14 @@ def list_genome_examples() -> dict:
     # the old hardcoded GENOME_EXAMPLES list only had 32 entries.
     # We use the legacy example_chr_id / example_gene_id columns
     # (not example_species_chr_id / example_cds_id) per user request.
-    # Note: Genefunc_registry has no `display_name` column; we alias
-    # table_name to display_name for the frontend (the /registry
-    # endpoint does the same thing).
+    # display_name is curated in the registry (e.g. "Chinese Spring 03G",
+    # "Durum Wheat cv. Svevo V2 (AABB)"); fall back to the polyploidy +
+    # table-name form only when it is empty.
     sql = """
-        SELECT table_name AS display_name, example_chr_id,
-               example_gene_id, COALESCE(Polyploidy, '') AS polyploidy
+        SELECT table_name,
+               COALESCE(NULLIF(display_name, ''), table_name) AS display_name,
+               example_chr_id, example_gene_id,
+               COALESCE(Polyploidy, '') AS polyploidy
         FROM Genefunc_registry
         WHERE visible = 1
         ORDER BY display_order, id
@@ -679,14 +703,19 @@ def list_genome_examples() -> dict:
     seen = set()
     examples = []
     for r in rows:
-        table_name = r.get("display_name")
-        display_name = _display_name(r.get("polyploidy") or None, table_name)
+        table_name = r.get("table_name")
+        display_name = (r.get("display_name") or "").strip() \
+            or _display_name(r.get("polyploidy") or None, table_name)
         if display_name in seen:
             continue
         seen.add(display_name)
         examples.append({
             "table_name":   table_name,
             "display_name": display_name,
+            # Karyotype (subgenome composition) drives the dropdown grouping;
+            # computed from Polyploidy or the table prefix so new genomes sort
+            # themselves (see app/core/genome_ordering.py).
+            "karyotype":    infer_karyotype(table_name, r.get("polyploidy")),
             # Frontend keys are region / gene / pfam for backward compat.
             "region":       _ensure_range(r.get("example_chr_id")),
             "gene":         r.get("example_gene_id"),
@@ -697,6 +726,7 @@ def list_genome_examples() -> dict:
             # needs a `Domain` column).
             "columns":      cols_map.get(table_name, []),
         })
+    examples.sort(key=genome_sort_key)
     return ok({"examples": examples})
 @interval_router.get("/registry")
 def list_gene_function_registry() -> dict:
@@ -858,15 +888,19 @@ def search_gene_interval(
                 gene_cols = ["Gene03G", "Gene02G"]
             else:
                 gene_cols = ["Gene"]
-            # Batched: strip version suffixes, then one IN(...) query per gene
-            # column (previously N queries, one per gene ID).
+            # Batched: match both the versioned and the version-stripped id.
+            # Older tables store `TraesCS1A03G0000100LC` while the pipeline
+            # tables (Abo, Svevo V2, ...) store `Abo1A000100.1`, so a single
+            # form never matches every table.
             base_ids = [re.sub(r"\.\d+$", "", gid) for gid in gene_ids]
-            placeholders = ",".join(["%s"] * len(base_ids))
+            candidates = list(dict.fromkeys(base_ids + gene_ids))
+            placeholders = ",".join(["%s"] * len(candidates))
             where_clause = " OR ".join(f"`{col}` IN ({placeholders})" for col in gene_cols)
-            cursor.execute(
-                f"SELECT * FROM `{table}` WHERE {where_clause}",
-                tuple(base_ids for _ in gene_cols),
-            )
+            # One placeholder group per gene column: flatten the ids for pymysql
+            # (a nested tuple of lists raised "not enough arguments for format string"
+            # for any multi-ID batch query).
+            args = tuple(candidates) * len(gene_cols)
+            cursor.execute(f"SELECT * FROM `{table}` WHERE {where_clause}", args)
             for row in cursor.fetchall():
                 records.append(_make_function_record(row, table))
         return ok({"table": table, "region": region, "count": len(records), "records": [record.model_dump() for record in records]})
@@ -877,8 +911,10 @@ def search_gene_interval(
     start_text, end_text = interval.split("-")
     start, end = int(start_text), int(end_text)
 
-    if end <= start or end - start > 30_000_000:
-        raise ValidationFailure("End number should be more than start number and region should not be more than 30Mb")
+    if end <= start:
+        raise ValidationFailure("End number should be more than start number")
+    if end - start > 30_000_000:
+        raise ValidationFailure("Region is too large: maximum interval is 30 Mb")
 
     with mysql_cursor(settings.DB_GENEFUNC) as cursor:
         cursor.execute(
@@ -891,3 +927,70 @@ def search_gene_interval(
     return ok({"table": table, "region": region, "count": len(records), "records": [record.model_dump() for record in records]})
 
 
+
+
+@genehub_router.get("/resolve")
+def resolve_gene_id(
+    gene_id: str = Query(..., alias="ID"),
+) -> dict:
+    """跨 Genefunc 表解析基因 ID，并返回中国春 02G 对应关系。
+
+    用于 GeneHub 非中国春 ID 的兜底：按 Gene/Gene02G/Gene03G 列扫描所有
+    visible 的 Genefunc 表，返回命中记录及其 ChineseSpring02G 映射。
+    """
+    gene_id = (gene_id or "").strip()
+    if not re.match(r"^[A-Za-z0-9_.:-]{2,200}$", gene_id):
+        raise ValidationFailure("Invalid gene ID")
+    base_id = re.sub(r"\.\d+$", "", gene_id)
+    candidates = list(dict.fromkeys([gene_id, base_id]))
+
+    mappings: list[dict] = []
+    seen = set()
+    with mysql_cursor(settings.DB_GENEFUNC) as cursor:
+        cursor.execute(
+            "SELECT table_name, display_name, `Group`, Polyploidy "
+            "FROM Genefunc_registry WHERE visible=1 ORDER BY display_order, table_name"
+        )
+        registry = cursor.fetchall()
+        cursor.execute(
+            "SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS "
+            "WHERE TABLE_SCHEMA=%s AND COLUMN_NAME IN ('Gene','Gene02G','Gene03G')",
+            (settings.DB_GENEFUNC,),
+        )
+        table_columns: dict[str, list[str]] = {}
+        for row in cursor.fetchall():
+            table_columns.setdefault(row["TABLE_NAME"], []).append(row["COLUMN_NAME"])
+
+        for meta in registry:
+            table = str(meta.get("table_name") or "")
+            if not re.match(r"^Genefunc_[A-Za-z0-9_]+_table$", table):
+                continue
+            gene_columns = table_columns.get(table)
+            if not gene_columns:
+                continue
+            display = normalize_text(meta.get("display_name")) or table
+            for col in gene_columns:
+                try:
+                    cursor.execute(
+                        f"SELECT * FROM `{table}` WHERE `{col}` IN (%s,%s) LIMIT 10",
+                        (gene_id, base_id),
+                    )
+                    rows = cursor.fetchall() or []
+                except Exception:
+                    continue
+                for row in rows:
+                    record = _make_function_record(row, table)
+                    key = (table, record.gene_primary, record.chinese_spring_02g)
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    data = record.model_dump()
+                    data.update(
+                        table=table,
+                        dataset=display,
+                        group=normalize_text(meta.get("Group")) or None,
+                        ploidy=normalize_text(meta.get("Polyploidy")) or None,
+                    )
+                    mappings.append(data)
+
+    return ok({"query": gene_id, "count": len(mappings), "mappings": mappings})

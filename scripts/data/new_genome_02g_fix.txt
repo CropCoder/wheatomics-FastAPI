@@ -1,0 +1,6 @@
+# New-genome 8-column BED -> Genefunc table, ChineseSpring02G backfill manifest
+# bed columns: Chrom Start End Gene Strand Description Domain ChineseSpring02G
+Genefunc_Thinopyrum_ponticum_decaploid_table	/var/www/data/masw_data/Thinopyrum_ponticum_decaploid/Thinopyrum_ponticum_decaploid_with_annotation_ChineseSpring02G.bed
+Genefunc_AABBRR_PT_table	/var/www/data/masw_data/AABBRR_PT/AABBRR_PT_with_annotation_ChineseSpring02G.bed
+Genefunc_AABBRR_ZX830_table	/var/www/data/masw_data/AABBRR_ZX830/AABBRR_ZX830_with_annotation_ChineseSpring02G.bed
+Genefunc_AABB_Wild_emmer_Zavitan_table	/var/www/data/masw_data/AABB_Wild_emmer_Zavitan/AABB_Wild_emmer_Zavitan_with_annotation_ChineseSpring02G.bed

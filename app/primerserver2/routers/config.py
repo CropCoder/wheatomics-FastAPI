@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 
 from ..config import PrimerServerConfig, blast_db_exists, get_primer_config
 from app.core.config import settings
+from app.core.genome_ordering import infer_karyotype, sort_key as genome_sort_key
 from ..models import ConfigResponse, DatabaseGroup, DatabasesResponse
 
 from pathlib import Path
@@ -178,28 +179,54 @@ def _blast_db_groups(nuc_dbs: List[str]) -> List[DatabaseGroup]:
             gene.append(name)
 
     # ------------------------------------------------------------
-    # Chinese Spring genomes go first.
-    #
-    # v2.1 is the platform default and ranks highest;
-    # other Chinese Spring references come next;
-    # everything else remains alphabetical.
+    # Database order follows the platform-wide genome ordering used by
+    # IntervalTool/PfamSearch (app/core/genome_ordering.py):
+    #   crops -> species-level -> Other, ploidy high -> low, karyotype,
+    #   Chinese Spring versions first inside their group.
+    # The same rule then applies to genome and gene databases alike, so
+    # newly imported genomes sort themselves without touching this file.
     # ------------------------------------------------------------
-    def _genome_sort_key(name: str) -> Tuple[int, str]:
+    # list_dbs() is disk-cached for an hour, so a database removed from disk can
+    # linger in the picker (and then fail validation on submit). Re-check the
+    # index files here; it is a handful of stat() calls per database.
+    genome = [n for n in genome if blast_db_exists(n)]
+    gene = [n for n in gene if blast_db_exists(n)]
 
-        if name == "AABBDD_Chinese_Spring2.1.genome":
-            return (0, name)
-
-        if (
-            "Chinese_Spring" in name
-            or "CS-CAU" in name
-            or "CS-IAAS" in name
+    def _db_core(name: str) -> str:
+        for suffix in (
+            ".genome",
+            ".add_Description.cds",
+            ".add_Description.pep",
+            ".cds",
+            ".pep",
         ):
-            return (1, name)
+            if name.endswith(suffix):
+                return name[: -len(suffix)]
+        return name
 
-        return (2, name)
+    def _db_sort_key(name: str) -> Tuple:
+        core = _db_core(name)
+        if "thinopyrum_ponticum" in core.casefold():
+            karyotype = "Thinopyrum ponticum"
+        else:
+            karyotype = infer_karyotype(core, "")
+        display = core
+        if (
+            karyotype
+            and karyotype not in ("Other", "Thinopyrum ponticum")
+            and core.upper().startswith(karyotype.upper() + "_")
+        ):
+            display = core[len(karyotype) + 1:]
+        display = display.replace("_", " ")
+        # "Spring2.1" -> "Spring 2.1" so the curated CS ordering applies.
+        display = re.sub(r"(?<=[A-Za-z])(\d)", r" \1", display)
+        # Chinese Spring 2.1 stays the first entry (platform default reference
+        # for primer design); everything else follows the standard ordering.
+        default_first = 0 if core.upper().startswith("AABBDD_CHINESE_SPRING2.1") else 1
+        return (default_first,) + genome_sort_key({"karyotype": karyotype, "display_name": display})
 
-    genome.sort(key=_genome_sort_key)
-    gene.sort()
+    genome.sort(key=_db_sort_key)
+    gene.sort(key=_db_sort_key)
 
     # ------------------------------------------------------------
     # Build the two database groups.

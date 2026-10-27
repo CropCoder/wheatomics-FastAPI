@@ -14,6 +14,13 @@ COEXPRESSION_TABLES = {
     "CO_result2": "Wheat grain",
 }
 
+# Gene-function tables that were renamed after the CGI era. The legacy ids are
+# still referenced by old URLs / scripts (cgi-py-RawScript/gene_function_search.py),
+# so resolve them to the current table names instead of rejecting them.
+GENEFUNC_TABLE_ALIASES = {
+    "Genefunc_IWGSC03G_table": "Genefunc_CS_IWGSC03G_table",   # Chinese Spring 03G (IWGSC RefSeq v2.1)
+}
+
 GENE_FUNCTION_TABLES = {
     "Genefunc_CS_IWGSCv1.0_table": "Functional annotation against IWGSC v1/v2",
     "Genefunc_CS_IWGSC03G_table": "Functional annotation with IWGSC v3 mapping",

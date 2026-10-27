@@ -719,6 +719,316 @@ curl -s https://wheatomics.sdau.edu.cn/api/<module>/<action> | head -c 200
 # 5. HTML 头部 6 件事齐
 curl -s http://127.0.0.1:8000/<module>/index.html | head -10
 # 期望：charset / viewport / title / favicon / bootstrap.css / jquery 都齐
+
+# 6. 多宽度渲染（见第九节；需要本机 ego-browser，无需 npm 安装任何东西）
+bash scripts/spa_visual_check.sh http://127.0.0.1:8000/<module>/
+# 期望：Result: PASS；再逐张看一下 w360 / w768 / w1440 截图
 ```
 
 **全部 ✓ 才算这个迭代完成**。
+
+---
+
+## 九、多宽度渲染检查（SPA 改造必跑）
+
+借鉴 Hallmark（`sloplint`）的"8 种宽度真实浏览器审查"思路，用本机已有的 `ego-browser`
+实现，**不安装任何 npm 依赖、不改生产环境**。目的不是替代人工 review，而是把
+"移动端/平板破版、对比度不足、异步加载没等到就截图"这类问题在 commit 前自动化掉。
+
+### 什么时候跑
+
+- 新增或改造 `app/static/<module>/index.html`（尤其像 wheatPTM 那样整页改版）之后、commit 之前；
+- 把截图贴到 PR / 聊天里一起 review；
+- 排查"线上某个宽度下有横向滚动条"之类的问题时，先跑一遍定位元素。
+
+### 用法
+
+```bash
+# 1) 纯落地页（本地 dev server 或线上 URL 都行）
+bash scripts/spa_visual_check.sh http://127.0.0.1:8000/wheatPTM/
+
+# 2) 需要交互的页面：填表 → 点搜索 → 等结果区，并额外截结果区
+bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/wheatPTM/ \
+  --label wheatptm-result \
+  --fill '#protein-input=TraesCS1A02G000100LC.1' \
+  --click '#search-btn' \
+  --wait '#result-area' \
+  --scroll-to '#result-area'
+
+# 3) 存量页面巡检（老 Bootstrap SPA 也能跑）
+bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/wheatPSP/ --label legacy-wheatpsp
+```
+
+默认宽度：`360,390,414,768,1024,1280,1440,1920`（≤480 用 844 高 + 触屏模拟）。
+常用参数：`--widths 390,768,1440`（只跑几档更快）、`--settle 1200`（慢接口页面）、
+`--out <dir>`（保存位置）、`--label <name>`（报告名/目录前缀）。
+
+### 判什么
+
+| 级别 | 检查项 | 说明 |
+|---|---|---|
+| **Floor（退出码 1）** | 横向溢出 | `scrollWidth > viewport`，并给出越界元素 selector + 坐标 |
+| | 图片加载失败 | `img.complete && naturalWidth === 0` |
+| | 页面 JS 错误 | 通过 CDP `Page.addScriptToEvaluateOnNewDocument` 注入捕获 |
+| | 缺 `meta viewport` | 移动端直接失效，老页面常见 |
+| | 文字对比度 < 3:1 | WCAG 可读性底线（跳过背景图/渐变上的文字） |
+| | `--wait` 选择器没出现 | 说明交互/异步状态没达到预期 |
+| **Warn（不失败）** | 对比度 3–4.5:1 | 逐条列出文字、颜色、背景、selector |
+| | 图片缺 alt、`<html lang>` 缺失 | 无障碍 |
+| | 小点击目标 | ≤480 宽下控件 <24px（正文内联链接按 WCAG 2.5.8 豁免，不报） |
+
+### 产出
+
+- 输出目录（默认 `$TMPDIR/spa-check/<label>-<时间戳>/`）：
+  `report.md`（人看）、`report.json`（机读/后续 CI）、`w360.png` … `w1920.png`
+  （每个宽度首屏截图；给了 `--scroll-to` 再加 `w*-section.png`）；
+- 终端直接打印 markdown 摘要：宽度 × 溢出/破图/JS 错误/对比度/小目标 的表格。
+
+### 依赖与边界
+
+- **需要 `ego-browser`**（本机已装，Agent 验收也在用）；服务端不装 Node，所以这是**本地开发期工具**，
+  不进生产链路、不进服务器；
+- 只检查"渲染与可访问性"，不检查数据/接口正确性（那仍按第八节 curl 自检）；
+- 检查时通过 CDP 禁用浏览器 HTTP 缓存，刚部署完直接跑也能看到新页面；
+- 对比度会跳过背景图/渐变上的文字（无法可靠计算），这类地方仍靠人眼；
+- 主题自带的问题（如 V2.0/outsitelink 的 "Back to top ↑" 在手机上是 72×15px）会作为
+  Warn 报出来，属于**仓库外主题**的问题，改主题时要一并修，不要在单个工具页里私改。
+
+---
+
+## 十、BLAST SPA（新版搜索页 + 结果页）
+
+ViroBlast 老页面（`/blast/blast.html` + `blastresult2.php`，Apache docroot，不在本仓库）的替代实现，
+V2.0 设计语言、纯静态单页、复用现有 `/api/blast` 异步任务后端。**源码在本仓库**：
+
+- 页面：`app/static/blast2/index.html`（单文件，内联 CSS/JS；主题与 header/footer 取自
+  `/outsitelink.html`，与 wheatPTM 页一致）
+- 部署脚本：`scripts/deploy_blast2_preview.py`（docroot 拷贝 + 时间戳备份，幂等）
+- 线上地址：**https://wheatomics.sdau.edu.cn/blast/blast.html**（canonical，替换原 ViroBlast 表单页）
+  · 别名/预览：https://wheatomics.sdau.edu.cn/blast/blast2.html（同一文件）
+- 结果深链接：`/blast/blast2.html#/job/<job-id>`（job 结果保留 7 天，过期由 API 返回 404）
+
+### 页面能力
+
+**搜索视图**
+- 5 个 program（blastn/blastp/blastx/tblastn/tblastx），切换 program 自动重载对应类型的数据库；
+- 数据库选择器：按分类折叠（`/api/blast/databases?program=...`）、名称过滤、分类全选、快捷
+  “All proteins/All genes (combined)”、已选 chips、上限 20 个（与 API 限制一致）；
+- 分类内再按**库类型分组**（combined / genome / CDS / protein）；每组的 **Genome** 只列
+  整基因组库（库内包含该组装的全部染色体，如 21/14/7 条），并显示 `21 chr` 等 badge；
+  **单染色体拆分库不在分类里展示，仅在搜索框中出现**；提供类型筛选 chips 和
+  “chromosome-level assemblies only” 开关；
+- 组装质量标签以数据库实际内容校准：`app/services/data/blast_db_levels.json` 是对
+  `genome_registry` 的覆盖表（由 `scripts/audit_assembly_levels.py` →
+  `scripts/make_level_overrides.py` 生成），修正了 scaffold/contig 误标、缺失的染色体级
+  组装（如 Jagger/Julius/Mace/Renan/Barley2/rye Lo7/T. urartu 等）；
+  每条库显示类型与组装质量 badge。元数据来自 API 的 `database_meta`
+  （`kind` / `assembly` / `chromosome` / `assembly_level`，由 `genome_registry` 的
+  `blast_*` 基名 + `assembly_level` 关联得到），前端仅作为兜底；
+- 仅用于取序列的超大聚合库（`all_genomes` / `all_other_genomes`）以及所有失效的
+  legacy alias（`LEGACY_ALIAS_DBS`）和坏库（`BROKEN_DB_BASES`，如 `Foma.pep`）都
+  **不在 BLAST 数据库列表中展示**（后端过滤 + 前端防御性隐藏）；`all_genomes` 等仍可
+  通过 `/api/sequence/*` 和 getfasta 页面使用；
+- 查询输入：粘贴 FASTA 或多序列、上传 FASTA 文件（客户端读取，≤5 MB）、按 program 提供示例序列；
+  输入框 placeholder 会随 program 切换显示核酸/蛋白示例预览，避免在 blastn 下误把蛋白序列当核酸；
+- 参数：E-value、max target sequences、word size、matrix、输出格式（hits+alignments / 仅 TSV / 仅文本）；
+- 提交走 `POST /api/blast/search` 且 `wait=false`，立即进入结果视图并轮询
+  `GET /api/blast/status/{job_id}`；
+- 最近任务存 localStorage，可一键重开；带浏览器端哈希路由（`#/job/<uuid>`）。
+
+**结果视图**（参考 NCBI BLAST 结果页结构）
+- Job summary：program / 库 / 参数 / job id / 提交时间 / 结果过期日期；
+- 四个 tab：**Graphic Summary / Descriptions / Alignments / Downloads**；
+- Graphic Summary：按 query 画命中示意图，HSP 色块按 identity 着色，悬停看位置/E value，点击跳到对应描述行；
+- Descriptions：按 subject 聚合 HSP（跨 HSP 的 Max score、Total score、Query cover、E value、
+  Per. ident、Aln length、HSP 数）；支持 Graphic-style 表头排序、Filter Results（Query、identity ≥、
+  E value ≤、Query cover ≥）、勾选行并导出 selected TSV、点击行展开每个 HSP 的区间/BTOP/完整标题；
+- Alignments：懒加载 `result.txt`（outfmt 0），按 hit 解析成可折叠卡片，Query/中间行/Sbjct 三段
+  彩色渲染（相同=绿、positive=橙、错配=粉底）；
+- Downloads：直接给出 API 返回的 `download_urls`（tabular/traditional）。
+- 多 query 的 job 会按 Query 分组显示，并提供 query 过滤。
+
+### 部署 / 校验
+
+```bash
+# 发布/更新（服务器上；canonical + 别名一起，内容相同；会先备份原文件）
+python3 scripts/deploy_blast2_preview.py
+python3 scripts/deploy_blast2_preview.py --check   # 期望全 [ok]，用于确认 docroot 与仓库一致
+python3 scripts/deploy_blast2_preview.py --canonical-only   # 只更新 /blast/blast.html
+
+# 改完页面后本地验收
+bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.html
+```
+
+### 现状与待办（重要）
+
+- **已替换 canonical 表单页**：`/blast/blast.html` 现在就是本 SPA（老 ViroBlast 页在 docroot 留有
+  `blast.html.bak-<时间戳>`，回滚只需 cp 回来）；全站导航/书签无需改动。
+- 老结果查看器 `/blast/blastresult2.php` **保持原样**，历史结果链接仍可用；新任务的“结果页”是本 SPA 的
+  `#/job/<uuid>` 视图。
+- 若后续要把老结果页也重定向到新 SPA，需要单独的旧 job 兼容方案（不在本轮范围）。
+- 老 ViroBlast 的部分高级参数（soft mask、genetic code、alignment view 等）当前 `/api/blast`
+  不提供，新版只暴露后端支持的参数子集。
+- 老结果页 `/blast/blastresult2.php` 未重定向到新 SPA（历史链接兼容），未来可做旧 job 的跳转映射。
+- Acc. len（subject 全长）当前 TSV 不提供，暂以 Aln length + HSP 数替代；如需 NCBI 同款列，可让
+  `/api/blast` 在 outfmt 中增加 `slen` 字段。
+
+---
+
+## 十一、BLAST 数据库体检 / 清理
+
+新增 `scripts/audit_blast_databases.py`（服务器上跑，需要 app 环境的 pymysql）：
+
+```bash
+# 只体检（推荐先跑；输出 JSON + Markdown）
+/home/fei/mambaforge/envs/zjw/bin/python scripts/audit_blast_databases.py \
+    --json /tmp/blast_audit/report.json --md /tmp/blast_audit/report.md
+
+# 快速复检（跳过逐库 blastdbcmd，只查 alias + registry）
+... --skip-base-scan
+
+# 备份式清理：把坏掉的 alias 文件（只移动 .nal/.pal，不动成员库）移到
+# /var/www/data/masw_data/blastdb_alias_backup_<timestamp>/
+... --apply-clean
+```
+
+体检项：
+1. `blastdbcmd -info` 逐个打开 BLAST_DB_PATH 下所有库（单卷/多卷，3126 个 base）；
+2. 解析所有含 `DBLIST` 的 alias 文件，检查成员是否悬空、alias 是否可打开；
+3. 四个维护中的 getfasta 聚合库（all_genomes / all_other_genomes / all_genes / all_proteins）；
+4. MySQL `genome_registry` 里 319 条 `blast_genome_db` 是否都有可打开的库文件
+   （registry 存的库名不带 `.genome`/`.add_Description.*` 后缀，脚本会自动解析）。
+
+### 2026-10-26 首次全量体检结果
+
+- 3,126 个数据库 base，**13 个打不开**：12 个 legacy alias + `Foma.pep`（mdb_env_open）；
+- alias 共 204 个，**12 个坏**：`all1_genomes`…`all7_genomes`（每库 305 个成员全部悬空）、
+  `all_Allohexaploid`（59 个成员悬空）、`all_Allotetraploid`（8 个）、`all_Diploid`（14 个）、
+  `all_OtherTriticeae`（26 个）、`all_tri6`（48 个成员悬空，`.nal`+`.pal`）；
+- 4 个维护聚合库全部正常；
+- registry 只有 1 条异常：`Triticum_aestivum_JM44` → `primer.Triticum_aestivum_JM44`
+  （该 primer 库已删除）；**2026-10-26 已修正**为实际库 `AABBDD_Triticum_aestivum_JM44`
+  （三个 `blast_*` 字段统一，旧行备份在
+  `/var/www/data/masw_data/genome_registry_jm44_backup_20261026_161514.json`），复检缺失=0；
+- **已清理 13 个 alias 文件**（含 all_tri6 的 `.nal` + `.pal`）→
+  `/var/www/data/masw_data/blastdb_alias_backup_20261026_155536/`（84K，回滚直接移回即可）；
+- `Foma.pep` **已于 2026-10-26 删除**：9 个文件（`.phr/.pin/.pjs/.pog/.pos/.pot/.psq/.ptf/.pto`）
+  备份到 `/var/www/data/masw_data/blastdb_removed_20261026_161514/`，`BROKEN_DB_BASES`
+  里保留名字仅作为旧备份恢复时的保险；
+- 清理后 BLAST 列表：blastn 2,926 → 2,918，blastp 194 → 193（Foma.pep）。
+
+**约定**：以后重命名/重建 BLAST 库后，必须同步重建或删除相关 alias（否则 alias 会指向旧名），
+并在发布前跑一次本脚本；`--apply-clean` 只移动 alias 文件，永远不会动成员库。
+
+### 附：重复库清理记录
+
+- `CS21_S1_S2_S3_All_NLR`（2024-08 建，16 卷，13.0 GB）与
+  `CS21_S1_S2_S3_All_NLR.fasta`（2026-09 重建，5 卷）索引的是同一套 105 条序列
+  （条目清单 md5 一致、总长 55,798,255,760 bp 一致），旧库已确认无引用。
+- All-in-one 分类展示 **21 个六倍体染色体聚合库**：`all_Allohexaploidchr1A` … `chr7D`，
+  每个聚合 50 个 AABBDD 组装的对应染色体；整体 `all_Allohexaploid`（52 个整基因组
+  alias）因 BLAST 2.12 文件句柄限制无法再嵌套而隐藏。
+- 另有重复的 legacy 聚合 alias：`all_gene` / `all_protein` 与维护中的
+  `all_genes` / `all_proteins` 序列数、总长、DBLIST 成员完全一致（2026-10-24 重建），
+  已从 BLAST 选择器隐藏，只保留复数版本；直接 API 仍可用旧名。
+- 2026-10-26 已删除旧库 70 个文件（13.0 GB），备份清单与 6 个小索引文件在
+  `/var/www/data/masw_data/cs21_nlr_old_build_20261026_2143/`；新库保留并验证可打开
+  （105 sequences / 55.8 Gb）。`DUPLICATE_ALIAS_DBS` 中保留旧名仅作防恢复的保险。
+
+---
+
+## 十二、SPA 统一 V2.0 外壳（按 `/V2.0/` 与 `/blast/blast.html` 风格改造）
+
+全站 SPA 采用同一套 V2.0 chrome：主题变量、固定 header + 大下拉导航、hero 区、深绿 footer（含
+访问统计）。样式和 header/footer 标记**只维护一份**，不再逐页复制。
+
+### 资产与来源
+
+| 路径 | 说明 |
+|---|---|
+| `app/static/_v2/shell.css` | V2.0 主题 + header/footer/hero 样式 + **Bootstrap 4 桥接**（`.card` / `.btn` / `.form-control` / `.table` / `.nav-tabs` / `.badge` / `.alert` / `.modal` / `.dropdown-menu` / `.pagination` / `.progress`、`h1–h4`、`.container`、`.text-muted`） |
+| `app/static/_v2/shell.js` | 注入 SVG sprite、header、footer；接管移动端菜单、下拉、Back to top、footer 访问统计；高亮当前模块导航 |
+| `app/static/_v2/template.html` | 转换模板（head + hero + main + footer 占位 + 脚本顺序） |
+| `app/static/_v2/README.md` | 逐页改造 checklist / 验证命令 / 页面清单 |
+| `scripts/extract_v2_shell.py` | 从 canonical BLAST 页（`app/static/blast2/index.html`，即线上 `/blast/blast.html`）重新抽取上述资产 |
+
+- 服务地址：**`/api/v2shell/shell.css|shell.js|template.html`**（`main.py` 里 `app.mount("/api/v2shell", …)`）。
+  放 `/api/` 前缀是有意为之：Apache 已把 `/api` 反代到 FastAPI，**新增挂载不需要改 Apache**。
+- 修改 chrome：改 canonical BLAST 页 → `python3 scripts/extract_v2_shell.py` → 提交生成物（勿手改 `_v2/shell.*`）。
+- docroot 的 Bootstrap 4.5.3 是站点定制版：`.card-body` 有 6px `#1a659e` 顶条、`.card-title` 是
+  `#00aadc` 居中。shell.css 的桥接已覆盖，老页面转换后不会串色。
+
+### 单页改造步骤（摘要，完整版见 `app/static/_v2/README.md`）
+
+1. head：保留页面原有本地资源（Bootstrap/jQuery/Plotly/Select2…），补 `viewport`、`title`、
+   `favicon`，在原有样式之后加载 `/api/v2shell/shell.css`；
+2. 删除旧框架：`#home_header`、`#header-tabs`、`#home_footer`、`#visit-stats`、以及每页各自的
+   `/api/track/visit` + `/api/track/stats` 脚本；
+3. body 改为 `<div id="v2-shell-header"></div>` + `<main id="main-content">`（`.news-hero` + `.news-body > .container`）
+   + `<div id="v2-shell-footer"></div>` + `<script src="/api/v2shell/shell.js"></script>`；
+4. 页面自有 CSS 改用 V2.0 token（`--forest/--leaf/--mist/--line/--muted/--page` 等），组件优先用共享 `.card/.btn/.form-control/.table/.nav-tabs`；
+5. **保留所有功能 id 与页面 JS**，只替换框架。
+
+### 验证（每页必做）
+
+```bash
+# 1) 静态自检
+node --check app/static/_v2/shell.js
+grep -c "api/v2shell/shell" app/static/<module>/index.html        # 期望 2
+grep -cE "home_header|header-tabs|home_footer|visit-stats" app/static/<module>/index.html   # 期望 0
+
+# 2) 本地渲染（/api/v2shell 指向本地副本，绕开 API 依赖）
+rm -rf /tmp/v2test && mkdir -p /tmp/v2test/<module> /tmp/v2test/api/v2shell
+cp app/static/<module>/index.html /tmp/v2test/<module>/
+cp app/static/_v2/shell.css app/static/_v2/shell.js /tmp/v2test/api/v2shell/
+(cd /tmp/v2test && python3 -m http.server 8011 >/dev/null 2>&1 &)
+bash scripts/spa_visual_check.sh http://127.0.0.1:8011/<module>/ --widths 390,768,1440
+
+# 3) 部署后线上验收（Lead 批量部署后执行）
+bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/<module>/ --widths 390,768,1440 --label v2-<module>
+```
+
+期望 `Result: PASS`；唯一可接受的 Warn 是 footer "Back to top ↑" 在 390px 下的小点击目标（主题自带，见第九节）。
+除渲染外还要在线上做一次功能冒烟：示例输入 → 提交 → 结果表/图出现。
+
+### 仓库外页面收编（2026-10-27 起）
+
+站点还有一批不是 SPA、也不在任何 ProxyPass 前缀下的 docroot 页面。它们现在由
+`app/static/docpages/` + `scripts/deploy_doc_pages.py` 管理（repo 为源，脚本负责带时间戳备份地
+发布到 `/var/www/html`；不需要改 Apache、不需要重启服务；支持 `--check/--dry-run/--only`）。
+覆盖页面：`/jbrowse.html`、`/download.html`、`/help/contact.html`、`/help/news.html`、
+`/outsitelink.html`、`/GeneHub/index.html`，以及 GeneHub 结果 CGI `/cgi-bin/geneDetail.py`
+（该 CGI 目标文件属 root：2026-10-27 已通过 docker root 步骤安装并上线，安装/回滚方式见
+`app/static/docpages/README.md`；以后更新这个 CGI 仍需一次 root/docker 操作）。
+
+- `/PrimerServer/`（v1）与 `/PrimerServer3/`（裸 Vite 入口副本）已从 docroot 移走，备份在
+  `/var/www/data/masw_data/backup_primerserver_20261027/`；导航 Tools、`/V2.0/` 和根首页的
+  PrimerServer 链接统一指向 `/PrimerServer2/`。
+- 仍在 docroot、暂未收编的运行时依赖：`/V2.0/news.json`（新闻 feed，被 `help_news.html` 运行时读取）、
+  `/css/wheat.jpeg`（outsitelink hero）、`/cite.html`（jbrowse 引文块）、`/V2.0/` 图片。
+- `/GeneHub/index.html` 的部署目标目录属 fei，可直接发布；`/cgi-bin/*` 属 root/www-data，
+  更新时需要 sudo 或 `docker run -u 0`（见 `app/static/docpages/README.md`）。
+
+### 部署注意
+
+- 只改静态文件也要 `sudo -n systemctl restart wheatomics-api`（StaticFiles 目录内容会即时生效，
+  但 `/api/v2shell` 是 Python 侧挂载，需重启；重启后端口 8000 通常要 2–3 分钟才恢复监听，期间 Apache 返回 503 属正常）。
+- 批量改造时按批次提交/部署，每批部署后跑一遍该批的线上 `spa_visual_check`。
+
+### 进度清单（2026-10-27 全部完成）
+
+- 已 V2.0：`blast2`（`/blast/blast.html` canonical）、`wheatPTM`、`preblast`、`primerserver2`、
+  `getfasta`、`interval`、`expression`、`coexpression`、`genes`、`caps`、`papers`、`eqtl`、`GO_KEGG`、
+  `HomologFinder`、`idConvert`、`neighborhood`、`orthofinder`、`PfamSearch`、`wheatPPI`、`VariantHub`、
+  `syntenyview`、`scRNA`、`wheatPSP`、`sms2`（入口页）。
+- 线上验收：每页 `spa_visual_check.sh --widths 390,768,1440` → PASS（仅 footer Back to top 小目标 Warn）；
+  另做了一次功能冒烟（示例输入 → 结果表/图/下载出现）。
+- 仓库外遗留：`/sms2/*.html` 的第三方工具页（docroot 自带，`.gitignore` 只放行 `app/static/sms2/index.html`）、
+  老 CGI 页（`/symap/`、`/tools/*.html` 等）不在本轮「SPA」范围。
+- **站点根路径已切换为 V2.0 首页（2026-10-27）**：`/var/www/html/index.html` 现在是 `/V2.0/index.html`
+  内容（仅把 `home.png` / `footer-plot.png` / `Logo-small.png` 改成 `/V2.0/…` 绝对路径），旧首页备份在
+  `/var/www/html/index.html.bak-20261027_081021`；`/V2.0/` 目录保留兼容旧书签。同步把 shell / BLAST 页的
+  Home、brand、`#tools`/`#data`/`#citation` 链接从 `/V2.0/` 改成 `/`。
+- ⚠️ `/neighborhood/` 的 Apache vhost **没有** `ProxyPass`，线上用 docroot 符号链接指向仓库目录：
+  `ln -s /var/www/FastAPI_backend_Port8000/app/static/neighborhood /var/www/html/neighborhood`
+  （`/var/www/html` 开了 `FollowSymLinks`，`git pull` 后自动生效；若以后补 ProxyPass 记得删符号链接）。

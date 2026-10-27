@@ -1,140 +1,63 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wheat Expression - WheatOmics</title>
+<title>GeneExpression | WheatOmics 2.0</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
 
-<script>
-// ===== Visit tracking =====
-(function() {
-  var page = location.pathname || 'unknown';
-  // POST a pageview (best-effort, ignore failures)
-  try {
-    fetch('/api/track/visit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ page: page })
-    }).catch(function(){});
-  } catch (e) {}
 
-  function fmt(n) {
-    n = Number(n) || 0;
-    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
-    if (n >= 10000)   return (n / 1000).toFixed(3) + 'k';
-    return String(n);
-  }
-
-  function setHtml(html) {
-    var el = document.getElementById('visit-stats');
-    if (el) el.innerHTML = html;
-  }
-
-  fetch('/api/track/stats')
-    .then(function(r) { return r.json(); })
-    .then(function(resp) {
-      if (!resp || !resp.success) {
-        setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
-        return;
-      }
-      var d = resp.data;
-      var html =
-        '<span class="vs-pill vs-today" title="Today pageviews">' +
-          '<span class="vs-dot vs-dot-today"></span>' +
-          'Today <b>' + fmt(d.today.pv) + '</b></span>' +
-        '<span class="vs-pill vs-total" title="Total pageviews (since 2019-08-01)">' +
-          '<span class="vs-dot vs-dot-total"></span>' +
-          'Total <b>' + fmt(d.total.pv) + '</b></span>' +
-        '<span class="vs-pill vs-online" title="Visitors active in the last 15 minutes">' +
-          '<span class="vs-dot vs-dot-online"></span>' +
-          'Online <b>' + fmt(d.online) + '</b></span>';
-      setHtml(html);
-    })
-    .catch(function() {
-      setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
-    });
-})();</script>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
 <script type="text/javascript" src="/expression/highcharts.js"></script>
 <script type="text/javascript" src="/expression/highcharts-more.js"></script>
 <script type="text/javascript" src="/expression/exporting.js"></script>
 <script type="text/javascript" src="/expression/export-data.js"></script>
 <script type="text/javascript" src="/expression/accessibility.js"></script>
+<link rel="stylesheet" href="/api/v2shell/shell.css">
 <style>
-  body { background: #f8f9fa; margin:0; padding:0; }
-  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
-  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
-  #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
-  /* menu tabs */
-  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
-  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
-  #header-tabs li { display:inline-block !important; width:190px !important; }
-  #header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
-  #header-tabs a:hover { background:#98c1d9; color:#000000; }
-  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
-  #header-tabs ul li ul { display:none !important; position:absolute; }
-  #header-tabs ul li:hover ul { display:block !important; }
-  #header-tabs ul li ul a { border-radius:0; }
-  #home_content { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
-  .chart-container { background: #fff; border-radius: 6px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .data-table-container { background: #fff; border-radius: 6px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  body { margin:0; padding:0; }
+  .chart-container { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; margin-top:20px; box-shadow:var(--shadow); }
+  .data-table-container { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; margin-top:20px; box-shadow:var(--shadow); overflow:hidden; }
   .data-table-container table { font-size: 13px; }
-  .data-table-container th { position: sticky; top: 0; background: #f8f9fa; }
+  .data-table-container th { position: sticky; top: 0; background: var(--mist); }
+  .data-table-container thead th { background: var(--mist) !important; }
   .loading { display: none; text-align: center; padding: 60px; }
-  .loading .spinner-border { width: 3rem; height: 3rem; }
-  .card-title { color: #333; border-left: 4px solid #007bff; padding-left: 12px; }
-  .help-text { font-size: 0.85rem; color: #6c757d; margin-top: 4px; }
+  .loading .spinner-border { width: 3rem; height: 3rem; color: var(--leaf); }
+  .help-text { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
   #error-msg { display: none; margin-top: 10px; }
-  .checkbox-list { max-height: 520px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px; padding: 6px 10px; background: #fff; }
+  #project-list > span { color: #4d6559 !important; }
+  .btn-sm { min-height: 28px; }
+  .checkbox-list { max-height: 520px; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; background: #fff; }
   .checkbox-group { margin-bottom: 2px; }
-  .checkbox-group-label { font-weight: bold; font-size: 13px; color: #495057; padding: 8px 0 4px; cursor: pointer; user-select: none; }
-  .checkbox-group-label:hover { color: #007bff; }
+  .checkbox-group-label { font-weight: 700; font-size: 13px; color: var(--forest-deep); padding: 8px 0 4px; cursor: pointer; user-select: none; }
+  .checkbox-group-label:hover { color: var(--leaf); }
   .checkbox-group-label .arrow { display: inline-block; width: 16px; font-size: 14px; transition: transform 0.15s; }
   .checkbox-group-label .arrow.open { transform: rotate(90deg); }
   .checkbox-subgroup { padding-left: 24px; }
-  .checkbox-subgroup-label { font-weight: 600; font-size: 13px; color: #555; padding: 6px 0 3px; cursor: pointer; user-select: none; }
-  .checkbox-subgroup-label:hover { color: #007bff; }
+  .checkbox-subgroup-label { font-weight: 600; font-size: 13px; color: #4d6559; padding: 6px 0 3px; cursor: pointer; user-select: none; }
+  .checkbox-subgroup-label:hover { color: var(--leaf); }
   .checkbox-subgroup-label .arrow { display: inline-block; width: 16px; font-size: 14px; transition: transform 0.15s; }
   .checkbox-subgroup-label .arrow.open { transform: rotate(90deg); }
-  .checkbox-sub-subgroup-label { font-weight: 500; font-size: 12px; color: #666; padding: 5px 0 2px 24px; cursor: pointer; user-select: none; }
-  .checkbox-sub-subgroup-label:hover { color: #007bff; }
+  .checkbox-sub-subgroup-label { font-weight: 500; font-size: 12px; color: var(--muted); padding: 5px 0 2px 24px; cursor: pointer; user-select: none; }
+  .checkbox-sub-subgroup-label:hover { color: var(--leaf); }
   .checkbox-sub-subgroup-label .arrow { display: inline-block; width: 16px; font-size: 13px; transition: transform 0.15s; }
   .checkbox-sub-subgroup-label .arrow.open { transform: rotate(90deg); }
-  .checkbox-item { padding: 3px 0 3px 48px; font-size: 13px; cursor: pointer; display: flex; align-items: center; }
+  .checkbox-item { padding: 3px 0 3px 48px; font-size: 13px; cursor: pointer; display: flex; align-items: center; min-height: 26px; }
   .checkbox-item input { margin-right: 6px; cursor: pointer; }
-  .checkbox-item:hover { background: #f0f4ff; border-radius: 3px; }
+  .checkbox-item:hover { background: var(--mist); border-radius: 6px; }
   .checkbox-controls { margin-bottom: 6px; }
   .checkbox-controls .btn-sm { font-size: 12px; padding: 2px 10px; }
 
-  /* ----- visit stats footer ----- */
-  .visit-stats { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-  .visit-stats .vs-pill {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 8px; border-radius: 12px;
-    font-size: 11px; line-height: 1.4;
-    background: #f1f5f9; color: #334155;
-    border: 1px solid #e2e8f0;
-    transition: background 0.15s;
-  }
-  .visit-stats .vs-pill b { color: #0f172a; font-weight: 600; }
-  .visit-stats .vs-dot {
-    display: inline-block; width: 6px; height: 6px;
-    border-radius: 50%; background: #94a3b8;
-  }
-  .visit-stats .vs-dot-today  { background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.18); }
-  .visit-stats .vs-dot-total  { background: #3b82f6; }
-  .visit-stats .vs-dot-online { background: #f59e0b; animation: vs-pulse 1.6s ease-in-out infinite; }
-  .visit-stats .vs-loading { color: #64748b; }
-  .visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
-  .visit-stats .vs-error   { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
-  @keyframes vs-pulse {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.35; }
-  }
-
+  /* ----- citation block (structured, readable) ----- */
+  .citation-box .citation-title { font-weight: 600; margin-bottom: 2px; }
+  .citation-box .citation-desc { margin-bottom: 2px; }
+  .citation-box .citation-pub { margin-bottom: 2px; }
+  .citation-box .citation-links { margin-top: 3px; }
+  .citation-box .citation-links a { text-decoration: underline; }
+  .project-result > h5 { margin-bottom: 6px; }
+  .checkbox-item span.item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 
 <!-- Baidu Tongji (async) -->
@@ -149,59 +72,30 @@ var _hmt = _hmt || [];
 </script>
 </head>
 <body>
-<!-- header -->
-<div id="home_header">
-  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 2.0</span>
-</div>
+  <div id="v2-shell-header"></div>
 
-<!-- nav menu -->
-<div id="header-tabs">
-  <ul>
-    <li><a href="/"><span>Home</span></a></li>
-    <li><a href="#"><span>Tools/Browse</span></a>
-      <ul>
-        <li><a href="/getfasta/index.html">GetSequence</a></li>
-        <li><a href="/blast/blast.html">BLAST</a></li>
-        <li><a href="/PrimerServer">PrimerServer</a></li>
-        <li><a href="/PrimerServer2/">PrimerServer2</a></li>
-        <li><a href="/caps/">CAPS/dCAPS</a></li>
-        <li><a href="/PfamSearch/">PfamSearch</a></li>
-        <li><a href="/idConvert/">IDConvert</a></li>
-        <li><a href="/HomologFinder/">HomologFinder</a></li>
-        <li><a href="/interval/">IntervalTool</a></li>
-        <li><a href="/expression/">GeneExpression</a></li>
-        <li><a href="/coexpression/index.html">Co-expression</a></li>
-        <li><a href="/wheatPPI/">WheatPPI</a></li>
-        <li><a href="/genes/">KnownGene</a></li>
-        <li><a href="/symap/index.html">SyntenySearch</a></li>
-        <li><a href="/syntenyview/">SynTenyView</a></li>
-        <li><a href="/preblast/">preBLAST</a></li>
-        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
-        <li><a href="/orthofinder/">OrthoFinder</a></li>
-        <li><a href="/VariantHub/">VariantHub</a></li>
-        <li><a href="DWGVa.html">DWGVa</a></li>
-        <li><a href="/scRNA/">scRNA</a></li>
-        <li><a href="/wheatPSP/">wheatPSP</a></li>
-        <li><a href="/eqtl/">eQTL Atlas</a></li>
-        <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
-        <li><a href="/papers">Triticeae papers</a></li>
-      </ul>
-    </li>
-    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
-    <li><a href="/download.html"><span>Download Data</span></a></li>
-    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
-    <li><a href="#"><span>About</span></a>
-      <ul>
-        <li><a href="/help/contact.html">Contact</a></li>
-        <li><a href="/help/news.html">News</a></li>
-      </ul>
-    </li>
-  </ul>
-</div>
+  <main id="main-content">
+    <section class="news-hero">
+      <div class="container news-hero-inner">
+        <div>
+          <p class="news-kicker">WheatOmics 2.0 · Analysis tool</p>
+          <h1 class="news-title">Gene<em>Expression</em></h1>
+          <p class="news-lead">Plot and tabulate TPM expression profiles for one or many genes across WheatOmics expression projects, with sample metadata and the project citation attached to each chart.</p>
+          <div class="news-stats">
+            <span class="news-stat">Multi-project overlay</span>
+            <span class="news-stat">TPM expression</span>
+            <span class="news-stat">Chart + data table</span>
+          </div>
+        </div>
+        <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-chart"/></svg></div>
+      </div>
+    </section>
 
-<div id="home_content">
-  <br><h5 class="card-title">Gene Expression</h5><br>
+    <section class="news-body">
+      <div class="container">
 
+  <div class="card">
+  <div class="card-body">
   <div class="row">
     <div class="col-md-6">
       <div class="form-group">
@@ -216,9 +110,12 @@ var _hmt = _hmt || [];
         <div style="margin-bottom:6px;font-size:13px;color:#6c757d;">Select one or more databases
           <button type="button" class="btn btn-sm btn-outline-secondary ml-2" onclick="clearAllProjects()" style="padding:2px 10px;font-size:12px;">Clear all</button>
         </div>
+        <div id="selected-summary" class="help-text" style="margin-bottom:6px;color:#6c757d;">Selected databases: 0</div>
         <div id="project-list" class="checkbox-list"></div>
       </div>
     </div>
+  </div>
+  </div>
   </div>
 
   <div id="error-msg" class="alert alert-danger"></div>
@@ -231,31 +128,13 @@ var _hmt = _hmt || [];
   <div id="result-area" style="display:none;"></div>
 </div>
 
-<!-- footer -->
-<div class="line" style="height:10px;background-color:white"></div>
-<div id="home_footer">
-  <center style="margin-top:5px">
-    <table>
-      <tr>
-        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><div style="height:50px;width:15px;"></div></td>
-        <td>
-          <div id="visit-stats" class="visit-stats">
-            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
-          </div>
-        </td>
-      </tr>
-    </table>
-    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
-  </center>
-</div>
+      </div>
+    </section>
+  </main>
+
+  <div id="v2-shell-footer"></div>
+
+  <script src="/api/v2shell/shell.js"></script>
 
 <script>
 $(function(){
@@ -267,6 +146,118 @@ var projectCitations = {};
 function escapeHtml(s) {
   return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 }
+
+  // ---- display / citation helpers (format fixes) ----
+  function shortenText(text, maxLen) {
+    text = String(text || '');
+    return text.length > maxLen ? text.slice(0, maxLen - 1) + '…' : text;
+  }
+
+  // Keep 6 significant digits so small non-zero values are not rounded to "0.0"
+  function fmtExpr(v) {
+    if (v === null || v === undefined || v === '') return '-';
+    var n = Number(v);
+    if (!isFinite(n)) return '-';
+    if (n === 0) return '0';
+    if (Math.abs(n) < 0.0001) return n.toExponential(2);
+    return String(Number(n.toPrecision(6)));
+  }
+
+  // Map a dataset accession to its correct archive (CNCB CRA/PRJCA vs ENA vs NCBI)
+  function archiveUrl(acc) {
+    if (!acc) return '';
+    acc = String(acc).trim();
+    if (/^CRA/i.test(acc)) return 'https://ngdc.cncb.ac.cn/gsa/browse/' + acc;
+    if (/^PRJCA/i.test(acc)) return 'https://ngdc.cncb.ac.cn/bioproject/browse/' + acc;
+    if (/^PRJN[AE]/i.test(acc)) return 'https://www.ncbi.nlm.nih.gov/bioproject/' + acc;
+    if (/^(PRJEB|PRJDB|ERP|SRP|ERR|DRR)/i.test(acc)) return 'https://www.ebi.ac.uk/ena/browser/view/' + acc;
+    return '';
+  }
+
+  // Turn the raw citation string stored in project_meta into readable fields.
+  function parseCitation(raw, projectId) {
+    var out = { desc: '', pub: '', pubmed: '', doi: '', archiveAcc: '', archiveHref: '' };
+    var s = String(raw || '').trim();
+    if (!s) return out;
+    var a = /<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]*)<\/a>/i.exec(s);
+    if (a) {
+      out.archiveHref = a[1];
+      out.archiveAcc = (a[2] || '').trim();
+      s = s.replace(a[0], ' ');
+    }
+    var pm = /https?:\/\/(?:pubmed\.ncbi\.nlm\.nih\.gov\/\d+|pmc\.ncbi\.nlm\.nih\.gov\/articles\/PMC\d+)\/?/i.exec(s);
+    if (pm) { out.pubmed = pm[0]; s = s.replace(pm[0], ' '); }
+    var dm = /https?:\/\/(?:dx\.)?doi\.org\/10\.[^\s<;"']+/i.exec(s);
+    if (dm) {
+      out.doi = dm[0].replace(/^http:/i, 'https:');
+      s = s.replace(dm[0], ' ');
+    } else {
+      var bare = /\b10\.\d{4,9}\/[^\s<;"']+/i.exec(s);
+      if (bare) {
+        out.doi = 'https://doi.org/' + bare[0].replace(/[.;]+$/, '');
+        s = s.replace(bare[0], ' ');
+      }
+    }
+    var pi = s.search(/publication\s*[:：]/i);
+    if (pi >= 0) {
+      out.desc = s.slice(0, pi);
+      out.pub = s.slice(pi).replace(/^publication\s*[:：]\s*/i, '');
+    } else {
+      out.desc = s;
+    }
+    function scrub(t) {
+      return t.replace(/description\s*[:：]\s*/ig, ' ')
+              .replace(/publication\s*[:：]\s*/ig, ' ')
+              .replace(/pubmed\s*link\s*[:：]\s*/ig, ' ')
+              .replace(/doi\s*link\s*[:：]\s*/ig, ' ')
+              .replace(/https?:\/\/\S+/ig, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+    }
+    out.desc = scrub(out.desc);
+    out.pub = scrub(out.pub);
+    var pidAcc = (String(projectId || '').match(/^(PRJ[A-Z]{2}\d+|CRA\d+|ERP\d+)/i) || [])[0];
+    var acc = out.archiveAcc || pidAcc || '';
+    out.archiveAcc = acc;
+    var mapped = archiveUrl(acc);
+    if (mapped) out.archiveHref = mapped;
+    else if (!/^https?:\/\//i.test(out.archiveHref || '')) out.archiveHref = '';
+    return out;
+  }
+
+  function buildCitationBlock(projectId) {
+    var raw = projectCitations[projectId] || '';
+    if (!raw) return null;
+    var c = parseCitation(raw, projectId);
+    var $box = $('<div class="alert alert-info citation-box" style="font-size:13px;margin-bottom:12px;"></div>');
+    $box.append($('<div class="citation-title"></div>').text('Citation'));
+    if (c.desc) $box.append($('<div class="citation-desc"></div>').text(c.desc));
+    if (c.pub) $box.append($('<div class="citation-pub"></div>').text(c.pub));
+    var links = [];
+    if (c.pubmed) links.push({ label: 'PubMed', href: c.pubmed });
+    if (c.doi) links.push({ label: 'DOI', href: c.doi });
+    if (c.archiveAcc && c.archiveHref) links.push({ label: c.archiveAcc, href: c.archiveHref });
+    if (links.length) {
+      var $links = $('<div class="citation-links"></div>');
+      links.forEach(function (l, i) {
+        if (i) $links.append(document.createTextNode(' · '));
+        $links.append($('<a target="_blank" rel="noopener"></a>').attr('href', l.href).text(l.label));
+      });
+      $box.append($links);
+    }
+    return $box;
+  }
+
+  function updateSelectedSummary() {
+    var $el = $('#selected-summary');
+    if (!$el.length) return;
+    var $checked = $('#project-list input.proj-check:checked');
+    var n = $checked.length;
+    if (n === 0) { $el.text('Selected databases: 0'); return; }
+    var ids = [];
+    $checked.slice(0, 4).each(function () { ids.push($(this).val()); });
+    $el.text('Selected databases: ' + n + ' — ' + ids.join(', ') + (n > 4 ? ' …' : ''));
+  }
 
 function loadProjects() {
   $('#project-list').html('<span style="color:#999;">Loading...</span>');
@@ -281,65 +272,69 @@ function loadProjects() {
         projectCitations[p.id] = p.citation || '';
       });
 
-      // Render 3-level tree: group → subgroup → projects
-      if (data.groups) {
-        data.groups.forEach(function(group) {
-          var gId = 'grp-' + group.name.replace(/[^a-z0-9]/gi, '_');
-          var hasSubgroups = group.subgroups && group.subgroups.length > 0;
+      // Render project picker. Collapse redundant hierarchy levels when the
+      // group/subgroup/sub_subgroup names are identical (e.g. "wheat population" 3x).
+      function projectLabel(proj) {
+        var $label = $('<label class="checkbox-item"></label>').attr('title', proj.description || '');
+        var $cb = $('<input type="checkbox" class="proj-check">').val(proj.id);
+        if (proj.id === 'PRJEB5314_paired_tbl') $cb.prop('checked', true);
+        $label.append($cb).append(document.createTextNode(' ')).append(
+          $('<span class="item-name"></span>').text(proj.description || proj.id)
+        );
+        return $label;
+      }
+      function appendProjects($container, projects) {
+        (projects || []).slice().sort(function (a, b) {
+          return String(a.description || '').localeCompare(String(b.description || ''));
+        }).forEach(function (proj) { $container.append(projectLabel(proj)); });
+      }
+      function eachProject($body, group) {
+        var subs = group.subgroups || [];
+        var collapseGroup = subs.length === 1 && ((subs[0].name || '') === (group.name || ''));
+        if (collapseGroup) return emitSubgroup($body, subs[0]);
+        subs.forEach(function (subgroup) { emitSubgroup($body, subgroup); });
+      }
+      function emitSubgroup($parent, subgroup) {
+        var ssgs = subgroup.sub_subgroups || [];
+        var collapseSub = ssgs.length === 1 && ((!ssgs[0].name) || ((ssgs[0].name || '') === (subgroup.name || '')));
+        if (collapseSub) { appendProjects($parent, ssgs[0].projects); return; }
+        var sgId = $parent.attr('id') + '-sg-' + (subgroup.name || '__none').replace(/[^a-z0-9]/gi, '_');
+        var projCount = ssgs.reduce(function (acc, x) { return acc + ((x.projects || []).length); }, 0);
+        $parent.append(
+          '<div class="checkbox-subgroup-label" data-target="#' + sgId + '-body">' +
+          '<span class="arrow">▸</span> ' + escapeHtml(subgroup.name || '—') + ' (' + projCount + ')' +
+          '</div>'
+        );
+        var $sgBody = $('<div id="' + sgId + '-body" style="display:none;"></div>');
+        $parent.append($sgBody);
+        ssgs.forEach(function (ssg) {
+          var ssgId = sgId + '-ssg-' + (ssg.name || '__none').replace(/[^a-z0-9]/gi, '_');
+          $sgBody.append(
+            '<div class="checkbox-sub-subgroup-label" data-target="#' + ssgId + '-body">' +
+            '<span class="arrow">▸</span> ' + escapeHtml(ssg.name || '—') +
+            ' (' + ((ssg.projects || []).length) + ')' +
+            '</div>'
+          );
+          var $ssgBody = $('<div id="' + ssgId + '-body" style="display:none;"></div>');
+          $sgBody.append($ssgBody);
+          appendProjects($ssgBody, ssg.projects);
+        });
+      }
 
-          // Group-level label (no checkbox, arrow only)
+      if (data.groups) {
+        data.groups.forEach(function (group) {
+          var gId = 'grp-' + group.name.replace(/[^a-z0-9]/gi, '_');
           container.append(
             '<div class="checkbox-group-label" data-target="#' + gId + '-body">' +
-            '<span class="arrow">▸</span> ' +
-            escapeHtml(group.name) +
+            '<span class="arrow">▸</span> ' + escapeHtml(group.name) +
             '</div>'
           );
           var $body = $('<div id="' + gId + '-body" style="display:none;"></div>');
           container.append($body);
-
-          if (hasSubgroups) {
-            group.subgroups.forEach(function(subgroup) {
-              var sgId = gId + '-sg-' + (subgroup.name || '__none').replace(/[^a-z0-9]/gi, '_');
-              var sgName = subgroup.name || '—';
-              var subSubGroups = subgroup.sub_subgroups || [];
-              var projCount = subSubGroups.reduce(function(acc, ssg) { return acc + ssg.projects.length; }, 0);
-              // Subgroup label (no checkbox, arrow + count)
-              $body.append(
-                '<div class="checkbox-subgroup-label" data-target="#' + sgId + '-body">' +
-                '<span class="arrow">▸</span> ' +
-                escapeHtml(sgName) + ' (' + projCount + ')' +
-                '</div>'
-              );
-              var $sgBody = $('<div id="' + sgId + '-body" style="display:none;"></div>');
-              $body.append($sgBody);
-
-              subSubGroups.forEach(function(ssg) {
-                var ssgId = sgId + '-ssg-' + (ssg.name || '__none').replace(/[^a-z0-9]/gi, '_');
-                var ssgName = ssg.name || '—';
-                // sub_subgroup label (no checkbox, arrow + count)
-                $sgBody.append(
-                  '<div class="checkbox-sub-subgroup-label" data-target="#' + ssgId + '-body">' +
-                  '<span class="arrow">▸</span> ' +
-                  escapeHtml(ssgName) + ' (' + ssg.projects.length + ')' +
-                  '</div>'
-                );
-                var $ssgBody = $('<div id="' + ssgId + '-body" style="display:none;"></div>');
-                $sgBody.append($ssgBody);
-
-                ssg.projects.forEach(function(proj) {
-                  var checked = (proj.id === 'PRJEB5314_paired_tbl') ? ' checked' : '';
-                  $ssgBody.append(
-                    '<label class="checkbox-item" title="' + escapeHtml(proj.description) + '">' +
-                    '<input type="checkbox" value="' + proj.id + '" class="proj-check"' + checked + '> ' +
-                    escapeHtml(proj.description) +
-                    '</label>'
-                  );
-                });
-              });
-            });
-          }
+          eachProject($body, group);
         });
       }
+      updateSelectedSummary();
 
       // ---- Accordion toggle (click label → expand/collapse) ----
       $('#project-list').on('click', '.checkbox-group-label', function(e) {
@@ -385,9 +380,9 @@ function loadProjects() {
         }
       });
 
-      // ---- Parent → children propagation ----
+      // ---- Keep the selected-databases summary in sync ----
       $('#project-list').on('change', '.proj-check', function() {
-        // When all projects in a subgroup become checked/unchecked, nothing extra needed
+        updateSelectedSummary();
       });
     })
     .fail(function() {
@@ -398,16 +393,20 @@ function loadProjects() {
 function showError(msg) {
   $('#error-msg').text(msg).show();
   $('#loading-indicator').hide();
+  // Do not leave stale results from a previous query under a validation error
+  $('#result-area').empty().hide();
 }
 
 function clearAllProjects() {
   $('#project-list .proj-check').prop('checked', false);
+  updateSelectedSummary();
 }
 
 function queryExpression() {
   var projects = [];
-  $('#project-list input:checked').each(function() { projects.push($(this).val()); });
+  $('#project-list input.proj-check:checked').each(function() { projects.push($(this).val()); });
   var genesRaw = $('#gene-input').val().trim();
+  $('#error-msg').hide();
   if (!projects || projects.length === 0) { showError('Please select at least one expression project'); return; }
   if (!genesRaw) { showError('Please input gene ID(s)'); return; }
 
@@ -419,45 +418,68 @@ function queryExpression() {
   });
   if (genes.length === 0) { showError('No valid gene IDs'); return; }
 
-  $('#error-msg').hide();
-  $('#result-area').hide().empty();
+  $('#result-area').empty().show();
   $('#loading-indicator').show();
 
   var projectNames = {};
-  $('#project-list label').each(function() {
+  $('#project-list label.checkbox-item').each(function() {
     projectNames[$(this).find('input').val()] = $.trim($(this).text());
   });
 
   var geneIds = genes.join(',');
   var doneCount = 0;
   var total = projects.length;
+  var blocks = {};
+
+  // Pre-create result blocks in the user's selection order, so responses that
+  // complete out of order still render deterministically (instead of AJAX order).
+  projects.forEach(function(proj) {
+    var $block = $('<div class="project-result" style="margin-top:30px;"></div>');
+    var $h = $('<h5></h5>').text(projectNames[proj] || proj);
+    var $chart = $('<div class="chart-container"></div>');
+    var $table = $('<div class="data-table-container"></div>');
+    $block.append($h, $chart, $table);
+    $('#result-area').append($block);
+    blocks[proj] = { chart: $chart, table: $table };
+  });
+
+  function finishOne() {
+    doneCount++;
+    if (doneCount === total) {
+      $('#loading-indicator').hide();
+      var $first = $('#result-area .project-result').first();
+      if ($first.length) {
+        $('html, body').animate({ scrollTop: $first.offset().top - 20 }, 250);
+      }
+    }
+  }
 
   projects.forEach(function(proj) {
+    var b = blocks[proj];
     $.getJSON('/api/expression/query', { gene_ids: geneIds, project: proj })
       .done(function(resp) {
-        doneCount++;
-        if (doneCount === total) { $('#loading-indicator').hide(); }
-        var projDiv = $('<div>').addClass('project-result').css('margin-top', '30px');
-        $('#result-area').append(projDiv);
-        projDiv.append('<h5>' + (projectNames[proj] || proj) + '</h5>');
-        var chartDiv = $('<div>').addClass('chart-container');
-        var tableDiv = $('<div>').addClass('data-table-container');
-        projDiv.append(chartDiv);
-        projDiv.append(tableDiv);
         if (!resp || !resp.success || !resp.data) {
-          tableDiv.append('<div class="alert alert-danger">Failed to load: ' +
-            ((resp && resp.message) || 'unknown error') + '</div>');
-          return;
+          b.table.append($('<div class="alert alert-danger"></div>')
+            .text('Failed to load: ' + ((resp && resp.message) || 'unknown error')));
+        } else {
+          renderResults(resp.data, proj, projectNames[proj] || proj, genes, b.chart, b.table);
         }
-        renderResults(resp.data, proj, projectNames[proj] || proj, genes, chartDiv, tableDiv);
+        finishOne();
       })
       .fail(function(jqXHR) {
-        doneCount++;
-        if (doneCount === total) { $('#loading-indicator').hide(); }
-        $('#result-area').append(
-          '<div class="alert alert-danger">' + (projectNames[proj] || proj) + ': ' +
-          (jqXHR.responseJSON ? jqXHR.responseJSON.detail : jqXHR.statusText) + '</div>'
-        );
+        // jQuery 1.9 does not populate jqXHR.responseJSON for HTTP error responses,
+        // so parse responseText to surface the API's JSON {detail: ...} message.
+        var detail = jqXHR.responseJSON && (jqXHR.responseJSON.detail || jqXHR.responseJSON.message);
+        if (!detail && jqXHR.responseText) {
+          try {
+            var body = JSON.parse(jqXHR.responseText);
+            detail = body.detail || body.message;
+          } catch (e) { /* non-JSON error body */ }
+        }
+        var msg = detail || jqXHR.statusText || 'request failed';
+        b.table.append($('<div class="alert alert-danger"></div>')
+          .text((projectNames[proj] || proj) + ': ' + msg));
+        finishOne();
       });
   });
 }
@@ -465,22 +487,25 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
 
   // 基因版本转换信息
   if (resp.genes_converted && Object.keys(resp.genes_converted).length > 0) {
-    var convHtml = '<div class="alert alert-info"><small><strong>Gene ID Conversion:</strong><br>';
+    var $conv = $('<div class="alert alert-info"><small></small></div>');
+    $conv.find('small').append($('<strong></strong>').text('Gene ID Conversion:')).append('<br>');
     Object.keys(resp.genes_converted).forEach(function(k) {
-      convHtml += k + ' → ' + resp.genes_converted[k] + '<br>';
+      $conv.find('small').append(document.createTextNode(k + ' → ' + resp.genes_converted[k])).append('<br>');
     });
-    convHtml += '</small></div>';
-    tableDiv.append(convHtml);
+    tableDiv.append($conv);
   }
 
   // 未找到的基因
   if (resp.genes_not_found && resp.genes_not_found.length > 0) {
-    tableDiv.append('<div class="alert alert-warning"><small><strong>Not found:</strong> ' + resp.genes_not_found.join(', ') + '</small></div>');
+    var $nf = $('<div class="alert alert-warning"><small></small></div>');
+    $nf.find('small').append($('<strong></strong>').text('Not found: '))
+      .append(document.createTextNode(resp.genes_not_found.join(', ')));
+    tableDiv.append($nf);
   }
 
   if (!resp.results || resp.results.length === 0) {
-    tableDiv.append('<div class="alert alert-warning">No expression data found for the given genes in this project.</div>');
-    $('#result-area').show();
+    tableDiv.append($('<div class="alert alert-warning"></div>')
+      .text('No expression data found for the given genes in this project.'));
     return;
   }
 
@@ -641,6 +666,19 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
   });
 
 
+  // === 引用信息（结构化渲染，放在图表上方；不再直出原始 citation 字符串） ===
+  var citationBlock = buildCitationBlock(projectName);
+  if (citationBlock) chartDiv.append(citationBlock);
+
+  // 长描述不再整段作为图表标题（会压住绘图区/导出按钮）；完整描述已在块标题显示
+  // Full description is shown in the block <h5>; the chart title is shortened so it
+  // never covers the plot / Export button at supported widths (375 / 768 / 1440).
+  var titleMaxLen = window.innerWidth < 600 ? 34 : (window.innerWidth < 900 ? 55 : 80);
+  var chartTitleText = shortenText(projectDesc, titleMaxLen);
+  var approxCharsPerLine = Math.max(26, Math.floor((($(chartDiv).width() || 900)) / 8));
+  var titleLines = Math.max(1, Math.ceil(chartTitleText.length / approxCharsPerLine));
+  var dynamicMarginTop = 30 + titleLines * 20;
+
   var chartId =
     'expr-chart-' +
     Math.random().toString(36).substr(2, 6);
@@ -671,11 +709,11 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
        * 标签越长，整体图高度适当增加。
        */
       height: Math.min(
-        680,
-        Math.max(480, 420 + bottomMargin - 100)
+        720,
+        Math.max(480, 420 + bottomMargin - 100 + Math.max(0, dynamicMarginTop - 55))
       ),
 
-      marginTop: 55,
+      marginTop: dynamicMarginTop,
 
       marginBottom: bottomMargin,
 
@@ -698,7 +736,10 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
     },
 
     title: {
-      text: projectDesc
+      text: chartTitleText,
+      align: 'left',
+      x: 6,
+      style: { fontSize: (window.innerWidth < 600 ? '12px' : '14px'), fontWeight: '600' }
     },
 
     /*
@@ -743,7 +784,8 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
 
         rotation: -45,
 
-        step: 1,
+        // 宽样本面板（>80 个样本）抽稀显示，避免 638 个标签叠成黑带
+        step: labels.length > 80 ? Math.ceil(labels.length / 80) : 1,
 
         /*
          * 不允许标签互相覆盖
@@ -828,6 +870,8 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
 
     exporting: {
 
+      filename: 'expression_' + projectName,
+
       buttons: {
         contextButton: {
           text: 'Export data'
@@ -842,42 +886,33 @@ function renderResults(resp, projectName, projectDesc, originalGenes, chartDiv, 
     chart.addSeries(s);
   });
 
-  // === 引用信息（在图表上方） ===
-  if (projectCitations[projectName] && projectCitations[projectName] !== '') {
-    chartDiv.append('<div class="alert alert-info" style="font-size:13px;margin-bottom:10px;"><strong>Citation:</strong> ' + projectCitations[projectName] + '</div>');
-  }
-
   // === 数据表格 ===
   var hasStd = resp.results[0].points.some(function(p) { return p.std !== null; });
 
-  var html = '<h6 class="mb-2">' + projectDesc + '</h6>';
-  html += '<div style="max-height:500px;overflow:auto;"><table class="table table-bordered table-hover table-sm" style="min-width:100%;white-space:nowrap;">';
+  var html = '<div style="max-height:500px;overflow:auto;"><table class="table table-bordered table-hover table-sm" style="min-width:100%;white-space:nowrap;">';
 
-  // 表头
+  // 表头（escape，避免标签里的 <>& 直接注入 HTML）
   html += '<thead><tr><th style="position:sticky;top:0;background:#f8f9fa;">Gene ID</th>';
-  labels.forEach(function(l) { html += '<th style="position:sticky;top:0;background:#f8f9fa;">' + l + '</th>'; });
+  labels.forEach(function(l) { html += '<th style="position:sticky;top:0;background:#f8f9fa;">' + escapeHtml(l) + '</th>'; });
   if (hasStd) {
-    labels.forEach(function(l) { html += '<th style="position:sticky;top:0;background:#f8f9fa;">' + l + ' (SD)</th>'; });
+    labels.forEach(function(l) { html += '<th style="position:sticky;top:0;background:#f8f9fa;">' + escapeHtml(l) + ' (SD)</th>'; });
   }
   html += '</tr></thead><tbody>';
 
   resp.results.forEach(function(gene) {
-    html += '<tr><td><strong>' + gene.gene_id + '</strong></td>';
+    html += '<tr><td><strong>' + escapeHtml(gene.gene_id) + '</strong></td>';
     gene.points.forEach(function(p) {
-      var v = parseFloat(p.value);
-      html += '<td>' + (isNaN(v) ? '-' : v.toFixed(1)) + '</td>';
+      html += '<td>' + fmtExpr(p.value) + '</td>';
     });
     if (hasStd) {
       gene.points.forEach(function(p) {
-        var s = p.std;
-        html += '<td>' + (s !== null && s !== undefined ? parseFloat(s).toFixed(2) : '-') + '</td>';
+        html += '<td>' + fmtExpr(p.std) + '</td>';
       });
     }
     html += '</tr>';
   });
   html += '</tbody></table></div>';
   tableDiv.append(html);
-  $('html, body').animate({ scrollTop: $('#result-area').offset().top - 20 }, 300);
 }
 </script>
 </body>

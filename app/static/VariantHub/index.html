@@ -3,119 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VariantHub - WheatOmics</title>
+<meta name="description" content="VariantHub — query WheatOmics genetic variation datasets by genomic region or variant ID, inspect genotypes and export CSV.">
+<title>VariantHub | WheatOmics 2.0</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
-
-<script>
-// ===== Visit tracking =====
-(function() {
-  var page = location.pathname || 'unknown';
-  // POST a pageview (best-effort, ignore failures)
-  try {
-    fetch('/api/track/visit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ page: page })
-    }).catch(function(){});
-  } catch (e) {}
-
-  function fmt(n) {
-    n = Number(n) || 0;
-    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
-    if (n >= 10000)   return (n / 1000).toFixed(3) + 'k';
-    return String(n);
-  }
-
-  function setHtml(html) {
-    var el = document.getElementById('visit-stats');
-    if (el) el.innerHTML = html;
-  }
-
-  fetch('/api/track/stats')
-    .then(function(r) { return r.json(); })
-    .then(function(resp) {
-      if (!resp || !resp.success) {
-        setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
-        return;
-      }
-      var d = resp.data;
-      var html =
-        '<span class="vs-pill vs-today" title="Today pageviews">' +
-          '<span class="vs-dot vs-dot-today"></span>' +
-          'Today <b>' + fmt(d.today.pv) + '</b></span>' +
-        '<span class="vs-pill vs-total" title="Total pageviews (since 2019-08-01)">' +
-          '<span class="vs-dot vs-dot-total"></span>' +
-          'Total <b>' + fmt(d.total.pv) + '</b></span>' +
-        '<span class="vs-pill vs-online" title="Visitors active in the last 15 minutes">' +
-          '<span class="vs-dot vs-dot-online"></span>' +
-          'Online <b>' + fmt(d.online) + '</b></span>';
-      setHtml(html);
-    })
-    .catch(function() {
-      setHtml('<span class="vs-pill vs-error">stats unavailable</span>');
-    });
-})();</script>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+<link rel="stylesheet" href="/api/v2shell/shell.css">
 <style>
-  body { background: #f8f9fa; margin:0; padding:0; }
-  #home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
-  #logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
-  #home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
-  #header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
-  #header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
-  #header-tabs li { display:inline-block !important; width:190px !important; }
-  #header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
-  #header-tabs a:hover { background:#98c1d9; color:#000000; }
-  #header-tabs ul li { display:inline-block; list-style:none; position:relative; }
-  #header-tabs ul li ul { display:none !important; position:absolute; }
-  #header-tabs ul li:hover ul { display:block !important; }
-  #header-tabs ul li ul a { border-radius:0; }
-  #home_content { max-width: 1400px; margin: 0 auto; padding: 0 15px; }
-  .loading { display: none; text-align: center; padding: 60px; }
-  .loading .spinner-border { width: 3rem; height: 3rem; }
-  #error-msg { display: none; margin-top: 10px; }
+  body { background: #fff; margin: 0; padding: 0; }
+  .vh-query-card { max-width: 1180px; }
+  .vh-result-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .vh-result-head h6 { margin: 0; font-size: 15px; }
+  .loading { display: none; text-align: center; padding: 54px; }
+  .loading .spinner-border { width: 2.6rem; height: 2.6rem; color: var(--leaf); }
+  #error-msg { display: none; margin-top: 14px; }
 
-  /* ----- VariantHub custom (vh- prefix) ----- */
-  .vh-card { background: #fff; border-radius: 6px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .vh-table-wrap { max-height: 600px; overflow: auto; }
-  .vh-table-wrap table { font-size: 12px; white-space: nowrap; }
-  .vh-table-wrap th { position: sticky; top: 0; background: #f8f9fa; z-index: 1; }
-  .vh-meta-box { max-height: 260px; overflow-y: auto; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 10px; font-family: Consolas, monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; }
-  .vh-sample-box { max-height: 150px; overflow-y: auto; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 10px; font-family: Consolas, monospace; font-size: 12px; }
-  .vh-meta-filter { font-size: 12px; height: 30px; padding: 2px 6px; }
+  /* ----- VariantHub custom (vh- prefix), V2.0 tokens ----- */
+  .vh-table-wrap { max-height: 600px; overflow: auto; margin-top: 10px; }
+  .vh-table-wrap table { font-size: 12px; white-space: nowrap; margin-bottom: 0; }
+  .vh-table-wrap th { position: sticky; top: 0; background: var(--mist); z-index: 1; }
+  .vh-meta-box { max-height: 260px; overflow-y: auto; background: var(--mist); border: 1px solid var(--line); border-radius: 8px; padding: 10px; font-family: var(--utility); font-size: 11px; color: #42584d; white-space: pre-wrap; word-break: break-all; }
+  .vh-sample-box { max-height: 150px; overflow-y: auto; background: var(--mist); border: 1px solid var(--line); border-radius: 8px; padding: 10px; font-family: var(--utility); font-size: 12px; color: #42584d; }
+  .vh-meta-filter { font-size: 12px; height: 32px; padding: 2px 6px; }
   .vh-sample-meta-table td, .vh-sample-meta-table th { padding: 3px 8px; font-size: 11.5px; white-space: nowrap; }
-  .vh-example { font-size: 13px; margin-left: 8px; }
-  .vh-summary { font-size: 14px; margin-bottom: 10px; }
-  .vh-pagination button { margin-right: 8px; }
-
-  /* ----- visit stats footer ----- */
-  .visit-stats { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-  .visit-stats .vs-pill {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 8px; border-radius: 12px;
-    font-size: 11px; line-height: 1.4;
-    background: #f1f5f9; color: #334155;
-    border: 1px solid #e2e8f0;
-    transition: background 0.15s;
-  }
-  .visit-stats .vs-pill b { color: #0f172a; font-weight: 600; }
-  .visit-stats .vs-dot {
-    display: inline-block; width: 6px; height: 6px;
-    border-radius: 50%; background: #94a3b8;
-  }
-  .visit-stats .vs-dot-today  { background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.18); }
-  .visit-stats .vs-dot-total  { background: #3b82f6; }
-  .visit-stats .vs-dot-online { background: #f59e0b; animation: vs-pulse 1.6s ease-in-out infinite; }
-  .visit-stats .vs-loading { color: #64748b; }
-  .visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
-  .visit-stats .vs-error   { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
-  @keyframes vs-pulse {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.35; }
-  }
-
+  .vh-summary { font-size: 13px; margin-bottom: 10px; color: #42584d; }
+  .vh-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .vh-pagination button { margin-right: 0; }
+  .vh-pagination .btn:disabled { opacity: 1; color: var(--muted); background: #fff; border-color: var(--line); }
+  .vh-query-card .radio-inline { padding: 6px 0; margin-bottom: 0; }
+  .vh-refs h6 { margin: 0 0 10px; }
+  .vh-refs p { margin: 12px 0 4px; }
 </style>
 
 <!-- Baidu Tongji (async) -->
@@ -130,58 +48,32 @@ var _hmt = _hmt || [];
 </script>
 </head>
 <body>
-<div id="home_header">
-  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 2.0</span>
-</div>
-<div id="header-tabs">
-  <ul>
-    <li><a href="/"><span>Home</span></a></li>
-    <li><a href="#"><span>Tools/Browse</span></a>
-      <ul>
-        <li><a href="/getfasta/index.html">GetSequence</a></li>
-        <li><a href="/blast/blast.html">BLAST</a></li>
-        <li><a href="/PrimerServer">PrimerServer</a></li>
-        <li><a href="/PrimerServer2/">PrimerServer2</a></li>
-        <li><a href="/caps/">CAPS/dCAPS</a></li>
-        <li><a href="/PfamSearch/">PfamSearch</a></li>
-        <li><a href="/idConvert/">IDConvert</a></li>
-        <li><a href="/HomologFinder/">HomologFinder</a></li>
-        <li><a href="/interval/">IntervalTool</a></li>
-        <li><a href="/expression/">GeneExpression</a></li>
-        <li><a href="/coexpression/index.html">Co-expression</a></li>
-        <li><a href="/wheatPPI/">WheatPPI</a></li>
-        <li><a href="/genes/">KnownGene</a></li>
-        <li><a href="/symap/index.html">SyntenySearch</a></li>
-        <li><a href="/syntenyview/">SynTenyView</a></li>
-        <li><a href="/preblast/">preBLAST</a></li>
-        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
-        <li><a href="/orthofinder/">OrthoFinder</a></li>
-        <li><a href="/VariantHub/">VariantHub</a></li>
-        <li><a href="DWGVa.html">DWGVa</a></li>
-        <li><a href="/scRNA/">scRNA</a></li>
-        <li><a href="/wheatPSP/">wheatPSP</a></li>
-        <li><a href="/eqtl/">eQTL Atlas</a></li>
-        <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
-        <li><a href="/papers">Triticeae papers</a></li>
-      </ul>
-    </li>
-    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
-    <li><a href="/download.html"><span>Download Data</span></a></li>
-    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
-    <li><a href="#"><span>About</span></a>
-      <ul>
-        <li><a href="/help/contact.html">Contact</a></li>
-        <li><a href="/help/news.html">News</a></li>
-      </ul>
-    </li>
-  </ul>
-</div>
+<div id="v2-shell-header"></div>
 
-<div id="home_content">
-  <br><h5 class="card-title">VariantHub</h5><br>
+<main id="main-content">
+  <section class="news-hero">
+    <div class="container news-hero-inner">
+      <div>
+        <p class="news-kicker">WheatOmics 2.0 · Variation analysis</p>
+        <h1 class="news-title">Variant<em>Hub</em></h1>
+        <p class="news-lead">Query wheat genetic variation datasets by genomic region or by variant ID, inspect the genotypes of any sample subset, and export the selected loci as CSV.</p>
+        <div class="news-stats">
+          <span class="news-stat"><strong>VCF</strong> variation datasets</span>
+          <span class="news-stat">Region or variant ID</span>
+          <span class="news-stat">Sample metadata filters</span>
+          <span class="news-stat">CSV export</span>
+        </div>
+      </div>
+      <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-marker"/></svg></div>
+    </div>
+  </section>
+
+  <section class="news-body">
+    <div class="container">
 
   <!-- ===== Query card ===== -->
-  <div class="vh-card">
+  <div class="card vh-query-card">
+    <div class="card-body">
     <div class="row">
       <div class="col-md-4">
         <div class="form-group">
@@ -224,6 +116,7 @@ var _hmt = _hmt || [];
         <button id="query-btn" class="btn btn-primary" onclick="runQuery(0)">Submit</button>
       </div>
     </div>
+    </div>
   </div>
 
   <div id="error-msg" class="alert alert-danger"></div>
@@ -234,58 +127,45 @@ var _hmt = _hmt || [];
   </div>
 
   <!-- ===== Dataset info card ===== -->
-  <div class="vh-card" id="dataset-info-card" style="display:none;">
-    <h6 class="card-title">Dataset information</h6>
-    <div id="dataset-info-body"></div>
+  <div class="card" id="dataset-info-card" style="display:none;">
+    <div class="card-body">
+      <h6 class="card-title">Dataset information</h6>
+      <div id="dataset-info-body"></div>
+    </div>
   </div>
 
   <!-- ===== Result card ===== -->
-  <div class="vh-card" id="result-area" style="display:none;">
-    <div class="d-flex align-items-center justify-content-between mb-2">
-      <h6 id="result-title" class="card-title mb-0">Results</h6>
-      <button type="button" id="export-btn" class="btn btn-success btn-sm" disabled>Export Results (CSV)</button>
-    </div>
-    <div class="vh-summary" id="result-summary"></div>
-    <div class="vh-table-wrap" id="result-table-body"></div>
-    <div class="vh-pagination mt-2">
-      <button id="prev-btn" class="btn btn-outline-primary btn-sm" onclick="prevPage()" disabled>&larr; Prev</button>
-      <span id="page-info"></span>
-      <button id="next-btn" class="btn btn-outline-primary btn-sm" onclick="nextPage()" disabled>Next &rarr;</button>
+  <div class="card" id="result-area" style="display:none;">
+    <div class="card-body">
+      <div class="vh-result-head">
+        <h6 id="result-title" class="card-title">Results</h6>
+        <button type="button" id="export-btn" class="btn btn-success btn-sm" disabled>Export Results (CSV)</button>
+      </div>
+      <div class="vh-summary" id="result-summary"></div>
+      <div class="vh-table-wrap" id="result-table-body"></div>
+      <div class="vh-pagination mt-2">
+        <button id="prev-btn" class="btn btn-outline-primary btn-sm" onclick="prevPage()" disabled>&larr; Prev</button>
+        <span id="page-info"></span>
+        <button id="next-btn" class="btn btn-outline-primary btn-sm" onclick="nextPage()" disabled>Next &rarr;</button>
+      </div>
     </div>
   </div>
 
   <!-- ===== References card ===== -->
-  <div class="vh-card" id="references-card">
-    <h6>References &amp; data sources</h6>
-    <div id="references-body"><span class="text-muted">Loading...</span></div>
+  <div class="card vh-refs" id="references-card">
+    <div class="card-body">
+      <h6>References &amp; data sources</h6>
+      <div id="references-body"><span class="text-muted">Loading...</span></div>
+    </div>
   </div>
-</div>
 
-<div class="line" style="height:10px;background-color:white"></div>
-<div id="home_footer">
-  <center style="margin-top:5px">
-    <table>
-      <tr>
-        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><div style="height:50px;width:15px;"></div></td>
-        <td>
-          <div id="visit-stats" class="visit-stats">
-            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
-          </div>
-        </td>
-      </tr>
-    </table>
-    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
-  </center>
-</div>
+    </div>
+  </section>
+</main>
 
+<div id="v2-shell-footer"></div>
+
+<script src="/api/v2shell/shell.js"></script>
 <script>
 // =====================================================================
 //  State
