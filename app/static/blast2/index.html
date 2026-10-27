@@ -1434,6 +1434,9 @@
     .blast-status-icon.spinner { width: 16px; height: 16px; border: 2px solid #bcd7f2; border-top-color: #1d6fa5; border-radius: 50%; font-size: 0; animation: blast-spin .8s linear infinite; }
     @keyframes blast-spin { to { transform: rotate(360deg); } }
     .blast-status-message { color: var(--forest-deep); font-size: 13px; font-weight: 600; }
+
+    .blast-aln-chevron { display: inline-block; width: 16px; color: var(--muted); font-size: 12px; line-height: 1; transition: transform .15s ease; }
+    .blast-aln-card[open] > summary .blast-aln-chevron { transform: rotate(90deg); }
   </style>
 </head>
 <body>
@@ -3104,7 +3107,8 @@ function loadAlignments() {
           return '<details class="blast-aln-card" data-align-index="' + i + '"' + (i < 3 ? ' open' : '') + '>' +
             '<summary>' + esc(h.header.slice(0, 160)) +
               '<span class="blast-aln-actions"><span class="blast-aln-hspcount">' + h.hsps.length + ' HSP' + (h.hsps.length === 1 ? '' : 's') + '</span>' +
-              '<button type="button" class="blast-aln-copy" title="Copy this target: HSP info + pairwise alignment">Copy</button></span></summary>' +
+              '<button type="button" class="blast-aln-copy" title="Copy this target: HSP info + pairwise alignment">Copy</button>' +
+              '<span class="blast-aln-chevron" aria-hidden="true" title="Expand / collapse">▸</span></span></summary>' +
             '<div class="blast-aln-body">' + hsps + '</div></details>';
         }).join('');
         if (state.alignHits.length > 50) {
