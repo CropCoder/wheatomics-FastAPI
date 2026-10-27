@@ -1,0 +1,1279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="WheatOmics JBrowse gateway — browse 200+ wheat and Triticeae genome assemblies, gene models, variants and tracks, with DOI links to the source publications.">
+  <title>JBrowse | WheatOmics 2.0</title>
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="/api/v2shell/shell.css">
+  <style>
+    .asm-toolbar { margin-bottom: 18px; }
+    .asm-toolbar h2 { margin: 0 0 6px; color: var(--forest-deep); font-family: var(--display); font-size: 23px; font-weight: 800; letter-spacing: -.03em; }
+    .asm-jump { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 30px; }
+    .asm-jump-label { color: #5e7268; font-family: var(--utility); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .asm-group { margin: 0 0 34px; scroll-margin-top: 112px; }
+    .asm-group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; padding-bottom: 10px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+    .asm-group-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0; font-family: var(--display); font-size: 18px; font-weight: 750; letter-spacing: -.02em; color: var(--forest-deep); }
+    .asm-formula { color: var(--leaf); font-family: var(--utility); font-size: 14px; letter-spacing: .02em; }
+    .asm-desc { color: #5e7268; font-family: var(--body); font-size: 13px; font-weight: 500; letter-spacing: 0; }
+    .asm-group-count { margin-left: auto; color: #5e7268; font-family: var(--utility); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
+    .asm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); gap: 10px; }
+    .asm-card { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px 14px; background: #fff; border: 1px solid var(--line); border-radius: 12px; transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
+    .asm-card:hover { border-color: rgba(17,134,83,.32); box-shadow: 0 12px 26px rgba(8,69,47,.07); transform: translateY(-1px); }
+    .asm-name { margin: 0; font-size: 13px; font-weight: 700; line-height: 1.45; overflow-wrap: anywhere; }
+    .asm-name a { color: var(--forest-deep); }
+    .asm-name a:hover { color: var(--leaf); text-decoration: underline; text-underline-offset: 2px; }
+    .asm-doi { margin: 0; font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+    .asm-doi a { color: var(--leaf); }
+    .asm-doi a:hover { color: var(--forest); text-decoration: underline; text-underline-offset: 2px; }
+    .asm-doi-none { color: #5e7268; font-style: italic; }
+    .asm-empty { margin-top: 8px; }
+    .asm-help { margin-top: 22px; }
+    .asm-help-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+    .asm-help-card { padding: 18px 20px; background: linear-gradient(160deg, #fff, #fbfdfb); border: 1px solid var(--line); border-radius: 14px; }
+    .asm-help-card .icon { width: 22px; height: 22px; color: var(--leaf); }
+    .asm-help-card h3 { margin: 10px 0 6px; font-family: var(--display); font-size: 15px; font-weight: 750; color: var(--forest-deep); }
+    .asm-help-card p { margin: 0; color: #5e7268; font-size: 12.5px; line-height: 1.7; }
+    .asm-note { margin: 0; color: #5e7268; font-size: 12.5px; line-height: 1.7; }
+    .asm-cite { margin-top: 26px; }
+    .asm-cite .card-body { padding: 20px 22px; }
+    .asm-cite-details { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
+    .asm-cite-details > summary { cursor: pointer; color: var(--forest); font-size: 12.5px; font-weight: 700; }
+    .asm-cite-details > summary:hover { color: var(--leaf); }
+    .asm-cite-body { margin-top: 12px; max-height: 380px; overflow: auto; padding-right: 6px; color: #5e7268; font-size: 12px; line-height: 1.75; }
+    .asm-cite-body a { color: var(--leaf); }
+    .asm-cite-body a:hover { color: var(--forest); text-decoration: underline; }
+    .asm-cite-body h4, .asm-cite-body h5 { color: var(--forest-deep); font-family: var(--display); font-size: 15px; }
+    .asm-cite-body div[style] { border-color: var(--line) !important; }
+    .asm-card[hidden], .asm-group[hidden], .asm-jump[hidden], .asm-clear[hidden], .asm-empty[hidden], .asm-placeholders[hidden] { display: none !important; }
+    @media (max-width: 640px) {
+      .asm-toolbar h2 { font-size: 20px; }
+      .asm-group-count { margin-left: 0; }
+      .asm-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="v2-shell-header"></div>
+
+  <main id="main-content">
+    <section class="news-hero">
+      <div class="container news-hero-inner">
+        <div>
+          <p class="news-kicker">WheatOmics 2.0 · Genome browser</p>
+          <h1 class="news-title">JBrowse</h1>
+          <p class="news-lead">Browse 200+ wheat and Triticeae genome assemblies, gene models, variants and tracks in the WheatOmics JBrowse instances.</p>
+          <div class="news-stats">
+            <span class="news-stat"><strong>213</strong> assemblies</span>
+            <span class="news-stat">JBrowse 1 &amp; 2</span>
+            <span class="news-stat">Track-level help</span>
+          </div>
+        </div>
+        <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-chromosome"/></svg></div>
+      </div>
+    </section>
+
+    <section class="news-body">
+      <div class="container">
+        <div class="news-toolbar asm-toolbar">
+          <div>
+            <h2 class="v2-section-title" style="margin: 0 0 6px;">Browse all assemblies</h2>
+            <p class="news-toolbar-note" id="asm-status" aria-live="polite">Showing <strong>206</strong> named assemblies in <strong>22</strong> genome groups</p>
+          </div>
+          <div class="news-toolbar-right">
+            <form class="news-search" role="search" onsubmit="return false;">
+              <label for="assembly-filter" hidden>Filter assemblies</label>
+              <input id="assembly-filter" type="search" placeholder="Filter — e.g. Jimai, rye, AABBDD" autocomplete="off" aria-controls="asm-groups">
+              <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+            </form>
+            <button type="button" class="btn btn-secondary btn-sm asm-clear" id="asm-clear" hidden>Clear</button>
+          </div>
+        </div>
+
+        <nav class="asm-jump" aria-label="Jump to a major genome group">
+          <span class="asm-jump-label">Jump to</span>
+          <a class="v2-chip" href="#group-aabbdd">AABBDD bread wheat <span>55</span></a>
+          <a class="v2-chip" href="#group-aabb">AABB durum / emmer <span>22</span></a>
+          <a class="v2-chip" href="#group-dd">DD Ae. tauschii <span>10</span></a>
+          <a class="v2-chip" href="#group-ss">SS Sitopsis <span>9</span></a>
+          <a class="v2-chip" href="#group-aa">AA einkorn <span>5</span></a>
+          <a class="v2-chip" href="#group-hh">HH barley <span>82</span></a>
+        </nav>
+
+        <noscript><p class="asm-note" style="margin-bottom: 22px;">Enable JavaScript to filter the assembly list. Every assembly below is still linked.</p></noscript>
+
+        <div id="asm-groups">
+        <section class="asm-group" id="group-aabbdd" aria-labelledby="group-aabbdd-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-aabbdd-title"><span class="asm-formula">AABBDD</span> <span class="asm-desc">Allohexaploid bread wheat (<i>Triticum aestivum</i>)</span></h2>
+            <span class="asm-group-count">55 assemblies</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="chinese spring v1.0(aabbdd) chinese_spring1.0 doi: 10.1126/science.aar7191 https:/doi.org/10.1126/science.aar7191 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Chinese_Spring1.0">Chinese Spring v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https:/doi.org/10.1126/science.aar7191" target="_blank" rel="noopener">doi: 10.1126/science.aar7191</a></p>
+            </article>
+            <article class="asm-card" data-search="chinese spring v2.1(aabbdd) chinese_spring2.1 doi:10.1111/tpj.15289 https://doi.org/10.1111/tpj.15289 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Chinese_Spring2.1">Chinese Spring v2.1(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1111/tpj.15289" target="_blank" rel="noopener">doi:10.1111/tpj.15289</a></p>
+            </article>
+            <article class="asm-card" data-search="chinese spring cs-cau(aabbdd) cs-cau doi:10.1016/j.molp.2025.02.002 https://doi.org/10.1016/j.molp.2025.02.002 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=CS-CAU">Chinese Spring CS-CAU(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1016/j.molp.2025.02.002" target="_blank" rel="noopener">doi:10.1016/j.molp.2025.02.002</a></p>
+            </article>
+            <article class="asm-card" data-search="chinese spring cs-iaas(aabbdd) cs-iaas_t2t doi:10.1038/s41588-025-02137-x https://doi.org/10.1038/s41588-025-02137-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=CS-IAAS_T2T">Chinese Spring CS-IAAS(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41588-025-02137-x" target="_blank" rel="noopener">doi:10.1038/s41588-025-02137-x</a></p>
+            </article>
+            <article class="asm-card" data-search="claire v1.0(aabbdd) claire doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Claire">Claire v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="jagger v1.0(aabbdd) jagger doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Jagger">Jagger v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="arina lrfor v1.0(aabbdd) arinalrfor doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=ArinaLrFor">Arina LrFor v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="cdc landmark v1.0(aabbdd) cdc_landmark doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=CDC_Landmark">CDC Landmark v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="cdc stanley v1.0(aabbdd) cdc_stanley doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=CDC_Stanley">CDC Stanley v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="julius v1.0(aabbdd) julius doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Julius">Julius v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="mace v1.0(aabbdd) mace doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Mace">Mace v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="norin61 v1.0(aabbdd) norin61 doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Norin61">Norin61 v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="paragon v1.0(aabbdd) paragon doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Paragon">Paragon v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="robigus v1.0(aabbdd) robigus doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Robigus">Robigus v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="sy mattis v1.0(aabbdd) sy_mattis doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=SY_Mattis">SY Mattis v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="spelta pi190962 v1.0(aabbdd) triticum_spelta_pi190962 doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Triticum_spelta_PI190962">Spelta PI190962 v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="weebill v1.0(aabbdd) weebill doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Weebill">Weebill v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="longreach lancer v1.0(aabbdd) longreach_lancer doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=LongReach_Lancer">LongReach Lancer v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="fielder v1.0(aabbdd) fielder doi:10.1093/dnares/dsab008 https://doi.org/10.1093/dnares/dsab008 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Fielder">Fielder v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1093/dnares/dsab008" target="_blank" rel="noopener">doi:10.1093/dnares/dsab008</a></p>
+            </article>
+            <article class="asm-card" data-search="kariega v1.0(aabbdd) kariega doi:10.1038/s41588-022-01022-1 https://doi.org/10.1038/s41588-022-01022-1 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Kariega">Kariega v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41588-022-01022-1" target="_blank" rel="noopener">doi:10.1038/s41588-022-01022-1</a></p>
+            </article>
+            <article class="asm-card" data-search="renan v1.0(aabbdd) renan doi:10.1093/gigascience/giac034 https://doi.org/10.1093/gigascience/giac034 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Renan">Renan v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1093/gigascience/giac034" target="_blank" rel="noopener">doi:10.1093/gigascience/giac034</a></p>
+            </article>
+            <article class="asm-card" data-search="attraktion v1.0(aabbdd) attraktion doi:10.1111/pbi.13843 https://doi.org/10.1111/pbi.13843 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Attraktion">Attraktion v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1111/pbi.13843" target="_blank" rel="noopener">doi:10.1111/pbi.13843</a></p>
+            </article>
+            <article class="asm-card" data-search="kenong9204(aabbdd) kn9204 doi:10.1016/j.molp.2022.07.008 https://doi.org/10.1016/j.molp.2022.07.008 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=KN9204">Kenong9204(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1016/j.molp.2022.07.008" target="_blank" rel="noopener">doi:10.1016/j.molp.2022.07.008</a></p>
+            </article>
+            <article class="asm-card" data-search="aikang58(ak58)(aabbdd) ak58 doi:10.1016/j.molp.2023.10.015 https://doi.org/10.1016/j.molp.2023.10.015 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=AK58">Aikang58(AK58)(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1016/j.molp.2023.10.015" target="_blank" rel="noopener">doi:10.1016/j.molp.2023.10.015</a></p>
+            </article>
+            <article class="asm-card" data-search="chuanmai104(aabbdd) chuanmai104 doi:10.1038/s41597-024-03527-2 https://doi.org/10.1038/s41597-024-03527-2 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Chuanmai104">Chuanmai104(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41597-024-03527-2" target="_blank" rel="noopener">doi:10.1038/s41597-024-03527-2</a></p>
+            </article>
+            <article class="asm-card" data-search="cwi86942 pi572674(aabbdd) taescwi86942 doi:10.1038/s41586-024-07808-z https://doi.org/10.1038/s41586-024-07808-z bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=TaesCWI86942">CWI86942 PI572674(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-07808-z" target="_blank" rel="noopener">doi:10.1038/s41586-024-07808-z</a></p>
+            </article>
+            <article class="asm-card" data-search="zhoumai16(aabbdd) zm16 doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=ZM16">Zhoumai16(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="yangmai158(aabbdd) ym158 doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=YM158">Yangmai158(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="xiaoyan6(aabbdd) xy6 doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=XY6">Xiaoyan6(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="xinong6028(aabbdd) xn6028 doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=XN6028">Xinong6028(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="shi4185(aabbdd) s4185 doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=S4185">Shi4185(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="ningchun4(aabbdd) nc4 doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=NC4">Ningchun4(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="mazhamai(aabbdd) mzm doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=MZM">Mazhamai(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="kuofan11(aabbdd) kf11 doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=KF11">Kuofan11(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="jinmai47(aabbdd) jm47 doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=JM47">Jinmai47(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="jimai 22 (2024 nature, aabbdd) jm22 doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=JM22"><i>Jimai 22</i> (2024 Nature, AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="handan6172(aabbdd) hd6172 doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HD6172">Handan6172(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="chuanmai42(aabbdd) cm42 doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=CM42">Chuanmai42(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="beijing8(aabbdd) bj8 doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=BJ8">Beijing8(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="aimengniu(aabbdd) amn doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=AMN">Aimengniu(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="abbondanza(aabbdd) abo doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Abo">Abbondanza(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="zhengmai366(aabbdd) zm366 doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=ZM366">Zhengmai366(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="zhoumai22(aabbdd) zm22 doi:10.1038/s41586-024-08277-0 https://www.nature.com/articles/s41586-024-08277-0 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=ZM22">Zhoumai22(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41586-024-08277-0" target="_blank" rel="noopener">doi:10.1038/s41586-024-08277-0</a></p>
+            </article>
+            <article class="asm-card" data-search="zhou8425b(aabbdd) z8425b doi:10.1016/j.xplc.2024.101222 https://www.cell.com/plant-communications/fulltext/s2590-3462(24)00643-6 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Z8425B">Zhou8425B(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.cell.com/plant-communications/fulltext/S2590-3462(24)00643-6" target="_blank" rel="noopener">doi:10.1016/j.xplc.2024.101222</a></p>
+            </article>
+            <article class="asm-card" data-search="zang1817 v1.0(aabbdd) zang1817 doi:10.1038/s41467-020-18738-5 https://www.nature.com/articles/s41467-020-18738-5 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Zang1817">Zang1817 v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41467-020-18738-5" target="_blank" rel="noopener">doi:10.1038/s41467-020-18738-5</a></p>
+            </article>
+            <article class="asm-card" data-search="cadenza v1.0(aabbdd) cadenza doi:10.1038/s41586-020-2961-x https://doi.org/10.1038/s41586-020-2961-x bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Cadenza">Cadenza v1.0(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-020-2961-x" target="_blank" rel="noopener">doi:10.1038/s41586-020-2961-x</a></p>
+            </article>
+            <article class="asm-card" data-search="mov(aabbdd) multiovary_wheat_mov doi:10.1073/pnas.2510889122 https://doi.org/10.1073/pnas.2510889122 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Multiovary_wheat_MOV">MOV(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1073/pnas.2510889122" target="_blank" rel="noopener">doi:10.1073/pnas.2510889122</a></p>
+            </article>
+            <article class="asm-card" data-search="yangmai33(aabbdd) ym33 doi:10.1016/j.molp.2025.12.022 https://doi.org/10.1016/j.molp.2025.12.022 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=YM33">Yangmai33(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1016/j.molp.2025.12.022" target="_blank" rel="noopener">doi:10.1016/j.molp.2025.12.022</a></p>
+            </article>
+            <article class="asm-card" data-search="alchemy(aabbdd) triticum_aestivum_alchemy bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Triticum_aestivum_alchemy">Alchemy(AABBDD)</a></h3>
+              <p class="asm-doi"><span class="asm-doi-none">DOI not listed</span></p>
+            </article>
+            <article class="asm-card" data-search="jin50(aabbdd) jin50 doi:10.21203/rs.3.rs-6539185/v1 https://doi.org/10.21203/rs.3.rs-6539185/v1 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=JIN50">JIN50(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.21203/rs.3.rs-6539185/v1" target="_blank" rel="noopener">doi:10.21203/rs.3.rs-6539185/v1</a></p>
+            </article>
+            <article class="asm-card" data-search="jimai44(aabbdd) triticum_aestivum_jm44 doi:10.1101/2025.07.27.667006 https://doi.org/10.1101/2025.07.27.667006 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Triticum_aestivum_JM44">JiMai44(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1101/2025.07.27.667006" target="_blank" rel="noopener">doi:10.1101/2025.07.27.667006</a></p>
+            </article>
+            <article class="asm-card" data-search="sumai3(aabbdd) sumai3 doi:10.1002/tpg2.70285 https://doi.org/10.1002/tpg2.70285 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Sumai3">Sumai3(AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1002/tpg2.70285" target="_blank" rel="noopener">doi:10.1002/tpg2.70285</a></p>
+            </article>
+            <article class="asm-card" data-search="nc99bgtag11(aabbdd) nc99bgtag11 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=NC99BGTAG11">NC99BGTAG11(AABBDD)</a></h3>
+              <p class="asm-doi"><span class="asm-doi-none">DOI not listed</span></p>
+            </article>
+            <article class="asm-card" data-search="jimai 22 (2026 jgg, saas, aabbdd) jm22_sass doi:10.1016/j.jgg.2026.06.001 https://www.jgenetgenomics.cn/article/doi/10.1016/j.jgg.2026.06.001 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=JM22_SASS">Jimai 22 (2026 JGG, SAAS, AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://www.jgenetgenomics.cn/article/doi/10.1016/j.jgg.2026.06.001" target="_blank" rel="noopener">doi:10.1016/j.jgg.2026.06.001</a></p>
+            </article>
+            <article class="asm-card" data-search="jm229 (aabbdd) aabbdd_jm229 doi:10.1111/jipb.70418 https://doi.org/10.1111/jipb.70418 bread wheat common wheat aestivum hexaploid wheat allohexaploid allohexaploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=AABBDD_JM229">JM229 (AABBDD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1111/jipb.70418" target="_blank" rel="noopener">doi:10.1111/jipb.70418</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-aabb" aria-labelledby="group-aabb-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-aabb-title"><span class="asm-formula">AABB</span> <span class="asm-desc">Allotetraploid durum and emmer wheat (<i>Triticum turgidum</i>)</span></h2>
+            <span class="asm-group-count">22 assemblies</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="wild emmer zavitan v1.0(aabb) wild_emmer doi: 10.1126/science.aan0032 https://doi.org/10.1126/science.aan0032 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Wild_emmer">Wild Emmer Zavitan v1.0(AABB)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1126/science.aan0032" target="_blank" rel="noopener">doi: 10.1126/science.aan0032</a></p>
+            </article>
+            <article class="asm-card" data-search="wild emmer zavitan v2.0(aabb) wild_emmerv2 doi: 10.1534/g3.118.200902 https://doi.org/10.1534/g3.118.200902 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Wild_emmerV2">Wild Emmer Zavitan v2.0(AABB)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1534/g3.118.200902" target="_blank" rel="noopener">doi: 10.1534/g3.118.200902</a></p>
+            </article>
+            <article class="asm-card" data-search="wild emmer zavitan (near-complete, 2026) aabb_wild_emmer_zavitan doi:10.1038/s41588-026-02808-3 https://doi.org/10.1038/s41588-026-02808-3 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=AABB_Wild_emmer_Zavitan">Wild Emmer Zavitan (near-complete, 2026)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41588-026-02808-3" target="_blank" rel="noopener">doi:10.1038/s41588-026-02808-3</a></p>
+            </article>
+            <article class="asm-card" data-search="wild emmer wheat zavitan (aabb) zavitan doi:10.1038/s41588-026-02678-9 https://www.nature.com/articles/s41588-026-02678-9 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Zavitan">Wild emmer wheat Zavitan (AABB)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41588-026-02678-9" target="_blank" rel="noopener">doi:10.1038/s41588-026-02678-9</a></p>
+            </article>
+            <article class="asm-card" data-search="durum wheat cv.svevo(aabb) aabb_durum_wheat_svevo doi: 10.1038/s41588-019-0381-3 https://doi.org/10.1038/s41588-019-0381-3 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=AABB_Durum_Wheat_Svevo">Durum Wheat cv.Svevo(AABB)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41588-019-0381-3" target="_blank" rel="noopener">doi: 10.1038/s41588-019-0381-3</a></p>
+            </article>
+            <article class="asm-card" data-search="durum wheat cv.langdon (aabb) durum_wheat_langdon doi: 10.1038/s41597-025-05724-z https://doi.org/10.1038/s41597-025-05724-z durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Durum_Wheat_Langdon">Durum Wheat cv.Langdon (AABB)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41597-025-05724-z" target="_blank" rel="noopener">doi: 10.1038/s41597-025-05724-z</a></p>
+            </article>
+            <article class="asm-card" data-search="durum wheat cv.pi192051 (aabb) durum_pi192051 doi:10.1038/s41467-025-64428-5 https://doi.org/10.1038/s41467-025-64428-5 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=durum_PI192051">Durum Wheat cv.PI192051 (AABB)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41467-025-64428-5" target="_blank" rel="noopener">doi:10.1038/s41467-025-64428-5</a></p>
+            </article>
+            <article class="asm-card" data-search="durum wheat pi576168 (aabb, v2.1) triticum_turgidum_kronos doi:10.1111/nph.71006 https://doi.org/10.1111/nph.71006 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Triticum_turgidum_Kronos">Durum wheat PI576168 (AABB, v2.1)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1111/nph.71006" target="_blank" rel="noopener">doi:10.1111/nph.71006</a></p>
+            </article>
+            <article class="asm-card" data-search="triticum turgidum chili(aabb) chili doi:10.64898/2026.05.25.727644 https://doi.org/10.64898/2026.05.25.727644 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Chili"><i>Triticum turgidum</i> Chili(AABB)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.64898/2026.05.25.727644" target="_blank" rel="noopener">doi:10.64898/2026.05.25.727644</a></p>
+            </article>
+            <article class="asm-card" data-search="triticum turgidum mahmoudi(aabb) mahmoudi doi:10.64898/2026.05.25.727644 https://doi.org/10.64898/2026.05.25.727644 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Mahmoudi"><i>Triticum turgidum</i> Mahmoudi(AABB)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.64898/2026.05.25.727644" target="_blank" rel="noopener">doi:10.64898/2026.05.25.727644</a></p>
+            </article>
+            <article class="asm-card" data-search="durum wheat cv.svevo v2(aabb) svevo_v2 doi:10.1111/pbi.70673 https://onlinelibrary.wiley.com/doi/10.1111/pbi.70673 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Svevo_V2">Durum Wheat cv.Svevo V2(AABB)</a></h3>
+              <p class="asm-doi"><a href="https://onlinelibrary.wiley.com/doi/10.1111/pbi.70673" target="_blank" rel="noopener">doi:10.1111/pbi.70673</a></p>
+            </article>
+            <article class="asm-card" data-search="ethiopian wheat ig77365 (aabb) aabb_ig77365 doi:10.1038/s41588-026-02678-9 https://www.nature.com/articles/s41588-026-02678-9 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=AABB_IG77365">Ethiopian wheat IG77365 (AABB)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41588-026-02678-9" target="_blank" rel="noopener">doi:10.1038/s41588-026-02678-9</a></p>
+            </article>
+            <article class="asm-card" data-search="domesticated emmer wheat ig99236 (aabb) ig99236 doi:10.1038/s41588-026-02678-9 https://www.nature.com/articles/s41588-026-02678-9 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=IG99236">Domesticated emmer wheat IG99236 (AABB)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41588-026-02678-9" target="_blank" rel="noopener">doi:10.1038/s41588-026-02678-9</a></p>
+            </article>
+            <article class="asm-card" data-search="durum wheat pi576168 (aabb, pan-genome 2026) kronos doi:10.1038/s41588-026-02678-9 https://www.nature.com/articles/s41588-026-02678-9 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Kronos">Durum wheat PI576168 (AABB, pan-genome 2026)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41588-026-02678-9" target="_blank" rel="noopener">doi:10.1038/s41588-026-02678-9</a></p>
+            </article>
+            <article class="asm-card" data-search="persian wheat nu00021 (aabb) nu00021 doi:10.1038/s41588-026-02678-9 https://www.nature.com/articles/s41588-026-02678-9 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=NU00021">Persian wheat NU00021 (AABB)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41588-026-02678-9" target="_blank" rel="noopener">doi:10.1038/s41588-026-02678-9</a></p>
+            </article>
+            <article class="asm-card" data-search="wild emmer wheat nu01905 (aabb) nu01905 doi:10.1038/s41588-026-02678-9 https://www.nature.com/articles/s41588-026-02678-9 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=NU01905">Wild emmer wheat NU01905 (AABB)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41588-026-02678-9" target="_blank" rel="noopener">doi:10.1038/s41588-026-02678-9</a></p>
+            </article>
+            <article class="asm-card" data-search="wild emmer wheat nu01954 (aabb) nu01954 doi:10.1038/s41588-026-02678-9 https://www.nature.com/articles/s41588-026-02678-9 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=NU01954">Wild emmer wheat NU01954 (AABB)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41588-026-02678-9" target="_blank" rel="noopener">doi:10.1038/s41588-026-02678-9</a></p>
+            </article>
+            <article class="asm-card" data-search="ispahanicum wheat pi294478 (aabb) pi294478 doi:10.1038/s41588-026-02678-9 https://www.nature.com/articles/s41588-026-02678-9 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=PI294478">Ispahanicum wheat PI294478 (AABB)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41588-026-02678-9" target="_blank" rel="noopener">doi:10.1038/s41588-026-02678-9</a></p>
+            </article>
+            <article class="asm-card" data-search="georgian wheat pi330553 (aabb) pi330553 doi:10.1038/s41588-026-02678-9 https://www.nature.com/articles/s41588-026-02678-9 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=PI330553">Georgian wheat PI330553 (AABB)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41588-026-02678-9" target="_blank" rel="noopener">doi:10.1038/s41588-026-02678-9</a></p>
+            </article>
+            <article class="asm-card" data-search="polish wheat xm000719 (aabb) xm000719 doi:10.1038/s41588-026-02678-9 https://www.nature.com/articles/s41588-026-02678-9 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=XM000719">Polish wheat XM000719 (AABB)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41588-026-02678-9" target="_blank" rel="noopener">doi:10.1038/s41588-026-02678-9</a></p>
+            </article>
+            <article class="asm-card" data-search="rivet wheat xm000834 (aabb) xm000834 doi:10.1038/s41588-026-02678-9 https://www.nature.com/articles/s41588-026-02678-9 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=XM000834">Rivet wheat XM000834 (AABB)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41588-026-02678-9" target="_blank" rel="noopener">doi:10.1038/s41588-026-02678-9</a></p>
+            </article>
+            <article class="asm-card" data-search="khorasan wheat xm001097 (aabb) xm001097 doi:10.1038/s41588-026-02678-9 https://www.nature.com/articles/s41588-026-02678-9 durum emmer tetraploid wheat turgidum pasta wheat wild emmer allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=XM001097">Khorasan wheat XM001097 (AABB)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41588-026-02678-9" target="_blank" rel="noopener">doi:10.1038/s41588-026-02678-9</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-aagg" aria-labelledby="group-aagg-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-aagg-title"><span class="asm-formula">AAGG</span> <span class="asm-desc">Timopheev's wheat (<i>Triticum timopheevii</i>)</span></h2>
+            <span class="asm-group-count">1 assembly</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="t.timopheevii pi94760(aagg) triticum_timopheevii_pi94760 doi:10.1101/2024.01.16.575864 https://doi.org/10.1101/2024.01.16.575864 timopheevii timopheev tetraploid wheat allotetraploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Triticum_timopheevii_PI94760"><i>T.timopheevii</i> PI94760(AAGG)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1101/2024.01.16.575864" target="_blank" rel="noopener">doi:10.1101/2024.01.16.575864</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-aa" aria-labelledby="group-aa-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-aa-title"><span class="asm-formula">AA</span> <span class="asm-desc">Einkorn wheat (<i>Triticum urartu</i>, <i>Triticum monococcum</i>)</span></h2>
+            <span class="asm-group-count">5 assemblies</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="t.urartu v2.0(aa) triticum_urartu doi: 10.1038/s41586-018-0108-0 https://doi.org/10.1038/s41586-018-0108-0 einkorn diploid wheat urartu monococcum diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Triticum_urartu"><i>T.urartu</i> v2.0(AA)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-018-0108-0" target="_blank" rel="noopener">doi: 10.1038/s41586-018-0108-0</a></p>
+            </article>
+            <article class="asm-card" data-search="t.monococcum ta299(aa) triticum_monococcum_ta299 doi: 10.1038/s41586-023-06389-7 https://doi.org/10.1038/s41586-023-06389-7 einkorn diploid wheat urartu monococcum diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Triticum_monococcum_TA299"><i>T.monococcum</i> TA299(AA)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-023-06389-7" target="_blank" rel="noopener">doi: 10.1038/s41586-023-06389-7</a></p>
+            </article>
+            <article class="asm-card" data-search="t.monococcum ta10622(aa) triticum_monococcum_ta10622 doi: 10.1038/s41586-023-06389-7 https://doi.org/10.1038/s41586-023-06389-7 einkorn diploid wheat urartu monococcum diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Triticum_monococcum_TA10622"><i>T.monococcum</i> TA10622(AA)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-023-06389-7" target="_blank" rel="noopener">doi: 10.1038/s41586-023-06389-7</a></p>
+            </article>
+            <article class="asm-card" data-search="t.monococcum pi306540(aa) triticum_monococcum_pi306540 doi:10.1016/j.xplc.2023.100768 https://doi.org/10.1016/j.xplc.2023.100768 einkorn diploid wheat urartu monococcum diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Triticum_monococcum_PI306540"><i>T.monococcum</i> PI306540(AA)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1016/j.xplc.2023.100768" target="_blank" rel="noopener">doi:10.1016/j.xplc.2023.100768</a></p>
+            </article>
+            <article class="asm-card" data-search="t.urartu pi428250(aa) triticum_urartu_pi428250 doi:10.1038/s41467-026-71539-0 https://doi.org/10.1038/s41467-026-71539-0 einkorn diploid wheat urartu monococcum diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Triticum_urartu_PI428250"><i>T.urartu</i> PI428250(AA)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41467-026-71539-0" target="_blank" rel="noopener">doi:10.1038/s41467-026-71539-0</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-dd" aria-labelledby="group-dd-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-dd-title"><span class="asm-formula">DD</span> <span class="asm-desc"><i>Aegilops tauschii</i> (D-genome donors)</span></h2>
+            <span class="asm-group-count">10 assemblies</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="ae.tauschii aet6 al8/78(dd) ae_tauschii_aet6 doi:10.1093/g3journal/jkaf042 https://doi.org/10.1093/g3journal/jkaf042 aegilops tauschii goatgrass d genome donor diploid diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Ae_tauschii_Aet6"><i>Ae.tauschii</i> Aet6 AL8/78(DD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1093/g3journal/jkaf042" target="_blank" rel="noopener">doi:10.1093/g3journal/jkaf042</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.tauschii ay61(dd) aegilops_tauschii_ay61 doi:10.1038/s41477-021-00934-w https://www.nature.com/articles/s41477-021-00934-w aegilops tauschii goatgrass d genome donor diploid diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Aegilops_tauschii_AY61"><i>Ae.tauschii </i> AY61(DD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41477-021-00934-w" target="_blank" rel="noopener">doi:10.1038/s41477-021-00934-w</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.tauschii t093(dd) aegilops_tauschii_t093 doi:10.1038/s41477-021-00934-w https://www.nature.com/articles/s41477-021-00934-w aegilops tauschii goatgrass d genome donor diploid diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Aegilops_tauschii_T093"><i>Ae.tauschii</i> T093(DD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41477-021-00934-w" target="_blank" rel="noopener">doi:10.1038/s41477-021-00934-w</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.tauschii xj02(dd) aegilops_tauschii_xj02 doi:10.1038/s41477-021-00934-w https://www.nature.com/articles/s41477-021-00934-w aegilops tauschii goatgrass d genome donor diploid diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Aegilops_tauschii_XJ02"><i>Ae.tauschii</i> XJ02(DD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41477-021-00934-w" target="_blank" rel="noopener">doi:10.1038/s41477-021-00934-w</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.tauschii ta10171(dd) aegilops_tauschii_ta10171 doi:10.1038/s41586-024-07808-z https://doi.org/10.1038/s41586-024-07808-z aegilops tauschii goatgrass d genome donor diploid diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Aegilops_tauschii_TA10171"><i>Ae.tauschii</i> TA10171(DD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-07808-z" target="_blank" rel="noopener">doi:10.1038/s41586-024-07808-z</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.tauschii ta1675(dd) aegilops_tauschii_ta1675 doi:10.1038/s41586-024-07808-z https://doi.org/10.1038/s41586-024-07808-z aegilops tauschii goatgrass d genome donor diploid diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Aegilops_tauschii_TA1675"><i>Ae.tauschii</i> TA1675(DD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-07808-z" target="_blank" rel="noopener">doi:10.1038/s41586-024-07808-z</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.tauschii ta2576(dd) aegilops_tauschii_ta2576 doi:10.1038/s41586-024-07808-z https://doi.org/10.1038/s41586-024-07808-z aegilops tauschii goatgrass d genome donor diploid diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Aegilops_tauschii_TA2576"><i>Ae.tauschii</i> TA2576(DD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-07808-z" target="_blank" rel="noopener">doi:10.1038/s41586-024-07808-z</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.tauschii al8/78(dd) tauschii_luo doi:10.1038/nature24486 https://doi.org/10.1038/nature24486 aegilops tauschii goatgrass d genome donor diploid diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=tauschii_Luo"><i>Ae.tauschii</i> AL8/78(DD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/nature24486" target="_blank" rel="noopener">doi:10.1038/nature24486</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.tauschii ay17(dd) aegilops_tauschii_ay17 doi:10.1038/s41477-021-00934-w https://www.nature.com/articles/s41477-021-00934-w aegilops tauschii goatgrass d genome donor diploid diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Aegilops_tauschii_AY17"><i>Ae.tauschii</i> AY17(DD)</a></h3>
+              <p class="asm-doi"><a href="https://www.nature.com/articles/s41477-021-00934-w" target="_blank" rel="noopener">doi:10.1038/s41477-021-00934-w</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.tauschii aet5 al8/78(dd) tauschii_aet5.0 doi:10.1093/g3journal/jkab325 https://doi.org/10.1093/g3journal/jkab325 aegilops tauschii goatgrass d genome donor diploid diploid wheat jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=tauschii_Aet5.0"><i>Ae.tauschii</i> Aet5 AL8/78(DD)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1093/g3journal/jkab325" target="_blank" rel="noopener">doi:10.1093/g3journal/jkab325</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-aabbrr" aria-labelledby="group-aabbrr-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-aabbrr-title"><span class="asm-formula">AABBRR</span> <span class="asm-desc">Hexaploid triticale (×<i>Triticosecale</i>)</span></h2>
+            <span class="asm-group-count">2 assemblies</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="pt (aabbrr) aabbrr_pt doi:10.1002/imt2.70155 https://doi.org/10.1002/imt2.70155 triticale hexaploid triticale hexaploid triticale jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=AABBRR_PT">PT (AABBRR)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1002/imt2.70155" target="_blank" rel="noopener">doi:10.1002/imt2.70155</a></p>
+            </article>
+            <article class="asm-card" data-search="zx830 (aabbrr) aabbrr_zx830 doi:10.1002/imt2.70155 https://doi.org/10.1002/imt2.70155 triticale hexaploid triticale hexaploid triticale jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=AABBRR_ZX830">ZX830 (AABBRR)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1002/imt2.70155" target="_blank" rel="noopener">doi:10.1002/imt2.70155</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-hh" aria-labelledby="group-hh-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-hh-title"><span class="asm-formula">HH</span> <span class="asm-desc">Barley (<i>Hordeum vulgare</i> and wild <i>Hordeum</i>)</span></h2>
+            <span class="asm-group-count">82 assemblies</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="barley v1.0 morex(hh) barley doi: 10.1038/nature22043 https://doi.org/10.1038/nature22043 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Barley">Barley v1.0 Morex(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/nature22043" target="_blank" rel="noopener">doi: 10.1038/nature22043</a></p>
+            </article>
+            <article class="asm-card" data-search="barley v2.0 morex(hh) barley2 doi:10.1186/s13059-019-1899-5 https://doi.org/10.1186/s13059-019-1899-5 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Barley2">Barley v2.0 Morex(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1186/s13059-019-1899-5" target="_blank" rel="noopener">doi:10.1186/s13059-019-1899-5</a></p>
+            </article>
+            <article class="asm-card" data-search="barley v3.0 morex(hh) barley3 doi:10.1093/plcell/koab077 https://doi.org/10.1093/plcell/koab077 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Barley3">Barley v3.0 Morex(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1093/plcell/koab077" target="_blank" rel="noopener">doi:10.1093/plcell/koab077</a></p>
+            </article>
+            <article class="asm-card" data-search="barley v1.0 golden promise(hh) barley_golden_promise doi: 10.1534/g3.119.401010 https://doi.org/10.1534/g3.119.401010 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=barley_Golden_Promise">Barley v1.0 Golden Promise(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1534/g3.119.401010" target="_blank" rel="noopener">doi: 10.1534/g3.119.401010</a></p>
+            </article>
+            <article class="asm-card" data-search="qingke cv.zangqing320(hh) qingke doi: 10.1111/pbi.12826 https://onlinelibrary.wiley.com/doi/10.1111/pbi.12826 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=qingke">Qingke cv.Zangqing320(HH)</a></h3>
+              <p class="asm-doi"><a href="https://onlinelibrary.wiley.com/doi/10.1111/pbi.12826" target="_blank" rel="noopener">doi: 10.1111/pbi.12826</a></p>
+            </article>
+            <article class="asm-card" data-search="barley barke_v2(hh) barke_v2 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Barke_V2">Barley Barke_V2(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="hordeum erectifolium(hh) hordeum_erectifolium doi: 10.1111/nph.71091 https://doi.org/10.1111/nph.71091 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Hordeum_erectifolium">Hordeum erectifolium(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1111/nph.71091" target="_blank" rel="noopener">doi: 10.1111/nph.71091</a></p>
+            </article>
+            <article class="asm-card" data-search="barley aizu_6(hh) aizu_6 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Aizu_6">Barley Aizu_6(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley akashinriki(hh) akashinriki doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Akashinriki">Barley Akashinriki(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley ft11(hh) ft11 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=FT11">Barley FT11(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley ft67(hh) ft67 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=FT67">Barley FT67(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley ft144(hh) ft144 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=FT144">Barley FT144(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley bonus(hh) bonus doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Bonus">Barley Bonus(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley bowman(hh) bowman doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Bowman">Barley Bowman(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley chikurin_ibaraki(hh) chikurin_ibaraki doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Chikurin_Ibaraki">Barley Chikurin_Ibaraki(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley ft880(hh) ft880 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=FT880">Barley FT880(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley foma(hh) foma doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Foma">Barley Foma(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley golden_melon(hh) golden_melon doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Golden_Melon">Barley Golden_Melon(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley golden_promise(hh) golden_promise doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Golden_Promise">Barley Golden_Promise(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hid055(hh) hid055 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HID055">Barley HID055(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hid101(hh) hid101 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HID101">Barley HID101(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley ft628(hh) ft628 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=FT628">Barley FT628(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley ft286(hh) ft286 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=FT286">Barley FT286(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hid249(hh) hid249 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HID249">Barley HID249(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley ft333(hh) ft333 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=FT333">Barley FT333(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hid357(hh) hid357 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HID357">Barley HID357(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hid380(hh) hid380 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HID380">Barley HID380(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley ft262(hh) ft262 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=FT262">Barley FT262(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hockett(hh) hockett doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Hockett">Barley Hockett(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_10096(hh) hor_10096 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_10096">Barley HOR_10096(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_10350(hh) hor_10350 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_10350">Barley HOR_10350(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_10892(hh) hor_10892 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_10892">Barley HOR_10892(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_1168(hh) hor_1168 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_1168">Barley HOR_1168(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_12184(hh) hor_12184 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_12184">Barley HOR_12184(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_12541(hh) hor_12541 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_12541">Barley HOR_12541(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_13594(hh) hor_13594 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_13594">Barley HOR_13594(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_13663(hh) hor_13663 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_13663">Barley HOR_13663(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_13821(hh) hor_13821 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_13821">Barley HOR_13821(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_13942(hh) hor_13942 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_13942">Barley HOR_13942(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_14061(hh) hor_14061 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_14061">Barley HOR_14061(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_14121(hh) hor_14121 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_14121">Barley HOR_14121(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_14273(hh) hor_14273 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_14273">Barley HOR_14273(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_1702(hh) hor_1702 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_1702">Barley HOR_1702(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_18321(hh) hor_18321 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_18321">Barley HOR_18321(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_19184(hh) hor_19184 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_19184">Barley HOR_19184(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_21256(hh) hor_21256 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_21256">Barley HOR_21256(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_21322(hh) hor_21322 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_21322">Barley HOR_21322(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_21595(hh) hor_21595 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_21595">Barley HOR_21595(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_21599(hh) hor_21599 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_21599">Barley HOR_21599(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_2180(hh) hor_2180 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_2180">Barley HOR_2180(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_2779(hh) hor_2779 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_2779">Barley HOR_2779(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_2830(hh) hor_2830 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_2830">Barley HOR_2830(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_3081(hh) hor_3081 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_3081">Barley HOR_3081(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_3365(hh) hor_3365 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_3365">Barley HOR_3365(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_3474(hh) hor_3474 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_3474">Barley HOR_3474(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_4224(hh) hor_4224 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_4224">Barley HOR_4224(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_495(hh) hor_495 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_495">Barley HOR_495(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_6220(hh) hor_6220 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_6220">Barley HOR_6220(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_7172(hh) hor_7172 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_7172">Barley HOR_7172(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_7385(hh) hor_7385 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_7385">Barley HOR_7385(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_7552(hh) hor_7552 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_7552">Barley HOR_7552(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_8117(hh) hor_8117 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_8117">Barley HOR_8117(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_8148(hh) hor_8148 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_8148">Barley HOR_8148(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_9043(hh) hor_9043 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_9043">Barley HOR_9043(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley hor_9972(hh) hor_9972 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=HOR_9972">Barley HOR_9972(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley igri(hh) igri doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Igri">Barley Igri(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley maximus(hh) maximus doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Maximus">Barley Maximus(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley morex(hh) morex doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Morex">Barley Morex(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley oun333(hh) oun333 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=OUN333">Barley OUN333(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley rgt_planet(hh) rgt_planet doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=RGT_Planet">Barley RGT_Planet(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley wbdc078(hh) wbdc078 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=WBDC078">Barley WBDC078(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley wbdc103(hh) wbdc103 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=WBDC103">Barley WBDC103(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley wbdc133(hh) wbdc133 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=WBDC133">Barley WBDC133(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley wbdc184(hh) wbdc184 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=WBDC184">Barley WBDC184(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley wbdc199(hh) wbdc199 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=WBDC199">Barley WBDC199(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley wbdc207(hh) wbdc207 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=WBDC207">Barley WBDC207(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley wbdc237(hh) wbdc237 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=WBDC237">Barley WBDC237(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley wbdc348(hh) wbdc348 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=WBDC348">Barley WBDC348(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley wbdc349(hh) wbdc349 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=WBDC349">Barley WBDC349(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley zdm01467(hh) zdm01467 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=ZDM01467">Barley ZDM01467(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley zdm02064(hh) zdm02064 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=ZDM02064">Barley ZDM02064(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+            <article class="asm-card" data-search="barley 10tj18(hh) 10tj18 doi: 10.1126/science.aba5435 https://doi.org/10.1038/s41586-024-08187-1 barley hordeum vulgare qingke hulless barley barley jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=10TJ18">Barley 10TJ18(HH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41586-024-08187-1" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-rr" aria-labelledby="group-rr-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-rr-title"><span class="asm-formula">RR</span> <span class="asm-desc">Rye (<i>Secale cereale</i>)</span></h2>
+            <span class="asm-group-count">3 assemblies</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="rye v1.0 weining(rr) rye_weining doi:10.1038/s41588-021-00808-z https:/doi.org/10.1038/s41588-021-00808-z rye secale cereale other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=rye_weining">Rye v1.0 Weining(RR)</a></h3>
+              <p class="asm-doi"><a href="https:/doi.org/10.1038/s41588-021-00808-z" target="_blank" rel="noopener">doi:10.1038/s41588-021-00808-z</a></p>
+            </article>
+            <article class="asm-card" data-search="rye v2.0 weining(rr) rye_weining2 doi:10.1186/s13059-025-03792-3 https:/doi.org/10.1186/s13059-025-03792-3 rye secale cereale other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=rye_weining2">Rye v2.0 Weining(RR)</a></h3>
+              <p class="asm-doi"><a href="https:/doi.org/10.1186/s13059-025-03792-3" target="_blank" rel="noopener">doi:10.1186/s13059-025-03792-3</a></p>
+            </article>
+            <article class="asm-card" data-search="rye v1.0 lo7(rr) rye_lo7 doi:10.1038/s41588-021-00807-0 https:/doi.org/10.1038/s41588-021-00807-0 rye secale cereale other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=rye_Lo7">Rye v1.0 Lo7(RR)</a></h3>
+              <p class="asm-doi"><a href="https:/doi.org/10.1038/s41588-021-00807-0" target="_blank" rel="noopener">doi:10.1038/s41588-021-00807-0</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-ss" aria-labelledby="group-ss-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-ss-title"><span class="asm-formula">SS</span> <span class="asm-desc">Sitopsis <i>Aegilops</i> (S-genome)</span></h2>
+            <span class="asm-group-count">9 assemblies</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="ae.speltoides y2032(ss) y2032 doi:10.1016/j.xplc.2023.100567 https://doi.org/10.1016%2fj.xplc.2023.100567 aegilops speltoides sharonensis longissima searsii bicornis sitopsis s genome other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=y2032"><i>Ae.speltoides</i> Y2032(SS)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1016%2Fj.xplc.2023.100567" target="_blank" rel="noopener">doi:10.1016/j.xplc.2023.100567</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.speltoides ts01(ss) ae.speltoides.ts01 10.1016/j.molp.2021.12.019 https://doi.org/10.1016/j.molp.2021.12.019 aegilops speltoides sharonensis longissima searsii bicornis sitopsis s genome other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=ae.speltoides.TS01"><i>Ae.speltoides</i> TS01(SS)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1016/j.molp.2021.12.019" target="_blank" rel="noopener">10.1016/j.molp.2021.12.019</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.sharonensis as_1644(ss) ae.sharonensis.as_1644 doi:10.1111/tpj.15664 https://doi.org/10.1111/tpj.15664 aegilops speltoides sharonensis longissima searsii bicornis sitopsis s genome other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=ae.sharonensis.AS_1644"><i>Ae.sharonensis</i> AS_1644(SS)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1111/tpj.15664" target="_blank" rel="noopener">doi:10.1111/tpj.15664</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.longissima tl05(ss) ae.longissima.tl05 10.1016/j.molp.2021.12.019 https://doi.org/10.1016/j.molp.2021.12.019 aegilops speltoides sharonensis longissima searsii bicornis sitopsis s genome other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=ae.longissima.TL05"><i>Ae.longissima</i> TL05(SS)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1016/j.molp.2021.12.019" target="_blank" rel="noopener">10.1016/j.molp.2021.12.019</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.searsii te01(ss) ae.searsii.te01 10.1016/j.molp.2021.12.019 https://doi.org/10.1016/j.molp.2021.12.019 aegilops speltoides sharonensis longissima searsii bicornis sitopsis s genome other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=ae.searsii.TE01"><i>Ae.searsii</i> TE01(SS)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1016/j.molp.2021.12.019" target="_blank" rel="noopener">10.1016/j.molp.2021.12.019</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.sharonensis th02(ss) ae.sharonensis.th02 10.1016/j.molp.2021.12.019 https://doi.org/10.1016/j.molp.2021.12.019 aegilops speltoides sharonensis longissima searsii bicornis sitopsis s genome other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=ae.sharonensis.TH02"><i>Ae.sharonensis</i> TH02(SS)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1016/j.molp.2021.12.019" target="_blank" rel="noopener">10.1016/j.molp.2021.12.019</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.longissima aeg-6782-2(ss) ae.longissima.aeg-6782-2 doi:10.1111/tpj.15664 https://doi.org/10.1111/tpj.15664 aegilops speltoides sharonensis longissima searsii bicornis sitopsis s genome other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=ae.longissima.AEG-6782-2"><i>Ae.longissima</i> AEG-6782-2(SS)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1111/tpj.15664" target="_blank" rel="noopener">doi:10.1111/tpj.15664</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.bicornis tb01(ss) ae.bicornis.tb01 doi:10.1016/j.molp.2021.12.019 https://doi.org/10.1016/j.molp.2021.12.019 aegilops speltoides sharonensis longissima searsii bicornis sitopsis s genome other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=ae.bicornis.TB01"><i>Ae.bicornis</i> TB01(SS)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1016/j.molp.2021.12.019" target="_blank" rel="noopener">doi:10.1016/j.molp.2021.12.019</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.speltoides aeg-9674-1(ss) ae.speltoides.aeg-9674-1 doi:10.1111/tpj.15664 https://doi.org/10.1111/tpj.15664 aegilops speltoides sharonensis longissima searsii bicornis sitopsis s genome other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=ae.speltoides.AEG-9674-1"><i>Ae.speltoides</i> AEG-9674-1(SS)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1111/tpj.15664" target="_blank" rel="noopener">doi:10.1111/tpj.15664</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-vv" aria-labelledby="group-vv-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-vv-title"><span class="asm-formula">VV</span> <span class="asm-desc"><i>Dasypyrum villosum</i></span></h2>
+            <span class="asm-group-count">1 assembly</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="da.villosum(vv) dasypyrum_villosum doi:10.1016/j.molp.2022.12.021 https://doi.org/10.1016/j.molp.2022.12.021 dasypyrum villosum other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Dasypyrum_villosum"><i>Da.villosum</i>(VV)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1016/j.molp.2022.12.021" target="_blank" rel="noopener">doi:10.1016/j.molp.2022.12.021</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-sshh" aria-labelledby="group-sshh-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-sshh-title"><span class="asm-formula">SSHH</span> <span class="asm-desc"><i>Elymus sibiricus</i></span></h2>
+            <span class="asm-group-count">1 assembly</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="e.sibiricus gaomuno.1(sshh) elymus_sibiricus_cultivar_gaomu doi:10.1038/s41597-024-03622-4 https://doi.org/10.1038/s41597-024-03622-4 elymus sibiricus other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Elymus_sibiricus_cultivar_Gaomu"><i>E.sibiricus</i> GaomuNo.1(SSHH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41597-024-03622-4" target="_blank" rel="noopener">doi:10.1038/s41597-024-03622-4</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-ststyyhh" aria-labelledby="group-ststyyhh-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-ststyyhh-title"><span class="asm-formula">StStYYHH</span> <span class="asm-desc"><i>Elymus</i> and <i>Roegneria</i> species</span></h2>
+            <span class="asm-group-count">3 assemblies</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="e.nutans(ststyyhh) elymus_nutans doi:10.1038/s41467-025-58341-0 https://doi.org/10.1038/s41467-025-58341-0 elymus roegneria nutans kamoji other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Elymus_nutans"><i>E.nutans</i>(StStYYHH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41467-025-58341-0" target="_blank" rel="noopener">doi:10.1038/s41467-025-58341-0</a></p>
+            </article>
+            <article class="asm-card" data-search="e.nutans griseb(ststyyhh) elymus_nutans_griseb doi:10.1111/pbi.70117 https://doi.org/10.1111/pbi.70117 elymus roegneria nutans kamoji other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Elymus_nutans_Griseb"><i>E.nutans</i> Griseb(StStYYHH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1111/pbi.70117" target="_blank" rel="noopener">doi:10.1111/pbi.70117</a></p>
+            </article>
+            <article class="asm-card" data-search="r.kamoji(ststyyhh) roegneria_kamoji doi:10.1038/s41467-025-63007-y https://doi.org/10.1038/s41467-025-63007-y elymus roegneria nutans kamoji other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Roegneria_kamoji"><i>R.kamoji</i>(StStYYHH)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41467-025-63007-y" target="_blank" rel="noopener">doi:10.1038/s41467-025-63007-y</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-uu" aria-labelledby="group-uu-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-uu-title"><span class="asm-formula">UU</span> <span class="asm-desc"><i>Aegilops umbellulata</i></span></h2>
+            <span class="asm-group-count">2 assemblies</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="ae.umbellulata ta1851(uu) aegilops_umbellulata_ta1851 doi:10.1038/s41588-023-01401-2 https://doi.org/10.1038/s41588-023-01401-2 aegilops umbellulata u genome other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Aegilops_umbellulata_TA1851"><i>Ae.umbellulata</i> TA1851(UU)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41588-023-01401-2" target="_blank" rel="noopener">doi:10.1038/s41588-023-01401-2</a></p>
+            </article>
+            <article class="asm-card" data-search="ae.umbellulata pi554389(uu) aegilops_umbellulata_pi554389 doi:10.1111/pbi.14470 https://doi.org/10.1111/pbi.14470 aegilops umbellulata u genome other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Aegilops_umbellulata_PI554389"><i>Ae.umbellulata</i> PI554389(UU)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1111/pbi.14470" target="_blank" rel="noopener">doi:10.1111/pbi.14470</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-mm" aria-labelledby="group-mm-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-mm-title"><span class="asm-formula">MM</span> <span class="asm-desc"><i>Aegilops comosa</i></span></h2>
+            <span class="asm-group-count">1 assembly</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="ae.comosa pi551049(mm) aegilop_comosa_pi551049 doi:10.1038/s41597-024-04346-1 https://doi.org/10.1038/s41597-024-04346-1 aegilops comosa m genome other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Aegilop_comosa_PI551049"><i>Ae.comosa</i> PI551049(MM)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41597-024-04346-1" target="_blank" rel="noopener">doi:10.1038/s41597-024-04346-1</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-tt" aria-labelledby="group-tt-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-tt-title"><span class="asm-formula">TT</span> <span class="asm-desc"><i>Aegilops mutica</i></span></h2>
+            <span class="asm-group-count">1 assembly</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="ae.mutica(tt) aegilops_mutica doi:10.1038/s41597-025-04737-y https://doi.org/10.1038/s41597-025-04737-y aegilops mutica amblyopyrum t genome other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Aegilops_mutica"><i>Ae.mutica</i>(TT)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41597-025-04737-y" target="_blank" rel="noopener">doi:10.1038/s41597-025-04737-y</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-ee" aria-labelledby="group-ee-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-ee-title"><span class="asm-formula">EE</span> <span class="asm-desc"><i>Thinopyrum elongatum</i></span></h2>
+            <span class="asm-group-count">1 assembly</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="th.elongatum v1.0(ee) thinopyrum_elongatum doi: 10.1126/science.aba5435 https://science.sciencemag.org/content/early/2020/04/08/science.aba5435 thinopyrum elongatum e genome other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Thinopyrum_elongatum"><i>Th.elongatum</i> v1.0(EE)</a></h3>
+              <p class="asm-doi"><a href="https://science.sciencemag.org/content/early/2020/04/08/science.aba5435" target="_blank" rel="noopener">doi: 10.1126/science.aba5435</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-vvjjss" aria-labelledby="group-vvjjss-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-vvjjss-title"><span class="asm-formula">VVJJSS</span> <span class="asm-desc"><i>Thinopyrum intermedium</i> (VVJJSS notation)</span></h2>
+            <span class="asm-group-count">1 assembly</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="th.intermedium(vvjjss) thinopyrum_intermedium doi:10.1038/s41467-025-63007-y https://doi.org/10.1038/s41467-025-63007-y thinopyrum intermedium intermediate wheatgrass other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Thinopyrum_intermedium"><i>Th.intermedium</i>(VVJJSS)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41467-025-63007-y" target="_blank" rel="noopener">doi:10.1038/s41467-025-63007-y</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-ststvvjj" aria-labelledby="group-ststvvjj-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-ststvvjj-title"><span class="asm-formula">StStVVJJ</span> <span class="asm-desc"><i>Thinopyrum intermedium</i> (StStVVJJ notation)</span></h2>
+            <span class="asm-group-count">1 assembly</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="th.intermedium pi440031(ststvvjj) thinopyrum_intermedium_pi440031 doi:10.1038/s41467-025-63007-y https://doi.org/10.1038/s41467-025-63007-y thinopyrum intermedium intermediate wheatgrass other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Thinopyrum_intermedium_PI440031"><i>Th.intermedium</i> PI440031(StStVVJJ)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1038/s41467-025-63007-y" target="_blank" rel="noopener">doi:10.1038/s41467-025-63007-y</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-ddnn" aria-labelledby="group-ddnn-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-ddnn-title"><span class="asm-formula">DDNN</span> <span class="asm-desc"><i>Aegilops ventricosa</i></span></h2>
+            <span class="asm-group-count">1 assembly</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="ae.ventricosa rm271(ddnn) rm271 doi:10.1016/j.xplc.2024.101131 https://doi.org/10.1016/j.xplc.2024.101131 aegilops ventricosa other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=RM271"><i>Ae.ventricosa</i> RM271(DDNN)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1016/j.xplc.2024.101131" target="_blank" rel="noopener">doi:10.1016/j.xplc.2024.101131</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-nsnsxmxm" aria-labelledby="group-nsnsxmxm-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-nsnsxmxm-title"><span class="asm-formula">NsNsXmXm</span> <span class="asm-desc"><i>Leymus chinensis</i></span></h2>
+            <span class="asm-group-count">1 assembly</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="l. chinensis(nsnsxmxm) leymus_chinensis doi:10.1111/pbi.70565 https://doi.org/10.1111/pbi.70565 leymus chinensis other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Leymus_chinensis"><i>L. chinensis</i>(NsNsXmXm)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1111/pbi.70565" target="_blank" rel="noopener">doi:10.1111/pbi.70565</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-mmuu" aria-labelledby="group-mmuu-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-mmuu-title"><span class="asm-formula">MMUU</span> <span class="asm-desc"><i>Aegilops geniculata</i></span></h2>
+            <span class="asm-group-count">1 assembly</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="ae. geniculatata2899(mmuu) aegilops_geniculata doi.org:10.1111/pbi.70456 https://doi.org/10.1111/pbi.70456 aegilops geniculata ovata other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Aegilops_geniculata"><i>Ae. geniculata</i>TA2899(MMUU)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1111/pbi.70456" target="_blank" rel="noopener">doi.org:10.1111/pbi.70456</a></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="asm-group" id="group-thinopyrum" aria-labelledby="group-thinopyrum-title">
+          <div class="asm-group-head">
+            <h2 class="asm-group-title" id="group-thinopyrum-title"><span class="asm-formula">Thinopyrum spp.</span> <span class="asm-desc">Other <i>Thinopyrum</i> accessions</span></h2>
+            <span class="asm-group-count">2 assemblies</span>
+          </div>
+          <div class="asm-grid">
+            <article class="asm-card" data-search="th.ponticum thinopyrum_ponticum doi: thinopyrum ponticum decaploid tall wheatgrass elongatum other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Thinopyrum_ponticum"><i>Th.ponticum</i></a></h3>
+              <p class="asm-doi"><span class="asm-doi-none">DOI not listed</span></p>
+            </article>
+            <article class="asm-card" data-search="thinopyrum ponticum (tpo.acc-1, decaploid, 2026, 41.33 gb/70 chr) thinopyrum_ponticum_decaploid doi:10.1016/j.molp.2026.09.014 https://doi.org/10.1016/j.molp.2026.09.014 thinopyrum ponticum decaploid tall wheatgrass elongatum other triticeae species jbrowse">
+              <h3 class="asm-name"><a href="/jbrowse-1.12.3-release/?data=Thinopyrum_ponticum_decaploid"><i>Thinopyrum ponticum</i> (Tpo.Acc-1, decaploid, 2026, 41.33 Gb/70 chr)</a></h3>
+              <p class="asm-doi"><a href="https://doi.org/10.1016/j.molp.2026.09.014" target="_blank" rel="noopener">doi:10.1016/j.molp.2026.09.014</a></p>
+            </article>
+          </div>
+        </section>
+
+        <!-- The legacy gateway has 7 unlabeled placeholder cards (empty name and DOI,
+             blank data= key). They are kept here verbatim, hidden, so the complete
+             link inventory of /jbrowse.html survives the migration. -->
+        <div class="asm-placeholders" hidden>
+          <a href="/jbrowse-1.12.3-release/?data= "></a>
+          <a href="/jbrowse-1.12.3-release/?data= "></a>
+          <a href="/jbrowse-1.12.3-release/?data= "></a>
+          <a href="/jbrowse-1.12.3-release/?data= "></a>
+          <a href="/jbrowse-1.12.3-release/?data= "></a>
+          <a href="/jbrowse-1.12.3-release/?data= "></a>
+          <a href="/jbrowse-1.12.3-release/?data= "></a>
+        </div>
+        </div>
+
+        <p class="news-state asm-empty" id="asm-empty" hidden>No assembly matches “<span id="asm-empty-q"></span>”. Try a species name, a genome formula such as AABBDD or HH, a DOI, or clear the filter.</p>
+
+        <section class="asm-help" aria-labelledby="asm-help-title">
+          <h2 class="v2-section-title" id="asm-help-title" style="margin-top: 34px;">How to browse</h2>
+          <div class="asm-help-grid">
+            <div class="asm-help-card">
+              <svg class="icon" aria-hidden="true"><use href="#i-chromosome"/></svg>
+              <h3>Pick an assembly</h3>
+              <p>Filter by assembly name, species or genome formula, then open a card to launch that assembly's own JBrowse instance.</p>
+            </div>
+            <div class="asm-help-card">
+              <svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg>
+              <h3>Explore the tracks</h3>
+              <p>Inside JBrowse, use the track selector to show or hide gene models, variants and other annotation tracks, and search or zoom to a locus.</p>
+            </div>
+            <div class="asm-help-card">
+              <svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>
+              <h3>Cite the source</h3>
+              <p>Every card links the assembly's publication when one is available. Citation guidance for the underlying genome resources is kept below.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="asm-cite" aria-labelledby="asm-cite-title">
+          <div class="card">
+            <div class="card-body">
+              <h2 class="v2-section-title" id="asm-cite-title" style="margin-top: 0;">Citing the assemblies</h2>
+              <p class="asm-note">The legacy JBrowse gateway also showed the platform's citation guidance for these genome resources. It is preserved here.</p>
+              <details class="asm-cite-details">
+                <summary>Show citation guidance</summary>
+                <div class="asm-cite-body" id="cite-content"><p class="asm-note">Loading citation guidance…</p></div>
+              </details>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div id="v2-shell-footer"></div>
+
+  <script src="/api/v2shell/shell.js"></script>
+  <script>
+    /* Client-side filter over the assembly cards (name, data key, DOI, genome group). */
+    (function () {
+      'use strict';
+      var input = document.getElementById('assembly-filter');
+      if (!input) { return; }
+      var clearBtn = document.getElementById('asm-clear');
+      var status = document.getElementById('asm-status');
+      var empty = document.getElementById('asm-empty');
+      var emptyQ = document.getElementById('asm-empty-q');
+      var groups = Array.prototype.map.call(
+        document.querySelectorAll('.asm-group'),
+        function (group) {
+          return {
+            el: group,
+            cards: Array.prototype.slice.call(group.querySelectorAll('.asm-card')),
+            countEl: group.querySelector('.asm-group-count')
+          };
+        }
+      );
+      var total = groups.reduce(function (sum, group) { return sum + group.cards.length; }, 0);
+
+      function setStatus(shown) {
+        if (shown === total) {
+          status.innerHTML = 'Showing <strong>' + total + '</strong> named assemblies in <strong>' +
+            groups.length + '</strong> genome groups';
+        } else {
+          status.innerHTML = 'Showing <strong>' + shown + '</strong> of ' + total +
+            ' named assemblies';
+        }
+      }
+
+      function apply() {
+        var query = input.value.trim().toLowerCase();
+        var shown = 0;
+        groups.forEach(function (group) {
+          var visible = 0;
+          group.cards.forEach(function (card) {
+            var haystack = card.getAttribute('data-search') || '';
+            var hit = query === '' || haystack.indexOf(query) !== -1;
+            card.hidden = !hit;
+            if (hit) { visible++; }
+          });
+          group.el.hidden = visible === 0;
+          if (group.countEl) {
+            group.countEl.textContent = query === '' ?
+              visible + (visible === 1 ? ' assembly' : ' assemblies') :
+              visible + ' of ' + group.cards.length + ' assemblies';
+          }
+          shown += visible;
+        });
+        setStatus(shown);
+        empty.hidden = shown !== 0;
+        if (emptyQ) { emptyQ.textContent = input.value.trim(); }
+        clearBtn.hidden = query === '';
+      }
+
+      input.addEventListener('input', apply);
+      input.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' || event.key === 'Esc') {
+          input.value = '';
+          apply();
+        }
+      });
+      clearBtn.addEventListener('click', function () {
+        input.value = '';
+        apply();
+        input.focus();
+      });
+      apply();
+    })();
+
+    /* The platform's citation block is still served from /cite.html (docroot). */
+    (function () {
+      'use strict';
+      var host = document.getElementById('cite-content');
+      if (!host) { return; }
+      if (typeof fetch !== 'function') {
+        host.innerHTML = '<p class="asm-note">See the <a href="/#citation">WheatOmics citation section</a>.</p>';
+        return;
+      }
+      fetch('/cite.html', { cache: 'no-store' })
+        .then(function (response) {
+          if (!response.ok) { throw new Error('HTTP ' + response.status); }
+          return response.text();
+        })
+        .then(function (html) { host.innerHTML = html; })
+        .catch(function () {
+          host.innerHTML = '<p class="asm-note">Citation guidance could not be loaded here. ' +
+            'See the <a href="/#citation">WheatOmics citation section</a>.</p>';
+        });
+    })();
+  </script>
+</body>
+</html>
