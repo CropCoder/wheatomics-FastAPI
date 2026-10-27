@@ -1446,13 +1446,13 @@
   </svg>
   <header class="site-header">
       <div class="container header-row">
-        <a class="brand" href="/" aria-label="WheatOmics 2.0 home">
+        <a class="brand" href="/V2.0/" aria-label="WheatOmics 2.0 home">
           <img class="brand-mark" src="/V2.0/Logo-small.png" alt="WheatOmics 2.0 logo">
           <span class="brand-version">2.0</span>
         </a>
 
         <nav class="main-nav" id="main-nav" aria-label="Primary navigation">
-          <div class="nav-item"><a class="nav-link" href="/">Home</a></div>
+          <div class="nav-item"><a class="nav-link" href="/V2.0/">Home</a></div>
           <div class="nav-item">
             <button class="nav-trigger" type="button" aria-expanded="false">Tools
               <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
@@ -1462,14 +1462,13 @@
               <li><a href="https://wheatomics.sdau.edu.cn/blast/blast.html">BLAST</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/GeneHub/">GeneHub</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/genes/">KnownGene</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/neighborhood/">Neighborhood</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/PfamSearch/">PfamSearch</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/PrimerServer2/">PrimerServer 2</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/tools/proteinfamily.html">PfamSearch</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/PrimerServer/">PrimerServer</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/idConvert/">IDConverter</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/HomologFinder/">HomologFinder</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/homologtools/index.html">HomologFinder</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/expression/index.html">GeneExpression</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/coexpression/index.html">Co-expression</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/interval/">IntervalTool</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/tools/intervalTools.html">IntervalTool</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/symap/index.html">SyntenySearch</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/caps/">CAPS/dCAPS</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/preblast/">preBLAST</a></li>
@@ -1483,7 +1482,7 @@
               <li><a href="https://wheatomics.sdau.edu.cn/wheatPPI/index.html">WheatPPI</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/wheatPSP/">wheatPSP</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/papers/">Triticeae Papers</a></li>
-              <li><a class="tools-all-link" href="/#tools">View all tools →</a></li>
+              <li><a class="tools-all-link" href="/V2.0/#tools">View all tools →</a></li>
             </ul>
           </div>
           <div class="nav-item">
@@ -1492,7 +1491,7 @@
             </button>
             <ul class="dropdown">
               <li><a href="https://wheatomics.sdau.edu.cn/jbrowse.html">JBrowse Gateway</a></li>
-              <li><a href="/#data">Browse Data Types</a></li>
+              <li><a href="/V2.0/#data">Browse Data Types</a></li>
             </ul>
           </div>
           <div class="nav-item"><a class="nav-link" href="https://wheatomics.sdau.edu.cn/download.html">Download Data</a></div>
@@ -1502,7 +1501,7 @@
               <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
             </button>
             <ul class="dropdown">
-              <li><a href="/#citation">Citation</a></li>
+              <li><a href="/V2.0/#citation">Citation</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/help/news.html">News</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/help/contact.html">Contact</a></li>
             </ul>
@@ -1796,7 +1795,7 @@ Paste one or more FASTA sequences here…"></textarea>
       <div>
         <h2 class="footer-title">Quick Links</h2>
         <div class="footer-links">
-          <a href="/#tools">Tools</a><a href="/#data">JBrowse</a>
+          <a href="/V2.0/#tools">Tools</a><a href="/V2.0/#data">JBrowse</a>
           <a href="https://wheatomics.sdau.edu.cn/download.html">Download Data</a><a href="https://wheatomics.sdau.edu.cn/outsitelink.html">External Links</a>
           <a href="https://wheatomics.sdau.edu.cn/help/news.html">News</a><a href="https://wheatomics.sdau.edu.cn/help/contact.html">About Us</a>
         </div>
@@ -2988,12 +2987,22 @@ function parseTraditional(text) {
 
 function alignmentTripletHtml(t) {
   var q = t[0], m = t[1], s = t[2];
+  // Only spaces *inside* the aligned segment are mismatches; the leading and
+  // trailing spaces under the coordinate numbers must keep the normal
+  // background (no pink blocks at the edges).
+  var start = 0, end = m.length - 1;
+  while (start <= end && m.charAt(start) === ' ') start++;
+  while (end >= start && m.charAt(end) === ' ') end--;
   var mid = '';
   for (var i = 0; i < q.length; i++) {
     var ch = m.charAt(i) || ' ';
-    if (ch === ' ') mid += '<span class="mm"> </span>';
-    else if (ch === '+') mid += '<span class="pp">+</span>';
-    else mid += '<span class="mx">' + esc(ch) + '</span>';
+    if (ch === ' ') {
+      mid += (i < start || i > end) ? ' ' : '<span class="mm"> </span>';
+    } else if (ch === '+') {
+      mid += '<span class="pp">+</span>';
+    } else {
+      mid += '<span class="mx">' + esc(ch) + '</span>';
+    }
   }
   return esc(q) + '\n' + mid + '\n' + esc(s);
 }
