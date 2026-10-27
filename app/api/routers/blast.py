@@ -200,6 +200,8 @@ def _registry_category(row: dict) -> str | None:
     text = ((row.get("species") or "") + " " + (row.get("common_name") or "")).lower()
     if "hordeum" in text or "barley" in text:
         return "barley"
+    if "secale" in text or "rye" in text:
+        return "rye"
     if "ponticum" in text:
         return "thinopyrum_ponticum"
     if ploidy == "AABBRR":
@@ -358,6 +360,12 @@ DB_CLASSIFICATION = [
         "keywords": [
             "ponticum",  # Thinopyrum_ponticum_decaploid.* 以及旧 Thinopyrum_ponticum
         ],
+    },
+    {
+        "id": "rye",
+        "label": "Rye genome",
+        "description": "Cultivated rye (Secale cereale) and rye assemblies (RR)",
+        "keywords": ["secale", "cereale", "rye"],
     },
     {
         "id": "other_triticeae",
