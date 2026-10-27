@@ -188,6 +188,27 @@ def _db_level_overrides() -> dict[str, dict]:
     return _DB_LEVELS_CACHE.get("map") or {}
 
 
+def _registry_category(row: dict) -> str | None:
+    """Species category id from genome_registry (ploidy/species), not keywords."""
+    ploidy = (row.get("ploidy") or "").strip().upper()
+    text = ((row.get("species") or "") + " " + (row.get("common_name") or "")).lower()
+    if "hordeum" in text or "barley" in text:
+        return "barley"
+    if "ponticum" in text:
+        return "thinopyrum_ponticum"
+    if ploidy == "AABBRR":
+        return "triticale"
+    if "AABBDD" in ploidy:
+        return "hexaploid_wheat"
+    if ploidy == "AABB":
+        return "tetraploid_wheat"
+    if ploidy in ("AA", "DD"):
+        return "diploid_wheat"
+    if ploidy:
+        return "other_triticeae"
+    return None
+
+
 def _assembly_level_map() -> dict[str, dict]:
     """Map blast_* base names to registry info (assembly level, dataset id).
 
@@ -199,7 +220,8 @@ def _assembly_level_map() -> dict[str, dict]:
         with mysql_cursor(settings.DB_LITERATURE) as cursor:
             cursor.execute(
                 "SELECT dataset_id, blast_genome_db, blast_cds_db, blast_pep_db, "
-                "assembly_level, chromosome_count FROM genome_registry"
+                "assembly_level, chromosome_count, species, common_name, ploidy "
+                "FROM genome_registry"
             )
             rows = cursor.fetchall()
     except Exception:
@@ -212,6 +234,7 @@ def _assembly_level_map() -> dict[str, dict]:
             "chromosome_level": level in CHROMOSOME_LEVELS,
             "chromosome_count": row.get("chromosome_count"),
             "dataset_id": row.get("dataset_id"),
+            "category": _registry_category(row),
         }
         for key in (row.get("blast_genome_db"), row.get("blast_cds_db"),
                     row.get("blast_pep_db"), row.get("dataset_id")):
@@ -228,6 +251,7 @@ def _assembly_level_map() -> dict[str, dict]:
             "chromosome_level": level in CHROMOSOME_LEVELS,
             "chromosome_count": (override or {}).get("chromosome_count"),
             "dataset_id": (out.get(base) or {}).get("dataset_id"),
+            "category": (out.get(base) or {}).get("category"),
         }
     return out
 
@@ -627,9 +651,14 @@ async def list_databases(
     kind_counts: dict[str, int] = {}
     for meta in database_meta.values():
         kind_counts[meta["kind"]] = kind_counts.get(meta["kind"], 0) + 1
+    def _category_for(db: str) -> str:
+        base, _kind, _chrom = _db_base_kind_chromosome(db)
+        info = level_map.get(base) or level_map.get(db) or {}
+        return info.get("category") or _classify_db(db)
+
     cat_map: dict[str, dict] = {}
     for cat in DB_CLASSIFICATION:
-        cat_dbs = [d for d in all_dbs if _classify_db(d) == cat["id"]]
+        cat_dbs = [d for d in all_dbs if _category_for(d) == cat["id"]]
         cat_kinds: dict[str, int] = {}
         for db in cat_dbs:
             kind = database_meta[db]["kind"]
@@ -641,7 +670,7 @@ async def list_databases(
         }
     
     # 未匹配的归入 Other
-    other_dbs = [d for d in all_dbs if _classify_db(d) == "other"]
+    other_dbs = [d for d in all_dbs if _category_for(d) == "other"]
     categories = [cat_map[c["id"]] for c in DB_CLASSIFICATION if cat_map[c["id"]]["count"] > 0]
     if other_dbs:
         categories.append({"id": "other", "label": "Other / Unclassified", "description": "Databases that could not be automatically classified", "count": len(other_dbs), "databases": other_dbs})
