@@ -1418,6 +1418,22 @@
     .blast-aln-actions { display: inline-flex; gap: 10px; align-items: center; margin-left: auto; }
     .blast-aln-copy { min-height: 26px; padding: 3px 11px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--leaf); font-size: 10px; font-weight: 700; cursor: pointer; }
     .blast-aln-copy:hover { border-color: rgba(17, 134, 83, .45); }
+
+    /* prominent BLAST job status banner */
+    .blast-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 16px 0 18px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 14px; background: #fbfdfb; }
+    .blast-status-row.status-pending { background: #fff8e8; border-color: #efd9a8; }
+    .blast-status-row.status-running { background: #eef6ff; border-color: #bcd7f2; }
+    .blast-status-row.status-done { background: #edf8f0; border-color: #b8dfc8; }
+    .blast-status-row.status-error, .blast-status-row.status-stale { background: #fdf0ee; border-color: #f0c5bd; }
+    .blast-status { padding: 6px 14px; border-radius: 999px; color: #fff; font-size: 13px; font-weight: 800; letter-spacing: .08em; }
+    .blast-status.pending { background: #b7791f; }
+    .blast-status.running { background: #1d6fa5; }
+    .blast-status.done { background: #12805c; }
+    .blast-status.error, .blast-status.stale { background: #b42318; }
+    .blast-status-icon { width: 20px; text-align: center; color: #3d564b; font-size: 18px; font-weight: 800; }
+    .blast-status-icon.spinner { width: 16px; height: 16px; border: 2px solid #bcd7f2; border-top-color: #1d6fa5; border-radius: 50%; font-size: 0; animation: blast-spin .8s linear infinite; }
+    @keyframes blast-spin { to { transform: rotate(360deg); } }
+    .blast-status-message { color: var(--forest-deep); font-size: 13px; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -1690,9 +1706,10 @@ Paste one or more FASTA sequences here…"></textarea>
             </div>
           </div>
 
-          <div class="blast-status-row">
-            <span class="blast-status" id="result-status">pending</span>
-            <span class="blast-hint" id="result-elapsed"></span>
+          <div class="blast-status-row" id="result-status-row">
+            <span class="blast-status-icon" id="result-status-icon" aria-hidden="true"></span>
+            <span class="blast-status" id="result-status">PENDING</span>
+            <span class="blast-status-message" id="result-elapsed"></span>
             <span class="blast-hint" id="result-expiry"></span>
           </div>
           <div id="result-error" class="blast-alert" role="alert"></div>
@@ -2538,15 +2555,38 @@ function renderMeta(ctx) {
   if (expires) $('#result-expiry').textContent = 'Result files are kept for 7 days (until ' + expires.toLocaleDateString() + ').';
 }
 
+function fmtDuration(seconds) {
+  seconds = Math.max(0, Math.round(seconds));
+  if (seconds < 60) return seconds + 's';
+  var m = Math.floor(seconds / 60), s = seconds % 60;
+  if (m < 60) return m + 'm' + (s ? ' ' + s + 's' : '');
+  return Math.floor(m / 60) + 'h' + (m % 60 ? ' ' + (m % 60) + 'm' : '');
+}
+
 function setStatus(status, message, withElapsed) {
   var pill = $('#result-status');
+  var row = $('#result-status-row');
+  var icon = $('#result-status-icon');
   pill.className = 'blast-status ' + status;
-  pill.textContent = status;
+  pill.textContent = (status || '').toUpperCase();
+  if (row) row.className = 'blast-status-row status-' + status;
+  if (icon) {
+    icon.textContent = status === 'done' ? '✓' : (status === 'error' || status === 'stale' ? '!' : '');
+    icon.className = 'blast-status-icon' + (status === 'running' ? ' spinner' : '');
+  }
   var text = message || '';
   if (withElapsed) {
     var ctx = state.result;
-    var start = ctx && ctx.createdAt ? ctx.createdAt : Date.now();
-    text += (text ? ' · ' : '') + Math.max(0, Math.round((Date.now() - start) / 1000)) + 's elapsed';
+    if (status === 'done') {
+      if (ctx && ctx.finishedAt && ctx.createdAt) {
+        text = 'Finished in ' + fmtDuration((ctx.finishedAt - ctx.createdAt) / 1000) + '.';
+      } else {
+        text = 'Finished.';
+      }
+    } else {
+      var start = (ctx && ctx.createdAt) ? ctx.createdAt : Date.now();
+      text += (text ? ' · ' : '') + fmtDuration((Date.now() - start) / 1000) + ' elapsed';
+    }
   }
   $('#result-elapsed').textContent = text;
 }
@@ -2562,7 +2602,14 @@ function pollStatus(id) {
       var status = json.status || 'pending';
       if (status === 'pending') { setStatus(status, 'Queued — waiting for a BLAST worker.', true); schedulePoll(id); }
       else if (status === 'running') { setStatus(status, 'BLAST is running…', true); schedulePoll(id); }
-      else if (status === 'done') { setStatus('done', 'Finished.', true); loadResult(id, json.download_urls || {}); }
+      else if (status === 'done') {
+        if (state.result && !state.result.finishedAt) {
+          state.result.finishedAt = Date.now();
+          try { localStorage.setItem('blast2.job.' + id, JSON.stringify(state.result)); } catch (e) {}
+        }
+        setStatus('done', '', true);
+        loadResult(id, json.download_urls || {});
+      }
       else { setStatus(status, '', false); showResultError(json.message || 'The BLAST job ended with status "' + status + '".'); }
     })
     .catch(function (err) {
