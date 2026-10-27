@@ -3002,7 +3002,13 @@ function renderDownloads(urls) {
     traditional: 'Pairwise alignments (text, outfmt 0)',
     traditional_gz: 'Pairwise alignments — compressed (.txt.gz)'
   };
-  var keys = Object.keys(urls || {});
+  var allKeys = Object.keys(urls || {});
+  // Prefer the compressed file when both are available; keep plain files for
+  // old jobs that predate the .gz generation.
+  var keys = allKeys.filter(function (key) {
+    if (key.slice(-3) === '_gz') return true;
+    return allKeys.indexOf(key + '_gz') < 0;
+  });
   if (!keys.length) { $('#download-list').innerHTML = '<div class="blast-empty">No result files were reported for this job.</div>'; return; }
   $('#download-list').innerHTML = keys.map(function (key) {
     return '<div class="blast-download"><span><strong>' + esc(labels[key] || key) + '</strong><br>' +
