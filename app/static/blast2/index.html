@@ -2167,7 +2167,7 @@ var DB_LABELS = {
   all_genes: 'All genes (combined)',
   all_gene: 'All genes (by genome)',
   all_proteins: 'All proteins (combined)',
-  PacBioFullLengthcDNA: 'PacBio full-length cDNA (Iso-Seq)',
+  PacBioFullLengthcDNA: 'PacBio full-length cDNA',
   all_protein: 'All proteins (by genome)',
   'CS21_S1_S2_S3_All_NLR.fasta': 'CS21 / S1 / S2 / S3 all NLR chromosomes'
 };
@@ -2276,6 +2276,19 @@ function fillDbList(listEl, idx) {
       if (hexa.length) entries.push({ kind: 'chromosome', label: 'Allohexaploid chr genome', items: hexa });
       if (tetra.length) entries.push({ kind: 'chromosome', label: 'Allotetraploid chr genome', items: tetra });
       if (otherChr.length) entries.push({ kind: 'chromosome', label: 'Other chromosome aggregates', items: otherChr });
+      return;
+    }
+    if (group.key === 'aggregate') {
+      var agg = (groups.aggregate || []).slice();
+      var rank = function (name) {
+        if (name === 'all_genes') return 0;
+        if (name === 'PacBioFullLengthcDNA') return 1;
+        if (name === 'all_genomes') return 2;
+        if (name === 'all_proteins') return 3;
+        return 10;
+      };
+      agg.sort(function (a, b) { return rank(a) - rank(b); });
+      entries.push({ kind: 'aggregate', label: group.label, items: agg });
       return;
     }
     entries.push({ kind: group.key, label: group.label, items: groups[group.key] || [] });
