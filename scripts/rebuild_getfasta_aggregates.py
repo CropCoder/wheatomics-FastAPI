@@ -28,6 +28,10 @@ import urllib.request
 CHROM_LEVELS = {"Chromosome", "Complete Genome", "draft chromosome level", "Chromosome Level"}
 
 # 已知有问题的 BLAST 库（blastdbcmd 打不开，放进 alias 会让整个库不可用）
+#: Third-generation (PacBio/Iso-Seq) transcript libraries exposed as their own
+#: BLAST database; never merge them into all_genes.
+SEPARATE_CDS_DBS = {"PacBioFullLengthcDNA"}
+
 INVALID_DB_MEMBERS = {
     # 2026-10-26: Foma.pep 已从 blastdb 删除（mdb_env_open 损坏）；保留此条目
     # 仅用于防止旧备份恢复后又被合并进 all_proteins。
@@ -304,7 +308,7 @@ def main() -> int:
 
     chrom = [m for m in chrom if m not in INVALID_DB_MEMBERS]
     other = [m for m in other if m not in INVALID_DB_MEMBERS]
-    cds = [m for m in sorted(cds) if m not in INVALID_DB_MEMBERS]
+    cds = [m for m in sorted(cds) if m not in INVALID_DB_MEMBERS and m not in SEPARATE_CDS_DBS]
     pep = [m for m in sorted(pep) if m not in INVALID_DB_MEMBERS]
     alias_files = {
         "all_genomes.nal": alias_text("all_genomes_at_chromosome_level", chrom),

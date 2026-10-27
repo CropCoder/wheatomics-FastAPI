@@ -91,6 +91,10 @@ LEGACY_ALIAS_DBS = frozenset({
 #: be offered until they are re-indexed/removed. `Foma.pep` (mdb_env_open
 #: failure) was deleted on 2026-10-26; the name stays here as a guard in case an
 #: old backup is restored.
+#: Third-generation transcript library kept separate from the All genes
+#: aggregate and exposed as its own entry in All-in-one / Combined databases.
+SEPARATE_AGGREGATE_DBS = frozenset({"PacBioFullLengthcDNA"})
+
 BROKEN_DB_BASES = frozenset({"Foma.pep"})
 
 #: Superseded duplicate BLAST builds. `CS21_S1_S2_S3_All_NLR` is the 2024-08
@@ -141,6 +145,8 @@ CHROMOSOME_LEVEL_ALIASES = {
 
 def _db_base_kind_chromosome(name: str) -> tuple[str, str, str | None]:
     """Split a BLAST database name into (assembly base, kind, chromosome)."""
+    if name in SEPARATE_AGGREGATE_DBS:
+        return name, "aggregate", None
     m = _DB_CHROM_RE.search(name)
     if m:
         return name[: m.start()], "chromosome", m.group(1)
@@ -652,6 +658,8 @@ async def list_databases(
     for meta in database_meta.values():
         kind_counts[meta["kind"]] = kind_counts.get(meta["kind"], 0) + 1
     def _category_for(db: str) -> str:
+        if db in SEPARATE_AGGREGATE_DBS:
+            return "aggregated"
         base, _kind, _chrom = _db_base_kind_chromosome(db)
         info = level_map.get(base) or level_map.get(db) or {}
         return info.get("category") or _classify_db(db)
