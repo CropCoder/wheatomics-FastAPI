@@ -86,7 +86,12 @@ def publish(key: str, src: Path, dest: Path, desc: str, *, check: bool, dry_run:
     else:
         print(f"[created] {key}: {dest}  ({desc})")
     shutil.copyfile(src, dest)
-    dest.chmod(0o755 if dest.suffix == ".py" else 0o644)
+    # The docroot files can be owned by www-data; a chmod then fails with EPERM
+    # even though the bytes were published. Treat the mode update as best-effort.
+    try:
+        dest.chmod(0o755 if dest.suffix == ".py" else 0o644)
+    except PermissionError:
+        print(f"          note: cannot chmod {dest} (not owner); bytes are published")
     print(f"          size={dest.stat().st_size} sha256={digest(dest)}")
     return True
 
