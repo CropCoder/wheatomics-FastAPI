@@ -1460,6 +1460,11 @@
     .blast-preset-label { align-self: center; color: var(--forest-deep); font-family: var(--display); font-size: 13px; font-weight: 800; letter-spacing: .01em; }
     .blast-preset-reset { border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--leaf); font-size: 10.5px; font-weight: 700; padding: 7px 14px; cursor: pointer; }
     .blast-preset-reset:hover { border-color: rgba(17, 134, 83, .45); background: var(--mist); }
+
+    .blast-selected-card .blast-selected-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; color: #3d564b; font-size: 12px; font-weight: 700; }
+    .blast-selected-card #blast-selected-count { color: var(--muted); font-family: var(--utility); font-size: 11.5px; font-weight: 400; }
+    .blast-selected-card #blast-clear-dbs { margin-left: auto; }
+    .blast-selected-card .blast-chips { margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -1632,14 +1637,6 @@ Paste one or more FASTA sequences here…"></textarea>
                     <div class="blast-empty"><span class="blast-spinner" aria-hidden="true"></span>Loading databases…</div>
                   </div>
                   <div class="blast-db-list" id="blast-db-search-results" hidden></div>
-                  <div class="blast-selected">
-                    <div class="blast-selected-head">
-                      <span class="blast-card-title" style="font-size:12px;margin:0;">Selected databases</span>
-                      <span id="blast-selected-count">0 / 20</span>
-                      <button type="button" class="blast-link-btn" id="blast-clear-dbs">Clear all</button>
-                    </div>
-                    <div class="blast-chips" id="blast-chips"></div>
-                  </div>
                 </section>
               </div>
 
@@ -1700,6 +1697,15 @@ Paste one or more FASTA sequences here…"></textarea>
                     <p class="blast-hint" id="blast-submit-hint">The job is queued and executed by the BLAST worker; this page follows its progress automatically.</p>
                   </div>
                   <div id="blast-form-error" class="blast-alert" role="alert"></div>
+                </section>
+
+                <section class="blast-card blast-selected-card">
+                  <div class="blast-selected-head">
+                    <h2 class="blast-card-title" style="font-size:12px;margin:0;">Selected databases</h2>
+                    <span id="blast-selected-count">0 / 20</span>
+                    <button type="button" class="blast-link-btn" id="blast-clear-dbs">Clear all</button>
+                  </div>
+                  <div class="blast-chips" id="blast-chips"></div>
                 </section>
 
                 <section class="blast-card">
