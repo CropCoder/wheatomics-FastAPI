@@ -1449,6 +1449,9 @@
     .blast-row-align { margin-left: 6px; padding: 1px 8px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--leaf); font-family: var(--utility); font-size: 9px; font-weight: 700; cursor: pointer; }
     .blast-row-align:hover { border-color: rgba(17, 134, 83, .45); }
     .blast-aln-card.flash > summary { background: #eaf7ea; }
+
+    .blast-aln-query-title { margin: 16px 0 8px; padding: 6px 12px; border-left: 3px solid var(--leaf); background: #f4f9f1; border-radius: 6px; color: var(--forest-deep); font-family: var(--display); font-size: 12px; font-weight: 700; }
+    .blast-aln-query-title span { color: var(--muted); font-family: var(--utility); font-size: 10px; font-weight: 400; }
   </style>
 </head>
 <body>
@@ -3043,11 +3046,13 @@ function switchTab(tab) {
 
 function parseTraditional(text) {
   var lines = (text || '').replace(/\r\n/g, '\n').split('\n');
-  var hits = [], cur = null, hsp = null;
+  var hits = [], cur = null, hsp = null, currentQuery = null;
   for (var i = 0; i < lines.length; i++) {
     var line = lines[i];
+    var qm = /^Query=\s*(\S+)/.exec(line);
+    if (qm) { currentQuery = qm[1]; continue; }
     if (line.charAt(0) === '>') {
-      cur = { header: line.slice(1).trim(), hsps: [] };
+      cur = { header: line.slice(1).trim(), query: currentQuery, hsps: [] };
       hits.push(cur);
       hsp = null;
       continue;
@@ -3106,6 +3111,22 @@ function alignmentTripletHtml(t) {
   return esc(q) + '\n' + mid + '\n' + esc(s);
 }
 
+function alignmentCardHtml(h) {
+  var idx = state.alignHits.indexOf(h);
+  var hsps = h.hsps.map(function (s, si) {
+    return '<div class="blast-aln-meta">HSP ' + (si + 1) + ': ' + s.meta.map(esc).join(' · ') + '</div>' +
+      s.triplets.map(function (t) { return '<pre class="blast-aln-pre">' + alignmentTripletHtml(t) + '</pre>'; }).join('');
+  }).join('');
+  return '<details class="blast-aln-card" data-align-index="' + idx + '" data-subject="' +
+    esc(h.header.split(/\s+/)[0]) + '" data-query="' + esc(h.query || '') + '">' +
+    '<summary>' + esc(h.header.slice(0, 160)) +
+      '<button type="button" class="blast-aln-getseq" data-align-index="' + idx + '" title="Fetch target sequence for the highest-scoring HSP">Get sequence</button>' +
+      '<span class="blast-aln-actions"><span class="blast-aln-hspcount">' + h.hsps.length + ' HSP' + (h.hsps.length === 1 ? '' : 's') + '</span>' +
+      '<button type="button" class="blast-aln-copy" title="Copy this target: HSP info + pairwise alignment">Copy</button>' +
+      '<span class="blast-aln-chevron" aria-hidden="true" title="Expand / collapse">▸</span></span></summary>' +
+    '<div class="blast-aln-body">' + hsps + '</div></details>';
+}
+
 function renderAlignments() {
   var box = $('#align-list');
   if (!state.alignLoaded) return;
@@ -3116,39 +3137,61 @@ function renderAlignments() {
   }
   var visible = filteredSubjects();
   var keep = {};
-  visible.forEach(function (s) { keep[s.sseqid] = 1; });
-  var hits = state.alignHits.filter(function (h) { return keep[h.header.split(/\s+/)[0]]; });
+  visible.forEach(function (s) { keep[s.qseqid + '\u0000' + s.sseqid] = 1; });
+  var hits = state.alignHits.filter(function (h) {
+    var sid = h.header.split(/\s+/)[0];
+    if (h.query) return keep[h.query + '\u0000' + sid] === 1;
+    var matched = false;
+    visible.forEach(function (s) { if (s.sseqid === sid) matched = true; });
+    return matched;
+  });
   if (!hits.length) {
     box.innerHTML = '<div class="blast-aln-empty">No alignment records match the current filters.</div>';
-  } else {
-    box.innerHTML = hits.slice(0, 50).map(function (h, i) {
-      var hsps = h.hsps.map(function (s, si) {
-        return '<div class="blast-aln-meta">HSP ' + (si + 1) + ': ' + s.meta.map(esc).join(' · ') + '</div>' +
-          s.triplets.map(function (t) { return '<pre class="blast-aln-pre">' + alignmentTripletHtml(t) + '</pre>'; }).join('');
-      }).join('');
-      return '<details class="blast-aln-card" data-align-index="' + state.alignHits.indexOf(h) + '" data-subject="' +
-        esc(h.header.split(/\s+/)[0]) + '"' + (i < 3 ? ' open' : '') + '>' +
-        '<summary>' + esc(h.header.slice(0, 160)) +
-          '<button type="button" class="blast-aln-getseq" data-align-index="' + state.alignHits.indexOf(h) + '" title="Fetch target sequence for the highest-scoring HSP">Get sequence</button>' +
-          '<span class="blast-aln-actions"><span class="blast-aln-hspcount">' + h.hsps.length + ' HSP' + (h.hsps.length === 1 ? '' : 's') + '</span>' +
-          '<button type="button" class="blast-aln-copy" title="Copy this target: HSP info + pairwise alignment">Copy</button>' +
-          '<span class="blast-aln-chevron" aria-hidden="true" title="Expand / collapse">▸</span></span></summary>' +
-        '<div class="blast-aln-body">' + hsps + '</div></details>';
-    }).join('');
-    if (hits.length > 50) box.innerHTML += '<p class="blast-hint">Showing the first 50 matching records — use the download for the full file.</p>';
+    $('#align-status').textContent = '0 of ' + state.alignHits.length + ' alignment record(s) shown.';
+    return;
   }
+  var qOrder = state.queries.map(function (q) { return q.id; });
+  var groups = {};
+  hits.forEach(function (h) { var q = h.query || ''; (groups[q] = groups[q] || []).push(h); });
+  var qs = Object.keys(groups).sort(function (a, b) {
+    var ia = qOrder.indexOf(a), ib = qOrder.indexOf(b);
+    if (ia < 0) ia = 999;
+    if (ib < 0) ib = 999;
+    return ia - ib || a.localeCompare(b);
+  });
+  var multi = state.queries.length > 1 || qs.length > 1;
+  var html = '';
+  var shown = 0;
+  qs.forEach(function (q) {
+    var arr = groups[q];
+    var qi = qOrder.indexOf(q);
+    if (multi) {
+      html += '<div class="blast-aln-query-title">' + (qi >= 0 ? 'Query ' + (qi + 1) : 'Query') +
+        ': ' + esc(q || 'unknown') + ' <span>(' + arr.length + ' alignment record' + (arr.length === 1 ? '' : 's') + ')</span></div>';
+    }
+    var take = arr.slice(0, Math.max(0, 100 - shown));
+    shown += take.length;
+    html += take.map(alignmentCardHtml).join('');
+  });
+  box.innerHTML = html + (shown < hits.length ? '<p class="blast-hint">Showing the first ' + shown + ' matching records — use the download for the full file.</p>' : '');
   $('#align-status').textContent = hits.length + ' of ' + state.alignHits.length + ' alignment record(s) shown' +
     (state.alignChars ? ', ' + fmtInt(state.alignChars) + ' characters' : '') + '.';
 }
 
 function scrollAlignToSubject() {
-  var id = state.pendingAlignSubject;
+  var pending = state.pendingAlignSubject;
+  if (!pending) return;
+  var id = (typeof pending === 'string') ? pending : pending.sseqid;
+  var qid = (typeof pending === 'string') ? '' : (pending.qseqid || '');
   if (!id) return;
   var cards = $$('#align-list .blast-aln-card');
   var found = null;
   cards.forEach(function (c) {
-    if (!found && c.getAttribute('data-subject') === id) found = c;
+    if (!found && c.getAttribute('data-subject') === id && (!qid || c.getAttribute('data-query') === qid)) found = c;
   });
+  if (!found) {
+    cards.forEach(function (c) { if (!found && c.getAttribute('data-subject') === id) found = c; });
+  }
   if (!found) {
     cards.forEach(function (c) {
       var sid = c.getAttribute('data-subject') || '';
@@ -3168,8 +3211,8 @@ function scrollAlignToSubject() {
   setTimeout(function () { found.classList.remove('flash'); }, 1500);
 }
 
-function openAlignmentForSubject(sseqid) {
-  state.pendingAlignSubject = sseqid;
+function openAlignmentForSubject(sseqid, qseqid) {
+  state.pendingAlignSubject = { sseqid: sseqid, qseqid: qseqid || '' };
   switchTab('alignments');
   if (state.alignLoaded) { scrollAlignToSubject(); state.pendingAlignSubject = null; }
   else loadAlignments();
@@ -3429,7 +3472,7 @@ function init() {
     if (!b) return;
     event.preventDefault();
     event.stopPropagation();
-    openAlignmentForSubject(b.getAttribute('data-sseqid'));
+    openAlignmentForSubject(b.getAttribute('data-sseqid'), b.getAttribute('data-qseqid'));
   });
   $('#job-id-open').addEventListener('click', function () { openJobById($('#job-id-input').value); });
   $('#job-id-input').addEventListener('keydown', function (event) {
