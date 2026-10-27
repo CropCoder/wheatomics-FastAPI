@@ -43,6 +43,7 @@ PAGES = {
     "contact": ("help_contact.html", DOCROOT / "help" / "contact.html", "Contact page"),
     "news": ("help_news.html", DOCROOT / "help" / "news.html", "News & updates"),
     "outsitelink": ("outsitelink.html", DOCROOT / "outsitelink.html", "External links"),
+    "genehub_index": ("genehub_index.html", DOCROOT / "GeneHub" / "index.html", "GeneHub search page"),
     "genehub_result": ("geneDetail.py", CGI_BIN / "geneDetail.py", "GeneHub result CGI"),
 }
 
@@ -78,14 +79,21 @@ def publish(key: str, src: Path, dest: Path, desc: str, *, check: bool, dry_run:
 
     # copy2/copystat can fail with EPERM when the docroot filesystem refuses
     # utime changes (seen on /var/www/html); copy the bytes ourselves.
-    if dest.is_file():
-        backup = dest.with_name(dest.name + ".bak-" + datetime.now().strftime("%Y%m%d_%H%M%S"))
-        shutil.copyfile(dest, backup)
-        print(f"[updated] {key}: {dest}  ({desc})")
-        print(f"          backup: {backup}")
-    else:
-        print(f"[created] {key}: {dest}  ({desc})")
-    shutil.copyfile(src, dest)
+    try:
+        if dest.is_file():
+            backup = dest.with_name(dest.name + ".bak-" + datetime.now().strftime("%Y%m%d_%H%M%S"))
+            shutil.copyfile(dest, backup)
+            print(f"[updated] {key}: {dest}  ({desc})")
+            print(f"          backup: {backup}")
+        else:
+            print(f"[created] {key}: {dest}  ({desc})")
+        shutil.copyfile(src, dest)
+    except PermissionError:
+        print(f"[needs-sudo] {key}: cannot write {dest} (owned by root/www-data).")
+        print(f"             install once with:")
+        print(f"               sudo cp {src} {dest}")
+        print(f"               sudo chmod 755 {dest}" if dest.suffix == ".py" else f"               sudo chmod 644 {dest}")
+        return False
     # The docroot files can be owned by www-data; a chmod then fails with EPERM
     # even though the bytes were published. Treat the mode update as best-effort.
     try:

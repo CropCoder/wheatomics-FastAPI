@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="GeneHub — search any wheat gene ID and map non-Chinese-Spring IDs to the Chinese Spring annotation.">
+  <title>GeneHub | WheatOmics 2.0</title>
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="/api/v2shell/shell.css">
+  <style>
+    .gh-card .form-control { height: 48px; font-size: 15px; border-radius: 10px 0 0 10px; }
+    .gh-card .btn { height: 48px; border-radius: 0 10px 10px 0; padding: 0 22px; font-weight: 700; }
+    .gh-examples { margin: 16px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.9; }
+    .gh-examples code { background: var(--mist); color: var(--forest-deep); border-radius: 5px; padding: 1px 6px; }
+    #gh-status { margin-top: 18px; color: #4d6258; font-size: 13px; }
+    #gh-result { margin-top: 20px; }
+    #gh-result table { background: #fff; }
+    #gh-result th { white-space: nowrap; }
+    #gh-result td { vertical-align: middle; }
+    .gh-note { margin: 18px 0 0; color: var(--muted); font-size: 12px; line-height: 1.8; }
+    .gh-open { white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <div id="v2-shell-header"></div>
+
+  <main id="main-content">
+    <section class="news-hero">
+      <div class="container news-hero-inner">
+        <div>
+          <p class="news-kicker">WheatOmics 2.0 · Gene search</p>
+          <h1 class="news-title">Gene<em>Hub</em></h1>
+          <p class="news-lead">Search any wheat gene ID. Chinese Spring IDs open the gene page directly; IDs from other genomes are first mapped to Chinese Spring 02G through the platform gene-function tables, then shown as a correspondence table.</p>
+          <div class="news-stats">
+            <span class="news-stat"><strong>Any</strong> wheat gene ID</span>
+            <span class="news-stat">Cross-genome mapping</span>
+            <span class="news-stat">Gene page + JBrowse</span>
+          </div>
+        </div>
+        <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-gene"/></svg></div>
+      </div>
+    </section>
+
+    <section class="news-body">
+      <div class="container">
+        <div class="card gh-card">
+          <div class="card-body">
+            <form id="genehub-form" action="/GeneHub/" method="get" class="mb-0">
+              <div class="input-group">
+                <input class="form-control" type="text" name="search" id="search" placeholder="e.g. TraesCS1A02G000500 or TrturSVE1A02G00000020.1" autocomplete="off" required aria-label="Wheat gene ID">
+                <div class="input-group-append"><button class="btn btn-primary" type="submit">Search GeneHub</button></div>
+              </div>
+            </form>
+            <p class="gh-examples">
+              Examples:
+              <a href="/GeneHub/?search=TraesCS1A02G000500"><code>TraesCS1A02G000500</code></a> (Chinese Spring)
+              &nbsp;·&nbsp;
+              <a href="/GeneHub/?search=TrturSVE1A02G00000020.1"><code>TrturSVE1A02G00000020.1</code></a> (Durum wheat)
+            </p>
+          </div>
+        </div>
+
+        <div id="gh-status"></div>
+        <div id="gh-result"></div>
+
+        <p class="gh-note">Tip: IDs from other genomes are resolved through the Genefunc / IntervalTool annotation tables; a table of matches is shown before opening GeneHub.</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="v2-shell-footer"></div>
+  <script src="/api/v2shell/shell.js"></script>
+  <script>
+  (function(){
+    var form = document.getElementById('genehub-form');
+    var input = document.getElementById('search');
+    var status = document.getElementById('gh-status');
+    var result = document.getElementById('gh-result');
+    var CGI = '/cgi-bin/geneDetail.py';
+
+    function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+    function isCsId(q){ return /^TraesCS\d/i.test(q) || /^Traes_/i.test(q); }
+    function openGene(cs){ location.href = CGI + '?search=' + encodeURIComponent(cs); }
+
+    function render(mappings, query){
+      result.innerHTML = '';
+      if(!mappings.length){
+        status.textContent = 'No matching gene found in the indexed genome annotation tables: ' + query;
+        return;
+      }
+      status.textContent = 'Found ' + mappings.length + ' mapping record(s) for ' + query + '.';
+      var html = '<div class="table-responsive"><table class="table table-sm table-bordered table-hover"><thead><tr><th>Dataset</th><th>Gene ID</th><th>Chinese Spring 02G</th><th>Region</th><th>Description</th><th>GeneHub</th></tr></thead><tbody>';
+      mappings.forEach(function(m){
+        var cs = m.chinese_spring_02g || '';
+        var region = (m.chromosome ? esc(m.chromosome) : '') + ((m.start_mb != null && m.end_mb != null) ? ':' + Math.round(m.start_mb * 1000000) + '-' + Math.round(m.end_mb * 1000000) : '');
+        var csCell = cs ? '<a href="' + CGI + '?search=' + encodeURIComponent(cs) + '">' + esc(cs) + '</a>' : '<span class="text-muted">no CS mapping</span>';
+        var open = cs ? '<a class="btn btn-sm btn-outline-primary gh-open" href="' + CGI + '?search=' + encodeURIComponent(cs) + '">Open</a>' : '';
+        html += '<tr><td>' + esc(m.dataset || m.table) + '</td><td><code>' + esc(m.gene_primary) + '</code></td><td>' + csCell + '</td><td>' + region + '</td><td>' + esc(m.description || m.domain || '') + '</td><td>' + open + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      result.innerHTML = html;
+    }
+
+    async function resolve(q){
+      status.textContent = 'Searching Genefunc tables for ' + q + ' ...';
+      result.innerHTML = '';
+      try{
+        var r = await fetch('/api/genes/resolve?ID=' + encodeURIComponent(q), {headers: {'Accept': 'application/json'}});
+        var p = await r.json();
+        if(!r.ok || !p.success) throw new Error((p && p.message) || ('HTTP ' + r.status));
+        render((p.data && p.data.mappings) || [], q);
+      }catch(e){
+        status.textContent = 'Mapping failed: ' + e.message;
+      }
+    }
+
+    form.addEventListener('submit', async function(ev){
+      var q = input.value.trim();
+      if(!q) return;
+      if(isCsId(q)){ ev.preventDefault(); openGene(q); return; }
+      ev.preventDefault();
+      await resolve(q);
+    });
+
+    var initial = new URLSearchParams(location.search).get('search');
+    if(initial){
+      input.value = initial;
+      if(isCsId(initial)){ openGene(initial); }
+      else { resolve(initial); }
+    }
+  })();
+  </script>
+</body>
+</html>
