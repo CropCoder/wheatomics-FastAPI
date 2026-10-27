@@ -1620,7 +1620,7 @@ Paste one or more FASTA sequences here…"></textarea>
                   <p class="blast-hint" id="blast-quick-hint" style="margin:6px 0 0;"></p>
                   <div class="blast-db-viewfilters" id="blast-db-viewfilters" hidden>
                     <span class="blast-hint">Show:</span>
-                    <button type="button" class="blast-kind-chip" data-kind="genome">Genome</button>
+                    <button type="button" class="blast-kind-chip active" data-kind="genome">Genome</button>
                     <button type="button" class="blast-kind-chip" data-kind="cds">CDS</button>
                     <button type="button" class="blast-kind-chip" data-kind="protein">Protein</button>
                   </div>
@@ -1939,6 +1939,7 @@ var PROGRAM_INFO = {
   tblastx: { query: 'nucleotide', db: 'nucleotide', hint: 'Translated nucleotide query against translated nucleotide databases.' }
 };
 var state = {
+  kindFilter: 'genome',
   program: 'blastn',
   databasesByProgram: {},
   categories: [],
