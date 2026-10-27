@@ -2539,7 +2539,7 @@ function deleteCurrentResult() {
   if (!window.confirm('Delete this BLAST result permanently? This cannot be undone.')) return;
   var btn = $('#result-delete');
   if (btn) btn.disabled = true;
-  fetch('/api/blast/job/' + encodeURIComponent(id), { method: 'DELETE', cache: 'no-store' })
+  fetch('/api/blast/job/' + encodeURIComponent(id) + '/delete', { method: 'POST', cache: 'no-store' })
     .then(function (resp) { return resp.json().then(function (json) { return { ok: resp.ok, json: json }; }).catch(function () { return { ok: resp.ok, json: null }; }); })
     .then(function (res) {
       if (btn) btn.disabled = false;

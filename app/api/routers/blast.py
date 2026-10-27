@@ -685,6 +685,7 @@ async def database_example(db: str = Query(...)):
     return {"success": True, "db": db, "example": seq_name, "length": seq_len}
 
 
+@router.post("/job/{job_id}/delete")
 @router.delete("/job/{job_id}")
 async def delete_blast_job(job_id: str):
     """Delete a finished BLAST job and its result files.
