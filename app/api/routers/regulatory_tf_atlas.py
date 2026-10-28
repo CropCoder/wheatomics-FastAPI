@@ -126,17 +126,10 @@ def profile(gene_id:str,region:str="upstream",motif_limit:int=Query(100,ge=1,le=
         motifs,truncated=get_motifs(c,g,region,motif_limit)
         regions=[dict(r) for r in c.execute(
             "SELECT * FROM regions WHERE gene_id=? ORDER BY start0",(g,))]
-        # Which region kinds actually carry motif hits for this gene. Lets the UI
-        # explain an empty result instead of showing a blank table.
-        hit_counts={r["kind"]:r["n"] for r in c.execute(
-            "SELECT r.kind, COUNT(*) AS n FROM regions r "
-            "JOIN hits h ON h.region_id=r.region_id "
-            "WHERE r.gene_id=? GROUP BY r.kind",(g,))}
     tf=tf_info(g)
     expression=table(EXPR).get(g) if tf["is_candidate_tf"] else None
     return {"gene":gene,"tf":tf,"classification":classification(g),
             "expression":expression,"regions":regions,"region":region,
-            "hit_counts_by_kind":hit_counts,
             "motifs":motifs,"motifs_truncated":truncated,"citation":CITATION}
 
 @router.get("/gene/{gene_id}/motif-variants")
