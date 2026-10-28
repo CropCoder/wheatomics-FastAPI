@@ -114,9 +114,9 @@ html, body { margin: 0; padding: 0; }
 .kg-longtext {
   margin: 0;
   font-size: 14px;
-  line-height: 1.75;
+  line-height: 1.5;
   color: var(--ink);
-  max-width: 78ch;
+  max-width: none;  /* use the full card width (was capped at 78ch, leaving a big blank) */
   overflow-wrap: anywhere;
 }
 .kg-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
