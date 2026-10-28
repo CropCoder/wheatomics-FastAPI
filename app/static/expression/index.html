@@ -288,16 +288,23 @@ function loadProjects() {
           return String(a.description || '').localeCompare(String(b.description || ''));
         }).forEach(function (proj) { $container.append(projectLabel(proj)); });
       }
+      function collectProjects(subgroup) {
+        var out = [];
+        (subgroup.sub_subgroups || []).forEach(function (x) {
+          out = out.concat(x.projects || []);
+        });
+        return out;
+      }
       function eachProject($body, group) {
         var subs = group.subgroups || [];
         var collapseGroup = subs.length === 1 && ((subs[0].name || '') === (group.name || ''));
-        if (collapseGroup) return emitSubgroup($body, subs[0]);
+        // Only collapse the *group* level when the single subgroup repeats the group
+        // name (e.g. "wheat population"); otherwise keep subgroup labels visible.
+        if (collapseGroup) { appendProjects($body, collectProjects(subs[0])); return; }
         subs.forEach(function (subgroup) { emitSubgroup($body, subgroup); });
       }
       function emitSubgroup($parent, subgroup) {
         var ssgs = subgroup.sub_subgroups || [];
-        var collapseSub = ssgs.length === 1 && ((!ssgs[0].name) || ((ssgs[0].name || '') === (subgroup.name || '')));
-        if (collapseSub) { appendProjects($parent, ssgs[0].projects); return; }
         var sgId = $parent.attr('id') + '-sg-' + (subgroup.name || '__none').replace(/[^a-z0-9]/gi, '_');
         var projCount = ssgs.reduce(function (acc, x) { return acc + ((x.projects || []).length); }, 0);
         $parent.append(
@@ -307,6 +314,12 @@ function loadProjects() {
         );
         var $sgBody = $('<div id="' + sgId + '-body" style="display:none;"></div>');
         $parent.append($sgBody);
+        // A single empty (or duplicate-named) sub_subgroup only means "no third level":
+        // list the projects directly under the subgroup, keeping the subgroup label.
+        if (ssgs.length === 1 && ((!ssgs[0].name) || ((ssgs[0].name || '') === (subgroup.name || '')))) {
+          appendProjects($sgBody, ssgs[0].projects);
+          return;
+        }
         ssgs.forEach(function (ssg) {
           var ssgId = sgId + '-ssg-' + (ssg.name || '__none').replace(/[^a-z0-9]/gi, '_');
           $sgBody.append(
