@@ -80,7 +80,7 @@ app/
 **BLAST jobs**: All blast execution lives in the standalone daemon `wheatomics-blastd.service` (app/services/blast_daemon.py, systemd unit in scripts/). `POST /api/blast/search` writes `params.json` + `status.json` under `BLAST_RESULT_DIR/<uuid4>/`; the daemon claims pending jobs and runs them (thread pool = BLAST_MAX_CONCURRENT, a true global cap). `wait=true` (default) enqueues and polls to completion (1100s cap < gunicorn timeout=1200), preserving the old sync contract; `wait=false` returns job_id immediately for `GET /api/blast/status/{job_id}` polling. Jobs survive worker recycling and API deploys; stale detection in blast_runner.read_status(). Never move blast execution back into the API worker / BackgroundTasks.
 
 **KnownGene data updates**: the curated known-gene list lives in `cloned_gene_db.cloned_gene_tbl`
-and is refreshed from the curation spreadsheet (1420 rows as of v2056, 2026-10-28) with
+and is refreshed from the curation spreadsheet (1420 rows as of v2061, derived from v2060 on 2026-10-28) with
 `scripts/known_genes_v2055/` (extract -> JSONL -> prepare -> DDL -> single-transaction swap -> verify).
 Never rebuild it from TSV (a 2026-10 bad import left `cloned_gene_bad_import_backup` in the DB).
 See MAINTENANCE.md §十三 for the full workflow, clone_id-stability rules and rollback steps.

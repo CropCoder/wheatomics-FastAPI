@@ -1038,6 +1038,8 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/<module>/ --widt
 ## 十三、KnownGene 数据更新流程（v2056 起）
 
 KnownGene（`/genes/`，后端 `/api/genes/known/*`，库 `cloned_gene_db.cloned_gene_tbl`）的数据来自人工整理的 Excel 清单。
+
+> 当前数据版本：**v2061**（由 v2060 全量重导入，2026-10-28；1420 行、6 个功能大类；默认列表按图位克隆优先排序）。
 从 v2056（2026-10-28，1420 行 × 17 列）起，更新流程固定为「Excel → JSONL 校验 → clone_id 映射 → staging 单事务替换」，
 **禁止再用 TSV/LOAD DATA 直接灌库**（2026-10 曾发生 1636 行 TSV 引号错位坏导入，残骸 `cloned_gene_bad_import_backup` 仍在库中）。
 
