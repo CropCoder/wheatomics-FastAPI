@@ -177,6 +177,9 @@ _TAG_ABBREVIATIONS = {
     "yr": "Yr", "lr": "Lr", "sr": "Sr", "pm": "Pm", "fhb": "FHB", "fcr": "FCR",
     "snb": "SNB", "stb": "STB", "se": "SE", "wymv": "WYMV", "bydv": "BYDV",
 }
+_TAG_PROVENANCE_RE = re.compile(
+    r"\s*\([^()]*?(?:family-level|copy-specific)[^()]*\)", re.IGNORECASE
+)
 
 
 def _split_top_level_semicolons(value: object) -> list[str]:
@@ -201,6 +204,8 @@ def _split_top_level_semicolons(value: object) -> list[str]:
 
 
 def _normalize_tag(tag: str) -> str:
+    tag = _TAG_PROVENANCE_RE.sub("", tag)
+    tag = re.sub(r"\s+", " ", tag).strip(" ;,")
     return re.sub(
         r"\((yr|lr|sr|pm|fhb|fcr|snb|stb|se|wymv|bydv)\b",
         lambda m: "(" + _TAG_ABBREVIATIONS[m.group(1)],
@@ -411,6 +416,8 @@ def main() -> int:
         for piece in _split_top_level_semicolons(r["gene_phenotype"]):
             t = _normalize_tag(piece.strip().lower())
             if not t or len(t) > 80:
+                continue
+            if "copy-specific" in t or "family-level" in t:
                 continue
             tags.append(t)
         tags = list(dict.fromkeys(tags))
