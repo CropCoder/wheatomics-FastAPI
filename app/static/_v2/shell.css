@@ -810,6 +810,12 @@
       cursor: pointer;
     }
 
+    /* The Bootstrap bridge later resets .container { padding: 0 }, which also
+       wiped the footer's own padding — use a footer-scoped (higher-specificity)
+       rule so footer copy is not flush with the dark band's edges. */
+    .site-footer .footer-main { padding-block: 44px 38px; padding-inline: clamp(16px, 2.2vw, 36px); }
+    .site-footer .footer-bottom { padding-inline: clamp(16px, 2.2vw, 36px); }
+
     /* ==================== 响应式适配 ==================== */
     @media (max-width: 1240px) {
       :root { --page: min(1160px, calc(100% - 40px)); }
