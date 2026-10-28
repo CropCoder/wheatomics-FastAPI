@@ -173,6 +173,41 @@ def is_multi_species(species: str) -> bool:
     return len([p for p in species.split(";") if p.strip()]) > 1
 
 
+_TAG_ABBREVIATIONS = {
+    "yr": "Yr", "lr": "Lr", "sr": "Sr", "pm": "Pm", "fhb": "FHB", "fcr": "FCR",
+    "snb": "SNB", "stb": "STB", "se": "SE", "wymv": "WYMV", "bydv": "BYDV",
+}
+
+
+def _split_top_level_semicolons(value: object) -> list[str]:
+    """Split on ';' outside parentheses (phenotype free text has '(...; ...)')."""
+
+    text = str(value or "")
+    pieces: list[str] = []
+    buf: list[str] = []
+    depth = 0
+    for ch in text:
+        if ch == "(":
+            depth += 1
+        elif ch == ")" and depth > 0:
+            depth -= 1
+        if ch == ";" and depth == 0:
+            pieces.append("".join(buf))
+            buf = []
+        else:
+            buf.append(ch)
+    pieces.append("".join(buf))
+    return pieces
+
+
+def _normalize_tag(tag: str) -> str:
+    return re.sub(
+        r"\((yr|lr|sr|pm|fhb|fcr|snb|stb|se|wymv|bydv)\b",
+        lambda m: "(" + _TAG_ABBREVIATIONS[m.group(1)],
+        tag,
+    )
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--xlsx", default=DEFAULT_XLSX)
@@ -373,8 +408,8 @@ def main() -> int:
     rows_without_tags = 0
     for r in records:
         tags = []
-        for piece in r["gene_phenotype"].split(";"):
-            t = piece.strip().lower()
+        for piece in _split_top_level_semicolons(r["gene_phenotype"]):
+            t = _normalize_tag(piece.strip().lower())
             if not t or len(t) > 80:
                 continue
             tags.append(t)
