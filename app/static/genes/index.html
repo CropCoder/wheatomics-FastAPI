@@ -218,6 +218,8 @@ html, body { margin: 0; padding: 0; }
   font-size: 13px;
 }
 @media (min-width: 768px) { .kg-bar-row { grid-template-columns: minmax(0, 32%) minmax(0, 1fr) auto; } }
+/* short labels (e.g. barley 1H–7H / rye 1R / chr51) need much less room */
+.kg-bar-row.kg-bar-row-compact { grid-template-columns: minmax(0, 64px) minmax(0, 1fr) auto; }
 .kg-bar-label { color: var(--ink); line-height: 1.35; overflow-wrap: anywhere; }
 .kg-bar-label.is-italic { font-style: italic; }
 .kg-bar-label.kg-clamp-2 { max-height: 2.7em; }
@@ -1270,15 +1272,16 @@ html, body { margin: 0; padding: 0; }
     }
 
     // Horizontal bar rows.  entries: [{label, count, title, fillClass, italic}]
-    function barRowsHtml(entries) {
+    function barRowsHtml(entries, options) {
       if (!entries.length) return '<div class="text-muted">No data.</div>';
       var max = 0;
       for (var i = 0; i < entries.length; i++) { if (entries[i].count > max) max = entries[i].count; }
+      var rowClass = 'kg-bar-row' + (options && options.compactLabel ? ' kg-bar-row-compact' : '');
       var html = [];
       for (var j = 0; j < entries.length; j++) {
         var item = entries[j];
         var pct = max > 0 ? (item.count / max * 100) : 0;
-        html.push('<div class="kg-bar-row" title="' + KG.escAttr(item.title || item.label) + '">');
+        html.push('<div class="' + rowClass + '" title="' + KG.escAttr(item.title || item.label) + '">');
         html.push('<div class="kg-bar-label' + (item.italic ? ' is-italic' : '') + (item.clamp ? ' kg-clamp-2' : '') + '">' +
           escapeHtml(item.label) + '</div>');
         html.push('<div class="kg-bar-track"><span class="kg-bar-fill' +
@@ -1395,7 +1398,7 @@ html, body { margin: 0; padding: 0; }
           fillClass: 'kg-fill-wheatish'
         };
       });
-      $('#chart-chrom-other').html(barRowsHtml(entries));
+      $('#chart-chrom-other').html(barRowsHtml(entries, { compactLabel: true }));
     }
 
     function renderStrategyChart(data) {
