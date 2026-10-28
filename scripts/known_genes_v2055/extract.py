@@ -180,6 +180,9 @@ _TAG_ABBREVIATIONS = {
 _TAG_PROVENANCE_RE = re.compile(
     r"\s*\([^()]*?(?:family-level|copy-specific)[^()]*\)", re.IGNORECASE
 )
+_TAG_ABBR_PAREN_RE = re.compile(
+    r"\(\s*(?:yr|lr|sr|pm|fhb|fcr|snb|stb|se|wymv|bydv)\s*\)", re.IGNORECASE
+)
 
 
 def _split_top_level_semicolons(value: object) -> list[str]:
@@ -205,6 +208,8 @@ def _split_top_level_semicolons(value: object) -> list[str]:
 
 def _normalize_tag(tag: str) -> str:
     tag = _TAG_PROVENANCE_RE.sub("", tag)
+    if "susceptib" in tag:
+        tag = _TAG_ABBR_PAREN_RE.sub("", tag)
     tag = re.sub(r"\s+", " ", tag).strip(" ;,")
     return re.sub(
         r"\((yr|lr|sr|pm|fhb|fcr|snb|stb|se|wymv|bydv)\b",

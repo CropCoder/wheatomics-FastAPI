@@ -134,6 +134,12 @@ _PHENOTYPE_ABBREVIATIONS = {
 _PHENOTYPE_PROVENANCE_RE = re.compile(
     r"\s*\([^()]*?(?:family-level|copy-specific)[^()]*\)", re.IGNORECASE
 )
+#: Disease abbreviations (Pm/Yr/...) are resistance-gene designations; on a
+#: *susceptibility* tag they read wrong (user request 2026-10-28), so drop the
+#: abbreviation parenthetical there, e.g. "powdery mildew susceptibility (Pm)".
+_PHENOTYPE_ABBR_PAREN_RE = re.compile(
+    r"\(\s*(?:yr|lr|sr|pm|fhb|fcr|snb|stb|se|wymv|bydv)\s*\)", re.IGNORECASE
+)
 
 
 def _split_phenotype_tags(value: object) -> list[str]:
@@ -171,6 +177,8 @@ def _split_phenotype_tags(value: object) -> list[str]:
         if not tag:
             continue
         tag = _PHENOTYPE_PROVENANCE_RE.sub("", tag)
+        if "susceptib" in tag:
+            tag = _PHENOTYPE_ABBR_PAREN_RE.sub("", tag)
         tag = re.sub(r"\s+", " ", tag).strip(" ;,")
         if not tag or "copy-specific" in tag or "family-level" in tag:
             continue
