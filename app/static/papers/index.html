@@ -353,6 +353,7 @@ var totalPapers = 0;             // backend-reported total (truth)
 var currentResults = [];         // current page's rows (from backend)
 var currentJournals = null;      // null = no filter, array = allowed journals
 var currentTag = null;           // null = no filter, string = tag to filter by
+var hasUserSearch = false;       // has the user run a search/filter in this page view?
 var stats = null;                // cached /api/papers/stats
 var searchInFlight = null;       // AbortController for the latest request
 
@@ -681,7 +682,8 @@ function buildQuery() {
   return params;
 }
 
-function runSearch() {
+function runSearch(initial) {
+  if (initial !== 0) hasUserSearch = true;
   // If the input box has text, search it as a one-shot term (AND on top
   // of whatever queryTerms already hold), then remove it so it doesn't
   // get double-counted if the user hits Search again after the result.
@@ -749,8 +751,9 @@ function renderPage() {
   document.getElementById('next-btn').disabled = currentPage >= pages;
   var exportBtn = document.getElementById('export-btn');
   exportBtn.disabled = totalPapers === 0;
-  // Only show the export action once a search has produced results.
-  exportBtn.hidden = totalPapers === 0;
+  // Hide until the user has actively searched/filtered (the page auto-loads
+  // a default result set on first open, which should not show this action).
+  exportBtn.hidden = !hasUserSearch || totalPapers === 0;
 
   if (currentResults.length === 0) {
     document.getElementById('list-content').innerHTML = '';
