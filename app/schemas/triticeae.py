@@ -101,6 +101,9 @@ class TriticeaePaper(BaseModel):
     link: str | None = None
     """PubMed 原文链接"""
 
+    doi: str | None = None
+    """DOI（papers.doi，每周导入/回填脚本维护）"""
+
     paper_created_at: str | None = None
     """论文元数据首次导入 WheatOmics 的时间 (p.created_at)"""
 

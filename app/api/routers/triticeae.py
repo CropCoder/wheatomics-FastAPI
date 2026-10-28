@@ -39,6 +39,7 @@ _SQL_COLUMNS = """p.id AS paper_id,
         p.ai_tags,
         p.keywords_source,
         p.link,
+        p.doi,
         p.created_at AS paper_created_at,
         p.functional_gene_flag,
         p.functional_gene_tags,
@@ -142,6 +143,7 @@ def _row_to_paper(row: dict) -> dict:
         ai_tags=str(row.get("ai_tags") or ""),
         keywords_source=str(row.get("keywords_source") or ""),
         link=str(row.get("link") or ""),
+        doi=str(row.get("doi") or "") or None,
         paper_created_at=str(row.get("paper_created_at") or ""),
         functional_gene_flag=str(row.get("functional_gene_flag") or ""),
         functional_gene_tags=str(row.get("functional_gene_tags") or ""),
@@ -369,6 +371,16 @@ def _fetch_dois(pmids: list[str]) -> None:
             found[m.group(1)] = d.group(1).strip()
     for pmid in pmids:
         _DOI_CACHE[pmid] = found.get(pmid, "")
+    if found:
+        try:
+            with mysql_cursor(settings.DB_TRITICEAE) as cursor:
+                for pmid, doi in found.items():
+                    cursor.execute(
+                        "UPDATE papers SET doi=%s WHERE pmid=%s AND (doi IS NULL OR doi='')",
+                        (doi, pmid),
+                    )
+        except Exception:
+            pass
 
 
 @router.get("/papers/dois")
