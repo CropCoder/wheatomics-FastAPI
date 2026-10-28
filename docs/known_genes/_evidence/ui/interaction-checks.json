@@ -1,0 +1,478 @@
+{
+  "index": {
+    "initialInfo": "Showing 1–50 of 1,420 · Browse all",
+    "initialCards": 50,
+    "pagerVisible": true,
+    "pageInfo": "Page 1 / 29",
+    "prevDisabled": true,
+    "nextDisabled": false,
+    "filterBarVisibleBrowse": false,
+    "page2Info": "Showing 51–100 of 1,420 · Browse all",
+    "page2FirstId": "TraesCS3A03G0229500",
+    "searchInfo": "Showing 1–50 of 167 · query \"Drought\" · field: Trait / Phenotype",
+    "searchCards": 50,
+    "filterBarVisibleSearch": true,
+    "filterChips": [
+      "Biotic & Abiotic Stress (160)",
+      "Morphology & Domestication (2)",
+      "Physiology & Metabolic Processes (4)",
+      "Reproduction & Phenology (1)",
+      "Reverse genetics (152)",
+      "Forward genetics (14)",
+      "Not reported (1)",
+      "Triticum aestivum (158)",
+      "Hordeum vulgare (6)",
+      "Triticum turgidum subsp. durum (2)",
+      "x Triticosecale (1)"
+    ],
+    "filterChipClicked": "Biotic & Abiotic Stress (160)",
+    "filteredInfo": "Showing 1–50 of 160 · filtered from 167 · query \"Drought\" · field: Trait / Phenotype",
+    "filteredCards": 50,
+    "filteredPages": "Page 1 / 4",
+    "csv": {
+      "hasBom": true,
+      "headerCount": 19,
+      "header": "Gene ID | Gene name | Reference genome ID | Chromosome | Chromosome position | Genome / reference | Species (normalized) | Species (raw) | Functional category | Research strategy | Phenotype | Protein family | Validation methods | Cloning method | Key results | Function description | Publication year(s) | DOIs | Detail URL",
+      "rowCount": 160,
+      "charLength": 115483,
+      "firstDataSnippet": "\"AY781352\",\"TaERF1-A\",\"TraesCS7A03G0370100\",\"7A\",\"Refv1.0 chr7A:112.264-112.266Mb\",\"Refv1.0\",\"Triticum aestivum\",\"Triticum aestivum (bread wheat)\",\"Biotic & Abiotic Stress\",\"Reverse genetics\",\"Drought tolerance; Cold tolerance; Salt toleran"
+    },
+    "csvFormulaGuard": "\"'=1+1\"|\"'@x\"|\"'-2\"",
+    "afterClearInfo": "Showing 1–50 of 167 · query \"Drought\" · field: Trait / Phenotype",
+    "afterClearCards": 50,
+    "geneNameSearchInfo": "Showing 1–1 of 1 · query \"HvPTR1\" · field: Gene name",
+    "geneNameSearchCards": 1,
+    "singleCsvHasProteinFamily": true,
+    "singleCsvRows": 1,
+    "mobileSearchInfo": "Showing 1–50 of 78 · query \"HORVU\" · field: All Fields"
+  },
+  "detail": {
+    "wheat_long_text_multi_doi": {
+      "title": "EF405961.1 - WheatOmics",
+      "geneName": "TaAGPS-7A",
+      "geneId": "EF405961.1",
+      "badges": "Quality & YieldReverse genetics",
+      "chrom": "7A",
+      "chromPos": "Refv1.0 chr7A:342.609-342.617Mb",
+      "species": "Triticum aestivum",
+      "years": "20222023",
+      "refCount": "2 references",
+      "refGenomeVisible": true,
+      "refGenome": "TraesCS7A03G0682600",
+      "geneHubVisible": true,
+      "geneHubHref": "/GeneHub/?search=TraesCS7A03G0682600",
+      "sectionsShown": [
+        "card-refgenome",
+        "card-protein-family",
+        "card-annotations",
+        "card-phenotype",
+        "card-key-results",
+        "card-function-desc",
+        "card-cloning",
+        "card-references",
+        "card-species",
+        "card-author"
+      ],
+      "expanders": [
+        {
+          "ctrl": "d-protein-family",
+          "hidden": true
+        },
+        {
+          "ctrl": "d-phenotype",
+          "hidden": false
+        },
+        {
+          "ctrl": "d-key-result",
+          "hidden": false
+        },
+        {
+          "ctrl": "d-function",
+          "hidden": false
+        },
+        {
+          "ctrl": "d-species-raw",
+          "hidden": true
+        }
+      ],
+      "refs": [
+        "2022Wheat E3 ubiquitin ligase TaGW2-6A degrades TaAGPS to affect seed size10.1016/j.plantsci.2022.111274",
+        "2023The 218th amino acid change of Ser to Ala in TaAGPS-7A increases enzyme activity and grain weight in bread wheat10.1"
+      ],
+      "hasHashText": false,
+      "hasLessThanText": false,
+      "otherAssaysVisible": false,
+      "validationChips": 7,
+      "cloningChips": [
+        "Homology-based cloning"
+      ],
+      "cloningDetailsVisible": true,
+      "authorVisible": true,
+      "errorBoxVisible": false,
+      "expanderClicked": "Show less",
+      "phenotypeOpen": true
+    },
+    "barley_3H": {
+      "title": "AF023472.1 - WheatOmics",
+      "geneName": "HvPTR1",
+      "geneId": "AF023472.1",
+      "badges": "Physiology & Metabolic ProcessesResearch strategy: Not reported",
+      "chrom": "3H",
+      "chromPos": "MorexV3 chr3H:18.913-18.920Mb",
+      "species": "Hordeum vulgare",
+      "years": "2005",
+      "refCount": "1 reference",
+      "refGenomeVisible": true,
+      "refGenome": "HORVU.MOREX.r3.3HG0228170",
+      "geneHubVisible": false,
+      "geneHubHref": "#",
+      "sectionsShown": [
+        "card-refgenome",
+        "card-protein-family",
+        "card-annotations",
+        "card-phenotype",
+        "card-key-results",
+        "card-function-desc",
+        "card-cloning",
+        "card-references",
+        "card-species",
+        "card-author"
+      ],
+      "expanders": [
+        {
+          "ctrl": "d-protein-family",
+          "hidden": true
+        },
+        {
+          "ctrl": "d-phenotype",
+          "hidden": true
+        },
+        {
+          "ctrl": "d-key-result",
+          "hidden": true
+        },
+        {
+          "ctrl": "d-function",
+          "hidden": true
+        },
+        {
+          "ctrl": "d-species-raw",
+          "hidden": true
+        }
+      ],
+      "refs": [
+        "2005A role for phosphorylation in the regulation of the barley scutellar peptide transporter HvPTR1 by amino acids10.109"
+      ],
+      "hasHashText": true,
+      "hasLessThanText": false,
+      "otherAssaysVisible": false,
+      "validationChips": 2,
+      "cloningChips": [
+        "Not reported"
+      ],
+      "cloningDetailsVisible": true,
+      "authorVisible": true,
+      "errorBoxVisible": false,
+      "expanderClicked": null,
+      "phenotypeOpen": false
+    },
+    "hash_symbol_row": {
+      "title": "TraesCS6A03G0642600 - WheatOmics",
+      "geneName": "TaTCP4-6A",
+      "geneId": "TraesCS6A03G0642600",
+      "badges": "Morphology & DomesticationReverse genetics",
+      "chrom": "6A",
+      "chromPos": "Refv1.0 chr6A:441.486-441.487Mb",
+      "species": "Triticum aestivum",
+      "years": "2023",
+      "refCount": "1 reference",
+      "refGenomeVisible": true,
+      "refGenome": "TraesCS6A03G0642600",
+      "geneHubVisible": true,
+      "geneHubHref": "/GeneHub/?search=TraesCS6A03G0642600",
+      "sectionsShown": [
+        "card-refgenome",
+        "card-protein-family",
+        "card-annotations",
+        "card-phenotype",
+        "card-key-results",
+        "card-function-desc",
+        "card-cloning",
+        "card-references",
+        "card-species",
+        "card-author"
+      ],
+      "expanders": [
+        {
+          "ctrl": "d-protein-family",
+          "hidden": true
+        },
+        {
+          "ctrl": "d-phenotype",
+          "hidden": true
+        },
+        {
+          "ctrl": "d-key-result",
+          "hidden": false
+        },
+        {
+          "ctrl": "d-function",
+          "hidden": false
+        },
+        {
+          "ctrl": "d-species-raw",
+          "hidden": true
+        }
+      ],
+      "refs": [
+        "2023The TaTCP4/10-B1 cascade regulates awn elongation in wheat (Triticum aestivum L.)10.1016/j.xplc.2023.100590"
+      ],
+      "hasHashText": false,
+      "hasLessThanText": false,
+      "otherAssaysVisible": false,
+      "validationChips": 8,
+      "cloningChips": [
+        "Homology-based cloning"
+      ],
+      "cloningDetailsVisible": true,
+      "authorVisible": true,
+      "errorBoxVisible": false,
+      "expanderClicked": null,
+      "phenotypeOpen": false
+    },
+    "no_chr_prefix_row": {
+      "title": "OR567850 - WheatOmics",
+      "geneName": "Lr39",
+      "geneId": "OR567850",
+      "badges": "Biotic & Abiotic StressForward genetics",
+      "chrom": "2D",
+      "chromPos": "AetTA1675 2D:2.33-2.45Mb",
+      "species": "Aegilops tauschii",
+      "years": "2024",
+      "refCount": "1 reference",
+      "refGenomeVisible": true,
+      "refGenome": "AeT.TA1675.r1.2D000150",
+      "geneHubVisible": false,
+      "geneHubHref": "#",
+      "sectionsShown": [
+        "card-refgenome",
+        "card-protein-family",
+        "card-annotations",
+        "card-phenotype",
+        "card-key-results",
+        "card-function-desc",
+        "card-cloning",
+        "card-references",
+        "card-species",
+        "card-author"
+      ],
+      "expanders": [
+        {
+          "ctrl": "d-protein-family",
+          "hidden": true
+        },
+        {
+          "ctrl": "d-phenotype",
+          "hidden": true
+        },
+        {
+          "ctrl": "d-key-result",
+          "hidden": false
+        },
+        {
+          "ctrl": "d-function",
+          "hidden": false
+        },
+        {
+          "ctrl": "d-species-raw",
+          "hidden": true
+        }
+      ],
+      "refs": [
+        "2024Origin and evolution of the bread wheat D genome10.1038/s41586-024-07808-z"
+      ],
+      "hasHashText": false,
+      "hasLessThanText": false,
+      "otherAssaysVisible": false,
+      "validationChips": 5,
+      "cloningChips": [
+        "Map-based cloning"
+      ],
+      "cloningDetailsVisible": true,
+      "authorVisible": true,
+      "errorBoxVisible": false,
+      "expanderClicked": null,
+      "phenotypeOpen": false
+    },
+    "multi_year_row": {
+      "title": "EF452301 - WheatOmics",
+      "geneName": "TaCRT-A/TaCRT3-A",
+      "geneId": "EF452301",
+      "badges": "Biotic & Abiotic StressReverse genetics",
+      "chrom": "3A",
+      "chromPos": "Refv1.0 chr3A:646.127-646.132Mb",
+      "species": "Triticum aestivum",
+      "years": "20082024",
+      "refCount": "2 references",
+      "refGenomeVisible": true,
+      "refGenome": "TraesCS3A03G0936700",
+      "geneHubVisible": true,
+      "geneHubHref": "/GeneHub/?search=TraesCS3A03G0936700",
+      "sectionsShown": [
+        "card-refgenome",
+        "card-protein-family",
+        "card-annotations",
+        "card-phenotype",
+        "card-key-results",
+        "card-function-desc",
+        "card-cloning",
+        "card-references",
+        "card-species",
+        "card-author"
+      ],
+      "expanders": [
+        {
+          "ctrl": "d-protein-family",
+          "hidden": true
+        },
+        {
+          "ctrl": "d-phenotype",
+          "hidden": true
+        },
+        {
+          "ctrl": "d-key-result",
+          "hidden": true
+        },
+        {
+          "ctrl": "d-function",
+          "hidden": true
+        },
+        {
+          "ctrl": "d-species-raw",
+          "hidden": true
+        }
+      ],
+      "refs": [
+        "2008Molecular cloning and characterization of wheat calreticulin (CRT) gene involved in drought-stressed responses10.109",
+        "2024TaCRT3 Is a Positive Regulator of Resistance to Blumeria graminis f. sp. tritici in Wheat10.1094/phyto-08-23-0276-r"
+      ],
+      "hasHashText": false,
+      "hasLessThanText": false,
+      "otherAssaysVisible": false,
+      "validationChips": 5,
+      "cloningChips": [
+        "Homology-based cloning",
+        "Functional cloning"
+      ],
+      "cloningDetailsVisible": true,
+      "authorVisible": true,
+      "errorBoxVisible": false,
+      "expanderClicked": null,
+      "phenotypeOpen": false
+    },
+    "largest_protein_family": {
+      "title": "AE.SHARON.r1.1SG0010260 - WheatOmics",
+      "geneName": "Sr62-Sr62NLR",
+      "geneId": "AE.SHARON.r1.1SG0010260",
+      "badges": "Biotic & Abiotic StressForward genetics",
+      "chrom": "1S",
+      "chromPos": "Ae.sharonensis.v1 chr1S:59.620-59.625Mb",
+      "species": "Aegilops sharonensis",
+      "years": "2025",
+      "refCount": "1 reference",
+      "refGenomeVisible": true,
+      "refGenome": "PP537390.1",
+      "geneHubVisible": false,
+      "geneHubHref": "#",
+      "sectionsShown": [
+        "card-refgenome",
+        "card-protein-family",
+        "card-annotations",
+        "card-phenotype",
+        "card-key-results",
+        "card-function-desc",
+        "card-cloning",
+        "card-references",
+        "card-species",
+        "card-author"
+      ],
+      "expanders": [
+        {
+          "ctrl": "d-protein-family",
+          "hidden": false
+        },
+        {
+          "ctrl": "d-phenotype",
+          "hidden": false
+        },
+        {
+          "ctrl": "d-key-result",
+          "hidden": false
+        },
+        {
+          "ctrl": "d-function",
+          "hidden": false
+        },
+        {
+          "ctrl": "d-species-raw",
+          "hidden": false
+        }
+      ],
+      "refs": [
+        "2025A wheat tandem kinase activates an NLR to trigger immunity10.1126/science.adp5034"
+      ],
+      "hasHashText": true,
+      "hasLessThanText": false,
+      "otherAssaysVisible": true,
+      "validationChips": 0,
+      "cloningChips": [
+        "Map-based cloning"
+      ],
+      "cloningDetailsVisible": true,
+      "authorVisible": true,
+      "errorBoxVisible": false,
+      "expanderClicked": "Show less",
+      "phenotypeOpen": true
+    },
+    "synthetic_empty": {
+      "sectionsShown": [
+        "card-refgenome",
+        "card-annotations",
+        "card-phenotype",
+        "card-key-results",
+        "card-references",
+        "card-species"
+      ],
+      "keyResultsText": "No key results recorded.",
+      "authorVisible": false,
+      "cloningVisible": false
+    },
+    "not_found": {
+      "errorText": "Gene not found: 999999 Back to KnownGene search."
+    }
+  },
+  "screenshots": [
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/index-1440-page1.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/index-1440-page2.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/index-search-1440.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/index-filtered-1440.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/index-filtered-1440-after-export.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/index-search-genename-1440.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/index-search-390.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-wheat_long_text_multi_doi-1440-fullpage.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-wheat_long_text_multi_doi-1440-expanded.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-barley_3H-1440-fullpage.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-barley_3H-1440-expanded.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-hash_symbol_row-1440-fullpage.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-hash_symbol_row-1440-expanded.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-no_chr_prefix_row-1440-fullpage.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-no_chr_prefix_row-1440-expanded.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-multi_year_row-1440-fullpage.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-multi_year_row-1440-expanded.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-largest_protein_family-1440-fullpage.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-largest_protein_family-1440-expanded.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-empty-fields-390-fullpage.png",
+    "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-404-390.png"
+  ],
+  "errors": []
+}

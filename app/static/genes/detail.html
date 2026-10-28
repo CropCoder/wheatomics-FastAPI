@@ -3,45 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gene Detail - WheatOmics</title>
+<title>KnownGene - WheatOmics</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
-
-<script>
-// ===== Visit tracking =====
-(function() {
-  var page = location.pathname + location.search || 'unknown';
-  try {
-    fetch('/api/track/visit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ page: page })
-    }).catch(function(){});
-  } catch (e) {}
-  function fmt(n) {
-    n = Number(n) || 0;
-    if (n >= 1000000) return (n / 1000000).toFixed(3) + 'M';
-    if (n >= 1000)    return (n / 1000).toFixed(1) + 'k';
-    return String(n);
-  }
-  function renderVisitStats(data) {
-    var el = document.getElementById('visit-stats');
-    if (!el || !data) return;
-    var today  = (data.today && data.today.pv != null) ? fmt(data.today.pv) : '—';
-    var total  = (data.total && data.total.pv != null) ? fmt(data.total.pv) : '—';
-    var online = data.online != null ? data.online : '—';
-    el.innerHTML =
-      '<span class="vs-pill"><span class="vs-dot vs-dot-today"></span>today <b>' + today + '</b></span>' +
-      '<span class="vs-pill"><span class="vs-dot vs-dot-total"></span>total <b>' + total + '</b></span>' +
-      '<span class="vs-pill"><span class="vs-dot vs-dot-online"></span>online <b>' + online + '</b></span>';
-  }
-  fetch('/api/track/stats').then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(resp){
-      if (resp && resp.success && resp.data) renderVisitStats(resp.data);
-    })
-    .catch(function(){});
-})();
-</script>
+<link rel="stylesheet" href="/api/v2shell/shell.css">
 
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.bundle.js"></script>
@@ -58,338 +23,785 @@ var _hmt = _hmt || [];
 </script>
 
 <style>
-html, body { margin:0; padding:0; background:#f8f9fa; font-family:Arial,sans-serif; }
-#home_header { height:100px; line-height:100px; vertical-align:middle; margin:0 auto; padding:0; background:#0077b6; text-align:center; }
-#logo_style { width:80px; height:80px; vertical-align:middle; margin-right:10px; }
-#home_header span { font-size:28px; font-weight:bold; color:#FFFFFF; }
-#header-tabs { background-color:#007DBC; text-align:center; padding-top:10px; position:relative; z-index:999; top:0; }
-#header-tabs ul { margin:0 !important; padding:0 !important; list-style:none !important; }
-#header-tabs li { display:inline-block !important; width:190px !important; }
-#header-tabs a { background:#0077b6; font-size:13pt; color:#FFFFFF !important; display:block; padding:8px; font-weight:bold; text-decoration:none !important; border-radius:5px 5px 0 0; }
-#header-tabs a:hover { background:#98c1d9; color:#000000; }
-#header-tabs ul li { display:inline-block; list-style:none; position:relative; }
-#header-tabs ul li ul { display:none !important; position:absolute; z-index:1000; background:#0077b6; }
-#header-tabs ul li:hover ul { display:block !important; }
-#header-tabs ul li ul a { border-radius:0; }
-#home_footer { margin:0 auto; padding:5px 0 10px 0; text-align:center; width:100%; background:#d9d9d9; }
-#home_footer table { margin:0 auto; }
-#home_footer .line { display:inline-block; height:30px; width:2px; background:#000; vertical-align:middle; margin:5px; }
-#home_footer .visit-stats { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; vertical-align:middle; margin-left:15px; }
-.visit-stats .vs-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:12px; font-size:11px; line-height:1.4; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; }
-.visit-stats .vs-pill b { color:#0f172a; font-weight:600; }
-.visit-stats .vs-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#94a3b8; }
-.visit-stats .vs-dot-today  { background:#22c55e; }
-.visit-stats .vs-dot-total  { background:#3b82f6; }
-.visit-stats .vs-dot-online { background:#f59e0b; }
-.visit-stats .vs-loading { color:#64748b; }
-.visit-stats .vs-loading .vs-dot { animation: vs-pulse 1.6s ease-in-out infinite; }
-@keyframes vs-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+/* ==========================================================================
+   KnownGene detail page — `.kg-*` classes only; Bootstrap built-ins untouched.
+   Long free-text fields are line-clamped here and expanded by
+   known_gene_common.js (event delegation, full text stays in the DOM).
+   ========================================================================== */
+html, body { margin: 0; padding: 0; }
 
-.container-main { max-width: 1180px; width: 96%; margin: 18px auto 26px; }
+.kg-back { display: inline-block; margin: 2px 0 14px; font-size: 14px; color: var(--leaf); }
+.kg-back:hover { color: var(--forest); text-decoration: underline; }
 
-.detail-head { background:#fff; border:1px solid #e6e6e6; border-left:4px solid #0077b6; border-radius:4px; padding:20px 24px; margin-bottom:16px; }
-.detail-head .gene-name { font-size:24px; color:#222; font-style:italic; font-weight:700; margin:0 0 4px 0; }
-.detail-head h2 { font-family:Menlo,Consolas,monospace; font-size:13px; color:#888; margin:0; word-break:break-all; font-weight:400; }
-.detail-head .meta { font-size:13px; color:#888; margin-top:6px; }
+.kg-detail-head {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--leaf);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+.kg-detail-head .kg-gene-name {
+  font-size: 24px;
+  color: var(--forest-deep);
+  font-style: italic;
+  font-weight: 700;
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+.kg-detail-head .kg-gene-id {
+  font-family: var(--utility);
+  font-size: 13px;
+  color: #4d6559;
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+.kg-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0; }
 
-.meta-card { background:#fff; border:1px solid #e6e6e6; border-radius:4px; padding:16px; text-align:center; height:100%; }
-.meta-card .meta-label { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px; }
-.meta-card .meta-value { font-size:18px; color:#222; margin-top:4px; font-weight:600; word-break:break-word; }
+/* functional-category badges (shared tokens with the list page) */
+.kg-cat { font-size: 10px; letter-spacing: .01em; }
+.kg-cat-stress  { color: #8f3428 !important; background: #fdecea !important; }
+.kg-cat-quality { color: #6b4d0e !important; background: #fdf3dc !important; }
+.kg-cat-morph   { color: #1e5a3d !important; background: #e9f3ea !important; }
+.kg-cat-phys    { color: #1f4a70 !important; background: #e9f0f8 !important; }
+.kg-cat-repro   { color: #553a70 !important; background: #f2ecf8 !important; }
+.kg-cat-default { color: #3b5347 !important; background: #eef6f0 !important; }
+.kg-strategy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--forest) !important;
+  background: #fff !important;
+  border: 1px solid var(--line) !important;
+  font-size: 10px;
+  font-weight: 700;
+}
+.kg-strategy .kg-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--forest); flex: none; }
+.kg-strategy.k-forward .kg-dot { background: var(--wheat); }
+.kg-chrom { font-family: var(--utility); font-size: 11px; letter-spacing: .02em; }
+.kg-meta { font-size: 12px; color: #4d6559; margin: 6px 0 0; overflow-wrap: anywhere; }
+.kg-meta .kg-meta-sep { margin: 0 8px; color: #9aaca1; }
 
-.section-card { background:#fff; border:1px solid #e6e6e6; border-radius:4px; padding:18px 22px; margin-bottom:14px; }
-.section-card h5 { color:#1f5f9f; font-size:16px; font-weight:700; margin:0 0 10px 0; padding-bottom:6px; border-bottom:1px solid #eef2f7; }
-.section-card ul { margin:0; padding-left:20px; }
-.section-card li { margin-bottom:6px; line-height:1.55; color:#333; }
-.section-card a { color:#1f5f9f; word-break:break-all; }
-.section-card a.doi { font-family:Menlo,Consolas,monospace; font-size:13px; }
+/* overview meta cards */
+.kg-meta-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  height: 100%;
+}
+.kg-meta-label { font-size: 11px; color: #4d6559; text-transform: uppercase; letter-spacing: .5px; }
+.kg-meta-value { font-size: 16px; color: var(--ink); margin-top: 4px; font-weight: 600; overflow-wrap: anywhere; }
+.kg-meta-value .kg-mono { font-size: 12px; font-weight: 400; }
+.kg-meta-sub { font-size: 11px; color: #4d6559; margin-top: 3px; overflow-wrap: anywhere; }
+.kg-year-chip {
+  display: inline-block;
+  margin: 2px 4px 2px 0;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--mist);
+  color: var(--forest);
+  font-family: var(--utility);
+  font-size: 12px;
+}
 
-.back-link { font-size:14px; color:#1f5f9f; }
-.back-link:hover { text-decoration:underline; }
+/* section cards */
+.kg-section .card-body h6.card-title { font-size: 14px; color: var(--forest-deep); }
+.kg-section { margin-bottom: 16px; }
+.kg-longtext {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--ink);
+  max-width: 78ch;
+  overflow-wrap: anywhere;
+}
+.kg-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.kg-clamp-6 { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+.kg-clamp-8 { display: -webkit-box; -webkit-line-clamp: 8; -webkit-box-orient: vertical; overflow: hidden; }
+.kg-clamp-12 { display: -webkit-box; -webkit-line-clamp: 12; -webkit-box-orient: vertical; overflow: hidden; }
+.kg-longtext.is-open { display: block; overflow: visible; -webkit-line-clamp: unset; }
+.btn.kg-expand { display: inline-flex; align-items: center; min-height: 26px; padding: 2px; margin: 4px 0 0; font-size: 12px; line-height: 1.4; }
+.kg-empty { color: #4d6559; font-style: italic; }
+.kg-muted-note { color: #4d6559; }
+.kg-pf-chip { max-width: 100%; overflow-wrap: anywhere; white-space: normal; text-align: left; margin-bottom: 10px; }
+.kg-section-note { font-size: 12px; color: #4d6559; margin: 8px 0 0; }
 
-.loading-wrap { padding:60px; text-align:center; }
+/* references */
+.kg-refs { padding-left: 20px; margin: 0; }
+.kg-ref { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; margin-bottom: 10px; line-height: 1.6; }
+.kg-ref-year {
+  font-family: var(--utility);
+  font-size: 12px;
+  color: var(--forest);
+  background: var(--mist);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1px 6px;
+  flex: none;
+}
+.kg-ref-title { flex: 1 1 320px; min-width: 0; color: var(--ink); overflow-wrap: anywhere; }
+.kg-ref a { font-family: var(--utility); font-size: 12px; color: var(--leaf); overflow-wrap: anywhere; }
+.kg-ref .kg-no-doi { font-size: 12px; color: #4d6559; }
+
+/* validation / cloning chips */
+.kg-other-assays { margin-top: 10px; }
+.kg-other-assays .kg-longtext { font-size: 13px; line-height: 1.7; }
+.kg-chip-group-label { font-size: 12px; color: #4d6559; margin: 0 0 6px; }
+
+.kg-loading { padding: 60px 0; text-align: center; }
 </style>
 </head>
 <body>
 
-<div id="home_header">
-  <span><img src="/css/logo.jpg" id="logo_style">WheatOmics 2.0</span>
-</div>
-<div id="header-tabs">
-  <ul>
-    <li><a href="/"><span>Home</span></a></li>
-    <li><a href="#"><span>Tools/Browse</span></a>
-      <ul>
-        <li><a href="/getfasta/index.html">GetSequence</a></li>
-        <li><a href="/blast/blast.html">BLAST</a></li>
-        <li><a href="/PrimerServer">PrimerServer</a></li>
-        <li><a href="/PrimerServer2/">PrimerServer2</a></li>
-        <li><a href="/caps/">CAPS/dCAPS</a></li>
-        <li><a href="/PfamSearch/">PfamSearch</a></li>
-        <li><a href="/idConvert/">IDConvert</a></li>
-        <li><a href="/HomologFinder/">HomologFinder</a></li>
-        <li><a href="/interval/">IntervalTool</a></li>
-        <li><a href="/expression/">GeneExpression</a></li>
-        <li><a href="/coexpression/index.html">Co-expression</a></li>
-        <li><a href="/wheatPPI/">WheatPPI</a></li>
-        <li><a href="/genes/">KnownGene</a></li>
-        <li><a href="/symap/index.html">SyntenySearch</a></li>
-        <li><a href="/syntenyview/">SynTenyView</a></li>
-        <li><a href="/preblast/">preBLAST</a></li>
-        <li><a href="/sms2/index.html">SequenceToolkit</a></li>
-        <li><a href="/orthofinder/">OrthoFinder</a></li>
-        <li><a href="/VariantHub/">VariantHub</a></li>
-        <li><a href="DWGVa.html">DWGVa</a></li>
-        <li><a href="/scRNA/">scRNA</a></li>
-        <li><a href="/wheatPSP/">wheatPSP</a></li>
-        <li><a href="/eqtl/">eQTL Atlas</a></li>
-        <li><a href="/GO_KEGG/">GO/KEGG Enrichment</a></li>
-        <li><a href="/papers">Triticeae papers</a></li>
-      </ul>
-    </li>
-    <li><a href="/jbrowse.html"><span>JBrowse</span></a></li>
-    <li><a href="/download.html"><span>Download Data</span></a></li>
-    <li><a href="/outsitelink.html"><span>External Links</span></a></li>
-    <li><a href="#"><span>About</span></a>
-      <ul>
-        <li><a href="/help/contact.html">Contact</a></li>
-        <li><a href="/help/news.html">News</a></li>
-      </ul>
-    </li>
-  </ul>
-</div>
+<div id="v2-shell-header"></div>
 
-<main class="container-main">
-  <a href="/genes/" class="back-link">← Back to gene search</a>
-
-  <div id="loading" class="loading-wrap">
-    <div class="spinner-border text-primary" role="status"></div>
-    <p class="mt-2 text-muted">Loading gene…</p>
-  </div>
-
-  <div id="error-box" class="alert alert-danger" hidden></div>
-
-  <div id="detail-content" hidden>
-    <div class="detail-head">
-      <p class="gene-name" id="d-gene-name"></p>
-      <h2 id="d-gene-id">—</h2>
-      <p class="meta" id="d-meta"></p>
-    </div>
-
-    <div class="row mb-3">
-      <div class="col-md-3 mb-2">
-        <div class="meta-card">
-          <div class="meta-label">Chromosome</div>
-          <div class="meta-value" id="d-chrom">—</div>
-        </div>
+<main id="main-content">
+  <section class="news-hero">
+    <div class="container news-hero-inner">
+      <div>
+        <p class="news-kicker">WheatOmics 2.0 · Data resource</p>
+        <h1 class="news-title">Known <em>Gene</em></h1>
+        <p class="news-lead">Curated functional annotation, evidence and references for one known gene.</p>
       </div>
-      <div class="col-md-3 mb-2">
-        <div class="meta-card">
-          <div class="meta-label">Species</div>
-          <div class="meta-value" id="d-species">—</div>
-        </div>
+      <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-gene"/></svg></div>
+    </div>
+  </section>
+
+  <section class="news-body">
+    <div class="container">
+      <a href="/genes/" class="kg-back">← Back to KnownGene search</a>
+
+      <div id="loading" class="kg-loading">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Loading gene…</p>
       </div>
-      <div class="col-md-3 mb-2">
-        <div class="meta-card">
-          <div class="meta-label">Phenotype</div>
-          <div class="meta-value" id="d-phenotype">—</div>
+
+      <div id="error-box" class="alert alert-danger" hidden></div>
+
+      <div id="detail-content" hidden>
+
+        <!-- 1) head -->
+        <header class="kg-detail-head">
+          <h2 class="kg-gene-name" id="d-gene-name"></h2>
+          <p class="kg-gene-id" id="d-gene-id">—</p>
+          <div class="kg-badges" id="d-badges"></div>
+          <p class="kg-meta" id="d-meta"></p>
+        </header>
+
+        <!-- 2) overview meta cards -->
+        <div class="row" id="d-overview" style="margin-bottom:16px;">
+          <div class="col-6 col-md-3 mb-3">
+            <div class="kg-meta-card">
+              <div class="kg-meta-label">Chromosome</div>
+              <div class="kg-meta-value"><span id="d-chrom" class="badge badge-secondary kg-chrom">—</span></div>
+              <div class="kg-meta-sub kg-mono" id="d-chrom-pos"></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3 mb-3">
+            <div class="kg-meta-card">
+              <div class="kg-meta-label">Species</div>
+              <div class="kg-meta-value"><i id="d-species">—</i></div>
+              <div class="kg-meta-sub" id="d-species-sub"></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3 mb-3">
+            <div class="kg-meta-card">
+              <div class="kg-meta-label">Publication years</div>
+              <div class="kg-meta-value" id="d-pubyear">—</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3 mb-3">
+            <div class="kg-meta-card">
+              <div class="kg-meta-label">References</div>
+              <div class="kg-meta-value" id="d-refcount">—</div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="col-md-3 mb-2">
-        <div class="meta-card">
-          <div class="meta-label">Publication year</div>
-          <div class="meta-value" id="d-pubyear">—</div>
-        </div>
-      </div>
-    </div>
 
-    <div class="section-card">
-      <h5>Key results</h5>
-      <ul id="d-key-result"><li class="text-muted">No key results recorded.</li></ul>
-    </div>
+        <!-- 3) reference genome ID -->
+        <section class="card kg-section" id="card-refgenome" hidden><div class="card-body">
+          <h6 class="card-title">Reference genome ID</h6>
+          <p class="mb-0">
+            <span class="kg-mono" id="d-refgenome">—</span>
+            <a class="btn btn-sm btn-outline-primary ml-2" id="d-genehub" href="#" target="_blank"
+               rel="noopener noreferrer" hidden>Open in GeneHub ↗</a>
+          </p>
+        </div></section>
 
-    <div class="section-card" id="card-func" hidden>
-      <h5>Function description</h5>
-      <p id="d-function" class="text-muted">—</p>
-    </div>
+        <!-- 4) protein family -->
+        <section class="card kg-section" id="card-protein-family" hidden><div class="card-body">
+          <h6 class="card-title">Protein family</h6>
+          <span class="v2-chip kg-pf-chip" id="d-protein-family-head"></span>
+          <p class="kg-longtext kg-clamp-6" id="d-protein-family"></p>
+          <button type="button" class="btn btn-link btn-sm kg-expand" aria-expanded="false"
+                  aria-controls="d-protein-family">Show more</button>
+        </div></section>
 
-    <div class="section-card" id="card-cloning" hidden>
-      <h5>Cloning method</h5>
-      <p id="d-cloning-method" class="text-muted">—</p>
-      <h6 class="mt-3" id="d-cloning-desc-label" hidden>Details</h6>
-      <p id="d-cloning-desc" class="text-muted"></p>
-    </div>
+        <!-- 5) annotation badges + validation methods -->
+        <section class="card kg-section" id="card-annotations" hidden><div class="card-body">
+          <h6 class="card-title">Functional category &amp; research strategy</h6>
+          <div class="kg-badges" id="d-badges-detail"></div>
+          <h6 class="mt-3">Validation methods</h6>
+          <div class="v2-chip-row" id="d-validation"></div>
+          <div class="kg-other-assays" id="d-validation-other" hidden></div>
+        </div></section>
 
-    <div class="section-card">
-      <h5>References</h5>
-      <ul id="d-references"><li class="text-muted">No references.</li></ul>
-    </div>
+        <!-- 6) phenotype full text -->
+        <section class="card kg-section" id="card-phenotype" hidden><div class="card-body">
+          <h6 class="card-title">Phenotype</h6>
+          <p class="kg-longtext kg-clamp-6" id="d-phenotype"></p>
+          <button type="button" class="btn btn-link btn-sm kg-expand" aria-expanded="false"
+                  aria-controls="d-phenotype">Show more</button>
+        </div></section>
 
-    <div class="section-card">
-      <h5>Submitted by</h5>
-      <p id="d-author" class="text-muted">—</p>
+        <!-- 7) key results -->
+        <section class="card kg-section" id="card-key-results"><div class="card-body">
+          <h6 class="card-title">Key results</h6>
+          <p class="kg-longtext kg-clamp-12" id="d-key-result"></p>
+          <button type="button" class="btn btn-link btn-sm kg-expand" aria-expanded="false"
+                  aria-controls="d-key-result">Show more</button>
+        </div></section>
+
+        <!-- 8) function description -->
+        <section class="card kg-section" id="card-function-desc" hidden><div class="card-body">
+          <h6 class="card-title">Function description</h6>
+          <p class="kg-longtext kg-clamp-8" id="d-function"></p>
+          <button type="button" class="btn btn-link btn-sm kg-expand" aria-expanded="false"
+                  aria-controls="d-function">Show more</button>
+        </div></section>
+
+        <!-- 9) cloning method -->
+        <section class="card kg-section" id="card-cloning" hidden><div class="card-body">
+          <h6 class="card-title">Cloning method</h6>
+          <div class="v2-chip-row" id="d-cloning-method"></div>
+          <button class="btn btn-link btn-sm" type="button" data-toggle="collapse"
+                  data-target="#d-cloning-desc-wrap" aria-expanded="false"
+                  aria-controls="d-cloning-desc-wrap" id="d-cloning-desc-label" hidden>Details</button>
+          <div class="collapse" id="d-cloning-desc-wrap">
+            <p class="kg-longtext" id="d-cloning-desc"></p>
+          </div>
+        </div></section>
+
+        <!-- 10) references (quiet heading: plain h6, no card-title) -->
+        <section class="card kg-section" id="card-references"><div class="card-body">
+          <h6>References</h6>
+          <ol class="kg-refs" id="d-references"></ol>
+        </div></section>
+
+        <!-- 11) species & materials -->
+        <section class="card kg-section" id="card-species" hidden><div class="card-body">
+          <h6 class="card-title">Species &amp; materials</h6>
+          <p class="kg-longtext kg-clamp-4" id="d-species-raw"></p>
+          <button type="button" class="btn btn-link btn-sm kg-expand" aria-expanded="false"
+                  aria-controls="d-species-raw">Show more</button>
+        </div></section>
+
+        <!-- 12) submitted by (hidden for empty) -->
+        <section class="card kg-section" id="card-author" hidden><div class="card-body">
+          <h6 class="card-title">Submitted by</h6>
+          <p class="mb-0" id="d-author"></p>
+        </div></section>
+
+      </div><!-- /#detail-content -->
     </div>
-  </div>
+  </section>
 </main>
 
-<div class="line" style="height:10px;background-color:white"></div>
-<div id="home_footer">
-  <center style="margin-top:5px">
-    <table>
-      <tr>
-        <td><span><img src="/css/LOGO_footer.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_ShanNong.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_IDGB.jpg" height="60"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><span><img src="/css/LOGO_footer_TuRangSuo.jpg" height="50"></span></td>
-        <td><div class="line" style="height:30px;width:2px;background-color:black;vertical-align:middle;margin:5px"></div></td>
-        <td><div style="height:50px;width:15px;"></div></td>
-        <td>
-          <div id="visit-stats" class="visit-stats">
-            <span class="vs-pill vs-loading"><span class="vs-dot"></span>loading</span>
-          </div>
-        </td>
-      </tr>
-    </table>
-    For any question and suggestion, please contact:&nbsp;<a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>
-  </center>
-</div>
+<div id="v2-shell-footer"></div>
 
+<script src="/api/v2shell/shell.js"></script>
+<script src="/genes/known_gene_common.js"></script>
 <script>
-function esc(s) {
-  if (s == null) return '';
-  return String(s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
+// =====================================================================
+//  KnownGene detail — renders /api/genes/known/{id}
+//  URL contract: /genes/detail.html?id=<clone_id>  (unchanged).
+// =====================================================================
+(function () {
+  'use strict';
 
-function doiUrl(doi) {
-  if (!doi) return '';
-  var d = String(doi).trim();
-  if (/^https?:\/\//i.test(d)) return d;
-  return 'https://doi.org/' + d;
-}
+  var CATEGORY_CLASS = {
+    'Biotic & Abiotic Stress': 'kg-cat-stress',
+    'Quality & Yield': 'kg-cat-quality',
+    'Morphology & Domestication': 'kg-cat-morph',
+    'Physiology & Metabolic Processes': 'kg-cat-phys',
+    'Reproduction & Phenology': 'kg-cat-repro'
+  };
 
-function showError(msg) {
-  $('#loading').prop('hidden', true);
-  $('#detail-content').prop('hidden', true);
-  $('#error-box').html(esc(msg) + ' <a href="/genes/" class="back-link">Back to search</a>.').prop('hidden', false);
-}
+  function $id(id) { return document.getElementById(id); }
 
-function renderDetail(d) {
-  $('#loading').prop('hidden', true);
-  $('#error-box').prop('hidden', true);
-  $('#detail-content').prop('hidden', false);
-
-  document.title = (d.gene_id || 'Gene') + ' - WheatOmics';
-  $('#d-gene-id').text(d.gene_id || '—');
-  $('#d-gene-name').text(d.gene_name || '');
-  if (!d.gene_name) $('#d-gene-name').hide();
-
-  var metaBits = [];
-  if (d.clone_id)        metaBits.push('Clone ID: ' + esc(d.clone_id));
-  if (d.submission_date) metaBits.push('Submitted: ' + esc(d.submission_date));
-  if (metaBits.length)   $('#d-meta').html(metaBits.join(' &nbsp;|&nbsp; '));
-  else                   $('#d-meta').hide();
-
-  $('#d-chrom').text(d.chrom_pos || '—');
-  $('#d-species').text(d.species || '—');
-  $('#d-phenotype').text(d.phenotype || '—');
-  $('#d-pubyear').text(d.publication_year || '—');
-
-  // Function description
-  if (d.function_description) {
-    $('#d-function').text(d.function_description);
-    $('#card-func').prop('hidden', false);
+  function show(id, visible) {
+    var el = $id(id);
+    if (!el) return;
+    if (visible) { el.removeAttribute('hidden'); } else { el.setAttribute('hidden', 'hidden'); }
   }
 
-  // Cloning method + description
-  if (d.cloning_method) {
-    $('#d-cloning-method').text(d.cloning_method);
-    if (d.cloning_method_description) {
-      $('#d-cloning-desc').text(d.cloning_method_description);
-      $('#d-cloning-desc-label, #d-cloning-desc').prop('hidden', false);
+  function setText(id, text) {
+    var el = $id(id);
+    if (el) el.textContent = text == null ? '' : String(text);
+  }
+
+  // jQuery 1.9's .show() does not clear the HTML5 `hidden` attribute (the UA
+  // stylesheet keeps display:none), so toggling uses the attribute directly.
+  function showEl(selector) {
+    var $el = typeof selector === 'string' ? $(selector) : selector;
+    $el.removeAttr('hidden').css('display', '');
+    return $el;
+  }
+
+  function hideEl(selector) {
+    var $el = typeof selector === 'string' ? $(selector) : selector;
+    $el.attr('hidden', 'hidden');
+    return $el;
+  }
+
+  // Hide an element when the value is empty, show it otherwise.
+  function toggleByValue(id, value) {
+    var el = $id(id);
+    if (!el) return false;
+    if (value == null || String(value).trim() === '') {
+      el.setAttribute('hidden', 'hidden');
+      return false;
     }
-    $('#card-cloning').prop('hidden', false);
+    el.removeAttribute('hidden');
+    return true;
   }
 
-  // References
-  var refs = d.references || [];
-  if (refs.length === 0) {
-    $('#d-references').html('<li class="text-muted">No references.</li>');
-  } else {
-    var html = '';
-    refs.forEach(function(r) {
-      var doi  = (r.doi || '').trim();
-      var ttl  = (r.title || '').trim();
-      if (doi) {
-        html += '<li><a class="doi" href="' + esc(doiUrl(doi)) + '" target="_blank" rel="noopener">' + esc(doi) + '</a>';
-        if (ttl) html += ' — ' + esc(ttl);
-        html += '</li>';
-      } else if (ttl) {
-        html += '<li>' + esc(ttl) + '</li>';
+  function shortText(value, max) {
+    var text = KG.str(value).trim();
+    if (text.length <= max) return text;
+    return text.slice(0, max).replace(/\s+\S*$/, '') + '\u2026';
+  }
+
+  // ------------------------------------------------------------------
+  //  small render helpers
+  // ------------------------------------------------------------------
+  function categoryBadge(category, extraClass) {
+    if (!category) return '';
+    var cls = CATEGORY_CLASS[category] || 'kg-cat-default';
+    return '<span class="badge kg-cat ' + cls + (extraClass ? ' ' + extraClass : '') + '">' +
+      KG.esc(category) + '</span>';
+  }
+
+  function strategyBadge(strategy) {
+    if (!strategy) return '';
+    if (strategy === 'Not reported') {
+      return '<span class="kg-muted-note">Research strategy: Not reported</span>';
+    }
+    var cls = strategy === 'Forward genetics' ? 'k-forward' : 'k-reverse';
+    return '<span class="badge kg-strategy ' + cls + '"><span class="kg-dot" aria-hidden="true"></span>' +
+      KG.esc(strategy) + '</span>';
+  }
+
+  function deriveSpeciesPrimary(raw) {
+    var text = KG.str(raw).trim();
+    if (!text) return '';
+    var match = text.match(/^(?:[x\u00d7]\s*)?[A-Z][a-z]+(?:\s+[a-z]+)?(?:\s+subsp\.\s+[a-z]+)?/);
+    return match ? match[0] : '';
+  }
+
+  function yearsOf(data) {
+    var years = KG.fmtYears(data.publication_years);
+    if (!years.length) years = KG.fmtYears(data.publication_year);
+    return years;
+  }
+
+  // Build the references list.  Preferred source is references[] (positional
+  // pairing done by the backend); legacy paper_title[] is only a fallback.
+  function buildReferences(data) {
+    var refs = [];
+    var i;
+    if (Object.prototype.toString.call(data.references) === '[object Array]' && data.references.length) {
+      for (i = 0; i < data.references.length; i++) {
+        var item = data.references[i] || {};
+        refs.push({
+          doi: KG.str(item.doi).trim(),
+          title: KG.str(item.title).trim(),
+          year: KG.str(item.year).trim()
+        });
       }
-    });
-    if (!html) html = '<li class="text-muted">No references.</li>';
-    $('#d-references').html(html);
+      return refs;
+    }
+    var titles = KG.splitMulti(data.paper_title);
+    var dois = KG.splitMulti(data.paper_doi);
+    var years = KG.splitMulti(data.publication_years);
+    if (!years.length) years = KG.splitMulti(data.publication_year);
+    var count = Math.max(titles.length, dois.length, years.length);
+    for (i = 0; i < count; i++) {
+      refs.push({
+        doi: i < dois.length ? dois[i] : '',
+        title: i < titles.length ? titles[i] : '',
+        year: i < years.length ? years[i] : ''
+      });
+    }
+    return refs;
   }
 
-  // Key results
-  var kr = d.key_result || [];
-  if (kr.length === 0) {
-    $('#d-key-result').html('<li class="text-muted">No key results recorded.</li>');
-  } else {
-    var html = '';
-    kr.forEach(function(s) {
-      if (s && String(s).trim()) html += '<li>' + esc(s) + '</li>';
-    });
-    if (!html) html = '<li class="text-muted">No key results recorded.</li>';
-    $('#d-key-result').html(html);
+  // ------------------------------------------------------------------
+  //  section renderers — each one shows or hides its own card
+  // ------------------------------------------------------------------
+  function renderHead(data) {
+    var name = KG.str(data.gene_name).trim();
+    var geneId = KG.str(data.gene_id).trim();
+    var title = name || geneId || ('Clone #' + KG.str(data.clone_id));
+    setText('d-gene-name', title);
+    if (title) { showEl('#d-gene-name'); } else { hideEl('#d-gene-name'); }
+
+    setText('d-gene-id', geneId || ('Clone #' + KG.str(data.clone_id)));
+
+    // meta line: record id and submission date are support/rollback anchors
+    var metaBits = [];
+    if (data.clone_id != null && data.clone_id !== '') {
+      metaBits.push('Record #' + KG.esc(data.clone_id));
+    }
+    if (data.submission_date) {
+      metaBits.push('Submitted: ' + KG.esc(data.submission_date));
+    }
+    var $meta = $('#d-meta');
+    if (metaBits.length) {
+      $meta.html(metaBits.join('<span class="kg-meta-sep">|</span>'));
+      showEl($meta);
+    } else {
+      hideEl($meta);
+    }
+
+    var badges = [];
+    badges.push(categoryBadge(data.functional_category));
+    badges.push(strategyBadge(data.research_strategy));
+    var html = badges.join('');
+    if (html) { $('#d-badges').html(html); showEl('#d-badges'); } else { hideEl('#d-badges'); }
   }
 
-  // Submitter
-  var name = d.author || '';
-  var mail = d.author_mail || '';
-  if (!name && !mail) {
-    $('#d-author').text('—');
-  } else {
+  function renderOverview(data) {
+    var parsed = KG.parseChrom(data.chrom_pos);
+    var chrom = KG.str(data.chromosome).trim() || parsed.label;
+    var genome = KG.str(data.genome_ref).trim() || parsed.genome;
+
+    var $chrom = $('#d-chrom');
+    if (chrom) {
+      $chrom.text(chrom).attr('class', KG.chromBadgeClass(chrom)).show();
+    } else {
+      $chrom.text('—').show();
+    }
+    // chrom_pos already starts with the assembly name (e.g. "Refv1.0 chr7A:..."),
+    // so show it verbatim and only fall back to the parsed genome prefix.
+    var chromSub = KG.str(data.chrom_pos).trim() || genome;
+    setText('d-chrom-pos', chromSub);
+
+    var speciesPrimary = KG.str(data.species_primary).trim() || deriveSpeciesPrimary(data.species);
+    setText('d-species', speciesPrimary || '—');
+    var rawSpecies = KG.str(data.species).trim();
+    var speciesSub = $('#d-species-sub');
+    if (rawSpecies && rawSpecies !== speciesPrimary) {
+      speciesSub.text(shortText(rawSpecies, 110)).attr('title', rawSpecies);
+      showEl(speciesSub);
+    } else {
+      hideEl(speciesSub);
+    }
+
+    var years = yearsOf(data);
+    var $years = $('#d-pubyear');
+    if (years.length) {
+      var chips = [];
+      for (var i = 0; i < years.length; i++) {
+        chips.push('<span class="kg-year-chip">' + KG.esc(years[i]) + '</span>');
+      }
+      $years.html(chips.join(''));
+    } else {
+      $years.text('—');
+    }
+
+    var refs = buildReferences(data);
+    setText('d-refcount', refs.length ? refs.length + (refs.length === 1 ? ' reference' : ' references') : '—');
+  }
+
+  function renderRefGenome(data) {
+    var refId = KG.str(data.reference_genome_id).trim();
+    if (!refId) { show('card-refgenome', false); return; }
+    show('card-refgenome', true);
+    setText('d-refgenome', refId);
+    var $link = $('#d-genehub');
+    var url = KG.geneHubUrl(refId);
+    if (url) {
+      $link.attr('href', url);
+      showEl($link);
+    } else {
+      $link.attr('href', '#');
+      hideEl($link);
+      $('#d-refgenome').attr('title', 'No GeneHub record for this reference genome ID');
+    }
+  }
+
+  function renderProteinFamily(data) {
+    var family = KG.str(data.protein_family).trim();
+    if (!family) { show('card-protein-family', false); return; }
+    show('card-protein-family', true);
+    setText('d-protein-family-head', KG.familyHead(family));
+    setText('d-protein-family', family);
+  }
+
+  function renderAnnotations(data) {
+    var hasCategory = !!KG.str(data.functional_category).trim();
+    var hasStrategy = !!KG.str(data.research_strategy).trim();
+    var validation = Object.prototype.toString.call(data.validation_methods) === '[object Array]'
+      ? data.validation_methods.slice()
+      : KG.splitMulti(data.validation_method);
+    validation = validation.filter(function (item) { return KG.str(item).trim() !== ''; });
+
+    if (!hasCategory && !hasStrategy && !validation.length) {
+      show('card-annotations', false);
+      return;
+    }
+    show('card-annotations', true);
+
+    var badges = categoryBadge(KG.str(data.functional_category).trim()) +
+                 strategyBadge(KG.str(data.research_strategy).trim());
+    if (badges) { $('#d-badges-detail').html(badges); showEl('#d-badges-detail'); } else { hideEl('#d-badges-detail'); }
+
+    // Validation methods: short tokens become chips (first 12 + "+N methods"),
+    // long free-text passages are collected under a collapsible "Other assays".
+    var shortTokens = [];
+    var longTokens = [];
+    for (var i = 0; i < validation.length; i++) {
+      var token = KG.str(validation[i]).trim();
+      if (token.length > 45) { longTokens.push(token); } else { shortTokens.push(token); }
+    }
+
+    var $chips = $('#d-validation');
+    var chips = [];
+    var visibleCount = Math.min(shortTokens.length, 12);
+    for (var j = 0; j < visibleCount; j++) {
+      chips.push('<span class="v2-chip">' + KG.esc(shortTokens[j]) + '</span>');
+    }
+    var hiddenTokens = shortTokens.slice(visibleCount);
+    for (var k = 0; k < hiddenTokens.length; k++) {
+      chips.push('<span class="v2-chip" data-kg-more hidden>' + KG.esc(hiddenTokens[k]) + '</span>');
+    }
+    if (hiddenTokens.length) {
+      chips.push('<button type="button" class="btn btn-link btn-sm" id="d-validation-more">+' +
+        hiddenTokens.length + ' methods</button>');
+    }
+    if (chips.length) { $chips.html(chips.join('')); showEl($chips); } else { hideEl($chips); }
+
+    var $other = $('#d-validation-other');
+    if (longTokens.length) {
+      var otherHtml = '<button type="button" class="btn btn-link btn-sm" id="d-validation-other-toggle" ' +
+        'aria-expanded="false">Other assays (' + longTokens.length + ') — show</button>' +
+        '<p class="kg-longtext" id="d-validation-other-text" hidden>' +
+        KG.esc(longTokens.join(' ')) + '</p>';
+      $other.html(otherHtml);
+      showEl($other);
+    } else {
+      $other.html('');
+      hideEl($other);
+    }
+  }
+
+  function renderPhenotype(data) {
+    var phenotype = KG.str(data.phenotype).trim();
+    if (!phenotype) { show('card-phenotype', false); return; }
+    show('card-phenotype', true);
+    setText('d-phenotype', phenotype);
+  }
+
+  function renderKeyResults(data) {
+    var results = KG.splitMulti(data.key_result);
+    var text = results.join('\n\n');
+    var el = $id('d-key-result');
+    var button = document.querySelector('.kg-expand[aria-controls="d-key-result"]');
+    if (!text) {
+      el.textContent = 'No key results recorded.';
+      el.classList.add('kg-empty');
+      if (button) button.setAttribute('hidden', 'hidden');
+      return;
+    }
+    el.textContent = text;
+    el.classList.remove('kg-empty');
+  }
+
+  function renderFunction(data) {
+    var text = KG.str(data.function_description).trim();
+    if (!text) { show('card-function-desc', false); return; }
+    show('card-function-desc', true);
+    setText('d-function', text);
+  }
+
+  function renderCloning(data) {
+    var methods = KG.splitMulti(data.cloning_method);
+    var description = KG.str(data.cloning_method_description).trim();
+    if (!methods.length && !description) { show('card-cloning', false); return; }
+    show('card-cloning', true);
+
+    var $methods = $('#d-cloning-method');
+    var chips = [];
+    for (var i = 0; i < methods.length; i++) {
+      if (methods[i] === 'Not reported') {
+        chips.push('<span class="kg-muted-note">Not reported</span>');
+      } else {
+        chips.push('<span class="v2-chip">' + KG.esc(methods[i]) + '</span>');
+      }
+    }
+    if (chips.length) { $methods.html(chips.join('')); showEl($methods); } else { hideEl($methods); }
+
+    var $label = $('#d-cloning-desc-label');
+    var $desc = $('#d-cloning-desc');
+    if (description) {
+      $desc.text(description);
+      showEl($label);
+    } else {
+      $desc.text('');
+      hideEl($label);
+      $('#d-cloning-desc-wrap').removeClass('show');
+    }
+  }
+
+  function renderReferences(data) {
+    var refs = buildReferences(data);
+    var $list = $('#d-references');
+    if (!refs.length) {
+      $list.html('<li class="kg-empty">No references recorded.</li>');
+      return;
+    }
+    var html = [];
+    for (var i = 0; i < refs.length; i++) {
+      var ref = refs[i];
+      var title = ref.title
+        ? '<span class="kg-ref-title">' + KG.esc(ref.title) + '</span>'
+        : '<span class="kg-ref-title kg-empty">(title not recorded)</span>';
+      var year = ref.year
+        ? '<span class="kg-ref-year">' + KG.esc(ref.year) + '</span>'
+        : '<span class="kg-ref-year kg-empty">\u2014</span>';
+      var doiUrl = ref.doi ? KG.doiUrl(ref.doi) : '';
+      var doiHtml;
+      if (doiUrl) {
+        doiHtml = '<a href="' + KG.escAttr(doiUrl) + '" target="_blank" rel="noopener noreferrer">' +
+          KG.esc(ref.doi) + '</a>';
+      } else if (ref.doi) {
+        doiHtml = '<span class="kg-no-doi">' + KG.esc(ref.doi) + '</span>';
+      } else {
+        doiHtml = '<span class="kg-no-doi">(DOI not recorded)</span>';
+      }
+      html.push('<li class="kg-ref">' + year + title + doiHtml + '</li>');
+    }
+    $list.html(html.join(''));
+  }
+
+  function renderSpecies(data) {
+    var raw = KG.str(data.species).trim();
+    if (!raw) { show('card-species', false); return; }
+    show('card-species', true);
+    setText('d-species-raw', raw);
+  }
+
+  function renderAuthor(data) {
+    var name = KG.str(data.author).trim();
+    var mail = KG.str(data.author_mail).trim();
+    if (!name && !mail) { show('card-author', false); return; }
+    show('card-author', true);
     var html = '';
-    if (name) html += esc(name);
+    if (name) html += KG.esc(name);
     if (mail) {
       if (name) html += ' ';
-      html += '<a href="mailto:' + esc(mail) + '">&lt;' + esc(mail) + '&gt;</a>';
+      html += '<a href="mailto:' + KG.escAttr(mail) + '">&lt;' + KG.esc(mail) + '&gt;</a>';
     }
     $('#d-author').html(html);
   }
-}
 
-$(function() {
-  var params = new URLSearchParams(location.search);
-  var id = params.get('id');
-  if (!id) {
-    showError('No gene ID provided.');
-    return;
+  function renderDetail(data) {
+    renderHead(data);
+    renderOverview(data);
+    renderRefGenome(data);
+    renderProteinFamily(data);
+    renderAnnotations(data);
+    renderPhenotype(data);
+    renderKeyResults(data);
+    renderFunction(data);
+    renderCloning(data);
+    renderReferences(data);
+    renderSpecies(data);
+    renderAuthor(data);
+
+    document.title = (KG.str(data.gene_id).trim() || 'KnownGene') + ' - WheatOmics';
+
+    $('#loading').hide();
+    $('#error-box').hide();
+    $('#detail-content').removeAttr('hidden');
+    KG.initExpanders(document);
   }
 
-  document.title = id + ' - WheatOmics';
-  $('#d-gene-id').text(id);
+  function showError(message) {
+    $('#loading').hide();
+    $('#detail-content').attr('hidden', 'hidden');
+    $('#error-box').html(
+      KG.esc(message) + ' <a href="/genes/" class="kg-back">Back to KnownGene search</a>.'
+    ).removeAttr('hidden');
+    document.title = 'KnownGene - WheatOmics';
+  }
 
-  $.getJSON('/api/genes/known/' + encodeURIComponent(id))
-    .done(function(resp) {
-      if (resp && resp.success && resp.data) {
-        renderDetail(resp.data);
-      } else {
-        showError((resp && (resp.detail || resp.error)) || 'Failed to load gene.');
-      }
-    })
-    .fail(function(jqXHR) {
-      var msg = (jqXHR.responseJSON && (jqXHR.responseJSON.detail || jqXHR.responseJSON.error))
-        || (jqXHR.status === 404 ? 'Gene not found: ' + id
-            : 'Failed to load gene (' + jqXHR.status + ').');
-      showError(msg);
+  // ------------------------------------------------------------------
+  //  annotation toggles (validation chips / other assays)
+  // ------------------------------------------------------------------
+  function bindDetailEvents() {
+    $('#d-validation').on('click', '#d-validation-more', function () {
+      var more = document.querySelectorAll('#d-validation [data-kg-more]');
+      for (var i = 0; i < more.length; i++) { more[i].removeAttribute('hidden'); }
+      $(this).hide();
     });
-});
+    $('#d-validation-other').on('click', '#d-validation-other-toggle', function () {
+      var $toggle = $(this);
+      var $text = $('#d-validation-other-text');
+      var open = $text.is(':visible');
+      if (open) {
+        $text.attr('hidden', 'hidden');
+        $toggle.attr('aria-expanded', 'false').text('Other assays — show');
+      } else {
+        $text.removeAttr('hidden');
+        $toggle.attr('aria-expanded', 'true').text('Other assays — hide');
+      }
+    });
+
+    // Bootstrap collapse works with jQuery 1.9.1 + bootstrap.bundle 4.5.3;
+    // keep the aria-expanded flag in sync for screen readers.
+    $('#d-cloning-desc-wrap').on('shown.bs.collapse hidden.bs.collapse', function () {
+      var expanded = $(this).hasClass('show');
+      $('#d-cloning-desc-label').attr('aria-expanded', expanded ? 'true' : 'false');
+    });
+  }
+
+  // ------------------------------------------------------------------
+  //  boot
+  // ------------------------------------------------------------------
+  $(function () {
+    KG.bindExpanders(document);
+    bindDetailEvents();
+
+    var params = new URLSearchParams(location.search);
+    var id = params.get('id');
+    if (!id) {
+      showError('No gene ID provided.');
+      return;
+    }
+
+    document.title = id + ' - WheatOmics';
+
+    $.getJSON('/api/genes/known/' + encodeURIComponent(id))
+      .done(function (resp) {
+        if (resp && resp.success && resp.data) {
+          renderDetail(resp.data);
+        } else {
+          showError((resp && (resp.detail || resp.message)) || 'Failed to load gene.');
+        }
+      })
+      .fail(function (jqXHR) {
+        var payload = jqXHR && jqXHR.responseJSON;
+        var message = (payload && (payload.detail || payload.message)) ||
+          (jqXHR.status === 404 ? 'Gene not found: ' + id
+            : 'Failed to load gene (' + jqXHR.status + ').');
+        showError(message);
+      });
+  });
+})();
 </script>
 </body>
 </html>
