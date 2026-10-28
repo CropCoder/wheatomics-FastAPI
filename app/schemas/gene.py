@@ -8,14 +8,27 @@ from pydantic import BaseModel, EmailStr, Field
 
 
 class DOIReference(BaseModel):
-    """DOI plus optional title."""
+    """DOI plus optional title and publication year.
 
-    doi: str
+    ``doi`` is nullable because the v2056 curated data has one row with four
+    titles but only three DOIs (the fourth reference has a title only).
+    ``year`` was added for the structured references list; legacy rows keep
+    returning ``None`` when no year is available.
+    """
+
+    doi: str | None = None
     title: str | None = None
+    year: int | str | None = None
 
 
 class KnownGeneSummary(BaseModel):
-    """Known/cloned gene summary row."""
+    """Known/cloned gene summary row.
+
+    The first eight fields are the pre-v2056 contract and must never be
+    removed or renamed.  ``clone_id``/``gene_id``/``gene_name``/``chrom_pos``/
+    ``phenotype``/``species`` are kept verbatim because the legacy frontend and
+    the CGI pages depend on them.
+    """
 
     clone_id: int | str | None = None
     gene_id: str
@@ -25,6 +38,15 @@ class KnownGeneSummary(BaseModel):
     species: str
     publication_year: str | None = None
     dois: list[str] = Field(default_factory=list)
+    # --- added for the v2056 curated dataset -------------------------------
+    reference_genome_id: str | None = None
+    species_primary: str | None = None
+    chromosome: str | None = None
+    genome_ref: str | None = None
+    phenotype_brief: str | None = None
+    functional_category: str | None = None
+    research_strategy: str | None = None
+    publication_years: list[str] = Field(default_factory=list)
 
 
 class KnownGeneDetail(BaseModel):
@@ -46,6 +68,18 @@ class KnownGeneDetail(BaseModel):
     author: str | None = None
     author_mail: str | None = None
     submission_date: date | str | None = None
+    # --- added for the v2056 curated dataset -------------------------------
+    reference_genome_id: str | None = None
+    protein_family: str | None = None
+    validation_method: str | None = None
+    validation_methods: list[str] = Field(default_factory=list)
+    research_strategy: str | None = None
+    functional_category: str | None = None
+    species_primary: str | None = None
+    chromosome: str | None = None
+    genome_ref: str | None = None
+    phenotype_brief: str | None = None
+    publication_years: list[int | str] = Field(default_factory=list)
 
 
 class GeneDetailResponse(BaseModel):

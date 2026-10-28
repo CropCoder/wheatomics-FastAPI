@@ -1,0 +1,4824 @@
+{
+ "meta": {
+  "source_file": "/Users/mashengwei/Desktop/markdown/陈甜甜/known-gene-paper-20260916/已知基因逐条提取清单_20261019-合集_修正版v2055_20261019.xlsx",
+  "sha256": "e0e971c1a570904cb23b3554787f7afa0fa2bf7fcc75a8f20521f2d42cc1fd47",
+  "size_bytes": 1688313,
+  "rows": 1420,
+  "cols": 17,
+  "columns_original": [
+   "gene_id（入库）",
+   "参考基因组ID（入库）",
+   "gene_name（入库）",
+   "物种信息（入库）",
+   "chrom_pos（入库）",
+   "gene_phenotype（入库）",
+   "key_result（入库，≤500 词英文）",
+   "function_description（入库）",
+   "蛋白家族（入库）",
+   "cloning_method（入库）",
+   "cloning_method_description（入库）",
+   "验证方法（入库）",
+   "研究策略（入库）",
+   "功能大类（入库）",
+   "title（入库）",
+   "doi（入库）",
+   "publication_year（入库）"
+  ],
+  "main_sheet": "数据（修正版v2055）",
+  "sheets": {
+   "数据（修正版v2055）": 1420,
+   "修改记录": 1153,
+   "物种改写明细": 1024,
+   "文本清洗明细": 338,
+   "未决清单": 0,
+   "D10 key_result草案": 0,
+   "K补写依据": 36,
+   "K补写依据(全文)": 16,
+   "说明": 32
+  },
+  "generated_at": "2026-10-28T17:08:57.618091+08:00",
+  "producer": "data-profiler (task-1)"
+ },
+ "colstats": {
+  "gene_id": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 1395,
+   "char_len": {
+    "min": 5,
+    "median": 19.0,
+    "p95": 21.0,
+    "max": 28,
+    "mean": 18.0
+   },
+   "byte_len": {
+    "max": 28,
+    "p95": 21.0
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 0,
+   "singlequote_rows": 0,
+   "backslash_rows": 0,
+   "semi_space_rows": 0,
+   "semicolon_rows": 0,
+   "comma_rows": 0,
+   "nonbmp_chars": 0,
+   "samples": [
+    "TraesCS5A03G0935400",
+    "TraesCS1B03G0192900",
+    "KF061193"
+   ],
+   "longest_sample": "HORVU.MOREX.PROJ.1HG00011510",
+   "longest_len": 28
+  },
+  "ref_genome_id": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 1386,
+   "char_len": {
+    "min": 8,
+    "median": 19.0,
+    "p95": 25.0,
+    "max": 42,
+    "mean": 19.2
+   },
+   "byte_len": {
+    "max": 42,
+    "p95": 25.0
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 0,
+   "singlequote_rows": 0,
+   "backslash_rows": 0,
+   "semi_space_rows": 0,
+   "semicolon_rows": 0,
+   "comma_rows": 1,
+   "nonbmp_chars": 0,
+   "samples": [
+    "TraesCS4D03G0655500",
+    "TraesCS7D03G0377400",
+    "TraesCS5A03G0935400"
+   ],
+   "longest_sample": "Ae.longissima_6S_ORF:51,756,423-51,772,629",
+   "longest_len": 42
+  },
+  "gene_name": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 1418,
+   "char_len": {
+    "min": 2,
+    "median": 8.0,
+    "p95": 12.0,
+    "max": 43,
+    "mean": 8.2
+   },
+   "byte_len": {
+    "max": 43,
+    "p95": 12.0
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 0,
+   "singlequote_rows": 0,
+   "backslash_rows": 0,
+   "semi_space_rows": 1,
+   "semicolon_rows": 9,
+   "comma_rows": 0,
+   "nonbmp_chars": 0,
+   "samples": [
+    "TaVRN-A1",
+    "HvPTR1",
+    "TaERF1-A"
+   ],
+   "longest_sample": "Pm60 (MlIW226 / MlIW6 / MlIW113; Hap 3/5/6)",
+   "longest_len": 43
+  },
+  "species": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 296,
+   "char_len": {
+    "min": 15,
+    "median": 31.0,
+    "p95": 487.0,
+    "max": 668,
+    "mean": 109.5
+   },
+   "byte_len": {
+    "max": 668,
+    "p95": 487.0
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 0,
+   "singlequote_rows": 2,
+   "backslash_rows": 0,
+   "semi_space_rows": 263,
+   "semicolon_rows": 263,
+   "comma_rows": 354,
+   "nonbmp_chars": 0,
+   "samples": [
+    "Triticum aestivum (bread wheat)",
+    "Hordeum vulgare (barley)",
+    "Triticum aestivum (bread wheat: the wheat tissues/grains used for expression, amylose and flour viscosity analyses, the "
+   ],
+   "longest_sample": "Triticum aestivum (bread wheat: the winter and spring wheat varieties used for TaHST1L overexpression and RNAi lines, th",
+   "longest_len": 668
+  },
+  "chrom_pos": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 1389,
+   "char_len": {
+    "min": 24,
+    "median": 31.0,
+    "p95": 31.0,
+    "max": 41,
+    "mean": 30.6
+   },
+   "byte_len": {
+    "max": 41,
+    "p95": 31.0
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 0,
+   "singlequote_rows": 0,
+   "backslash_rows": 0,
+   "semi_space_rows": 0,
+   "semicolon_rows": 0,
+   "comma_rows": 0,
+   "nonbmp_chars": 0,
+   "samples": [
+    "Refv1.0 chr4D:447.639-447.642Mb",
+    "Refv1.0 chr7D:117.243-117.246Mb",
+    "Refv1.0 chr5A:587.411-587.423Mb"
+   ],
+   "longest_sample": "Ae.umbellulata.v1 chr6U:472.602-472.618Mb",
+   "longest_len": 41
+  },
+  "gene_phenotype": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 1070,
+   "char_len": {
+    "min": 10,
+    "median": 359.0,
+    "p95": 1081.1,
+    "max": 1677,
+    "mean": 368.9
+   },
+   "byte_len": {
+    "max": 1677,
+    "p95": 1081.1
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 0,
+   "singlequote_rows": 20,
+   "backslash_rows": 0,
+   "semi_space_rows": 897,
+   "semicolon_rows": 897,
+   "comma_rows": 748,
+   "nonbmp_chars": 0,
+   "samples": [
+    "Not determined",
+    "Drought tolerance",
+    "Salt tolerance"
+   ],
+   "longest_sample": "Cell wall invertase positively regulating resistance to Fusarium crown rot and sharp eyespot: FCR and SE are serious soi",
+   "longest_len": 1677
+  },
+  "key_result": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 1151,
+   "char_len": {
+    "min": 298,
+    "median": 1270.0,
+    "p95": 1760.0,
+    "max": 3051,
+    "mean": 1179.8
+   },
+   "byte_len": {
+    "max": 3051,
+    "p95": 1760.0
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 8,
+   "singlequote_rows": 115,
+   "backslash_rows": 0,
+   "semi_space_rows": 947,
+   "semicolon_rows": 954,
+   "comma_rows": 1416,
+   "nonbmp_chars": 0,
+   "samples": [
+    "We characterized seven GA3OX genes in bread wheat and isolated EMS mutants for GA3OX2, GA3OX3 and GA1OX1. GA3OX2 was ess",
+    "In plant cells, Ca2+ ions are important second messengers, and the Ca2+ sensor calmodulin (CaM) is the most thoroughly c",
+    "Starch content and composition in wheat endosperm are critical determinants of wheat yield and quality, and amylose cont"
+   ],
+   "longest_sample": "TaST (Triticum aestivum salt tolerance gene) was identified by screening a wheat cDNA microarray. Gene-chip analysis of ",
+   "longest_len": 3051
+  },
+  "function_description": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 1420,
+   "char_len": {
+    "min": 343,
+    "median": 1123.0,
+    "p95": 1650.05,
+    "max": 2236,
+    "mean": 1141.0
+   },
+   "byte_len": {
+    "max": 2236,
+    "p95": 1650.05
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 12,
+   "singlequote_rows": 185,
+   "backslash_rows": 0,
+   "semi_space_rows": 1388,
+   "semicolon_rows": 1388,
+   "comma_rows": 1419,
+   "nonbmp_chars": 0,
+   "samples": [
+    "Encodes HvPTR1, a plasma-membrane peptide transporter of the barley scutellar epithelium belonging to the NRT1/PTR (POT)",
+    "Encodes TaERF1, a 355-amino-acid ERF/AP2 (class IV) transcription factor of wheat. Overexpression in transgenic Arabidop",
+    "Encodes TaERF1, a 355-amino-acid ERF/AP2 (class IV) transcription factor of wheat. Overexpression in transgenic Arabidop"
+   ],
+   "longest_sample": "RG1/TaAPA2 corresponds to TraesCS7D02G010200 on the short arm of wheat chromosome 7D and encodes a protein with a von Wi",
+   "longest_len": 2236
+  },
+  "protein_family": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 1176,
+   "char_len": {
+    "min": 22,
+    "median": 366.0,
+    "p95": 1897.05,
+    "max": 2657,
+    "mean": 591.5
+   },
+   "byte_len": {
+    "max": 2657,
+    "p95": 1897.05
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 10,
+   "singlequote_rows": 65,
+   "backslash_rows": 0,
+   "semi_space_rows": 1025,
+   "semicolon_rows": 1025,
+   "comma_rows": 970,
+   "nonbmp_chars": 0,
+   "samples": [
+    "HSP90 (heat shock protein 90) family - ATP-dependent molecular chaperone acting in protein folding, maturation and stres",
+    "NAC transcription factor family",
+    "R2R3-MYB transcription factor family"
+   ],
+   "longest_sample": "PEBP family (FLOWERING LOCUS T-like) - VRN-D3/FT-D1 (TraesCS7D02G111600, printed in the 2024 Plant Communications paper ",
+   "longest_len": 2657
+  },
+  "cloning_method": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 8,
+   "char_len": {
+    "min": 10,
+    "median": 22.0,
+    "p95": 27.0,
+    "max": 51,
+    "mean": 19.3
+   },
+   "byte_len": {
+    "max": 51,
+    "p95": 27.0
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 0,
+   "singlequote_rows": 0,
+   "backslash_rows": 0,
+   "semi_space_rows": 6,
+   "semicolon_rows": 6,
+   "comma_rows": 0,
+   "nonbmp_chars": 0,
+   "samples": [
+    "Homology-based cloning",
+    "Not reported",
+    "Transcriptome-based cloning"
+   ],
+   "longest_sample": "Homology-based cloning; Transcriptome-based cloning",
+   "longest_len": 51
+  },
+  "cloning_method_description": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 1221,
+   "char_len": {
+    "min": 224,
+    "median": 862.0,
+    "p95": 1412.2499999999998,
+    "max": 1757,
+    "mean": 909.0
+   },
+   "byte_len": {
+    "max": 1757,
+    "p95": 1412.2499999999998
+   },
+   "html_rows": 0,
+   "pipe_rows": 1,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 3,
+   "singlequote_rows": 131,
+   "backslash_rows": 0,
+   "semi_space_rows": 966,
+   "semicolon_rows": 974,
+   "comma_rows": 1420,
+   "nonbmp_chars": 0,
+   "samples": [
+    "Haplotypes of TaCYP78A3/5/16/17-A were analysed in 483 wheat cultivars and their associations with yield-related traits ",
+    "Homologs of the VACUOLAR IRON TRANSPORTER (VIT) were functionally characterized in wheat and the expression patterns of ",
+    "TaCaM3 was cloned from wheat cultivar Suwon11 as a homologue of barley CaM (based on the reported BLN1-CaM interaction i"
+   ],
+   "longest_sample": "TaCRK10 was identified from the HTSP-resistant wheat cultivar Xiaoyan 6 (XY6): a 1,649-bp cDNA fragment up-regulated und",
+   "longest_len": 1757
+  },
+  "validation_method": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 895,
+   "char_len": {
+    "min": 12,
+    "median": 149.5,
+    "p95": 1443.1499999999999,
+    "max": 2114,
+    "mean": 494.0
+   },
+   "byte_len": {
+    "max": 2114,
+    "p95": 1443.1499999999999
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 0,
+   "singlequote_rows": 28,
+   "backslash_rows": 0,
+   "semi_space_rows": 1363,
+   "semicolon_rows": 1363,
+   "comma_rows": 567,
+   "nonbmp_chars": 0,
+   "samples": [
+    "Expression analysis",
+    "VIGS; Expression analysis; Phenotyping",
+    "Overexpression; Transgenic transformation; Expression analysis; Phenotyping"
+   ],
+   "longest_sample": "Fine mapping of Rph7 on the short arm of chromosome arm 3H near the telomere using a high-resolution F2 population of 22",
+   "longest_len": 2114
+  },
+  "research_strategy": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 3,
+   "char_len": {
+    "min": 12,
+    "median": 16.0,
+    "p95": 16.0,
+    "max": 16,
+    "mean": 15.8
+   },
+   "byte_len": {
+    "max": 16,
+    "p95": 16.0
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 0,
+   "singlequote_rows": 0,
+   "backslash_rows": 0,
+   "semi_space_rows": 0,
+   "semicolon_rows": 0,
+   "comma_rows": 0,
+   "nonbmp_chars": 0,
+   "samples": [
+    "Reverse genetics",
+    "Forward genetics",
+    "Not reported"
+   ],
+   "longest_sample": "Reverse genetics",
+   "longest_len": 16
+  },
+  "functional_category": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 5,
+   "char_len": {
+    "min": 15,
+    "median": 23.0,
+    "p95": 32.0,
+    "max": 32,
+    "mean": 23.2
+   },
+   "byte_len": {
+    "max": 32,
+    "p95": 32.0
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 0,
+   "singlequote_rows": 0,
+   "backslash_rows": 0,
+   "semi_space_rows": 0,
+   "semicolon_rows": 0,
+   "comma_rows": 0,
+   "nonbmp_chars": 0,
+   "samples": [
+    "Biotic & Abiotic Stress",
+    "Quality & Yield",
+    "Morphology & Domestication"
+   ],
+   "longest_sample": "Physiology & Metabolic Processes",
+   "longest_len": 32
+  },
+  "title": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 824,
+   "char_len": {
+    "min": 48,
+    "median": 112.0,
+    "p95": 220.0,
+    "max": 473,
+    "mean": 124.9
+   },
+   "byte_len": {
+    "max": 473,
+    "p95": 220.0
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 3,
+   "singlequote_rows": 5,
+   "backslash_rows": 0,
+   "semi_space_rows": 127,
+   "semicolon_rows": 138,
+   "comma_rows": 213,
+   "nonbmp_chars": 0,
+   "samples": [
+    "Wheat V-H+-ATPase Subunit Genes Significantly Affect Salt Tolerance in Arabidopsis thaliana",
+    "Molecular analysis of common wheat genes encoding three types of cytosolic heat shock protein 90 (Hsp90): functional inv",
+    "Pleiotropic phenotypic effects of the TaCYP78A family on multiple yield-related traits in wheat"
+   ],
+   "longest_sample": "Combinational transformation of three wheat genes encoding fructan biosynthesis enzymes confers increased fructan conten",
+   "longest_len": 473
+  },
+  "doi": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 820,
+   "char_len": {
+    "min": 13,
+    "median": 25.0,
+    "p95": 47.049999999999955,
+    "max": 82,
+    "mean": 25.1
+   },
+   "byte_len": {
+    "max": 82,
+    "p95": 47.049999999999955
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 0,
+   "singlequote_rows": 0,
+   "backslash_rows": 0,
+   "semi_space_rows": 130,
+   "semicolon_rows": 130,
+   "comma_rows": 0,
+   "nonbmp_chars": 0,
+   "samples": [
+    "10.1371/journal.pone.0086982",
+    "10.1111/j.1469-8137.2011.03715.x",
+    "10.1111/pbi.14385"
+   ],
+   "longest_sample": "10.1016/j.molp.2021.05.009; 10.1016/j.molp.2021.05.010; 10.1038/s41588-022-01022-1",
+   "longest_len": 82
+  },
+  "publication_year": {
+   "nonempty": 1420,
+   "empty": 0,
+   "unique": 102,
+   "char_len": {
+    "min": 4,
+    "median": 4.0,
+    "p95": 10.0,
+    "max": 16,
+    "mean": 4.6
+   },
+   "byte_len": {
+    "max": 16,
+    "p95": 10.0
+   },
+   "html_rows": 0,
+   "pipe_rows": 0,
+   "tab_newline_rows": 0,
+   "doublequote_rows": 0,
+   "singlequote_rows": 0,
+   "backslash_rows": 0,
+   "semi_space_rows": 115,
+   "semicolon_rows": 115,
+   "comma_rows": 0,
+   "nonbmp_chars": 0,
+   "samples": [
+    "2022",
+    "2024",
+    "2023"
+   ],
+   "longest_sample": "2012; 2024; 2002",
+   "longest_len": 16
+  }
+ },
+ "identity": {
+  "gene_id": {
+   "unique": 1395,
+   "dup_value_count": 23,
+   "dup_rows": 25,
+   "top": [
+    [
+     "TraesCS5A03G0935400",
+     3
+    ],
+    [
+     "TraesCS1B03G0192900",
+     3
+    ],
+    [
+     "KF061193",
+     2
+    ],
+    [
+     "TraesCS5D03G0008300",
+     2
+    ],
+    [
+     "TraesCS7A03G0737400",
+     2
+    ],
+    [
+     "TraesCS7D03G0704300",
+     2
+    ],
+    [
+     "TraesCS2A03G0741400",
+     2
+    ],
+    [
+     "TraesCS5A03G0658100",
+     2
+    ],
+    [
+     "TraesCS5B03G0394500",
+     2
+    ],
+    [
+     "HORVU.MOREX.r3.1HG0046420",
+     2
+    ]
+   ]
+  },
+  "ref_genome_id": {
+   "unique": 1386,
+   "dup_value_count": 30,
+   "dup_rows": 34,
+   "top": [
+    [
+     "TraesCS4D03G0655500",
+     3
+    ],
+    [
+     "TraesCS7D03G0377400",
+     3
+    ],
+    [
+     "TraesCS5A03G0935400",
+     3
+    ],
+    [
+     "TraesCS1B03G0192900",
+     3
+    ],
+    [
+     "TraesCS5D03G0008300",
+     2
+    ],
+    [
+     "TraesCS7A03G0737400",
+     2
+    ],
+    [
+     "TraesCS7B03G0535400",
+     2
+    ],
+    [
+     "TraesCS7D03G0704300",
+     2
+    ],
+    [
+     "TraesCS2B03G1021500",
+     2
+    ],
+    [
+     "TraesCS2B03G1112500",
+     2
+    ]
+   ]
+  },
+  "gene_name": {
+   "unique": 1418,
+   "dup_value_count": 1,
+   "dup_rows": 2,
+   "top": [
+    [
+     "TaVRN-A1",
+     3
+    ]
+   ]
+  },
+  "chrom_pos": {
+   "unique": 1389,
+   "dup_value_count": 27,
+   "dup_rows": 31,
+   "top": [
+    [
+     "Refv1.0 chr4D:447.639-447.642Mb",
+     3
+    ],
+    [
+     "Refv1.0 chr7D:117.243-117.246Mb",
+     3
+    ],
+    [
+     "Refv1.0 chr5A:587.411-587.423Mb",
+     3
+    ],
+    [
+     "Refv1.0 chr1B:59.192-59.197Mb",
+     3
+    ],
+    [
+     "Refv1.0 chr7A:409.870-409.879Mb",
+     2
+    ],
+    [
+     "Refv1.0 chr7B:317.228-317.237Mb",
+     2
+    ],
+    [
+     "Refv1.0 chr7D:370.177-370.186Mb",
+     2
+    ],
+    [
+     "Refv1.0 chr2B:569.523-569.527Mb",
+     2
+    ],
+    [
+     "Refv1.0 chr2B:629.017-629.026Mb",
+     2
+    ],
+    [
+     "Refv1.0 chr2A:511.474-511.477Mb",
+     2
+    ]
+   ]
+  },
+  "gene_name_lower_nospace": {
+   "unique": 1415,
+   "dup_rows": 5
+  },
+  "gene_id_upper": {
+   "unique": 1395,
+   "dup_rows": 25
+  },
+  "gene_id_equals_ref": 1240,
+  "gene_id_ne_ref": 180
+ },
+ "multivalue": {
+  "mismatch": [
+   {
+    "idx": 239,
+    "excel_row": 241,
+    "gene_id": "TraesCS1D03G0038800",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1111/nph.19246 | 10.1016/j.jgg.2023.09.001",
+    "year": "2023",
+    "title": "A Glu209Lys substitution in DRG1/TaACT7, which disturbs F-actin organization, reduces plant height and grain length in bread wheat | TaACTIN7-D regulates plant height and grain shape in bread wheat"
+   },
+   {
+    "idx": 243,
+    "excel_row": 245,
+    "gene_id": "TraesCS2A03G0801300",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1016/j.ijbiomac.2022.12.240 | 10.1094/phyto-11-22-0429-r",
+    "year": "2023",
+    "title": "The somatic embryogenesis receptor kinase TaSERK1 participates in the immune response to Rhizoctonia cerealis infection by interacting and phosphorylating the receptor-like cytoplasmic kinase TaRLCK1B in wheat | The Leucine-Rich Repeat Receptor-Like Kinase Protein TaSERK1 Positively Regulates High-T"
+   },
+   {
+    "idx": 247,
+    "excel_row": 249,
+    "gene_id": "TraesCS2B03G0887400",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1016/j.ijbiomac.2022.12.240 | 10.1094/phyto-11-22-0429-r",
+    "year": "2023",
+    "title": "The somatic embryogenesis receptor kinase TaSERK1 participates in the immune response to Rhizoctonia cerealis infection by interacting and phosphorylating the receptor-like cytoplasmic kinase TaRLCK1B in wheat | The Leucine-Rich Repeat Receptor-Like Kinase Protein TaSERK1 Positively Regulates High-T"
+   },
+   {
+    "idx": 252,
+    "excel_row": 254,
+    "gene_id": "TraesCS2D03G0741000",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1016/j.ijbiomac.2022.12.240 | 10.1094/phyto-11-22-0429-r",
+    "year": "2023",
+    "title": "The somatic embryogenesis receptor kinase TaSERK1 participates in the immune response to Rhizoctonia cerealis infection by interacting and phosphorylating the receptor-like cytoplasmic kinase TaRLCK1B in wheat | The Leucine-Rich Repeat Receptor-Like Kinase Protein TaSERK1 Positively Regulates High-T"
+   },
+   {
+    "idx": 281,
+    "excel_row": 283,
+    "gene_id": "TraesCS6A03G0761900",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1007/s11427-022-2286-0 | 10.1016/j.jgg.2023.04.002",
+    "year": "2023",
+    "title": "TaMADS29 interacts with TaNF-YB1 to synergistically regulate early grain development in bread wheat | TabHLH95-TaNF-YB1 module promotes grain starch synthesis in bread wheat"
+   },
+   {
+    "idx": 329,
+    "excel_row": 331,
+    "gene_id": "TraesCS3A03G0970200",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1002/advs.202401383 | 10.1111/jipb.13600",
+    "year": "2024",
+    "title": "Deciphering the Transcriptional Regulatory Network Governing Starch and Storage Protein Biosynthesis in Wheat for Breeding Improvement | TaSRO1 interacts with TaVP1 to modulate seed dormancy and pre-harvest sprouting resistance in wheat"
+   },
+   {
+    "idx": 384,
+    "excel_row": 386,
+    "gene_id": "TraesCS7D03G0023900",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1007/s11427-024-2629-1 | 10.1007/s11427-024-2620-7",
+    "year": "2024",
+    "title": "Identification of a von Willebrand factor type A protein affecting both grain and flag leaf morphologies in wheat | Mutations in wheat TaAPA2 gene result in pleiotropic effects on plant architecture"
+   },
+   {
+    "idx": 437,
+    "excel_row": 439,
+    "gene_id": "HORVU.MOREX.r3.1HG0077240",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1093/jxb/erq382 | 10.1186/1471-2229-11-164",
+    "year": "2011",
+    "title": "Expression analysis of vernalization and day-length response genes in barley (Hordeum vulgare L.) indicates that VRNH2 is a repressor of PPDH2 (HvFT3) under long days | Adaptation of barley to mild winters: A role for PPDH2"
+   },
+   {
+    "idx": 615,
+    "excel_row": 617,
+    "gene_id": "TraesCS7A03G0602700",
+    "n_doi": 2,
+    "n_title": 1,
+    "n_year": 1,
+    "doi": "10.1016/j.cj.2019.09.006 | 10.3389/fpls.2019.00212",
+    "year": "2019",
+    "title": "Diversity and sub-functionalization of TaGW8 homoeologs hold potential for genetic yield improvement in wheat"
+   },
+   {
+    "idx": 617,
+    "excel_row": 619,
+    "gene_id": "TraesCS7B03G0430500",
+    "n_doi": 2,
+    "n_title": 1,
+    "n_year": 1,
+    "doi": "10.1016/j.cj.2019.09.006 | 10.3389/fpls.2019.00212",
+    "year": "2019",
+    "title": "Diversity and sub-functionalization of TaGW8 homoeologs hold potential for genetic yield improvement in wheat"
+   },
+   {
+    "idx": 619,
+    "excel_row": 621,
+    "gene_id": "TraesCS7D03G0590200",
+    "n_doi": 2,
+    "n_title": 1,
+    "n_year": 1,
+    "doi": "10.1016/j.cj.2019.09.006 | 10.3389/fpls.2019.00212",
+    "year": "2019",
+    "title": "Diversity and sub-functionalization of TaGW8 homoeologs hold potential for genetic yield improvement in wheat"
+   },
+   {
+    "idx": 1092,
+    "excel_row": 1094,
+    "gene_id": "TraesCS5D03G1233100",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1007/s11103-007-9201-8 | 10.1007/s00122-007-0551-z",
+    "year": "2007",
+    "title": "Leaf rust resistance gene Lr1, isolated from bread wheat (Triticum aestivum L.) is a member of the large psr567 gene family | Physical mapping and identification of a candidate for the leaf rust resistance gene Lr1 of wheat"
+   },
+   {
+    "idx": 1110,
+    "excel_row": 1112,
+    "gene_id": "TraesCS7A03G0678600",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1111/jipb.13151 | 10.1016/j.jgg.2021.07.003",
+    "year": "2021",
+    "title": "Increasing yield potential through manipulating of an ARE1 ortholog related to nitrogen use efficiency in wheat by CRISPR/Cas9 | Genetic manipulations of TaARE1 boost nitrogen utilization and grain yield in wheat"
+   },
+   {
+    "idx": 1115,
+    "excel_row": 1117,
+    "gene_id": "TraesCS7B03G0545300",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1111/jipb.13151 | 10.1016/j.jgg.2021.07.003",
+    "year": "2021",
+    "title": "Increasing yield potential through manipulating of an ARE1 ortholog related to nitrogen use efficiency in wheat by CRISPR/Cas9 | Genetic manipulations of TaARE1 boost nitrogen utilization and grain yield in wheat"
+   },
+   {
+    "idx": 1124,
+    "excel_row": 1126,
+    "gene_id": "TraesCS7D03G0650400",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1111/jipb.13151 | 10.1016/j.jgg.2021.07.003",
+    "year": "2021",
+    "title": "Increasing yield potential through manipulating of an ARE1 ortholog related to nitrogen use efficiency in wheat by CRISPR/Cas9 | Genetic manipulations of TaARE1 boost nitrogen utilization and grain yield in wheat"
+   },
+   {
+    "idx": 1400,
+    "excel_row": 1402,
+    "gene_id": "TraesCS7D03G0250300",
+    "n_doi": 3,
+    "n_title": 4,
+    "n_year": 3,
+    "doi": "10.1073/pnas.0607142103 | 10.1016/j.xplc.2024.101226 | 10.1111/pbi.70032",
+    "year": "2006 | 2025 | 2025",
+    "title": "The wheat and barley vernalization gene VRN3 is an orthologue of FT | A comprehensive map of DNA-segment copy number variation in 491 genomes of common wheat uncovers genes associated with multiple agronomic traits | A comprehensive map of DNA-segment copy number variation in 491 genomes of common w"
+   }
+  ],
+  "counts_doi": [
+   [
+    1,
+    1290
+   ],
+   [
+    2,
+    110
+   ],
+   [
+    3,
+    20
+   ]
+  ],
+  "counts_year": [
+   [
+    1,
+    1305
+   ],
+   [
+    2,
+    95
+   ],
+   [
+    3,
+    20
+   ]
+  ],
+  "counts_title": [
+   [
+    1,
+    1293
+   ],
+   [
+    2,
+    107
+   ],
+   [
+    3,
+    19
+   ],
+   [
+    4,
+    1
+   ]
+  ],
+  "two_doi_one_year": 15,
+  "same_year_dupe_doi": [],
+  "twooneyear_examples": [
+   {
+    "idx": 239,
+    "excel_row": 241,
+    "gene_id": "TraesCS1D03G0038800",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1111/nph.19246 | 10.1016/j.jgg.2023.09.001",
+    "year": "2023",
+    "title": "A Glu209Lys substitution in DRG1/TaACT7, which disturbs F-actin organization, reduces plant height and grain length in bread wheat | TaACTIN7-D regulates plant height and grain shape in bread wheat"
+   },
+   {
+    "idx": 243,
+    "excel_row": 245,
+    "gene_id": "TraesCS2A03G0801300",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1016/j.ijbiomac.2022.12.240 | 10.1094/phyto-11-22-0429-r",
+    "year": "2023",
+    "title": "The somatic embryogenesis receptor kinase TaSERK1 participates in the immune response to Rhizoctonia cerealis infection by interacting and phosphorylating the receptor-like cytoplasmic kinase TaRLCK1B in wheat | The Leucine-Rich Repeat Receptor-Like Kinase Protein TaSERK1 Positively Regulates High-T"
+   },
+   {
+    "idx": 247,
+    "excel_row": 249,
+    "gene_id": "TraesCS2B03G0887400",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1016/j.ijbiomac.2022.12.240 | 10.1094/phyto-11-22-0429-r",
+    "year": "2023",
+    "title": "The somatic embryogenesis receptor kinase TaSERK1 participates in the immune response to Rhizoctonia cerealis infection by interacting and phosphorylating the receptor-like cytoplasmic kinase TaRLCK1B in wheat | The Leucine-Rich Repeat Receptor-Like Kinase Protein TaSERK1 Positively Regulates High-T"
+   },
+   {
+    "idx": 252,
+    "excel_row": 254,
+    "gene_id": "TraesCS2D03G0741000",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1016/j.ijbiomac.2022.12.240 | 10.1094/phyto-11-22-0429-r",
+    "year": "2023",
+    "title": "The somatic embryogenesis receptor kinase TaSERK1 participates in the immune response to Rhizoctonia cerealis infection by interacting and phosphorylating the receptor-like cytoplasmic kinase TaRLCK1B in wheat | The Leucine-Rich Repeat Receptor-Like Kinase Protein TaSERK1 Positively Regulates High-T"
+   },
+   {
+    "idx": 281,
+    "excel_row": 283,
+    "gene_id": "TraesCS6A03G0761900",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1007/s11427-022-2286-0 | 10.1016/j.jgg.2023.04.002",
+    "year": "2023",
+    "title": "TaMADS29 interacts with TaNF-YB1 to synergistically regulate early grain development in bread wheat | TabHLH95-TaNF-YB1 module promotes grain starch synthesis in bread wheat"
+   },
+   {
+    "idx": 329,
+    "excel_row": 331,
+    "gene_id": "TraesCS3A03G0970200",
+    "n_doi": 2,
+    "n_title": 2,
+    "n_year": 1,
+    "doi": "10.1002/advs.202401383 | 10.1111/jipb.13600",
+    "year": "2024",
+    "title": "Deciphering the Transcriptional Regulatory Network Governing Starch and Storage Protein Biosynthesis in Wheat for Breeding Improvement | TaSRO1 interacts with TaVP1 to modulate seed dormancy and pre-harvest sprouting resistance in wheat"
+   }
+  ],
+  "title_more_than_doi": [
+   {
+    "idx": 1400,
+    "excel_row": 1402,
+    "gene_id": "TraesCS7D03G0250300",
+    "n_doi": 3,
+    "n_title": 4,
+    "n_year": 3,
+    "doi": "10.1073/pnas.0607142103 | 10.1016/j.xplc.2024.101226 | 10.1111/pbi.70032",
+    "year": "2006 | 2025 | 2025",
+    "title": "The wheat and barley vernalization gene VRN3 is an orthologue of FT | A comprehensive map of DNA-segment copy number variation in 491 genomes of common wheat uncovers genes associated with multiple agronomic traits | A comprehensive map of DNA-segment copy number variation in 491 genomes of common w"
+   }
+  ],
+  "year_format_bad": [],
+  "year_range": [
+   1998,
+   2026
+  ],
+  "doi_unique": 820,
+  "doi_token_unique": 883,
+  "doi_rows_vs_unique": {
+   "n_rows": 1570,
+   "n_unique": 883,
+   "shared_tokens": 332,
+   "top_shared": [
+    [
+     "10.1371/journal.pone.0086982",
+     9
+    ],
+    [
+     "10.1111/j.1469-8137.2011.03715.x",
+     9
+    ],
+    [
+     "10.1111/pbi.14385",
+     9
+    ],
+    [
+     "10.1111/pbi.14000",
+     8
+    ],
+    [
+     "10.1093/plphys/kiac112",
+     8
+    ],
+    [
+     "10.1111/nph.18549",
+     7
+    ],
+    [
+     "10.1186/1471-2229-13-64",
+     7
+    ],
+    [
+     "10.1038/s42003-022-03139-9",
+     7
+    ]
+   ]
+  }
+ },
+ "chrom": {
+  "format_dist": [
+   [
+    "full_coord_Mb",
+    1418
+   ],
+   [
+    "no_chr_prefix_coord",
+    2
+   ]
+  ],
+  "no_chr_prefix": [
+   [
+    297,
+    "AetTA1675 2D:2.33-2.45Mb"
+   ],
+   [
+    711,
+    "SYMattis 4A:608.681-608.682Mb"
+   ]
+  ],
+  "chr54_51": [
+   [
+    1147,
+    "T.ponticum.v1 chr54:437.839-437.843Mb",
+    "MN531843.1",
+    "Thinopyrum ponticum (tall wheat grass, 2n = 10x = 70, donor "
+   ],
+   [
+    1151,
+    "T.ponticum.v1 chr51:46.014-46.017Mb",
+    "MN531844.1",
+    "Thinopyrum ponticum (tall wheat grass, donor of the 6Ae#3 se"
+   ]
+  ],
+  "assembly_dist": [
+   [
+    "Refv1.0",
+    1298
+   ],
+   [
+    "MorexV3",
+    72
+   ],
+   [
+    "Zavitan.v1.0",
+    6
+   ],
+   [
+    "Lo7.v1",
+    4
+   ],
+   [
+    "Morex.v3",
+    3
+   ],
+   [
+    "CSIAAS",
+    2
+   ],
+   [
+    "Tmonococcum",
+    2
+   ],
+   [
+    "MorexV2",
+    2
+   ],
+   [
+    "T.elongatum.v1",
+    2
+   ],
+   [
+    "T.ponticum.v1",
+    2
+   ],
+   [
+    "AK58.v1",
+    2
+   ],
+   [
+    "Ae.sharonensis.v1",
+    2
+   ],
+   [
+    "Svevo.v1",
+    2
+   ],
+   [
+    "HvS",
+    1
+   ],
+   [
+    "CSCAU",
+    1
+   ],
+   [
+    "MorexV1",
+    1
+   ],
+   [
+    "RyeLo7",
+    1
+   ],
+   [
+    "Tintermedium",
+    1
+   ],
+   [
+    "Mace",
+    1
+   ],
+   [
+    "BarleyMorex",
+    1
+   ],
+   [
+    "Svevo",
+    1
+   ],
+   [
+    "Turartu",
+    1
+   ],
+   [
+    "Svevo.v1.0",
+    1
+   ],
+   [
+    "Lancer.v2.1",
+    1
+   ],
+   [
+    "Jagger",
+    1
+   ],
+   [
+    "KN9204",
+    1
+   ],
+   [
+    "Ae.longissima",
+    1
+   ],
+   [
+    "D.villosum.v1",
+    1
+   ],
+   [
+    "Refv2.1",
+    1
+   ],
+   [
+    "Zavitan.v1",
+    1
+   ],
+   [
+    "T.monococcum.v1",
+    1
+   ],
+   [
+    "Ae.umbellulata.v1",
+    1
+   ]
+  ],
+  "regex": "^(?P<asm>.+?)\\s*chr\\s*(?P<chrom>[0-9A-Za-z.]+)\\s*:\\s*(?P<start>\\d+(?:\\.\\d+)?)\\s*-\\s*(?P<end>\\d+(?:\\.\\d+)?)\\s*(?P<unit>Mb|Mbp|Mb\\.)?$",
+  "chrom_token_dist": [
+   [
+    "2B",
+    96
+   ],
+   [
+    "2A",
+    90
+   ],
+   [
+    "7A",
+    78
+   ],
+   [
+    "7D",
+    75
+   ],
+   [
+    "2D",
+    75
+   ],
+   [
+    "5B",
+    70
+   ],
+   [
+    "3B",
+    69
+   ],
+   [
+    "5A",
+    68
+   ],
+   [
+    "4D",
+    64
+   ],
+   [
+    "1B",
+    62
+   ],
+   [
+    "3A",
+    61
+   ],
+   [
+    "7B",
+    60
+   ],
+   [
+    "1D",
+    58
+   ],
+   [
+    "4B",
+    58
+   ],
+   [
+    "3D",
+    57
+   ],
+   [
+    "4A",
+    57
+   ],
+   [
+    "5D",
+    56
+   ],
+   [
+    "1A",
+    55
+   ],
+   [
+    "6A",
+    44
+   ],
+   [
+    "6B",
+    38
+   ],
+   [
+    "6D",
+    34
+   ],
+   [
+    "3H",
+    16
+   ],
+   [
+    "2H",
+    15
+   ],
+   [
+    "7H",
+    15
+   ],
+   [
+    "1H",
+    13
+   ],
+   [
+    "4H",
+    10
+   ],
+   [
+    "5H",
+    8
+   ],
+   [
+    "1R",
+    4
+   ],
+   [
+    "6H",
+    3
+   ],
+   [
+    "7E",
+    2
+   ],
+   [
+    "1S",
+    2
+   ],
+   [
+    "2V",
+    1
+   ],
+   [
+    "6R",
+    1
+   ],
+   [
+    "6S",
+    1
+   ],
+   [
+    "6V",
+    1
+   ],
+   [
+    "54",
+    1
+   ],
+   [
+    "51",
+    1
+   ],
+   [
+    "6U",
+    1
+   ]
+  ],
+  "chrom_token_unique": 38,
+  "parse_fail": [],
+  "by_species": {
+   "Hordeum vulgare (unmapped)": [
+    7,
+    [
+     "1H",
+     "2H",
+     "3H",
+     "4H",
+     "5H",
+     "6H",
+     "7H"
+    ]
+   ],
+   "Triticum aestivum (bread wheat)": [
+    22,
+    [
+     "1A",
+     "1B",
+     "1D",
+     "1R",
+     "2A",
+     "2B",
+     "2D",
+     "3A",
+     "3B",
+     "3D",
+     "4A",
+     "4B",
+     "4D",
+     "5A",
+     "5B",
+     "5D",
+     "6A",
+     "6B",
+     "6D",
+     "7A",
+     "7B",
+     "7D"
+    ]
+   ],
+   "Triticum turgidum subsp. durum (durum wheat)": [
+    10,
+    [
+     "2A",
+     "2B",
+     "3A",
+     "3B",
+     "4A",
+     "4B",
+     "5A",
+     "5B",
+     "6A",
+     "6D"
+    ]
+   ],
+   "Aegilops peregrina": [
+    2,
+    [
+     "2B",
+     "2D"
+    ]
+   ],
+   "Dasypyrum villosum": [
+    2,
+    [
+     "3B",
+     "6V"
+    ]
+   ],
+   "Triticum monococcum (einkorn wheat)": [
+    6,
+    [
+     "1A",
+     "2A",
+     "2B",
+     "2D",
+     "3A",
+     "5A"
+    ]
+   ],
+   "Aegilops tauschii": [
+    7,
+    [
+     "1D",
+     "2D",
+     "3D",
+     "4D",
+     "5D",
+     "6D",
+     "7D"
+    ]
+   ],
+   "Triticum urartu": [
+    5,
+    [
+     "2A",
+     "3A",
+     "5A",
+     "6A",
+     "7B"
+    ]
+   ],
+   "Triticum polonicum (Polish wheat)": [
+    2,
+    [
+     "7A",
+     "7B"
+    ]
+   ],
+   "Triticum boeoticum": [
+    2,
+    [
+     "4D",
+     "7A"
+    ]
+   ],
+   "x Triticosecale (triticale)": [
+    2,
+    [
+     "2B",
+     "6B"
+    ]
+   ],
+   "Thinopyrum intermedium": [
+    1,
+    [
+     "2V"
+    ]
+   ],
+   "Hordeum vulgare subsp. spontaneum (wild barley)": [
+    1,
+    [
+     "3H"
+    ]
+   ],
+   "Triticum turgidum (rivet wheat)": [
+    4,
+    [
+     "1A",
+     "1B",
+     "4B",
+     "6B"
+    ]
+   ],
+   "Agropyron cristatum (crested wheatgrass)": [
+    1,
+    [
+     "2A"
+    ]
+   ],
+   "Aegilops speltoides": [
+    2,
+    [
+     "6B",
+     "7A"
+    ]
+   ],
+   "Thinopyrum elongatum": [
+    1,
+    [
+     "7E"
+    ]
+   ],
+   "Triticum turgidum subsp. dicoccoides (wild emmer wheat)": [
+    4,
+    [
+     "2B",
+     "3B",
+     "6B",
+     "7A"
+    ]
+   ],
+   "Triticum timopheevii": [
+    1,
+    [
+     "2B"
+    ]
+   ],
+   "Secale cereale (rye)": [
+    2,
+    [
+     "1R",
+     "6R"
+    ]
+   ],
+   "Aegilops sharonensis": [
+    2,
+    [
+     "1S",
+     "6S"
+    ]
+   ],
+   "Thinopyrum ponticum": [
+    2,
+    [
+     "51",
+     "54"
+    ]
+   ],
+   "Aegilops umbellulata": [
+    1,
+    [
+     "6U"
+    ]
+   ]
+  },
+  "label_dist": [
+   [
+    "2B",
+    96
+   ],
+   [
+    "2A",
+    90
+   ],
+   [
+    "7A",
+    78
+   ],
+   [
+    "7D",
+    75
+   ],
+   [
+    "2D",
+    75
+   ],
+   [
+    "5B",
+    70
+   ],
+   [
+    "3B",
+    69
+   ],
+   [
+    "5A",
+    68
+   ],
+   [
+    "4D",
+    64
+   ],
+   [
+    "1B",
+    62
+   ],
+   [
+    "3A",
+    61
+   ],
+   [
+    "7B",
+    60
+   ],
+   [
+    "1D",
+    58
+   ],
+   [
+    "4B",
+    58
+   ],
+   [
+    "3D",
+    57
+   ],
+   [
+    "4A",
+    57
+   ],
+   [
+    "5D",
+    56
+   ],
+   [
+    "1A",
+    55
+   ],
+   [
+    "6A",
+    44
+   ],
+   [
+    "6B",
+    38
+   ],
+   [
+    "6D",
+    34
+   ],
+   [
+    "3H",
+    16
+   ],
+   [
+    "2H",
+    15
+   ],
+   [
+    "7H",
+    15
+   ],
+   [
+    "1H",
+    13
+   ],
+   [
+    "4H",
+    10
+   ],
+   [
+    "5H",
+    8
+   ],
+   [
+    "1R",
+    4
+   ],
+   [
+    "6H",
+    3
+   ],
+   [
+    "7E",
+    2
+   ],
+   [
+    "1S",
+    2
+   ],
+   [
+    "2V",
+    1
+   ],
+   [
+    "6R",
+    1
+   ],
+   [
+    "6S",
+    1
+   ],
+   [
+    "6V",
+    1
+   ],
+   [
+    "54",
+    1
+   ],
+   [
+    "51",
+    1
+   ],
+   [
+    "6U",
+    1
+   ]
+  ],
+  "label_unique": 38
+ },
+ "gene_id_pattern_dist": [
+  [
+   "TraesCS",
+   1158
+  ],
+  [
+   "GenBank-like",
+   152
+  ],
+  [
+   "HORVU",
+   56
+  ],
+  [
+   "other",
+   54
+  ]
+ ],
+ "ref_pattern_dist": [
+  [
+   "TraesCS",
+   1293
+  ],
+  [
+   "HORVU",
+   77
+  ],
+  [
+   "other",
+   26
+  ],
+  [
+   "GenBank-like",
+   23
+  ],
+  [
+   "Ae./other-alpha",
+   1
+  ]
+ ],
+ "species": {
+  "raw_unique": 296,
+  "canonical_unique": 23,
+  "canonical_dist": [
+   [
+    "Triticum aestivum",
+    1260
+   ],
+   [
+    "Hordeum vulgare",
+    79
+   ],
+   [
+    "Triticum turgidum subsp. durum",
+    13
+   ],
+   [
+    "Triticum monococcum",
+    10
+   ],
+   [
+    "Aegilops tauschii",
+    10
+   ],
+   [
+    "Triticum turgidum subsp. dicoccoides",
+    9
+   ],
+   [
+    "Triticum urartu",
+    7
+   ],
+   [
+    "Triticum turgidum",
+    4
+   ],
+   [
+    "Secale cereale",
+    4
+   ],
+   [
+    "Aegilops sharonensis",
+    3
+   ],
+   [
+    "Aegilops peregrina",
+    2
+   ],
+   [
+    "Dasypyrum villosum",
+    2
+   ],
+   [
+    "Triticum polonicum",
+    2
+   ],
+   [
+    "Triticum boeoticum",
+    2
+   ],
+   [
+    "x Triticosecale",
+    2
+   ],
+   [
+    "Aegilops speltoides",
+    2
+   ],
+   [
+    "Thinopyrum elongatum",
+    2
+   ],
+   [
+    "Thinopyrum ponticum",
+    2
+   ],
+   [
+    "Thinopyrum intermedium",
+    1
+   ],
+   [
+    "Hordeum vulgare subsp. spontaneum",
+    1
+   ],
+   [
+    "Agropyron cristatum",
+    1
+   ],
+   [
+    "Triticum timopheevii",
+    1
+   ],
+   [
+    "Aegilops umbellulata",
+    1
+   ]
+  ],
+  "common_name_map": {
+   "Triticum aestivum": "bread wheat",
+   "Hordeum vulgare": "barley",
+   "Triticum turgidum": "rivet wheat",
+   "Triticum turgidum subsp. durum": "durum wheat",
+   "Triticum turgidum subsp. dicoccoides": "wild emmer wheat",
+   "Triticum monococcum": "einkorn wheat",
+   "Triticum polonicum": "Polish wheat",
+   "Secale cereale": "rye",
+   "x Triticosecale": "triticale",
+   "Agropyron cristatum": "crested wheatgrass",
+   "Hordeum vulgare subsp. spontaneum": "wild barley"
+  },
+  "canonical_map": [],
+  "raw_to_canonical": {
+   "Aegilops peregrina": "Aegilops peregrina",
+   "Aegilops sharonensis (accession AEG-548-4, donor of the 6S segment in the wheat introgression line D42); Aegilops longissima (diversity panel of 244 accessions used for AgRenSeq); Triticum aestivum (bread wheat: cv. Galil background of the D42 introgression line and cv. Fielder transgenic lines)": "Aegilops sharonensis",
+   "Aegilops sharonensis (accession AS_1644, donor of the 1Ssh segment carrying Sr62); Triticum aestivum (bread wheat: the Zahir-1644 wheat-Ae. sharonensis introgression lines used for EMS mutagenesis, and the susceptible cv. Fielder used for stable transformation)": "Aegilops sharonensis",
+   "Aegilops sharonensis (accession AS_1644/Zahir-1644, donor of the SR62 locus on chromosome arm 1S); Triticum aestivum (bread wheat: cv. Fielder carrying the orthologous 1D NLR allele (94.6% amino acid identity) used for transient complementation, and the Zahir-1644 EMS mutant lines); Nicotiana benthamiana (transient co-expression and luciferase assays; oat (Avena sativa) protoplasts were also used)": "Aegilops sharonensis",
+   "Aegilops speltoides (Pm12 donor); Triticum aestivum (bread wheat introgression lines WL31/1338-8 and transgenic cv. Fielder); Nicotiana benthamiana (CC-domain cell-death assays)": "Aegilops speltoides",
+   "Aegilops speltoides (donor of the Lr47 segment from chromosome 7S#1; sequenced reference TS01); Triticum aestivum (bread wheat: the translocation line T7AS-7S#1S-7AS.7AL and cv. Kern Lr47 carrying the introgression, the mutant line m118 used for mapping, and transgenic lines for complementation)": "Aegilops speltoides",
+   "Aegilops tauschii": "Aegilops tauschii",
+   "Aegilops tauschii (242-accession panel); Triticum aestivum (Fielder transgenics)": "Aegilops tauschii",
+   "Aegilops tauschii (AL8/78, Sr33 donor); Triticum aestivum (CS1D5405, Fielder transgenics)": "Aegilops tauschii",
+   "Aegilops tauschii (WTK4 donor); Triticum aestivum (synthetic hexaploid NIAB-144); Triticum turgidum (durum parent Hoh-501)": "Aegilops tauschii",
+   "Aegilops tauschii (accession CPI110672); Triticum aestivum (transgenic lines in cvs Fielder and Avocet S)": "Aegilops tauschii",
+   "Aegilops tauschii (accession KU2126, AetSRG1 donor); Triticum aestivum (bread wheat cv. Bobwhite transgenic overexpression lines; wheat orthologs TaSRG1A/TaSRG1B/TaSRG1D)": "Aegilops tauschii",
+   "Aegilops tauschii (the D-genome donor of bread wheat, in which the Lr42 resistance allele is rare and in which the causal NLR gene AET1Gv20040300 resides); Triticum aestivum (bread wheat: the CIMMYT breeding lines carrying Lr42, and the transgenic overexpression and mutant lines used to validate the gene)": "Aegilops tauschii",
+   "Aegilops tauschii (wild diploid wheat, D-genome progenitor of bread wheat)": "Aegilops tauschii",
+   "Aegilops umbellulata (accession TA1851, donor of the 6U segment carrying Lr9); Aegilops triuncialis (reported source of Lr58, although Lr58 has an identical coding sequence to Lr9 and appears to come from the same translocation); Triticum aestivum (bread wheat: the Lr9 introgression line TcLr9 (Transfer/6xThatcher), the Lr58 carrier TA5605, and the VIGS assay background cv. Fielder)": "Aegilops umbellulata",
+   "Agropyron cristatum (2PL donor); Triticum aestivum (2PT5 translocation line and Fielder transgenics)": "Agropyron cristatum",
+   "Dasypyrum villosum": "Dasypyrum villosum",
+   "Dasypyrum villosum (Haynaldia villosa, 6VS donor of Pm21/NLR1-V); Triticum aestivum (bread wheat: the T6VS.6AL introgression line NAU427, the EMS-derived susceptible mutants SM-1 to SM-8, and the transgenic SM-1 plants)": "Dasypyrum villosum",
+   "Hordeum vulgare (barley)": "Hordeum vulgare",
+   "Hordeum vulgare (barley: cv. Bowman and the near-isogenic line cv. Bowman-cul4.5 carrying the cul4.5 mutant allele; the six wild-type cultivars used for the mapping cross; and the cul4 mutant alleles analysed)": "Hordeum vulgare",
+   "Hordeum vulgare (barley: cv. Cebada Capa (PI 539113), donor of Rph7; the near-isogenic line BW758 carrying Rph7 in the susceptible cv. Bowman background; and cv. Golden Promise used for protoplast assays and transgenic complementation); Nicotiana benthamiana (transient expression and cell death assays)": "Hordeum vulgare",
+   "Hordeum vulgare (barley: cv. Thibaut, donor of the Rdg2a allele; cv. Mirco, the susceptible parent used for mapping; cv. Morex, used for BAC/cosmid physical mapping; and cv. Golden Promise, the leaf stripe susceptible transformation host)": "Hordeum vulgare",
+   "Hordeum vulgare subsp. spontaneum (wild barley)": "Hordeum vulgare subsp. spontaneum",
+   "Secale cereale (rye, chromosome 6RS of triticale lines; Lo7 and Weining genome assemblies used as references); Triticum aestivum (bread wheat: cv. Fielder transgenic overexpression lines, BSMV-VIGS plants and the EMS-mutagenized TR1 population); Nicotiana benthamiana (transient overexpression of CC and CC-NBS-LRR constructs)": "Secale cereale",
+   "Secale cereale (rye, the 1RS segment introgressed in wheat cv. Amigo; cv. Petkus rye as the source of Pm8); Triticum aestivum (bread wheat: cv. Amigo carrying the 1AL.1RS/1BL.1RS translocation, cv. Bobwhite 26 used for stable transformation, cv. Chancellor used for transient assays, and the T3 transgenic lines)": "Secale cereale",
+   "Secale cereale (rye: cv. Imperial, donor of the 1RS segment carrying Sr50/ScRGA1-A in the wheat 1DL.1RS translocation); Triticum aestivum (bread wheat: the Gabo 1DL.1RS-DR.A1 stock and its EMS-derived sr50 mutants M7 and M13, plus the transgenic cv. Fielder lines expressing Sr50)": "Secale cereale",
+   "Secale cereale (rye: cv. Petkus, donor of the 1RS segment in the wheat 1BL.1RS translocation); Triticum aestivum (bread wheat: the susceptible cv. Bobwhite SH 98 26 used for stable transformation, the 1BL.1RS wheat lines carrying Petkus 1RS, and cv. Amigo (1AL.1RS; Pm17) used as a control)": "Secale cereale",
+   "Thinopyrum elongatum (tall wheat grass, donor of Sr43). Triticum aestivum (bread wheat: the wheat-Th. elongatum recombinant chromosome 7D introgression line mutagenized with EMS, and the transgenic cv. Fielder lines expressing Sr43)": "Thinopyrum elongatum",
+   "Thinopyrum elongatum (wild relative used in wheat distant-hybridization breeding, E genome); Triticum aestivum (wheat, cv. KN199 transgenic lines and wheat-Thinopyrum introgression/substitution lines)": "Thinopyrum elongatum",
+   "Thinopyrum intermedium": "Thinopyrum intermedium",
+   "Thinopyrum ponticum (tall wheat grass, 2n = 10x = 70, donor of Sr26 on the 6Ae#1 segment); Triticum aestivum (bread wheat: the Avocet+Lr46 genetic stock carrying the T6AS.6AL-6Ae#1 translocation used for EMS mutagenesis, and the transgenic wheat lines used for complementation)": "Thinopyrum ponticum",
+   "Thinopyrum ponticum (tall wheat grass, donor of the 6Ae#3 segment). Triticum aestivum (bread wheat: the South African accession W3757 carrying the 6Ae#3 (6D) chromosome substitution and its EMS mutants such as M4, the recombinant alien segment line 376/15, and the transgenic wheat lines used for complementation)": "Thinopyrum ponticum",
+   "Triticosecale (the artificial wheat-rye hybrid: the triticale cultivar Coorong carrying the 3RS introgression from Imperial rye and its EMS-mutagenized M2 families, used for MutRenSeq and for the Pgt infection screens); Triticum aestivum (bread wheat: the wheat line carrying the 3R introgression in which Sr27 was first identified, the wheat germplasm used for transgenic expression of the Sr27 candidate, and wheat as a host of Puccinia graminis f. sp. tritici); Secale cereale (cultivar Imperial, the rye donor of the 3RS segment carrying Sr27)": "x Triticosecale",
+   "Triticum aestivum (bread wheat cv. Madsen; resistance donor Aegilops sharonensis)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat); Arabidopsis thaliana (P35S:WLHS1-D overexpression)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat); Arabidopsis thaliana (heterologous overexpression of TaMADS2-3D)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat); Arabidopsis thaliana (heterologous overexpression)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat); Triticum turgidum (tetraploid wheat cv. Kronos); Brachypodium distachyon and heterologous cereal transgenics": "Triticum aestivum",
+   "Triticum aestivum (bread wheat); Triticum turgidum (tetraploid wheat cv. Kronos); heterologous cereal transgenics": "Triticum aestivum",
+   "Triticum aestivum (bread wheat); heterologous cereal transgenics": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, +Lr34 cv. Chinese Spring and -Lr34 cv. Renan alleles; near-isogenic lines Jupateco R/S and Arina Lr34/-Lr34; gamma-irradiation and sodium azide mutants)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, GWAS panel and cultivars; cv. Fielder RNAi/overexpression transgenics)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, Nongda3753 and its EMS mutant M564; ND981, GY5218 and SL02-1 marker-assisted backcrossed lines)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, Qc1 mutant line S-Cp1-1 and its EMS revertant AS1); Triticum monococcum (BAC library used for the physical contig)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, UK/European winter wheat MAGIC population); Triticum turgidum (tetraploid wheat cv. Kronos TILLING mutants)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Cadenza EMS mutant lines); Aegilops variabilis (F1 hybrids with hexaploid wheat)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Cadenza EMS mutants); Triticum turgidum ssp. durum (tetraploid cv. Kronos)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Cadenza TILLING population and transgenic lines)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Cadenza TILLING population); Triticum turgidum (tetraploid wheat cv. Kronos TILLING lines); Aegilops peregrina (crossed to generate the synthetic tetraploid KU37 for B-granule variation)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Chinese Spring and cv. Fielder CRISPR mutants); Oryza sativa (transgenic expression of TaPHT1;9-4B)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Chinese Spring for cloning/expression analysis; cv. Fielder for protoplasts and transgenic/VIGS experiments)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Chinese Spring for gene isolation, cv. Kenong 199 as transformation recipient, and wheat wild accessions/landraces/modern varieties for haplotype analysis)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Chinese Spring for the three homoeologs and cv. Fielder for RNAi/overexpression lines); Triticum turgidum ssp. durum (tetraploid wheat for the double homoeolog mutant)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Fielder CRISPR mutants and 306 hexaploid wheat accessions)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Fielder CRISPR mutants and transgenic overexpression lines)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Fielder CRISPR mutants; 306 hexaploid wheat accessions used for the TaSus-A1 haplotype analysis)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Fielder CRISPR-Cas9 edited lines)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Fielder CRISPR-Cas9 knockout lines)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Fielder and additional wheat genotypes with Taspl6 mutants; landrace donor of TaSPL6-DIn and a leading cultivar for introgression)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Fielder for RNAi/overexpression lines); Triticum turgidum ssp. durum (tetraploid wheat for the double homoeolog mutant)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Fielder overexpression lines)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Fielder transgenic overexpression and CRISPR-Cas9 knockout lines)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Fielder transgenic overexpression lines)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Fielder transgenics)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Fielder used for TaERF109A2 overexpression and for the CRISPR/Cas9 nonuple Taerf109s mutant)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Jinan Wheat No. 1 (JW1) transgenic overexpression lines)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Jing411 and its EMS mutant je0072)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Kenong 199 and transgenic lines); Triticum urartu (TuSPR donor)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Kenong 199 gene-edited mutants)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Kenong199)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Magnif M semidwarf mutant, Cadenza TILLING line Cadenza0453 and cv. Fielder transgenic families)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. NB1 RNAi transgenics and EMS-mutagenized population)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Paragon deletion lines and cv. Cadenza TILLING mutants)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Pingyuan 50 VIGS material and cv. Aikang 58 EMS mutants; DH population from Bainong64 x Jingshuang16); Triticum turgidum (tetraploid wheat cv. Kronos EMS mutant)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Sumai 3 and its EMS mutant NAUH164)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. ZhengMai 7698 and cv. Kenong 199 CRISPR-Cas9 mutants)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Zhengmai 7698 and transgenic/mutant lines); Oryza sativa (OsPIL11) and Zea mays (ZmPIL1) homologues": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, cv. Zhoumai 18 for proteomics and promoter isolation; 62 bread wheat cultivars, 11 tetraploid wheat accessions and 28 diploid wheat relatives for haplotype and nucleotide-diversity analyses); Oryza sativa (transgenic expression of TaPHT1;9-4B)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, including the Portuguese landrace Mocho de Espiga Branca); Saccharomyces cerevisiae and Xenopus laevis oocytes (heterologous expression); Arabidopsis thaliana (transient expression)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, susceptible cultivar FM5); Arabidopsis thaliana (transgenic overexpression)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, susceptible cv. Fielder used for transformation); Aegilops tauschii (Lr1 region physical mapping and orthologous resistance)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, two spring wheat genotypes with contrasting waterlogging tolerance); Arabidopsis thaliana (heterologous overexpression)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, winter cultivars Xiaoyan 54 and Jing 411; KN199 transgenic background; commercial cultivar JM22 introgression lines)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat, winter wheat cultivar Dongnongdongmai1/Dn1); Arabidopsis thaliana (transgenic overexpression)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: Chinese Spring and the wheat accessions/cultivars used for haplotype and association analysis of TaBT1-6B, and the RNAi transgenic wheat lines used for grain phenotyping); Oryza sativa (transgenic rice carrying exogenous TaBT1 promoters for GUS staining and enzyme activity assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: Chinese Spring and the wheat accessions/cultivars used for haplotype and association analysis of the TaBT1-6B locus, and the RNAi transgenic wheat lines used for grain phenotyping); Oryza sativa (transgenic rice carrying exogenous TaBT1 promoters for GUS staining and enzyme activity assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: Chinese Spring, from which RFL29b was cloned, the maintainer lines and restorer lines Primepi, R0946E and R0934F carrying RFL29a, Fielder carrying RFL29c, and the T-CMS transgenic plants used for the restoration test); Triticum timopheevii (the donor of the T-CMS cytoplasm)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: Chinese Spring, the EMS-mutagenised cv. Gabo 56 M2 population, the Vernstein line and the transgenic wheat lines used for complementation; the wild emmer accession Zavitan is referred to only for sequence comparison of Sr21 homologues)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: cv CM82036 from which the TaNACL-D1 gene was cloned and sequenced, cv Chinese Spring (IWGSC RefSeq v1.1) in which the 5A/5B/5D homeologs were identified, and the transgenic wheat lines overexpressing TaNACL-D1 together with wild-type plants used for Fusarium head blight (FHB) disease phenotyping and expression analyses); Nicotiana benthamiana (leaves used for transient expression of TaNACL-D1-YFP fusions for subcellular localization and for bimolecular fluorescence complementation (BiFC) assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: cv. AK58 used for EMS mutagenesis, and cv. Yangmai 18 (YM18) used for transgenic complementation); Nicotiana benthamiana (split-luciferase complementation, BiFC and co-immunoprecipitation of Yr6 CNLI and Yr6 RL)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: cv. AK58 used for EMS mutagenesis, and cv. Yangmai 18 (YM18) used for transgenic complementation); Nicotiana benthamiana (yeast two-hybrid, split-luciferase complementation, BiFC and co-immunoprecipitation of Yr6 CNLI and Yr6 RL)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: cv. Cadenza TILLING lines, cv. Jagger and Chinese Spring used as reference genomes, and an R-gene capture panel of 320 wheat lines including 300 A.E. Watkins landraces)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: cv. Cadenza, the genotype used for the CRISPR/Cas9 editing, together with the T0, T1, T2 and T3 edited lines and the wild-type controls analysed for grain free asparagine, free amino acids and germination)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: cv. Fielder used for overexpression and RNAi transgenic lines; Chinese wheat core collections and 348 cultivars used for haplotype association; developing grains used for proteome analysis); Nicotiana benthamiana (transient luciferase complementation imaging and promoter LUC assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: cv. Kitahonami, which carries the GNI-A1 105Y allele and was used for TILLING, and the hexaploid wheat lines used for RNAi knockdown and field trials); Triticum turgidum (tetraploid wheat: wild emmer T. turgidum ssp. dicoccoides and domesticated emmer ssp. dicoccum used in the evolutionary analyses, and the durum reference corresponding to the row gene model); Triticum monococcum (einkorn wheat, used for in situ hybridisation of GNI1 mRNA in the spikelet meristem and rachilla)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: cv. Lumai 15 carrying the 1BL/1RS rye translocation, cv. Kenong 9204 as the reference genome, cv. Fielder as transgenic recipient, and the 1BL/1RS cultivars CB037-PstR and CB037-PstS used for CRISPR editing)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: cv. Yanzhan4110 and the EMS-induced early leaf senescence mutant els3); Nicotiana benthamiana (transient expression of the mutant gene)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: flag leaves and grains at the grain-filling stage sampled under 37 °C heat treatment for RNA-seq and WGCNA, and wheat plants used for nano-carrier transient expression of TaBI-1/TaMBF1c); Saccharomyces cerevisiae (yeast assays of thermotolerance at 50 °C)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the 'Chinese Spring' BAC library used to isolate PRR homologues, and the varieties with known Ppd alleles including 'Ciano 67', 'Mercia' and 'Norstar'); Aegilops tauschii (the PRR homologue sequence DQ885771 used in the sequence comparison)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the 225 bHLH transcription factors analysed by expression patterns, the developing seeds at 5-20 days post-anthesis used for expression analysis, and the stable TaPGS1 overexpression lines (built with the full-length CDS of TraesCS1D02G094000 and TraesCS1D02G094200) and wild-type controls used for grain weight/size and carbohydrate/protein phenotyping); Oryza sativa (rice: the Kitaake overexpression lines and OsFl3 CRISPR/Cas9 knockout lines used for grain weight/size phenotyping, plus the rice materials used for ChIP-seq and RNA-seq analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the 262 worldwide wheat lines used for haplotype analysis, the synthetic hexaploid wheat from which PHS-3D was mapped, and the transgenic wheat lines used for functional validation); Aegilops tauschii (the 16 accessions included in the haplotype analysis of the PAV region)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the 30 wheat cultivars with various genetic backgrounds used for sequencing the coding regions and promoters of the three TaCYP78A5 homoeologs, the transgenic wheat lines with constitutive or maternal-integument-localized overexpression of TaCYP78A5, and the field trials/accession panels used for grain weight, yield and haplotype analyses); Nicotiana benthamiana (leaves infiltrated with Ap-HapI::LUC and Ap-HapII::LUC constructs for promoter-activity assays of the 2A haplotypes)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the 300 whole-genome shotgun-sequenced landraces of the WatSeq consortium used for GWAS, the cultivars Chinese Spring and ArinaLrFor used for gene annotation and transgenesis, and the EMS-mutagenised M2 families and transgenic lines used for validation)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the AvocetS-Yr5 and Lemhi-Yr5 lines, cv. Claire, Cadenza and Kronos, plus the susceptible EMS mutant populations used for MutRenSeq)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the Bobwhite background and the TALEN-induced Tamlo-R32 mutant carrying a 304-kb deletion at the MLO-B1 locus, the Tamlo-R32 x Tamlo-aaBBdd and Tamlo-R32 x Tamlo-aabbdd F2 populations used for genetic mapping and powdery mildew resistance scoring, the CRISPR-Cas9-edited elite wheat varieties carrying the Tamlo-R32 allele, and the field-grown plants used for growth and yield evaluation); Arabidopsis thaliana (the Atmlo2/6/12 triple mutant overexpressing AtTMT3, used to test the conserved function of TMT3)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the CRISPR-Cas9-edited duo-B1 mutant lines in a bread wheat cultivar background, the 90 wheat landrace association population, and field trials at Changping, Beijing and Zhaoxian, Hebei); Brachypodium distachyon (Bd21 used as a wheat proxy, including the tDNA insertion mutant bdduo1-1, the CRISPR-Cas9 knockouts bdduo1 m1 and m2, and the gBdDUO1 complementation lines)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the CRISPR/Cas9 tanhx2 and tagad1 mutants, the TaNHX2-overexpressing transgenic wheat lines and the wild-type controls grown under water deficit, and the wheat protoplasts/guard cell materials used for stomatal and interaction analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the CS/Ax7A substitution line and cv. Thew used for EMS mutagenesis and MutRenSeq, and cv. Fielder used for stable transgenic complementation); Nicotiana benthamiana (transient co-expression of AvrPm1a and Pm1a for the hypersensitive response assay)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the Cadenza genetic background in which the seven GA3OX genes were sequenced and the EMS-mutant population used for the ga3ox2, ga3ox3 and ga1ox1 mutants, together with the wheat accessions used for the GA3OX3-B1/GA1OX1-B1 haplotype and association analyses and the grain samples used for GA profiling)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the Canadian dormant cultivar Leader, the nondormant Japanese cultivar Haruyokoi used as recurrent parent, the BC3F2/BC4F2 and BC3F3/BC4F3 mapping populations selected around Phs1, and the transgenic complementation lines MEL29 and MEL31)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the EMS mutant and wild-type lines used for grain trait, pericarp cell and expression analyses, and the 210 wheat accessions (landraces and cultivars) used for haplotype association); Triticum turgidum (the tetraploid wheat variety Kronos EMS mutant library, including the TtARF25 single-homoeolog mutants Kronos2217/Kronos824/Kronos932 and the TtERF3 mutant Kronos2247); Nicotiana benthamiana (leaves used for the firefly luciferase complementation imaging (LCI) and bimolecular fluorescence complementation (BiFC) assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the EMS mutant m406 and its wild-type, the fine-mapping population and the materials used for fluorescence in situ hybridization of the 2DS deletion, and the TaFPF1-2D CRISPR/Cas9 knockout mutants generated in the KN199 background together with the field materials used for heading date, spike length and grain size phenotyping)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the EMS-induced autoimmunity mutant 8P4087 and the 8P4087 x KN9204 mapping population, the transgenic wheat lines carrying WAI-B2 used for complementation and multi-disease resistance phenotyping, and the wheat plants used for cell-death and autoimmunity analyses); Nicotiana benthamiana (leaves used for luciferase complementation imaging (LCI), Co-immunoprecipitation and cell-death assays, and for testing the AI-designed WAI-B2 alleles)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the EMS-induced chl mutant and the allelic TaCHLI mutants chl-7b-1, chl-7b-2 and chl-7d-1, the segregating population used for map-based cloning, and the wheat accessions used for natural-variation/haplotype analysis); Oryza sativa (rice overexpressing TaCHLI-7D, used to test effects on thousand kernel weight, yield per plant and germination)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the EMS-induced oligo-tiller mutant ot2 and its wild-type parental line, used for mutant characterization, bulked segregant analysis/exon sequencing, KASP marker genotyping and transcriptome analysis; the mapping population used for fine mapping of Taot2 on chromosome 1BL)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the EMS-mutagenized mutants ta1 and ta2 with enlarged tiller angles, the wild-type cultivar KN199, the pUbi::TaPROG1 overexpression lines, the TaPROG1 and Rht-A1ta1 double-transgenic plants and the TaLA1 CRISPR/Cas9 knockout lines used for tiller angle/plant height phenotyping, and wheat mesophyll protoplasts used for transient expression); Nicotiana benthamiana (leaf tissue used for transient luciferase complementation imaging, BiFC and dual-luciferase assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the EMS-mutagenized ta1 and ta2 mutant populations, the F2 mapping population, the CRISPR/Cas9 and overexpression transgenic lines of Rht-A1, TaPROG1 and TaLA1-D, and the wheat accessions used for TaLA1-D haplotype/population genomic analysis); Nicotiana benthamiana (leaves used for transient expression, split-luciferase complementation imaging (LCI) and bimolecular fluorescence complementation (BiFC) assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the EMS-mutant population in the Cadenza genetic background, from which the ga1ox1-B1 line (Cadenza1684, 3' splice acceptor/intron 2) and the ga3ox2/ga3ox3 mutants were isolated and phenotyped, together with the wheat accessions used for the GA1OX1-B1/GA3OX3-B1 haplotype and association analyses and the grain samples used for GA profiling)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the EMS-mutant population in the Cadenza genetic background, from which the ga3ox2 (W149), ga3ox3 (W130) and ga1ox1 mutants were isolated and phenotyped, together with the wheat accessions used for the GA3OX3-B1/GA1OX1-B1 haplotype and association analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the EMS-mutant population in the Cadenza genetic background, from which the ga3ox2-B1 (W130), ga3ox2-A1 (W149), ga3ox3 (W130-equivalent) and ga1ox1 mutants were isolated and phenotyped, together with the wheat accessions used for the GA3OX3-B1/GA1OX1-B1 haplotype and association analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the EMS-mutant population in the Cadenza genetic background, from which the ga3ox2-D1 (Cadenza0268, Table 1 allele W149), ga3ox2-A1 (Cadenza1176), ga3ox2-B1 (Cadenza0110, W130), ga3ox3 and ga1ox1 mutants were isolated, intercrossed to build the ga3ox2 and ga3ox3 multiple mutants, and phenotyped, together with the wheat accessions used for the GA3OX3-B1/GA1OX1-B1 haplotype and association analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the EMS-mutant population in the Cadenza genetic background, from which the ga3ox3-A1 (Cadenza0593, W71), ga3ox3-B1, ga3ox2 (Cadenza1176/Cadenza0110/Cadenza0268) and ga1ox1 mutants were isolated and intercrossed, together with the wheat accessions used for the GA3OX3-B1/GA1OX1-B1 haplotype and association analyses and the grain samples used for GA profiling)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the EMS-mutant population in the Cadenza genetic background, from which the ga3ox3-B1 line (Cadenza1640, R172), ga3ox3-A1 (Cadenza0593, W71) and the ga3ox2/ga1ox1 mutants were isolated and intercrossed, together with the wheat accessions used for the GA3OX3-B1/GA1OX1-B1 haplotype and association analyses and the grain samples used for GA profiling)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the Fusarium head blight-resistant cultivar CM82036 from which TaFROG was cloned, the transgenic wheat overexpression lines and the wheat plants used for virus-induced gene silencing (BSMV-VIGS) and Fusarium graminearum/deoxynivalenol (DON) treatments)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the Fusarium head blight-resistant cultivar CM82036 from which TaFROG was cloned, the transgenic wheat overexpression lines, and the wheat plants used for virus-induced gene silencing (BSMV-VIGS) and Fusarium graminearum/deoxynivalenol (DON) treatments; the expression of the 4A, 4B and 4D homeologs was profiled with homeolog-specific primers)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the GWAS panel used to identify the chromosome 5A starch-content locus, the wheat grains used for expression and starch property analyses, and the wild-type and CRISPR/Cas9 tajaz1-abd mutant lines used for starch, quality and yield phenotyping)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the Lr21 donor lines and mapping populations, including the resistant recombinant line 97-87-43 (WGRC2/WI) and the Fielder spring wheat cultivar used for transformation); Aegilops tauschii (diploid accessions TA1599 and TA1649, Lr21 donors used in the diploid/polyploid shuttle mapping strategy)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the Pst-infected wheat leaves used for the yeast two-hybrid library, expression and VIGS experiments, and the wheat plants used for BSMV-VIGS silencing of TaMYB4L and Pst infection phenotyping); Nicotiana benthamiana (leaves used for transient overexpression of Pst3180.3 and the BAX-triggered programmed cell death assay, for luciferase complementation imaging (LCI) and for co-immunoprecipitation (Co-IP)); Puccinia striiformis f. sp. tritici (the stripe rust pathogen; the effector Pst3180.3 was silenced by BSMV-HIGS in the fungus)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the Q/TaLAX1 genetic materials, the TaLAX1 overexpression and loss-of-function (Talax1) mutant lines, the transgenic wheat used for domestication-trait phenotyping, and the TaLAX1-3A/3B/3D homoeologs analysed); Aegilops tauschii (accession T093, used for the TaLAX1 promoter InDel comparison between the D subgenome of bread wheat and its ancestor); Nicotiana benthamiana (leaves used for Agrobacterium-mediated transient expression, bimolecular fluorescence complementation (BiFC) and GFP localization)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the QTL isolines 178A/178B segregating for qGLD-6A used for map-based cloning, the transgenic lines overexpressing TaNAM-A1a/TaNAM-A1d and the RNAi-silenced NAM-1 homolog lines, the Triticum turgidum cv. Kronos TILLING population (TtNAM-A1c mutants K1107 and K481), and the wheat varieties/population used for haplotype and association analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the RIL population derived from the parents C35050 and SN483 used for QTL mapping and cloning, the natural population genotyped with the CAPS marker and phenotyped for plant height in 12 environments and under irrigation/rainfed conditions, and the T4-generation RNAi knock-down lines of TaOSCA1.4 together with wild-type plants used for plant height and cell length measurements)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the STTM lines repressing tae-miR319 and the tae-miR319-overexpressing transgenic wheat lines grown in field plots, the miR319-resistant TaGAMYB3 (rTaGAMYB3) and rTaPCF8 transgenic complementation lines, and the wheat protoplasts/leaves used for transactivation, LCI and BiFC assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the Sm1 carrier cultivars CDC Landmark, Robigus and Paragon and the non-carrier reference Chinese Spring together with the other assembled wheat genomes, and the two independent EMS mutant lines carrying the W98 nonsense mutation and the G182R substitution that were phenotyped for orange wheat blossom midge resistance)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the TaCRY1a-overexpressing transgenic wheat lines and wild-type control used for plant height and coleoptile phenotyping, and the wheat proteins tested for TaCRY1a-TaGID1/Rht1 interactions); Arabidopsis thaliana (della mutant and transgenic lines used for the genetic analysis of CRY1-mediated growth repression and for Co-IP of CRY1 with RGA); Nicotiana benthamiana (leaves used for firefly luciferase complementation imaging (LCI) assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the TaD27-RNAi and TaD27-B overexpression transgenic wheat lines, the wild-type controls and the seedlings used for hydroponic GR24/TIS108 treatment and axillary bud phenotyping)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the TaDA1 overexpression and RNAi transgenic wheat lines, the Chinese wheat core collections used for TaDA1-A haplotype analysis, the 348 wheat cultivars used for combinational haplotype and multi-environment field analyses, and the developing grains used for the comparative proteome analysis); Nicotiana benthamiana (tobacco leaves used for LCI interaction assays and TaDA1-A promoter-LUC transient expression assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the TaDWF4 overexpression lines and wild-type controls grown at a range of nitrogen levels on marginal soils, and the wheat expression atlas data used to identify the dominant shoot-expressed TaDWF4 homoeologue)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the TaDWF4 overexpression lines and wild-type controls grown at a range of nitrogen levels on marginal soils, and the wheat tissues (shoot, spike and root) used for homoeolog expression analysis)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the TaDWF4-4B overexpression lines and wild-type controls grown at a range of nitrogen levels on marginal soils, and the wheat tissues (shoot, spike and root) used for homoeolog expression analysis)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the TaIAA21-A/B/D genes and the EMS mutants L1786, L4 and L14, and the early developing grains used for expression, interaction and transactivation analyses); Triticum turgidum (tetraploid wheat: the Kronos EMS mutant library, in which TtARF25-B mutants Kronos2217, Kronos824 and Kronos932 and TtERF3 mutants were identified)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the Yr7 donor cv. Cadenza, the AvocetS near-isogenic lines for Yr5/YrSP, and the susceptible EMS mutant populations used for MutRenSeq)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the cold-resistant winter wheat line DM1 from which TaTPS11 was originally identified, the cultivar Fielder used for transformation, and the T2 generation transgenic lines overexpressing TaTPS11-6D (OE3-3 and OE8-7) and the CRISPR/Cas9-edited lines (Cri 4-3) together with Fielder controls, which were treated at different temperatures for cold resistance, sugar and phytohormone analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the common wheat cultivar Hanxuan 10 from which TaMOR-A, TaMOR-B and TaMOR-D were cloned, and the diploid progenitor and tetraploid wheat accessions used for genome-specific cloning and expression analysis); Arabidopsis thaliana (transgenic lines overexpressing TaMOR-D, used for lateral root and root system phenotyping); Oryza sativa (transgenic rice overexpressing TaMOR-D, used for crown root, panicle and grain yield phenotyping); Nicotiana benthamiana (leaf cells used for subcellular localization of TaMOR-D and TaMRRP)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the common wheat lines carrying the TaAFP-B1a and TaAFP-B1b alleles on chromosome arm 2BS, and the transgenic wheat lines TaAFP-Ba, TaAFP-Bb, TaAFP-Ba-GFP and TaAFP-Bb-GFP used for expression analysis); Oryza sativa (rice: ssp. japonica cultivar Nipponbare, the transgenic rice lines used for germination index, ABA sensitivity and seed dormancy assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the common wheat natural population used for the association analysis of heading date and plant height, and the wheat accessions used for allele-specific expression and haplotype analyses); Oryza sativa (rice: the transgenic rice lines overexpressing the truncated TaPRR73 form lacking part of the N-terminal PR domain, grown under long-day conditions for heading time evaluation)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the cultivar Canthatch (CTH), in which SuSr-D1 was identified as a suppressor of stem rust resistance, and the EMS-induced suppressor mutants NS1 and NS2 used for the chromosome, map-based cloning and expression analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the cultivar Canthatch (CTH), in which SuSr-D1 was identified as a suppressor of stem rust resistance, and the eight EMS-induced suppressor mutants (two with large chromosome deletions and six with nonsense mutations in Med15b.D) used for the chromosome, map-based cloning and expression analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the cultivar Canthatch, in which SuSr-D1 was identified as a suppressor of stem rust resistance, and the EMS-induced suppressor mutants NS1 and NS2 used for the chromosome, map-based cloning and expression analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the cultivar Fielder and the CRISPR-Cas9 TaPsIPK1 knockout line carrying frameshift mutations in all three homoeologs, the TaPsIPK1 overexpression (TaPsIPK1OE), PsSpg1RNAi and TaCBF1dOE lines, the stable silencing lines of the three homoeologs, and the plants used for Pst infection assays, fungal biomass quantification, RNA-seq, dual-luciferase and agronomic trait evaluation in two-year field tests); Nicotiana benthamiana (leaves used for transient co-expression, subcellular localization/nuclear import and luciferase complementation imaging assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the cultivar Fielder and the CRISPR-Cas9 TaPsIPK1 knockout lines, the TaPsIPK1 overexpression (TaPsIPK1OE), PsSpg1RNAi and TaCBF1dOE lines used for Pst infection assays, fungal biomass quantification, RNA-seq, dual-luciferase and agronomic trait evaluation, and the two-year field tests); Nicotiana benthamiana (leaves used for transient co-expression, subcellular localization/nuclear import and luciferase complementation imaging assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the cultivar Fielder and the CRISPR/Cas9 TaSWEET11-A/B/D knockout lines (tasweet11-7-10 etc.), the cultivar CB037 and the TaSWEET11 overexpression lines used for yield-related trait evaluation, the 130 wheat materials used for haplotype analysis, and wheat protoplasts used for subcellular localization; Xenopus oocytes were used for the [14C]sucrose/glucose uptake transport assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the cultivar Fielder and the CRISPR/Cas9 taplt8a, taplt8d and taplt8ad knockout lines and the TaPLT8A overexpression lines used for hydroponic Fe treatments, organ Fe measurements and root trait analysis, and wheat protoplasts used for subcellular localization); Nicotiana benthamiana (leaf epidermal cells used for transient co-expression in the subcellular localization assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the cultivar Fielder and the TaVOZ1 overexpression and knockdown lines, the TaGW2 overexpression, knockdown and CRISPR-Cas9 tagw2 knockout lines in cultivar Kenong199, the wild-type controls, the plants treated with 150 mM NaCl in saline versus nonsaline soils for salt tolerance, yield and biomass evaluation, and the wheat seedlings used for RNA-seq, ChIP/DAP-qPCR and transactivation analyses); Nicotiana benthamiana (leaves used for the LCI interaction assays); Escherichia coli (purified recombinant TaVOZ1 protein for in vitro DNA-binding and ubiquitination assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the cultivar Fielder and the transgenic wheat lines overexpressing TaTNP1 or the P-loop mutant TaTNP1P-loop (T3 generation), the CRISPR-Cas9 TaTNP1-knockout line (Tatnp1), the BSMV-based virus-induced gene silencing lines of TaTNP1/TaTNP2/TaTNP3 and TaEDS1, the TaEDS1-silenced and -overexpressing lines, and the plants inoculated with avirulent Pst race CYR23 for resistance and PAMP-triggered immunity analyses); Nicotiana benthamiana (leaves used for heterologous expression, LCI/Co-IP interaction assays, cell death assays and the GFP-marked TMV replication assay)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the cultivar Jinmai47 and the semi-dwarf EMS mutant d14078 derived from it, the CRISPR/Cas9 TaWAK3-B knockout mutants and the TaWAK3-B overexpression transgenic plants, which were analysed for plant height, grain size, stem development and cytoskeleton organization; wheat protoplasts/tissues used for protein interaction and co-localization assays); Nicotiana benthamiana (leaves used for the LCI interaction assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the cultivar Renan used for the BLAST-n recovery of the three TaRecQ4 homoeologs and the EMS-mutagenized populations, from which the single-copy mutants, double mutants, triple mutant (TM) and heterozygous lines (Htz-A, Htz-B and Htz-D) together with the wild-type controls were characterized for fertility, pollen viability and meiotic chromosome behaviour)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the cultivars Fielder and Chinese Spring, the CRISPR/Cas9 q-2 and qip3-aabbdd mutants, and the Ubiquitin:Q-Flag (Q-OE) transgenic plants); Nicotiana benthamiana (LCI, BiFC and transient TaMYB30-6A promoter assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the cv. Cadenza TILLING lines from the in silico wheat TILLING resource used to confirm the role of the PBF homoeolog, and the RefSeq v1.0 wheat genome used for downstream target prediction); H. vulgare (the four lys3 mutant alleles, the wild-type cultivars Bomi and Minerva, and the 5HL fine-mapping and chromosome-sequencing material used to identify PBF/LYS3)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the developing seeds/endosperm used for the Y1H library, expression, RNA-seq and SSP/starch measurements, the TaNAC100-overexpression transgenic wheat lines and wild-type controls used for HMW-GS/SSP/starch and agronomic trait phenotyping, and the cultivar panel used for haplotype analysis); Nicotiana benthamiana (tobacco leaves used for the transactivation assays of GLU-1 promoter repression)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the developing seeds/endosperm used for the Y1H library, expression, RNA-seq and SSP/starch measurements, the TaNAC100-overexpression transgenic wheat lines and wild-type controls used for HMW-GS/SSP/starch and agronomic trait phenotyping, the cultivar panel used for haplotype analysis, and wheat mesophyll protoplasts used for subcellular localization of the TaNAC100-2D-GFP fusion); Nicotiana benthamiana (tobacco leaves used for the transactivation assays of GLU-1 promoter repression)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the developing seeds/endosperm used for the Y1H library, expression, RNA-seq and SSP/starch measurements, the TaNAC100-overexpression transgenic wheat lines and wild-type controls used for HMW-GS/SSP/starch and agronomic trait phenotyping, the cultivar panel used for haplotype analysis, and wheat mesophyll protoplasts used for subcellular localization); Nicotiana benthamiana (tobacco leaves used for the transactivation assays of GLU-1 promoter repression)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the developing seeds/endosperm used for the cDNA expression library, expression and RNA-seq analyses, the triple CRISPR/Cas9 nac019 knock-out lines and the wild-type controls used for gluten/starch/flour quality phenotyping, and the natural wheat population used for TaNAC019 haplotype/allele association of the B-genome copy); Nicotiana benthamiana (leaves used for transient expression and subcellular localization of the TaNAC019 homoeologs)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the developing seeds/endosperm used for the cDNA expression library, expression and RNA-seq analyses, the triple CRISPR/Cas9 nac019 knock-out lines and the wild-type controls used for gluten/starch/flour quality phenotyping, and the natural wheat population used for TaNAC019 haplotype/allele association); Nicotiana benthamiana (leaves used for transient expression and subcellular localization of the TaNAC019 homoeologs)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the dormant cultivar Leader and the nondormant Japanese cultivar Haruyokoi used as recurrent parents for the Phs1 backcross, the BC3F3/BC4F3 homozygous recombinants and the transgenic complementation lines (T1-T3) used for seed-dormancy phenotyping); Triticum urartu (A genome ancestor) and Aegilops tauschii (D genome ancestor) plus rice, tobacco (Nicotiana tabacum) and Arabidopsis thaliana (used only for comparative MKK3 sequence/haplotype analysis)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the extra-early flowering cultivar Chogokuwase, its parental cultivars including Geurumil, the two intervarietal F2 populations used for segregation analysis, and the wheat materials used for clock/clock-output gene expression and heading-date analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the heat-treated wheat seedlings used for expression, polysome profiling/RNA-seq and yeast two-hybrid library screening, and the TaMBF1c knockdown and CRISPR/Cas9 knockout lines used for heat-sensitivity phenotyping); diploid and tetraploid wheat species/progenitors (Triticum urartu, Aegilops speltoides, Aegilops tauschii and tetraploid wheat) used for the evolutionary conservation analysis; Arabidopsis thaliana (transgenic plants expressing TaMBF1c-7B-MYC used for co-immunoprecipitation and LC-MS/MS)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the hexaploid wheat used to isolate the three CO/Hd1 homologs TaHd1-1, TaHd1-2 and TaHd1-3 and to analyse the TaHd1-2 promoter and transcript); Oryza sativa (the rice line deficient in Hd1 function used for transformation with the TaHd1-1 genomic clone and the transgenic rice plants phenotyped for heading time under short-day, long-day and natural conditions)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the hexaploid wheat used to isolate the three CO/Hd1 homologs TaHd1-1, TaHd1-2 and TaHd1-3 and to determine their sequences, expression and map positions); Oryza sativa (the rice line deficient in Hd1 function used for transformation with the TaHd1-1 genomic clone and the transgenic rice plants phenotyped for heading time under short-day, long-day and natural conditions)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the hexaploid wheat used to isolate the three CO/Hd1 homologs TaHd1-1, TaHd1-2 and TaHd1-3); Oryza sativa (the rice line deficient in Hd1 function used for transformation with the TaHd1-1 genomic clone and the transgenic rice plants phenotyped for heading time under short-day, long-day and natural conditions)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the high-density mapping population used to show co-segregation of the candidate gene with VRN-D4, the EMS-mutagenized TDF population used for TILLING, and the wheat lines used for expression and flowering-time analyses); Triticum aestivum ssp. sphaerococcum (the ancient South Asian subspecies in which VRN-D4 is present in most accessions and which was used for the population-genetic analysis of diversity and selection in the chromosome 5D centromeric region)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the high-quality powdery mildew-resistant spring wheat cultivar SJ106 whose resistance derives from Wheat-wheatgrass 33, the susceptible parent Chinese Spring, the susceptible receptor cultivar Jinqiang5 used for overexpression, and the F2/F2:3 populations and the TaRGA5-like VIGS plants used for mapping and resistance phenotyping)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the incompatible and compatible wheat-Pst interaction materials used for the transcriptome, metabolome and UPLC-MS/MS analyses, and the wheat seedlings used for BSMV-VIGS knockdown and exogenous melatonin treatment)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the low gluten protein 2 (lgp2) mutant, cv. Lumai 15 and ND3331 used in the mapping cross, the 1,936 F2 plants and the homozygous F2 plants with low HMW glutenin levels, and the knockdown, overexpression and CRISPR/Cas9-edited transgenic lines)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the mapping population and the two-gene interval on chromosome 7B in which TaCOL-B5 was identified, the transgenic wheat plants constitutively overexpressing the dominant TaCol-B5 allele that were phenotyped in the greenhouse and in the field, the indigenous cultivar Yangmai18 used for the yield test, and the wheat accessions used for the allele/haplotype analysis and for the homoeolog sequence comparison)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the multiovary wheat line MOV and its wild-type counterpart SOV, the mapping populations and mutants (nine deletion mutants and eight TILLING mutants), and the transgenic plants used for genetic complementation, expression and floral-development analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the natural population used for whole-genome resequencing and genome-wide association study of thousand grain weight, the CRISPR/Cas9 Taodorant1 knockout lines generated in the wheat variety Fielder together with wild-type controls, and the wheat accessions used for haplotype and domestication/breeding selection analyses); Aegilops tauschii, Triticum urartu, Zea mays and Arabidopsis thaliana (comparative ortholog sequence/expression analysis only)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the near-isogenic lines NIL-TAM107 and NIL-CS, the recombinant inbred lines used for genetic mapping of QMpe.cau-2D, the TaFAD8 loss-of-function mutants and the TaWRKY71 mutants used for heat-stress phenotyping, and the wheat germplasm used for haplotype analysis)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the near-isogenic lines R-7 (recurrent parent Mianyang 99-323) and R-43 (recurrent parent PH691), the 142 wheat accessions sequenced for TaHRC, the RNAi knockdown and CRISPR-edited transgenic lines in cv. Bobwhite, and the resistant sources Sumai 3/CM-82036 and Chokwang/Ning7840 used in the two companion studies)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the necrotic NIL-Ne1 line, the M114 and Zhoumai 22 (ZM) parents of the M114 x ZM mapping population, the EMS-mutagenised M2 families and the transgenic complementation lines); Triticum turgidum (wild emmer wheat, the likely origin of Ne1 through duplication and ectopic recombination)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the panel of 323 wheat accessions assessed for root depth variation and genotyped with the Wheat 660K SNP Array, the transgenic wheat lines with altered TaVSR1-B expression, and the tavsr1 TILLING mutant); Oryza sativa (transgenic rice lines with altered TaVSR1-B expression used to verify the role of the gene in root growth)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the panel of 539 wheat accessions used for the genome-wide association study and haplotype analysis, the bulked segregant analysis populations, and the TaHXK3-2A overexpression transgenic wheat lines used for stomatal, transpiration and drought phenotyping)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the panel of 539 wheat accessions used for the genome-wide association study and haplotype analysis, the bulked segregant analysis populations, and the TaHXK3-2B overexpression transgenic wheat lines used for stomatal, transpiration and drought phenotyping)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the panel of 539 wheat accessions used for the genome-wide association study and haplotype analysis, the bulked segregant analysis populations, and the TaHXK3-2D overexpression transgenic wheat lines used for stomatal, transpiration and drought phenotyping)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the ph2a and ph2b mutants, the specifically created 3DS deletion mutants, the cv. Cadenza TILLING population of 1,200 mutants, and the EMS-generated msh7-3D mutant lines); Aegilops variabilis (the wheat wild relative crossed with msh7-3D mutants for homoeologous recombination assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the photoperiod-insensitive and photoperiod-sensitive varieties compared for the Ppd alleles, and the doubled haploid population used to test cosegregation with the Ppd-B1 locus)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the powdery mildew-susceptible cultivar Bainong AK58 and the resistant cultivar Bainong 207 used for Bgt inoculation, expression analysis and BSMV-VIGS silencing, plus the wheat genome information used for the genome-wide identification of the PsbP gene family)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the powdery-mildew-resistant Chinese wheat landrace from Shaanxi province, the recombinant inbred lines and fine-mapping recombinants used for the two-step BSR-Seq, the transgenic complementation lines, the EMS-induced loss-of-function mutants, and the diverse worldwide wheat panel used for haplotype association)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the recombinant inbred line population derived from the cross between Shannong 4155 and Shimai 12 used for QTL mapping, the CRISPR/Cas9-edited TaeEF1A lines, and the 428 wheat cultivars and breeding lines used for haplotype analysis)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the resistant line 4N0461, the susceptible cultivars Nongda4503 and Shi4185 used as parents, the F2 populations with 9:7 segregation, the subpopulations in which LrN3B segregated as a single allele, and the Chinese Spring reference genome IWGSC RefSeq v1.1)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the resistant line CH Campala Lr22a, the susceptible parent CH Campala and the susceptible cultivar Thatcher, the mapping population of about 400 plants used for the 2DS telomeric region, and five independent EMS mutants generated from CH Campala Lr22a)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the segregating populations used for map-based cloning, the common wheat cultivar transformed with the dominant TaCol-B5 allele lacking the B-box-encoding region (four independent transgenic events, T0 and T1 generations), the field-trial materials, and the global collection of modern cultivars surveyed for the TaCol-B5 allele); Triticum turgidum (emmer wheat accessions in which the TaCol-B5 allele is present, used in the allele-distribution survey)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the semi-dominant lethal mDES1 mutant, the Bobwhite cross used to generate the F2 mapping population, and the transgenic overexpression and gene-edited lines); Nicotiana benthamiana (agroinfiltration for cell-death assays and bimolecular fluorescence complementation)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the stripe rust resistance donor line and its susceptible EMS mutants (e.g. T59230) used for STAM cloning, the susceptible/resistant segregants and haplotype panels, and the transgenic wheat plants expressing YrNAM from its endogenous promoter that were tested against Pst races CYR32 and CYR33); Aegilops longissima and Aegilops sharonensis (wild wheat relatives in which the ancient YrNAM gene is present)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the susceptible cultivar Jing411 and the resistant near-isogenic line BJ-1 used for RNA-seq and expression analysis, and the resistant parent cultivar Brock used for BSMV-based virus-induced gene silencing and powdery mildew resistance phenotyping, with the BSMV:PDS, BSMV:GFP and buffer control groups)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the susceptible cultivar Newton, the resistant cultivar Molly carrying the H13 resistance gene, the transgenic RNAi lines and their progeny, and the ditelosomic/deletion lines used to map Mds-1 to chromosome arm 3AS)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the synthetic hexaploid wheat accession TA4152-19 carrying Stb16q, the susceptible line ND495 and the TA4152-19 x ND495 doubled haploid and F2 mapping populations, the EMS-mutagenised TA4152-19 M2 families and the transgenic lines used for complementation); Aegilops tauschii (the donor of Stb16q and source of the physical-map scaffolds Scaffold1066 and Scaffold45305); Nicotiana benthamiana (subcellular localization of STB16)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the tillering mutant lt1 and its wild-type line C6878, the F2 mapping population, and the CRISPR-Cas9 knockout lines used to validate the gene)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the transgenic wheat lines overexpressing TaCRY1a, used for plant height and coleoptile growth phenotyping); Arabidopsis thaliana (genetic analysis of CRY1-DELLA interactions, RGA accumulation and the GID1-GAI/RGA interaction); Nicotiana benthamiana (luciferase complementation imaging assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the transgenic wheat lines overexpressing TaPIL1 or the TaPIL1-SUPERMAN repression-domain construct, together with the wild-type controls used for tiller phenotyping, and the wheat tissues used for expression, ChIP-qPCR and interaction analyses); Oryza sativa (rice: the OsPIL11 overexpression and loss-of-function lines analysed for tiller number and OsTB1 expression); Arabidopsis thaliana (PIF4-SPL9 interaction and shoot branching analyses); Nicotiana benthamiana (tobacco leaves used for transient BiFC, luciferase and co-immunoprecipitation assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the transgenic wheat lines overexpressing TaPYL1-1B and the wild-type controls used for ABA sensitivity, seed germination, photosynthesis, water-use efficiency, drought tolerance and grain yield evaluation, plus the wheat natural population/genotypes used for candidate gene association and allele frequency analyses); Nicotiana benthamiana (tobacco leaves used for the transient transcriptional activation assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the transgenic wheat lines overexpressing TaSHN1 (T2 and T3 generations) and the non-transgenic control plants, which were evaluated under controlled glasshouse conditions for drought tolerance, growth, leaf surface traits, stomatal density, water loss, cuticular wax composition and yield components)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the transgenic wheat lines with constitutive or maternal-integument-localized overexpression of TaCYP78A5, the field trials used for grain weight and yield measurement, and the wheat accessions used for haplotype/TGW association analysis); Nicotiana benthamiana (leaves infiltrated with Ap-HapI::LUC and Ap-HapII::LUC constructs for promoter-activity assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the weak-dormancy variety J411 and strong-dormancy variety HMC21 used for expression, promoter and haplotype analyses, the CRISPR/Cas9 knockout lines of TaCYP94-A1, and the wheat protoplasts used for promoter-activity assays); Nicotiana benthamiana (leaves used for BiFC assays of the TaABI4-TaNAC-A1 interaction)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat accessions and populations used for expression analysis, sequence polymorphism/haplotype and association analysis; wheat protoplasts used for subcellular localization of TaSRL1-4D); Oryza sativa (rice: the transgenic rice plants ectopically expressing the TaSRL1-4D coding sequence used for root length and plant height phenotyping and auxin-related gene expression analysis); Nicotiana benthamiana (leaves used for the Agrobacterium-mediated dual-luciferase transient assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat accessions and populations used for expression analysis, sequence polymorphism/haplotype and association analysis; wheat protoplasts used for subcellular localization); Oryza sativa (rice: the transgenic rice plants ectopically expressing TaSRL1 used for root length and plant height phenotyping and for auxin-related gene expression analysis); Nicotiana benthamiana (leaves used for the Agrobacterium-mediated dual-luciferase transient assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat accessions used for TaHAL3-7A haplotype analysis, the TaHAL3-7A overexpression and mutant lines and the regional field trials, and the wheat tissues used for expression, transcriptome and qPCR analyses); Oryza sativa (rice plants overexpressing TaHAL3-7A for pigment and yield-related phenotyping); Nicotiana benthamiana (tobacco leaves used for bimolecular fluorescence complementation (BiFC) assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat accessions used for expression, haplotype and agronomic-trait association analyses, and the wheat materials used for 24-epiBL sensitivity, BR content and seedling root-length/salt-tolerance assays); Triticum turgidum (Kronos TILLING population, from which the tad11-2a-1 (Kronos2702) and additional tad11-2a mutants were screened); Oryza sativa (rice cpb1 mutant used for ectopic expression of TaD11-2A, and rice materials used for root length and salt tolerance assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat association panel genotyped with the Wheat 660K SNP array plus 102 added variants for the gene-based GWAS and haplotype analysis, the TaWRKY115 overexpression and CRISPR/Cas9-edited lines, the BSMV-based virus-induced gene silencing plants of TaSP1, TaMYB4 and TaCBF12d, and the EMS mutants of TaMYB4 and TaCBF12d, together with the cold-treated plants used for RNA-seq and cold-tolerance phenotyping); Nicotiana benthamiana (tobacco leaves used for the firefly luciferase complementation imaging assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat association panel used for the detached-leaf water loss rate genome-wide association study and the promoter haplotype analysis (Hap1/2 versus Hap3/4), the TaWAK5 overexpression and CRISPR/Cas9-based knockout lines used for drought phenotyping, and the wheat plants used for stomatal and canopy temperature measurements); Nicotiana benthamiana (leaves used for transient expression of TaWAK5 and the dual-luciferase (LUC) assays of TaPAN activity); Escherichia coli/yeast (recombinant proteins used for the oligogalacturonide (OG) binding affinity and kinase assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat bHLH transcription factor family analysed by expression patterns, the developing seeds at 5-20 days post-anthesis used for expression analysis, and the stable TaPGS1 overexpression lines and wild-type controls used for grain weight/size and carbohydrate/protein phenotyping); Oryza sativa (rice: the Kitaake overexpression lines and OsFl3 CRISPR/Cas9 knockout lines used for grain weight/size phenotyping, plus the rice materials used for ChIP-seq and RNA-seq analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat bHLH transcription factor family analysed by expression patterns, the developing seeds at 5-20 days post-anthesis used for expression analysis, and the stable TaPGS1 overexpression lines in the wheat cultivar 166 and the wild-type controls used for grain weight/size and carbohydrate/protein phenotyping); Oryza sativa (rice: the Kitaake overexpression lines and OsFl3 CRISPR/Cas9 knockout lines used for grain weight/size phenotyping, plus the rice materials used for ChIP-seq and RNA-seq analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat cultivar Bainong 207 used for Blumeria graminis f. sp. tritici (Bgt) inoculation, qRT-PCR and RNAi transgenic lines, and the wheat materials used for BSMV-VIGS silencing and powdery mildew phenotyping); the public wheatOmics RNA-seq data used for expression profiling": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat cultivar Zhoumai18 and the transgenic wheat lines overexpressing TaSTT3b-2B, together with the BSMV-based virus-induced gene silencing (VIGS) plants and the wild-type controls, which were inoculated with Rhizoctonia cerealis and/or treated with exogenous methyl jasmonate (MeJA) or the JA synthesis inhibitor sodium diethyldithiocarbamate for resistance, grain weight and JA content analyses; wheat protoplasts/leaves used for subcellular localization of the TaSTT3b-2B protein)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat cultivar used for the transcriptome-based identification of tetrad-stage-specific genes and the CRISPR/Cas9 TaRIP2 mutants (rip2), together with the wild-type controls used for anther/pollen phenotyping, microscopy, lipid staining, lipidomic/GC-MS analysis, RNA-seq and fatty acid quantification; wheat protoplasts/leaves used for the dual-luciferase transient expression assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat cultivar(s) used for cloning and expression analysis of TaWRKY31 and for the BSMV-based virus-induced gene silencing lines BSMV:TaWRKY31-1as and BSMV:TaWRKY31-2as, which were subjected to drought treatment for growth, water status, ROS and antioxidant enzyme analyses); Arabidopsis thaliana (transgenic lines overexpressing TaWRKY31, used for drought tolerance, stomatal opening, water loss, germination and root length assays and for stress-related gene expression analysis)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat cultivars/accessions used for TaZIM-A1/TaZIM-B1 sequence and haplotype analysis, the transgenic wheat lines overexpressing TaZIM-A1 (e.g. TaZIM-A1-OE-L1) used for flowering time and thousand-kernel weight phenotyping and for ChIP-qPCR, and the wild-type plants used for expression and binding analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat cultivars/accessions used for TaZIM-A1/TaZIM-B1 sequence and haplotype analysis, the transgenic wheat lines overexpressing TaZIM-A1 used for flowering time and thousand-kernel weight phenotyping and for ChIP-qPCR, and the wild-type plants used for expression and binding analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat cultivars/genotypes used for immature embryo transformation and regeneration with TaWOX5 overexpression, including the transgenic wheat plants identified by the wider-flag-leaf phenotype); Triticum monococcum, triticale, rye and Zea mays (the additional cereal species in which TaWOX5 application improved transformation efficiency)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat lines and the nullisomic lines lacking particular chromosomes that were used to assign the C15-1 cDNA to chromosomes 4A, 4B and 4D, and the wheat genotypes carrying the semidominant Rht-B1b/Rht-D1b mutant alleles); Arabidopsis thaliana (the Gibberellin Insensitive gai mutant and gene); Zea mays (the dwarf-8 d8 mutant and gene); Oryza sativa (transgenic rice plants expressing the Arabidopsis gai protein, which were tested for gibberellin response and dwarfism)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat lines used for TaPsIPK1 interaction screens, CRISPR-Cas9 knockout, overexpression and two-year field trials); Nicotiana benthamiana (split luciferase complementation and co-immunoprecipitation assays of the PsSpg1-TaPsIPK1 interaction)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat materials used for BSMV-VIGS silencing and overexpression of TaASR2L and TaSR30, including the T1 and T2 overexpression lines L6, L11 and L13 and the BSMV:gamma controls); Nicotiana benthamiana (BiFC and LCI interaction assays and subcellular localization of TaASR2L and TaSR30)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat materials used for the transcriptome analysis and genome-wide association study, the ethyl methanesulfonate (EMS) mutants and transgenic overexpression/knockout lines of TaHSP18.6 and TaSRT1, the wheat accessions used for TaHSP18.6 haplotype analysis, and the plants used for Fusarium crown rot and auxin phenotyping); Nicotiana benthamiana (cells used for the firefly luciferase complementation imaging (LCI) assay); Fusarium pseudograminearum (the Fusarium crown rot pathogen used for inoculation)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat plants infected with Puccinia striiformis f. sp. tritici (Pst) pathotype CYR31 and treated with exogenous ABA, and the virus-induced gene silencing (BSMV-VIGS) plants used for susceptibility and sugar acquisition analyses); Arabidopsis thaliana (transgenic plants overexpressing TaSTP6, used for powdery mildew susceptibility and leaf glucose accumulation assays); Saccharomyces cerevisiae (yeast strains used for the functional complementation assays of TaSTP6 transport activity)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat plants used for BSMV virus-induced gene silencing (VIGS) of TaMIXTA1/TaMIXTA2 and TaCER5, and for the leaf cuticular wax, water-loss and chlorophyll-leaching phenotyping, together with the wheat tissues used for expression and transactivation analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat plants used for BSMV virus-induced gene silencing (VIGS) of TaMYB60-1/TaMYB60-2 and TaFATB1/TaFATB2, and for the leaf cuticular wax and cuticle permeability phenotyping, together with the wheat tissues used for expression and transactivation analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat plants used for Puccinia striiformis f. sp. tritici (Pst) infection and expression analysis, the BSMV-based virus-induced gene silencing (VIGS) plants and the TaRGA3 overexpression lines used for stripe rust resistance, ROS accumulation and APX activity assays); Nicotiana benthamiana (leaves used for the Agrobacterium-mediated transient cell death assays and subcellular localization of TaRGA3 and its CC domain)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat plants used for expression analysis after Puccinia striiformis f. sp. tritici (Pst) infection, the BSMV-based virus-induced gene silencing lines of TaZFP8 and TaCML21 used for Pst resistance phenotyping, and the TaZFP8-5B overexpression transgenic wheat plants); Oryza sativa (transgenic rice lines overexpressing TaZFP8-5B, which were tested for resistance to Magnaporthe oryzae); Nicotiana benthamiana (leaves used for the bimolecular fluorescence complementation (BiFC) and split-luciferase interaction assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat plants used for expression analysis of the TaVIT1 and TaVIT2 paralogs and the transgenic wheat lines overexpressing TaVIT2 under the control of an endosperm-specific promoter, which were analysed for grain/flour iron content, phytate and in vitro iron bioavailability); Saccharomyces cerevisiae (the yeast mutants defective in vacuolar iron transport, manganese transport and vacuolar zinc transport used in the complementation assays); Arabidopsis thaliana (tissue used for transient expression of the GFP fusion proteins to determine vacuolar localization)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat plants used for homologous cloning of TaHXK7-1A, subcellular localization, virus-induced/RNA silencing and drought-stress phenotyping); Arabidopsis thaliana (transgenic plants overexpressing TaHXK7-1A, used for superoxide radical, MDA, RBOH gene expression, seedling growth and ROS-accumulation assays under drought and 6% glucose treatments)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat plants used for homologous cloning of TaTDF1, expression analysis and BSMV-based virus-induced gene silencing, and the silenced plants analysed for anther and pollen phenotypes and tapetum-related gene expression); Arabidopsis thaliana (the TaTDF1 overexpression line TaTDF1-OE and the dominant mosaic suppression silence line TaTDF1-EAR, analysed for bolting time, Alexander staining and anther/pollen phenotypes)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat seedlings and leaves used for RNA blot hybridization, photoperiod/circadian expression analysis and tissue localization of TaGI1 transcripts); Arabidopsis thaliana (wild-type plants overexpressing TaGI1 and the gi mutant used for complementation, assessed for flowering time)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat seedlings used for peptide treatment, root-length and drought-tolerance phenotyping, and the CRISPR-Cas9 knockout and overexpression lines of TaCEP15, TaCEPRL, TaSnRK1alpha and TabZIP9); Nicotiana benthamiana (split-luciferase complementation and BiFC interaction assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat tissues including root, stem, spike, stem apex and young leaf used for expression analysis, and the TaPIN1-RNA interference (TaPIN1-RNAi) transgenic wheat plants together with the wild-type controls used for tiller number, spikelet number, grain number per panicle, thousand-grain weight and grain yield phenotyping); Arabidopsis thaliana (plants infected with the 35S::TaPIN1-6a-CDS-GFP fusion construct for subcellular localization of the TaPIN1 proteins)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat tissues including stem apex and young leaf used for expression analysis, and the TaPIN1-RNA interference (TaPIN1-RNAi) transgenic wheat plants together with the wild-type controls used for tiller number, spikelet number, grain number per panicle, thousand-grain weight and grain yield phenotyping); Arabidopsis thaliana (plants infected with the 35S::TaPIN1-6a-CDS-GFP fusion construct for subcellular localization of TaPIN1-6a)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat tissues including stem apex and young leaf used for expression analysis, and the TaPIN1-RNA interference (TaPIN1-RNAi) transgenic wheat plants together with the wild-type controls used for tiller number, spikelet number, grain number per panicle, thousand-grain weight and grain yield phenotyping); Arabidopsis thaliana (plants infected with the 35S::TaPIN1-6a-CDS-GFP fusion construct for subcellular localization of the TaPIN1 proteins)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat tissues including stem apex, young leaf, root, stem and spike used for expression analysis, and the TaPIN1-RNA interference (TaPIN1-RNAi) transgenic wheat plants together with the wild-type controls used for tiller number, spikelet number, grain number per panicle, thousand-grain weight and grain yield phenotyping); Arabidopsis thaliana (plants infected with the 35S::TaPIN1-6a-CDS-GFP fusion construct for subcellular localization of the TaPIN1 proteins)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat tissues used for expression analysis under low and high nitrogen, and the transgenic wheat lines overexpressing TaNAR2.1 or TaNAR2.2 (T2 generation positive lines) together with wild-type plants used for nitrate influx, root system architecture, nitrogen uptake and yield phenotyping); Nicotiana benthamiana (tobacco epidermal cells used for transient expression of TaNAR2.1-6B::mRFP/TaNRT2.5-3B::GFP fusions in the subcellular localization assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat tissues used for expression analysis under low and high nitrogen, and the transgenic wheat lines overexpressing TaNAR2.1 or TaNAR2.2 (T2 generation positive lines) together with wild-type plants used for nitrate influx, root system architecture, nitrogen uptake and yield phenotyping); Nicotiana benthamiana (tobacco epidermal cells used for transient expression of the TaNAR2.2 mRFP fusion in the subcellular localization assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat tissues/grains used for expression and transcriptome analyses, the CRISPR/Cas9 Tamads-gs knockout lines and wild-type plants used for endosperm cellularization, grain size and grain weight phenotyping, and the large wheat germplasm collection used for TaMADS-GS haplotype/elite-allele screening)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat tissues/grains used for expression, amylose and flour viscosity analyses, the CRISPR/Cas9 tamyb44 and tamyb1 knockout lines and the TaMYB44-4D/TaMYB1-6B overexpression lines, and the natural wheat population used for TaMYB44-D promoter haplotype association); Nicotiana benthamiana (leaf epidermal cells used for bimolecular fluorescence complementation (BiFC), luciferase complementation imaging (LCI) and co-immunoprecipitation (Co-IP) assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat varieties and recombinant substitution lines carrying the dominant Vrn-B3 (VRN-B4) versus recessive vrn-B3 alleles, the winter wheat variety Jagger transformed with the TaFT allele carrying the promoter retroelement insertion, and the wheat plants used for vernalization experiments and TaFT transcript analysis)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wheat varieties and recombinant substitution lines carrying the dominant Vrn-B3/VRN-B4 versus recessive alleles used in the 2006 vernalization study, the winter wheat variety Jagger transformed with the TaFT allele carrying the promoter retroelement insertion, the 491-genome panel used for the DNA-segment copy-number variation map (including Kenong 9204 and Aikang 58, which carry two copies of TaFT-D1), and the wheat accessions and transgenic materials used for the TaFT-D1 grain-weight and TaFDL2 analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the wild-type cultivar Fielder and the TaOTUB1-RNAi transgenic wheat plants used for tiller number phenotyping and expression analyses, and the wheat sequences used for identification and phylogenetic analysis of the TaOTUB1 homoeologs); Nicotiana benthamiana (tobacco epidermal cells used for Agrobacterium-mediated transient expression of the 35S::TaOTUB1-GFP fusion in the subcellular localization assay)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the winter and spring wheat varieties used for TaHST1L overexpression and RNAi lines, the 243 Chinese wheat accessions used for allele association across 8 environments, and the hexaploid wheat used for GWAS/BSA); Triticum turgidum and other tetraploid wheats (T. dicoccoides, T. dicoccon, T. polonicum and additional subspecies used for the 242-bp InDel domestication analysis and the EMS-mutagenized tetraploid wheat lines); Oryza sativa (Nipponbare transgenic rice overexpressing TaHST1L-A1a or TaHST1L-A1b for tiller angle analysis); Nicotiana benthamiana (leaves used for the firefly luciferase complementation imaging (LCI) assay)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the winter and spring wheat varieties used for TaHST1L overexpression and RNAi lines, the 243 Chinese wheat accessions used for allele association, the EMS-mutagenized tetraploid wheat lines, and the wheat cDNA library used for yeast two-hybrid screening); Triticum turgidum and other tetraploid wheats (domestication analysis of the 242-bp InDel); Oryza sativa (Nipponbare transgenic rice overexpressing TaHST1L-A1a or TaHST1L-A1b); Nicotiana benthamiana (leaves used for the firefly luciferase complementation imaging (LCI) assay)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the winter wheat cultivar Jing 841 used for the vernalization expression profiling and gene cloning, the strong winter cultivar Xindong 18 and ten recombinant inbred lines (RILs, Hussar x Yanzhan1) used for expression-vernalization association analysis, and the wild-type and TaIRI9 overexpression transgenic wheat lines used for plant height, tiller number, heading time and vernalization requirement phenotyping)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the winter wheat cultivars Duster and Billings and the DH/F3:4 mapping population derived from them, used for the heading-date QTL mapping and multi-environment analysis, and the transgenic Duster plants overexpressing the Billings TaOGT1b allele together with non-transgenic controls used for heading-date and gene-expression analyses)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the winter wheat cultivars Jagger and 2174 used for the Y2H library and allele analysis, the natural TaE3V1 allele variants, the CRISPR/Cas9-edited lines with simultaneous inactivation of the three homoeologs, and the wheat materials used for developmental phenotyping); Nicotiana benthamiana (leaves used for BiFC and firefly luciferase complementation imaging (LCI) assays)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat: the winter wheat cultivars and the transgenic wheat lines overexpressing VAS and TaRF2b, the tarf2b mutants and the wild-type controls used for vernalization treatment, expression analysis and flowering time evaluation); Nicotiana benthamiana (leaves used for Agrobacterium-mediated luciferase complementation imaging assays of TaRF2b and TaRF2a); Arabidopsis thaliana (mesophyll protoplasts used for the transcriptional activity assays of BD-TaRF2b and BD-TaRF2a)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat; 265 Chinese wheat accessions for haplotype association, and CRISPR/Cas9 gene-edited mutants)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat; B-genome homoeolog, function referenced to TaNAC071-A)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat; D-genome copy); Triticum turgidum (tetraploid wheat cv. Kronos, used for the A/B TILLING mutants)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat; D-genome homoeolog, function referenced to TaNAC071-A)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat; Luyuan 502 x Liangxing 99 BC3F4 population and transgene-free CRISPR/Cas9 mutants)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat; gamma-ray-induced winter wheat mutant Karcagi 522M7K and the Halberd Rht12 line obtained by backcrossing into cv. Halberd)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat; hb tetrasomic 4D NIL, pVRN1:TB-D1 transgenics and tb-d1 TILLING mutant)": "Triticum aestivum",
+   "Triticum aestivum (bread wheat; hb tetrasomic 4D NIL, pVRN1:TB1 transgenics and tb-d1 TILLING mutant)": "Triticum aestivum",
+   "Triticum aestivum (hexaploid bread wheat: the CRISPR-Cas9-edited lines carrying mutations in the TaGW7 B and/or D homoeologs and the hexaploid wheat accessions used in the exome-capture diversity analysis); Triticum turgidum (tetraploid wheat: domesticated and wild emmer accessions used in the exome-capture diversity analysis)": "Triticum aestivum",
+   "Triticum aestivum (hexaploid bread wheat: the TaFIGL1 homoeologs TaFIGL1-A1/TaFIGL1-B1/TaFIGL1-D1, the EMS-induced TILLING mutants and VIGS lines, and the mapping cross); Triticum turgidum (tetraploid wheat: the TtFIGL1-A1 and TtFIGL1-B1 genes, the corresponding EMS-induced TILLING mutants and VIGS lines used for the cytogenetic analyses)": "Triticum aestivum",
+   "Triticum aestivum (hexaploid bread wheat: the floral organs and lines used for expression analysis, RNAi knockdown and field trials, including cv. Kitahonami used for TILLING); Triticum turgidum (tetraploid wheat, whose floral organs were also analysed for GNI-B1 transcript abundance, and the wild/domesticated emmer accessions used in the evolutionary analyses)": "Triticum aestivum",
+   "Triticum aestivum (hexaploid bread wheat: the floral organs and lines used for expression analysis, RNAi knockdown and field trials, including cv. Kitahonami used for TILLING); Triticum turgidum (tetraploid wheat, whose floral organs were analysed together with hexaploid wheat for GNI-B1/GNI-D1 transcript abundance, and the wild/domesticated emmer accessions used in the evolutionary analyses)": "Triticum aestivum",
+   "Triticum boeoticum": "Triticum boeoticum",
+   "Triticum boeoticum (wild einkorn, donor of PmNCA6 in the introgression line YangYF267); Triticum aestivum (bread wheat: the susceptible line Yang09DPBZ used as mapping parent, the susceptible cultivar Fielder used for transgenic complementation, the NILs and RILs field-tested for yield, and the 553 Chinese wheat cultivars screened for the gene)": "Triticum boeoticum",
+   "Triticum dicoccoides (wild emmer wheat, accession IW39; WEW_v1.0 Zavitan reference); Triticum aestivum (bread wheat, cv. Fielder transgenic lines and F1 complementation crosses); Nicotiana benthamiana (transient co-expression and cell-death assays)": "Triticum turgidum subsp. dicoccoides",
+   "Triticum dicoccoides (wild emmer wheat, the donor of the PmWR183 locus); Triticum aestivum (bread wheat: the hexaploid germplasm panel and the stable transformation materials); Nicotiana benthamiana (transient expression for hypersensitive-response and interaction assays)": "Triticum turgidum subsp. dicoccoides",
+   "Triticum monococcum": "Triticum monococcum",
+   "Triticum monococcum (TmNAS3 donor); Triticum aestivum (cv. Bobwhite transgenics)": "Triticum monococcum",
+   "Triticum monococcum (TmNAS3 donor); Triticum aestivum (homoeolog annotation and transgenic wheat)": "Triticum monococcum",
+   "Triticum monococcum (diploid wheat, donor of Sr35 on chromosome arm 3AmL); Triticum aestivum (bread wheat: the transgenic hexaploid wheat plants expressing the Sr35 candidate CNL9 and tested against Ug99)": "Triticum monococcum",
+   "Triticum monococcum (einkorn wheat)": "Triticum monococcum",
+   "Triticum monococcum (einkorn wheat: the resistant diploid accession G3116 from which Sr21 was identified and the diploid wheat used for loss-of-function and temperature analyses); Triticum aestivum (bread wheat: the hexaploid introgression line CSSr21 and the transgenic hexaploid lines expressing Sr21)": "Triticum monococcum",
+   "Triticum polonicum (P1 donor of the elongated-glume allele); Triticum aestivum (hexaploid wheat transgenic lines and near-isogenic lines for P1)": "Triticum polonicum",
+   "Triticum polonicum (Polish wheat)": "Triticum polonicum",
+   "Triticum timopheevii (tetraploid AAGG species, chromosome 2G donor of Pm6); Triticum aestivum (bread wheat: cv. Prins and the 2B/2G introgression line IGVI-465, cultivars Julius and Lancer carrying the candidate gene, and transgenic/complementation hybrid lines); Nicotiana benthamiana (cell-death assay)": "Triticum timopheevii",
+   "Triticum turgidum (tetraploid wheat cv. Kronos TILLING lines); Triticum aestivum (bread wheat, cv. Cadenza TILLING mutant)": "Triticum turgidum",
+   "Triticum turgidum (tetraploid wheat cv. Kronos); reference locus from Triticum aestivum": "Triticum turgidum",
+   "Triticum turgidum (tetraploid wheat: cv. Kronos wild type and the EMS-induced tgw1 mutant, and the transgenic KAT-2B overexpression and complementation lines); Arabidopsis thaliana (the kat2 mutant used for complementation in a sucrose-free medium)": "Triticum turgidum",
+   "Triticum turgidum ssp. dicoccoides (wild emmer wheat: the WEW accession(s) carrying MLIW170/PM26 and the EMS mutant populations used for candidate validation); Triticum aestivum (bread wheat: the bread wheat derivatives carrying MLIW170/PM26 and the stable transgenic wheat plants transformed with TdCNL1 alone or with the TdCNL1/TdCNL5 pair, as well as the Fielder line carrying TdCNL5 alone, which were tested for powdery mildew resistance)": "Triticum turgidum subsp. dicoccoides",
+   "Triticum turgidum ssp. dicoccoides (wild emmer wheat: the WEW accession(s) carrying MLIW170/PM26 and the EMS mutant populations used for candidate validation); Triticum aestivum (bread wheat: the bread wheat derivatives carrying MLIW170/PM26, the stable transgenic wheat plants transformed with TdCNL1 alone or with the TdCNL1/TdCNL5 pair, and the Fielder line carrying TdCNL5 alone, which were tested for powdery mildew resistance)": "Triticum turgidum subsp. dicoccoides",
+   "Triticum turgidum ssp. dicoccoides (wild emmer wheat: the donor of TdRCA1 and the tetraploid accessions used for sequence polymorphism analysis); Triticum aestivum (bread wheat: the common wheat genetic background in which TdRCA1 was identified on chromosome arm 7AS, and the transgenic wheat lines overexpressing TdRCA1 that were analysed for organ pigmentation, anthocyanin structural gene expression, light-dependent coleoptile colour and Fusarium crown rot resistance)": "Triticum turgidum subsp. dicoccoides",
+   "Triticum turgidum ssp. durum (durum wheat)": "Triticum turgidum subsp. durum",
+   "Triticum turgidum ssp. durum (durum wheat, cv. Svevo)": "Triticum turgidum subsp. durum",
+   "Triticum turgidum subsp. dicoccoides (wild emmer wheat, donor of Pm41 on chromosome arm 3BL); Triticum aestivum (bread wheat: the susceptible hexaploid cv. Fielder transformed with the Pm41 cDNA ORF by the PureWheat technique, and the wheat materials carrying the Pm41 introgression used for EMS mutagenesis and Bgt E09 tests)": "Triticum turgidum subsp. dicoccoides",
+   "Triticum turgidum subsp. dicoccoides (wild emmer wheat, donor of Yr36); Triticum turgidum subsp. durum (cv. Langdon, the susceptible parent, and the Yr36-carrying isogenic recombinant substitution line RSL65 in the Langdon background); Triticum aestivum (bread wheat cv. Bobwhite used for transgenic complementation)": "Triticum turgidum subsp. dicoccoides",
+   "Triticum turgidum subsp. durum (Greek durum wheat accession TRI 1796, donor of Pm68); Triticum aestivum (bread wheat: the elite cv. YM158 introgression lines obtained by interspecific cross and multiple backcrosses, and the transgenic wheat lines expressing Pm68-1 and/or Pm68-2); Nicotiana benthamiana (transient expression assays)": "Triticum turgidum subsp. durum",
+   "Triticum turgidum subsp. durum (Greek durum wheat accession TRI 1796, donor of Pm68); Triticum aestivum (bread wheat: the elite cv. YM158 introgression lines, and the transgenic wheat lines expressing Pm68-1 and/or Pm68-2); Nicotiana benthamiana (transient expression assays)": "Triticum turgidum subsp. durum",
+   "Triticum turgidum subsp. durum (durum wheat)": "Triticum turgidum subsp. durum",
+   "Triticum turgidum subsp. durum (durum wheat: the semidwarf (Rht-B1b) varieties Kronos, Desert Gold and UC1771-Low Cadmium used for the BC4F3 near-isogenic lines, and the sequenced Kronos EMS mutant population including mutant K2557)": "Triticum turgidum subsp. durum",
+   "Triticum turgidum subsp. durum (tetraploid durum wheat: Kronos TILLING donor lines Kronos994 and Kronos562, the Montana recurrent parents MT Raska and MT112219, and their near-isogenic lines)": "Triticum turgidum subsp. durum",
+   "Triticum turgidum subsp. durum (tetraploid wheat landrace PI 192051 and its EMS mutant m1); Triticum aestivum (hexaploid wheat, cv. Fielder transgenic complementation lines)": "Triticum turgidum subsp. durum",
+   "Triticum turgidum subsp. durum (tetraploid wheat, cv. Kronos TILLING lines Kronos2138 and Kronos3589); H. vulgare (cv. Morex egt2-1 line TM2835 and cv. Barke, and cv. Golden Promise egt2-2 CRISPR mutant)": "Triticum turgidum subsp. durum",
+   "Triticum urartu": "Triticum urartu",
+   "Triticum urartu (TuSPR donor); Triticum aestivum cv. Kenong 199 (transgenic overexpression)": "Triticum urartu",
+   "Triticum urartu (the A-genome progenitor of wheat and donor of the Pm60 powdery mildew resistance locus); Triticum aestivum (bread wheat: the susceptible cultivar Kn199 used as the stable transformation recipient); Nicotiana benthamiana (transient overexpression for the hypersensitive cell-death and interaction assays). The MlIW226/MlIW6/MlIW113 haplotype designations and the Triticum dicoccoides alleles previously listed in this field are not reported in this paper and need team confirmation": "Triticum urartu",
+   "x Triticosecale (triticale)": "x Triticosecale"
+  },
+  "multi_segment_rows": 263,
+  "segments_dist": [
+   [
+    1,
+    1157
+   ],
+   [
+    2,
+    181
+   ],
+   [
+    3,
+    58
+   ],
+   [
+    4,
+    24
+   ]
+  ],
+  "len_gt100": 339,
+  "len_gt500": 60,
+  "len_max": 668
+ },
+ "phenotype": {
+  "brief_max_len": 803,
+  "brief_after_colon_max": 666,
+  "brief_rows_nonempty": 1420,
+  "tags_total": 1448,
+  "tags_unique": 658,
+  "rows_zero_tags": 255,
+  "top_tags": [
+   [
+    "Drought tolerance",
+    70
+   ],
+   [
+    "Stripe rust resistance",
+    65
+   ],
+   [
+    "Powdery mildew resistance",
+    51
+   ],
+   [
+    "Salt tolerance",
+    45
+   ],
+   [
+    "Leaf rust resistance",
+    17
+   ],
+   [
+    "Stripe rust susceptibility",
+    15
+   ],
+   [
+    "Flowering time",
+    14
+   ],
+   [
+    "Grain weight",
+    14
+   ],
+   [
+    "Stem rust resistance",
+    13
+   ],
+   [
+    "Heat tolerance",
+    12
+   ],
+   [
+    "Salinity tolerance",
+    11
+   ],
+   [
+    "Drought and salt tolerance",
+    10
+   ],
+   [
+    "Grain yield",
+    10
+   ],
+   [
+    "Male sterility",
+    9
+   ],
+   [
+    "Plant architecture",
+    9
+   ],
+   [
+    "Male fertility",
+    9
+   ],
+   [
+    "Cadmium tolerance",
+    9
+   ],
+   [
+    "Sharp eyespot resistance",
+    9
+   ],
+   [
+    "Powdery mildew susceptibility",
+    8
+   ],
+   [
+    "Spike architecture",
+    8
+   ],
+   [
+    "Tiller number",
+    8
+   ],
+   [
+    "Seedling growth",
+    7
+   ],
+   [
+    "Fusarium head blight resistance",
+    7
+   ],
+   [
+    "Plant height",
+    7
+   ],
+   [
+    "Seed dormancy",
+    7
+   ],
+   [
+    "G3P accumulation",
+    6
+   ],
+   [
+    "Negative regulation of stripe rust resistance",
+    6
+   ],
+   [
+    "Heading date",
+    6
+   ],
+   [
+    "Thermotolerance",
+    6
+   ],
+   [
+    "Grain size",
+    6
+   ],
+   [
+    "Spike size",
+    6
+   ],
+   [
+    "Grain quality",
+    6
+   ],
+   [
+    "Cuticular wax biosynthesis and powdery mildew susceptibility",
+    6
+   ],
+   [
+    "Resistance to stripe rust via calcium signalling",
+    6
+   ],
+   [
+    "Negative regulation of saline-alkali stress tolerance",
+    6
+   ],
+   [
+    "Salt and drought tolerance",
+    5
+   ],
+   [
+    "Deoxynivalenol tolerance",
+    5
+   ],
+   [
+    "Leaf senescence",
+    5
+   ],
+   [
+    "Starch content",
+    5
+   ],
+   [
+    "Wheat blast resistance",
+    5
+   ],
+   [
+    "Cadmium accumulation",
+    5
+   ],
+   [
+    "Disease resistance",
+    5
+   ],
+   [
+    "Seed dormancy and pre-harvest sprouting resistance",
+    5
+   ],
+   [
+    "Cold tolerance",
+    4
+   ],
+   [
+    "Fusarium resistance",
+    4
+   ],
+   [
+    "Nitrogen use efficiency",
+    4
+   ],
+   [
+    "Amylose content",
+    4
+   ],
+   [
+    "Freeze tolerance",
+    4
+   ],
+   [
+    "Wheat yellow mosaic virus susceptibility",
+    4
+   ],
+   [
+    "Spike development",
+    4
+   ]
+  ]
+ },
+ "validation_method": {
+  "tokens": 6095,
+  "unique": 1087,
+  "rows_zero": 42,
+  "top": [
+   [
+    "Expression analysis",
+    819
+   ],
+   [
+    "Phenotyping",
+    648
+   ],
+   [
+    "Overexpression",
+    396
+   ],
+   [
+    "Subcellular localization",
+    358
+   ],
+   [
+    "Transgenic transformation",
+    329
+   ],
+   [
+    "VIGS",
+    220
+   ],
+   [
+    "Heterologous expression",
+    199
+   ],
+   [
+    "Interaction assays",
+    181
+   ],
+   [
+    "Promoter/transactivation assays",
+    123
+   ],
+   [
+    "RNAi",
+    99
+   ],
+   [
+    "Mutant sequencing",
+    93
+   ],
+   [
+    "CRISPR/Cas9",
+    92
+   ],
+   [
+    "Haplotype/association analysis",
+    79
+   ],
+   [
+    "Biochemical activity assays",
+    74
+   ],
+   [
+    "Yeast two-hybrid",
+    50
+   ],
+   [
+    "Y2H",
+    45
+   ],
+   [
+    "Transgenic complementation",
+    37
+   ],
+   [
+    "Transient expression",
+    34
+   ],
+   [
+    "EMS mutants",
+    32
+   ],
+   [
+    "Co-IP",
+    32
+   ],
+   [
+    "Yeast one-hybrid",
+    32
+   ],
+   [
+    "BiFC",
+    31
+   ],
+   [
+    "Marker development",
+    27
+   ],
+   [
+    "Virus-induced gene silencing",
+    21
+   ],
+   [
+    "EMSA",
+    20
+   ],
+   [
+    "BSMV-VIGS",
+    20
+   ],
+   [
+    "Bimolecular fluorescence complementation",
+    17
+   ],
+   [
+    "CRISPR/Cas9 knock-out",
+    15
+   ],
+   [
+    "Luciferase complementation imaging",
+    15
+   ],
+   [
+    "Metabolite/hormone profiling",
+    13
+   ],
+   [
+    "In situ hybridization",
+    13
+   ],
+   [
+    "Chromosome assignment",
+    12
+   ],
+   [
+    "LCI",
+    12
+   ],
+   [
+    "Electrophoretic mobility shift assays",
+    12
+   ],
+   [
+    "Complementation",
+    11
+   ],
+   [
+    "Y1H",
+    11
+   ],
+   [
+    "Transcriptome analysis",
+    10
+   ],
+   [
+    "GST pull-down",
+    10
+   ],
+   [
+    "Split-luciferase complementation",
+    10
+   ],
+   [
+    "Agronomic trait measurement",
+    10
+   ],
+   [
+    "BSMV-mediated virus-induced gene silencing",
+    10
+   ],
+   [
+    "ChIP-qPCR",
+    9
+   ],
+   [
+    "Electrophoretic mobility shift assay",
+    9
+   ],
+   [
+    "Expression analysis of TaCYP78A3/5/16/17-A in different wheat organs",
+    9
+   ],
+   [
+    "TILLING",
+    8
+   ],
+   [
+    "Ca2+ flux assays",
+    8
+   ],
+   [
+    "Genotyping",
+    8
+   ],
+   [
+    "In vitro phosphorylation assays",
+    8
+   ],
+   [
+    "RNA-seq",
+    8
+   ],
+   [
+    "Disease phenotyping",
+    8
+   ],
+   [
+    "CRISPR-Cas9 loss-of-function mutants of TaCYP78A3/5/17-A",
+    8
+   ],
+   [
+    "Allele sequencing",
+    7
+   ],
+   [
+    "Dual-luciferase reporter assay",
+    7
+   ],
+   [
+    "Transactivation assay",
+    7
+   ],
+   [
+    "Dual-luciferase assay",
+    7
+   ],
+   [
+    "Genome-wide association study",
+    7
+   ],
+   [
+    "BSMV-based virus-induced gene silencing",
+    7
+   ],
+   [
+    "Proline content measurement",
+    6
+   ],
+   [
+    "Drought tolerance phenotyping",
+    6
+   ],
+   [
+    "Pst inoculation",
+    6
+   ]
+  ]
+ },
+ "protein_family": {
+  "unique": 1176,
+  "len_max": 2657,
+  "median": 366,
+  "rows_with_semi": 1025,
+  "rows_with_dash": 905,
+  "rows_with_paren": 1362
+ },
+ "controlled_vocab_cloning_method": [
+  [
+   "Homology-based cloning",
+   569
+  ],
+  [
+   "Not reported",
+   304
+  ],
+  [
+   "Transcriptome-based cloning",
+   250
+  ],
+  [
+   "Map-based cloning",
+   184
+  ],
+  [
+   "Functional",
+   106
+  ],
+  [
+   "Homology-based cloning; Functional cloning",
+   3
+  ],
+  [
+   "Homology-based cloning; Transcriptome-based cloning",
+   3
+  ],
+  [
+   "Functional cloning",
+   1
+  ]
+ ],
+ "controlled_vocab_research_strategy": [
+  [
+   "Reverse genetics",
+   1061
+  ],
+  [
+   "Forward genetics",
+   281
+  ],
+  [
+   "Not reported",
+   78
+  ]
+ ],
+ "controlled_vocab_functional_category": [
+  [
+   "Biotic & Abiotic Stress",
+   776
+  ],
+  [
+   "Quality & Yield",
+   202
+  ],
+  [
+   "Morphology & Domestication",
+   154
+  ],
+  [
+   "Physiology & Metabolic Processes",
+   146
+  ],
+  [
+   "Reproduction & Phenology",
+   142
+  ]
+ ],
+ "schema": {
+  "truncation_current": {
+   "gene_phenotype": {
+    "limit": 1000,
+    "rows_over": 99,
+    "max": 1677
+   },
+   "gene_species": {
+    "limit": 500,
+    "rows_over": 60,
+    "max": 668
+   },
+   "gene_id": {
+    "limit": 300,
+    "rows_over": 0,
+    "max": 28
+   },
+   "gene_name": {
+    "limit": 500,
+    "rows_over": 0,
+    "max": 43
+   },
+   "chrom_pos": {
+    "limit": 500,
+    "rows_over": 0,
+    "max": 41
+   },
+   "key_result": {
+    "limit": 15000,
+    "rows_over": 0,
+    "max": 3051
+   },
+   "cloning_method": {
+    "limit": 255,
+    "rows_over": 0,
+    "max": 51
+   }
+  },
+  "row_size": {
+   "current_varchar_chars": 18355,
+   "current_varchar_bytes_utf8mb3": 55065,
+   "limit_bytes": 65535
+  },
+  "utf8": {
+   "four_byte_chars": 0,
+   "nonascii_unique": 14,
+   "nonascii_top": [
+    [
+     "α",
+     463
+    ],
+    [
+     "β",
+     79
+    ],
+    [
+     "°",
+     31
+    ],
+    [
+     "“",
+     7
+    ],
+    [
+     "”",
+     7
+    ],
+    [
+     "Δ",
+     6
+    ],
+    [
+     "–",
+     4
+    ],
+    [
+     "γ",
+     3
+    ],
+    [
+     "—",
+     2
+    ],
+    [
+     "≤",
+     1
+    ],
+    [
+     "µ",
+     1
+    ],
+    [
+     "₂",
+     1
+    ],
+    [
+     "μ",
+     1
+    ],
+    [
+     "‐",
+     1
+    ]
+   ]
+  },
+  "recommended_new_columns": [
+   "reference_genome_id varchar(128)",
+   "chromosome varchar(16)",
+   "species_primary varchar(128)",
+   "phenotype_brief TEXT",
+   "protein_family TEXT",
+   "protein_family_label varchar(128)",
+   "validation_method TEXT",
+   "validation_methods TEXT",
+   "phenotype_tags TEXT(可选)",
+   "research_strategy varchar(40)",
+   "functional_category varchar(64)",
+   "publication_years varchar(64)",
+   "data_version varchar(32)"
+  ],
+  "must_widen": [
+   "gene_phenotype varchar(1000)->TEXT",
+   "gene_species varchar(500)->TEXT"
+  ]
+ },
+ "old_db_compare": {
+  "old_rows": 520,
+  "old_clone_id_range": [
+   1,
+   526
+  ],
+  "missing_clone_ids": [
+   3,
+   7,
+   8,
+   13,
+   15,
+   25
+  ],
+  "old_gene_id_versions": {
+   "traescs_v02": 461,
+   "traescs_v01": 10,
+   "note": "Lead verified; local regex counts 469/10 including case/spelling variants",
+   "non_traescs": 40
+  },
+  "auto_tiers": {
+   "P1": 10,
+   "P2": 211,
+   "P3": 12,
+   "P4": 39
+  },
+  "auto_matched": 272,
+  "auto_pct": 52.31,
+  "genehub_verified": {
+   "inherit": 321,
+   "inherit_pct": 61.73,
+   "orphans": 199,
+   "note": "Lead verified via Genehub_DB.GenePageIWGSCv1_table v1/v2->v3"
+  },
+  "clone_plan_321": {
+   "insert_rows": 1099,
+   "clone_id_start": 527,
+   "clone_id_end": 1625,
+   "auto_increment": 1626,
+   "final_rows": 1420,
+   "rows_if_orphans_kept": 1619
+  },
+  "clone_plan_272": {
+   "insert_rows": 1148,
+   "clone_id_start": 527,
+   "clone_id_end": 1674,
+   "auto_increment": 1675
+  },
+  "chrom_conflicts": null,
+  "remaining_old_rows": [
+   {
+    "clone_id": 10,
+    "gene_id": "TraesCSU02G302300LC",
+    "gene_name": "TaMKK3"
+   },
+   {
+    "clone_id": 11,
+    "gene_id": "TraesCS3A02G006600",
+    "gene_name": "TaPHS1'''TaMFT"
+   },
+   {
+    "clone_id": 17,
+    "gene_id": "TraesCS5A02G391700",
+    "gene_name": "TaVRN1-5A"
+   },
+   {
+    "clone_id": 18,
+    "gene_id": "TraesCS5A02G541300",
+    "gene_name": "TaVRN2-5A"
+   },
+   {
+    "clone_id": 19,
+    "gene_id": "TraesCS3B02G515900",
+    "gene_name": "Tamyb10-B1"
+   },
+   {
+    "clone_id": 21,
+    "gene_id": "TraesCS7B02G013100",
+    "gene_name": "TaVRN3-7B"
+   },
+   {
+    "clone_id": 23,
+    "gene_id": "TraesCS7D02G176700",
+    "gene_name": "TaVRT-2"
+   },
+   {
+    "clone_id": 24,
+    "gene_id": "TraesCS7B02G080300",
+    "gene_name": "TaVRT-2"
+   },
+   {
+    "clone_id": 26,
+    "gene_id": "TraesCS7A02G175200",
+    "gene_name": "TaVRT-2"
+   },
+   {
+    "clone_id": 27,
+    "gene_id": "TraesCS5A02G501500",
+    "gene_name": "TaBot1"
+   },
+   {
+    "clone_id": 28,
+    "gene_id": "TaBot1-4D",
+    "gene_name": "TraesCS4D02G326900"
+   },
+   {
+    "clone_id": 29,
+    "gene_id": "TaBot1-4B",
+    "gene_name": "TraesCS4B02G330000"
+   },
+   {
+    "clone_id": 32,
+    "gene_id": "TraesCS2A02G081900",
+    "gene_name": "PPD-A1"
+   },
+   {
+    "clone_id": 33,
+    "gene_id": "TraesCS3B02G608800",
+    "gene_name": "TdDof/SSt1"
+   },
+   {
+    "clone_id": 34,
+    "gene_id": "TraesCS3D02G537400",
+    "gene_name": "TdDof/SSt1"
+   },
+   {
+    "clone_id": 35,
+    "gene_id": "TraesCS3A02G532000",
+    "gene_name": "TRITD3Bv1G28053"
+   },
+   {
+    "clone_id": 36,
+    "gene_id": "TRITD3Bv1G28053",
+    "gene_name": "TdDof/SSt1"
+   },
+   {
+    "clone_id": 39,
+    "gene_id": "TraesCS5A02G311600",
+    "gene_name": "CBF-A12"
+   },
+   {
+    "clone_id": 40,
+    "gene_id": "TraesCS5D02G318500",
+    "gene_name": "CBF-D12"
+   },
+   {
+    "clone_id": 41,
+    "gene_id": "TraesCS5B02G312200",
+    "gene_name": "CBF-B12"
+   },
+   {
+    "clone_id": 45,
+    "gene_id": "TraesCS3A02G401700",
+    "gene_name": "TaZIP4-A1"
+   },
+   {
+    "clone_id": 46,
+    "gene_id": "TraesCS3B02G434600",
+    "gene_name": "TaZIP4-B1"
+   },
+   {
+    "clone_id": 47,
+    "gene_id": "TraesCS3D02G396500",
+    "gene_name": "TaZIP4-D1"
+   },
+   {
+    "clone_id": 48,
+    "gene_id": "TraesCS5B02G255100",
+    "gene_name": "TtZIP4"
+   },
+   {
+    "clone_id": 51,
+    "gene_id": "TraesCS4D02G040400",
+    "gene_name": "Rht-B1, Rht-D1"
+   },
+   {
+    "clone_id": 53,
+    "gene_id": "TraesCS3D02G137200",
+    "gene_name": "Tasg-D1/S1/Rht-B1b/GSK3/DOG1L4/TaGSK3"
+   },
+   {
+    "clone_id": 54,
+    "gene_id": "TraesCS7B02G475400",
+    "gene_name": "Bo1/Bot-B5b"
+   },
+   {
+    "clone_id": 55,
+    "gene_id": "TraesCS7D02G724400LC",
+    "gene_name": "Bot-D5a"
+   },
+   {
+    "clone_id": 56,
+    "gene_id": "TraesCS5A02G473800",
+    "gene_name": "Q"
+   },
+   {
+    "clone_id": 57,
+    "gene_id": "TraesCS5B02G486900",
+    "gene_name": "Q"
+   },
+   {
+    "clone_id": 62,
+    "gene_id": "TraesCS1A02G317311",
+    "gene_name": "Glu-1Ax"
+   },
+   {
+    "clone_id": 63,
+    "gene_id": "TraesCS1B02G329992",
+    "gene_name": "Glu-1By"
+   },
+   {
+    "clone_id": 64,
+    "gene_id": "TraesCS1B02G329711",
+    "gene_name": "Glu-1Bx"
+   },
+   {
+    "clone_id": 65,
+    "gene_id": "TraesCS1A02G466500LC",
+    "gene_name": "Glu-1Ay"
+   },
+   {
+    "clone_id": 66,
+    "gene_id": "TraesCS1D02G317301",
+    "gene_name": "Glu-1Dy"
+   },
+   {
+    "clone_id": 67,
+    "gene_id": "TraesCS1D02G317211",
+    "gene_name": "Glu-1Dx"
+   },
+   {
+    "clone_id": 68,
+    "gene_id": "TraesCS1A02G008000",
+    "gene_name": "Glu-A3"
+   },
+   {
+    "clone_id": 69,
+    "gene_id": "TraesCS1A02G007934",
+    "gene_name": "Glu-A3"
+   },
+   {
+    "clone_id": 70,
+    "gene_id": "TraesCS1A02G010900",
+    "gene_name": "Glu-A3"
+   },
+   {
+    "clone_id": 71,
+    "gene_id": "TraesCS1A02G010905",
+    "gene_name": "Glu-A3"
+   },
+   {
+    "clone_id": 72,
+    "gene_id": "TraesCS1B02G011523",
+    "gene_name": "Glu-B3"
+   },
+   {
+    "clone_id": 73,
+    "gene_id": "TraesCS1B02G011600",
+    "gene_name": "Glu-B3"
+   },
+   {
+    "clone_id": 74,
+    "gene_id": "TraesCS1B02G011700",
+    "gene_name": "Glu-B3"
+   },
+   {
+    "clone_id": 75,
+    "gene_id": "TraesCS1B02G013500",
+    "gene_name": "Glu-B3"
+   },
+   {
+    "clone_id": 76,
+    "gene_id": "TraesCS1B02G042700",
+    "gene_name": "Glu-B3"
+   },
+   {
+    "clone_id": 77,
+    "gene_id": "TraesCS1D02G000200",
+    "gene_name": "Glu-D3"
+   },
+   {
+    "clone_id": 78,
+    "gene_id": "TraesCS1D02G000300",
+    "gene_name": "Glu-D3"
+   },
+   {
+    "clone_id": 79,
+    "gene_id": "TraesCS1D02G007400",
+    "gene_name": "Glu-D3"
+   },
+   {
+    "clone_id": 80,
+    "gene_id": "TraesCS1D02G008600",
+    "gene_name": "Glu-D3"
+   },
+   {
+    "clone_id": 81,
+    "gene_id": "TraesCS1D02G009400",
+    "gene_name": "Glu-D3"
+   },
+   {
+    "clone_id": 82,
+    "gene_id": "TraesCS1D02G009900",
+    "gene_name": "Glu-D3"
+   },
+   {
+    "clone_id": 83,
+    "gene_id": "TraesCS1D02G015100",
+    "gene_name": "Glu-D3"
+   },
+   {
+    "clone_id": 84,
+    "gene_id": "TraesCS1D02G007626",
+    "gene_name": "Glu-D3"
+   },
+   {
+    "clone_id": 86,
+    "gene_id": "TraesCS2D02G290800",
+    "gene_name": "TaSBEIIa"
+   },
+   {
+    "clone_id": 87,
+    "gene_id": "TraesCS2B02G309500",
+    "gene_name": "TaSBEIIa"
+   },
+   {
+    "clone_id": 88,
+    "gene_id": "TraesCS2A02G310300",
+    "gene_name": "TaSBEIIb"
+   },
+   {
+    "clone_id": 89,
+    "gene_id": "TraesCS2B02G327300",
+    "gene_name": "TaSBEIIb"
+   },
+   {
+    "clone_id": 90,
+    "gene_id": "TraesCS2D02G308600",
+    "gene_name": "TaSBEIIb"
+   },
+   {
+    "clone_id": 91,
+    "gene_id": "TraesCS7A02G549100",
+    "gene_name": "TaSBEIa"
+   },
+   {
+    "clone_id": 92,
+    "gene_id": "TraesCS7D02G535400",
+    "gene_name": "TaSBEIa"
+   },
+   {
+    "clone_id": 93,
+    "gene_id": "TraesCS7A02G549300",
+    "gene_name": "TaSBEIb"
+   },
+   {
+    "clone_id": 94,
+    "gene_id": "TraesCS7B02G472300",
+    "gene_name": "TaSBEIb"
+   },
+   {
+    "clone_id": 95,
+    "gene_id": "TraesCS7D02G535500",
+    "gene_name": "TaSBEIc"
+   },
+   {
+    "clone_id": 96,
+    "gene_id": "TraesCS2A02G168200",
+    "gene_name": "TaSuSy2"
+   },
+   {
+    "clone_id": 97,
+    "gene_id": "TraesCS2B02G194200",
+    "gene_name": "TaSuSy2"
+   },
+   {
+    "clone_id": 98,
+    "gene_id": "TraesCS2D02G175600",
+    "gene_name": "TaSuSy2"
+   },
+   {
+    "clone_id": 102,
+    "gene_id": "TraesCS4A02G446700",
+    "gene_name": "TaSuSy4"
+   },
+   {
+    "clone_id": 103,
+    "gene_id": "TraesCS7D02G036600",
+    "gene_name": "TaSuSy4"
+   },
+   {
+    "clone_id": 104,
+    "gene_id": "TraesCS2A02G406700",
+    "gene_name": "TaSuSy5"
+   },
+   {
+    "clone_id": 105,
+    "gene_id": "TraesCS2B02G424300",
+    "gene_name": "TaSuSy5"
+   },
+   {
+    "clone_id": 106,
+    "gene_id": "TraesCS2D02G403600",
+    "gene_name": "TaSuSy5"
+   },
+   {
+    "clone_id": 107,
+    "gene_id": "TraesCS7A02G070100",
+    "gene_name": "TaGBSSI"
+   },
+   {
+    "clone_id": 112,
+    "gene_id": "TraesCSU02G137200",
+    "gene_name": "TaSPR-A"
+   },
+   {
+    "clone_id": 118,
+    "gene_id": "TraesCS3D02G103200",
+    "gene_name": "TaBtr1/QIP2"
+   },
+   {
+    "clone_id": 119,
+    "gene_id": "TraesCS4A02G418200",
+    "gene_name": "Wx"
+   },
+   {
+    "clone_id": 121,
+    "gene_id": "TraesCS7D01G064300",
+    "gene_name": "Wx"
+   },
+   {
+    "clone_id": 122,
+    "gene_id": "TraesCS7A02G557300",
+    "gene_name": "Psy1"
+   },
+   {
+    "clone_id": 123,
+    "gene_id": "TraesCS7B02G482000",
+    "gene_name": "Psy1"
+   },
+   {
+    "clone_id": 124,
+    "gene_id": "TraesCS7D02G553300",
+    "gene_name": "Psy1"
+   },
+   {
+    "clone_id": 127,
+    "gene_id": "TraesCS7D02G468700",
+    "gene_name": "WAPO1-7D"
+   },
+   {
+    "clone_id": 131,
+    "gene_id": "TraesCS1B02G477400",
+    "gene_name": "ELF3"
+   },
+   {
+    "clone_id": 132,
+    "gene_id": "TraesCS4D02G026700",
+    "gene_name": "BGC1/FLO6"
+   },
+   {
+    "clone_id": 133,
+    "gene_id": "TraesCS4B02G029700",
+    "gene_name": "BGC1/FLO6"
+   },
+   {
+    "clone_id": 134,
+    "gene_id": "TraesCS4A02G284000",
+    "gene_name": "BGC1/FLO6"
+   },
+   {
+    "clone_id": 135,
+    "gene_id": "TraesCS2B02G007700",
+    "gene_name": "DA1"
+   },
+   {
+    "clone_id": 137,
+    "gene_id": "TraesCSU02G007800",
+    "gene_name": "DA1"
+   },
+   {
+    "clone_id": 143,
+    "gene_id": "TraesCS6B02G207500LC",
+    "gene_name": "Gpc-B1/NAM-B1"
+   },
+   {
+    "clone_id": 144,
+    "gene_id": "TraesCS6A02G108300",
+    "gene_name": "Gpc-A1/NAM-A1"
+   },
+   {
+    "clone_id": 145,
+    "gene_id": "TraesCS6D02G096300",
+    "gene_name": "Gpc-D1/NAM-D1"
+   },
+   {
+    "clone_id": 149,
+    "gene_id": "TraesCS2A02G176000",
+    "gene_name": "GW7"
+   },
+   {
+    "clone_id": 153,
+    "gene_id": "TraesCS6A02G392400",
+    "gene_name": "KAT-2A"
+   },
+   {
+    "clone_id": 154,
+    "gene_id": "TraesCS6D02G493900LC",
+    "gene_name": "KAT-2D"
+   },
+   {
+    "clone_id": 160,
+    "gene_id": "TraesCS5D02G004000",
+    "gene_name": "Gsp-1"
+   },
+   {
+    "clone_id": 161,
+    "gene_id": "TraesCS7A02G514400",
+    "gene_name": "Pinb2-1"
+   },
+   {
+    "clone_id": 162,
+    "gene_id": "TraesCS7A02G514500",
+    "gene_name": "Pinb2-2"
+   },
+   {
+    "clone_id": 163,
+    "gene_id": "TraesCS7A02G514505",
+    "gene_name": "Pinb2-3"
+   },
+   {
+    "clone_id": 165,
+    "gene_id": "TraesCS1A02G018600",
+    "gene_name": "Lr10"
+   },
+   {
+    "clone_id": 166,
+    "gene_id": "TraesCS4B02G037900",
+    "gene_name": "Lpx-B1.1;LoxA"
+   },
+   {
+    "clone_id": 167,
+    "gene_id": "TraesCS4B02G037700",
+    "gene_name": "Lpx-B1.2;LoxA"
+   },
+   {
+    "clone_id": 168,
+    "gene_id": "TraesCS5A02G378700",
+    "gene_name": "Lpx-A2;LoxC"
+   },
+   {
+    "clone_id": 169,
+    "gene_id": "TraesCS5B02G382300",
+    "gene_name": "Lpx-A2;LoxC"
+   },
+   {
+    "clone_id": 170,
+    "gene_id": "TraesCS5D02G388700",
+    "gene_name": "Lpx-A2;LoxC"
+   },
+   {
+    "clone_id": 171,
+    "gene_id": "TraesCS4A02G275900",
+    "gene_name": "Lpx-3;LoxB"
+   },
+   {
+    "clone_id": 172,
+    "gene_id": "TraesCS4D02G035100",
+    "gene_name": "Lpx-3;LoxB"
+   },
+   {
+    "clone_id": 173,
+    "gene_id": "TraesCS4B02G037800",
+    "gene_name": "Lpx-3;LoxB"
+   },
+   {
+    "clone_id": 174,
+    "gene_id": "MT123593",
+    "gene_name": "Lr14a"
+   },
+   {
+    "clone_id": 177,
+    "gene_id": "TraesCS3D02G468400-2",
+    "gene_name": "Myb10-D/PHS-3D"
+   },
+   {
+    "clone_id": 181,
+    "gene_id": "TraesCS4D02G243100",
+    "gene_name": "Lr67/Yr46/Sr55/Pm46/Ltn3"
+   },
+   {
+    "clone_id": 182,
+    "gene_id": "TraesCS4B02G243500",
+    "gene_name": "Lr67/Yr46/Sr55/Pm46/Ltn3"
+   },
+   {
+    "clone_id": 183,
+    "gene_id": "TraesCS4A02G066200",
+    "gene_name": "a homoeologous gene of Lr67/Yr46/Sr55/Pm46/Ltn3"
+   },
+   {
+    "clone_id": 187,
+    "gene_id": "TraesCS5A02G494800",
+    "gene_name": "TaMlo-A1"
+   },
+   {
+    "clone_id": 188,
+    "gene_id": "TraesCS4D02G319100",
+    "gene_name": "TaMlo-D1"
+   },
+   {
+    "clone_id": 189,
+    "gene_id": "TraesCS4B02G322700",
+    "gene_name": "TaMlo-B1"
+   },
+   {
+    "clone_id": 190,
+    "gene_id": "TraesCS4B02G017900",
+    "gene_name": "Ms1"
+   },
+   {
+    "clone_id": 191,
+    "gene_id": "TraesCS3A02G217000",
+    "gene_name": "Ms5"
+   },
+   {
+    "clone_id": 192,
+    "gene_id": "TraesCS7A02G175200-1",
+    "gene_name": "P1/VRT2"
+   },
+   {
+    "clone_id": 194,
+    "gene_id": "TraesCS5D02G044600",
+    "gene_name": "Pm2"
+   },
+   {
+    "clone_id": 195,
+    "gene_id": "TraesCS1A02G008100",
+    "gene_name": "Pm3a/Pm3b/Pm3d/Pm3f"
+   },
+   {
+    "clone_id": 196,
+    "gene_id": "MT783929/MT783930",
+    "gene_name": "Pm4a/ Pm4b (Pm4c)/ Pm4d (Pm4e)/ Pm4f/ Pm4g/ Pm4h"
+   },
+   {
+    "clone_id": 202,
+    "gene_id": "MF996807",
+    "gene_name": "Pm60"
+   },
+   {
+    "clone_id": 203,
+    "gene_id": "TraesCS6A02G221900",
+    "gene_name": "Rht24/Rht18"
+   },
+   {
+    "clone_id": 210,
+    "gene_id": "TraesCS4B02G020300",
+    "gene_name": "TaGRP2"
+   },
+   {
+    "clone_id": 211,
+    "gene_id": "TraesCS5A02G391300",
+    "gene_name": "PhyC"
+   },
+   {
+    "clone_id": 212,
+    "gene_id": "TraesCS5B02G396200",
+    "gene_name": "PhyC"
+   },
+   {
+    "clone_id": 213,
+    "gene_id": "TraesCS5D02G401000",
+    "gene_name": "PhyC"
+   },
+   {
+    "clone_id": 215,
+    "gene_id": "MW375697",
+    "gene_name": "MlWE18"
+   },
+   {
+    "clone_id": 216,
+    "gene_id": "TraesCS5A02G542800",
+    "gene_name": "B1"
+   },
+   {
+    "clone_id": 217,
+    "gene_id": "TraesCS3B02G572900",
+    "gene_name": "TaSINA"
+   },
+   {
+    "clone_id": 218,
+    "gene_id": "TraesCS4B02G372700",
+    "gene_name": "VRN-B2/VRN2"
+   },
+   {
+    "clone_id": 219,
+    "gene_id": "ATE88995",
+    "gene_name": "Sr13"
+   },
+   {
+    "clone_id": 222,
+    "gene_id": "LN883743/TraesCS7A02G499600",
+    "gene_name": "Sr22/Sr22b/SrTm5"
+   },
+   {
+    "clone_id": 232,
+    "gene_id": "TraesCS4D02G341700",
+    "gene_name": "WSOC1-4D"
+   },
+   {
+    "clone_id": 236,
+    "gene_id": "TraesCS1A02G031600",
+    "gene_name": "Rf1/RFL77"
+   },
+   {
+    "clone_id": 238,
+    "gene_id": "TraesCS4B02G317000",
+    "gene_name": "TaPHT1-9-4B"
+   },
+   {
+    "clone_id": 242,
+    "gene_id": "TraesCS5A02G515500",
+    "gene_name": "WSOC1-5A"
+   },
+   {
+    "clone_id": 243,
+    "gene_id": "TraesCS4B02G346700",
+    "gene_name": "WSOC1-4B"
+   },
+   {
+    "clone_id": 245,
+    "gene_id": "TraesCS7A02G211300",
+    "gene_name": "TaHd1-7A/TaCO-7A"
+   },
+   {
+    "clone_id": 246,
+    "gene_id": "TraesCS7B02G118300",
+    "gene_name": "TaHd1-7B/TaCO-7B"
+   },
+   {
+    "clone_id": 247,
+    "gene_id": "TraesCS7D02G213000",
+    "gene_name": "TaHd1-7D/TaCO-7D"
+   },
+   {
+    "clone_id": 248,
+    "gene_id": "TraesCS3A02G249100",
+    "gene_name": "TaFUSCA3-3A"
+   },
+   {
+    "clone_id": 249,
+    "gene_id": "TraesCS3B02G278000",
+    "gene_name": "TaFUSCA3-3B"
+   },
+   {
+    "clone_id": 250,
+    "gene_id": "TraesCS3D02G249100",
+    "gene_name": "TaFUSCA3-3D"
+   },
+   {
+    "clone_id": 258,
+    "gene_id": "HORVU5Hr1G027890",
+    "gene_name": "EGT2"
+   },
+   {
+    "clone_id": 267,
+    "gene_id": "TraesCS1D02G340800",
+    "gene_name": "TaFT3-D1"
+   },
+   {
+    "clone_id": 268,
+    "gene_id": "TraesCS1A02G338600",
+    "gene_name": "TaFT3-A1"
+   },
+   {
+    "clone_id": 269,
+    "gene_id": "TraesCS1B02G076300",
+    "gene_name": "TaTOE-B1"
+   },
+   {
+    "clone_id": 270,
+    "gene_id": "TraesCS1D02G059200",
+    "gene_name": "TaTOE-D1"
+   },
+   {
+    "clone_id": 271,
+    "gene_id": "TraesCS1A02G058400",
+    "gene_name": "TaTOE-A1"
+   },
+   {
+    "clone_id": 279,
+    "gene_id": "TraesCS6B02G224100",
+    "gene_name": "TaCRY1b"
+   },
+   {
+    "clone_id": 280,
+    "gene_id": "TraesCS6D02G187200",
+    "gene_name": "TaCRY1d"
+   },
+   {
+    "clone_id": 293,
+    "gene_id": "TraesCS7A02G152500",
+    "gene_name": "TaNAC77-7A"
+   },
+   {
+    "clone_id": 294,
+    "gene_id": "TraesCS7B02G056300",
+    "gene_name": "TaNAC77-7B"
+   },
+   {
+    "clone_id": 295,
+    "gene_id": "TraesCS7D02G154200",
+    "gene_name": "TaNAC77-7D"
+   },
+   {
+    "clone_id": 299,
+    "gene_id": "TraesCS5A02G038300",
+    "gene_name": "TaARF25-5A"
+   },
+   {
+    "clone_id": 301,
+    "gene_id": "TraesCS5D02G045700",
+    "gene_name": "TaARF25-5D"
+   },
+   {
+    "clone_id": 302,
+    "gene_id": "TraesCS3A02G328000",
+    "gene_name": "TaERF3-3A"
+   },
+   {
+    "clone_id": 303,
+    "gene_id": "TraesCS3B02G357500",
+    "gene_name": "TaERF3-3B"
+   },
+   {
+    "clone_id": 304,
+    "gene_id": "TraesCS3D02G321500",
+    "gene_name": "TaERF3-3D"
+   },
+   {
+    "clone_id": 308,
+    "gene_id": "TraesCS5D02G097400",
+    "gene_name": "TaWOX2-5D"
+   },
+   {
+    "clone_id": 309,
+    "gene_id": "TraesCS5A02G085000",
+    "gene_name": "TaWOX2-5A"
+   },
+   {
+    "clone_id": 310,
+    "gene_id": "TraesCS5B02G091000",
+    "gene_name": "TaWOX2-5B"
+   },
+   {
+    "clone_id": 317,
+    "gene_id": "TraesCS6D02G207100",
+    "gene_name": "TaPRR1-D1"
+   },
+   {
+    "clone_id": 318,
+    "gene_id": "TraesCS6A02G227900",
+    "gene_name": "TaPRR1-A1"
+   },
+   {
+    "clone_id": 319,
+    "gene_id": "TraesCS6B02G253900",
+    "gene_name": "TaPRR1-B1"
+   },
+   {
+    "clone_id": 322,
+    "gene_id": "TraesCS2A02G468500",
+    "gene_name": "PPO-A2"
+   },
+   {
+    "clone_id": 323,
+    "gene_id": "TraesCS2B02G491400",
+    "gene_name": "PPO-B2"
+   },
+   {
+    "clone_id": 324,
+    "gene_id": "TraesCS2D02G468600",
+    "gene_name": "PPO-D2"
+   },
+   {
+    "clone_id": 326,
+    "gene_id": "TraesCS2B02G491100",
+    "gene_name": "PPO-B3"
+   },
+   {
+    "clone_id": 329,
+    "gene_id": "TraesCS4A02G002600",
+    "gene_name": "SVP3-4A/BM1-4A"
+   },
+   {
+    "clone_id": 330,
+    "gene_id": "TraesCS4B02G302600",
+    "gene_name": "SVP3-4B/BM1-4B"
+   },
+   {
+    "clone_id": 331,
+    "gene_id": "TraesCS4D02G301100",
+    "gene_name": "SVP3-4D/BM1-4D"
+   },
+   {
+    "clone_id": 332,
+    "gene_id": "TraesCS2A02G261200",
+    "gene_name": "FUL2-2A/BM8-2A/TaAP1-3-2A"
+   },
+   {
+    "clone_id": 333,
+    "gene_id": "TraesCS2B02G281000",
+    "gene_name": "FUL2-2B/BM8-2B/TaAP1-3-2B"
+   },
+   {
+    "clone_id": 334,
+    "gene_id": "TraesCS2D02G262700",
+    "gene_name": "FUL2-2D/BM8-2D/TaAP1-3-2D"
+   },
+   {
+    "clone_id": 335,
+    "gene_id": "TraesCS2A02G174300",
+    "gene_name": "FUL3-2A/BM3-2A/TaAP1-2-2A"
+   },
+   {
+    "clone_id": 336,
+    "gene_id": "TraesCS2B02G200800",
+    "gene_name": "FUL3-2B/BM3-2B/TaAP1-2-2B"
+   },
+   {
+    "clone_id": 337,
+    "gene_id": "TraesCS2D02G181400",
+    "gene_name": "FUL3-2D/BM3-2D/TaAP1-2-2D"
+   },
+   {
+    "clone_id": 338,
+    "gene_id": "TraesCS1A02G264300",
+    "gene_name": "PI1-1A/WPI-1-1A"
+   },
+   {
+    "clone_id": 339,
+    "gene_id": "TraesCS1B02G275000",
+    "gene_name": "PI1-1B/WPI-1-1B"
+   },
+   {
+    "clone_id": 340,
+    "gene_id": "TraesCS1D02G264500",
+    "gene_name": "PI1-1D/WPI-1-1D"
+   },
+   {
+    "clone_id": 341,
+    "gene_id": "TraesCS7A02G383800",
+    "gene_name": "AP3-1-7A/WPA3-7A"
+   },
+   {
+    "clone_id": 342,
+    "gene_id": "TraesCS7B02G286600",
+    "gene_name": "AP3-1-7B/WPA3-7B"
+   },
+   {
+    "clone_id": 343,
+    "gene_id": "TraesCS7D02G286600",
+    "gene_name": "AP3-1-7D/WPA3-7D"
+   },
+   {
+    "clone_id": 344,
+    "gene_id": "TraesCS3A02G314300",
+    "gene_name": "AG2-3A/WAG2-3A"
+   },
+   {
+    "clone_id": 345,
+    "gene_id": "TraesCS3B02G157500",
+    "gene_name": "AG2-3B/WAG2-3B"
+   },
+   {
+    "clone_id": 346,
+    "gene_id": "TraesCS3D02G140200",
+    "gene_name": "AG2-3D/WAG2-3D"
+   },
+   {
+    "clone_id": 347,
+    "gene_id": "TraesCS1A02G125800",
+    "gene_name": "AG1-1A/WAG1-1A"
+   },
+   {
+    "clone_id": 348,
+    "gene_id": "TraesCS1B02G144800",
+    "gene_name": "AG1-1B/WAG1-1B"
+   },
+   {
+    "clone_id": 349,
+    "gene_id": "TraesCS1D02G127700",
+    "gene_name": "AG1-1D/WAG1-1D"
+   },
+   {
+    "clone_id": 351,
+    "gene_id": "TraesCS4B02G245700",
+    "gene_name": "SEP1-2-4B/WLHS1-4B"
+   },
+   {
+    "clone_id": 353,
+    "gene_id": "TraesCS7A02G122000",
+    "gene_name": "SEP1-4-7A/TaSEP6-7A"
+   },
+   {
+    "clone_id": 354,
+    "gene_id": "TraesCS7B02G020800",
+    "gene_name": "SEP1-4-7B/TaSEP6-7B"
+   },
+   {
+    "clone_id": 355,
+    "gene_id": "TraesCS7D02G120500",
+    "gene_name": "SEP1-4-7D/TaSEP6-7D"
+   },
+   {
+    "clone_id": 356,
+    "gene_id": "TraesCS5A02G286800",
+    "gene_name": "SEP3-2-5A/TaSEP3-5A"
+   },
+   {
+    "clone_id": 357,
+    "gene_id": "TraesCS5B02G286100",
+    "gene_name": "SEP3-2-5B/TaSEP3-5B"
+   },
+   {
+    "clone_id": 358,
+    "gene_id": "TraesCS5D02G294500",
+    "gene_name": "SEP3-2-5D/TaSEP3-5D"
+   },
+   {
+    "clone_id": 374,
+    "gene_id": "TraesCS4A02G145300",
+    "gene_name": "TaNHX1-4A"
+   },
+   {
+    "clone_id": 375,
+    "gene_id": "TraesCS4D02G147600",
+    "gene_name": "TaNHX1-4D"
+   },
+   {
+    "clone_id": 376,
+    "gene_id": "TraesCS4B02G125700",
+    "gene_name": "TaNHX1-4B"
+   },
+   {
+    "clone_id": 377,
+    "gene_id": "TraesCS2A02G121000",
+    "gene_name": "TaNHX2-2A"
+   },
+   {
+    "clone_id": 378,
+    "gene_id": "TraesCS2B02G141900",
+    "gene_name": "TaNHX2-B"
+   },
+   {
+    "clone_id": 379,
+    "gene_id": "TraesCS2D02G123000",
+    "gene_name": "TaNHX2-2D"
+   },
+   {
+    "clone_id": 380,
+    "gene_id": "TraesCS7A02G141300",
+    "gene_name": "TaAVP1-7A"
+   },
+   {
+    "clone_id": 381,
+    "gene_id": "TraesCS7D02G142600",
+    "gene_name": "TaAVP1-7D"
+   },
+   {
+    "clone_id": 382,
+    "gene_id": "TraesCS7B02G042600",
+    "gene_name": "TaAVP1-7B"
+   },
+   {
+    "clone_id": 386,
+    "gene_id": "TraesCS3A02G143100",
+    "gene_name": "FT-A2"
+   },
+   {
+    "clone_id": 390,
+    "gene_id": "TraesCS4D02G359300",
+    "gene_name": "TaDIR-D1"
+   },
+   {
+    "clone_id": 391,
+    "gene_id": "TraesCS5A02G549300",
+    "gene_name": "TaDIR-A1"
+   },
+   {
+    "clone_id": 405,
+    "gene_id": "TraesCS1A02G010500",
+    "gene_name": "Csl-1A"
+   },
+   {
+    "clone_id": 409,
+    "gene_id": "TraesCS2A01G547800",
+    "gene_name": "TaARF12-2A"
+   },
+   {
+    "clone_id": 410,
+    "gene_id": "TraesCS2B02G578500",
+    "gene_name": "TaARF12-2B"
+   },
+   {
+    "clone_id": 411,
+    "gene_id": "TraesCS2D02G548900",
+    "gene_name": "TaARF12-2D"
+   },
+   {
+    "clone_id": 418,
+    "gene_id": "TraesCS5B02G388000",
+    "gene_name": "Cdu-B1;TaHMA3-5B"
+   },
+   {
+    "clone_id": 419,
+    "gene_id": "TraesCS5D02G392700",
+    "gene_name": "TaHMA3-5D"
+   },
+   {
+    "clone_id": 420,
+    "gene_id": "TraesCS5A02G383400",
+    "gene_name": "TaHMA3-5A"
+   },
+   {
+    "clone_id": 424,
+    "gene_id": "TraesCS7A02G140500",
+    "gene_name": "TaSRG1A/AetSRG1"
+   },
+   {
+    "clone_id": 425,
+    "gene_id": "TraesCS7B02G042200",
+    "gene_name": "TaSRG1B/AetSRG1"
+   },
+   {
+    "clone_id": 435,
+    "gene_id": "TraesCS5D02G349800",
+    "gene_name": "YrU1-5D"
+   },
+   {
+    "clone_id": 436,
+    "gene_id": "TraesCS5B02G344200",
+    "gene_name": "YrU1-5B"
+   },
+   {
+    "clone_id": 439,
+    "gene_id": "TraesCS1B02G079900",
+    "gene_name": "Yr15"
+   },
+   {
+    "clone_id": 440,
+    "gene_id": "TraesCS1A02G061500",
+    "gene_name": "Yr15-1A"
+   },
+   {
+    "clone_id": 441,
+    "gene_id": "TraesCS6D02G025700",
+    "gene_name": "Yr15-6D"
+   },
+   {
+    "clone_id": 442,
+    "gene_id": "TraesCS6B02G029600",
+    "gene_name": "Yr15-6B"
+   },
+   {
+    "clone_id": 443,
+    "gene_id": "TraesCS1D02G062300",
+    "gene_name": "Yr15-1D"
+   },
+   {
+    "clone_id": 444,
+    "gene_id": "TraesCS6A02G020100",
+    "gene_name": "Yr15-6A"
+   },
+   {
+    "clone_id": 455,
+    "gene_id": "GU256285.1",
+    "gene_name": "Tsn1"
+   },
+   {
+    "clone_id": 470,
+    "gene_id": "TraesCS2A02G176300",
+    "gene_name": "TaAFP-A"
+   },
+   {
+    "clone_id": 471,
+    "gene_id": "TraesCS2D02G183700",
+    "gene_name": "TaAFP-D"
+   },
+   {
+    "clone_id": 479,
+    "gene_id": "TraesCS3A02G049500",
+    "gene_name": "Stb6"
+   },
+   {
+    "clone_id": 480,
+    "gene_id": "TraesCS1D02G427800",
+    "gene_name": "TaRec8-D1"
+   },
+   {
+    "clone_id": 481,
+    "gene_id": "TraesCS1A02G420000",
+    "gene_name": "TaRec8-A1"
+   },
+   {
+    "clone_id": 482,
+    "gene_id": "TraesCS1B02G450400",
+    "gene_name": "TaRec8-B1"
+   },
+   {
+    "clone_id": 483,
+    "gene_id": "MG372313",
+    "gene_name": "TtRec8-A1"
+   },
+   {
+    "clone_id": 484,
+    "gene_id": "MG372314",
+    "gene_name": "TtRec8-B1"
+   },
+   {
+    "clone_id": 491,
+    "gene_id": "KF148626.1",
+    "gene_name": "Bo4'''Bot(Tp4A)-B5c"
+   },
+   {
+    "clone_id": 492,
+    "gene_id": "TtBtr1-A",
+    "gene_name": "TtBtr1-A"
+   },
+   {
+    "clone_id": 493,
+    "gene_id": "TtBtr1-B",
+    "gene_name": "TtBtr1-B"
+   },
+   {
+    "clone_id": 500,
+    "gene_id": "TraesCS1B02G173900",
+    "gene_name": "TaHB-B2"
+   },
+   {
+    "clone_id": 501,
+    "gene_id": "TraesCS1D02G001200",
+    "gene_name": "LGP1"
+   },
+   {
+    "clone_id": 505,
+    "gene_id": "TraesCS4D02G198600",
+    "gene_name": "TaMPK3-4D/TaMPK3"
+   },
+   {
+    "clone_id": 506,
+    "gene_id": "TraesCS4B02G197800",
+    "gene_name": "TaMPK3-4B"
+   },
+   {
+    "clone_id": 507,
+    "gene_id": "TraesCS4A02G106400",
+    "gene_name": "TaMPK3-4A"
+   },
+   {
+    "clone_id": 508,
+    "gene_id": "TraesCS1D02G134200",
+    "gene_name": "TaHAG1"
+   },
+   {
+    "clone_id": 510,
+    "gene_id": "TraesCS1A02G138200",
+    "gene_name": "TaHAG1-A"
+   },
+   {
+    "clone_id": 514,
+    "gene_id": "TraesCS6A02G157900",
+    "gene_name": "TaCBF1a"
+   },
+   {
+    "clone_id": 515,
+    "gene_id": "TraesCS6B02G185700",
+    "gene_name": "TaCBF1b"
+   },
+   {
+    "clone_id": 517,
+    "gene_id": "TraesCS1A02G314200",
+    "gene_name": "DUO1/DUO-A1"
+   },
+   {
+    "clone_id": 518,
+    "gene_id": "TraesCS1D02G314700",
+    "gene_name": "DUO-D1"
+   }
+  ],
+  "remaining_old_rows_count": 248
+ },
+ "other_sheets": {
+  "修改记录": {
+   "rows": 1153,
+   "cols": [
+    "类别",
+    "原行号(Excel)",
+    "新行号(Excel)",
+    "gene_name",
+    "字段",
+    "原值",
+    "新值",
+    "依据",
+    "验证"
+   ],
+   "cat_counts": [
+    [
+     "清洗",
+     464
+    ],
+    [
+     "新增",
+     440
+    ],
+    [
+     "D6",
+     121
+    ],
+    [
+     "K",
+     36
+    ],
+    [
+     "删除",
+     36
+    ],
+    [
+     "核查",
+     17
+    ],
+    [
+     "K(全文)",
+     16
+    ],
+    [
+     "D1",
+     10
+    ],
+    [
+     "U",
+     10
+    ],
+    [
+     "D2",
+     3
+    ]
+   ],
+   "field_counts": [
+    [
+     "整行（14 列）",
+     440
+    ],
+    [
+     "cloning_method_description（入库）",
+     82
+    ],
+    [
+     "key_result（入库，≤500 词英文）",
+     78
+    ],
+    [
+     "title（入库）",
+     68
+    ],
+    [
+     "publication_year（入库）",
+     63
+    ],
+    [
+     "key_result（入库，≤500 词英文）、cloning_method_description（入库）",
+     60
+    ],
+    [
+     "cloning_method（入库）、cloning_method_description（入库）",
+     54
+    ],
+    [
+     "key_result（入库）",
+     52
+    ],
+    [
+     "key_result（入库，≤500 词英文）、function_description（入库）",
+     40
+    ],
+    [
+     "整行",
+     36
+    ],
+    [
+     "function_description（入库）",
+     30
+    ],
+    [
+     "蛋白家族（入库）",
+     29
+    ],
+    [
+     "cloning_method（入库）",
+     18
+    ],
+    [
+     "物种信息（入库）",
+     10
+    ],
+    [
+     "gene_phenotype（入库）、cloning_method（入库）",
+     8
+    ],
+    [
+     "蛋白家族（入库）、cloning_method（入库）、cloning_method_description（入库）",
+     8
+    ],
+    [
+     "蛋白家族（入库）、cloning_method（入库）",
+     8
+    ],
+    [
+     "gene_phenotype（入库）、cloning_method_description（入库）",
+     7
+    ],
+    [
+     "doi（入库）",
+     6
+    ],
+    [
+     "function_description（入库）、蛋白家族（入库）",
+     6
+    ],
+    [
+     "gene_phenotype（入库）、key_result（入库，≤500 词英文）、function_description（入库）、蛋白家族（入库）、cloning_method_description（入库）",
+     6
+    ],
+    [
+     "function_description（入库）、cloning_method_description（入库）",
+     6
+    ],
+    [
+     "key_result（入库，≤500 词英文）、蛋白家族（入库）、cloning_method（入库）、cloning_method_description（入库）",
+     6
+    ],
+    [
+     "gene_phenotype（入库）、蛋白家族（入库）、cloning_method（入库）",
+     5
+    ],
+    [
+     "key_result（入库，≤500 词英文）、cloning_method（入库）、cloning_method_description（入库）",
+     4
+    ],
+    [
+     "key_result（入库，≤500 词英文）、function_description（入库）、cloning_method_description（入库）",
+     4
+    ],
+    [
+     "gene_phenotype（入库）",
+     3
+    ],
+    [
+     "chrom_pos（入库）",
+     3
+    ],
+    [
+     "title/doi/year",
+     2
+    ],
+    [
+     "gene_phenotype（入库）、key_result（入库，≤500 词英文）、cloning_method（入库）、cloning_method_description（入库）",
+     2
+    ],
+    [
+     "gene_phenotype（入库）、key_result（入库，≤500 词英文）、function_description（入库）、蛋白家族（入库）、cloning_method（入库）、cloning_method_description（入库）",
+     2
+    ],
+    [
+     "function_description（入库）、蛋白家族（入库）、cloning_method（入库）",
+     2
+    ],
+    [
+     "gene_phenotype（入库）、key_result（入库，≤500 词英文）",
+     2
+    ],
+    [
+     "title（按 DOI 对齐）",
+     1
+    ],
+    [
+     "gene_phenotype（入库）、key_result（入库，≤500 词英文）、cloning_method_description（入库）",
+     1
+    ],
+    [
+     "gene_id（入库）",
+     1
+    ]
+   ],
+   "verify_counts": [
+    [
+     "已删除",
+     500
+    ],
+    [
+     "Crossref 年份",
+     62
+    ],
+    [
+     "题名数与 DOI 数一致",
+     61
+    ],
+    [
+     "摘要依据见「K 补写依据」表",
+     36
+    ],
+    [
+     "来源见「K补写依据(全文)」表",
+     16
+    ],
+    [
+     "Z840 全文；GeneHub 坐标",
+     13
+    ],
+    [
+     "通过（见首轮校验）",
+     10
+    ],
+    [
+     "已落实",
+     10
+    ],
+    [
+     "与 PubMed 摘要（PMID 38151074）逐条对应",
+     5
+    ],
+    [
+     "通过",
+     3
+    ]
+   ],
+   "basis_top": [
+    [
+     "按用户 2026-10-19 要求：此类过程性说明不进数据字段",
+     298
+    ],
+    [
+     "按用户 2026-10-19 决定 W14 A",
+     166
+    ],
+    [
+     "D6：按 DOI 顺序逐一对应 Crossref 原文题名",
+     61
+    ],
+    [
+     "D6：年份与 DOI 顺序对齐",
+     60
+    ],
+    [
+     "按 PubMed 摘要改写（80–150 词），逐句可溯源",
+     36
+    ],
+    [
+     "按原文全文 Results/摘要改写（80–150 词），逐句可溯源",
+     16
+    ],
+    [
+     "Crossref 核验：DOI 可解析、题名/年份一致",
+     10
+    ],
+    [
+     "按你 2026-10-19 的 U1–U10 决定",
+     10
+    ],
+    [
+     "橙色A类核实：基因+ref 均在原文（或基因名明确），按论文摘要/正文补写；用户确认按序列入库",
+     8
+    ],
+    [
+     "橙色A类核实：论文含转基因互补/敲除/RNAi/TILLING 等功能验证；ref/坐标已核",
+     5
+    ]
+   ]
+  },
+  "文本清洗明细": {
+   "rows": 338,
+   "cols": [
+    "原行号(Excel)",
+    "新行号(Excel)",
+    "gene_name",
+    "被清洗的字段"
+   ],
+   "field_counts": [
+    [
+     "gene_phenotype（入库）、function_description（入库）、蛋白家族（入库）、cloning_method_description（入库）",
+     100
+    ],
+    [
+     "gene_phenotype（入库）、key_result（入库，≤500 词英文）、function_description（入库）",
+     44
+    ],
+    [
+     "key_result（入库，≤500 词英文）、function_description（入库）、蛋白家族（入库）、cloning_method_description（入库）",
+     40
+    ],
+    [
+     "gene_phenotype（入库）、key_result（入库，≤500 词英文）、function_description（入库）、蛋白家族（入库）、cloning_method_description（入库）",
+     34
+    ],
+    [
+     "蛋白家族（入库）",
+     20
+    ],
+    [
+     "key_result（入库，≤500 词英文）、function_description（入库）、蛋白家族（入库）",
+     17
+    ],
+    [
+     "gene_phenotype（入库）、key_result（入库，≤500 词英文）",
+     16
+    ],
+    [
+     "gene_phenotype（入库）",
+     14
+    ],
+    [
+     "gene_phenotype（入库）、key_result（入库，≤500 词英文）、function_description（入库）、蛋白家族（入库）",
+     9
+    ],
+    [
+     "function_description（入库）、蛋白家族（入库）、cloning_method_description（入库）",
+     8
+    ],
+    [
+     "cloning_method（入库）",
+     6
+    ],
+    [
+     "title（入库）",
+     6
+    ],
+    [
+     "gene_phenotype（入库）、function_description（入库）、蛋白家族（入库）",
+     6
+    ],
+    [
+     "gene_phenotype（入库）、蛋白家族（入库）",
+     4
+    ],
+    [
+     "gene_phenotype（入库）、cloning_method_description（入库）",
+     4
+    ],
+    [
+     "key_result（入库，≤500 词英文）、function_description（入库）",
+     3
+    ],
+    [
+     "cloning_method_description（入库）",
+     2
+    ],
+    [
+     "key_result（入库，≤500 词英文）",
+     2
+    ],
+    [
+     "function_description（入库）、蛋白家族（入库）",
+     1
+    ],
+    [
+     "cloning_method（入库）、title（入库）",
+     1
+    ],
+    [
+     "function_description（入库）",
+     1
+    ]
+   ]
+  },
+  "K补写依据": {
+   "rows": 36,
+   "cols": [
+    "新行号(Excel)",
+    "gene_name",
+    "PMID",
+    "DOI",
+    "补写后词数",
+    "PubMed 摘要原文"
+   ],
+   "pmid_unique": 4,
+   "doi_unique": 18,
+   "words": [
+    [
+     104,
+     97,
+     97,
+     98,
+     93,
+     93,
+     86,
+     86,
+     86,
+     86,
+     86,
+     86,
+     93,
+     93,
+     89,
+     98,
+     98,
+     98,
+     85,
+     85,
+     96,
+     88,
+     88,
+     88,
+     63,
+     63,
+     63,
+     76,
+     76,
+     76,
+     76,
+     76,
+     76,
+     98,
+     98,
+     98
+    ]
+   ]
+  },
+  "K补写依据(全文)": {
+   "rows": 16,
+   "cols": [
+    "新行号(Excel)",
+    "gene_name",
+    "原文文件",
+    "章节",
+    "原文依据（逐字节选）",
+    "补写后词数"
+   ],
+   "files": [
+    [
+     "",
+     11
+    ],
+    [
+     "PMC7004906_10.1111_pbi.13247.txt",
+     3
+    ],
+    [
+     "fulltext_pdf/TaCDPK1-5A_s00299-024-03344-2.pdf（pdftotext）",
+     1
+    ],
+    [
+     "PMC11121176_10.1016_j.xplc.2023.100739.xml",
+     1
+    ]
+   ],
+   "chapters": [
+    [
+     "",
+     11
+    ],
+    [
+     "Summary; Results",
+     3
+    ],
+    [
+     "Abstract",
+     1
+    ],
+    [
+     "Body (letter); Figure 1 legend",
+     1
+    ]
+   ]
+  },
+  "未决清单": {
+   "rows": 0,
+   "cols": [
+    "编号",
+    "类型",
+    "原行号(Excel)",
+    "新行号(Excel)",
+    "gene_name",
+    "原写法/原文",
+    "候选/说明",
+    "需要你定什么"
+   ]
+  },
+  "D10 key_result草案": {
+   "rows": 0,
+   "cols": [
+    "新行号(Excel)",
+    "gene_name",
+    "DOI",
+    "当前词数",
+    "当前 key_result",
+    "题目"
+   ]
+  },
+  "物种改写明细": {
+   "rows": 1024,
+   "cols": [
+    "原行号(Excel)",
+    "新行号(Excel)",
+    "gene_name",
+    "原写法",
+    "统一为（NCBI Taxonomy）",
+    "被移除的补充信息"
+   ],
+   "canonical_unique": 14,
+   "canonical_dist": [
+    [
+     "Triticum aestivum (bread wheat)",
+     915
+    ],
+    [
+     "Hordeum vulgare (barley)",
+     79
+    ],
+    [
+     "Triticum turgidum (rivet wheat)",
+     7
+    ],
+    [
+     "Aegilops tauschii",
+     6
+    ],
+    [
+     "Triticum monococcum (einkorn wheat)",
+     4
+    ],
+    [
+     "Triticum urartu",
+     4
+    ],
+    [
+     "Aegilops peregrina",
+     2
+    ],
+    [
+     "Triticum polonicum (Polish wheat)",
+     1
+    ],
+    [
+     "Triticum turgidum subsp. durum (durum wheat)",
+     1
+    ],
+    [
+     "x Triticosecale (triticale)",
+     1
+    ],
+    [
+     "Thinopyrum intermedium",
+     1
+    ],
+    [
+     "Dasypyrum villosum",
+     1
+    ],
+    [
+     "Triticum boeoticum",
+     1
+    ],
+    [
+     "Hordeum vulgare subsp. spontaneum (wild barley)",
+     1
+    ]
+   ],
+   "removed_nonempty": 881,
+   "blank_new_row": 34,
+   "removed_len_median": 11,
+   "removed_len_max": 551
+  }
+ },
+ "context_corrections": [
+  "HTML tags: 0 rows; 58 rows contain < or > as math/comparison symbols (P<0.05 etc). Do not strip; escape only at render.",
+  "chrom labels: 38 (21 wheat + 7 barley + 8 alien + chr54/chr51), not 37; the 2 rows lacking chr prefix are Excel rows 297/711, not the ponticum rows.",
+  "gene_name normalized duplicates: V-ATPase-C/c, -D/d, -A/a are distinct subunits (different ref IDs), not duplicates; only TaVRN-A1 x3 is expected (D2).",
+  "DOI duplication: 600 rows share identical doi-cell value; 938 rows contain at least one doi token appearing elsewhere.",
+  "26 rows contain # (Lead counted 23); legacy_parsers.normalize_text() maps # to apostrophe -> backend display blocker; branch by data_version.",
+  "Old DB has 2 rows with gene_id/gene_name swapped (clone_id 28/29).",
+  "Two-vintage authoring style: rows ~0-667 tag-style, ~668-1419 prose-style; affects phenotype/validation/protein_family parsing.",
+  "chrom_pos assembly label Refv1.0 (1298 rows) conflicts with reference_genome_id v03/v2.1 annotation; author decision needed."
+ ]
+}
