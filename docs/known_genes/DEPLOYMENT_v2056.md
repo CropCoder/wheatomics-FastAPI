@@ -84,3 +84,4 @@
 - 搜索框下方 helper 文案补充 "CSV export is available for search results."；
 - 本地 mock 验证：浏览态按钮 hidden=true / 不可见，搜索 `Drought`（167 条）按钮可见；导出 CSV 行数=167、19 列、UTF-8 BOM、0 JS 错误；多宽度 `spa_visual_check` 浏览/搜索态均 PASS；
 - 变更文件仅 `app/static/genes/index.html`（静态文件，`git pull` 即生效，无需重启服务）。
+- **生产验证（2026-10-28 19:46）**：浏览态 50 卡片 + 导出按钮 `hidden=true`（helper 文案已提示 search-only）；搜索 `Drought` → 215 条、按钮可见、文案 `Export Search Results (CSV)`；点击导出得到 **215 行 × 19 列** CSV（UTF-8 BOM，首行数据正常）；生产 `spa_visual_check` 搜索态 390/768/1440 **PASS**（0 溢出/0 JS 错误）。截图与报告：`_evidence/ui/prod/export-browse-w1440.png`、`export-search-w1440.png`、`prod/export-search/report.md`。
