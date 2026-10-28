@@ -26,14 +26,16 @@ table.wide{min-width:940px}
 <div id="geneinfo" class="scroll"></div>
 <p class="muted" id="genemeta"></p>
 <div id="tfinfo"></div>
+<p><button id="show-expr" type="button" class="secondary">Show expression across 26 tissues</button></p>
 <small class="legend">
-<sup>a</sup> Gene stable ID v1.1 and Gene stable ID v2.1 represent stable gene identifier from IWGSC RefSeq v1.1 and IWGSC RefSeq v2.1, respectively.<br>
+<sup>a</sup> Gene stable ID v1.1 represents the stable gene identifier from IWGSC RefSeq v1.1.<br>
 <sup>b</sup> Transcription factor family classification based on PlantTFDB, published papers and genome annotation.<br>
 <sup>c</sup> Transcription factor family classification from PlantTFDB.<br>
 <sup>d</sup> Transcription factor family classification from "Ramírez-González RH, Borrill P, Lang D, et al. The transcriptional landscape of polyploid wheat. Science. 2018;361(6403):eaar6089. doi:10.1126/science.aar6089."<br>
-<sup>e</sup> "IWGSC RefSeq v1.1 TF_family" and "IWGSC RefSeq v2.1 TF_family" factor family classification based on the genome annotation of IWGSC RefSeq v1.1 and IWGSC RefSeq v2.1, respectively.
+<sup>e</sup> "IWGSC RefSeq v1.1 TF_family" factor family classification based on the genome annotation of IWGSC RefSeq v1.1.
 </small></section>
-<section id="exprsec" hidden><h2>Expression across 26 tissues</h2><div id="expr"></div></section>
+<section id="exprsec" hidden><h2>Expression across 26 tissues</h2>
+<p class="muted">Tissue expression data are from Ren et al. (2026).</p><div id="expr"></div></section>
 <section id="motifsec" hidden><h2>Motif hits</h2>
 <div class="seg" id="motif-regions">
 <button type="button" data-region="upstream">Upstream</button>
@@ -66,6 +68,7 @@ const $=id=>document.getElementById(id);
 let currentGene="";
 let motifRegion="upstream";
 let variantRegion="upstream";
+let lastExpression=null;
 function text(el,s){el.textContent=s==null?"":String(s)}
 function table(rows,columns,opts){
 const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
@@ -90,14 +93,12 @@ function renderIdentity(d){
 const g=d.gene||{},c=d.classification||{},tf=d.tf||{};
 const row={
 "Gene stable ID v1.1 a":dash(g.gene_id||currentGene),
-"Gene stable ID v2.1 a":dash(c.gene_id_v21),
 "Gene name":dash(c.gene_name),
 "TF classification b":dash(c.tf_classification),
 "PlantTFDB c":dash(c.planttfdb),
 "Classification from Reference d":dash(c.ref_classification),
-"IWGSC RefSeq v1.1 TF_family e":dash(c.iwgsc_v11_tf_family),
-"IWGSC RefSeq v2.1 TF_family e":dash(c.iwgsc_v21_tf_family)};
-$("geneinfo").replaceChildren(table([row],Object.keys(row),{wide:true}));
+"IWGSC RefSeq v1.1 TF_family e":dash(c.iwgsc_v11_tf_family)};
+$("geneinfo").replaceChildren(table([row],Object.keys(row)));
 const meta=[`${g.chrom}:${g.start0+1}-${g.end0}`,`strand ${g.strand}`];
 if(c.transcript_length)meta.push(`transcript ${c.transcript_length} bp`);
 if(c.gc_content)meta.push(`GC ${c.gc_content}%`);
@@ -106,18 +107,28 @@ const parts=[];
 parts.push(tf.is_candidate_tf?`Curated candidate TF (Ren et al. 2026): yes — family ${dash(tf.tf_family)}${tf.cloned==="1"?"; cloned":""}`:"Not in the curated candidate-TF list (Ren et al. 2026)");
 if(c.status==="not_in_tf_classification")parts.push("No TF classification for this gene in the atlas table.");
 if(c.status==="classification_not_configured")parts.push("TF classification table not configured on this server.");
-if(c.go_terms)parts.push(`GO: ${c.go_terms}`);
 text($("tfinfo"),parts.join(" · "));
+}
+function toggleExpr(){
+if(!lastExpression)return;
+if($("exprsec").hidden){
+if(!$("expr").childElementCount){
+const rows=Object.entries(lastExpression).filter(([k])=>!["gene_id","Average","Sum"].includes(k)).map(([k,v])=>({Tissue:k,TPM:v}));
+$("expr").appendChild(table(rows,["Tissue","TPM"]))}
+$("exprsec").hidden=false;$("show-expr").textContent="Hide expression across 26 tissues"
+}else{$("exprsec").hidden=true;$("show-expr").textContent="Show expression across 26 tissues"}
 }
 async function search(){
 const g=$("gene").value.trim();if(!g)return;
 text($("status"),"Loading...");for(const id of ["profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
 try{const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(g)+"?region="+encodeURIComponent(motifRegion)+"&motif_limit=500");
 currentGene=d.gene.gene_id;
+lastExpression=d.expression||null;
+$("expr").replaceChildren();
+$("show-expr").textContent="Show expression across 26 tissues";
+$("show-expr").hidden=!lastExpression;
 renderIdentity(d);
 $("profile").hidden=false;
-$("expr").replaceChildren();if(d.expression){const rows=Object.entries(d.expression).filter(([k])=>!["gene_id","Average","Sum"].includes(k)).map(([k,v])=>({Tissue:k,TPM:v}));
-$("expr").appendChild(table(rows,["Tissue","TPM"]));$("exprsec").hidden=false}
 $("motifs").replaceChildren();
 const motifRows=d.motifs.map(x=>({
   "Region":x.kind,
@@ -133,7 +144,11 @@ const motifRows=d.motifs.map(x=>({
 }));
 $("motifs").appendChild(table(motifRows,["Region","Motif model","Motif ID","Chromosome","Start (1-based)","End (1-based)","Strand","Score","p-value","Matched sequence"]));
 $("motifsec").hidden=false;$("variantsec").hidden=false;
-text($("motifstatus"),`${d.motifs.length} motif hits in ${regionLabel(motifRegion)}${d.motifs_truncated?" (truncated)":""}.`);
+let msg=`${d.motifs.length} motif hits in ${regionLabel(motifRegion)}${d.motifs_truncated?" (truncated)":""}.`;
+if(!d.motifs.length){
+const kinds=Object.keys(d.hit_counts_by_kind||{});
+msg+=kinds.length?` Motif hits exist only for: ${kinds.join(", ")}.`:" No motif hits are recorded for this gene in any region."}
+text($("motifstatus"),msg);
 text($("status"),`Loaded ${currentGene}.`);
 }catch(e){text($("status"),"Error: "+e.message)}
 }
@@ -153,13 +168,14 @@ $("varianttable").appendChild(table(d.items.map(x=>({
 })),["Region","Motif model","Motif ID","Chromosome","Variant position","REF","ALT","Overlap (bp)"]));
 text($("vstatus"),`${d.items.length} motif–variant intersections in ${regionLabel(variantRegion)}${d.truncated?" (truncated)":""}; genomic overlap only, no PWM effect.`);
 }catch(e){text($("vstatus"),"Error: "+e.message)}}
-function clearAll(){currentGene="";$("gene").value="";
+function clearAll(){currentGene="";lastExpression=null;$("gene").value="";
 for(const id of ["profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
 for(const id of ["geneinfo","genemeta","tfinfo","expr","motifs","motifstatus","varianttable"])$(id).replaceChildren();
 text($("vstatus"),"");
 text($("status"),"Search any IWGSC RefSeq v1.1 (02G) gene, e.g. TraesCS2A02G305400.");
 $("gene").focus()}
 $("search").addEventListener("click",search);$("clear").addEventListener("click",clearAll);$("variants").addEventListener("click",variants);
+$("show-expr").addEventListener("click",toggleExpr);
 $("gene").addEventListener("keydown",e=>{if(e.key==="Enter")search()});
 bindRegions("motif-regions",r=>{motifRegion=r},search);
 bindRegions("variant-regions",r=>{variantRegion=r},variants);
