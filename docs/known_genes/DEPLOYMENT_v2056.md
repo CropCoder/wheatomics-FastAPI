@@ -12,7 +12,7 @@
 | P2 后端代码上线 | ✅ | 生产 HEAD `14aa700`（后端+数据管线+docs）；`systemctl restart wheatomics-api` 成功；旧数据 520 行下新 API 冒烟通过（新列为 NULL 的防御路径） |
 | P3 数据替换 | ✅ | 1420 行、distinct clone_id 1420、max clone_id 1625、继承旧 id 321、空值检查全 0、23 物种 / 38 染色体 / 5 功能大类 / 3 研究策略；`#` 保留 18 行 |
 | P4 前端上线 | ✅ | 生产 HEAD `516de39`；`/genes/` 62,377 B、`/genes/detail.html` 31,069 B、`known_gene_common.js` 15,901 B（static 即时生效，无需重启） |
-| P5 News 公告 | ✅ | `/var/www/html/V2.0/news.json` 首位新增 2026-10-28 条目（备份 `news.json.bak-20261028_known_gene`） |
+| P5 News 公告 | ✅ | `/var/www/html/V2.0/news.json` 首位新增 2026-10-28 条目（备份 `news.json.bak-20261028_known_gene`）；公网首页 News 条已实测显示 `OCT 28, 2026 KnownGene expanded to 1,420 curated functional genes…`（截图 `_evidence/ui/prod/home-news-w1440.png`） |
 | P6 线上验收 | ✅ | 公网 API 冒烟全绿 + 多宽度视觉检查 PASS（见 §3） |
 
 ## 2. 关键口径（实际值）
