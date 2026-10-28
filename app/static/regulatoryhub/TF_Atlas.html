@@ -8,18 +8,48 @@ section{background:white;padding:22px;border:1px solid #dce8e3;border-radius:12p
 input,select,button{padding:11px;border-radius:7px;border:1px solid #a7c5bb;font:inherit}
 button{background:#206b5c;color:white;cursor:pointer}button.secondary{background:#e7efec;color:#16453e;border-color:#a7c5bb}.muted{color:#63776f}
 table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:8px;border-bottom:1px solid #e0e9e5;text-align:left}
+th{background:#f2f7f5;font-weight:600}
+table.wide{min-width:940px}
 .scroll{overflow:auto;max-height:450px}a{color:#145d70}small{line-height:1.6}
+.seg{display:inline-flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.seg button{padding:6px 12px;font-size:13px;background:#e7efec;color:#16453e;border-color:#a7c5bb}
+.seg button.active{background:#206b5c;color:#fff;border-color:#206b5c}
+.legend{display:block;margin-top:10px;color:#63776f}
 </style></head><body><main>
 <header><h1>Wheat TF & Regulatory Hub</h1><p>TF identity · Tissue expression · Promoter motifs · Regulatory variants</p></header>
 <section><label for="gene">Gene ID</label>
-<input id="gene" value="TraesCS2B02G286600" size="28" placeholder="e.g. TraesCS2B02G286600">
+<input id="gene" value="TraesCS2A02G305400" size="28" placeholder="e.g. TraesCS2A02G305400">
 <button id="search">Analyze gene</button>
 <button id="clear" type="button" class="secondary">Clear</button>
-<p class="muted" id="status">Search any IWGSC RefSeq v1.1 (02G) gene, e.g. TraesCS2B02G286600.</p></section>
-<section id="profile" hidden><h2>Gene & TF identity</h2><div id="geneinfo"></div><div id="tfinfo"></div></section>
+<p class="muted" id="status">Search any IWGSC RefSeq v1.1 (02G) gene, e.g. TraesCS2A02G305400.</p></section>
+<section id="profile" hidden><h2>Gene &amp; TF identity</h2>
+<div id="geneinfo" class="scroll"></div>
+<p class="muted" id="genemeta"></p>
+<div id="tfinfo"></div>
+<small class="legend">
+<sup>a</sup> Gene stable ID v1.1 and Gene stable ID v2.1 represent stable gene identifier from IWGSC RefSeq v1.1 and IWGSC RefSeq v2.1, respectively.<br>
+<sup>b</sup> Transcription factor family classification based on PlantTFDB, published papers and genome annotation.<br>
+<sup>c</sup> Transcription factor family classification from PlantTFDB.<br>
+<sup>d</sup> Transcription factor family classification from "Ramírez-González RH, Borrill P, Lang D, et al. The transcriptional landscape of polyploid wheat. Science. 2018;361(6403):eaar6089. doi:10.1126/science.aar6089."<br>
+<sup>e</sup> "IWGSC RefSeq v1.1 TF_family" and "IWGSC RefSeq v2.1 TF_family" factor family classification based on the genome annotation of IWGSC RefSeq v1.1 and IWGSC RefSeq v2.1, respectively.
+</small></section>
 <section id="exprsec" hidden><h2>Expression across 26 tissues</h2><div id="expr"></div></section>
-<section id="motifsec" hidden><h2>Motif hits</h2><div id="motifs" class="scroll"></div></section>
+<section id="motifsec" hidden><h2>Motif hits</h2>
+<div class="seg" id="motif-regions">
+<button type="button" data-region="upstream">Upstream</button>
+<button type="button" data-region="downstream">Downstream</button>
+<button type="button" data-region="upstream+downstream">Upstream + downstream</button>
+<button type="button" data-region="all">Upstream + downstream + gene body</button>
+</div>
+<p class="muted" id="motifstatus"></p>
+<div id="motifs" class="scroll"></div></section>
 <section id="variantsec" hidden><h2>Motif–Variant overlap</h2>
+<div class="seg" id="variant-regions">
+<button type="button" data-region="upstream">Upstream</button>
+<button type="button" data-region="downstream">Downstream</button>
+<button type="button" data-region="upstream+downstream">Upstream + downstream</button>
+<button type="button" data-region="all">Upstream + downstream + gene body</button>
+</div>
 <label>VariantHub dataset <select id="dataset"></select></label>
 <button id="variants">Intersect variants with motifs</button><p id="vstatus" class="muted"></p>
 <div id="varianttable" class="scroll"></div></section>
@@ -34,8 +64,12 @@ TF classifications are candidate annotations; motif hits and variant overlaps do
 </main><script>
 const $=id=>document.getElementById(id);
 let currentGene="";
+let motifRegion="upstream";
+let variantRegion="upstream";
 function text(el,s){el.textContent=s==null?"":String(s)}
-function table(rows,columns){const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
+function table(rows,columns,opts){
+const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
+if(opts&&opts.wide)t.className="wide";
 for(const c of columns){const th=document.createElement("th");text(th,c);tr.appendChild(th)}
 const body=t.createTBody();for(const r of rows){const tr=body.insertRow();for(const c of columns){const td=tr.insertCell();text(td,r[c])}}
 return t}
@@ -48,20 +82,45 @@ for(const d of x.items||[]){if(d.status!=="ready"||d.assembly!=="IWGSC RefSeq v1
 const o=document.createElement("option");o.value=d.dataset_id;text(o,d.label||d.dataset_id);sel.appendChild(o)}
 if(sel.querySelector('option[value="'+DEFAULT_DATASET+'"]'))sel.value=DEFAULT_DATASET;
 }catch(e){text($("vstatus"),"Dataset list error: "+e.message)}}
+function markActive(id,region){$(id).querySelectorAll("button[data-region]").forEach(b=>b.classList.toggle("active",b.dataset.region===region))}
+function bindRegions(id,setter,rerun){$(id).querySelectorAll("button[data-region]").forEach(btn=>{
+btn.addEventListener("click",()=>{setter(btn.dataset.region);markActive(id,btn.dataset.region);rerun()})})}
+function dash(v){return v==null||v===""?"—":v}
+function renderIdentity(d){
+const g=d.gene||{},c=d.classification||{},tf=d.tf||{};
+const row={
+"Gene stable ID v1.1 a":dash(g.gene_id||currentGene),
+"Gene stable ID v2.1 a":dash(c.gene_id_v21),
+"Gene name":dash(c.gene_name),
+"TF classification b":dash(c.tf_classification),
+"PlantTFDB c":dash(c.planttfdb),
+"Classification from Reference d":dash(c.ref_classification),
+"IWGSC RefSeq v1.1 TF_family e":dash(c.iwgsc_v11_tf_family),
+"IWGSC RefSeq v2.1 TF_family e":dash(c.iwgsc_v21_tf_family)};
+$("geneinfo").replaceChildren(table([row],Object.keys(row),{wide:true}));
+const meta=[`${g.chrom}:${g.start0+1}-${g.end0}`,`strand ${g.strand}`];
+if(c.transcript_length)meta.push(`transcript ${c.transcript_length} bp`);
+if(c.gc_content)meta.push(`GC ${c.gc_content}%`);
+$("genemeta").textContent=meta.join(" · ");
+const parts=[];
+parts.push(tf.is_candidate_tf?`Curated candidate TF (Ren et al. 2026): yes — family ${dash(tf.tf_family)}${tf.cloned==="1"?"; cloned":""}`:"Not in the curated candidate-TF list (Ren et al. 2026)");
+if(c.status==="not_in_tf_classification")parts.push("No TF classification for this gene in the atlas table.");
+if(c.status==="classification_not_configured")parts.push("TF classification table not configured on this server.");
+if(c.go_terms)parts.push(`GO: ${c.go_terms}`);
+text($("tfinfo"),parts.join(" · "));
+}
 async function search(){
 const g=$("gene").value.trim();if(!g)return;
 text($("status"),"Loading...");for(const id of ["profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
-try{const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(g)+"?region=upstream&motif_limit=500");
+try{const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(g)+"?region="+encodeURIComponent(motifRegion)+"&motif_limit=500");
 currentGene=d.gene.gene_id;
-text($("geneinfo"),`${currentGene} | ${d.gene.chrom}:${d.gene.start0+1}-${d.gene.end0} | strand ${d.gene.strand}`);
-text($("tfinfo"),d.tf.is_candidate_tf?
-`Candidate TF: ${d.tf.tf_family}; cloned: ${d.tf.cloned==="1"?"yes":"no"}; source: Ren et al. (2026)`:
-"Not annotated as a candidate TF in Ren et al. (2026). This does not prove it is not a TF.");
+renderIdentity(d);
 $("profile").hidden=false;
 $("expr").replaceChildren();if(d.expression){const rows=Object.entries(d.expression).filter(([k])=>!["gene_id","Average","Sum"].includes(k)).map(([k,v])=>({Tissue:k,TPM:v}));
 $("expr").appendChild(table(rows,["Tissue","TPM"]));$("exprsec").hidden=false}
 $("motifs").replaceChildren();
 const motifRows=d.motifs.map(x=>({
+  "Region":x.kind,
   "Motif model":x.motif_model||x.motif_name||"Unannotated",
   "Motif ID":x.motif_id,
   "Chromosome":x.chrom,
@@ -72,33 +131,38 @@ const motifRows=d.motifs.map(x=>({
   "p-value":x.pvalue,
   "Matched sequence":x.matched_sequence||""
 }));
-$("motifs").appendChild(table(motifRows,["Motif model","Motif ID","Chromosome","Start (1-based)","End (1-based)","Strand","Score","p-value","Matched sequence"]));
+$("motifs").appendChild(table(motifRows,["Region","Motif model","Motif ID","Chromosome","Start (1-based)","End (1-based)","Strand","Score","p-value","Matched sequence"]));
 $("motifsec").hidden=false;$("variantsec").hidden=false;
-text($("status"),`${d.motifs.length} upstream motif hits shown${d.motifs_truncated?" (truncated)":""}.`);
+text($("motifstatus"),`${d.motifs.length} motif hits in ${regionLabel(motifRegion)}${d.motifs_truncated?" (truncated)":""}.`);
+text($("status"),`Loaded ${currentGene}.`);
 }catch(e){text($("status"),"Error: "+e.message)}
 }
+function regionLabel(r){return{"upstream":"upstream","downstream":"downstream","upstream+downstream":"upstream + downstream","all":"upstream + downstream + gene body"}[r]||r}
 async function variants(){if(!currentGene)return;const id=$("dataset").value;
 text($("vstatus"),"Checking genomic overlap...");$("varianttable").replaceChildren();
-try{const q=new URLSearchParams({dataset_id:id,region:"upstream"});
+try{const q=new URLSearchParams({dataset_id:id,region:variantRegion});
 const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(currentGene)+"/motif-variants?"+q);
 $("varianttable").appendChild(table(d.items.map(x=>({
+  "Region":x.region_kind||"",
   "Motif model":x.motif_model||x.motif_name||"Unannotated",
   "Motif ID":x.motif_id,
   "Chromosome":x.chrom,
   "Variant position":x.pos1,
   "REF":x.ref,"ALT":x.alt,
-  "Overlap (bp)":x.overlap_bp,
-  "Effect":x.effect
-})),["Motif model","Motif ID","Chromosome","Variant position","REF","ALT","Overlap (bp)","Effect"]));
-text($("vstatus"),`${d.items.length} motif–variant intersections${d.truncated?" (truncated)":""}; genomic overlap only, no PWM effect.`);
+  "Overlap (bp)":x.overlap_bp
+})),["Region","Motif model","Motif ID","Chromosome","Variant position","REF","ALT","Overlap (bp)"]));
+text($("vstatus"),`${d.items.length} motif–variant intersections in ${regionLabel(variantRegion)}${d.truncated?" (truncated)":""}; genomic overlap only, no PWM effect.`);
 }catch(e){text($("vstatus"),"Error: "+e.message)}}
 function clearAll(){currentGene="";$("gene").value="";
 for(const id of ["profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
-for(const id of ["geneinfo","tfinfo","expr","motifs","varianttable"])$(id).replaceChildren();
+for(const id of ["geneinfo","genemeta","tfinfo","expr","motifs","motifstatus","varianttable"])$(id).replaceChildren();
 text($("vstatus"),"");
-text($("status"),"Search any IWGSC RefSeq v1.1 (02G) gene, e.g. TraesCS2B02G286600.");
+text($("status"),"Search any IWGSC RefSeq v1.1 (02G) gene, e.g. TraesCS2A02G305400.");
 $("gene").focus()}
 $("search").addEventListener("click",search);$("clear").addEventListener("click",clearAll);$("variants").addEventListener("click",variants);
 $("gene").addEventListener("keydown",e=>{if(e.key==="Enter")search()});
+bindRegions("motif-regions",r=>{motifRegion=r},search);
+bindRegions("variant-regions",r=>{variantRegion=r},variants);
+markActive("motif-regions",motifRegion);markActive("variant-regions",variantRegion);
 loadDatasets();search();
 </script></body></html>
