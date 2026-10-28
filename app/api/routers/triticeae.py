@@ -5,6 +5,10 @@ Queries functional_gene_annotations LEFT JOIN papers for full annotation+metadat
 
 from __future__ import annotations
 
+import re
+import urllib.parse
+import urllib.request
+
 from fastapi import APIRouter, HTTPException, Query
 
 from app.core.config import settings
@@ -339,6 +343,44 @@ def search_papers(
     默认排序：paper_created_at DESC（最近入库优先）。
     """
     return _build_search(**locals())
+
+
+# DOI enrichment for the papers list. The papers table has no DOI column, so
+# resolve DOIs from PubMed on demand (one batch per rendered page) and cache
+# them in-process; failures degrade gracefully to no DOI link.
+_DOI_CACHE: dict[str, str] = {}
+_EFETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+
+
+def _fetch_dois(pmids: list[str]) -> None:
+    data = urllib.parse.urlencode(
+        {"db": "pubmed", "id": ",".join(pmids), "retmode": "xml"}
+    ).encode()
+    req = urllib.request.Request(
+        _EFETCH_URL, data=data, headers={"User-Agent": "wheatomics-api/1.0"}
+    )
+    with urllib.request.urlopen(req, timeout=6) as resp:
+        xml = resp.read().decode("utf-8", "replace")
+    found: dict[str, str] = {}
+    for block in re.findall(r"<PubmedArticle>.*?</PubmedArticle>", xml, re.S):
+        m = re.search(r"<PMID[^>]*>(\d+)</PMID>", block)
+        d = re.search(r'<ArticleId IdType="doi">([^<]+)</ArticleId>', block)
+        if m and d:
+            found[m.group(1)] = d.group(1).strip()
+    for pmid in pmids:
+        _DOI_CACHE[pmid] = found.get(pmid, "")
+
+
+@router.get("/papers/dois")
+def paper_dois(pmids: str = Query(..., description="Comma-separated PubMed IDs")):
+    ids = [p.strip() for p in pmids.split(",") if p.strip().isdigit()][:100]
+    missing = [p for p in ids if p not in _DOI_CACHE]
+    if missing:
+        try:
+            _fetch_dois(missing)
+        except Exception:
+            pass
+    return ok({p: _DOI_CACHE[p] for p in ids if _DOI_CACHE.get(p)})
 
 
 @router.get("/papers/{pmid}/annotation")

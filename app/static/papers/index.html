@@ -762,6 +762,29 @@ function renderPage() {
   var html = '';
   for (var i = 0; i < currentResults.length; i++) html += renderPaper(currentResults[i]);
   document.getElementById('list-content').innerHTML = html;
+  loadPageDois();
+}
+
+function loadPageDois() {
+  var pmids = [];
+  $('.paper-doi').each(function () {
+    var p = String($(this).data('pmid') || '');
+    if (p) pmids.push(p);
+  });
+  if (!pmids.length) return;
+  $.getJSON('/api/papers/dois?pmids=' + encodeURIComponent(pmids.join(',')))
+    .done(function (resp) {
+      if (!resp || !resp.success) return;
+      var map = resp.data || {};
+      $('.paper-doi').each(function () {
+        var pmid = String($(this).data('pmid') || '');
+        var doi = map[pmid];
+        if (doi) {
+          $(this).html(' · <a href="https://doi.org/' + encodeURIComponent(doi) +
+            '" target="_blank" class="id-link">DOI: ' + escapeHtml(doi) + '</a>');
+        }
+      });
+    });
 }
 
 function renderPaper(p) {
@@ -789,6 +812,7 @@ function renderPaper(p) {
   return '<div class="paper-item">' +
     '<div class="journal-meta"><em>' + journal + '</em>' + (journal && date ? ' | ' : '') + date +
       ' · <a href="' + escapeHtml(link) + '" target="_blank" class="id-link">PMID: ' + pmid + '</a>' +
+      '<span class="paper-doi" data-pmid="' + pmid + '"></span>' +
     '</div>' +
     '<a href="' + escapeHtml(link) + '" target="_blank" class="paper-title d-block mb-2">' + title + '</a>' +
     (tagsHtml ? '<div class="mb-2">' + tagsHtml + '</div>' : '') +
