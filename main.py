@@ -18,6 +18,8 @@ from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps, eqtl, scrna, wheatpsp, genome, ptm
+from app.api.routers.regulatory import router as regulatory_router
+from app.api.routers.regulatory_integration import router as regulatory_integration_router
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 from app.primerserver2.dependencies import verify_api_key
@@ -155,6 +157,7 @@ app.mount("/api/v2shell", StaticFiles(directory=Path(__file__).parent / "app" / 
 # Built Vue SPA. The path must match base: '/PrimerServer2/' in the frontend's
 # vite.config.js, which also bakes it into the asset URLs.
 app.mount("/PrimerServer2", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "primerserver2", html=True), name="primerserver2")
+app.mount("/regulatoryhub", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "regulatoryhub", html=True), name="regulatoryhub")
 
 
 @app.middleware("http")
@@ -227,6 +230,10 @@ for router in [
     ptm,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)
+
+# Wheat Regulatory Hub: motif atlas, candidate TFs, and VariantHub overlap
+app.include_router(regulatory_router, prefix=settings.API_PREFIX)
+app.include_router(regulatory_integration_router, prefix=settings.API_PREFIX)
 
 
 # PrimerServer2 (original PCR primer design) - mounted under /api/PrimerServer2

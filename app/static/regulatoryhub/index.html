@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wheat Regulatory Hub | WheatOmics</title>
+<style>
+:root{--ink:#183631;--muted:#667a75;--line:#dce7e1;--green:#12685b;--pale:#edf6f1;--gold:#c58b39;--bg:#f5f8f6;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 Inter,system-ui,-apple-system,Arial,sans-serif}
+header{background:#153e38;color:white;padding:25px max(20px,calc((100vw - 1240px)/2));display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+header h1{font-size:25px;margin:0}header p{margin:4px 0;color:#c4e1d5}a{color:var(--green)}
+header a{color:#d9f5e9;text-decoration:none;margin-left:18px}
+main{max-width:1240px;margin:24px auto;padding:0 18px 60px}
+.panel{background:white;border:1px solid var(--line);border-radius:13px;padding:21px;margin-bottom:18px;box-shadow:0 2px 10px #153e3808}
+h2{font-size:18px;margin:0 0 14px}h3{font-size:15px;margin:0 0 10px}
+.sub{color:var(--muted);font-size:12px}.row{display:flex;align-items:end;gap:12px;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:150px}
+label{font-weight:650;font-size:12px}input,select{width:100%;padding:10px 11px;border:1px solid #c9d9d1;border-radius:8px;background:#fff;color:var(--ink);font:inherit}
+button,.button{border:0;background:var(--green);color:#fff;border-radius:8px;padding:10px 16px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;display:inline-block}
+button.secondary,.button.secondary{background:#e9f2ee;color:#1b6256}button:disabled{opacity:.5;cursor:not-allowed}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:17px}.tab{background:#e8efeb;color:#35584e}.tab.active{background:var(--green);color:#fff}
+.hidden{display:none!important}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}.stat{border:1px solid var(--line);background:#fafcfb;border-radius:9px;padding:13px}
+.stat b{font-size:21px;display:block}.stat small{color:var(--muted)}.status{border-radius:8px;background:var(--pale);padding:10px 12px;margin:12px 0;color:#275b4f}
+.status.error{background:#fff0e8;color:#8a482b}.status.warn{background:#fff7e8;color:#80622c}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:9px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{text-align:left;padding:10px;border-bottom:1px solid #edf1ee;white-space:nowrap}th{background:#eff5f1;color:#34564d;position:sticky;top:0}
+tr.clickable{cursor:pointer}tr.clickable:hover{background:#edf7f1}tr.selected{background:#ddf0e7}
+.chip{display:inline-block;padding:2px 8px;border-radius:100px;background:#e6f2eb;color:#216a58;font-size:11px}
+.chip.amber{background:#fff0d8;color:#825a21}.layout{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.track{height:120px;background:#f2f8f4;border:1px solid var(--line);border-radius:9px;position:relative;margin:10px 0 18px;overflow:hidden}
+.axis{position:absolute;left:5%;right:5%;top:72px;height:2px;background:#8ba89b}.tick{position:absolute;top:64px;height:18px;border-left:1px solid #718c80}
+.mark{position:absolute;top:24px;height:26px;min-width:3px;background:#188477;border-radius:2px;cursor:pointer}
+.mark:hover{background:var(--gold)}.legend{display:flex;gap:15px;flex-wrap:wrap;color:var(--muted);font-size:12px}
+.detail{background:#f7faf8;padding:14px;border:1px solid var(--line);border-radius:9px;min-height:100px}
+code{overflow-wrap:anywhere;color:#275a4e}p{margin:8px 0 12px}.muted{color:var(--muted)}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}header h1{font-size:21px}}
+</style>
+</head>
+<body>
+<header><div><h1>Wheat TF & Regulatory Hub</h1><p>Gene → Motif → Candidate TF → Regulatory Variant</p></div>
+<nav><a href="/">WheatOmics</a><a href="/VariantHub/" target="_blank" rel="noopener">VariantHub</a><a href="/api/docs" target="_blank" rel="noopener">API Docs</a></nav></header>
+<main>
+<section class="panel">
+<h2>Explore a wheat gene</h2>
+<div class="row">
+<div class="field" style="flex:3"><label for="gene">Gene ID</label><input id="gene" value="TraesCS1A02G000100" placeholder="TraesCS1A02G000100"></div>
+<div class="field"><label for="filter">Motif / TF model name</label><input id="filter" placeholder="e.g. TCP4, ARF7, MA1035"></div>
+<div class="field"><label for="pvalue">Maximum p-value (local filter)</label><select id="pvalue"><option value="1">All matches</option><option value="0.0001">1e-4</option><option value="0.00001">1e-5</option><option value="0.000001">1e-6</option></select></div>
+<button id="search">Search gene</button>
+</div>
+<div id="status" class="status">Ready. Search a gene to load real motif data from WheatOmics.</div>
+<div class="stats"><div class="stat"><small>Motif hits</small><b id="count">—</b></div><div class="stat"><small>Distinct motif models</small><b id="distinct">—</b></div><div class="stat"><small>Region</small><b id="region">—</b></div><div class="stat"><small>Reference</small><b id="assembly" style="font-size:14px">—</b></div></div>
+<div class="sub" id="meta"></div>
+</section>
+<section class="panel">
+<div class="tabs"><button class="tab active" data-tab="motifs">Motif Explorer</button><button class="tab" data-tab="tf">TF Explorer</button><button class="tab" data-tab="variants">Regulatory Variants</button></div>
+<div id="motifs" class="view">
+<h2>Promoter motif distribution</h2><p class="sub">The track shows the strongest motif matches returned by the existing track API; the table is paginated separately. Coordinates are 0-based, half-open internally.</p>
+<div id="track" class="track"><div class="axis"></div></div><div class="legend"><span>● Predicted motif match</span><span>Click a track mark or table row for details</span></div>
+<div class="row" style="margin:17px 0"><div class="field"><label for="sort">Sort table</label><select id="sort"><option value="position">Genomic position</option><option value="pvalue">Lowest p-value</option><option value="name">Motif name</option></select></div><div class="field"><label for="pageSize">Page size</label><select id="pageSize"><option>25</option><option selected>50</option><option>100</option></select></div><button id="export" class="secondary">Export CSV</button></div>
+<div class="tablewrap"><table><thead><tr><th>Motif model</th><th>Motif ID</th><th>Coordinates (1-based)</th><th>Strand</th><th>Score</th><th>p-value</th><th>Mapped wheat TF</th></tr></thead><tbody id="motifRows"><tr><td colspan="7">Search a gene first.</td></tr></tbody></table></div>
+<div class="row" style="justify-content:space-between;margin-top:12px"><span id="pagination" class="sub"></span><div><button id="prev" class="secondary">Previous</button> <button id="next" class="secondary">Next</button></div></div>
+</div>
+<div id="tf" class="view hidden">
+<h2>Candidate transcription factor models</h2>
+<p class="status warn">TF evidence: curated wheat gene mappings only. Unmapped motif models remain explicitly unmapped. Mapping evidence is not proof of binding at this locus.</p>
+<div class="layout"><div><h3>TF-associated motif models for this gene</h3><div class="tablewrap"><table><thead><tr><th>Mapped wheat TF genes</th><th>Motif ID</th><th>Hits on loaded page</th><th>Source</th></tr></thead><tbody id="tfRows"><tr><td colspan="4">Search a gene first.</td></tr></tbody></table></div><p class="sub">The summary uses the currently loaded motif page, not necessarily all hits in the gene. <span id="tfStatus"></span></p></div>
+<div><h3>Selected TF model</h3><div id="tfDetail" class="detail">Select a motif row to inspect its TF model and associated binding sites.</div></div></div>
+</div>
+<div id="variants" class="view hidden">
+<h2>Regulatory Variant Explorer</h2>
+<p class="status warn">Live variant overlap is queried from configured, indexed VariantHub-compatible VCF datasets when available. Without a configured dataset, no variants or allele effects are claimed.</p>
+<div class="layout"><div><h3>Selected motif interval</h3><div id="variantDetail" class="detail">Search a gene and select a motif to inspect its coordinates.</div></div>
+<div><h3>VariantHub integration</h3><p>Open VariantHub and use the displayed chromosome, interval, and matching reference assembly to query variants. Automatic prefill and overlap analysis require a shared backend endpoint.</p>
+<div class="field"><label for="variantDataset">Variant dataset</label><select id="variantDataset"><option value="">Loading datasets…</option></select></div><p><button id="queryVariants" class="secondary" disabled>Query overlapping variants</button></p><a class="button" href="/VariantHub/" target="_blank" rel="noopener">Open VariantHub</a>
+<button id="copyRegion" class="secondary" disabled>Copy interval</button>
+<p class="sub">Important: the motif dataset is annotated as IWGSC RefSeq v1.0. Do not reuse these coordinates against another assembly without a validated conversion.</p></div></div>
+<div style="margin-top:18px"><h3>Variant effect analysis status</h3><div class="tablewrap"><table><thead><tr><th>Variant</th><th>REF / ALT</th><th>Motif overlap</th><th>Δ PWM score</th><th>Evidence</th></tr></thead><tbody id="variantRows"><tr><td colspan="5" class="muted">Select a motif and query an available dataset. Allele-specific PWM rescoring is not yet implemented.</td></tr></tbody></table></div></div>
+</div>
+</section>
+<section class="panel"><h2>Selected motif details</h2><div id="selected" class="detail">Select a motif in the distribution track or results table.</div></section>
+<footer class="sub">Predicted sequence matches are not experimentally confirmed TF binding sites. Motif names reflect the source motif collection; genome build and transcript choices must be checked before interpretation.</footer>
+</main>
+<script>
+"use strict";
+const API="/api/regulatory";
+const $=id=>document.getElementById(id);
+let currentGene="", profile=null, items=[], selected=null, page=1, total=0, trackItems=[], requestId=0;
+const esc=s=>String(s??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=n=>Number.isFinite(Number(n))?Number(n).toLocaleString("en-US"):"—";
+const sci=n=>n==null?"—":Number(n).toExponential(2);
+function setStatus(message,error=false){$("status").textContent=message;$("status").className="status"+(error?" error":"");}
+async function getJSON(url){const r=await fetch(url,{headers:{Accept:"application/json"}});if(!r.ok){let detail="";try{detail=JSON.stringify(await r.json())}catch{}throw Error("HTTP "+r.status+" "+detail)}return r.json()}
+function activeTab(id){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===id));document.querySelectorAll(".view").forEach(v=>v.classList.toggle("hidden",v.id!==id));}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>activeTab(b.dataset.tab)));
+function motifText(x){return `${x.motif_name||x.motif_id||"Unknown"} (${x.motif_id||"—"})`;}
+async function loadVariantDatasets(){
+ try{
+ const d=await getJSON(`${API}/variant-datasets`);
+ variantDatasets=d.items||[];
+ $("variantDataset").innerHTML='<option value="">Select dataset</option>'+variantDatasets.map(x=>`<option value="${esc(x.dataset_id)}">${esc(x.dataset_id)} · ${esc(x.assembly)}</option>`).join("");
+ }catch(e){$("variantDataset").innerHTML='<option value="">Variant backend not installed</option>'}
+ updateVariantButton();
+}
+function updateVariantButton(){
+ const d=variantDatasets.find(x=>x.dataset_id===$("variantDataset").value);
+ $("queryVariants").disabled=!selected||!d||d.assembly!==profile?.assembly;
+}
+$("variantDataset").onchange=updateVariantButton;
+$("queryVariants").onclick=async()=>{
+ const d=variantDatasets.find(x=>x.dataset_id===$("variantDataset").value);
+ if(!selected||!d)return;
+ const chrom=selected.chrom||profile?.region?.chrom;
+ $("variantRows").innerHTML='<tr><td colspan="5">Querying…</td></tr>';
+ try{
+ const u=`${API}/variants/overlap?dataset_id=${encodeURIComponent(d.dataset_id)}&assembly=${encodeURIComponent(profile.assembly)}&chrom=${encodeURIComponent(chrom)}&start0=${selected.start0}&end0=${selected.end0}`;
+ const r=await getJSON(u);
+ $("variantRows").innerHTML=r.items.length?r.items.map(v=>`<tr><td>${esc(v.chrom)}:${fmt(v.pos1)}</td><td>${esc(v.ref)} / ${esc(v.alt)}</td><td>${esc(v.overlap_type)}</td><td>Not calculated</td><td>${esc(v.dataset_id)} · genomic overlap</td></tr>`).join(""):'<tr><td colspan="5">No overlapping variants in this dataset.</td></tr>';
+ }catch(e){$("variantRows").innerHTML=`<tr><td colspan="5">${esc(e.message)}</td></tr>`}
+};
+function selectHit(x){selected=x;
+const chr=x.chrom||profile?.region?.chrom||profile?.gene?.chrom||"";
+const start=x.start0+1,end=x.end0;
+const text=`${chr}:${start}-${end}`;
+$("selected").innerHTML=`<b>${esc(motifText(x))}</b><p>Interval: <code>${esc(text)}</code> · Strand: ${esc(x.strand)} · Score: ${esc(x.score)} · p-value: ${esc(sci(x.pvalue))}</p><p>Matched sequence: <code>${esc(x.matched_sequence)}</code></p><p>Motif source: ${esc(x.motif_source||"JASPAR2026_CORE_Plants")}</p><span class="chip">Motif-predicted, not validated binding</span>`;
+$("tfDetail").innerHTML=`<b>${esc(x.motif_name||x.motif_id)}</b><p>Motif ID: <code>${esc(x.motif_id)}</code></p><p>Source: ${esc(x.motif_source||"JASPAR2026_CORE_Plants")}</p><p>Mapped wheat TF: ${esc(tfNames(x.motif_id))}</p><p>Mapping entries: ${esc((tfMap.get(x.motif_id)||[]).map(v=>v.evidence_type+" ("+v.source+")").join("; ")||"none")}</p><button id="showSites" class="secondary">View motif sites</button>`;
+$("showSites").onclick=()=>{$("filter").value=x.motif_id;activeTab("motifs");renderMotifs()};
+$("variantDetail").innerHTML=`<b>${esc(text)}</b><p>Assembly: ${esc(profile?.assembly)}</p><p>Motif: ${esc(motifText(x))}</p><p>Copy the interval, then query the same assembly in VariantHub.</p>`;
+$("copyRegion").disabled=false;updateVariantButton();
+$("copyRegion").onclick=async()=>{try{await navigator.clipboard.writeText(text);$("copyRegion").textContent="Copied"}catch{window.prompt("Copy interval:",text)}};
+document.querySelectorAll("#motifRows tr").forEach(tr=>tr.classList.toggle("selected",tr.dataset.id===String(x.hit_id)));
+}
+function renderTrack(){
+const el=$("track");el.replaceChildren();const axis=document.createElement("div");axis.className="axis";el.append(axis);
+const region=profile?.region;if(!region||!trackItems.length)return;
+const length=region.end0-region.start0;
+for(const x of trackItems){const m=document.createElement("div");m.className="mark";m.style.left=(5+90*(x.start0-region.start0)/length)+"%";m.style.width=Math.max(0.35,90*(x.end0-x.start0)/length)+"%";m.title=`${x.motif_id}: ${region.chrom}:${x.start0+1}-${x.end0} (p=${sci(x.pvalue)})`;m.onclick=()=>{const full=items.find(v=>v.hit_id===x.hit_id)||{...x,chrom:region.chrom,motif_name:x.motif_id};selectHit(full)};el.append(m)}
+const left=document.createElement("small"),right=document.createElement("small");left.style.cssText="position:absolute;left:5%;bottom:8px;color:#61776e";right.style.cssText="position:absolute;right:5%;bottom:8px;color:#61776e";left.textContent=fmt(region.start0+1);right.textContent=fmt(region.end0);el.append(left,right);
+}
+function filtered(){const f=$("filter").value.trim().toLowerCase(),p=Number($("pvalue").value);let rows=items.filter(x=>(!f||[x.motif_name,x.motif_id].some(v=>String(v||"").toLowerCase().includes(f)))&&Number(x.pvalue)<=p);
+const sort=$("sort").value;rows.sort((a,b)=>sort==="pvalue"?a.pvalue-b.pvalue:sort==="name"?String(a.motif_name).localeCompare(String(b.motif_name)):a.start0-b.start0);return rows}
+let tfMap=new Map(), tfStatus="Not loaded", variantDatasets=[];
+function tfNames(id){const a=tfMap.get(id)||[];return a.length?a.map(x=>x.wheat_tf_gene_id).join(", "):"Not mapped"}
+async function loadTFMapping(gene){
+ try{
+  const d=await getJSON(`${API}/gene/${encodeURIComponent(gene)}/candidate-tfs`);
+  tfMap=new Map(Object.entries(d.mappings||{}));
+  tfStatus=d.status||"unknown";
+ }catch(e){tfMap=new Map();tfStatus="Mapping API unavailable: "+e.message}
+}
+function renderMotifs(){
+const rows=filtered();$("motifRows").innerHTML=rows.length?rows.map(x=>`<tr class="clickable ${selected?.hit_id===x.hit_id?"selected":""}" data-id="${x.hit_id}"><td>${esc(x.motif_name)}</td><td><code>${esc(x.motif_id)}</code></td><td>${esc(x.chrom)}:${fmt(x.start0+1)}–${fmt(x.end0)}</td><td>${esc(x.strand)}</td><td>${esc(x.score)}</td><td>${sci(x.pvalue)}</td><td><span class="chip">${esc(tfNames(x.motif_id))}</span></td></tr>`).join(""):'<tr><td colspan="7">No matching motifs on this page.</td></tr>';
+$("motifRows").querySelectorAll("tr[data-id]").forEach(tr=>tr.onclick=()=>selectHit(items.find(x=>String(x.hit_id)===tr.dataset.id)));
+$("pagination").textContent=`Page ${page} · ${fmt(total)} total hits · ${rows.length} displayed after local filters`;
+$("prev").disabled=page<=1;$("next").disabled=page*Number($("pageSize").value)>=total;
+renderTF();
+}
+function renderTF(){
+if($("tfStatus"))$("tfStatus").textContent="Mapping: "+tfStatus;
+const groups=new Map();for(const x of filtered()){const key=x.motif_id;const g=groups.get(key)||{...x,n:0};g.n++;groups.set(key,g)}
+$("tfRows").innerHTML=[...groups.values()].sort((a,b)=>b.n-a.n).map(x=>`<tr class="clickable" data-id="${esc(x.motif_id)}"><td>${esc(tfNames(x.motif_id))}</td><td>${esc(x.motif_id)}</td><td>${x.n}</td><td>${esc(x.motif_source)}</td></tr>`).join("")||'<tr><td colspan="4">No models on the current page.</td></tr>';
+$("tfRows").querySelectorAll("tr[data-id]").forEach(tr=>tr.onclick=()=>{const x=items.find(v=>v.motif_id===tr.dataset.id);if(x)selectHit(x)});
+}
+async function loadPage(){
+if(!currentGene)return;const token=++requestId;const size=Number($("pageSize").value);
+try{const data=await getJSON(`${API}/gene/${encodeURIComponent(currentGene)}/hits?page=${page}&page_size=${size}`);if(token!==requestId)return;items=data.items||[];total=data.total||0;renderMotifs();setStatus(`Loaded ${items.length} motif hits on page ${page}. TF gene mappings and variant datasets are shown when configured.`)}
+catch(e){if(token!==requestId)return;setStatus("Motif query failed: "+e.message,true);$("motifRows").innerHTML='<tr><td colspan="7">Unable to load motif hits.</td></tr>'}
+}
+async function search(){
+const gene=$("gene").value.trim();if(!/^[A-Za-z0-9_.-]{3,100}$/.test(gene)){setStatus("Please enter a valid wheat gene ID.",true);return}
+currentGene=gene;page=1;selected=null;profile=null;items=[];trackItems=[];$("search").disabled=true;setStatus("Loading gene and regulatory motifs…");
+try{
+const [g,t]=await Promise.all([getJSON(`${API}/gene/${encodeURIComponent(gene)}`),getJSON(`${API}/gene/${encodeURIComponent(gene)}/track`)]);
+profile=g;trackItems=t.items||[];await loadTFMapping(gene);const summary=g.summary||{},r=g.region||{};
+$("count").textContent=fmt(summary.hit_count);$("distinct").textContent=fmt(summary.motif_count);$("region").textContent=r.kind||"—";$("assembly").textContent=g.assembly||"—";
+$("meta").textContent=`${g.gene?.chrom||r.chrom||""} · Gene strand ${g.gene?.strand||"?"} · Upstream region ${r.chrom||""}:${fmt(r.start0+1)}-${fmt(r.end0)} (1-based)`;
+renderTrack();await loadVariantDatasets();$("selected").textContent="Select a motif to see its sequence, candidate TF model and VariantHub interval.";$("variantDetail").textContent="Select a motif in the Motif Explorer.";$("tfDetail").textContent="Select a TF-associated motif model.";$("copyRegion").disabled=true;
+await loadPage();
+}catch(e){setStatus("Gene search failed: "+e.message,true)}
+finally{$("search").disabled=false}
+}
+$("search").onclick=search;$("gene").addEventListener("keydown",e=>{if(e.key==="Enter")search()});
+$("filter").addEventListener("input",renderMotifs);$("pvalue").onchange=renderMotifs;$("sort").onchange=renderMotifs;
+$("pageSize").onchange=()=>{page=1;loadPage()};$("prev").onclick=()=>{if(page>1){page--;loadPage()}};$("next").onclick=()=>{if(page*Number($("pageSize").value)<total){page++;loadPage()}};
+$("export").onclick=()=>{if(currentGene)window.location.href=`${API}/gene/${encodeURIComponent(currentGene)}/export`};
+search();
+</script>
+</body></html>
