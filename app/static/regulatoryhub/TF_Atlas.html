@@ -54,7 +54,19 @@ text($("tfinfo"),d.tf.is_candidate_tf?
 $("profile").hidden=false;
 $("expr").replaceChildren();if(d.expression){const rows=Object.entries(d.expression).filter(([k])=>!["gene_id","Average","Sum"].includes(k)).map(([k,v])=>({Tissue:k,TPM:v}));
 $("expr").appendChild(table(rows,["Tissue","TPM"]));$("exprsec").hidden=false}
-$("motifs").replaceChildren();$("motifs").appendChild(table(d.motifs,["motif_id","chrom","start0","end0","strand","score","pvalue"]));
+$("motifs").replaceChildren();
+const motifRows=d.motifs.map(x=>({
+  "Motif model":x.motif_model||x.motif_name||"Unannotated",
+  "Motif ID":x.motif_id,
+  "Chromosome":x.chrom,
+  "Start (1-based)":x.start0+1,
+  "End (1-based)":x.end0,
+  "Strand":x.strand,
+  "Score":x.score,
+  "p-value":x.pvalue,
+  "Matched sequence":x.matched_sequence||""
+}));
+$("motifs").appendChild(table(motifRows,["Motif model","Motif ID","Chromosome","Start (1-based)","End (1-based)","Strand","Score","p-value","Matched sequence"]));
 $("motifsec").hidden=false;$("variantsec").hidden=false;
 text($("status"),`${d.motifs.length} upstream motif hits shown${d.motifs_truncated?" (truncated)":""}.`);
 }catch(e){text($("status"),"Error: "+e.message)}
@@ -63,7 +75,15 @@ async function variants(){if(!currentGene)return;const id=$("dataset").value;
 text($("vstatus"),"Checking genomic overlap...");$("varianttable").replaceChildren();
 try{const q=new URLSearchParams({dataset_id:id,region:"upstream"});
 const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(currentGene)+"/motif-variants?"+q);
-$("varianttable").appendChild(table(d.items,["motif_id","chrom","pos1","ref","alt","overlap_bp","effect"]));
+$("varianttable").appendChild(table(d.items.map(x=>({
+  "Motif model":x.motif_model||x.motif_name||"Unannotated",
+  "Motif ID":x.motif_id,
+  "Chromosome":x.chrom,
+  "Variant position":x.pos1,
+  "REF":x.ref,"ALT":x.alt,
+  "Overlap (bp)":x.overlap_bp,
+  "Effect":x.effect
+})),["Motif model","Motif ID","Chromosome","Variant position","REF","ALT","Overlap (bp)","Effect"]));
 text($("vstatus"),`${d.items.length} motif–variant intersections${d.truncated?" (truncated)":""}; genomic overlap only, no PWM effect.`);
 }catch(e){text($("vstatus"),"Error: "+e.message)}}
 $("search").addEventListener("click",search);$("variants").addEventListener("click",variants);

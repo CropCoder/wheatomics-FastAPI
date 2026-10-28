@@ -37,10 +37,33 @@ def tf_info(g):
     item=table(ATLAS).get(g)
     if not item:return {"status":"not_annotated_in_ren2026","is_candidate_tf":False,"source":CITATION}
     return {"status":"annotated_candidate_tf","is_candidate_tf":True,**item}
+def motif_metadata_columns(c):
+    """Discover motif metadata without changing the production SQLite database."""
+    tables={r[0] for r in c.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'")}
+    if "motifs" not in tables:
+        raise HTTPException(503, "motifs metadata table not found in regulatory.sqlite")
+    cols={r[1] for r in c.execute("PRAGMA table_info(motifs)")}
+    if "motif_id" not in cols:
+        raise HTTPException(503, "motifs.motif_id not found")
+    name=next((v for v in ("motif_name","name","model_name","tf_name")
+               if v in cols),None)
+    source=next((v for v in ("motif_source","source","database")
+                 if v in cols),None)
+    if name is None:
+        raise HTTPException(503, "No motif model name column in motifs metadata")
+    return name,source
+
 def get_motifs(c,g,region,limit):
-    sql="""SELECT h.hit_id,h.region_id,h.motif_id,h.chrom,h.start0,h.end0,
-                  h.strand,h.score,h.pvalue,h.qvalue,h.matched_sequence,r.kind
+    name,source=motif_metadata_columns(c)
+    source_sql=f"m.{source}" if source else "NULL"
+    sql=f"""SELECT h.hit_id,h.region_id,h.motif_id,h.chrom,h.start0,h.end0,
+                  h.strand,h.score,h.pvalue,h.qvalue,h.matched_sequence,r.kind,
+                  m.{name} AS motif_name,
+                  m.{name} AS motif_model,
+                  {source_sql} AS motif_source
            FROM hits h JOIN regions r ON r.region_id=h.region_id
+           LEFT JOIN motifs m ON m.motif_id=h.motif_id
            WHERE r.gene_id=?"""
     params=[g]
     if region!="all":sql+=" AND r.kind=?";params.append(region)
@@ -120,6 +143,7 @@ def motif_variants(gene_id:str,dataset_id:str,region:str="upstream",
                         left=max(vs,h["start0"]);right=min(ve,h["end0"])
                         if left<right:
                             items.append({"hit_id":h["hit_id"],"motif_id":h["motif_id"],
+                              "motif_model":h["motif_model"],"motif_name":h["motif_name"],
                               "motif_start0":h["start0"],"motif_end0":h["end0"],
                               "chrom":r["chrom"],"pos1":v.pos,"variant_start0":vs,
                               "variant_end0":ve,"ref":v.ref,"alt":alt,
