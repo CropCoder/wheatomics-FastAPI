@@ -584,7 +584,7 @@ html, body { margin: 0; padding: 0; }
     var family = KG.str(data.protein_family).trim();
     if (!family) { show('card-protein-family', false); return; }
     show('card-protein-family', true);
-    setText('d-protein-family-head', KG.familyHead(family));
+    setText('d-protein-family-head', KG.familyHead(family, 0));
     setText('d-protein-family', family);
   }
 

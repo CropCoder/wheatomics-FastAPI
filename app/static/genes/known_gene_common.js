@@ -228,12 +228,15 @@
 
   // "NRT1/PTR (POT) family; peptide transporter" -> "NRT1/PTR"
   // "CC-NLR (coiled-coil ...) - Sr62NLR is ..."   -> "CC-NLR"
-  function familyHead(value) {
+  function familyHead(value, maxLen) {
     var text = str(value).trim();
     if (!text) return '';
     var head = text.split(/\s+-\s+|;|\(/)[0].trim();
     if (!head) head = text.split(/\s+/)[0];
-    return truncate(head, 48);
+    // Detail page passes 0 to show the full family head (no "..." cut);
+    // list cards keep the compact 48-char label by default.
+    var limit = (maxLen == null ? 48 : maxLen);
+    return limit ? truncate(head, limit) : head;
   }
 
   /* ------------------------------------------------------------------ *
