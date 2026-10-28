@@ -10,12 +10,12 @@ from app.db.mysql import mysql_cursor
 # Preferred display order for tissue-level subgroups (wheat developmental tissues).
 # Other groups fall back to alphabetical order.
 SUBGROUP_ORDER = [
+    "Multiple organs / whole-plant series",
     "Root",
     "Stem",
     "Leaf",
     "Spike/Floral organs",
     "Seed / Grain",
-    "Multiple organs / whole-plant series",
 ]
 
 
