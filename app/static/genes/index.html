@@ -236,12 +236,12 @@ html, body { margin: 0; padding: 0; }
 .kg-bar-fill.kg-fill-repro   { background: #7d5fa0; }
 .kg-bar-count { min-width: 42px; text-align: right; color: #3b5347; font-family: var(--utility); font-size: 12px; }
 
-.kg-vbar { display: flex; align-items: flex-end; gap: 4px; overflow-x: auto; padding: 4px 2px 0; }
-.kg-vbar-col { display: flex; flex-direction: column; align-items: center; flex: 1 1 0; min-width: 22px; }
-.kg-vbar-count { font-size: 10px; color: #3b5347; font-family: var(--utility); margin-bottom: 3px; }
-.kg-vbar-stack { width: 100%; max-width: 34px; height: 170px; display: flex; flex-direction: column; justify-content: flex-end; }
-.kg-vbar-fill { width: 100%; min-height: 1px; background: var(--leaf); border-radius: 3px 3px 0 0; }
-.kg-vbar-label { font-size: 10px; color: var(--ink); margin-top: 5px; text-align: center; line-height: 1.2; font-family: var(--utility); }
+.kg-vbar { display: flex; align-items: flex-end; gap: 4px; overflow-x: auto; padding: 24px 2px 0; }
+.kg-vbar-col { display: flex; flex-direction: column; align-items: center; flex: 1 1 0; min-width: 26px; }
+.kg-vbar-stack { position: relative; width: 100%; max-width: 34px; height: 170px; }
+.kg-vbar-fill { position: absolute; left: 0; right: 0; bottom: 0; min-height: 1px; background: var(--leaf); border-radius: 3px 3px 0 0; }
+.kg-vbar-value { position: absolute; left: 0; right: 0; text-align: center; font-size: 12px; font-weight: 700; color: #3b5347; font-family: var(--utility); line-height: 1; }
+.kg-vbar-label { font-size: 11px; color: var(--ink); margin-top: 5px; text-align: center; line-height: 1.2; font-family: var(--utility); }
 .kg-vbar-empty { color: #7b8a82; font-style: italic; }
 
 .kg-stats-error { margin-top: 12px; }
@@ -1305,9 +1305,12 @@ html, body { margin: 0; padding: 0; }
       for (var j = 0; j < entries.length; j++) {
         var item = entries[j];
         var pct = max > 0 ? (item.count / max * 100) : 0;
+        var pctStyle = pct.toFixed(1) + '%';
         html.push('<div class="kg-vbar-col" title="' + KG.escAttr(item.label + ': ' + KG.fmtNum(item.count)) + '">');
-        html.push('<div class="kg-vbar-count">' + KG.fmtNum(item.count) + '</div>');
-        html.push('<div class="kg-vbar-stack"><span class="kg-vbar-fill" style="height:' + pct.toFixed(1) + '%;"></span></div>');
+        html.push('<div class="kg-vbar-stack">' +
+          '<span class="kg-vbar-fill" style="height:' + pctStyle + ';"></span>' +
+          '<span class="kg-vbar-value" style="bottom:calc(' + pctStyle + ' + 3px);">' + KG.fmtNum(item.count) + '</span>' +
+          '</div>');
         html.push('<div class="kg-vbar-label' + (item.count === 0 ? ' kg-vbar-empty' : '') + '">' +
           escapeHtml(item.label) + '</div>');
         html.push('</div>');
@@ -1427,13 +1430,28 @@ html, body { margin: 0; padding: 0; }
     function renderYearChart(data) {
       var years = (data.publication_year || []).slice();
       years.sort(function (a, b) { return Number(a.year) - Number(b.year); });
-      var entries = years.map(function (item) {
-        return { label: String(item.year), count: Number(item.count) || 0 };
-      });
+      var CUTOFF = 2003;  // all years before 2003 are grouped into one bar
+      var entries = [];
+      var earlyCount = 0;
+      var earlyYears = [];
+      for (var i = 0; i < years.length; i++) {
+        var y = Number(years[i].year);
+        var c = Number(years[i].count) || 0;
+        if (y < CUTOFF) {
+          earlyCount += c;
+          earlyYears.push(String(years[i].year));
+        } else {
+          entries.push({ label: String(years[i].year), count: c });
+        }
+      }
+      if (earlyYears.length) {
+        entries.unshift({ label: '\u22642002', count: earlyCount });
+      }
       $('#chart-year').html(vBarsHtml(entries));
       var notes = data.notes || {};
-      var note = 'Genes per publication year, ' +
-        (entries.length ? entries[0].label + '\u2013' + entries[entries.length - 1].label : '1998\u20132026') +
+      var note = 'Genes per publication year' +
+        (earlyYears.length ? ' (years before 2003 grouped as \u22642002: ' +
+          KG.fmtNum(earlyYears.length) + ' years, ' + KG.fmtNum(earlyCount) + ' genes)' : '') +
         '. Rows with several references are counted once per year' +
         (notes.multi_year_rows != null ? ' (' + KG.fmtNum(notes.multi_year_rows) + ' multi-year rows).' : '.');
       $('#chart-year-note').text(note);
