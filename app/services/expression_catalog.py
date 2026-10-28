@@ -7,6 +7,18 @@ from typing import Any
 from app.core.config import settings
 from app.db.mysql import mysql_cursor
 
+# Preferred display order for tissue-level subgroups (wheat developmental tissues).
+# Other groups fall back to alphabetical order.
+SUBGROUP_ORDER = [
+    "Root",
+    "Stem",
+    "Leaf",
+    "Spike",
+    "Seed / Grain",
+    "Floral organs",
+    "Multiple organs / whole-plant series",
+]
+
 
 def _fetch_all_projects() -> list[dict[str, Any]]:
     """Fetch all project metadata from project_meta table."""
@@ -72,7 +84,14 @@ def list_projects() -> dict:
                 sub_subgroups.append({"name": ssgname, "projects": projects})
             sub_subgroups.sort(key=lambda s: s["name"])
             subgroups.append({"name": sgname, "sub_subgroups": sub_subgroups})
-        subgroups.sort(key=lambda s: s["name"])
+        def _subgroup_key(item):
+            name = item["name"]
+            try:
+                return (0, SUBGROUP_ORDER.index(name))
+            except ValueError:
+                return (1, name)
+
+        subgroups.sort(key=_subgroup_key)
         return subgroups
 
     # Build ordered list of groups
