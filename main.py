@@ -18,6 +18,7 @@ from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps, eqtl, scrna, wheatpsp, genome, ptm
+from app.api.routers.gene_write import router as gene_write
 from app.api.routers.regulatory import router as regulatory_router
 from app.api.routers.regulatory_integration import router as regulatory_integration_router
 from app.core.config import settings
@@ -228,6 +229,7 @@ for router in [
     wheatpsp,
     genome,
     ptm,
+    gene_write,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)
 

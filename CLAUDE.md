@@ -84,6 +84,9 @@ and is refreshed from the curation spreadsheet (1420 rows as of v2056, 2026-10-2
 `scripts/known_genes_v2055/` (extract -> JSONL -> prepare -> DDL -> single-transaction swap -> verify).
 Never rebuild it from TSV (a 2026-10 bad import left `cloned_gene_bad_import_backup` in the DB).
 See MAINTENANCE.md §十三 for the full workflow, clone_id-stability rules and rollback steps.
+For adding/updating individual genes without redeploying, use the permissioned write API
+(`POST /api/genes/known/write`, `PATCH .../{clone_id}`, `POST .../bulk`; API keys in DB with
+scopes + audit log) — see docs/known_genes/WRITE_API.md.
 
 **No tests or dependency file**: The repo has no `tests/` directory, no `requirements.txt`, and no `pyproject.toml`. Dependencies must be inferred from imports.
 

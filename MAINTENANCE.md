@@ -1088,3 +1088,24 @@ python3 scripts/known_genes_v2055/migrate_known_genes_v2055.py --phase verify --
 - **回滚**：数据 `--phase rollback --commit`（从 `cloned_gene_tbl_backup_<date>` 恢复旧 N 行）；
   代码/前端 `git revert`；DDL 结构回滚见 `scripts/sql/known_genes_v2055_ddl.sql` 末尾注释块。
 - 详细上线记录与验收数值：`docs/known_genes/ROLLOUT_v2056.md`、`docs/known_genes/DEPLOYMENT_v2056.md`。
+
+### 13.1 在线更新接口（KnownGene WRITE API，2026-10-28 起）
+
+单个/批量新增或修改已知基因，不再需要改库或跑迁移脚本，走受鉴权保护的 HTTP API：
+
+- **DDL（一次性，root）**：`sudo mysql < scripts/sql/known_gene_write_api.sql`
+  （只新增 `known_gene_api_keys` / `known_gene_change_log` 两张表，不动业务表）。
+- **建 key（应用账号，无需 root）**：
+  `python3 scripts/known_gene_api_key.py create --label <name> --scopes write --expires-days 365 --out-file <600文件>`
+  （raw key 只输出一次；DB 只存 sha256；`--scopes admin` 可查审计；`list`/`revoke --id N` 管理）。
+- **端点**（`Authorization: Bearer kgw_...`，也兼容 `X-API-Key`）：
+  `POST /api/genes/known/write`、`PATCH /api/genes/known/write/{clone_id}`、
+  `POST /api/genes/known/write/bulk`、`GET /api/genes/known/write/changes`（admin）、
+  `GET /api/genes/known/write/whoami`。支持 `dry_run`、批量 ≤500 行、2MB body、60 req/min/key 软限流。
+- **审计**：`known_gene_change_log` 记录 action/before/after/actor/client_ip/reason，与主表写同事务；
+  用 `scripts/known_gene_admin.py delete --clone-id N --confirm <gene_id> --reason ...` 可安全删除（会写审计）。
+- **批量更新流程**：Excel → `scripts/known_genes_v2055/extract.py`（JSONL）→
+  `scripts/known_gene_push.py --jsonl ... --dry-run`（预演）→ 加 `--commit` 批量 upsert。
+- **上线顺序**：先 root DDL → 再 `git pull + restart` → 再建 key；完整说明/curl/错误码/密钥轮换见
+  `docs/known_genes/WRITE_API.md`。
+- **不要**把 raw key 写进代码/前端/URL/日志；泄露立即 `known_gene_api_key.py revoke --id` 并重建。
