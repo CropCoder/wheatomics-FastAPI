@@ -452,7 +452,8 @@ CSS 要点（新类名统一 `.kg-` 前缀，不覆盖 Bootstrap）：
 - 保留 `csvField()` 的 RFC4180 转义与 UTF-8 BOM（`index.html:512-514`）。
 - 加 **Excel 公式注入防护**：单元值 `^[=+\-@\t\r]` 时前置 `'`（防 `=HYPERLINK(...)` 型 payload；新数据虽无，但测试用例要覆盖）。
 - 多值数组统一 `join('; ')`（现有 `csvField` 已处理 Array）。
-- 导出范围：**当前查询的筛选后全部结果**，不是当前页。实现：点击导出时若 `filteredCount > loadedCount`，先 `GET` 剩余页（或一次 `limit=0`）再生成；按钮期间 disabled + 文案 `Preparing CSV…`。
+- 导出范围：**当前查询的筛选后全部结果**，不是当前页。
+  - **2026-10-28 调整（用户要求）**：导出按钮仅在有搜索结果时显示；浏览态（全量 1,420 行）隐藏，避免逐行 `/known/{id}` 富化的全量导出。文案改为 "Export Search Results (CSV)"。实现：点击导出时若 `filteredCount > loadedCount`，先 `GET` 剩余页（或一次 `limit=0`）再生成；按钮期间 disabled + 文案 `Preparing CSV…`。
 - 文件名保持 `known_genes_<term>_<timestamp>.csv`（`index.html:521-525`），空 term 为 `all`。
 
 ### 4.6 Search 脚本改造清单（函数级）

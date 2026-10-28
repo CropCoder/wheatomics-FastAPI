@@ -304,7 +304,7 @@ html, body { margin: 0; padding: 0; }
                   <label for="searchInp" class="kg-small-label">Search term</label>
                   <input type="text" id="searchInp" class="form-control form-control-sm"
                          placeholder="e.g. VRN1, TraesCS5A02G391700, HORVU.MOREX.r3.3HG0228170, drought">
-                  <div class="kg-helper-text mt-1">Leave empty to browse all curated genes, 50 records per page.</div>
+                  <div class="kg-helper-text mt-1">Leave empty to browse all curated genes, 50 records per page. CSV export is available for search results.</div>
                 </div>
                 <div class="form-group col-md-1 mb-2 d-flex align-items-end">
                   <button type="button" id="search-btn" class="btn btn-primary btn-sm btn-block">Search</button>
@@ -317,8 +317,8 @@ html, body { margin: 0; padding: 0; }
 
             <div class="kg-results-head">
               <div id="res-info" class="kg-res-info" role="status" aria-live="polite">Loading…</div>
-              <button type="button" id="export-btn" class="btn btn-success btn-sm" disabled>
-                Export Results (CSV)
+              <button type="button" id="export-btn" class="btn btn-success btn-sm" hidden disabled>
+                Export Search Results (CSV)
               </button>
             </div>
 
@@ -472,6 +472,24 @@ html, body { margin: 0; padding: 0; }
       exporting: false
     };
     var debugLastCsv = null;
+    // CSV export is intentionally limited to an active search result set: the
+    // browse view is the full 1,420-row dataset and a full export would need one
+    // /known/{id} detail request per row (long-text columns are not in the list
+    // payload). Browse mode therefore hides the button; see renderExportState().
+    var EXPORT_LABEL = 'Export Search Results (CSV)';
+
+    function exportAvailable() {
+      return state.mode === 'search' && !state.loading && state.total > 0;
+    }
+
+    function renderExportState() {
+      var button = $id('export-btn');
+      if (!button) return;
+      var available = exportAvailable();
+      setHidden('export-btn', !available);
+      button.disabled = !available || state.exporting;
+      if (!state.exporting) button.textContent = EXPORT_LABEL;
+    }
 
     // ---- tiny DOM helpers ----------------------------------------------
     function $id(id) { return document.getElementById(id); }
@@ -533,7 +551,7 @@ html, body { margin: 0; padding: 0; }
       var token = ++state.token;
       state.loading = true;
       $('#res-info').text('Searching…');
-      $('#export-btn').prop('disabled', true);
+      renderExportState();
       if (scrollToResults !== false) { /* initial page: keep viewport in place */ }
 
       $.getJSON(endpoint(), currentQueryParams(state.offset))
@@ -720,7 +738,7 @@ html, body { margin: 0; padding: 0; }
       var records = state.records;
       var $list = $('#list-content');
       setHidden('pager', state.total <= PAGE_LIMIT || records.length === 0);
-      $('#export-btn').prop('disabled', state.total === 0 || state.loading);
+      renderExportState();
 
       if (!records.length) {
         if (state.mode === 'search') {
@@ -771,7 +789,8 @@ html, body { margin: 0; padding: 0; }
       html += '</div>';
       $('#list-content').html(html);
       setHidden('pager', true);
-      $('#export-btn').prop('disabled', true);
+      state.loading = false;
+      renderExportState();
     }
 
     // =====================================================================
@@ -979,16 +998,16 @@ html, body { margin: 0; padding: 0; }
       var button = $id('export-btn');
       if (!button) return;
       button.disabled = busy;
-      button.textContent = busy ? (label || 'Preparing CSV…') : 'Export Results (CSV)';
+      button.textContent = busy ? (label || 'Preparing CSV…') : EXPORT_LABEL;
     }
 
-    // Fetch the complete result set for the current query (not just this page).
+    // Fetch the complete result set for the current SEARCH query (not just this
+    // page). Browse mode is never exported (see EXPORT_LABEL / exportAvailable).
     function fetchFullResultSet(callback) {
       if (state.universe) { callback(state.universe); return; }
-      var params = state.mode === 'search'
-        ? { searchid: state.term, field: state.field, limit: MAX_EXPORT_ROWS, offset: 0 }
-        : { limit: MAX_EXPORT_ROWS, offset: 0 };
-      $.getJSON(endpoint(), params)
+      if (state.mode !== 'search') { callback(null); return; }
+      var params = { searchid: state.term, field: state.field, limit: MAX_EXPORT_ROWS, offset: 0 };
+      $.getJSON('/api/genes/known/search', params)
         .done(function (resp) {
           if (!resp || !resp.success || !resp.data) {
             callback(null);
@@ -1003,7 +1022,7 @@ html, body { margin: 0; padding: 0; }
 
     function exportCsv() {
       if (state.exporting || state.loading) return;
-      if (state.total === 0) return;
+      if (!exportAvailable()) return;
       state.exporting = true;
       setExportBusy(true, 'Collecting records…');
 

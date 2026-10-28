@@ -74,3 +74,13 @@
   批量导出端点（见前端 spec 偏差 D2）。
 - 旧 199 条未映射 clone_id 的详情 URL 会 404（用户已确认接受；不建 legacy 表）。
 - 生产本机 `/tmp` 迁移临时文件已清理（JSONL/映射报告留存于 `/home/fei/backup/`）。
+
+## 6. 2026-10-28 后续调整：CSV 导出仅支持搜索结果
+
+用户反馈浏览态（1,420 行）的 "Export Results (CSV)" 按钮暂时去掉/仅支持搜索结果导出。已按「仅支持搜索结果导出」实现：
+
+- 浏览态（搜索词为空）：**隐藏导出按钮**（`.btn` 加 `hidden`），不再触发 1,420 行全量导出（该路径需逐行 `/known/{id}` 富化，代价大）；
+- 搜索态：按钮显示、文案改为 **Export Search Results (CSV)**，仅导出当前查询（含筛选）的结果集；
+- 搜索框下方 helper 文案补充 "CSV export is available for search results."；
+- 本地 mock 验证：浏览态按钮 hidden=true / 不可见，搜索 `Drought`（167 条）按钮可见；导出 CSV 行数=167、19 列、UTF-8 BOM、0 JS 错误；多宽度 `spa_visual_check` 浏览/搜索态均 PASS；
+- 变更文件仅 `app/static/genes/index.html`（静态文件，`git pull` 即生效，无需重启服务）。
