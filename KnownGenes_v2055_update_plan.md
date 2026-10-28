@@ -510,6 +510,24 @@ P5 观察 30 min + 验收
 
 ---
 
+## 7.6 实施状态：已完成上线（2026-10-28）
+
+| 项 | 结果 |
+|---|---|
+| 冻结 | v2055 md5 `85f3e6207bba347fb1d7dcddda881cd6`；修正版 v2056 md5 `1dbbeff77f8f53eb33e8ea133d32cb65`（16 行多值修正，见 `multi_value_fixes_v2056.md`） |
+| 数据管线 | `extract.py` → JSONL 1420 行（md5 `33e7f288…`，fatal 0 / 多值异常 0 / 23 物种 / 38 染色体 / 1570 引用·883 DOI） |
+| 生产 DDL | ✅ 24 列 / 备份表 520 / staging 0 / 4 索引（root，`scripts/sql/known_genes_v2055_ddl.sql`） |
+| 生产数据替换 | ✅ 1420 行 / distinct clone_id 1420 / max 1625 / 继承旧 id 321 / 23 物种 / 38 染色体 / 5 大类 / 3 策略；verify PASS |
+| 后端 | ✅ commit `14aa700`（4 端点兼容扩展 + `/stats` + 两处旧 bug）；smoke S1–S13 全绿 |
+| 前端 | ✅ commit `516de39`（index/detail/common.js 重构 + `_v2` shell + 19 列 CSV + 6 KPI/7 图）；生产视觉检查 index/stats 360–1920、search/detail 390–1440 全部 PASS |
+| News | ✅ 生产 `/var/www/html/V2.0/news.json` 首位 2026-10-28 公告（备份 `.bak-20261028_known_gene`） |
+| 回滚 | 数据 `--phase rollback --commit`；备份表 `cloned_gene_tbl_backup_20261028` + `/home/fei/backup/*`；代码 revert；News 恢复备份 |
+| 记录 | `docs/known_genes/DEPLOYMENT_v2056.md`、`ROLLOUT_v2056.md`、`FREEZE_v2055.md`；维护流程写入 `MAINTENANCE.md` §十三 |
+
+**备注**：旧 199 个未映射 `clone_id` 的详情链接按决策 Q3 不再保留（不建 legacy 表）；前端 CSV 全量导出对长文本列走逐行详情富化（1420 行约 10–30 s，后续可加批量端点优化）。
+
+---
+
 ## 8. 待你确认的决策
 
 > 注：以下决策已于 2026-10-28 确认，见 §7.5 与 `docs/known_genes/FREEZE_v2055.md`。

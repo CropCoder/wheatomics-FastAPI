@@ -1032,3 +1032,59 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/<module>/ --widt
 - ⚠️ `/neighborhood/` 的 Apache vhost **没有** `ProxyPass`，线上用 docroot 符号链接指向仓库目录：
   `ln -s /var/www/FastAPI_backend_Port8000/app/static/neighborhood /var/www/html/neighborhood`
   （`/var/www/html` 开了 `FollowSymLinks`，`git pull` 后自动生效；若以后补 ProxyPass 记得删符号链接）。
+
+---
+
+## 十三、KnownGene 数据更新流程（v2056 起）
+
+KnownGene（`/genes/`，后端 `/api/genes/known/*`，库 `cloned_gene_db.cloned_gene_tbl`）的数据来自人工整理的 Excel 清单。
+从 v2056（2026-10-28，1420 行 × 17 列）起，更新流程固定为「Excel → JSONL 校验 → clone_id 映射 → staging 单事务替换」，
+**禁止再用 TSV/LOAD DATA 直接灌库**（2026-10 曾发生 1636 行 TSV 引号错位坏导入，残骸 `cloned_gene_bad_import_backup` 仍在库中）。
+
+### 目录与产物
+
+| 文件 | 用途 |
+|---|---|
+| `scripts/known_genes_v2055/extract.py` | xlsx → `out/known_genes_<ver>.jsonl` + 校验报告 + 前端 fixtures |
+| `scripts/known_genes_v2055/migrate_known_genes_v2055.py` | `--phase prepare/data/verify/rollback`（prepare 只读；data 单事务） |
+| `scripts/sql/known_genes_v2055_ddl.sql` | root 一次性 DDL：追加 8 列 + 加宽 2 列 + 备份/staging 表 |
+| `scripts/known_genes_v2055/README.md` | 完整操作说明与验收口径 |
+| `scripts/known_genes_v2055/out/` | 生成产物（gitignore；JSONL 约 8 MB） |
+
+### 标准流程（以 v2056 为例）
+
+```bash
+# 1) 提取 + 校验（期望 fatals=0, multi_value_anomalies=0）
+python3 scripts/known_genes_v2055/extract.py --xlsx "/path/to/已知基因逐条提取清单_..._v2056_20261028.xlsx"
+
+# 2) 只读映射预演（生产节点，应用账号）：clone_id 继承/孤儿/新号区间
+python3 scripts/known_genes_v2055/migrate_known_genes_v2055.py --phase prepare \
+  --jsonl /tmp/known_genes_v2056.jsonl --report-dir /tmp/kg_migration
+
+# 3) root DDL（必须先于代码上线：新代码 SELECT 新列）
+sudo mysql < scripts/sql/known_genes_v2055_ddl.sql
+
+# 4) 数据替换（应用账号，单事务 DELETE + INSERT...SELECT；禁止 TRUNCATE）
+python3 scripts/known_genes_v2055/migrate_known_genes_v2055.py --phase data --dry-run --jsonl /tmp/known_genes_v2056.jsonl --report-dir /tmp/kg_migration
+python3 scripts/known_genes_v2055/migrate_known_genes_v2055.py --phase data --commit  --jsonl /tmp/known_genes_v2056.jsonl --report-dir /tmp/kg_migration
+python3 scripts/known_genes_v2055/migrate_known_genes_v2055.py --phase verify --jsonl /tmp/known_genes_v2056.jsonl --report-dir /tmp/kg_migration
+```
+
+### 口径与坑（重要）
+
+- **多值字段**：`title`/`doi`/`publication_year` 三列以 `; ` 分隔、按位置一一对应；导入后统一存成 `###` 拼接，
+  API 用 `split_aligned_multi_value()` 保位拆分 → `references[] {doi,title,year}`。异常行必须先在 Excel 修正（v2055→v2056 修了 16 行）。
+- **clone_id 稳定性**：旧行能映射到新数据的保留原 `clone_id`（v2056：321/520）；映射用
+  `Genehub_DB.GenePageIWGSCv1_table` 做 v1/v2→v3 ID 转换 + gene_id/同名同染色体规则；未映射旧行删除且 **id 不复用**。
+  详情 URL 一律用内部 `clone_id`（`/genes/detail.html?id=<clone_id>`）。
+- **`#` 字符**：新数据含 `7S#1`、`lines #1` 等字面 `#`，known 端点按 `reference_genome_id IS NULL` 区分 legacy；
+  **不能全局改 `normalize_text()`**（其它 15+ 模块依赖旧的 `#`→`'` 约定）。
+- **列类型**：`gene_phenotype`/`gene_species` 已加宽到 varchar(2000)/(1000)；`key_result` 保持 varchar(15000)；
+  `publication_year` 保持 YEAR(4)=最早年份，多值原文在 `publication_years`。
+- **字符集**：表维持 utf8mb3。直接 CONVERT 到 utf8mb4 会因行大小 73,490 B > 65,535 B 报 ERROR 1118
+  （必须先 `key_result` → TEXT，见 `docs/known_genes/backend_investigation.md` §4.3）。
+- **前端**：`/genes/` 列表分页 50/页、Stats 走 `/api/genes/known/stats`；改前端后必须跑
+  `bash scripts/spa_visual_check.sh <url> --click 'a[href="#tab-stats"]' --wait '#stats-content'`。
+- **回滚**：数据 `--phase rollback --commit`（从 `cloned_gene_tbl_backup_<date>` 恢复旧 N 行）；
+  代码/前端 `git revert`；DDL 结构回滚见 `scripts/sql/known_genes_v2055_ddl.sql` 末尾注释块。
+- 详细上线记录与验收数值：`docs/known_genes/ROLLOUT_v2056.md`、`docs/known_genes/DEPLOYMENT_v2056.md`。
