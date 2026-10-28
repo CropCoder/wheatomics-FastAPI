@@ -3,15 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KnownGene | WheatOmics 2.0</title>
+<title>KnownGene - WheatOmics</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
-
-
+<link rel="stylesheet" href="/api/v2shell/shell.css">
 
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.bundle.js"></script>
-<link rel="stylesheet" href="/api/v2shell/shell.css">
 
 <!-- Baidu Tongji (async) -->
 <script>
@@ -25,73 +23,231 @@ var _hmt = _hmt || [];
 </script>
 
 <style>
-html, body { margin:0; padding:0; }
-.container-main { max-width: 1180px; width: 96%; margin: 0 auto; }
-.page-title-wrap { max-width: 1180px; width: 96%; margin: 0 auto 10px; }
-.page-title-wrap h2 { font-size: 28px; font-weight: 700; margin: 0 0 6px 0; line-height: 1.25; color: var(--forest-deep); }
-.page-title-wrap p { margin: 0; color: var(--muted); font-size: 14px; }
+/* ==========================================================================
+   KnownGene search + stats — page-local styles.
+   Only `.kg-*` classes are introduced; Bootstrap built-ins are used as-is
+   (never redefined here) so the V2 shell bridge keeps them consistent.
+   ========================================================================== */
+html, body { margin: 0; padding: 0; }
 
-.filter-block {
+/* ---------- search form ---------- */
+.kg-filter-block {
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 14px 16px;
-  margin-bottom: 14px;
+  border-radius: 14px;
+  padding: 16px 18px 6px;
+  margin-bottom: 16px;
 }
-.filter-block h5 { font-size: 16px; font-weight: 700; margin: 0 0 10px 0; color: var(--forest-deep); }
-.small-label { font-size: 12px; color: var(--forest-deep); font-weight: 700; margin-bottom: 4px; }
-.helper-text { font-size: 12px; color: var(--muted); }
+.kg-filter-block h5 { font-size: 16px; font-weight: 700; margin: 0 0 10px; }
+.kg-small-label { font-size: 12px; color: var(--forest-deep); font-weight: 700; margin-bottom: 4px; }
+.kg-helper-text { font-size: 12px; color: #4d6559; }
 
-.results-row { margin-top: 0; }
+/* ---------- results header / export ---------- */
+.kg-results-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 6px 0 12px;
+}
+.kg-res-info { font-size: 13px; color: #4d6559; overflow-wrap: anywhere; }
+.kg-res-info strong { color: var(--forest-deep); }
+.kg-card-note { font-size: 12px; color: #4d6559; margin: -2px 0 10px; }
 
-/* gene result cards */
-.gene-card {
-  background:#fff;
-  border:1px solid var(--line);
-  border-left:4px solid var(--leaf);
-  border-radius:10px;
-  padding:14px 16px;
-  margin-bottom:10px;
+/* ---------- result cards ---------- */
+.kg-gene-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--leaf);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
   transition: 160ms ease;
 }
-.gene-card:hover { border-color: rgba(17,134,83,.34); box-shadow: 0 10px 26px rgba(8,69,47,.07); }
-.gene-card-head { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
-.gene-card-head .gene-name {
-  font-size:16px; font-weight:700; color: var(--forest-deep);
-  font-style:italic;
+.kg-gene-card:hover { border-color: rgba(17, 134, 83, .34); box-shadow: 0 10px 26px rgba(8, 69, 47, .07); }
+.kg-card-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 10px; }
+.kg-gene-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--forest-deep);
+  font-style: italic;
+  text-decoration: none;
+  overflow-wrap: anywhere;
 }
-.gene-card-head .gene-id {
-  font-size:12px; color: var(--forest);
-  text-decoration:none; font-family: var(--utility);
+.kg-gene-name:hover { color: var(--leaf); text-decoration: underline; }
+.kg-gene-id {
+  font-size: 12px;
+  color: var(--forest);
+  font-family: var(--utility);
+  text-decoration: none;
+  overflow-wrap: anywhere;
 }
-.gene-card-head .gene-id:hover { text-decoration:underline; }
-.gene-card-body { margin-top:6px; font-size:13px; color: #4d6559; display:flex; flex-wrap:wrap; gap:14px; }
-.gene-card-body .badge { font-size:11px; }
-.text-info { color: var(--forest) !important; }
-.btn:disabled, .btn.disabled { opacity: 1; color: #4d6559; background: var(--mist); border-color: var(--line); }
+.kg-gene-id:hover { color: var(--forest-deep); text-decoration: underline; }
+.kg-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #4d6559;
+}
+.kg-card-meta .badge { font-size: 11px; }
+.kg-genome { font-family: var(--utility); font-size: 11px; color: #4d6559; }
+.kg-refid { font-size: 12px; color: #4d6559; overflow-wrap: anywhere; }
+.kg-refid .kg-mono, .kg-mono { font-family: var(--utility); font-size: 12px; }
+.kg-mono { overflow-wrap: anywhere; }
+.kg-species { font-size: 13px; color: #4d6559; overflow-wrap: anywhere; }
+.kg-years { font-family: var(--utility); font-size: 12px; color: #4d6559; }
+.kg-refcount { font-size: 12px; color: var(--forest); font-weight: 700; }
 
-/* stats tab */
-#stats-loading, #stats-error { padding:40px; text-align:center; }
-.kpi-card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px; text-align:center; height:100%; }
-.kpi-card .kpi-label { font-size:12px; color: var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
-.kpi-card .kpi-value { font-size:24px; font-weight:700; color: var(--forest); margin-top:4px; font-family: var(--utility); }
-.bar-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:13px; }
-.bar-row .bar-label { width:200px; min-width:200px; max-width:200px; color: var(--ink); overflow-wrap:break-word; line-height:1.3; }
-.bar-row .bar-track { flex:1; background: var(--mist); height:18px; border-radius:999px; position:relative; overflow:hidden; }
-.bar-row .bar-fill { background: var(--leaf); height:100%; }
-.bar-row .bar-count { width:50px; text-align:right; color: #4d6559; font-variant-numeric:tabular-nums; }
+/* chromosome badge: wheat keeps badge-secondary, other Triticeae are lighter */
+.kg-chrom { font-family: var(--utility); font-size: 11px; letter-spacing: .02em; }
 
-/* Vertical (column) bar chart — used for chromosome and phenotype breakdowns.
-   Labels wrap on whitespace and break-all so long phenotype strings
-   ("wheat spike and spikelet development/flowering/plant height") are not
-   truncated. */
-.vbar { display:flex; align-items:flex-end; gap:6px; overflow-x:auto; padding:6px 4px 0; }
-.vbar .vbar-col { display:flex; flex-direction:column; align-items:center; flex:0 0 60px; }
-.vbar .vbar-stack { display:flex; flex-direction:column; justify-content:flex-end; height:220px; width:32px; }
-.vbar .vbar-fill { width:100%; background: var(--leaf); border-radius:4px 4px 0 0; min-height:1px; }
-.vbar .vbar-count { font-size:11px; color: #4d6559; margin-bottom:4px; font-variant-numeric:tabular-nums; }
-.vbar .vbar-label { font-size:11px; color: var(--ink); margin-top:6px; text-align:center; line-height:1.3; max-width:60px; word-break:break-word; }
-.vbar .vbar-empty { color: #9aaca1; font-style:italic; }
+/* functional-category badges (spec §3.3; text/background pairs >= 4.5:1) */
+.kg-cat { font-size: 10px; letter-spacing: .01em; }
+.kg-cat-stress  { color: #8f3428 !important; background: #fdecea !important; }  /* legacy v2056 combined value */
+.kg-cat-biotic  { color: #8f3428 !important; background: #fdecea !important; }
+.kg-cat-abiotic { color: #1f5a52 !important; background: #e6f3f0 !important; }
+.kg-cat-quality { color: #6b4d0e !important; background: #fdf3dc !important; }
+.kg-cat-morph   { color: #1e5a3d !important; background: #e9f3ea !important; }
+.kg-cat-phys    { color: #1f4a70 !important; background: #e9f0f8 !important; }
+.kg-cat-repro   { color: #553a70 !important; background: #f2ecf8 !important; }
+.kg-cat-default { color: #3b5347 !important; background: #eef6f0 !important; }
+
+/* research-strategy badges: white pill with a coloured dot */
+.kg-strategy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--forest) !important;
+  background: #fff !important;
+  border: 1px solid var(--line) !important;
+  font-size: 10px;
+  font-weight: 700;
+}
+.kg-strategy .kg-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--forest); flex: none; }
+.kg-strategy.k-forward .kg-dot { background: var(--wheat); }
+
+/* ---------- long-text line clamps ---------- */
+.kg-longtext {
+  margin: 9px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #3b5347;
+  max-width: 90ch;
+  overflow-wrap: anywhere;
+}
+.kg-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.kg-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.kg-clamp-6 { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+.kg-clamp-8 { display: -webkit-box; -webkit-line-clamp: 8; -webkit-box-orient: vertical; overflow: hidden; }
+.kg-clamp-12 { display: -webkit-box; -webkit-line-clamp: 12; -webkit-box-orient: vertical; overflow: hidden; }
+.kg-longtext.is-open { display: block; overflow: visible; -webkit-line-clamp: unset; }
+.btn.kg-expand { display: inline-flex; align-items: center; min-height: 26px; padding: 2px 2px 2px 2px; margin: 2px 0 0; font-size: 12px; line-height: 1.4; }
+.kg-pf-chip { margin-top: 8px; max-width: 100%; overflow-wrap: anywhere; text-align: left; white-space: normal; }
+
+/* ---------- client-side filter bar (search results only) ---------- */
+.kg-filter-bar {
+  background: var(--mist);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 0 0 14px;
+}
+.kg-filter-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0; }
+.kg-filter-label {
+  min-width: 130px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--forest-deep);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.kg-filter-chip {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 10px;
+  color: var(--forest);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.kg-filter-chip:hover { border-color: rgba(17, 134, 83, .45); color: var(--forest-deep); }
+.kg-filter-chip.is-on { background: var(--forest); border-color: var(--forest); color: #fff; }
+.kg-filter-chip .kg-chip-count { font-weight: 400; opacity: .95; }
+.kg-filter-note { font-size: 11px; color: #4d6559; margin: 4px 0 0; }
+
+/* ---------- pagination ---------- */
+.kg-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 16px 0 6px;
+}
+.kg-page-info { font-size: 12px; color: #4d6559; font-family: var(--utility); }
+
+/* ---------- stats: KPI + charts ---------- */
+.kg-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+@media (min-width: 768px) { .kg-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .kg-kpi-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.kg-kpi-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 12px; height: 100%; }
+.kg-kpi-label { font-size: 11px; color: #4d6559; text-transform: uppercase; letter-spacing: .04em; line-height: 1.4; }
+.kg-kpi-value { font-size: 22px; font-weight: 700; color: var(--forest); margin-top: 4px; font-family: var(--utility); overflow-wrap: anywhere; }
+.kg-kpi-note { font-size: 11px; color: #4d6559; margin-top: 4px; line-height: 1.4; overflow-wrap: anywhere; }
+
+.kg-chart { margin-top: 6px; }
+.kg-chart-note { font-size: 12px; color: #4d6559; margin: 0 0 12px; }
+.kg-bar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 44%) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 9px;
+  font-size: 13px;
+}
+@media (min-width: 768px) { .kg-bar-row { grid-template-columns: minmax(0, 32%) minmax(0, 1fr) auto; } }
+.kg-bar-label { color: var(--ink); line-height: 1.35; overflow-wrap: anywhere; }
+.kg-bar-label.is-italic { font-style: italic; }
+.kg-bar-label.kg-clamp-2 { max-height: 2.7em; }
+.kg-bar-track { background: var(--mist); border-radius: 999px; height: 16px; overflow: hidden; }
+.kg-bar-fill { display: block; height: 100%; min-width: 2px; border-radius: 999px; background: var(--leaf); }
+.kg-bar-fill.kg-fill-wheatish { background: var(--wheat); }
+/* saturated variants of the category badge hues (same colour families) */
+.kg-bar-fill.kg-fill-stress  { background: #b05545; }  /* legacy combined value */
+.kg-bar-fill.kg-fill-biotic  { background: #b05545; }
+.kg-bar-fill.kg-fill-abiotic { background: #3f8a7a; }
+.kg-bar-fill.kg-fill-quality { background: #b58a2a; }
+.kg-bar-fill.kg-fill-morph   { background: #3f7d5c; }
+.kg-bar-fill.kg-fill-phys    { background: #4a7ba8; }
+.kg-bar-fill.kg-fill-repro   { background: #7d5fa0; }
+.kg-bar-count { min-width: 42px; text-align: right; color: #3b5347; font-family: var(--utility); font-size: 12px; }
+
+.kg-vbar { display: flex; align-items: flex-end; gap: 4px; overflow-x: auto; padding: 4px 2px 0; }
+.kg-vbar-col { display: flex; flex-direction: column; align-items: center; flex: 1 1 0; min-width: 22px; }
+.kg-vbar-count { font-size: 10px; color: #3b5347; font-family: var(--utility); margin-bottom: 3px; }
+.kg-vbar-stack { width: 100%; max-width: 34px; height: 170px; display: flex; flex-direction: column; justify-content: flex-end; }
+.kg-vbar-fill { width: 100%; min-height: 1px; background: var(--leaf); border-radius: 3px 3px 0 0; }
+.kg-vbar-label { font-size: 10px; color: var(--ink); margin-top: 5px; text-align: center; line-height: 1.2; font-family: var(--utility); }
+.kg-vbar-empty { color: #7b8a82; font-style: italic; }
+
+.kg-stats-error { margin-top: 12px; }
+@media (max-width: 400px) {
+  .kg-card-meta { font-size: 12px; }
+  .kg-filter-label { min-width: 100%; }
+}
 </style>
 </head>
 <body>
@@ -103,9 +259,9 @@ html, body { margin:0; padding:0; }
         <div>
           <p class="news-kicker">WheatOmics 2.0 · Data resource</p>
           <h1 class="news-title">Known <em>Genes</em></h1>
-          <p class="news-lead">Curated functional-gene annotations for wheat and its relatives. Search by gene ID, gene name, chromosome, phenotype or species, and browse dataset statistics.</p>
+          <p class="news-lead">Curated functional-gene annotations for wheat and its relatives. Search by gene ID, gene name, reference genome ID, phenotype, species, DOI, protein family or chromosome, and browse dataset statistics.</p>
           <div class="news-stats">
-            <span class="news-stat"><strong>6</strong> search fields</span>
+            <span class="news-stat"><strong>9</strong> search fields</span>
             <span class="news-stat">Curated annotations</span>
             <span class="news-stat">Dataset statistics</span>
           </div>
@@ -117,111 +273,137 @@ html, body { margin:0; padding:0; }
     <section class="news-body">
       <div class="container">
 
-  <ul class="nav nav-tabs mb-3" role="tablist">
-    <li class="nav-item">
-      <a class="nav-link active" id="tab-search-link" data-toggle="tab" href="#tab-search" role="tab">🔍 Search</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" id="tab-stats-link" data-toggle="tab" href="#tab-stats" role="tab">📊 Stats</a>
-    </li>
-  </ul>
+        <ul class="nav nav-tabs mb-3" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="tab-search-link" data-toggle="tab" href="#tab-search" role="tab">🔍 Search</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="tab-stats-link" data-toggle="tab" href="#tab-stats" role="tab">📊 Stats</a>
+          </li>
+        </ul>
 
-  <div class="tab-content">
+        <div class="tab-content">
 
-  <!-- ============= TAB: SEARCH ============= -->
-  <div class="tab-pane fade show active" id="tab-search" role="tabpanel">
-    <div class="filter-block">
-      <h5>Search</h5>
-      <div class="form-row align-items-end">
-        <div class="form-group col-md-3 mb-2">
-          <label for="searchField" class="small-label">Field</label>
-          <select id="searchField" class="form-control form-control-sm">
-            <option value="all">All Fields</option>
-            <option value="phenotype">Trait</option>
-            <option value="chrom_pos">Chromosome</option>
-            <option value="species">Species</option>
-            <option value="gene_name">Gene name</option>
-            <option value="gene_id">Gene ID</option>
-          </select>
-        </div>
-        <div class="form-group col-md-7 mb-2">
-          <label for="searchInp" class="small-label">Search term</label>
-          <input type="text" id="searchInp" class="form-control form-control-sm"
-                 placeholder="e.g. VRN1, TraesCS5A02G391700, vernalization">
-        </div>
-        <div class="form-group col-md-1 mb-2 d-flex align-items-end">
-          <button type="button" id="search-btn" class="btn btn-primary btn-sm btn-block">Search</button>
-        </div>
-        <div class="form-group col-md-1 mb-2 d-flex align-items-end">
-          <button type="button" id="reset-btn" class="btn btn-outline-secondary btn-sm btn-block">Reset</button>
-        </div>
-      </div>
-    </div>
+          <!-- ===================== TAB: SEARCH ===================== -->
+          <div class="tab-pane fade show active" id="tab-search" role="tabpanel">
+            <div class="kg-filter-block">
+              <h5>Search</h5>
+              <div class="form-row align-items-end">
+                <div class="form-group col-md-3 mb-2">
+                  <label for="searchField" class="kg-small-label">Field</label>
+                  <select id="searchField" class="form-control form-control-sm">
+                    <option value="all" selected>All Fields</option>
+                    <option value="gene_id">Gene ID</option>
+                    <option value="gene_name">Gene name</option>
+                    <option value="reference_genome_id">Reference genome ID</option>
+                    <option value="phenotype">Trait / Phenotype</option>
+                    <option value="species">Species</option>
+                    <option value="doi">DOI</option>
+                    <option value="protein_family">Protein family</option>
+                    <option value="functional_category">Functional category</option>
+                    <option value="chrom_pos">Chromosome</option>
+                  </select>
+                </div>
+                <div class="form-group col-md-7 mb-2">
+                  <label for="searchInp" class="kg-small-label">Search term</label>
+                  <input type="text" id="searchInp" class="form-control form-control-sm"
+                         placeholder="e.g. VRN1, TraesCS5A02G391700, HORVU.MOREX.r3.3HG0228170, drought">
+                  <div class="kg-helper-text mt-1">Leave empty to browse all curated genes, 50 records per page. CSV export is available for search results. Map-based cloning genes are listed first.</div>
+                </div>
+                <div class="form-group col-md-1 mb-2 d-flex align-items-end">
+                  <button type="button" id="search-btn" class="btn btn-primary btn-sm btn-block">Search</button>
+                </div>
+                <div class="form-group col-md-1 mb-2 d-flex align-items-end">
+                  <button type="button" id="reset-btn" class="btn btn-outline-secondary btn-sm btn-block">Reset</button>
+                </div>
+              </div>
+            </div>
 
-    <div class="results-row">
-      <div class="d-flex align-items-center justify-content-between mb-2">
-        <div id="res-info" class="text-muted">Loading…</div>
-        <button type="button" id="export-btn" class="btn btn-success btn-sm" disabled>
-          Export Results (CSV)
-        </button>
-      </div>
-      <div id="list-content"></div>
-    </div>
-  </div><!-- /#tab-search -->
+            <div class="kg-results-head">
+              <div id="res-info" class="kg-res-info" role="status" aria-live="polite">Loading…</div>
+              <button type="button" id="export-btn" class="btn btn-success btn-sm" hidden disabled>
+                Export Search Results (CSV)
+              </button>
+            </div>
 
-  <!-- ============= TAB: STATS ============= -->
-  <div class="tab-pane fade" id="tab-stats" role="tabpanel">
-    <div id="stats-loading" class="text-muted">Loading dataset stats…</div>
-    <div id="stats-content" hidden>
-      <h5>Dataset Overview</h5>
-      <p class="text-muted small">Aggregates are computed client-side from the full <code>/api/genes/known/all</code> response.</p>
+            <div id="filter-bar" class="kg-filter-bar" hidden></div>
 
-      <div class="row mb-4">
-        <div class="col-md-3 mb-2">
-          <div class="kpi-card">
-            <div class="kpi-label">Total known genes</div>
-            <div class="kpi-value" id="kpi-total">—</div>
-          </div>
-        </div>
-        <div class="col-md-3 mb-2">
-          <div class="kpi-card">
-            <div class="kpi-label">Wheat chromosomes covered</div>
-            <div class="kpi-value" id="kpi-chroms">—</div>
-          </div>
-        </div>
-        <div class="col-md-3 mb-2">
-          <div class="kpi-card">
-            <div class="kpi-label">Distinct species</div>
-            <div class="kpi-value" id="kpi-species">—</div>
-          </div>
-        </div>
-        <div class="col-md-3 mb-2">
-          <div class="kpi-card">
-            <div class="kpi-label">Distinct phenotypes</div>
-            <div class="kpi-value" id="kpi-phenotypes">—</div>
-          </div>
-        </div>
-      </div>
+            <div id="list-content"></div>
 
-      <div class="card mb-4">
-        <div class="card-body">
-          <h6 class="card-title">Genes per chromosome</h6>
-          <div id="chrom-bars"></div>
-        </div>
-      </div>
+            <div id="pager" class="kg-pager" hidden>
+              <button type="button" id="prev-page" class="btn btn-outline-secondary btn-sm" disabled>‹ Prev</button>
+              <span id="page-info" class="kg-page-info">Page 1 / 1</span>
+              <button type="button" id="next-page" class="btn btn-outline-secondary btn-sm" disabled>Next ›</button>
+            </div>
+          </div><!-- /#tab-search -->
 
-      <div class="card mb-4">
-        <div class="card-body">
-          <h6 class="card-title">Top 15 phenotypes</h6>
-          <div id="phenotype-bars"></div>
-        </div>
-      </div>
-    </div>
-    <div id="stats-error" class="alert alert-danger" hidden></div>
-  </div><!-- /#tab-stats -->
+          <!-- ===================== TAB: STATS ===================== -->
+          <div class="tab-pane fade" id="tab-stats" role="tabpanel">
+            <div id="stats-loading" class="text-muted">Loading dataset statistics…</div>
 
-  </div><!-- /.tab-content -->
-</main>
+            <div id="stats-content" hidden>
+              <h5 class="kg-section-h">Dataset Overview</h5>
+              <p class="text-muted small">Aggregated server-side from <code>/api/genes/known/stats</code>; the full dataset is no longer downloaded to the browser.</p>
+
+              <div id="stats-kpi" class="kg-kpi-grid">
+                <div class="text-muted small">Loading…</div>
+              </div>
+
+              <div class="row">
+                <div class="col-12 col-lg-6">
+                  <div class="card mb-4"><div class="card-body">
+                    <h6 class="card-title">Species distribution</h6>
+                    <p class="kg-chart-note">Normalised primary species; Top 15 shown, remaining species grouped as Other.</p>
+                    <div id="chart-species" class="kg-chart"></div>
+                  </div></div>
+                </div>
+                <div class="col-12 col-lg-6">
+                  <div class="card mb-4"><div class="card-body">
+                    <h6 class="card-title">Functional category</h6>
+                    <p class="kg-chart-note">Six controlled categories; colours match the badges on result cards.</p>
+                    <div id="chart-category" class="kg-chart"></div>
+                  </div></div>
+                </div>
+              </div>
+
+              <div class="card mb-4"><div class="card-body">
+                <h6 class="card-title">Genes per wheat chromosome</h6>
+                <p class="kg-chart-note">All 21 hexaploid wheat chromosomes (1A–7D); an empty bar means no curated gene on that chromosome.</p>
+                <div id="chart-chrom-wheat" class="kg-chart"></div>
+
+                <h6 class="card-title mt-4">Other Triticeae chromosome types (barley, rye, wild relatives)</h6>
+                <p class="kg-chart-note">Non-wheat chromosome labels (e.g. barley 1H–7H, rye 1R/6R, T. ponticum chr51/chr54) are charted separately.</p>
+                <div id="chart-chrom-other" class="kg-chart"></div>
+              </div></div>
+
+              <div class="row">
+                <div class="col-12 col-lg-6">
+                  <div class="card mb-4"><div class="card-body">
+                    <h6 class="card-title">Research strategy</h6>
+                    <p class="kg-chart-note">Reverse / forward genetics / not reported.</p>
+                    <div id="chart-strategy" class="kg-chart"></div>
+                  </div></div>
+                </div>
+                <div class="col-12 col-lg-6">
+                  <div class="card mb-4"><div class="card-body">
+                    <h6 class="card-title">Publication year</h6>
+                    <p class="kg-chart-note" id="chart-year-note">Genes per publication year, 1998–2026.</p>
+                    <div id="chart-year" class="kg-chart"></div>
+                  </div></div>
+                </div>
+              </div>
+
+              <div class="card mb-4"><div class="card-body">
+                <h6 class="card-title">Top 20 phenotype tags</h6>
+                <p class="kg-chart-note" id="chart-phenotype-note">Reusable trait tags extracted from the phenotype free text (long free-text passages are excluded).</p>
+                <div id="chart-phenotype" class="kg-chart"></div>
+              </div></div>
+            </div><!-- /#stats-content -->
+
+            <div id="stats-error" class="alert alert-danger kg-stats-error" hidden></div>
+          </div><!-- /#tab-stats -->
+
+        </div><!-- /.tab-content -->
 
       </div>
     </section>
@@ -230,327 +412,1123 @@ html, body { margin:0; padding:0; }
   <div id="v2-shell-footer"></div>
 
   <script src="/api/v2shell/shell.js"></script>
+  <script src="/genes/known_gene_common.js"></script>
+  <script>
+  // =====================================================================
+  //  KnownGene — search tab + stats tab
+  //  Data source: /api/genes/known/{all,search,stats} (v2056 contract).
+  // =====================================================================
+  (function () {
+    'use strict';
 
-<script>
-// =====================================================================
-//  State
-// =====================================================================
-// allGenes is populated on first call to loadAllGenes(); reused for stats
-// and as a client-side cache so empty search can show the full list
-// without re-fetching.
-var allGenes = null;
-var allGenesLoading = null;
-// Holds the most recent result set (post any rendering) so the Export
-// CSV button can serialise exactly what the user is looking at.
-var lastResults = [];
+    var PAGE_LIMIT = 50;
+    var MAX_EXPORT_ROWS = 5000;   // backend limit cap; far above 1420
+    var DETAIL_FETCH_CONCURRENCY = 6;
 
-// =====================================================================
-//  Helpers
-// =====================================================================
-function esc(s) {
-  if (s == null) return '';
-  return String(s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
+    var FIELD_LABELS = {
+      all: 'All Fields',
+      gene_id: 'Gene ID',
+      gene_name: 'Gene name',
+      reference_genome_id: 'Reference genome ID',
+      phenotype: 'Trait / Phenotype',
+      species: 'Species',
+      doi: 'DOI',
+      protein_family: 'Protein family',
+      functional_category: 'Functional category',
+      chrom_pos: 'Chromosome'
+    };
 
-// Build the detail page URL. Prefer clone_id (a numeric primary key)
-// over gene_id, because gene_id can contain slashes or DOI strings
-// (e.g. "MT783929/MT783930") that complicate URL encoding.
-function detailUrl(r) {
-  var key = (r.clone_id != null && r.clone_id !== '') ? r.clone_id : r.gene_id;
-  return '/genes/detail.html?id=' + encodeURIComponent(key);
-}
+    var CATEGORY_ORDER = [
+      'Biotic Stress',
+      'Abiotic Stress',
+      'Quality & Yield',
+      'Morphology & Domestication',
+      'Physiology & Metabolic Processes',
+      'Reproduction & Phenology'
+    ];
+    var CATEGORY_CLASS = {
+      // v2060 split "Biotic & Abiotic Stress" into Biotic / Abiotic.
+      'Biotic Stress': 'kg-cat-biotic',
+      'Abiotic Stress': 'kg-cat-abiotic',
+      'Biotic & Abiotic Stress': 'kg-cat-stress',  // legacy rows, kept for compatibility
+      'Quality & Yield': 'kg-cat-quality',
+      'Morphology & Domestication': 'kg-cat-morph',
+      'Physiology & Metabolic Processes': 'kg-cat-phys',
+      'Reproduction & Phenology': 'kg-cat-repro'
+    };
+    var STRATEGY_ORDER = ['Reverse genetics', 'Forward genetics', 'Not reported'];
+    // Natural display order for the non-wheat chromosome bar chart.
+    var OTHER_CHROM_ORDER = ['1H', '2H', '3H', '4H', '5H', '6H', '7H',
+                             '1R', '6R', '1S', '2V', '6S', '6U', '6V', '7E',
+                             'chr51', 'chr54'];
 
-// Group a chrom_pos string ("chr5A", "5A", "chr1A:1-1000", "Chr2B:...") into
-// the chromosome label "1A"/"2B"/"5D" etc. Falls back to the raw token when
-// no digit prefix is found.
-function chromLabel(s) {
-  if (!s) return '';
-  var m = String(s).match(/(\d+[A-Da-d])/);
-  return m ? m[1].toUpperCase() : String(s);
-}
+    // ---- page state -----------------------------------------------------
+    var state = {
+      token: 0,            // guards against stale async responses
+      mode: 'browse',      // 'browse' (no term) | 'search'
+      term: '',
+      field: 'all',
+      offset: 0,
+      total: 0,
+      records: [],
+      universe: null,      // full result set of the current search (filters/export)
+      universeToken: 0,
+      filterMode: false,
+      filtered: null,
+      filters: { category: {}, strategy: {}, species: {} },
+      loading: false,
+      exporting: false
+    };
+    var debugLastCsv = null;
+    // CSV export is intentionally limited to an active search result set: the
+    // browse view is the full 1,420-row dataset and a full export would need one
+    // /known/{id} detail request per row (long-text columns are not in the list
+    // payload). Browse mode therefore hides the button; see renderExportState().
+    var EXPORT_LABEL = 'Export Search Results (CSV)';
 
-// 21 hexaploid wheat chromosomes (1A-7A, 1B-7B, 1D-7D). Some rows in the DB
-// carry a stray non-wheat label (e.g. "0C" from malformed imports); we
-// exclude anything outside this set so the chart shows the real karyotype.
-var WHEAT_CHROMS = [];
-for (var g = 1; g <= 7; g++) ['A','B','D'].forEach(function(sub){ WHEAT_CHROMS.push(g + sub); });
-function isWheatChrom(label) { return WHEAT_CHROMS.indexOf(label) !== -1; }
-
-function loadAllGenes() {
-  if (allGenes) {
-    return $.Deferred().resolve(allGenes).promise();
-  }
-  if (allGenesLoading) return allGenesLoading;
-  var d = $.Deferred();
-  $.getJSON('/api/genes/known/all')
-    .done(function(resp) {
-      if (!resp || !resp.success) {
-        allGenesLoading = null;
-        d.reject((resp && resp.detail) || 'Failed to load genes');
-        return;
-      }
-      allGenes = resp.data.records || [];
-      d.resolve(allGenes);
-    })
-    .fail(function() {
-      allGenesLoading = null;
-      d.reject('Failed to load /api/genes/known/all');
-    });
-  allGenesLoading = d.promise();
-  return allGenesLoading;
-}
-
-// =====================================================================
-//  Search
-// =====================================================================
-function runSearch() {
-  var term = $('#searchInp').val().trim();
-  var $info = $('#res-info');
-  var $list = $('#list-content');
-
-  $info.text('Searching…');
-  $list.html('');
-
-  function renderResults(records) {
-    lastResults = records;
-    $('#export-btn').prop('disabled', records.length === 0);
-
-    if (records.length === 0) {
-      $info.text('No genes found.');
-      $list.html('<div class="alert alert-warning">No matching known gene. Try a different keyword or clear the post-filters.</div>');
-      return;
+    function exportAvailable() {
+      return state.mode === 'search' && !state.loading && state.total > 0;
     }
 
-    $info.text('Showing ' + records.length + ' known gene' + (records.length === 1 ? '' : 's') + '.');
+    function renderExportState() {
+      var button = $id('export-btn');
+      if (!button) return;
+      var available = exportAvailable();
+      setHidden('export-btn', !available);
+      button.disabled = !available || state.exporting;
+      if (!state.exporting) button.textContent = EXPORT_LABEL;
+    }
 
-    var html = '';
-    records.forEach(function(r) {
-      var chromBadge = chromLabel(r.chrom_pos)
-        ? '<span class="badge badge-secondary">' + esc(chromLabel(r.chrom_pos)) + '</span>'
-        : '';
-      var sp  = r.species  ? '<span>Species: ' + esc(r.species) + '</span>' : '';
-      var ph  = r.phenotype ? '<span>Phenotype: ' + esc(r.phenotype) + '</span>' : '';
-      var doiCount = (r.dois && r.dois.length) ? '<span class="text-info">' + r.dois.length + ' reference' + (r.dois.length === 1 ? '' : 's') + '</span>' : '';
-      html +=
-        '<div class="gene-card">' +
-          '<div class="gene-card-head">' +
-            (r.gene_name ? '<span class="gene-name">' + esc(r.gene_name) + '</span>' : '') +
-            '<a class="gene-id" href="' + esc(detailUrl(r)) + '" target="_blank">' + esc(r.gene_id) + '</a>' +
-          '</div>' +
-          '<div class="gene-card-body">' +
-            chromBadge + sp + ph + doiCount +
-          '</div>' +
-        '</div>';
-    });
-    $list.html(html);
-  }
+    // ---- tiny DOM helpers ----------------------------------------------
+    function $id(id) { return document.getElementById(id); }
 
-  // If the user typed a term, hit the search endpoint; otherwise show the
-  // cached full list (still subject to post-filters).
-  if (term) {
-    $.getJSON('/api/genes/known/search', { searchid: term })
-      .done(function(resp) {
-        if (!resp || !resp.success) {
-          $info.text('Search failed');
-          $list.html('<div class="alert alert-danger">' + esc((resp && resp.detail) || 'Unknown error') + '</div>');
+    function setHidden(id, hidden) {
+      var el = $id(id);
+      if (!el) return;
+      if (hidden) { el.setAttribute('hidden', 'hidden'); } else { el.removeAttribute('hidden'); }
+    }
+
+    function escapeHtml(value) { return KG.esc(value); }
+
+    function fieldLabel(field) { return FIELD_LABELS[field] || field; }
+
+    // =====================================================================
+    //  Search / pagination
+    // =====================================================================
+    function currentQueryParams(offset) {
+      var params = {};
+      if (state.mode === 'search') {
+        params.searchid = state.term;
+        params.field = state.field;
+      }
+      params.limit = PAGE_LIMIT;
+      params.offset = offset;
+      return params;
+    }
+
+    function endpoint() {
+      return state.mode === 'search'
+        ? '/api/genes/known/search'
+        : '/api/genes/known/all';
+    }
+
+    function errorMessage(jqXHR, fallback) {
+      var payload = jqXHR && jqXHR.responseJSON;
+      return (payload && (payload.detail || payload.message)) ||
+             (jqXHR && jqXHR.statusText) || fallback;
+    }
+
+    function startSearch() {
+      var term = String($('#searchInp').val() || '').trim();
+      var field = String($('#searchField').val() || 'all');
+      state.mode = term ? 'search' : 'browse';
+      state.term = term;
+      state.field = field;
+      state.offset = 0;
+      state.total = 0;
+      state.filters = { category: {}, strategy: {}, species: {} };
+      state.filterMode = false;
+      state.filtered = null;
+      state.universe = null;
+      state.universeToken = 0;
+      renderFilterBar();
+      fetchPage(true);
+    }
+
+    function fetchPage(scrollToResults) {
+      var token = ++state.token;
+      state.loading = true;
+      $('#res-info').text('Searching…');
+      renderExportState();
+      if (scrollToResults !== false) { /* initial page: keep viewport in place */ }
+
+      $.getJSON(endpoint(), currentQueryParams(state.offset))
+        .done(function (resp) {
+          if (token !== state.token) return;
+          state.loading = false;
+          if (!resp || !resp.success || !resp.data) {
+            showError((resp && (resp.detail || resp.message)) || 'Unexpected response from the KnownGene API.', 'retry-search');
+            return;
+          }
+          var data = resp.data;
+          state.records = Array.isArray(data.records) ? data.records : [];
+          state.total = Number(data.total);
+          if (!isFinite(state.total) || state.total < 0) state.total = state.records.length;
+          renderResults();
+          // Search mode: fetch the full result set once so the filter bar can
+          // show exact counts and the CSV export can cover every filtered row.
+          if (state.mode === 'search' && state.universe === null) {
+            loadUniverse(token);
+          }
+        })
+        .fail(function (jqXHR) {
+          if (token !== state.token) return;
+          state.loading = false;
+          showError(errorMessage(jqXHR, 'Failed to load known genes.') + ' (HTTP ' + (jqXHR.status || '?') + ')', 'retry-search');
+        });
+    }
+
+    function loadUniverse(pageToken) {
+      var uniToken = ++state.universeToken;
+      var params = {
+        searchid: state.term,
+        field: state.field,
+        limit: MAX_EXPORT_ROWS,
+        offset: 0
+      };
+      $.getJSON('/api/genes/known/search', params)
+        .done(function (resp) {
+          if (uniToken !== state.universeToken || pageToken !== state.token) return;
+          if (!resp || !resp.success || !resp.data) { renderFilterBar(); return; }
+          state.universe = Array.isArray(resp.data.records) ? resp.data.records : [];
+          renderFilterBar();
+        })
+        .fail(function () {
+          if (uniToken !== state.universeToken) return;
+          state.universe = null;
+          renderFilterBar();
+        });
+    }
+
+    function goToPage(offset) {
+      if (state.loading) return;
+      if (state.filterMode) {
+        state.offset = offset;
+        renderFilteredPage();
+        scrollToResults();
+        return;
+      }
+      state.offset = offset;
+      fetchPage(false);
+      scrollToResults();
+    }
+
+    function scrollToResults() {
+      var el = $id('list-content');
+      if (!el) return;
+      var top = el.getBoundingClientRect().top + window.pageYOffset - 70;
+      window.scrollTo(0, Math.max(0, top));
+    }
+
+    // =====================================================================
+    //  Rendering: result list / states / pagination
+    // =====================================================================
+    function isNonWheatChrom(label) { return label && !KG.isWheatChrom(label); }
+
+    function categoryBadge(category) {
+      if (!category) return '';
+      var cls = CATEGORY_CLASS[category] || 'kg-cat-default';
+      return '<span class="badge kg-cat ' + cls + '">' + escapeHtml(category) + '</span>';
+    }
+
+    function strategyBadge(strategy) {
+      if (!strategy || strategy === 'Not reported') return '';
+      var cls = strategy === 'Forward genetics' ? 'k-forward' : 'k-reverse';
+      return '<span class="badge kg-strategy ' + cls + '"><span class="kg-dot" aria-hidden="true"></span>' +
+        escapeHtml(strategy) + '</span>';
+    }
+
+    function formatYearsShort(years) {
+      if (!years || !years.length) return '';
+      if (years.length <= 3) return years.join(', ');
+      return years[0] + ' +' + (years.length - 1);
+    }
+
+    function recordHtml(record, index) {
+      var url = KG.detailUrl(record);
+      var parsed = KG.parseChrom(record.chrom_pos);
+      var chrom = record.chromosome || parsed.label;
+      var genome = record.genome_ref || parsed.genome;
+      var species = record.species_primary || '';
+      var years = KG.fmtYears(record.publication_years || record.publication_year);
+      var doiCount = (record.dois && record.dois.length) || 0;
+      var pheno = record.phenotype_brief || record.phenotype || '';
+      var refId = record.reference_genome_id || '';
+      var html = [];
+
+      html.push('<article class="kg-gene-card gene-card">');
+      html.push('<div class="kg-card-head">');
+      if (record.gene_name) {
+        html.push('<a class="kg-gene-name" href="' + KG.escAttr(url) + '" target="_blank" rel="noopener">' +
+          escapeHtml(record.gene_name) + '</a>');
+      }
+      if (record.gene_id) {
+        html.push('<a class="kg-gene-id" href="' + KG.escAttr(url) + '" target="_blank" rel="noopener">' +
+          escapeHtml(record.gene_id) + '</a>');
+      } else if (!record.gene_name) {
+        html.push('<a class="kg-gene-id" href="' + KG.escAttr(url) + '" target="_blank" rel="noopener">Clone #' +
+          escapeHtml(record.clone_id) + '</a>');
+      }
+      html.push(categoryBadge(record.functional_category));
+      html.push(strategyBadge(record.research_strategy));
+      html.push('</div>');
+
+      html.push('<div class="kg-card-meta">');
+      if (chrom) {
+        html.push('<span class="' + KG.chromBadgeClass(chrom) + '" title="' + KG.escAttr(record.chrom_pos || chrom) + '">' +
+          escapeHtml(chrom) + '</span>');
+      }
+      if (genome) {
+        html.push('<span class="kg-genome" title="' + KG.escAttr(record.chrom_pos || '') + '">' + escapeHtml(genome) + '</span>');
+      }
+      if (refId) {
+        var genehub = KG.geneHubUrl(refId);
+        if (genehub) {
+          html.push('<span class="kg-refid">Ref: <a class="kg-mono" href="' + KG.escAttr(genehub) +
+            '" target="_blank" rel="noopener noreferrer" aria-label="Open in GeneHub">' + escapeHtml(refId) + ' ↗</a></span>');
+        } else {
+          html.push('<span class="kg-refid">Ref: <span class="kg-mono" title="No GeneHub record for this reference genome ID">' +
+            escapeHtml(refId) + '</span></span>');
+        }
+      }
+      if (species) {
+        html.push('<span class="kg-species" title="' + KG.escAttr(record.species || species) + '"><i>' +
+          escapeHtml(species) + '</i></span>');
+      }
+      if (years.length) {
+        html.push('<span class="kg-years" title="Publication year(s)">' + escapeHtml(formatYearsShort(years)) + '</span>');
+      }
+      if (doiCount) {
+        html.push('<span class="kg-refcount">' + escapeHtml(doiCount) + ' reference' + (doiCount === 1 ? '' : 's') + '</span>');
+      }
+      html.push('</div>');
+
+      if (pheno) {
+        var phenoId = 'kg-pheno-' + index;
+        html.push('<p class="kg-longtext kg-clamp-2" id="' + phenoId + '">' + escapeHtml(pheno) + '</p>');
+        html.push('<button type="button" class="btn btn-link btn-sm kg-expand" aria-expanded="false" aria-controls="' +
+          phenoId + '">Show more</button>');
+      }
+      if (record.protein_family) {
+        var head = KG.familyHead(record.protein_family);
+        html.push('<div class="mt-2"><span class="v2-chip kg-pf-chip" title="' + KG.escAttr(record.protein_family) + '">' +
+          escapeHtml(head) + '</span></div>');
+      }
+      html.push('</article>');
+      return html.join('');
+    }
+
+    function renderCards(records) {
+      if (!records.length) return '';
+      var html = [];
+      for (var i = 0; i < records.length; i++) html.push(recordHtml(records[i], i));
+      return html.join('');
+    }
+
+    function rangeText(offset, count, total) {
+      if (!total || !count) return '0';
+      var start = offset + 1;
+      var end = offset + count;
+      return start + '\u2013' + end + ' of ' + KG.fmtNum(total);
+    }
+
+    function renderResults() {
+      var records = state.records;
+      var $list = $('#list-content');
+      setHidden('pager', state.total <= PAGE_LIMIT || records.length === 0);
+      renderExportState();
+
+      if (!records.length) {
+        if (state.mode === 'search') {
+          $('#res-info').text('No known gene matches "' + state.term + '".');
+          $list.html('<div class="alert alert-warning">No known gene matches &quot;' + escapeHtml(state.term) +
+            '&quot;. Try another keyword, or check the field selector. ' +
+            '<button type="button" class="btn btn-link btn-sm kg-reset-link">Reset search</button></div>');
+        } else {
+          $('#res-info').text('No known genes found.');
+          $list.html('<div class="alert alert-warning">No known genes found in the dataset.</div>');
+        }
+        renderPager();
+        return;
+      }
+
+      var info = 'Showing ' + rangeText(state.offset, records.length, state.total);
+      if (state.filterMode) {
+        info += ' · filtered from ' + KG.fmtNum(state.universe ? state.universe.length : state.total);
+      }
+      if (state.mode === 'search') {
+        info += ' · query "' + state.term + '" · field: ' + fieldLabel(state.field);
+      } else {
+        info += ' · Browse all';
+      }
+      info += ' · map-based cloning first';
+      $('#res-info').text(info);
+
+      $list.html(renderCards(records));
+      renderPager();
+      KG.bindExpanders(document);
+      KG.initExpanders($id('list-content'));
+    }
+
+    function renderPager() {
+      var pages = Math.max(1, Math.ceil(state.total / PAGE_LIMIT));
+      var page = Math.floor(state.offset / PAGE_LIMIT) + 1;
+      if (page > pages) page = pages;
+      $('#page-info').text('Page ' + page + ' / ' + pages);
+      $('#prev-page').prop('disabled', page <= 1 || state.loading);
+      $('#next-page').prop('disabled', page >= pages || state.loading);
+    }
+
+    function showError(message, retryKind) {
+      $('#res-info').text('Load failed.');
+      var html = '<div class="alert alert-danger">' + escapeHtml(message);
+      if (retryKind === 'retry-search') {
+        html += ' <button type="button" class="btn btn-outline-danger btn-sm ml-2 kg-retry-search">Retry</button>';
+      }
+      html += '</div>';
+      $('#list-content').html(html);
+      setHidden('pager', true);
+      state.loading = false;
+      renderExportState();
+    }
+
+    // =====================================================================
+    //  Client-side filters (search results only)
+    // =====================================================================
+    function activeKeys(map) {
+      var keys = [];
+      for (var key in map) { if (map.hasOwnProperty(key) && map[key]) keys.push(key); }
+      return keys;
+    }
+
+    function anyFilterActive() {
+      return activeKeys(state.filters.category).length > 0 ||
+             activeKeys(state.filters.strategy).length > 0 ||
+             activeKeys(state.filters.species).length > 0;
+    }
+
+    function speciesKey(record) { return record.species_primary || ''; }
+
+    function filterUniverse() {
+      var cats = activeKeys(state.filters.category);
+      var strategies = activeKeys(state.filters.strategy);
+      var species = activeKeys(state.filters.species);
+      var topSpecies = speciesTop(state.universe);
+      return (state.universe || []).filter(function (record) {
+        if (cats.length && cats.indexOf(record.functional_category || '') < 0) return false;
+        if (strategies.length && strategies.indexOf(record.research_strategy || '') < 0) return false;
+        if (species.length) {
+          var key = speciesKey(record);
+          var inTop = topSpecies.indexOf(key) >= 0;
+          var selectedTop = species.filter(function (item) { return item !== '__other__'; });
+          var otherSelected = species.indexOf('__other__') >= 0;
+          var matchedTop = selectedTop.indexOf(key) >= 0;
+          var matchedOther = otherSelected && !inTop;
+          if (!matchedTop && !matchedOther) return false;
+        }
+        return true;
+      });
+    }
+
+    function countBy(records, keyFn) {
+      var counts = {};
+      var order = [];
+      for (var i = 0; i < records.length; i++) {
+        var key = keyFn(records[i]);
+        if (!key) continue;
+        if (!counts.hasOwnProperty(key)) { counts[key] = 0; order.push(key); }
+        counts[key] += 1;
+      }
+      return { counts: counts, order: order };
+    }
+
+    function speciesTop(records) {
+      if (!records) return [];
+      var stats = countBy(records, speciesKey);
+      return stats.order.slice().sort(function (a, b) { return stats.counts[b] - stats.counts[a]; }).slice(0, 8);
+    }
+
+    function renderFilterBar() {
+      var bar = $id('filter-bar');
+      if (!bar) return;
+      var show = state.mode === 'search' && state.total > 0;
+      if (!show) { setHidden('filter-bar', true); bar.innerHTML = ''; return; }
+      if (!state.universe) {
+        bar.innerHTML = '<div class="kg-filter-note">Loading filter counts…</div>';
+        setHidden('filter-bar', false);
+        return;
+      }
+      var universe = state.universe;
+      var catStats = countBy(universe, function (r) { return r.functional_category || ''; });
+      var strategyStats = countBy(universe, function (r) { return r.research_strategy || ''; });
+      var speciesStats = countBy(universe, speciesKey);
+
+      var html = [];
+
+      // functional category (5 controlled values)
+      var catItems = CATEGORY_ORDER.filter(function (cat) { return catStats.counts.hasOwnProperty(cat); });
+      if (activeKeys(catStats.counts).length || catItems.length) {
+        html.push('<div class="kg-filter-group"><span class="kg-filter-label">Functional category</span>');
+        for (var i = 0; i < catItems.length; i++) {
+          html.push(filterChip('category', catItems[i], catItems[i], catStats.counts[catItems[i]]));
+        }
+        html.push('</div>');
+      }
+
+      // research strategy (3 controlled values, Not reported included)
+      var strategyItems = STRATEGY_ORDER.filter(function (item) {
+        return strategyStats.counts.hasOwnProperty(item);
+      });
+      if (strategyItems.length > 1) {
+        html.push('<div class="kg-filter-group"><span class="kg-filter-label">Research strategy</span>');
+        for (var j = 0; j < strategyItems.length; j++) {
+          html.push(filterChip('strategy', strategyItems[j], strategyItems[j], strategyStats.counts[strategyItems[j]]));
+        }
+        html.push('</div>');
+      }
+
+      // species: Top 8 + Other (only when the result set spans several species)
+      var speciesOrdered = speciesStats.order.slice().sort(function (a, b) {
+        return speciesStats.counts[b] - speciesStats.counts[a];
+      });
+      if (speciesOrdered.length > 1) {
+        var top = speciesOrdered.slice(0, 8);
+        var rest = speciesOrdered.slice(8);
+        html.push('<div class="kg-filter-group"><span class="kg-filter-label">Species</span>');
+        for (var k = 0; k < top.length; k++) {
+          html.push(filterChip('species', top[k], top[k], speciesStats.counts[top[k]]));
+        }
+        if (rest.length) {
+          var otherCount = 0;
+          for (var r = 0; r < rest.length; r++) otherCount += speciesStats.counts[rest[r]];
+          html.push(filterChip('species', '__other__', 'Other (' + rest.length + ' species)', otherCount));
+        }
+        html.push('</div>');
+      }
+
+      html.push('<div class="kg-filter-group"><span class="kg-filter-label">&nbsp;</span>' +
+        '<button type="button" class="btn btn-link btn-sm" id="clear-filters">Clear filters</button>' +
+        '<span class="kg-filter-note">Filters apply to the full result set of this query (not only the current page).</span></div>');
+
+      bar.innerHTML = html.join('');
+      setHidden('filter-bar', false);
+      updateFilterChips();
+    }
+
+    function filterChip(group, value, label, count) {
+      var on = state.filters[group].hasOwnProperty(value) && state.filters[group][value];
+      return '<button type="button" class="kg-filter-chip' + (on ? ' is-on' : '') +
+        '" data-group="' + KG.escAttr(group) + '" data-value="' + KG.escAttr(value) + '" aria-pressed="' +
+        (on ? 'true' : 'false') + '">' + escapeHtml(label) +
+        ' <span class="kg-chip-count">(' + KG.fmtNum(count) + ')</span></button>';
+    }
+
+    function updateFilterChips() {
+      var chips = document.querySelectorAll('#filter-bar .kg-filter-chip');
+      for (var i = 0; i < chips.length; i++) {
+        var chip = chips[i];
+        var group = chip.getAttribute('data-group');
+        var value = chip.getAttribute('data-value');
+        var on = state.filters[group] && state.filters[group][value];
+        if (on) { chip.classList.add('is-on'); } else { chip.classList.remove('is-on'); }
+        chip.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+      var clear = $id('clear-filters');
+      if (clear) {
+        if (anyFilterActive()) { clear.removeAttribute('hidden'); } else { clear.setAttribute('hidden', 'hidden'); }
+      }
+    }
+
+    function onFilterChipClick(chip) {
+      var group = chip.getAttribute('data-group');
+      var value = chip.getAttribute('data-value');
+      if (!state.filters[group].hasOwnProperty(value) || !state.filters[group][value]) {
+        state.filters[group][value] = true;
+      } else {
+        delete state.filters[group][value];
+      }
+      updateFilterChips();
+      state.filterMode = anyFilterActive();
+      state.offset = 0;
+      if (state.filterMode) {
+        renderFilteredPage();
+      } else {
+        // back to server-side pagination for the unfiltered search
+        state.filtered = null;
+        fetchPage(false);
+      }
+    }
+
+    function renderFilteredPage() {
+      if (!state.universe) return;
+      state.filtered = filterUniverse();
+      state.total = state.filtered.length;
+      state.records = state.filtered.slice(state.offset, state.offset + PAGE_LIMIT);
+      renderResults();
+      scrollToResults();
+    }
+
+    // =====================================================================
+    //  CSV export (19 columns, UTF-8 BOM, formula-injection guard)
+    // =====================================================================
+    var CSV_HEADERS = [
+      'Gene ID',
+      'Gene name',
+      'Reference genome ID',
+      'Chromosome',
+      'Chromosome position',
+      'Genome / reference',
+      'Species (normalized)',
+      'Species (raw)',
+      'Functional category',
+      'Research strategy',
+      'Phenotype',
+      'Protein family',
+      'Validation methods',
+      'Cloning method',
+      'Key results',
+      'Function description',
+      'Publication year(s)',
+      'DOIs',
+      'Detail URL'
+    ];
+
+    function setExportBusy(busy, label) {
+      var button = $id('export-btn');
+      if (!button) return;
+      button.disabled = busy;
+      button.textContent = busy ? (label || 'Preparing CSV…') : EXPORT_LABEL;
+    }
+
+    // Fetch the complete result set for the current SEARCH query (not just this
+    // page). Browse mode is never exported (see EXPORT_LABEL / exportAvailable).
+    function fetchFullResultSet(callback) {
+      if (state.universe) { callback(state.universe); return; }
+      if (state.mode !== 'search') { callback(null); return; }
+      var params = { searchid: state.term, field: state.field, limit: MAX_EXPORT_ROWS, offset: 0 };
+      $.getJSON('/api/genes/known/search', params)
+        .done(function (resp) {
+          if (!resp || !resp.success || !resp.data) {
+            callback(null);
+            return;
+          }
+          var records = Array.isArray(resp.data.records) ? resp.data.records : [];
+          if (state.mode === 'search') state.universe = records;
+          callback(records);
+        })
+        .fail(function () { callback(null); });
+    }
+
+    function exportCsv() {
+      if (state.exporting || state.loading) return;
+      if (!exportAvailable()) return;
+      state.exporting = true;
+      setExportBusy(true, 'Collecting records…');
+
+      fetchFullResultSet(function (records) {
+        if (!records) {
+          state.exporting = false;
+          setExportBusy(false);
+          showError('Could not load the full result set for the CSV export.', 'retry-search');
           return;
         }
-        renderResults(resp.data.records || []);
-      })
-      .fail(function(jqXHR) {
-        var msg = (jqXHR.responseJSON && jqXHR.responseJSON.detail) || jqXHR.statusText || 'Search failed';
-        $info.text('Search failed');
-        $list.html('<div class="alert alert-danger">' + esc(msg) + '</div>');
+        var base = state.filterMode ? records.filter(function (record) { return recordMatches(record); }) : records;
+        if (!base.length) {
+          state.exporting = false;
+          setExportBusy(false);
+          return;
+        }
+        enrichRecords(base, function () {
+          var csv = buildCsv(base);
+          debugLastCsv = csv;
+          window.__kgLastCsv = csv;
+          window.__kgLastCsvRows = base.length;
+          KG.downloadCsv(csv, KG.excelFilename(state.term));
+          state.exporting = false;
+          setExportBusy(false);
+        });
       });
-  } else {
-    loadAllGenes()
-      .done(function(records) { renderResults(records.slice()); })
-      .fail(function(msg) {
-        $info.text('Load failed');
-        $list.html('<div class="alert alert-danger">' + esc(msg) + '</div>');
+    }
+
+    // Re-run the filter predicate for the export (reuses the active filters).
+    function recordMatches(record) {
+      var cats = activeKeys(state.filters.category);
+      var strategies = activeKeys(state.filters.strategy);
+      var species = activeKeys(state.filters.species);
+      if (cats.length && cats.indexOf(record.functional_category || '') < 0) return false;
+      if (strategies.length && strategies.indexOf(record.research_strategy || '') < 0) return false;
+      if (species.length) {
+        var key = speciesKey(record);
+        var top = speciesTop(state.universe || []);
+        var inTop = top.indexOf(key) >= 0;
+        var selectedTop = species.filter(function (item) { return item !== '__other__'; });
+        if (selectedTop.indexOf(key) < 0 && !(species.indexOf('__other__') >= 0 && !inTop)) return false;
+      }
+      return true;
+    }
+
+    // The list summary does not carry long-text columns (payload control), so
+    // the CSV export enriches each row with its /known/{id} detail response.
+    function enrichRecords(records, done) {
+      var pending = [];
+      for (var i = 0; i < records.length; i++) {
+        if (!records[i].__full) pending.push(records[i]);
+      }
+      if (!pending.length) { done(); return; }
+      var cursor = 0;
+      var active = 0;
+      var finished = false;
+      var progress = 0;
+
+      function finish() {
+        if (finished) return;
+        finished = true;
+        done();
+      }
+
+      function next() {
+        if (finished) { return; }
+        if (cursor >= pending.length && active === 0) { finish(); return; }
+        while (active < DETAIL_FETCH_CONCURRENCY && cursor < pending.length) {
+          var record = pending[cursor++];
+          active += 1;
+          fetchDetail(record, function () {
+            active -= 1;
+            progress += 1;
+            setExportBusy(true, 'Preparing CSV… (' + progress + '/' + pending.length + ')');
+            next();
+          });
+        }
+      }
+      setExportBusy(true, 'Preparing CSV… (0/' + pending.length + ')');
+      next();
+    }
+
+    function fetchDetail(record, callback) {
+      var key = (record.clone_id != null && record.clone_id !== '') ? record.clone_id : record.gene_id;
+      if (!key) { callback(); return; }
+      $.getJSON('/api/genes/known/' + encodeURIComponent(key))
+        .done(function (resp) {
+          if (resp && resp.success && resp.data) record.__full = resp.data;
+          callback();
+        })
+        .fail(function () { callback(); });
+    }
+
+    function buildCsv(records) {
+      var rows = [];
+      for (var i = 0; i < records.length; i++) {
+        var record = records[i];
+        var full = record.__full || {};
+        var parsed = KG.parseChrom(record.chrom_pos);
+        var refs = full.references || [];
+        var dois = (record.dois && record.dois.length) ? record.dois : (full.dois || []);
+        if (!dois.length) {
+          for (var d = 0; d < refs.length; d++) { if (refs[d].doi) dois.push(refs[d].doi); }
+        }
+        var years = KG.fmtYears(full.publication_years || record.publication_years ||
+                                full.publication_year || record.publication_year);
+        var validation = full.validation_methods && full.validation_methods.length
+          ? full.validation_methods
+          : KG.splitMulti(full.validation_method);
+        var keyResults = full.key_result && full.key_result.length ? full.key_result.join('\n\n') : '';
+        var chrom = record.chromosome || full.chromosome || parsed.label;
+        var genome = record.genome_ref || full.genome_ref || parsed.genome;
+        rows.push([
+          record.gene_id || '',
+          record.gene_name || '',
+          record.reference_genome_id || full.reference_genome_id || '',
+          chrom || '',
+          record.chrom_pos || '',
+          genome || '',
+          record.species_primary || full.species_primary || '',
+          record.species || '',
+          record.functional_category || full.functional_category || '',
+          record.research_strategy || full.research_strategy || '',
+          record.phenotype || '',
+          full.protein_family || '',
+          validation,
+          full.cloning_method || '',
+          keyResults,
+          full.function_description || '',
+          years,
+          dois,
+          location.origin + KG.detailUrl(record)
+        ]);
+      }
+      return KG.toCsv(CSV_HEADERS, rows);
+    }
+
+    // =====================================================================
+    //  Stats tab (server-side aggregates: /api/genes/known/stats)
+    // =====================================================================
+    var statsLoaded = false;
+
+    function loadStats() {
+      setHidden('stats-loading', false);
+      setHidden('stats-content', true);
+      setHidden('stats-error', true);
+      $.getJSON('/api/genes/known/stats')
+        .done(function (resp) {
+          if (!resp || !resp.success || !resp.data) {
+            statsFailed((resp && (resp.detail || resp.message)) || 'Unexpected response from /api/genes/known/stats.');
+            return;
+          }
+          renderStats(resp.data);
+          setHidden('stats-loading', true);
+          setHidden('stats-content', false);
+        })
+        .fail(function (jqXHR) {
+          statsFailed(errorMessage(jqXHR, 'Failed to load dataset statistics.') +
+            ' (HTTP ' + (jqXHR.status || '?') + ')');
+        });
+    }
+
+    function statsFailed(message) {
+      setHidden('stats-loading', true);
+      setHidden('stats-content', true);
+      var el = $id('stats-error');
+      if (el) {
+        el.innerHTML = escapeHtml(message) +
+          ' <button type="button" class="btn btn-outline-danger btn-sm ml-2" id="stats-retry">Retry</button>';
+        setHidden('stats-error', false);
+      }
+    }
+
+    function renderStats(data) {
+      renderKpis(data);
+      renderSpeciesChart(data);
+      renderCategoryChart(data);
+      renderWheatChromChart(data);
+      renderOtherChromChart(data);
+      renderStrategyChart(data);
+      renderYearChart(data);
+      renderPhenotypeChart(data);
+      KG.initExpanders($id('stats-content'));
+    }
+
+    function renderKpis(data) {
+      var species = data.species || [];
+      var chromosomes = data.chromosomes || [];
+      var categories = data.functional_category || [];
+      var strategies = data.research_strategy || [];
+      var references = data.references || {};
+      var notes = data.notes || {};
+      var wheatChroms = chromosomes.filter(function (c) { return c.group === 'wheat'; });
+      var otherChroms = chromosomes.filter(function (c) { return c.group !== 'wheat'; });
+      var covered = notes.wheat_chromosomes_covered != null
+        ? Number(notes.wheat_chromosomes_covered)
+        : wheatChroms.length;
+      var otherTypes = otherChroms.length;
+      var strategyNote = strategies.map(function (item) {
+        return KG.fmtNum(item.count) + ' ' + String(item.name || '').toLowerCase();
+      }).join(' · ');
+
+      var items = [
+        {
+          label: 'Total known genes',
+          value: KG.fmtNum(data.total != null ? data.total : 0),
+          note: 'curated records'
+        },
+        {
+          label: 'Normalised species',
+          value: KG.fmtNum(species.length),
+          note: KG.fmtNum(data.species_raw_count != null ? data.species_raw_count : 0) + ' raw species strings'
+        },
+        {
+          label: 'Wheat chromosomes',
+          value: covered + ' / 21',
+          note: '+' + otherTypes + ' other chromosome types'
+        },
+        {
+          label: 'Functional categories',
+          value: KG.fmtNum(categories.length),
+          note: 'controlled categories'
+        },
+        {
+          label: 'Research strategies',
+          value: KG.fmtNum(strategies.length),
+          note: strategyNote || 'not reported'
+        },
+        {
+          label: 'References',
+          value: KG.fmtNum(references.entries != null ? references.entries : 0),
+          note: KG.fmtNum(references.unique_dois != null ? references.unique_dois : 0) + ' unique DOIs'
+        }
+      ];
+
+      var html = [];
+      for (var i = 0; i < items.length; i++) {
+        html.push('<div class="kg-kpi-card">' +
+          '<div class="kg-kpi-label">' + escapeHtml(items[i].label) + '</div>' +
+          '<div class="kg-kpi-value">' + escapeHtml(items[i].value) + '</div>' +
+          '<div class="kg-kpi-note">' + escapeHtml(items[i].note) + '</div>' +
+          '</div>');
+      }
+      $('#stats-kpi').html(html.join(''));
+    }
+
+    // Horizontal bar rows.  entries: [{label, count, title, fillClass, italic}]
+    function barRowsHtml(entries) {
+      if (!entries.length) return '<div class="text-muted">No data.</div>';
+      var max = 0;
+      for (var i = 0; i < entries.length; i++) { if (entries[i].count > max) max = entries[i].count; }
+      var html = [];
+      for (var j = 0; j < entries.length; j++) {
+        var item = entries[j];
+        var pct = max > 0 ? (item.count / max * 100) : 0;
+        html.push('<div class="kg-bar-row" title="' + KG.escAttr(item.title || item.label) + '">');
+        html.push('<div class="kg-bar-label' + (item.italic ? ' is-italic' : '') + (item.clamp ? ' kg-clamp-2' : '') + '">' +
+          escapeHtml(item.label) + '</div>');
+        html.push('<div class="kg-bar-track"><span class="kg-bar-fill' +
+          (item.fillClass ? ' ' + item.fillClass : '') + '" style="width:' + pct.toFixed(1) + '%;"></span></div>');
+        html.push('<div class="kg-bar-count">' + KG.fmtNum(item.count) + '</div>');
+        html.push('</div>');
+      }
+      return html.join('');
+    }
+
+    // Vertical bars.  entries: [{label, count}]
+    function vBarsHtml(entries, opts) {
+      opts = opts || {};
+      if (!entries.length) return '<div class="text-muted">No data.</div>';
+      var max = opts.maxOverride;
+      if (max == null) {
+        max = 0;
+        for (var i = 0; i < entries.length; i++) { if (entries[i].count > max) max = entries[i].count; }
+      }
+      var html = ['<div class="kg-vbar' + (opts.className ? ' ' + opts.className : '') + '">'];
+      for (var j = 0; j < entries.length; j++) {
+        var item = entries[j];
+        var pct = max > 0 ? (item.count / max * 100) : 0;
+        html.push('<div class="kg-vbar-col" title="' + KG.escAttr(item.label + ': ' + KG.fmtNum(item.count)) + '">');
+        html.push('<div class="kg-vbar-count">' + KG.fmtNum(item.count) + '</div>');
+        html.push('<div class="kg-vbar-stack"><span class="kg-vbar-fill" style="height:' + pct.toFixed(1) + '%;"></span></div>');
+        html.push('<div class="kg-vbar-label' + (item.count === 0 ? ' kg-vbar-empty' : '') + '">' +
+          escapeHtml(item.label) + '</div>');
+        html.push('</div>');
+      }
+      html.push('</div>');
+      return html.join('');
+    }
+
+    function renderSpeciesChart(data) {
+      var species = (data.species || []).slice();
+      if (!species.length) { $('#chart-species').html('<div class="text-muted">No data.</div>'); return; }
+      var top = species.slice(0, 15);
+      var rest = species.slice(15);
+      var entries = top.map(function (item) {
+        var title = item.name + (item.common_name ? ' (' + item.common_name + ')' : '') +
+          ' · ' + KG.fmtNum(item.count) + ' genes' +
+          (item.raw_forms ? ' · ' + KG.fmtNum(item.raw_forms) + ' raw forms' : '');
+        return { label: item.name, count: item.count, title: title, italic: true };
       });
-  }
-}
+      if (rest.length) {
+        var otherCount = 0;
+        for (var i = 0; i < rest.length; i++) otherCount += Number(rest[i].count) || 0;
+        entries.push({
+          label: 'Other (' + rest.length + ' species)',
+          count: otherCount,
+          title: rest.map(function (item) { return item.name + ': ' + KG.fmtNum(item.count); }).join('; ')
+        });
+      }
+      $('#chart-species').html(barRowsHtml(entries));
+    }
 
-function resetSearch() {
-  $('#searchInp').val('');
-  runSearch();
-}
+    function renderCategoryChart(data) {
+      var categories = data.functional_category || [];
+      var counts = {};
+      for (var i = 0; i < categories.length; i++) counts[categories[i].name] = categories[i];
+      var entries = [];
+      var fillClasses = {
+        'Biotic Stress': 'kg-fill-biotic',
+        'Abiotic Stress': 'kg-fill-abiotic',
+        'Biotic & Abiotic Stress': 'kg-fill-stress',  // legacy rows
+        'Quality & Yield': 'kg-fill-quality',
+        'Morphology & Domestication': 'kg-fill-morph',
+        'Physiology & Metabolic Processes': 'kg-fill-phys',
+        'Reproduction & Phenology': 'kg-fill-repro'
+      };
+      for (var j = 0; j < CATEGORY_ORDER.length; j++) {
+        var name = CATEGORY_ORDER[j];
+        if (!counts.hasOwnProperty(name)) continue;
+        entries.push({
+          label: name,
+          count: counts[name].count,
+          title: name + ': ' + KG.fmtNum(counts[name].count) + ' genes',
+          fillClass: fillClasses[name] || ''
+        });
+      }
+      $('#chart-category').html(barRowsHtml(entries));
+    }
 
-// =====================================================================
-//  Stats tab
-// =====================================================================
-function renderBars($container, entries, topN) {
-  if (!entries || entries.length === 0) {
-    $container.html('<div class="text-muted">No data.</div>');
-    return;
-  }
-  if (topN) entries = entries.slice(0, topN);
-  var max = entries[0][1];
-  var html = '';
-  entries.forEach(function(e) {
-    var label = e[0], count = e[1];
-    var pct = max > 0 ? (count / max * 100) : 0;
-    html +=
-      '<div class="bar-row" title="' + esc(label) + '">' +
-        '<div class="bar-label">' + esc(label) + '</div>' +
-        '<div class="bar-track"><div class="bar-fill" style="width:' + pct.toFixed(1) + '%;"></div></div>' +
-        '<div class="bar-count">' + count + '</div>' +
-      '</div>';
-  });
-  $container.html(html);
-}
-
-// Vertical bar (column) chart. Each entry becomes a thin column rising from
-// the baseline; the label sits below, allowed to wrap so long phenotype
-// strings are not truncated. maxOverride lets the caller supply a fixed
-// scale (used for chromosome chart so 0-count chromosomes show as empty
-// bars against the same axis as the tallest chromosome).
-function renderVerticalBars($container, entries, opts) {
-  opts = opts || {};
-  if (!entries || entries.length === 0) {
-    $container.html('<div class="text-muted">No data.</div>');
-    return;
-  }
-  var max = opts.maxOverride;
-  if (max == null) {
-    max = entries.reduce(function(m, e) { return e[1] > m ? e[1] : m; }, 0);
-  }
-  var html = '<div class="vbar">';
-  entries.forEach(function(e) {
-    var label = e[0], count = e[1];
-    var pct = max > 0 ? (count / max * 100) : 0;
-    var labelHtml = count === 0
-      ? '<div class="vbar-label vbar-empty">' + esc(label) + '</div>'
-      : '<div class="vbar-label" title="' + esc(label) + '">' + esc(label) + '</div>';
-    html +=
-      '<div class="vbar-col" title="' + esc(label) + ': ' + count + ' gene' + (count === 1 ? '' : 's') + '">' +
-        '<div class="vbar-count">' + count + '</div>' +
-        '<div class="vbar-stack"><div class="vbar-fill" style="height:' + pct.toFixed(1) + '%;"></div></div>' +
-        labelHtml +
-      '</div>';
-  });
-  html += '</div>';
-  $container.html(html);
-}
-
-function loadStats() {
-  $('#stats-loading').prop('hidden', false);
-  $('#stats-content').prop('hidden', true);
-  $('#stats-error').prop('hidden', true);
-  loadAllGenes()
-    .done(function(records) {
-      $('#stats-loading').prop('hidden', true);
-      $('#stats-content').prop('hidden', false);
-
-      $('#kpi-total').text(records.length);
-
-      var chromMap = {}, speciesMap = {}, phenoMap = {};
-      records.forEach(function(r) {
-        // A row's chrom_pos can mention several loci (e.g. homeologs on 5A
-        // and 5B). Count each wheat chromosome that appears, but only
-        // within the 21-chromosome wheat karyotype.
-        var c = chromLabel(r.chrom_pos);
-        if (c && isWheatChrom(c)) chromMap[c] = (chromMap[c] || 0) + 1;
-        if (r.species)    speciesMap[r.species]     = (speciesMap[r.species]    || 0) + 1;
-        if (r.phenotype)  phenoMap[r.phenotype]     = (phenoMap[r.phenotype]    || 0) + 1;
+    function renderWheatChromChart(data) {
+      var chromosomes = data.chromosomes || [];
+      var counts = {};
+      for (var i = 0; i < chromosomes.length; i++) {
+        if (chromosomes[i].group === 'wheat') counts[chromosomes[i].label] = chromosomes[i].count;
+      }
+      var labels = KG.sortWheatChroms(KG.WHEAT_CHROMS.slice());
+      var entries = labels.map(function (label) {
+        return { label: label, count: Number(counts[label] || 0) };
       });
-      // KPI: number of wheat chromosomes (out of 21) that have ≥1 gene.
-      var coveredChroms = Object.keys(chromMap).filter(isWheatChrom).length;
-      $('#kpi-chroms').text(coveredChroms + ' / ' + WHEAT_CHROMS.length);
-      $('#kpi-species').text(Object.keys(speciesMap).length);
-      $('#kpi-phenotypes').text(Object.keys(phenoMap).length);
+      $('#chart-chrom-wheat').html(vBarsHtml(entries));
+    }
 
-      // Show all 21 wheat chromosomes on the bar chart, even if a given
-      // chromosome currently has zero genes (count = 0 → empty bar).
-      var chromEntries = WHEAT_CHROMS.map(function(k){ return [k, chromMap[k] || 0]; });
-      renderVerticalBars($('#chrom-bars'), chromEntries);
+    function renderOtherChromChart(data) {
+      var chromosomes = data.chromosomes || [];
+      var counts = {};
+      var extras = [];
+      for (var i = 0; i < chromosomes.length; i++) {
+        if (chromosomes[i].group === 'wheat') continue;
+        counts[chromosomes[i].label] = chromosomes[i].count;
+        if (OTHER_CHROM_ORDER.indexOf(chromosomes[i].label) < 0) extras.push(chromosomes[i].label);
+      }
+      var labels = OTHER_CHROM_ORDER.filter(function (label) { return counts.hasOwnProperty(label); });
+      labels = labels.concat(extras.sort());
+      var entries = labels.map(function (label) {
+        return {
+          label: label,
+          count: Number(counts[label] || 0),
+          title: label + ': ' + KG.fmtNum(counts[label] || 0) + ' genes',
+          fillClass: 'kg-fill-wheatish'
+        };
+      });
+      $('#chart-chrom-other').html(barRowsHtml(entries));
+    }
 
-      var phenoEntries = Object.keys(phenoMap)
-        .map(function(k){ return [k, phenoMap[k]]; })
-        .sort(function(a, b){ return b[1] - a[1] || a[0].localeCompare(b[0]); });
-      renderBars($('#phenotype-bars'), phenoEntries, 15);
-    })
-    .fail(function(msg) {
-      $('#stats-loading').prop('hidden', true);
-      $('#stats-error').text(msg).prop('hidden', false);
+    function renderStrategyChart(data) {
+      var strategies = data.research_strategy || [];
+      var counts = {};
+      for (var i = 0; i < strategies.length; i++) counts[strategies[i].name] = strategies[i];
+      var entries = [];
+      var fills = {
+        'Reverse genetics': '',
+        'Forward genetics': 'kg-fill-wheatish',
+        'Not reported': ''
+      };
+      for (var j = 0; j < STRATEGY_ORDER.length; j++) {
+        var name = STRATEGY_ORDER[j];
+        if (!counts.hasOwnProperty(name)) continue;
+        entries.push({
+          label: name,
+          count: counts[name].count,
+          title: name + ': ' + KG.fmtNum(counts[name].count) + ' genes',
+          fillClass: fills[name] || ''
+        });
+      }
+      $('#chart-strategy').html(barRowsHtml(entries));
+    }
+
+    function renderYearChart(data) {
+      var years = (data.publication_year || []).slice();
+      years.sort(function (a, b) { return Number(a.year) - Number(b.year); });
+      var entries = years.map(function (item) {
+        return { label: String(item.year), count: Number(item.count) || 0 };
+      });
+      $('#chart-year').html(vBarsHtml(entries));
+      var notes = data.notes || {};
+      var note = 'Genes per publication year, ' +
+        (entries.length ? entries[0].label + '\u2013' + entries[entries.length - 1].label : '1998\u20132026') +
+        '. Rows with several references are counted once per year' +
+        (notes.multi_year_rows != null ? ' (' + KG.fmtNum(notes.multi_year_rows) + ' multi-year rows).' : '.');
+      $('#chart-year-note').text(note);
+    }
+
+    function renderPhenotypeChart(data) {
+      var tags = (data.phenotype_tags || []).slice(0, 20);
+      var entries = tags.map(function (item) {
+        var label = item.tag;
+        if (label.length > 1) label = label.charAt(0).toUpperCase() + label.slice(1);
+        return {
+          label: label,
+          count: item.count,
+          title: item.tag + ': ' + KG.fmtNum(item.count) + ' genes',
+          clamp: true
+        };
+      });
+      $('#chart-phenotype').html(barRowsHtml(entries));
+      if (data.phenotype_tag_distinct != null) {
+        $('#chart-phenotype-note').text('Reusable trait tags extracted from the phenotype free text; ' +
+          KG.fmtNum(data.phenotype_tag_distinct) + ' distinct tags. Long free-text passages are excluded.');
+      }
+    }
+
+    // =====================================================================
+    //  Events
+    // =====================================================================
+    function bindEvents() {
+      $('#search-btn').on('click', function () { startSearch(); });
+      $('#reset-btn').on('click', function () {
+        $('#searchInp').val('');
+        $('#searchField').val('all');
+        startSearch();
+      });
+      $('#searchInp').on('keydown', function (event) {
+        if (event.key === 'Enter') { event.preventDefault(); startSearch(); }
+      });
+      $('#export-btn').on('click', exportCsv);
+
+      $('#pager').on('click', '#prev-page', function () {
+        goToPage(Math.max(0, state.offset - PAGE_LIMIT));
+      });
+      $('#pager').on('click', '#next-page', function () {
+        goToPage(state.offset + PAGE_LIMIT);
+      });
+
+      // Delegated handlers for content rendered after page load.
+      $('#list-content').on('click', '.kg-reset-link', function () {
+        $('#searchInp').val('');
+        $('#searchField').val('all');
+        startSearch();
+      });
+      $('#list-content').on('click', '.kg-retry-search', function () { fetchPage(false); });
+
+      $('#filter-bar').on('click', '.kg-filter-chip', function () {
+        onFilterChipClick(this);
+      });
+      $('#filter-bar').on('click', '#clear-filters', function () {
+        state.filters = { category: {}, strategy: {}, species: {} };
+        state.filterMode = false;
+        state.filtered = null;
+        state.offset = 0;
+        renderFilterBar();
+        fetchPage(false);
+      });
+
+      $('#stats-error').on('click', '#stats-retry', function () { loadStats(); });
+
+      // Stats are loaded lazily the first time the tab is shown.
+      $('a[href="#tab-stats"]').on('shown.bs.tab', function () {
+        if (statsLoaded) return;
+        statsLoaded = true;
+        loadStats();
+      });
+    }
+
+    // =====================================================================
+    //  Init
+    // =====================================================================
+    $(function () {
+      KG.bindExpanders(document);
+      bindEvents();
+      // First screen: browse the first page of the full dataset.
+      startSearch();
     });
-}
 
-// =====================================================================
-//  Export CSV
-// =====================================================================
-var CSV_COLUMNS = [
-  ['gene_id',     'Gene ID'],
-  ['gene_name',   'Gene name'],
-  ['chrom_pos',   'Chromosome'],
-  ['species',     'Species'],
-  ['phenotype',   'Phenotype'],
-  ['dois',        'DOIs'],
-  ['detail_url',  'Detail URL'],
-];
-
-// RFC 4180-ish: wrap in double quotes, escape embedded quotes by doubling.
-function csvField(value) {
-  if (value == null) return '';
-  var s = Array.isArray(value) ? value.join('; ') : String(value);
-  return '"' + s.replace(/"/g, '""') + '"';
-}
-
-function buildCsv(records) {
-  var lines = [CSV_COLUMNS.map(function(c){ return csvField(c[1]); }).join(',')];
-  records.forEach(function(r) {
-    var row = CSV_COLUMNS.map(function(c) {
-      var key = c[0];
-      if (key === 'detail_url') return csvField(location.origin + detailUrl(r));
-      return csvField(r[key]);
-    });
-    lines.push(row.join(','));
-  });
-  // Excel prefers a UTF-8 BOM so non-ASCII (Chinese species, etc.) opens cleanly.
-  return '﻿' + lines.join('\r\n');
-}
-
-function exportCsv() {
-  if (!lastResults || lastResults.length === 0) return;
-  var csv = buildCsv(lastResults);
-  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  var url  = URL.createObjectURL(blob);
-  var term = ($('#searchInp').val().trim() || 'all').replace(/[^A-Za-z0-9_.-]+/g, '_').slice(0, 40);
-  var ts   = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = 'known_genes_' + term + '_' + ts + '.csv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  // Revoke after the click has had a chance to start the download.
-  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
-}
-
-// =====================================================================
-//  Wiring
-// =====================================================================
-$('#search-btn').on('click', runSearch);
-$('#reset-btn').on('click', resetSearch);
-$('#export-btn').on('click', exportCsv);
-$('#searchInp').on('keydown', function(e) {
-  if (e.key === 'Enter') { e.preventDefault(); runSearch(); }
-});
-
-// Lazy-load stats when the tab is first shown.
-var statsLoaded = false;
-$('a[href="#tab-stats"]').on('shown.bs.tab', function() {
-  if (statsLoaded) return;
-  statsLoaded = true;
-  loadStats();
-});
-
-// Initial load: pull the full list once, populate filters lazily on first
-// search (so the page is responsive even before the user types anything).
-runSearch();
-</script>
+    // Exposed for the local verification harness only (harmless in production).
+    window.__kgCsvDebug = function () { return debugLastCsv; };
+  })();
+  </script>
 </body>
 </html>

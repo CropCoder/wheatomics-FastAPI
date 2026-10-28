@@ -1,0 +1,46 @@
+{
+  "label": "kg-detail-771-recheck",
+  "url": "http://127.0.0.1:8100/genes/detail.html?id=771",
+  "checkedAt": "2026-10-28T10:09:48.494Z",
+  "widths": [
+    390
+  ],
+  "passed": true,
+  "floor": [],
+  "warnings": [
+    "w390: small touch target 72x15 — \"Back to top ↑\" (footer.site-footer > div.container.footer-bottom > button.back-top)"
+  ],
+  "results": [
+    {
+      "width": 390,
+      "height": 844,
+      "title": "EF405961.1 - WheatOmics",
+      "url": "http://127.0.0.1:8100/genes/detail.html?id=771",
+      "viewport": {
+        "width": 391,
+        "height": 846,
+        "scrollWidth": 391
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [
+        {
+          "path": "footer.site-footer > div.container.footer-bottom > button.back-top",
+          "size": "72x15",
+          "text": "Back to top ↑"
+        }
+      ],
+      "screenshot": "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/detail-771/w390.png"
+    }
+  ]
+}

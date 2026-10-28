@@ -1,0 +1,98 @@
+{
+  "label": "kg-prod-detail-old",
+  "url": "https://wheatomics.sdau.edu.cn/genes/detail.html?id=12",
+  "checkedAt": "2026-10-28T10:16:37.127Z",
+  "widths": [
+    390,
+    768,
+    1440
+  ],
+  "passed": true,
+  "floor": [],
+  "warnings": [
+    "w390: small touch target 72x15 — \"Back to top ↑\" (footer.site-footer > div.container.footer-bottom > button.back-top)"
+  ],
+  "results": [
+    {
+      "width": 390,
+      "height": 844,
+      "title": "TraesCS5A03G0010400 - WheatOmics",
+      "url": "https://wheatomics.sdau.edu.cn/genes/detail.html?id=12",
+      "viewport": {
+        "width": 391,
+        "height": 846,
+        "scrollWidth": 391
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [
+        {
+          "path": "footer.site-footer > div.container.footer-bottom > button.back-top",
+          "size": "72x15",
+          "text": "Back to top ↑"
+        }
+      ],
+      "screenshot": "/tmp/kg_prod_visual/detail12/w390.png"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "title": "TraesCS5A03G0010400 - WheatOmics",
+      "url": "https://wheatomics.sdau.edu.cn/genes/detail.html?id=12",
+      "viewport": {
+        "width": 768,
+        "height": 1024,
+        "scrollWidth": 768
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [],
+      "screenshot": "/tmp/kg_prod_visual/detail12/w768.png"
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "title": "TraesCS5A03G0010400 - WheatOmics",
+      "url": "https://wheatomics.sdau.edu.cn/genes/detail.html?id=12",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [],
+      "screenshot": "/tmp/kg_prod_visual/detail12/w1440.png"
+    }
+  ]
+}

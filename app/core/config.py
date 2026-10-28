@@ -111,6 +111,21 @@ class Settings(BaseSettings):
     PRIMERSERVER2_SHOW_INFO: bool = False
     PRIMERSERVER2_REMOVE_TMP: bool = True
 
+    # --- KnownGene write API (POST/PATCH /api/genes/known/write, see
+    # docs/known_genes/WRITE_API.md) ----------------------------------------
+    # Max rows per POST /bulk request; scripts/known_gene_push.py batches by
+    # this value. Requests above it are rejected with 413/422 before writing.
+    KNOWN_GENE_WRITE_BATCH_LIMIT: int = 500
+    # Per-key sliding-window rate limit for the write router (requests/min).
+    # Counted in-process per gunicorn worker (no Redis): the effective limit
+    # is up to N x this value with N workers. 0 disables the limiter.
+    KNOWN_GENE_WRITE_RATE_PER_MINUTE: int = 60
+    # Optional comma-separated client-IP allowlist for the write router.
+    # Empty = no restriction. request.client.host is used (behind Apache this
+    # is the proxy address, 127.0.0.1), so leave empty unless deploying a
+    # direct-exposure/edge restriction.
+    KNOWN_GENE_WRITE_ALLOW_IPS: str = ""
+
 
     model_config = SettingsConfigDict(
         env_file=".env",

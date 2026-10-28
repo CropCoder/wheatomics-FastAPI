@@ -1,0 +1,157 @@
+{
+  "label": "kg-index",
+  "url": "http://127.0.0.1:8100/genes/",
+  "checkedAt": "2026-10-28T10:08:29.227Z",
+  "widths": [
+    360,
+    390,
+    768,
+    1024,
+    1440
+  ],
+  "passed": true,
+  "floor": [],
+  "warnings": [
+    "w360: small touch target 72x15 — \"Back to top ↑\" (footer.site-footer > div.container.footer-bottom > button.back-top)",
+    "w390: small touch target 72x15 — \"Back to top ↑\" (footer.site-footer > div.container.footer-bottom > button.back-top)"
+  ],
+  "results": [
+    {
+      "width": 360,
+      "height": 844,
+      "title": "KnownGene - WheatOmics",
+      "url": "http://127.0.0.1:8100/genes/",
+      "viewport": {
+        "width": 360,
+        "height": 844,
+        "scrollWidth": 360
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [
+        {
+          "path": "footer.site-footer > div.container.footer-bottom > button.back-top",
+          "size": "72x15",
+          "text": "Back to top ↑"
+        }
+      ],
+      "screenshot": "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/index/w360.png"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "title": "KnownGene - WheatOmics",
+      "url": "http://127.0.0.1:8100/genes/",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [
+        {
+          "path": "footer.site-footer > div.container.footer-bottom > button.back-top",
+          "size": "72x15",
+          "text": "Back to top ↑"
+        }
+      ],
+      "screenshot": "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/index/w390.png"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "title": "KnownGene - WheatOmics",
+      "url": "http://127.0.0.1:8100/genes/",
+      "viewport": {
+        "width": 768,
+        "height": 1024,
+        "scrollWidth": 768
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [],
+      "screenshot": "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/index/w768.png"
+    },
+    {
+      "width": 1024,
+      "height": 1024,
+      "title": "KnownGene - WheatOmics",
+      "url": "http://127.0.0.1:8100/genes/",
+      "viewport": {
+        "width": 1024,
+        "height": 1024,
+        "scrollWidth": 1024
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [],
+      "screenshot": "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/index/w1024.png"
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "title": "KnownGene - WheatOmics",
+      "url": "http://127.0.0.1:8100/genes/",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [],
+      "screenshot": "/Users/mashengwei/Desktop/markdown/wheatomics/FastAPI_backend_Port8000/docs/known_genes/_evidence/ui/index/w1440.png"
+    }
+  ]
+}

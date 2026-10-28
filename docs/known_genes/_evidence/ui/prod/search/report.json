@@ -1,0 +1,242 @@
+{
+  "label": "kg-prod-search",
+  "url": "https://wheatomics.sdau.edu.cn/genes/",
+  "checkedAt": "2026-10-28T10:16:49.446Z",
+  "widths": [
+    360,
+    390,
+    414,
+    768,
+    1024,
+    1280,
+    1440,
+    1920
+  ],
+  "passed": true,
+  "floor": [],
+  "warnings": [
+    "w360: small touch target 72x15 — \"Back to top ↑\" (footer.site-footer > div.container.footer-bottom > button.back-top)",
+    "w390: small touch target 72x15 — \"Back to top ↑\" (footer.site-footer > div.container.footer-bottom > button.back-top)",
+    "w414: small touch target 72x15 — \"Back to top ↑\" (footer.site-footer > div.container.footer-bottom > button.back-top)"
+  ],
+  "results": [
+    {
+      "width": 360,
+      "height": 844,
+      "title": "KnownGene - WheatOmics",
+      "url": "https://wheatomics.sdau.edu.cn/genes/",
+      "viewport": {
+        "width": 360,
+        "height": 844,
+        "scrollWidth": 360
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [
+        {
+          "path": "footer.site-footer > div.container.footer-bottom > button.back-top",
+          "size": "72x15",
+          "text": "Back to top ↑"
+        }
+      ],
+      "screenshot": "/tmp/kg_prod_visual/search/w360.png"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "title": "KnownGene - WheatOmics",
+      "url": "https://wheatomics.sdau.edu.cn/genes/",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [
+        {
+          "path": "footer.site-footer > div.container.footer-bottom > button.back-top",
+          "size": "72x15",
+          "text": "Back to top ↑"
+        }
+      ],
+      "screenshot": "/tmp/kg_prod_visual/search/w390.png"
+    },
+    {
+      "width": 414,
+      "height": 844,
+      "title": "KnownGene - WheatOmics",
+      "url": "https://wheatomics.sdau.edu.cn/genes/",
+      "viewport": {
+        "width": 414,
+        "height": 844,
+        "scrollWidth": 414
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [
+        {
+          "path": "footer.site-footer > div.container.footer-bottom > button.back-top",
+          "size": "72x15",
+          "text": "Back to top ↑"
+        }
+      ],
+      "screenshot": "/tmp/kg_prod_visual/search/w414.png"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "title": "KnownGene - WheatOmics",
+      "url": "https://wheatomics.sdau.edu.cn/genes/",
+      "viewport": {
+        "width": 768,
+        "height": 1024,
+        "scrollWidth": 768
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [],
+      "screenshot": "/tmp/kg_prod_visual/search/w768.png"
+    },
+    {
+      "width": 1024,
+      "height": 1024,
+      "title": "KnownGene - WheatOmics",
+      "url": "https://wheatomics.sdau.edu.cn/genes/",
+      "viewport": {
+        "width": 1024,
+        "height": 1024,
+        "scrollWidth": 1024
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [],
+      "screenshot": "/tmp/kg_prod_visual/search/w1024.png"
+    },
+    {
+      "width": 1280,
+      "height": 900,
+      "title": "KnownGene - WheatOmics",
+      "url": "https://wheatomics.sdau.edu.cn/genes/",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "scrollWidth": 1280
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [],
+      "screenshot": "/tmp/kg_prod_visual/search/w1280.png"
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "title": "KnownGene - WheatOmics",
+      "url": "https://wheatomics.sdau.edu.cn/genes/",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [],
+      "screenshot": "/tmp/kg_prod_visual/search/w1440.png"
+    },
+    {
+      "width": 1920,
+      "height": 900,
+      "title": "KnownGene - WheatOmics",
+      "url": "https://wheatomics.sdau.edu.cn/genes/",
+      "viewport": {
+        "width": 1920,
+        "height": 900,
+        "scrollWidth": 1920
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [],
+      "screenshot": "/tmp/kg_prod_visual/search/w1920.png"
+    }
+  ]
+}

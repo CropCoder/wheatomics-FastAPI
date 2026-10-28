@@ -1,0 +1,98 @@
+{
+  "label": "kg-prod-export-search",
+  "url": "https://wheatomics.sdau.edu.cn/genes/",
+  "checkedAt": "2026-10-28T11:45:36.697Z",
+  "widths": [
+    390,
+    768,
+    1440
+  ],
+  "passed": true,
+  "floor": [],
+  "warnings": [
+    "w390: small touch target 72x15 — \"Back to top ↑\" (footer.site-footer > div.container.footer-bottom > button.back-top)"
+  ],
+  "results": [
+    {
+      "width": 390,
+      "height": 844,
+      "title": "KnownGene - WheatOmics",
+      "url": "https://wheatomics.sdau.edu.cn/genes/",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [
+        {
+          "path": "footer.site-footer > div.container.footer-bottom > button.back-top",
+          "size": "72x15",
+          "text": "Back to top ↑"
+        }
+      ],
+      "screenshot": "/tmp/kg_prod_export_check/w390.png"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "title": "KnownGene - WheatOmics",
+      "url": "https://wheatomics.sdau.edu.cn/genes/",
+      "viewport": {
+        "width": 768,
+        "height": 1024,
+        "scrollWidth": 768
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [],
+      "screenshot": "/tmp/kg_prod_export_check/w768.png"
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "title": "KnownGene - WheatOmics",
+      "url": "https://wheatomics.sdau.edu.cn/genes/",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440
+      },
+      "overflowPx": 0,
+      "offenders": [],
+      "brokenImages": [],
+      "imagesMissingAlt": [],
+      "jsErrors": [],
+      "hasViewportMeta": true,
+      "viewportContent": "width=device-width, initial-scale=1.0",
+      "lang": "en",
+      "contrast": {
+        "severe": [],
+        "minor": []
+      },
+      "smallTargets": [],
+      "screenshot": "/tmp/kg_prod_export_check/w1440.png"
+    }
+  ]
+}

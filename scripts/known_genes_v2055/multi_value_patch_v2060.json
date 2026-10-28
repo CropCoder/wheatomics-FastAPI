@@ -1,0 +1,265 @@
+{
+ "description": "Multi-value (title/doi/publication_year positional alignment) patch for the v2060 workbook. The 16 rows are identical (title/doi/year) to v2055, so the Crossref-verified v2056 correction is reused. Extractor applies a patch only when the current doi string matches 'expected.doi'; otherwise it warns and skips (future edits are not clobbered).",
+ "source_workbook": "已知基因逐条提取清单_20261019-合集_修正版v2060_20261019.xlsx",
+ "source_md5": "3e5f42db018585a918516be56a21d976",
+ "reference_workbook": "frozen_20261028/..._v2056_20261028.xlsx (md5 1dbbeff77f8f53eb33e8ea133d32cb65)",
+ "generated_at": "2026-10-28",
+ "rows": [
+  {
+   "excel_row_v2060": 241,
+   "gene_id": "TraesCS1D03G0038800",
+   "gene_name": "DRG1/TaACT7/TaACTIN7-D",
+   "expected": {
+    "title": "A Glu209Lys substitution in DRG1/TaACT7, which disturbs F-actin organization, reduces plant height and grain length in bread wheat; TaACTIN7-D regulates plant height and grain shape in bread wheat",
+    "doi": "10.1111/nph.19246; 10.1016/j.jgg.2023.09.001",
+    "publication_year": "2023"
+   },
+   "corrected": {
+    "title": "A Glu209Lys substitution in DRG1/TaACT7, which disturbs F-actin organization, reduces plant height and grain length in bread wheat; TaACTIN7-D regulates plant height and grain shape in bread wheat",
+    "doi": "10.1111/nph.19246; 10.1016/j.jgg.2023.09.001",
+    "publication_year": "2023; 2023"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 245,
+   "gene_id": "TraesCS2A03G0801300",
+   "gene_name": "TaSERK1-A",
+   "expected": {
+    "title": "The somatic embryogenesis receptor kinase TaSERK1 participates in the immune response to Rhizoctonia cerealis infection by interacting and phosphorylating the receptor-like cytoplasmic kinase TaRLCK1B in wheat; The Leucine-Rich Repeat Receptor-Like Kinase Protein TaSERK1 Positively Regulates High-Temperature Seedling Plant Resistance to Puccinia striiformis f. sp. tritici by Interacting with TaDJA7",
+    "doi": "10.1016/j.ijbiomac.2022.12.240; 10.1094/phyto-11-22-0429-r",
+    "publication_year": "2023"
+   },
+   "corrected": {
+    "title": "The somatic embryogenesis receptor kinase TaSERK1 participates in the immune response to Rhizoctonia cerealis infection by interacting and phosphorylating the receptor-like cytoplasmic kinase TaRLCK1B in wheat; The Leucine-Rich Repeat Receptor-Like Kinase Protein TaSERK1 Positively Regulates High-Temperature Seedling Plant Resistance to Puccinia striiformis f. sp. tritici by Interacting with TaDJA7",
+    "doi": "10.1016/j.ijbiomac.2022.12.240; 10.1094/phyto-11-22-0429-r",
+    "publication_year": "2023; 2023"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 249,
+   "gene_id": "TraesCS2B03G0887400",
+   "gene_name": "TaSERK1-B",
+   "expected": {
+    "title": "The somatic embryogenesis receptor kinase TaSERK1 participates in the immune response to Rhizoctonia cerealis infection by interacting and phosphorylating the receptor-like cytoplasmic kinase TaRLCK1B in wheat; The Leucine-Rich Repeat Receptor-Like Kinase Protein TaSERK1 Positively Regulates High-Temperature Seedling Plant Resistance to Puccinia striiformis f. sp. tritici by Interacting with TaDJA7",
+    "doi": "10.1016/j.ijbiomac.2022.12.240; 10.1094/phyto-11-22-0429-r",
+    "publication_year": "2023"
+   },
+   "corrected": {
+    "title": "The somatic embryogenesis receptor kinase TaSERK1 participates in the immune response to Rhizoctonia cerealis infection by interacting and phosphorylating the receptor-like cytoplasmic kinase TaRLCK1B in wheat; The Leucine-Rich Repeat Receptor-Like Kinase Protein TaSERK1 Positively Regulates High-Temperature Seedling Plant Resistance to Puccinia striiformis f. sp. tritici by Interacting with TaDJA7",
+    "doi": "10.1016/j.ijbiomac.2022.12.240; 10.1094/phyto-11-22-0429-r",
+    "publication_year": "2023; 2023"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 254,
+   "gene_id": "TraesCS2D03G0741000",
+   "gene_name": "TaSERK1-D",
+   "expected": {
+    "title": "The somatic embryogenesis receptor kinase TaSERK1 participates in the immune response to Rhizoctonia cerealis infection by interacting and phosphorylating the receptor-like cytoplasmic kinase TaRLCK1B in wheat; The Leucine-Rich Repeat Receptor-Like Kinase Protein TaSERK1 Positively Regulates High-Temperature Seedling Plant Resistance to Puccinia striiformis f. sp. tritici by Interacting with TaDJA7",
+    "doi": "10.1016/j.ijbiomac.2022.12.240; 10.1094/phyto-11-22-0429-r",
+    "publication_year": "2023"
+   },
+   "corrected": {
+    "title": "The somatic embryogenesis receptor kinase TaSERK1 participates in the immune response to Rhizoctonia cerealis infection by interacting and phosphorylating the receptor-like cytoplasmic kinase TaRLCK1B in wheat; The Leucine-Rich Repeat Receptor-Like Kinase Protein TaSERK1 Positively Regulates High-Temperature Seedling Plant Resistance to Puccinia striiformis f. sp. tritici by Interacting with TaDJA7",
+    "doi": "10.1016/j.ijbiomac.2022.12.240; 10.1094/phyto-11-22-0429-r",
+    "publication_year": "2023; 2023"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 283,
+   "gene_id": "TraesCS6A03G0761900",
+   "gene_name": "TaNF-YB1",
+   "expected": {
+    "title": "TaMADS29 interacts with TaNF-YB1 to synergistically regulate early grain development in bread wheat; TabHLH95-TaNF-YB1 module promotes grain starch synthesis in bread wheat",
+    "doi": "10.1007/s11427-022-2286-0; 10.1016/j.jgg.2023.04.002",
+    "publication_year": "2023"
+   },
+   "corrected": {
+    "title": "TaMADS29 interacts with TaNF-YB1 to synergistically regulate early grain development in bread wheat; TabHLH95-TaNF-YB1 module promotes grain starch synthesis in bread wheat",
+    "doi": "10.1007/s11427-022-2286-0; 10.1016/j.jgg.2023.04.002",
+    "publication_year": "2023; 2023"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 331,
+   "gene_id": "TraesCS3A03G0970200",
+   "gene_name": "TaABI3-A1/TaVP1-A",
+   "expected": {
+    "title": "Deciphering the Transcriptional Regulatory Network Governing Starch and Storage Protein Biosynthesis in Wheat for Breeding Improvement; TaSRO1 interacts with TaVP1 to modulate seed dormancy and pre-harvest sprouting resistance in wheat",
+    "doi": "10.1002/advs.202401383; 10.1111/jipb.13600",
+    "publication_year": "2024"
+   },
+   "corrected": {
+    "title": "Deciphering the Transcriptional Regulatory Network Governing Starch and Storage Protein Biosynthesis in Wheat for Breeding Improvement; TaSRO1 interacts with TaVP1 to modulate seed dormancy and pre-harvest sprouting resistance in wheat",
+    "doi": "10.1002/advs.202401383; 10.1111/jipb.13600",
+    "publication_year": "2024; 2024"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 386,
+   "gene_id": "TraesCS7D03G0023900",
+   "gene_name": "RG1/TaAPA2",
+   "expected": {
+    "title": "Identification of a von Willebrand factor type A protein affecting both grain and flag leaf morphologies in wheat; Mutations in wheat TaAPA2 gene result in pleiotropic effects on plant architecture",
+    "doi": "10.1007/s11427-024-2629-1; 10.1007/s11427-024-2620-7",
+    "publication_year": "2024"
+   },
+   "corrected": {
+    "title": "Identification of a von Willebrand factor type A protein affecting both grain and flag leaf morphologies in wheat; Mutations in wheat TaAPA2 gene result in pleiotropic effects on plant architecture",
+    "doi": "10.1007/s11427-024-2629-1; 10.1007/s11427-024-2620-7",
+    "publication_year": "2024; 2024"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 439,
+   "gene_id": "HORVU.MOREX.r3.1HG0077240",
+   "gene_name": "HvFT3",
+   "expected": {
+    "title": "Expression analysis of vernalization and day-length response genes in barley (Hordeum vulgare L.) indicates that VRNH2 is a repressor of PPDH2 (HvFT3) under long days; Adaptation of barley to mild winters: A role for PPDH2",
+    "doi": "10.1093/jxb/erq382; 10.1186/1471-2229-11-164",
+    "publication_year": "2011"
+   },
+   "corrected": {
+    "title": "Expression analysis of vernalization and day-length response genes in barley (Hordeum vulgare L.) indicates that VRNH2 is a repressor of PPDH2 (HvFT3) under long days; Adaptation of barley to mild winters: A role for PPDH2",
+    "doi": "10.1093/jxb/erq382; 10.1186/1471-2229-11-164",
+    "publication_year": "2011; 2011"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 617,
+   "gene_id": "TraesCS7A03G0602700",
+   "gene_name": "TaGW8-7A/TaSPL16-7A",
+   "expected": {
+    "title": "Diversity and sub-functionalization of TaGW8 homoeologs hold potential for genetic yield improvement in wheat",
+    "doi": "10.1016/j.cj.2019.09.006; 10.3389/fpls.2019.00212",
+    "publication_year": "2019"
+   },
+   "corrected": {
+    "title": "Diversity and sub-functionalization of TaGW8 homoeologs hold potential for genetic yield improvement in wheat; Identification and Functional Characterization of Squamosa Promoter Binding Protein-Like Gene TaSPL16 in Wheat (Triticum aestivum L.)",
+    "doi": "10.1016/j.cj.2019.09.006; 10.3389/fpls.2019.00212",
+    "publication_year": "2019; 2019"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 619,
+   "gene_id": "TraesCS7B03G0430500",
+   "gene_name": "TaGW8-7B/TaSPL16-7B",
+   "expected": {
+    "title": "Diversity and sub-functionalization of TaGW8 homoeologs hold potential for genetic yield improvement in wheat",
+    "doi": "10.1016/j.cj.2019.09.006; 10.3389/fpls.2019.00212",
+    "publication_year": "2019"
+   },
+   "corrected": {
+    "title": "Diversity and sub-functionalization of TaGW8 homoeologs hold potential for genetic yield improvement in wheat; Identification and Functional Characterization of Squamosa Promoter Binding Protein-Like Gene TaSPL16 in Wheat (Triticum aestivum L.)",
+    "doi": "10.1016/j.cj.2019.09.006; 10.3389/fpls.2019.00212",
+    "publication_year": "2019; 2019"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 621,
+   "gene_id": "TraesCS7D03G0590200",
+   "gene_name": "TaGW8-7D/TaSPL16-7D",
+   "expected": {
+    "title": "Diversity and sub-functionalization of TaGW8 homoeologs hold potential for genetic yield improvement in wheat",
+    "doi": "10.1016/j.cj.2019.09.006; 10.3389/fpls.2019.00212",
+    "publication_year": "2019"
+   },
+   "corrected": {
+    "title": "Diversity and sub-functionalization of TaGW8 homoeologs hold potential for genetic yield improvement in wheat; Identification and Functional Characterization of Squamosa Promoter Binding Protein-Like Gene TaSPL16 in Wheat (Triticum aestivum L.)",
+    "doi": "10.1016/j.cj.2019.09.006; 10.3389/fpls.2019.00212",
+    "publication_year": "2019; 2019"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 1094,
+   "gene_id": "TraesCS5D03G1233100",
+   "gene_name": "Lr1",
+   "expected": {
+    "title": "Leaf rust resistance gene Lr1, isolated from bread wheat (Triticum aestivum L.) is a member of the large psr567 gene family; Physical mapping and identification of a candidate for the leaf rust resistance gene Lr1 of wheat",
+    "doi": "10.1007/s11103-007-9201-8; 10.1007/s00122-007-0551-z",
+    "publication_year": "2007"
+   },
+   "corrected": {
+    "title": "Leaf rust resistance gene Lr1, isolated from bread wheat (Triticum aestivum L.) is a member of the large psr567 gene family; Physical mapping and identification of a candidate for the leaf rust resistance gene Lr1 of wheat",
+    "doi": "10.1007/s11103-007-9201-8; 10.1007/s00122-007-0551-z",
+    "publication_year": "2007; 2007"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 1112,
+   "gene_id": "TraesCS7A03G0678600",
+   "gene_name": "TaARE1-7A",
+   "expected": {
+    "title": "Increasing yield potential through manipulating of an ARE1 ortholog related to nitrogen use efficiency in wheat by CRISPR/Cas9; Genetic manipulations of TaARE1 boost nitrogen utilization and grain yield in wheat",
+    "doi": "10.1111/jipb.13151; 10.1016/j.jgg.2021.07.003",
+    "publication_year": "2021"
+   },
+   "corrected": {
+    "title": "Increasing yield potential through manipulating of an ARE1 ortholog related to nitrogen use efficiency in wheat by CRISPR/Cas9; Genetic manipulations of TaARE1 boost nitrogen utilization and grain yield in wheat",
+    "doi": "10.1111/jipb.13151; 10.1016/j.jgg.2021.07.003",
+    "publication_year": "2021; 2021"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 1117,
+   "gene_id": "TraesCS7B03G0545300",
+   "gene_name": "TaARE1-7B",
+   "expected": {
+    "title": "Increasing yield potential through manipulating of an ARE1 ortholog related to nitrogen use efficiency in wheat by CRISPR/Cas9; Genetic manipulations of TaARE1 boost nitrogen utilization and grain yield in wheat",
+    "doi": "10.1111/jipb.13151; 10.1016/j.jgg.2021.07.003",
+    "publication_year": "2021"
+   },
+   "corrected": {
+    "title": "Increasing yield potential through manipulating of an ARE1 ortholog related to nitrogen use efficiency in wheat by CRISPR/Cas9; Genetic manipulations of TaARE1 boost nitrogen utilization and grain yield in wheat",
+    "doi": "10.1111/jipb.13151; 10.1016/j.jgg.2021.07.003",
+    "publication_year": "2021; 2021"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 1126,
+   "gene_id": "TraesCS7D03G0650400",
+   "gene_name": "TaARE1-7D",
+   "expected": {
+    "title": "Increasing yield potential through manipulating of an ARE1 ortholog related to nitrogen use efficiency in wheat by CRISPR/Cas9; Genetic manipulations of TaARE1 boost nitrogen utilization and grain yield in wheat",
+    "doi": "10.1111/jipb.13151; 10.1016/j.jgg.2021.07.003",
+    "publication_year": "2021"
+   },
+   "corrected": {
+    "title": "Increasing yield potential through manipulating of an ARE1 ortholog related to nitrogen use efficiency in wheat by CRISPR/Cas9; Genetic manipulations of TaARE1 boost nitrogen utilization and grain yield in wheat",
+    "doi": "10.1111/jipb.13151; 10.1016/j.jgg.2021.07.003",
+    "publication_year": "2021; 2021"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  },
+  {
+   "excel_row_v2060": 1402,
+   "gene_id": "TraesCS7D03G0250300",
+   "gene_name": "VRN-D3/FT-D1",
+   "expected": {
+    "title": "The wheat and barley vernalization gene VRN3 is an orthologue of FT; A comprehensive map of DNA-segment copy number variation in 491 genomes of common wheat uncovers genes associated with multiple agronomic traits; A comprehensive map of DNA-segment copy number variation in 491 genomes of common wheat uncovers genes associated with multiple agronomic traits; TaFT-D1 positively regulates grain weight by acting as a coactivator of TaFDL2 in wheat",
+    "doi": "10.1073/pnas.0607142103; 10.1016/j.xplc.2024.101226; 10.1111/pbi.70032",
+    "publication_year": "2006; 2025; 2025"
+   },
+   "corrected": {
+    "title": "The wheat and barley vernalization gene VRN3 is an orthologue of FT; A comprehensive map of DNA-segment copy number variation in 491 genomes of common wheat uncovers genes associated with multiple agronomic traits; TaFT-D1 positively regulates grain weight by acting as a coactivator of TaFDL2 in wheat",
+    "doi": "10.1073/pnas.0607142103; 10.1016/j.xplc.2024.101226; 10.1111/pbi.70032",
+    "publication_year": "2006; 2025; 2025"
+   },
+   "source": "v2056 corrected via Crossref (2026-10-28)"
+  }
+ ]
+}

@@ -17,3 +17,9 @@ app/static/sms2/*
 !app/static/sms2/index.html
 bioprojects.sql
 scripts/xlsx_to_sample_meta.py
+
+# KnownGene v2056 pipeline generated artifacts (JSONL is ~8 MB; regenerate with extract.py)
+scripts/known_genes_v2055/out/
+
+# KnownGene v2056 UI verification screenshots (large PNGs; reports are committed)
+docs/known_genes/_evidence/ui/**/*.png

@@ -18,6 +18,14 @@ SUBGROUP_ORDER = [
     "Seed / Grain",
 ]
 
+# For these groups, order subgroups by their project count (descending),
+# with the subgroup name as a stable tie-breaker.
+COUNT_ORDERED_GROUPS = {
+    "wheat biotic interaction",
+    "wheat abiotic stresses",
+    "wheat genetic material",
+}
+
 
 def _fetch_all_projects() -> list[dict[str, Any]]:
     """Fetch all project metadata from project_meta table."""
@@ -73,7 +81,7 @@ def list_projects() -> dict:
             "citation": p["citation"],
         })
 
-    def build_subgroups(subgroup_tree: dict) -> list[dict]:
+    def build_subgroups(subgroup_tree: dict, group_name: str = "") -> list[dict]:
         """Turn {subgroup: {sub_subgroup: [projects]}} into the ordered subgroup list."""
         subgroups = []
         for sgname, ss_tree in subgroup_tree.items():
@@ -85,6 +93,9 @@ def list_projects() -> dict:
             subgroups.append({"name": sgname, "sub_subgroups": sub_subgroups})
         def _subgroup_key(item):
             name = item["name"]
+            if group_name in COUNT_ORDERED_GROUPS:
+                count = sum(len(x["projects"]) for x in item["sub_subgroups"])
+                return (0, -count, name)
             try:
                 return (0, SUBGROUP_ORDER.index(name))
             except ValueError:
@@ -107,12 +118,12 @@ def list_projects() -> dict:
     for gname in group_order:
         if gname in tree and gname not in seen:
             seen.add(gname)
-            groups_out.append({"name": gname, "subgroups": build_subgroups(tree[gname])})
+            groups_out.append({"name": gname, "subgroups": build_subgroups(tree[gname], gname)})
 
     # Remaining groups not in the fixed order
     for gname in sorted(tree):
         if gname not in seen:
-            groups_out.append({"name": gname, "subgroups": build_subgroups(tree[gname])})
+            groups_out.append({"name": gname, "subgroups": build_subgroups(tree[gname], gname)})
 
     # Flat project list for backwards compatibility
     flat = [
