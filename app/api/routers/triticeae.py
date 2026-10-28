@@ -9,6 +9,8 @@ import re
 import urllib.parse
 import urllib.request
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, HTTPException, Query
 
 from app.core.config import settings
@@ -482,7 +484,8 @@ def stats() -> dict:
                 MIN(SUBSTRING(p.pub_date, 1, 4)) AS year_min,
                 MAX(SUBSTRING(p.pub_date, 1, 4)) AS year_max,
                 COUNT(f.id)                   AS total_annotations,
-                COUNT(DISTINCT f.pubmedid)    AS annotated_papers
+                COUNT(DISTINCT f.pubmedid)    AS annotated_papers,
+                MAX(p.created_at)             AS latest_paper_added_at
             FROM papers p
             LEFT JOIN functional_gene_annotations f ON p.pmid = f.pubmedid
         """)
@@ -600,6 +603,11 @@ def stats() -> dict:
         "functional_dist": functional_dist,
         "review_status_dist": review_status_dist,
         "source_method_dist": source_method_dist,
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "latest_paper_added_at": (
+            head["latest_paper_added_at"].isoformat()
+            if head.get("latest_paper_added_at") else None
+        ),
     })
 
 @router.get("/papers/{pubmedid}")
