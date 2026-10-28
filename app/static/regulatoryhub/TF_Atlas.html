@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wheat TF Atlas | WheatOmics</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f8f6;color:#1c3631;margin:0}
+main{max-width:1080px;margin:35px auto;padding:0 20px}header{background:#16453e;color:white;padding:24px;border-radius:14px}
+section{background:white;padding:22px;border:1px solid #dce8e3;border-radius:12px;margin-top:16px}
+input,select,button{padding:11px;border-radius:7px;border:1px solid #a7c5bb;font:inherit}
+button{background:#206b5c;color:white;cursor:pointer}.muted{color:#63776f}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:8px;border-bottom:1px solid #e0e9e5;text-align:left}
+.scroll{overflow:auto;max-height:450px}a{color:#145d70}small{line-height:1.6}
+</style></head><body><main>
+<header><h1>Wheat TF & Regulatory Hub</h1><p>TF identity · Tissue expression · Promoter motifs · Regulatory variants</p></header>
+<section><label for="gene">Gene ID</label>
+<input id="gene" value="TraesCS1A02G000100" size="28">
+<button id="search">Analyze gene</button>
+<p class="muted" id="status">Search any IWGSC RefSeq v1.1 (02G) gene.</p></section>
+<section id="profile" hidden><h2>Gene & TF identity</h2><div id="geneinfo"></div><div id="tfinfo"></div></section>
+<section id="exprsec" hidden><h2>Expression across 26 tissues</h2><div id="expr"></div></section>
+<section id="motifsec" hidden><h2>Motif hits</h2><div id="motifs" class="scroll"></div></section>
+<section id="variantsec" hidden><h2>Motif–Variant overlap</h2>
+<label>VariantHub dataset <select id="dataset"></select></label>
+<button id="variants">Intersect variants with motifs</button><p id="vstatus" class="muted"></p>
+<div id="varianttable" class="scroll"></div></section>
+<section><h2>Data citation</h2><small>Ren K., Wang Y., Cui Y., et al. (2026).
+<i>Construction and validation of a monoclonal yeast transcription factor library for high-throughput interaction screening in wheat.</i>
+Journal of Integrative Agriculture, 25(10), 4378–4382.
+<a href="https://doi.org/10.1016/j.jia.2026.07.037" target="_blank" rel="noopener noreferrer">https://doi.org/10.1016/j.jia.2026.07.037</a>.
+TF classifications are candidate annotations; motif hits and variant overlaps do not prove TF–DNA binding.</small></section>
+</main><script>
+const $=id=>document.getElementById(id);
+let currentGene="";
+function text(el,s){el.textContent=s==null?"":String(s)}
+function table(rows,columns){const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
+for(const c of columns){const th=document.createElement("th");text(th,c);tr.appendChild(th)}
+const body=t.createTBody();for(const r of rows){const tr=body.insertRow();for(const c of columns){const td=tr.insertCell();text(td,r[c])}}
+return t}
+async function api(path){const r=await fetch(path);let x;try{x=await r.json()}catch{x={detail:"Invalid JSON response"}}
+if(!r.ok)throw Error(typeof x.detail==="string"?x.detail:"HTTP "+r.status);return x}
+async function loadDatasets(){try{
+const x=await api("/api/regulatory/variant-datasets");const sel=$("dataset");sel.replaceChildren();
+for(const d of x.items||[]){if(d.status!=="ready"||d.assembly!=="IWGSC RefSeq v1.0")continue;
+const o=document.createElement("option");o.value=d.dataset_id;text(o,d.label||d.dataset_id);sel.appendChild(o)}
+}catch(e){text($("vstatus"),"Dataset list error: "+e.message)}}
+async function search(){
+const g=$("gene").value.trim();if(!g)return;
+text($("status"),"Loading...");for(const id of ["profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
+try{const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(g)+"?region=upstream&motif_limit=500");
+currentGene=d.gene.gene_id;
+text($("geneinfo"),`${currentGene} | ${d.gene.chrom}:${d.gene.start0+1}-${d.gene.end0} | strand ${d.gene.strand}`);
+text($("tfinfo"),d.tf.is_candidate_tf?
+`Candidate TF: ${d.tf.tf_family}; cloned: ${d.tf.cloned==="1"?"yes":"no"}; source: Ren et al. (2026)`:
+"Not annotated as a candidate TF in Ren et al. (2026). This does not prove it is not a TF.");
+$("profile").hidden=false;
+$("expr").replaceChildren();if(d.expression){const rows=Object.entries(d.expression).filter(([k])=>!["gene_id","Average","Sum"].includes(k)).map(([k,v])=>({Tissue:k,TPM:v}));
+$("expr").appendChild(table(rows,["Tissue","TPM"]));$("exprsec").hidden=false}
+$("motifs").replaceChildren();$("motifs").appendChild(table(d.motifs,["motif_id","chrom","start0","end0","strand","score","pvalue"]));
+$("motifsec").hidden=false;$("variantsec").hidden=false;
+text($("status"),`${d.motifs.length} upstream motif hits shown${d.motifs_truncated?" (truncated)":""}.`);
+}catch(e){text($("status"),"Error: "+e.message)}
+}
+async function variants(){if(!currentGene)return;const id=$("dataset").value;
+text($("vstatus"),"Checking genomic overlap...");$("varianttable").replaceChildren();
+try{const q=new URLSearchParams({dataset_id:id,region:"upstream"});
+const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(currentGene)+"/motif-variants?"+q);
+$("varianttable").appendChild(table(d.items,["motif_id","chrom","pos1","ref","alt","overlap_bp","effect"]));
+text($("vstatus"),`${d.items.length} motif–variant intersections${d.truncated?" (truncated)":""}; genomic overlap only, no PWM effect.`);
+}catch(e){text($("vstatus"),"Error: "+e.message)}}
+$("search").addEventListener("click",search);$("variants").addEventListener("click",variants);
+$("gene").addEventListener("keydown",e=>{if(e.key==="Enter")search()});
+loadDatasets();search();
+</script></body></html>
