@@ -128,6 +128,24 @@ app.add_middleware(
 # VCF query payloads) — avoids Apache proxy buffering timeouts.
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+@app.middleware("http")
+async def no_cache_known_gene_assets(request: Request, call_next):
+    """Force revalidation of the KnownGene SPA + v2 shell HTML/JS/CSS.
+
+    StaticFiles only sends ETag/Last-Modified, so browsers may reuse a stale
+    HTML/JS bundle by heuristic caching after a deploy (e.g. an old
+    known_gene_common.js still truncating the protein-family chip).  Sending
+    Cache-Control: no-cache makes normal reloads revalidate instead; the files
+    are tiny, and hashed/static API payloads are not affected.
+    """
+    response = await call_next(request)
+    path = request.url.path
+    if path.startswith(("/genes/", "/api/v2shell/")):
+        ctype = response.headers.get("content-type", "")
+        if ctype.startswith(("text/html", "text/css", "text/javascript", "application/javascript")):
+            response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return response
+
 
 app.mount("/expression", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "expression", html=True), name="expression")
 app.mount("/getfasta", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "getfasta", html=True), name="getfasta")
