@@ -122,6 +122,56 @@ _KNOWN_LIST_ORDER = "(cloning_method = 'Map-based cloning') DESC, clone_id"
 
 _KNOWN_TAG_MAX_CHARS = 80
 _KNOWN_TAG_LIMIT = 100
+#: Canonical case for disease/abbreviation tokens that commonly appear in
+#: parentheses inside phenotype free text (e.g. "(Pm)" / "(Yr)"); the
+#: phenotype tag chart should never show "(pm" / "(yr".
+_PHENOTYPE_ABBREVIATIONS = {
+    "yr": "Yr", "lr": "Lr", "sr": "Sr", "pm": "Pm", "fhb": "FHB", "fcr": "FCR",
+    "snb": "SNB", "stb": "STB", "se": "SE", "wymv": "WYMV", "bydv": "BYDV",
+}
+
+
+def _split_phenotype_tags(value: object) -> list[str]:
+    """Split a phenotype string into display tags on top-level semicolons only.
+
+    Phenotype free text frequently contains semicolons inside parentheses
+    (e.g. ``Male fertility (...)(family-level; not copy-specific)``); a naive
+    ``str.split(";")`` produced fragments such as ``not copy-specific)`` or
+    ``powdery mildew resistance (pm`` in the stats chart.  Track parenthesis
+    depth so only separators outside ``(...)`` split, then normalize the
+    canonical case of common disease abbreviations (Pm, Yr, Lr, ...).
+    """
+
+    text = str(value or "")
+    pieces: list[str] = []
+    buf: list[str] = []
+    depth = 0
+    for ch in text:
+        if ch == "(":
+            depth += 1
+        elif ch == ")" and depth > 0:
+            depth -= 1
+        if ch == ";" and depth == 0:
+            pieces.append("".join(buf))
+            buf = []
+        else:
+            buf.append(ch)
+    pieces.append("".join(buf))
+
+    tags: list[str] = []
+    for piece in pieces:
+        tag = piece.strip().lower()
+        if not tag:
+            continue
+        tag = re.sub(
+            r"\((yr|lr|sr|pm|fhb|fcr|snb|stb|se|wymv|bydv)\b",
+            lambda m: "(" + _PHENOTYPE_ABBREVIATIONS[m.group(1)],
+            tag,
+        )
+        if len(tag) > _KNOWN_TAG_MAX_CHARS:
+            continue
+        tags.append(tag)
+    return tags
 _KNOWN_YEAR_PATTERN = re.compile(r"^\d{4}$")
 
 #: NCBI common names for the controlled `species_primary` tokens (v2056).
@@ -398,14 +448,9 @@ def _build_known_stats(
     unique_dois: set[str] = set()
 
     for row in light_rows:
-        # --- phenotype tags: ';' split -> trim/lower -> row dedupe -> count
-        tags: list[str] = []
-        for piece in str(row.get("gene_phenotype") or "").split(";"):
-            tag = piece.strip().lower()
-            if not tag or len(tag) > _KNOWN_TAG_MAX_CHARS:
-                continue
-            tags.append(tag)
-        deduped_tags = list(dict.fromkeys(tags))
+        # --- phenotype tags: paren-aware ';' split -> trim/lower/abbrev case ->
+        #     row dedupe -> count
+        deduped_tags = list(dict.fromkeys(_split_phenotype_tags(row.get("gene_phenotype"))))
         if deduped_tags:
             phenotype_tags.update(deduped_tags)
         else:
