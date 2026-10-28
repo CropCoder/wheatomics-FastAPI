@@ -110,6 +110,7 @@ html, body { margin:0; padding:0; }
   .paper-title { font-size: 17px; }
   .id-link { display: block; margin-top: 4px; float: none !important; }
 }
+  .badge-tag.active { background: #116a4a; border-color: #116a4a; color: #fff; }
 </style>
 </head>
 <body>
@@ -671,6 +672,12 @@ function buildQuery() {
     else if (params[key] !== newVal) params[key] = params[key] + ',' + newVal;
   }
   queryTerms.forEach(appendFor);
+
+  // Clicked tag chips / tag-cloud items filter the AI tags column. The
+  // backend's ai_tags parameter is a single LIKE pattern, so a clicked tag
+  // takes precedence over an ai_tags term from the query builder.
+  if (currentTag) params.ai_tags = currentTag;
+
   return params;
 }
 
@@ -768,7 +775,7 @@ function renderPaper(p) {
 
   var tagsHtml = '';
   uniqTags.slice(0, 12).forEach(function(t){
-    tagsHtml += '<span class="badge-tag" data-tag="' + escapeHtml(t) + '">' + escapeHtml(t) + '</span>';
+    tagsHtml += '<span class="badge-tag' + (t === currentTag ? ' active' : '') + '" data-tag="' + escapeHtml(t) + '">' + escapeHtml(t) + '</span>';
   });
 
   var abstractId = 'abs-' + pmid;
