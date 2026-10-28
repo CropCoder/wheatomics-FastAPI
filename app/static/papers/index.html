@@ -780,7 +780,7 @@ function loadPageDois() {
         var pmid = String($(this).data('pmid') || '');
         var doi = map[pmid];
         if (doi) {
-          $(this).html(' · <a href="https://doi.org/' + encodeURIComponent(doi) +
+          $(this).html(' · <a href="https://doi.org/' + encodeURI(doi) +
             '" target="_blank" class="id-link">DOI: ' + escapeHtml(doi) + '</a>');
         }
       });
