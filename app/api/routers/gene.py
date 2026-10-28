@@ -129,6 +129,11 @@ _PHENOTYPE_ABBREVIATIONS = {
     "yr": "Yr", "lr": "Lr", "sr": "Sr", "pm": "Pm", "fhb": "FHB", "fcr": "FCR",
     "snb": "SNB", "stb": "STB", "se": "SE", "wymv": "WYMV", "bydv": "BYDV",
 }
+#: Parenthetical provenance qualifiers such as "(family-level; not copy-specific)"
+#: describe evidence scope, not a phenotype trait; strip them from stats tags.
+_PHENOTYPE_PROVENANCE_RE = re.compile(
+    r"\s*\([^()]*?(?:family-level|copy-specific)[^()]*\)", re.IGNORECASE
+)
 
 
 def _split_phenotype_tags(value: object) -> list[str]:
@@ -138,8 +143,10 @@ def _split_phenotype_tags(value: object) -> list[str]:
     (e.g. ``Male fertility (...)(family-level; not copy-specific)``); a naive
     ``str.split(";")`` produced fragments such as ``not copy-specific)`` or
     ``powdery mildew resistance (pm`` in the stats chart.  Track parenthesis
-    depth so only separators outside ``(...)`` split, then normalize the
-    canonical case of common disease abbreviations (Pm, Yr, Lr, ...).
+    depth so only separators outside ``(...)`` split, strip parenthetical
+    provenance qualifiers (``(family-level; not copy-specific)``) that are not
+    phenotype traits, then normalize the canonical case of common disease
+    abbreviations (Pm, Yr, Lr, ...).
     """
 
     text = str(value or "")
@@ -162,6 +169,10 @@ def _split_phenotype_tags(value: object) -> list[str]:
     for piece in pieces:
         tag = piece.strip().lower()
         if not tag:
+            continue
+        tag = _PHENOTYPE_PROVENANCE_RE.sub("", tag)
+        tag = re.sub(r"\s+", " ", tag).strip(" ;,")
+        if not tag or "copy-specific" in tag or "family-level" in tag:
             continue
         tag = re.sub(
             r"\((yr|lr|sr|pm|fhb|fcr|snb|stb|se|wymv|bydv)\b",
