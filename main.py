@@ -20,6 +20,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps, eqtl, scrna, wheatpsp, genome, ptm
 from app.api.routers.regulatory import router as regulatory_router
 from app.api.routers.regulatory_integration import router as regulatory_integration_router
+from app.api.routers.regulatory_tf_atlas import router as regulatory_tf_atlas_router
 from app.core.config import settings
 from app.mcp.sequence_tools import sequence_mcp_server
 from app.primerserver2.dependencies import verify_api_key
@@ -234,6 +235,8 @@ for router in [
 # Wheat Regulatory Hub: motif atlas, candidate TFs, and VariantHub overlap
 app.include_router(regulatory_router, prefix=settings.API_PREFIX)
 app.include_router(regulatory_integration_router, prefix=settings.API_PREFIX)
+# The TF Atlas router already includes /api in its prefix.
+app.include_router(regulatory_tf_atlas_router)
 
 
 # PrimerServer2 (original PCR primer design) - mounted under /api/PrimerServer2

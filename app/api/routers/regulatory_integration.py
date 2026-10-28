@@ -6,7 +6,6 @@ No modifications to existing VariantHub router or data files.
 from __future__ import annotations
 
 import csv
-import json
 import os
 import re
 import sqlite3
@@ -14,11 +13,12 @@ from collections import defaultdict
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query
+from app.api.routers.varianthub import VARIANTHUB_DATASETS
+from app.core.config import settings
 
 router = APIRouter(prefix="/regulatory", tags=["Wheat Regulatory Integration"])
 DB = Path(os.environ.get("WHEAT_REGULATORY_DB", "/var/www/html/wheat-regulatory-hub/data/processed/regulatory.sqlite"))
 MAP = Path(os.environ.get("WHEAT_TF_MAPPING_TSV", "/var/www/html/wheat-regulatory-hub/data/processed/tf_motif_mapping.tsv"))
-CATALOG = Path(os.environ.get("WHEAT_VARIANT_DATASETS_JSON", "/var/www/html/wheat-regulatory-hub/data/processed/variant_datasets.json"))
 REQUIRED = ("motif_id", "wheat_tf_gene_id", "evidence_type", "source", "source_tf", "tf_family")
 GENE = re.compile(r"^[A-Za-z0-9_.-]{3,100}$")
 CHROM = re.compile(r"^(?:chr)?[1-7][ABD]$", re.IGNORECASE)
@@ -42,31 +42,38 @@ def load_mappings():
 
 
 def load_catalog():
-    if not CATALOG.is_file():
-        return []
-    try:
-        entries = json.loads(CATALOG.read_text(encoding="utf-8"))
-        if not isinstance(entries, list):
-            raise ValueError("Catalog must be a JSON list")
-        result = []
-        for entry in entries:
-            if not isinstance(entry, dict):
-                continue
-            dataset_id = entry.get("dataset_id", "")
-            assembly = entry.get("assembly", "")
-            vcf = Path(entry.get("vcf_path", ""))
-            if not re.fullmatch(r"[A-Za-z0-9_.-]{1,100}", dataset_id):
-                continue
-            if assembly != "IWGSC RefSeq v1.0":
-                continue
-            if not vcf.is_absolute() or not vcf.is_file():
-                continue
-            if not (Path(str(vcf) + ".tbi").is_file() or Path(str(vcf) + ".csi").is_file()):
-                continue
-            result.append({"dataset_id": dataset_id, "assembly": assembly, "vcf_path": str(vcf)})
-        return result
-    except (OSError, ValueError, TypeError) as exc:
-        raise HTTPException(503, "Invalid variant dataset catalog") from exc
+    """Read the authoritative VariantHub registry, without a second manifest."""
+    root = Path(settings.VARIANTHUB_VCF_DIR)
+    result = []
+    for dataset_id, meta in VARIANTHUB_DATASETS.items():
+        if meta.get("reference") != "Chinese_Spring1.0":
+            continue
+        filename = meta.get("filename", "")
+        # Registry entries are basenames, not arbitrary paths.
+        if not filename or Path(filename).name != filename:
+            continue
+        vcf = root / filename
+        indexed = any(Path(str(vcf) + ext).is_file() for ext in (".tbi", ".csi"))
+        exists = vcf.is_file()
+        # This status is a preliminary file check, not a VCF integrity test.
+        status = "ready" if exists and indexed else (
+            "missing_vcf" if not exists else "missing_index"
+        )
+        # Known header failure from the VCF inventory. Preserve in dropdown.
+        if dataset_id == "SHW_GBS_SNP" and status == "ready":
+            status = "requires_header_repair"
+        result.append({
+            "dataset_id": dataset_id,
+            "label": meta.get("label", dataset_id),
+            "source": meta.get("source", ""),
+            "url": meta.get("url", ""),
+            "assembly": "IWGSC RefSeq v1.0",
+            "reference": "Chinese_Spring1.0",
+            "vcf_path": str(vcf),
+            "status": status,
+            "genome_concordant": meta.get("genome_concordant"),
+        })
+    return result
 
 
 @router.get("/gene/{gene_id}/candidate-tfs")
@@ -100,7 +107,7 @@ def candidate_tfs(gene_id: str, limit: int = Query(10000, ge=1, le=100000)):
 
 @router.get("/variant-datasets")
 def variant_datasets():
-    return {"items": [{"dataset_id": d["dataset_id"], "assembly": d["assembly"]} for d in load_catalog()]}
+    return {"items": [{k: v for k, v in d.items() if k != "vcf_path"} for d in load_catalog()]}
 
 
 @router.get("/variants/overlap")
@@ -119,6 +126,8 @@ def variants_overlap(
     data = next((d for d in load_catalog() if d["dataset_id"] == dataset_id), None)
     if data is None:
         raise HTTPException(404, "Unknown or unconfigured dataset")
+    if data["status"] != "ready":
+        raise HTTPException(503, f"Dataset unavailable: {data['status']}")
     if assembly != data["assembly"]:
         raise HTTPException(400, "Reference assembly mismatch")
     try:
