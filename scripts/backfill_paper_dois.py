@@ -11,10 +11,14 @@ cron example (Monday 05:00):
 """
 
 import json
+import os
 import re
+import sys
 import time
 import urllib.parse
 import urllib.request
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pymysql
 
