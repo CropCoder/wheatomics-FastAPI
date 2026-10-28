@@ -13,9 +13,8 @@ SUBGROUP_ORDER = [
     "Root",
     "Stem",
     "Leaf",
-    "Spike",
+    "Spike/Floral organs",
     "Seed / Grain",
-    "Floral organs",
     "Multiple organs / whole-plant series",
 ]
 
