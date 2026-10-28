@@ -16,7 +16,7 @@
 - 多值字段 ``paper_title`` / ``paper_doi`` / ``publication_years`` 在 DB 里用
   ``###`` 连接、**按位置一一对应**；API 入参允许 list 或 ``"; "`` 分隔的
   字符串（含 ``###`` 时按 ``###`` 拆，避免误伤标题里本身的 ``;``）；
-- ``functional_category`` 5 值、``research_strategy`` 3 值受控；
+- ``functional_category`` 6 值、``research_strategy`` 3 值受控；
 - ``species_primary``（23 个 NCBI 学名）与 ``chromosome``（38 个标签）是派生列，
   由 ``gene_species`` / ``chrom_pos`` 自动计算；调用方显式传入时也接受，但会
   按受控集合校验（便于 ``scripts/known_gene_push.py`` 回放 JSONL 的派生值）。
@@ -67,7 +67,8 @@ SPECIES_MAP_PATH = DATA_DIR / "known_gene_species_map.json"
 
 #: 受控功能大类（v2056 数据 5 值，见 docs/known_genes/CONTEXT.md §1）。
 FUNCTIONAL_CATEGORIES: tuple[str, ...] = (
-    "Biotic & Abiotic Stress",
+    "Biotic Stress",
+    "Abiotic Stress",
     "Quality & Yield",
     "Morphology & Domestication",
     "Physiology & Metabolic Processes",

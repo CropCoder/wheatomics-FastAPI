@@ -53,9 +53,10 @@ except ImportError:  # pragma: no cover
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-DEFAULT_XLSX = "/Users/mashengwei/Desktop/markdown/陈甜甜/known-gene-paper-20260916/已知基因逐条提取清单_20261019-合集_修正版v2056_20261028.xlsx"
+DEFAULT_XLSX = "/Users/mashengwei/Desktop/markdown/陈甜甜/known-gene-paper-20260916/已知基因逐条提取清单_20261019-合集_修正版v2061_20261028.xlsx"
 DEFAULT_PROFILE = os.path.join(REPO_ROOT, "docs", "known_genes", "_evidence", "profile_v2055.json")
 DEFAULT_OUTDIR = os.path.join(REPO_ROOT, "scripts", "known_genes_v2055", "out")
+DEFAULT_PATCH = os.path.join(REPO_ROOT, "scripts", "known_genes_v2055", "multi_value_patch_v2060.json")
 
 SHEET_PREFIX = "数据（修正版"
 MULTI_SEP = "; "
@@ -177,6 +178,12 @@ def main() -> int:
     ap.add_argument("--xlsx", default=DEFAULT_XLSX)
     ap.add_argument("--sheet", default=None, help="main sheet name (default: auto-detect 数据（修正版*)")
     ap.add_argument("--profile", default=DEFAULT_PROFILE, help="profile_v2055.json for species mapping")
+    ap.add_argument(
+        "--patch",
+        default=DEFAULT_PATCH,
+        help="optional JSON patch for multi-value alignment anomalies (default: %(default)s)",
+    )
+    ap.add_argument("--no-patch", action="store_true", help="disable the multi-value alignment patch")
     ap.add_argument("--outdir", default=DEFAULT_OUTDIR)
     ap.add_argument("--skip-fixtures", action="store_true")
     args = ap.parse_args()
@@ -195,6 +202,38 @@ def main() -> int:
             sys.exit(f"cannot find main sheet (expected name starting with {SHEET_PREFIX!r}); sheets={xls.sheet_names}")
         sheet = candidates[-1]
     df = pd.read_excel(args.xlsx, sheet_name=sheet, dtype=str).fillna("")
+    patched_rows: list[dict] = []
+    patch_path = None if args.no_patch else args.patch
+    if patch_path and os.path.isfile(patch_path):
+        patch = json.load(open(patch_path, encoding="utf-8"))
+        for entry in patch.get("rows", []):
+            mask = (df["gene_id（入库）"].str.strip() == str(entry["gene_id"]).strip()) & (
+                df["gene_name（入库）"].str.strip() == str(entry["gene_name"]).strip()
+            )
+            idx = list(df.index[mask])
+            if not idx:
+                print(f"WARNING  : patch row not found in workbook: {entry['gene_name']}", file=sys.stderr)
+                continue
+            i = idx[0]
+            exp, cor = entry["expected"], entry["corrected"]
+            current = {col: str(df.at[i, col]).strip() for col in ("title（入库）", "doi（入库）", "publication_year（入库）")}
+            already = {col: str(cor[k]).strip() for col, k in (
+                ("title（入库）", "title"), ("doi（入库）", "doi"), ("publication_year（入库）", "publication_year"))}
+            if current == already:
+                patched_rows.append({"row": int(i) + 2, "gene_name": entry["gene_name"], "doi": cor["doi"], "already_corrected": True})
+                continue
+            if (current["doi（入库）"] != str(exp["doi"]).strip()
+                    or current["title（入库）"] != str(exp["title"]).strip()
+                    or current["publication_year（入库）"] != str(exp["publication_year"]).strip()):
+                print(f"WARNING  : patch skipped (row changed since patch): {entry['gene_name']}", file=sys.stderr)
+                continue
+            df.at[i, "title（入库）"] = cor["title"]
+            df.at[i, "doi（入库）"] = cor["doi"]
+            df.at[i, "publication_year（入库）"] = cor["publication_year"]
+            patched_rows.append({"row": int(i) + 2, "gene_name": entry["gene_name"], "doi": cor["doi"]})
+        print(f"patch    : {patch_path} ({len(patched_rows)} rows applied)")
+    elif patch_path:
+        print(f"patch    : skipped (not found: {patch_path})")
     print(f"workbook : {args.xlsx}")
     print(f"md5      : {xlsx_md5}")
     print(f"sheet    : {sheet}")
@@ -472,7 +511,9 @@ def main() -> int:
     fixtures_dir = os.path.join(outdir, "api_fixtures")
     os.makedirs(fixtures_dir, exist_ok=True)
 
-    jsonl_path = os.path.join(outdir, "known_genes_v2056.jsonl")
+    ver_match = re.search(r"v(\d+)", sheet)
+    version_tag = f"v{ver_match.group(1)}" if ver_match else "v2056"
+    jsonl_path = os.path.join(outdir, f"known_genes_{version_tag}.jsonl")
     with open(jsonl_path, "w", encoding="utf-8") as fh:
         for rec in records:
             fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
@@ -489,6 +530,8 @@ def main() -> int:
         "fatals": fatals,
         "warnings": warns,
         "multi_value_anomalies": multi_anomalies,
+        "multi_value_patch_path": patch_path,
+        "multi_value_patch_rows": patched_rows,
         "stats": {
             "species": len(species_dist),
             "species_raw": len({r["gene_species"] for r in records}),
@@ -520,6 +563,7 @@ def main() -> int:
     md.append(f"- fatal errors: **{len(fatals)}**")
     md.append(f"- warnings: **{len(warns)}**")
     md.append(f"- multi-value anomalies: **{len(multi_anomalies)}**")
+    md.append(f"- multi-value patch: `{patch_path or 'disabled'}` ({len(patched_rows)} rows applied)")
     md.append(f"- species: {len(species_dist)} (raw {len({r['gene_species'] for r in records})})")
     md.append(f"- chromosomes: {len(chrom_dist)} ({len(wheat_set & set(chrom_dist))} wheat)")
     md.append(f"- references: {ref_entries} entries / {len(unique_dois)} unique DOIs")

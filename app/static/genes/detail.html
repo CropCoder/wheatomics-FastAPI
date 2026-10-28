@@ -60,7 +60,9 @@ html, body { margin: 0; padding: 0; }
 
 /* functional-category badges (shared tokens with the list page) */
 .kg-cat { font-size: 10px; letter-spacing: .01em; }
-.kg-cat-stress  { color: #8f3428 !important; background: #fdecea !important; }
+.kg-cat-stress  { color: #8f3428 !important; background: #fdecea !important; }  /* legacy v2056 combined value */
+.kg-cat-biotic  { color: #8f3428 !important; background: #fdecea !important; }
+.kg-cat-abiotic { color: #1f5a52 !important; background: #e6f3f0 !important; }
 .kg-cat-quality { color: #6b4d0e !important; background: #fdf3dc !important; }
 .kg-cat-morph   { color: #1e5a3d !important; background: #e9f3ea !important; }
 .kg-cat-phys    { color: #1f4a70 !important; background: #e9f0f8 !important; }
@@ -322,7 +324,10 @@ html, body { margin: 0; padding: 0; }
   'use strict';
 
   var CATEGORY_CLASS = {
-    'Biotic & Abiotic Stress': 'kg-cat-stress',
+    // v2060 split "Biotic & Abiotic Stress" into Biotic / Abiotic.
+    'Biotic Stress': 'kg-cat-biotic',
+    'Abiotic Stress': 'kg-cat-abiotic',
+    'Biotic & Abiotic Stress': 'kg-cat-stress',  // legacy rows, kept for compatibility
     'Quality & Yield': 'kg-cat-quality',
     'Morphology & Domestication': 'kg-cat-morph',
     'Physiology & Metabolic Processes': 'kg-cat-phys',

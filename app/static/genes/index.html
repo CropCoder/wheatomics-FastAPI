@@ -107,7 +107,9 @@ html, body { margin: 0; padding: 0; }
 
 /* functional-category badges (spec §3.3; text/background pairs >= 4.5:1) */
 .kg-cat { font-size: 10px; letter-spacing: .01em; }
-.kg-cat-stress  { color: #8f3428 !important; background: #fdecea !important; }
+.kg-cat-stress  { color: #8f3428 !important; background: #fdecea !important; }  /* legacy v2056 combined value */
+.kg-cat-biotic  { color: #8f3428 !important; background: #fdecea !important; }
+.kg-cat-abiotic { color: #1f5a52 !important; background: #e6f3f0 !important; }
 .kg-cat-quality { color: #6b4d0e !important; background: #fdf3dc !important; }
 .kg-cat-morph   { color: #1e5a3d !important; background: #e9f3ea !important; }
 .kg-cat-phys    { color: #1f4a70 !important; background: #e9f0f8 !important; }
@@ -224,7 +226,9 @@ html, body { margin: 0; padding: 0; }
 .kg-bar-fill { display: block; height: 100%; min-width: 2px; border-radius: 999px; background: var(--leaf); }
 .kg-bar-fill.kg-fill-wheatish { background: var(--wheat); }
 /* saturated variants of the category badge hues (same colour families) */
-.kg-bar-fill.kg-fill-stress  { background: #b05545; }
+.kg-bar-fill.kg-fill-stress  { background: #b05545; }  /* legacy combined value */
+.kg-bar-fill.kg-fill-biotic  { background: #b05545; }
+.kg-bar-fill.kg-fill-abiotic { background: #3f8a7a; }
 .kg-bar-fill.kg-fill-quality { background: #b58a2a; }
 .kg-bar-fill.kg-fill-morph   { background: #3f7d5c; }
 .kg-bar-fill.kg-fill-phys    { background: #4a7ba8; }
@@ -304,7 +308,7 @@ html, body { margin: 0; padding: 0; }
                   <label for="searchInp" class="kg-small-label">Search term</label>
                   <input type="text" id="searchInp" class="form-control form-control-sm"
                          placeholder="e.g. VRN1, TraesCS5A02G391700, HORVU.MOREX.r3.3HG0228170, drought">
-                  <div class="kg-helper-text mt-1">Leave empty to browse all curated genes, 50 records per page. CSV export is available for search results.</div>
+                  <div class="kg-helper-text mt-1">Leave empty to browse all curated genes, 50 records per page. CSV export is available for search results. Map-based cloning genes are listed first.</div>
                 </div>
                 <div class="form-group col-md-1 mb-2 d-flex align-items-end">
                   <button type="button" id="search-btn" class="btn btn-primary btn-sm btn-block">Search</button>
@@ -435,14 +439,18 @@ html, body { margin: 0; padding: 0; }
     };
 
     var CATEGORY_ORDER = [
-      'Biotic & Abiotic Stress',
+      'Biotic Stress',
+      'Abiotic Stress',
       'Quality & Yield',
       'Morphology & Domestication',
       'Physiology & Metabolic Processes',
       'Reproduction & Phenology'
     ];
     var CATEGORY_CLASS = {
-      'Biotic & Abiotic Stress': 'kg-cat-stress',
+      // v2060 split "Biotic & Abiotic Stress" into Biotic / Abiotic.
+      'Biotic Stress': 'kg-cat-biotic',
+      'Abiotic Stress': 'kg-cat-abiotic',
+      'Biotic & Abiotic Stress': 'kg-cat-stress',  // legacy rows, kept for compatibility
       'Quality & Yield': 'kg-cat-quality',
       'Morphology & Domestication': 'kg-cat-morph',
       'Physiology & Metabolic Processes': 'kg-cat-phys',
@@ -763,6 +771,7 @@ html, body { margin: 0; padding: 0; }
       } else {
         info += ' · Browse all';
       }
+      info += ' · map-based cloning first';
       $('#res-info').text(info);
 
       $list.html(renderCards(records));
@@ -1342,7 +1351,9 @@ html, body { margin: 0; padding: 0; }
       for (var i = 0; i < categories.length; i++) counts[categories[i].name] = categories[i];
       var entries = [];
       var fillClasses = {
-        'Biotic & Abiotic Stress': 'kg-fill-stress',
+        'Biotic Stress': 'kg-fill-biotic',
+        'Abiotic Stress': 'kg-fill-abiotic',
+        'Biotic & Abiotic Stress': 'kg-fill-stress',  // legacy rows
         'Quality & Yield': 'kg-fill-quality',
         'Morphology & Domestication': 'kg-fill-morph',
         'Physiology & Metabolic Processes': 'kg-fill-phys',

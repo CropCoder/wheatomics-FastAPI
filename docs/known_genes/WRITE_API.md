@@ -94,7 +94,7 @@ curl -sS -X POST "$BASE/api/genes/known/write" \
         "gene_species": "Triticum aestivum (bread wheat)",
         "chrom_pos": "Refv1.0 chr7B:112.264-112.266Mb",
         "gene_phenotype": "Drought tolerance",
-        "functional_category": "Biotic & Abiotic Stress",
+        "functional_category": "Biotic Stress",
         "research_strategy": "Reverse genetics",
         "key_result": "Overexpression improves drought tolerance.",
         "paper_doi": "10.1007/s11103-007-9237-9"}}' | python3 -m json.tool
@@ -245,7 +245,7 @@ KNOWN_GENE_WRITE_ALLOW_IPS=             # 逗号分隔 IP 白名单；空=不限
 
 ```text
 functional_category（5 值）:
-  Biotic & Abiotic Stress / Quality & Yield / Morphology & Domestication /
+  Biotic Stress / Abiotic Stress / Quality & Yield / Morphology & Domestication /
   Physiology & Metabolic Processes / Reproduction & Phenology
 
 research_strategy（3 值）:
@@ -293,7 +293,7 @@ paper_title / paper_doi / publication_years：多值位置一一对应，DB 用 
   "gene_species": "Triticum aestivum (bread wheat)",
   "chrom_pos": "Refv1.0 chr7B:112.264-112.266Mb",
   "gene_phenotype": "Drought tolerance",
-  "functional_category": "Biotic & Abiotic Stress",
+  "functional_category": "Biotic Stress",
   "research_strategy": "Reverse genetics",
   "key_result": "Overexpression improves drought tolerance.",
   "paper_doi": "10.1007/s11103-007-9237-9",

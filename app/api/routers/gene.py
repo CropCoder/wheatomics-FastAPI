@@ -114,6 +114,12 @@ _KNOWN_CHROMOSOME_PATTERN = re.compile(r"^[0-9]{1,2}[A-Z]{0,2}$")
 _KNOWN_WHEAT_CHROMOSOMES = frozenset(
     f"{group}{sub}" for group in range(1, 8) for sub in ("A", "B", "D")
 )
+#: Default list ordering for KnownGene list endpoints: genes cloned by
+#: map-based cloning (positional cloning) first (user request 2026-10-28),
+#: then the historical clone_id order. MySQL 5.7 accepts the boolean expression
+#: in ORDER BY; the column is always populated for curated rows.
+_KNOWN_LIST_ORDER = "(cloning_method = 'Map-based cloning') DESC, clone_id"
+
 _KNOWN_TAG_MAX_CHARS = 80
 _KNOWN_TAG_LIMIT = 100
 _KNOWN_YEAR_PATTERN = re.compile(r"^\d{4}$")
@@ -539,7 +545,7 @@ def search_known_genes(
                 "species_primary": "Triticum aestivum",
                 "chromosome": "3A", "genome_ref": "Refv1.0",
                 "phenotype_brief": "Drought tolerance",
-                "functional_category": "Biotic & Abiotic Stress",
+                "functional_category": "Biotic Stress",
                 "research_strategy": "Reverse genetics",
                 "publication_years": ["2008", "2024"]
               }]
@@ -567,7 +573,7 @@ def search_known_genes(
 
     sql = (
         f"SELECT {_KNOWN_SUMMARY_COLUMNS} FROM cloned_gene_tbl "
-        f"WHERE {where_sql} ORDER BY clone_id"
+        f"WHERE {where_sql} ORDER BY {_KNOWN_LIST_ORDER}"
     )
     count_sql = f"SELECT COUNT(*) AS total FROM cloned_gene_tbl WHERE {where_sql}"
     if limit is not None:
@@ -625,14 +631,14 @@ def list_known_genes(
             "reference_genome_id": "TraesCS3A03G0936700",
             "species_primary": "Triticum aestivum", "chromosome": "3A",
             "genome_ref": "Refv1.0", "phenotype_brief": "Drought tolerance",
-            "functional_category": "Biotic & Abiotic Stress",
+            "functional_category": "Biotic Stress",
             "research_strategy": "Reverse genetics",
             "publication_years": ["2008", "2024"]
           }]
         }
     """
 
-    sql = f"SELECT {_KNOWN_SUMMARY_COLUMNS} FROM cloned_gene_tbl ORDER BY clone_id"
+    sql = f"SELECT {_KNOWN_SUMMARY_COLUMNS} FROM cloned_gene_tbl ORDER BY {_KNOWN_LIST_ORDER}"
     params: tuple = ()
     if limit is not None:
         sql += " LIMIT %s OFFSET %s"
@@ -691,7 +697,7 @@ def list_known_genes_on_chromosome(
         f"SELECT {_KNOWN_SUMMARY_COLUMNS} FROM cloned_gene_tbl "
         f"WHERE chromosome IN ({placeholders}) "
         f"OR (chromosome IS NULL AND chrom_pos REGEXP %s) "
-        f"ORDER BY clone_id"
+        f"ORDER BY {_KNOWN_LIST_ORDER}"
     )
     params = tuple(match_tokens) + (_chromosome_fallback_regex(token),)
 
@@ -742,7 +748,7 @@ def get_known_gene_stats() -> dict:
               {"label": "3H", "count": 16, "group": "other"}
             ],
             "functional_category": [
-              {"name": "Biotic & Abiotic Stress", "count": 776}
+              {"name": "Biotic Stress", "count": 415}, {"name": "Abiotic Stress", "count": 361}
             ],
             "research_strategy": [
               {"name": "Reverse genetics", "count": 1061}
@@ -892,7 +898,7 @@ def get_known_gene(gene_id: str) -> dict:
               "validation_method": "Expression analysis; Overexpression; VIGS",
               "validation_methods": ["Expression analysis", "Overexpression", "VIGS"],
               "research_strategy": "Reverse genetics",
-              "functional_category": "Biotic & Abiotic Stress",
+              "functional_category": "Biotic Stress",
               "species_primary": "Triticum aestivum",
               "chromosome": "3A", "genome_ref": "Refv1.0",
               "phenotype_brief": "Drought tolerance",

@@ -212,11 +212,13 @@ def compute_mapping(old_rows: list[dict], new_rows: list[dict]) -> tuple[list[di
     old_ids.discard("")
     genehub_map = build_genehub_mapping(old_ids)
 
+    new_by_pair: dict[tuple[str, str], list[int]] = {}
     new_by_ref: dict[str, list[int]] = {}
     new_by_name: dict[str, list[int]] = {}
     new_by_name_chrom: dict[tuple[str, str], list[int]] = {}
     new_by_doi: dict[str, list[int]] = {}
     for i, rec in enumerate(new_rows):
+        new_by_pair.setdefault((str(rec.get("gene_id") or ""), str(rec.get("gene_name") or "")), []).append(i)
         for key in {rec.get("reference_genome_id"), rec.get("gene_id")}:
             if key:
                 new_by_ref.setdefault(str(key), []).append(i)
@@ -240,8 +242,16 @@ def compute_mapping(old_rows: list[dict], new_rows: list[dict]) -> tuple[list[di
         gname = str(row.get("gene_name") or "").strip()
         candidates: list[tuple[str, int]] = []
 
+        # T0: exact (gene_id, gene_name) pair — strongest signal for reloads of
+        # the same curated dataset (duplicate gene_ids exist with different names).
+        pair_candidates = new_by_pair.get((gid, gname), [])
+        if pair_candidates:
+            n = take(pair_candidates)
+            if n is not None:
+                candidates.append(("T0_pair", n))
+
         ids_to_try = [gid] + split_tokens(gid)
-        for token in dict.fromkeys(ids_to_try):
+        for token in ([] if candidates else dict.fromkeys(ids_to_try)):
             if token in new_by_ref:
                 n = take(new_by_ref[token])
                 if n is not None:
