@@ -234,7 +234,21 @@ def run_checks(args: argparse.Namespace) -> int:
         else:
             report(_FAIL, f"PATCH /write/{clone_id}（dry_run）", f"status={status} body={raw[:300]}")
 
-    # --- 8. 批量 dry-run ---------------------------------------------------
+        # 8. 公网安全别名：POST /write/update/{clone_id}（等价 PATCH）
+        status, body, raw = http_call(
+            base,
+            "POST",
+            f"/api/genes/known/write/update/{clone_id}",
+            key=key,
+            payload={"dry_run": True, "fields": {"gene_phenotype": "selftest dry-run phenotype"}},
+        )
+        if status == 200:
+            changed = (body.get("data") or {}).get("changed_fields")
+            report(_PASS, f"POST /write/update/{clone_id}（dry_run，公网别名）", f"200，changed_fields={changed}")
+        else:
+            report(_FAIL, f"POST /write/update/{clone_id}（dry_run，公网别名）", f"status={status} body={raw[:300]}")
+
+    # --- 9. 批量 dry-run ---------------------------------------------------
     bulk_payload = {"rows": [selftest_gene_payload()], "mode": "upsert", "dry_run": True}
     status, body, raw = http_call(base, "POST", "/api/genes/known/write/bulk", key=key, payload=bulk_payload)
     if status == 200 and isinstance(body, dict):

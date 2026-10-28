@@ -312,7 +312,15 @@ curl -sS -X POST "$BASE/api/genes/known/write" \
   -d '{"dry_run": true, "gene": {...}}'
 ```
 
-### 4.2 `PATCH /api/genes/known/write/{clone_id}` — 更新
+### 4.2 `PATCH /api/genes/known/write/{clone_id}` — 更新（另有 POST 别名）
+
+> ⚠️ 公网入口提示：`wheatomics.sdau.edu.cn` 前面的校园网络边界会丢弃 **PATCH** 请求
+> （curl 表现为 `Empty reply from server`；服务器本机直连 Apache/uvicorn 验证 PATCH 正常）。
+> 因此同功能提供 **`POST /api/genes/known/write/update/{clone_id}`** 别名，公网调用请用它；
+> PATCH 仍保留，供服务器本机/内网脚本与标准 HTTP 客户端使用。两者请求体、响应、错误码完全一致。
+
+- 规范方法：`PATCH /api/genes/known/write/{clone_id}`
+- 公网安全别名：`POST /api/genes/known/write/update/{clone_id}`
 
 - **权限**：`write`
 - **请求体**：`{"dry_run": false, "fields": {...}}`（或裸字段对象；`fields`/`gene` 均可）

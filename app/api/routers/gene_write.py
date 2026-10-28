@@ -455,8 +455,21 @@ async def create_known_gene(
 # ---------------------------------------------------------------------------
 # PATCH /api/genes/known/write/{clone_id} — 更新
 # ---------------------------------------------------------------------------
+# NOTE: two equivalent routes for the update operation.
+# - PATCH is the canonical HTTP method (used by our own scripts / direct API
+#   access);
+# - POST /update/{clone_id} is the public-proxy-safe alias: the campus network
+#   edge in front of wheatomics.sdau.edu.cn drops PATCH requests (curl gets
+#   "Empty reply from server") while POST/PUT pass through. Keeping both means
+#   external maintainers are never blocked by that middlebox.
 @router.patch(
     "/{clone_id}",
+    dependencies=[Depends(enforce_known_gene_body_limit)],
+    responses=_WRITE_ERROR_RESPONSES,
+    openapi_extra=_PATCH_REQUEST_BODY,
+)
+@router.post(
+    "/update/{clone_id}",
     dependencies=[Depends(enforce_known_gene_body_limit)],
     responses=_WRITE_ERROR_RESPONSES,
     openapi_extra=_PATCH_REQUEST_BODY,
