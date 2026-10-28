@@ -122,8 +122,27 @@ html, body { margin: 0; padding: 0; }
 }
 
 /* section cards */
-.kg-section .card-body h6.card-title { font-size: 14px; color: var(--forest-deep); }
 .kg-section { margin-bottom: 16px; }
+/* field headings: larger, bolder, with a leaf-green accent bar */
+.kg-section .card-body > h6 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--forest-deep);
+  letter-spacing: .01em;
+  margin: 0 0 10px;
+}
+.kg-section .card-body > h6::before {
+  content: "";
+  width: 4px;
+  height: 15px;
+  border-radius: 2px;
+  background: var(--leaf);
+  flex: none;
+}
+.kg-section .card-body > h6.mt-3 { margin-top: 16px; }
 .kg-longtext {
   margin: 0;
   font-size: 14px;
