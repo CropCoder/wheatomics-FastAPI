@@ -144,7 +144,15 @@ html, body { margin: 0; padding: 0; }
   flex: none;
 }
 .kg-ref-title { flex: 1 1 320px; min-width: 0; color: var(--ink); overflow-wrap: anywhere; }
-.kg-ref a { font-family: var(--utility); font-size: 12px; color: var(--leaf); overflow-wrap: anywhere; }
+/* title doubles as the DOI link: keep title typography, add a subtle clickable cue */
+.kg-ref a.kg-ref-title {
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--line);
+}
+.kg-ref a.kg-ref-title:hover { color: var(--forest); border-bottom-color: var(--forest); text-decoration: none; }
 .kg-ref .kg-no-doi { font-size: 12px; color: #4d6559; }
 
 /* validation / cloning chips */
@@ -671,23 +679,20 @@ html, body { margin: 0; padding: 0; }
     var html = [];
     for (var i = 0; i < refs.length; i++) {
       var ref = refs[i];
-      var title = ref.title
-        ? '<span class="kg-ref-title">' + KG.esc(ref.title) + '</span>'
-        : '<span class="kg-ref-title kg-empty">(title not recorded)</span>';
+      var titleText = ref.title || '(title not recorded)';
+      var doiUrl = ref.doi ? KG.doiUrl(ref.doi) : '';
+      var title;
+      if (doiUrl) {
+        // The DOI resolves through the title link; the raw DOI is not shown.
+        title = '<a class="kg-ref-title" href="' + KG.escAttr(doiUrl) + '" target="_blank" rel="noopener noreferrer">' +
+          (ref.title ? KG.esc(ref.title) : '<span class="kg-empty">' + KG.esc(titleText) + '</span>') + '</a>';
+      } else {
+        title = '<span class="kg-ref-title' + (ref.title ? '' : ' kg-empty') + '">' + KG.esc(titleText) + '</span>';
+      }
       var year = ref.year
         ? '<span class="kg-ref-year">' + KG.esc(ref.year) + '</span>'
         : '<span class="kg-ref-year kg-empty">\u2014</span>';
-      var doiUrl = ref.doi ? KG.doiUrl(ref.doi) : '';
-      var doiHtml;
-      if (doiUrl) {
-        doiHtml = '<a href="' + KG.escAttr(doiUrl) + '" target="_blank" rel="noopener noreferrer">' +
-          KG.esc(ref.doi) + '</a>';
-      } else if (ref.doi) {
-        doiHtml = '<span class="kg-no-doi">' + KG.esc(ref.doi) + '</span>';
-      } else {
-        doiHtml = '<span class="kg-no-doi">(DOI not recorded)</span>';
-      }
-      html.push('<li class="kg-ref">' + year + title + doiHtml + '</li>');
+      html.push('<li class="kg-ref">' + year + title + '</li>');
     }
     $list.html(html.join(''));
   }
