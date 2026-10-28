@@ -33,6 +33,19 @@ html, body { margin: 0; padding: 0; }
 .kg-back { display: inline-block; margin: 2px 0 14px; font-size: 14px; color: var(--leaf); }
 .kg-back:hover { color: var(--forest); text-decoration: underline; }
 
+.kg-head-row {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 16px;
+}
+.kg-head-row > .kg-detail-head,
+.kg-head-row > #card-phenotype { flex: 1 1 0; min-width: 0; margin-bottom: 0; }
+@media (max-width: 991.98px) {
+  .kg-head-row { flex-direction: column; gap: 16px; }
+  .kg-head-row > .kg-detail-head,
+  .kg-head-row > #card-phenotype { flex: none; width: 100%; }
+}
 .kg-detail-head {
   background: #fff;
   border: 1px solid var(--line);
@@ -192,13 +205,23 @@ html, body { margin: 0; padding: 0; }
 
       <div id="detail-content" hidden>
 
-        <!-- 1) head -->
-        <header class="kg-detail-head">
-          <h2 class="kg-gene-name" id="d-gene-name"></h2>
-          <p class="kg-gene-id" id="d-gene-id">—</p>
-          <div class="kg-badges" id="d-badges"></div>
-          <p class="kg-meta" id="d-meta"></p>
-        </header>
+        <!-- 1) head row: gene title/identity + phenotype side by side -->
+        <div class="kg-head-row" id="d-head-row">
+          <header class="kg-detail-head">
+            <h2 class="kg-gene-name" id="d-gene-name"></h2>
+            <p class="kg-gene-id" id="d-gene-id">—</p>
+            <div class="kg-badges" id="d-badges"></div>
+            <p class="kg-meta" id="d-meta"></p>
+          </header>
+
+          <!-- 6) phenotype full text (next to the gene header card) -->
+          <section class="card kg-section" id="card-phenotype" hidden><div class="card-body">
+            <h6 class="card-title">Phenotype</h6>
+            <p class="kg-longtext kg-clamp-6" id="d-phenotype"></p>
+            <button type="button" class="btn btn-link btn-sm kg-expand" aria-expanded="false"
+                    aria-controls="d-phenotype">Show more</button>
+          </div></section>
+        </div>
 
         <!-- 2) overview meta cards -->
         <div class="row" id="d-overview" style="margin-bottom:16px;">
@@ -256,14 +279,6 @@ html, body { margin: 0; padding: 0; }
           <h6 class="mt-3">Validation methods</h6>
           <div class="v2-chip-row" id="d-validation"></div>
           <div class="kg-other-assays" id="d-validation-other" hidden></div>
-        </div></section>
-
-        <!-- 6) phenotype full text -->
-        <section class="card kg-section" id="card-phenotype" hidden><div class="card-body">
-          <h6 class="card-title">Phenotype</h6>
-          <p class="kg-longtext kg-clamp-6" id="d-phenotype"></p>
-          <button type="button" class="btn btn-link btn-sm kg-expand" aria-expanded="false"
-                  aria-controls="d-phenotype">Show more</button>
         </div></section>
 
         <!-- 7) key results -->
