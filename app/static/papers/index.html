@@ -248,7 +248,7 @@ html, body { margin:0; padding:0; }
   <div class="results-row">
     <div class="d-flex align-items-center justify-content-between mb-2">
       <div id="res-info">Loading…</div>
-      <button type="button" id="export-btn" class="btn btn-success btn-sm" disabled>
+      <button type="button" id="export-btn" class="btn btn-success btn-sm" disabled hidden>
         Export Results (TSV)
       </button>
     </div>
@@ -747,7 +747,10 @@ function renderPage() {
   document.getElementById('page-num').textContent = 'Page ' + currentPage + ' / ' + pages;
   document.getElementById('prev-btn').disabled = currentPage <= 1;
   document.getElementById('next-btn').disabled = currentPage >= pages;
-  document.getElementById('export-btn').disabled = totalPapers === 0;
+  var exportBtn = document.getElementById('export-btn');
+  exportBtn.disabled = totalPapers === 0;
+  // Only show the export action once a search has produced results.
+  exportBtn.hidden = totalPapers === 0;
 
   if (currentResults.length === 0) {
     document.getElementById('list-content').innerHTML = '';
