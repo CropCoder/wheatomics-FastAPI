@@ -266,7 +266,7 @@ html, body { margin:0; padding:0; }
     <div id="stats-loading" class="text-muted text-center" style="padding:40px;">Loading dataset stats…</div>
     <div id="stats-content" hidden>
       <h5>Dataset Overview</h5>
-      <p class="text-muted small">Numbers reflect the database snapshot the API was last queried against; we refresh weekly.</p>
+      <p class="text-muted small">Live aggregates computed from the current database; the underlying literature data is refreshed weekly. <span id="stats-asof" class="font-weight-bold"></span></p>
 
       <!-- KPI cards -->
       <div class="row mb-4" id="stats-kpis">
@@ -439,6 +439,17 @@ function renderStatsTab() {
         return showError((resp && resp.error) || 'unknown');
       }
       var s = resp.data;
+
+      // Freshness note
+      var asof = document.getElementById('stats-asof');
+      if (asof) {
+        var parts = [];
+        parts.push(s.generated_at ? 'Generated ' + new Date(s.generated_at).toLocaleString() : 'Live');
+        if (s.latest_paper_added_at) {
+          parts.push('latest paper added ' + new Date(s.latest_paper_added_at).toLocaleDateString());
+        }
+        asof.textContent = parts.join(' · ') + '.';
+      }
 
       // KPIs
       document.getElementById('kpi-total').textContent     = (s.total_papers || 0).toLocaleString();
