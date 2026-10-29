@@ -108,18 +108,30 @@ def motif_meta(c):
     return out
 
 def _upstream_rows(c,g,limit):
+    """Query hits per region id so idx_hits_region_start supplies the order.
+
+    Joining regions->hits makes SQLite plan a temp B-tree for ORDER BY; looking
+    the region ids up first keeps the scan ordered and lets LIMIT stop early.
+    """
     name,source=motif_metadata_columns(c)
     source_sql=f"m.{source}" if source else "NULL"
-    sql=f"""SELECT h.hit_id,h.region_id,h.motif_id,h.chrom,h.start0,h.end0,
-                  h.strand,h.score,h.pvalue,h.qvalue,h.matched_sequence,r.kind,
-                  m.{name} AS motif_name,
-                  m.{name} AS motif_model,
-                  {source_sql} AS motif_source
-           FROM regions r JOIN hits h ON h.region_id=r.region_id
-           LEFT JOIN motifs m ON m.motif_id=h.motif_id
-           WHERE r.gene_id=? AND r.kind='upstream'
-           ORDER BY h.start0,h.hit_id LIMIT ?"""
-    return [dict(x) for x in c.execute(sql,(g,limit))]
+    region_ids=[r["region_id"] for r in c.execute(
+        "SELECT region_id FROM regions WHERE gene_id=? AND kind='upstream' "
+        "ORDER BY start0",(g,))]
+    rows=[]
+    for rid in region_ids:
+        sql=f"""SELECT h.hit_id,h.region_id,h.motif_id,h.chrom,h.start0,h.end0,
+                      h.strand,h.score,h.pvalue,h.qvalue,h.matched_sequence,
+                      'upstream' AS kind,
+                      m.{name} AS motif_name,
+                      m.{name} AS motif_model,
+                      {source_sql} AS motif_source
+               FROM hits h LEFT JOIN motifs m ON m.motif_id=h.motif_id
+               WHERE h.region_id=? ORDER BY h.start0 LIMIT ?"""
+        rows+=[dict(x) for x in c.execute(sql,(rid,limit))]
+        if len(rows)>=limit:
+            break
+    return rows[:limit]
 
 def shard_path(chrom):
     return SHARDS/f"{chrom}.sqlite"
@@ -135,7 +147,7 @@ def _downstream_rows(c,gene,limit):
         rows=[dict(x) for x in con.execute(
             "SELECT hit_id,region_id,motif_id,chrom,start0,end0,strand,"
             "score,pvalue,qvalue,matched_sequence FROM hits "
-            "WHERE region_id=? ORDER BY start0,hit_id LIMIT ?",
+            "WHERE region_id=? ORDER BY start0 LIMIT ?",
             (f"{gene['gene_id']}|downstream",limit))]
     finally:
         con.close()
