@@ -298,53 +298,54 @@ def _build_search(
 
 @router.get("/papers")
 def search_papers(
-    q: str | None = Query(None, description="全文关键词搜索（title / abstract / journal / authors / pubmed_keywords / ai_tags / function_gene_tags）"),
-    q_exclude: str | None = Query(None, description="排除关键词（NOT 语义），搜索范围同 q"),
-    title: str | None = Query(None, description="标题模糊匹配"),
-    title_exclude: str | None = Query(None, description="标题排除"),
-    abstract: str | None = Query(None, description="摘要模糊匹配"),
-    abstract_exclude: str | None = Query(None, description="摘要排除"),
-    journal: str | None = Query(None, description="期刊模糊匹配"),
-    journal_exclude: str | None = Query(None, description="期刊排除"),
-    authors: str | None = Query(None, description="作者模糊匹配（LIKE %...%，跨整词）"),
-    authors_exclude: str | None = Query(None, description="作者排除"),
-    pubmed_keywords: str | None = Query(None, description="PubMed 关键词模糊匹配"),
-    pubmed_keywords_exclude: str | None = Query(None, description="PubMed 关键词排除"),
-    ai_tags: str | None = Query(None, description="AI 标签模糊匹配（papers.ai_tags）"),
-    ai_tags_exclude: str | None = Query(None, description="AI 标签排除"),
-    function_gene_tags: str | None = Query(None, description="功能基因标签模糊匹配（papers.function_gene_tags）"),
-    function_gene_tags_exclude: str | None = Query(None, description="功能基因标签排除"),
-    gene_name: str | None = Query(None, description="基因名模糊匹配（papers.function_gene_tags + functional_gene_tags）"),
-    gene_name_exclude: str | None = Query(None, description="基因名排除"),
-    source_method: str | None = Query(None, description="按 LLM 标注来源过滤（functional_gene_annotations.source_method，EXISTS 子查询），如 llm_error / rule+llm / seed_title_match"),
-    source_method_exclude: str | None = Query(None, description="排除某标注来源（NOT EXISTS）"),
-    review_status: str | None = Query(None, description="按标注审核状态过滤（EXISTS 子查询），如 negative / auto_pass / need_review"),
-    review_status_exclude: str | None = Query(None, description="排除某审核状态（NOT EXISTS）"),
-    pmid: str | None = Query(None, description="PubMed ID 精确匹配（自动去除空白字符）"),
-    pmid_exclude: str | None = Query(None, description="PubMed ID 精确排除"),
-    functional_gene_flag: str | None = Query(None, description="论文级功能基因标记"),
-    functional_gene_source: str | None = Query(None, description="论文级功能基因来源"),
-    function_gene_flag: str | None = Query(None, description="第二套功能基因标记"),
-    pub_date_start: str | None = Query(None, description="发布年份起始"),
-    pub_date_end: str | None = Query(None, description="发布年份结束"),
+    q: str | None = Query(None, description="Full-text keyword search (title / abstract / journal / authors / pubmed_keywords / ai_tags / function_gene_tags)"),
+    q_exclude: str | None = Query(None, description="Excluded keywords (NOT semantics); same search scope as q"),
+    title: str | None = Query(None, description="Fuzzy title match"),
+    title_exclude: str | None = Query(None, description="Title exclusion"),
+    abstract: str | None = Query(None, description="Fuzzy abstract match"),
+    abstract_exclude: str | None = Query(None, description="Abstract exclusion"),
+    journal: str | None = Query(None, description="Fuzzy journal match"),
+    journal_exclude: str | None = Query(None, description="Journal exclusion"),
+    authors: str | None = Query(None, description="Fuzzy author match (LIKE %...%, across whole words)"),
+    authors_exclude: str | None = Query(None, description="Author exclusion"),
+    pubmed_keywords: str | None = Query(None, description="Fuzzy PubMed keyword match"),
+    pubmed_keywords_exclude: str | None = Query(None, description="PubMed keyword exclusion"),
+    ai_tags: str | None = Query(None, description="Fuzzy AI tag match (papers.ai_tags)"),
+    ai_tags_exclude: str | None = Query(None, description="AI tag exclusion"),
+    function_gene_tags: str | None = Query(None, description="Fuzzy functional gene tag match (papers.function_gene_tags)"),
+    function_gene_tags_exclude: str | None = Query(None, description="Functional gene tag exclusion"),
+    gene_name: str | None = Query(None, description="Fuzzy gene name match (papers.function_gene_tags + functional_gene_tags)"),
+    gene_name_exclude: str | None = Query(None, description="Gene name exclusion"),
+    source_method: str | None = Query(None, description="Filter by LLM annotation source (functional_gene_annotations.source_method, EXISTS subquery), e.g. llm_error / rule+llm / seed_title_match"),
+    source_method_exclude: str | None = Query(None, description="Exclude an annotation source (NOT EXISTS)"),
+    review_status: str | None = Query(None, description="Filter by annotation review status (EXISTS subquery), e.g. negative / auto_pass / need_review"),
+    review_status_exclude: str | None = Query(None, description="Exclude a review status (NOT EXISTS)"),
+    pmid: str | None = Query(None, description="Exact PubMed ID match (whitespace is stripped automatically)"),
+    pmid_exclude: str | None = Query(None, description="Exact PubMed ID exclusion"),
+    functional_gene_flag: str | None = Query(None, description="Paper-level functional gene flag"),
+    functional_gene_source: str | None = Query(None, description="Paper-level functional gene source"),
+    function_gene_flag: str | None = Query(None, description="Second-set functional gene flag"),
+    pub_date_start: str | None = Query(None, description="Publication year start"),
+    pub_date_end: str | None = Query(None, description="Publication year end"),
     since_days: int | None = Query(None, ge=1, le=3650,
-        description="按 papers 表的入库时间（p.created_at）过滤最近 N 天"),
-    limit: int = Query(20, ge=1, le=200, description="返回条数上限"),
-    offset: int = Query(0, ge=0, description="分页偏移量"),
+        description="Filter by papers-table insertion time (p.created_at) within the last N days"),
+    limit: int = Query(20, ge=1, le=200, description="Maximum number of results"),
+    offset: int = Query(0, ge=0, description="Pagination offset"),
 ) -> dict:
-    """搜索 Triticeae 论文元数据。
+    """Search Triticeae paper metadata.
 
-    只查 `papers` 表（包含论文级标注：functional_gene_flag / ai_tags / keywords_source 等），
-    不再 LEFT JOIN functional_gene_annotations。需要细粒度 LLM 标注（gene_name /
-    trait_label / confidence 等）请调 /papers/{pmid}/annotation。
+    Queries only the `papers` table (includes paper-level annotations such as
+    functional_gene_flag / ai_tags / keywords_source); it no longer LEFT JOINs
+    functional_gene_annotations. For fine-grained LLM annotations (gene_name /
+    trait_label / confidence, etc.) call /papers/{pmid}/annotation.
 
-    支持 <param>_exclude 形式参数实现 NOT 语义。
+    Every parameter also accepts a <param>_exclude variant for NOT semantics.
 
     `since_days` is anchored to `papers.created_at` (when the row was
     inserted), not `fga.created_at`. Use it for "what new papers did
     we add this week".
 
-    默认排序：paper_created_at DESC（最近入库优先）。
+    Default order: paper_created_at DESC (most recently added first).
     """
     return _build_search(**locals())
 
@@ -399,15 +400,15 @@ def paper_dois(pmids: str = Query(..., description="Comma-separated PubMed IDs")
 
 @router.get("/papers/{pmid}/annotation")
 def get_paper_annotation(pmid: str) -> dict:
-    """按 PMID 获取单篇论文的 LLM 标注（functional_gene_annotations 表）。
+    """Get the LLM annotation of a single paper by PMID (functional_gene_annotations table).
 
-    返回标注层全部字段：fga_id, is_functional_gene, confidence,
+    Returns all annotation-layer fields: fga_id, is_functional_gene, confidence,
     gene_name, gene_type, trait_label, function_summary, evidence_type,
     new_tags, llm_reason, source_method, review_status, created_at,
-    updated_at。
+    updated_at.
 
-    如果该论文没有 annotation 记录（AI 判定不是 functional gene study），
-    返回 has_annotation: false + annotation: null。
+    If the paper has no annotation record (the AI judged it is not a
+    functional gene study), returns has_annotation: false + annotation: null.
     """
     with mysql_cursor(settings.DB_TRITICEAE) as cursor:
         cursor.execute("""
@@ -468,10 +469,11 @@ def get_paper_annotation(pmid: str) -> dict:
 # routers.
 @router.get("/papers/stats")
 def stats() -> dict:
-    """数据集聚合统计：年份分布、期刊 top-20、AI 标签 top-30、功能基因比例、审核状态分布。
+    """Dataset aggregate statistics: year distribution, top-20 journals, top-30 AI tags, functional gene ratio, review status distribution.
 
-    所有聚合走 SQL GROUP BY，22K 行在 100ms 内返回。papers 表按 PMID 去重统计；
-    functional_gene_annotations 表按标注记录统计（一个 PMID 可对应多条标注）。
+    All aggregations use SQL GROUP BY; 22K rows return in under 100ms. The papers
+    table is counted with PMID de-duplication; functional_gene_annotations is
+    counted per annotation record (one PMID may map to several annotations).
     """
     with mysql_cursor(settings.DB_TRITICEAE) as cursor:
 
@@ -612,14 +614,15 @@ def stats() -> dict:
 
 @router.get("/papers/{pubmedid}")
 def get_paper(pubmedid: str) -> dict:
-    """按 PubMed ID 获取单篇论文元数据（只查 papers 表）。
+    """Get the metadata of a single paper by PubMed ID (papers table only).
 
-    返回 papers.* 字段；fga_* 字段全部为空。
-    需要 LLM 标注请调 /papers/{pmid}/annotation。
+    Returns the papers.* fields; all fga_* fields are empty.
+    For LLM annotations call /papers/{pmid}/annotation.
 
-    注意路由顺序：必须在 /papers/{pmid}/annotation **之后**声明，否则
-    Starlette 会先匹配这个单段路径，把请求 42105133/annotation 拆成
-    pubmedid="42105133" + 一个未知的 "annotation" 查询参数。
+    Note the route order: this route must be declared **after**
+    /papers/{pmid}/annotation, otherwise Starlette matches this single-segment
+    route first and splits the request 42105133/annotation into
+    pubmedid="42105133" plus an unknown "annotation" query parameter.
     """
     with mysql_cursor(settings.DB_TRITICEAE) as cursor:
         cursor.execute(f"{_SQL_SELECT} WHERE p.pmid = %s", (pubmedid,))

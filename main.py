@@ -52,7 +52,7 @@ app = FastAPI(
     openapi_tags=[
         {
             "name": "PrimerServer2",
-            "description": "Primer desgin version 2",
+            "description": "Primer design, version 2",
         },
         {
             "name": "OrthoFinder",
@@ -60,56 +60,56 @@ app = FastAPI(
         },
     ],
     description=(
-        "<h2>概述</h2>"
-        "WheatOmics 是全球小麦多组学数据整合分析平台，涵盖基因组、转录组、"
-        "蛋白互作组及文献等多维度数据。本 API 为平台后端服务，采用 RESTful 设计，"
-        "为前端应用与第三方工具提供结构化的数据访问能力。"
+        "<h2>Overview</h2>"
+        "WheatOmics is a global wheat multi-omics data integration and analysis platform "
+        "covering genome, transcriptome, protein-protein interaction and literature data. "
+        "This API is the platform's backend service; it follows RESTful design principles and "
+        "provides structured data access for front-end applications and third-party tools."
         "<br><br>"
-        "所有接口前缀为 <code>/api</code>，统一返回 JSON 格式："
+        "All endpoints are prefixed with <code>/api</code> and return JSON in a unified envelope: "
         "<pre>{\"success\": true, \"data\": { ... }}</pre>"
 
-        "<h2>模块说明</h2>"
+        "<h2>Modules</h2>"
         "<table>"
         "<tr><td><b>Known Genes</b></td><td><code>/api/genes/known</code></td>"
-        "<td>已知基因搜索与详情</td></tr>"
-        "<tr><td><b>PfamSearch</b></td><td><code>/api/genes/functions/pfam</code></td><td>基因结构域搜索 [gene family]</td></tr><tr><td><b>IntervalTool</b></td><td><code>/api/genes/functions/interval</code></td><td>染色体区间基因查询</td></tr><tr><td><b>Coexpression</b></td><td><code>/api/coexpression</code></td>"
-        "<td>共表达网络关系对查询与网络图数据检索</td></tr>"
+        "<td>Known-gene search and details</td></tr>"
+        "<tr><td><b>PfamSearch</b></td><td><code>/api/genes/functions/pfam</code></td><td>Gene structural-domain search (gene family)</td></tr><tr><td><b>IntervalTool</b></td><td><code>/api/genes/functions/interval</code></td><td>Genes within a chromosome interval</td></tr><tr><td><b>Coexpression</b></td><td><code>/api/coexpression</code></td>"
+        "<td>Co-expression network edge query and network-graph data</td></tr>"
         "<tr><td><b>Search Wheat Protein-Protein Interactions</b></td><td><code>/api/ppi</code></td>"
-        "<td>小麦蛋白质互作关系查询（wheatPPI，CF-MS 数据）</td></tr>"
-        "<tr><td><b>Comparative 比较</b></td><td><code>/api/comparative</code></td>"
-        "<td>小麦-水稻-拟南芥同源基因映射、共线性区间查询、基因 ID 跨库转换</td></tr>"
-        "<tr><td><b>Expression 表达</b></td><td><code>/api/expression</code></td>"
-        "<td>多物种、多项目的基因表达谱数据查询</td></tr>"
+        "<td>Wheat protein-protein interactions (wheatPPI, CF-MS data)</td></tr>"
+        "<tr><td><b>Comparative</b></td><td><code>/api/comparative</code></td>"
+        "<td>Wheat-rice-Arabidopsis homolog mapping, synteny interval queries and cross-database gene ID conversion</td></tr>"
+        "<tr><td><b>Expression</b></td><td><code>/api/expression</code></td>"
+        "<td>Multi-species, multi-project gene expression profiles</td></tr>"
         "<tr><td><b>GeneHub</b></td><td><code>/api/genes/detail/{gene_id}</code></td>"
-        "<td>GeneHub：基因标准化详情查询（v1/v2/v3 ID映射、蛋白参数、功能注释）</td></tr>"
-        "<tr><td><b>Sequences 序列</b></td><td><code>/api/sequence</code></td>"
-        "<td>基因及区间序列提取、预计算 BLAST 结果检索</td></tr>"
-        "<tr><td><b>Triticeae Papers</b></td><td><code>/api/papers</code></td><td>小麦族研究文献筛选：基因/性状/置信度/AI标签多维过滤</td></tr><tr><td><b>Blast</b></td><td><code>/api/blast</code></td>"
-        "<td>序列比对搜索（blastn/blastp/blastx/tblastn/tblastx）</td></tr>"
+        "<td>GeneHub: normalized gene details (v1/v2/v3 ID mapping, protein properties, functional annotation)</td></tr>"
+        "<tr><td><b>Sequences</b></td><td><code>/api/sequence</code></td>"
+        "<td>Gene and interval sequence extraction, pre-computed BLAST hits</td></tr>"
+        "<tr><td><b>Triticeae Papers</b></td><td><code>/api/papers</code></td><td>Triticeae literature filtering by gene, trait, confidence and AI tags</td></tr><tr><td><b>BLAST</b></td><td><code>/api/blast</code></td>"
+        "<td>Sequence similarity search (blastn/blastp/blastx/tblastn/tblastx)</td></tr>"
         "<tr><td><b>OrthoFinder</b></td><td><code>/api/orthofinder</code></td><td>OrthoFinder orthogroup browser: cluster-filtered gene tree, synteny, MSA download</td></tr>"
 "<tr><td><b>PrimerServer (SNP)</b></td><td><code>/api/tasks</code></td>"
-        "<td>SNP 引物设计、特异性检查（PrimerServer 复刻）</td></tr>"
+        "<td>SNP primer design and specificity checks (PrimerServer replica)</td></tr>"
         "<tr><td><b>PrimerServer2</b></td><td><code>/api/PrimerServer2</code></td>"
-        "<td>PCR 引物批量设计与特异性检查（Primer desgin version 2）</td></tr>"
+        "<td>Batch PCR primer design and specificity checks (Primer design, version 2)</td></tr>"
         "<tr><td><b>GO/KEGG Enrichment</b></td><td><code>/api/go</code> / <code>/api/kegg</code></td>"
-        "<td>GO/KEGG 富集分析：超几何检验 + Benjamini-Hochberg FDR 校正，支持气泡图可视化</td></tr>"
+        "<td>GO/KEGG enrichment analysis: hypergeometric test with Benjamini-Hochberg FDR correction and bubble-plot visualization</td></tr>"
         "<tr><td><b>VariantHub</b></td><td><code>/api/VariantHub/query</code></td>"
-        "<td>VCF 变异查询：按基因组分组的 26 个群体变异数据集（IWGSCv1.0 / IWGSCv2.1），支持区间/变异 ID 查询与样本子集过滤（bcftools）</td></tr>"
+        "<td>VCF variant queries across 26 population variation datasets grouped by genome (IWGSCv1.0 / IWGSCv2.1), with interval/variant-ID search and sample-subset filtering (bcftools)</td></tr>"
         "<tr><td><b>JBrowse</b></td><td><code>/api/jbrowse</code></td>"
-        "<td>基因组浏览器数据集与轨道元数据（jbrowse_meta 库，trackList.json 由 API 重建）</td></tr>"
+        "<td>Genome browser dataset and track metadata (jbrowse_meta database; trackList.json is rebuilt by the API)</td></tr>"
         "<tr><td><b>CAPS/dCAPS</b></td><td><code>/api/caps</code></td>"
-        "<td>CAPS/dCAPS 引物设计：按 SNP 枚举限制酶与错配引物，支持序列/坐标/VCF 三种输入</td></tr>"
+        "<td>CAPS/dCAPS primer design by SNP: enumeration of restriction enzymes and mismatch primers, with sequence/coordinate/VCF input modes</td></tr>"
         "<tr><td><b>eQTL Atlas</b></td><td><code>/api/eqtl/search</code></td>"
-        "<td>小麦 eQTL 图谱：按基因查询 eQTL 记录与各 project 的 FarmCPU 曼哈顿图</td></tr>"
+        "<td>Wheat eQTL atlas: eQTL records by gene and per-project FarmCPU Manhattan plots</td></tr>"
         "</table>"
 
-        "<h2>AI Agent 接入 (MCP)</h2>"
-        "本服务内置 MCP (Model Context Protocol) 服务器，"
-        "AI Agent 可通过标准化协议直接调用数据接口。"
-        "SSE 端点: <code>GET /api/mcp/sse</code>，消息端点: <code>POST /api/mcp/messages</code>。"
-        "详细说明见 <a href='https://wheatomics.sdau.edu.cn/V2/MCP-ServerUsage.html'>MCP 服务器文档</a>。"
+        "<h2>AI Agent access (MCP)</h2>"
+        "This service embeds an MCP (Model Context Protocol) server, so AI agents can call the data endpoints through a standardized protocol. "
+        "SSE endpoint: <code>GET /api/mcp/sse</code>; message endpoint: <code>POST /api/mcp/messages</code>. "
+        "See <a href='https://wheatomics.sdau.edu.cn/agent.html'>Agent &amp; API documentation</a> for details."
         "<br>For issues and feedback, please email: "
-        "<a href='mailto:shengweima@icloud.com'>shengweima@icloud.com</a>。"
+        "<a href='mailto:shengweima@icloud.com'>shengweima@icloud.com</a>."
     ),
     docs_url="/api/docs",           # 将 Swagger UI 移到 /api/docs
     redoc_url="/api/redoc",         # 将 ReDoc 移到 /api/redoc (可选)
@@ -279,7 +279,7 @@ app.include_router(ps2_results.router, prefix=PS2_PREFIX, dependencies=[Depends(
 sse_transport = SseServerTransport("/api/mcp/messages")
 
 async def mcp_sse_endpoint(request: Request):
-    """处理大模型客户端的 SSE 连接"""
+    """Handle the SSE connection from an LLM client."""
     async with sse_transport.connect_sse(
         request.scope, 
         request.receive, 
@@ -292,7 +292,7 @@ async def mcp_sse_endpoint(request: Request):
         )
 
 async def mcp_messages_endpoint(request: Request):
-    """处理大模型客户端发来的 POST 消息 (Tool calls 等)"""
+    """Handle POST messages (tool calls, etc.) sent by an LLM client."""
     await sse_transport.handle_post_message(
         request.scope, 
         request.receive, 
@@ -304,20 +304,20 @@ app.routes.append(Route("/api/mcp/messages", endpoint=mcp_messages_endpoint, met
 
 @app.get("/api/about")
 async def root(request: Request) -> dict:
-    """获取应用基本信息。
+    """Return basic application information.
 
-    功能:
-        返回 WheatOmics API 的名称、版本号、交互式文档地址和 API 前缀。
+    Purpose:
+        Return the WheatOmics API name, version, interactive documentation URL and API prefix.
 
-    用法:
+    Usage:
         GET /api/about
-        无需任何参数，直接返回应用元信息 JSON。
+        No parameters; returns the application metadata JSON directly.
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/about"
 
-        响应:
+        Response:
           {
             "name": "WheatOmics",
             "version": "1.0.0",
@@ -340,20 +340,20 @@ async def root(request: Request) -> dict:
 
 @app.get("/api/health")
 async def health() -> dict:
-    """服务健康检查。
+    """Service health check.
 
-    功能:
-        返回服务运行状态，用于探活和监控。
+    Purpose:
+        Return the service status for liveness probes and monitoring.
 
-    用法:
+    Usage:
         GET /api/health
-        无需任何参数，直接返回状态信息。
+        No parameters; returns the status information directly.
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/health"
 
-        响应:
+        Response:
           { "status": "Wheatomics API running, ..." }
     """
 
@@ -364,11 +364,13 @@ _git_pull_lock = threading.Lock()
 
 
 def run_git_pull():
-    """在后台执行 auto_pull.sh 脚本，拉取最新代码。
+    """Run auto_pull.sh in the background to fetch the latest code.
 
-    串行化（两个 webhook 紧接到达时并发 git fetch + reset --hard 会损坏
-    .git），并加 120s 超时（git fetch 挂住时后台任务不会永久占 worker 线程）。
-    注意：脚本只 git pull，不重启服务——Python 改动仍需手动重启。
+    Serialized with a lock (two webhooks arriving back-to-back would otherwise
+    run concurrent git fetch + reset --hard and corrupt .git) and capped at
+    120s so a hung git fetch cannot hold a worker thread forever.
+    Note: the script only performs git pull — Python changes still require a
+    manual service restart.
     """
 
     if not _git_pull_lock.acquire(blocking=False):
@@ -393,10 +395,10 @@ def run_git_pull():
 
 @app.post("/api/webhook/gitee")
 async def gitee_webhook(request: Request, background_tasks: BackgroundTasks):
-    """处理 Gitee Webhook 推送。
+    """Handle a Gitee webhook push.
 
-    验证 X-Gitee-Token 后，将 git pull 放入后台任务异步执行，
-    立即返回响应以避免 Gitee 端请求超时。
+    After validating the X-Gitee-Token header, run git pull as a background
+    task and return immediately so the Gitee request does not time out.
     """
 
     token = request.headers.get("X-Gitee-Token")

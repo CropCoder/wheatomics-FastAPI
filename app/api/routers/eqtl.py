@@ -104,16 +104,17 @@ def manhattan_image(project: str, gene: str) -> FileResponse:
 def search_eqtl(
     gene: str = Query(..., min_length=1, description="Gene ID (Traes...) to search"),
 ) -> dict:
-    """按基因 ID 查询 eQTL 记录及其各 project 的 FarmCPU 曼哈顿图。
+    """Query eQTL records by gene ID plus each project's FarmCPU Manhattan plot.
 
-    功能:
-        在 ``eqtl`` 库的 ``wheat`` 表中按 ``Geneid`` 模糊匹配，返回命中的全部
-        记录（列名动态发现，见模块 docstring）以及 5 个 project 的曼哈顿图信息。
+    Purpose:
+        Fuzzy-match ``Geneid`` in the ``eqtl`` database's ``wheat`` table,
+        return all matching records (column names discovered dynamically, see
+        the module docstring) plus the Manhattan plot info of the 5 projects.
 
-    用法:
+    Usage:
         GET /api/eqtl/search?gene=TraesCS5A02G391700
 
-    响应:
+    Response:
         {
           "success": true,
           "data": {

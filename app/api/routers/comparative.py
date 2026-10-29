@@ -36,24 +36,24 @@ def wheat_rice_arabidopsis_homologs(
     gene_id: str = Query(...),
     max_targets: int = Query(3, ge=1, le=100),
 ) -> dict:
-    """查询小麦基因在水稻和拟南芥中的同源基因。
+    """Query the homologs of a wheat gene in rice and Arabidopsis.
 
-    功能:
-        根据小麦基因 ID 查询 WheatRiceArabidopsis_tbl 表，
-        返回该基因在水稻（Rice）和拟南芥（Arabidopsis）中的同源基因，
-        包含比对的 Qcovs、Identity、E-value、Score 等详细信息。
-        max_targets 控制每个物种返回的同源基因数量上限。
+    Purpose:
+        Query the WheatRiceArabidopsis_tbl table by wheat gene ID and return the
+        gene's homologs in rice (Rice) and Arabidopsis, including alignment details
+        such as Qcovs, Identity, E-value and Score.
+        max_targets caps the number of homologs returned per species.
 
-    用法:
-        GET /api/homologs/wheat-rice-arabidopsis?gene_id=<基因ID>&max_targets=<数量>
-        - gene_id: 必填，小麦基因 ID（Traes 开头）或其他物种基因 ID
-        - max_targets: 可选，每个物种最多返回的同源基因数（默认 3，1-100）
+    Usage:
+        GET /api/homologs/wheat-rice-arabidopsis?gene_id=<gene ID>&max_targets=<count>
+        - gene_id: required, wheat gene ID (starting with Traes) or a gene ID from another species
+        - max_targets: optional, maximum homologs returned per species (default 3, 1-100)
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/homologs/wheat-rice-arabidopsis?gene_id=TraesCS5A02G391700&max_targets=3"
 
-        响应:
+        Response:
           {
             "success": true,
             "data": {
@@ -117,25 +117,25 @@ def search_synteny(
     query: str = Query(..., alias="ID"),
     table: str = Query("CSsymaptbl"),
 ) -> dict:
-    """搜索小麦与其他麦族物种的共线性（Synteny）信息。
+    """Search synteny information between wheat and other Triticeae species.
 
-    功能:
-        支持两种查询模式:
-        1. 基因组区间查询 - 格式 chr5A:100000-200000，返回该区段内基因的共线性记录
-        2. 基因 ID 查询 - 精确查找单个基因的共线性关系
-        结果为每个基因在 Chinese Spring、Durum wheat、Wild emmer、
-        Triticum urartu、Aegilops tauschii 中的共线性对应关系。
+    Purpose:
+        Supports two query modes:
+        1. Genomic interval query - format chr5A:100000-200000; returns the synteny records of genes in that region
+        2. Gene ID query - looks up the synteny relationships of a single gene
+        Results are the syntenic counterparts of each gene in Chinese Spring, Durum wheat, Wild emmer,
+        Triticum urartu and Aegilops tauschii.
 
-    用法:
-        GET /api/synteny/search?ID=<查询内容>&table=<表名>
-        - ID: 必填，基因ID 或 染色体区间
-        - table: 可选，共线性表名，默认 CSsymaptbl
+    Usage:
+        GET /api/synteny/search?ID=<query>&table=<table name>
+        - ID: required, gene ID or chromosome interval
+        - table: optional, synteny table name, default CSsymaptbl
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/synteny/search?ID=TraesCS5A02G391700"
 
-        响应:
+        Response:
           {
             "success": true,
             "data": {
@@ -206,34 +206,35 @@ def convert_gene_ids(
     gene_ids: str = Query(..., alias="ID"),
     version: str = Query(..., alias="gene_version"),
 ) -> dict:
-    """在不同基因注释版本间转换基因 ID（统一转换为 IWGSC v1.1 / 02G）。
+    """Convert gene IDs between different gene annotation versions (all mapped to IWGSC v1.1 / 02G).
 
-    ⚠️  版本说明:
-        以下三个源版本的基因 ID 可转换为 IWGSC v1.1 (02G):
-        - MIPS_result:  MIPS v2.2 格式，例如 "Traes_1AS_E6058767A.1"
-        - TGACv1_result: TGACv1 格式，例如 "TRIAE_CS42_6BL_TGACv1_501926_AA1621570.1"
-        - IWGSCv1_result: IWGSC v1.0 格式，例如 "TraesCS6B01G342500.1"
-        请输入转录本 ID（带 ".1" 后缀），输出的 reference_gene 为 02G 格式（如 "TraesCS6B02G084800"）。
+    ⚠️  Version note:
+        Gene IDs from the following three source versions can be converted to IWGSC v1.1 (02G):
+        - MIPS_result:  MIPS v2.2 format, e.g. "Traes_1AS_E6058767A.1"
+        - TGACv1_result: TGACv1 format, e.g. "TRIAE_CS42_6BL_TGACv1_501926_AA1621570.1"
+        - IWGSCv1_result: IWGSC v1.0 format, e.g. "TraesCS6B01G342500.1"
+        Please provide transcript IDs (with the ".1" suffix); the output reference_gene is in 02G format (e.g. "TraesCS6B02G084800").
 
-    功能:
-        输入多个源基因 ID（%0D%0A 分隔），在指定版本表中查询并
-        转换到 IWGSC v1.1 (02G)。返回每个基因的映射结果（reference_gene、
-        code、length）。未找到的基因列在 not_found 中。
+    Purpose:
+        Take multiple source gene IDs (%0D%0A-separated), look them up in the
+        specified version table and convert them to IWGSC v1.1 (02G). Returns
+        each gene's mapping result (reference_gene, code, length). Genes that
+        are not found are listed in not_found.
 
-    用法:
-        GET /api/id-conversion?ID=<基因1 基因2>&gene_version=<源版本表>
-        - ID: 必填，基因 ID 列表，多基因用 %0D%0A（URL编码换行符）分隔（需带 ".1" 后缀的转录本 ID）
-        - gene_version: 必填，源版本对应的数据库表名：
+    Usage:
+        GET /api/id-conversion?ID=<gene1 gene2>&gene_version=<source version table>
+        - ID: required, gene ID list; separate multiple genes with %0D%0A (URL-encoded newline) (transcript IDs with the ".1" suffix are required)
+        - gene_version: required, database table name of the source version:
           "MIPS_result" / "TGACv1_result" / "IWGSCv1_result"
 
-    案例:
-        请求 (MIPS v2.2 → IWGSC v1.1):
+    Example:
+        Request (MIPS v2.2 → IWGSC v1.1):
           curl -X GET "http://localhost:8000/api/id-conversion?ID=Traes_1AS_E6058767A.1&gene_version=MIPS_result"
 
-        请求 (IWGSC v1.0 → IWGSC v1.1):
+        Request (IWGSC v1.0 → IWGSC v1.1):
           curl -X GET "http://localhost:8000/api/id-conversion?ID=TraesCS6B01G342500.1%0D%0ATraesCS6B01G123400.1&gene_version=IWGSCv1_result"
 
-        响应:
+        Response:
           {
             "success": true,
             "data": {

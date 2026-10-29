@@ -24,21 +24,22 @@ router = APIRouter(prefix="/tasks", tags=["PrimerServer"])
 def get_primer_databases(
     category: str = Query("all", pattern="^(all|genome|gene)$"),
 ) -> dict:
-    """获取可用的引物设计参考基因组/基因数据库列表。
+    """List the available primer-design reference genome / gene databases.
 
-    功能:
-        返回系统配置的所有参考基因组和基因数据库，包含
-        数据库文件名、别名和分类（genome / gene）。
-        供 primer-design 和 primer-check 接口选择使用。
+    Purpose:
+        Return all reference genomes and gene databases configured in the
+        system, including database file name, alias and category
+        (genome / gene). Used for choosing among the primer-design and
+        primer-check endpoints.
 
-    用法:
+    Usage:
         GET /api/tasks/primer-databases?category=<all|genome|gene>
 
-    案例:
+    Example:
         curl -X GET "http://localhost:8000/api/tasks/primer-databases"
         curl -X GET "http://localhost:8000/api/tasks/primer-databases?category=genome"
 
-        响应:
+        Response:
         {
           "success": true,
           "data": {
@@ -64,27 +65,28 @@ def get_primer_databases(
 
 @router.post("/primer-design")
 def design_primers(payload: PrimerDesignRequest) -> dict:
-    """设计 SNP 引物并进行特异性检查。
+    """Design SNP primers and run specificity checks.
 
-    功能:
-        根据输入 SNP 标记数据，完成以下全流程:
-        1. 标记验证与格式化
-        2. BLAST 参考基因组提取侧翼序列
-        3. Primer3 引物设计（CAPS / KASP）
-        4. 多数据库特异性检查（BLAST → Tm 计算 → 产物筛选）
-        5. 返回结构化的引物分组结果
+    Purpose:
+        Starting from the input SNP marker data, run the full pipeline:
+        1. Marker validation and formatting
+        2. BLAST against the reference genome to extract flanking sequences
+        3. Primer3 primer design (CAPS / KASP)
+        4. Multi-database specificity checks (BLAST → Tm calculation → product-size filtering)
+        5. Return structured primer groups
 
-    对标 PrimerServer 网页版:
-        对应 https://github.com/billzt/PrimerServer 的完整设计+检查流程。
+    Parity with the PrimerServer web version:
+        Corresponds to the full design + check pipeline of
+        https://github.com/billzt/PrimerServer.
 
-    用法:
+    Usage:
         POST /api/tasks/primer-design
         Body (JSON):
-          - markers:      [必填] 标记行列表，格式 "chr,pos,SEQUENCE[/SNP]"
-          - template:     [必填] 参考基因组数据库名
-          - checking_dbs: [可选] 特异性检查数据库名列表
+          - markers:      [required] list of marker rows, format "chr,pos,SEQUENCE[/SNP]"
+          - template:     [required] reference genome database name
+          - checking_dbs: [optional] list of database names for specificity checking
 
-    案例:
+    Example:
         curl -X POST "http://localhost:8000/api/tasks/primer-design" \\
           -H "Content-Type: application/json" \\
           -d '{
@@ -95,7 +97,7 @@ def design_primers(payload: PrimerDesignRequest) -> dict:
             "product_size_max": 1000
           }'
 
-        响应:
+        Response:
         {
           "success": true,
           "data": {
@@ -138,19 +140,20 @@ def design_primers(payload: PrimerDesignRequest) -> dict:
 
 @router.post("/primer-check")
 def check_primer_specificity(payload: PrimerCheckRequest) -> dict:
-    """对已有引物进行特异性检查（不进行引物设计）。
+    """Run specificity checks on existing primers (no primer design).
 
-    功能:
-        输入已经设计好的引物序列组，在多数据库中进行
-        BLAST 对比 → Tm 计算 → 产物大小筛选 → 3' 端错配分析。
+    Purpose:
+        Given primer sequence sets that have already been designed, run
+        BLAST against multiple databases → Tm calculation → product-size
+        filtering → 3'-end mismatch analysis.
 
-    对标 PrimerServer 网页版:
-        对应 "Directly checking specificity" 模式。
+    Parity with the PrimerServer web version:
+        Corresponds to the "Directly checking specificity" mode.
 
-    用法:
+    Usage:
         POST /api/tasks/primer-check
 
-    案例:
+    Example:
         curl -X POST "http://localhost:8000/api/tasks/primer-check" \\
           -H "Content-Type: application/json" \\
           -d '{
@@ -158,7 +161,7 @@ def check_primer_specificity(payload: PrimerCheckRequest) -> dict:
             "checking_dbs": ["primer_Chinese_Spring1.0.genome"]
           }'
 
-        响应: { "success": true, "data": { "job_dir": "...", "groups": [...], "artifacts": [...] } }
+        Response: { "success": true, "data": { "job_dir": "...", "groups": [...], "artifacts": [...] } }
     """
     if not payload.primers:
         raise ValidationFailure("primers are required")
@@ -178,19 +181,19 @@ def check_primer_specificity(payload: PrimerCheckRequest) -> dict:
 
 @router.get("/primer-result/{job_id}")
 def get_primer_result(job_id: str) -> dict:
-    """获取引物设计/检查作业的结果文件列表。
+    """List the result files of a primer design/check job.
 
-    功能:
-        根据 job_id 返回指定作业目录下的所有输出文件列表，
-        方便 agent 定位并下载结果文件。
+    Purpose:
+        Return all output files in the given job directory for a job_id, so
+        agents can locate and download the result files.
 
-    用法:
+    Usage:
         GET /api/tasks/primer-result/{job_id}
 
-    案例:
+    Example:
         curl -X GET "http://localhost:8000/api/tasks/primer-result/abc123"
 
-        响应:
+        Response:
         {
           "success": true,
           "data": {

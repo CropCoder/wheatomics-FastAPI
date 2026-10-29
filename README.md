@@ -79,6 +79,8 @@ nohup gunicorn main:app \
 }
 ```
 
+接口文档（`/api/docs` Swagger UI、`/api/redoc` ReDoc、`/api/openapi.json`）的文档字符串统一为英文，面向国际用户；运行期提示文本与代码注释仍可为中文。可用 `python3 scripts/check_api_docs_en.py --url https://wheatomics.sdau.edu.cn/api/openapi.json` 校验。
+
 | 模块 | 前缀 | 主要功能 |
 |------|------|----------|
 | Genes | `/api/genes` | 已知基因搜索、详情、功能注释、基因提交与更新 |
@@ -268,13 +270,16 @@ curl "https://wheatomics.sdau.edu.cn/api/blast/status"
 
 MCP 工具目前提供序列查询等功能，可通过配置 MCP 客户端连接使用。使用中遇到问题可邮件反馈至 shengweima@icloud.com。
 
+面向 Agent / API 用户的公开说明页：<https://wheatomics.sdau.edu.cn/agent.html>（MCP 工具、连接方式、REST API 模块与示例）。
+REST API 文档入口：`/api/docs`（Swagger UI）、`/api/redoc`（ReDoc）、`/api/openapi.json`（OpenAPI schema）。
+
 ## 配置说明
 
 所有配置通过环境变量注入，详见 `app/core/config.py`：
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `APP_NAME` | 应用名称 | WheatOmics API for Ai Agent - FastAPI |
+| `APP_NAME` | 应用名称 | WheatOmics API for AI Agent - FastAPI |
 | `APP_VERSION` | 版本号 | 2.0 |
 | `API_PREFIX` | API 路由前缀 | /api |
 | `DEBUG` | 调试模式 | true |

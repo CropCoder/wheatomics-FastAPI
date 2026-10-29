@@ -1,11 +1,17 @@
 """Server-side script: normalize the WheatOmics homepage tool card grid.
 
+HISTORICAL / OBSOLETE — do not run this against the current landing page: it
+regenerates the old ``<!-- tool -->`` + ``.card-group`` markup, while the live
+page now uses ``<a class="tool-card">`` entries inside the ``#tools-grid``.
+Kept for reference only (tool retirements are handled by
+``scripts/remove_v2_home_tool.py``).
+
 Canonical order - one row of exactly 3 cards per card-group:
   GetSequence | BLAST | PfamSearch
   PrimerServer | IDConverter | HomologFinder
   GeneExpression | Co-expression | scRNA        <- scRNA moved right after Co-expression
   WheatPPI | wheatPSP | KnownGene
-  SyntenySearch | IntervalTool | CAPS/KASP(Beta)
+  IntervalTool | CAPS/KASP(Beta)                <- SyntenySearch retired 2026-10-29
   preBLAST | SequenceToolkit | Orthofinder
   VariantHub | eQTL Atlas | GO/KEGG Enrichment
   Collinearity | Triticeae papers
@@ -37,7 +43,6 @@ CARDS = [
     ("WheatPPI", "/wheatPPI/index.html", "Protein Interactions Search"),
     ("wheatPSP", "/wheatPSP/", "Phase Separation-associated Proteins"),
     ("KnownGene", "/genes", "Wheat Known Genes Search"),
-    ("SyntenySearch", "/symap/index.html", "Querying Gene Synteny"),
     ("IntervalTool", "/tools/intervalTools.html", "Gene information for a genome interval"),
     ("CAPS/dCAPS", "/caps", "CAPS/dCAPS Primer Design"),
     ("preBLAST", "/preblast", "Pre-computed BLAST Alignment"),

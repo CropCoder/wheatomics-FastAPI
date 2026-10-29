@@ -16,21 +16,21 @@ coexpression_router = APIRouter(tags=["Coexpression"])
 
 @coexpression_router.get("/coexpression/databases")
 def list_coexpression_databases() -> dict:
-    """获取可用的共表达数据库列表。
+    """List the available coexpression databases.
 
-    功能:
-        返回系统支持的所有共表达数据集，每个数据集包含
-        唯一标识 ID 和中文描述信息，供下游查询使用。
+    Purpose:
+        Return all coexpression datasets supported by the system, each with a
+        unique ID and a description, for downstream queries.
 
-    用法:
+    Usage:
         GET /api/coexpression/databases
-        无需参数。
+        No parameters.
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/coexpression/databases"
 
-        响应:
+        Response:
           {
             "success": true,
             "data": [
@@ -49,30 +49,31 @@ def query_coexpression(
     database: str = Query("CO_PRJEB25639"),
     filter_value: float = Query(300),
 ) -> dict:
-    """查询基因的共表达关系对。
+    """Query coexpression relationships for genes.
 
-    功能:
-        根据输入的基因 ID 列表，在指定的共表达数据库中查询
-        与该基因存在共表达关系的基因对。支持两种筛选模式:
-        - 小数模式（如 0.8）: 按 PCC (Pearson 相关系数) 筛选，
-          返回 |PCC| >= filter_value 的记录
-        - 整数模式（如 5）: 按 MR (Mutual Rank) 筛选，
-          返回 MR <= filter_value 的记录
+    Purpose:
+        Given a list of gene IDs, query the coexpression partners of these
+        genes in the specified coexpression database. Two filter modes are
+        supported:
+        - Decimal mode (e.g. 0.8): filter by PCC (Pearson correlation
+          coefficient), returning records with |PCC| >= filter_value
+        - Integer mode (e.g. 5): filter by MR (Mutual Rank), returning
+          records with MR <= filter_value
 
-    用法:
-        GET /api/coexpression/query?gene_ids=<基因1,基因2>&database=<数据库>&filter_value=<阈值>
-        - gene_ids: 必填，逗号分隔的基因 ID 列表
-        - database: 可选，共表达数据库 ID（CO_result2 或 CO_PRJEB25639），默认 CO_PRJEB25639
-        - filter_value: 可选，筛选阈值，默认 300（MR 模式）
+    Usage:
+        GET /api/coexpression/query?gene_ids=<gene1,gene2>&database=<database>&filter_value=<threshold>
+        - gene_ids: required, comma-separated list of gene IDs
+        - database: optional, coexpression database ID (CO_result2 or CO_PRJEB25639), default CO_PRJEB25639
+        - filter_value: optional, filter threshold, default 300 (MR mode)
 
-    案例:
-        请求 (PCC 模式):
+    Example:
+        Request (PCC mode):
           curl -X GET "http://localhost:8000/api/coexpression/query?gene_ids=TraesCS5A02G391700&database=CO_PRJEB25639&filter_value=0.9"
 
-        请求 (MR 模式):
+        Request (MR mode):
           curl -X GET "http://localhost:8000/api/coexpression/query?gene_ids=TraesCS5A02G391700&database=CO_PRJEB25639&filter_value=5"
 
-        响应:
+        Response:
           {
             "success": true,
             "data": {
@@ -224,12 +225,13 @@ def list_bioprojects(
 ) -> dict:
     """List bioproject metadata records.
 
-    功能:
-        返回 `coexpressiondb.bioproject_meta` 表中已爬取的 bioproject
-        元数据。可选按数据源过滤（NCBI/ENA/CNGB），可选按标题/描述/
-        物种做子串模糊搜索。
+    Purpose:
+        Return the bioproject metadata crawled into the
+        `coexpressiondb.bioproject_meta` table. Optionally filter by data
+        source (NCBI/ENA/CNGB), and optionally substring-search over
+        title / description / species.
 
-    用法:
+    Usage:
         GET /api/coexpression/projects
         GET /api/coexpression/projects?source=NCBI
         GET /api/coexpression/projects?q=wheat
@@ -259,7 +261,7 @@ def list_bioprojects(
 def get_bioproject(accession: str) -> dict:
     """Return one bioproject's metadata, 404 if absent.
 
-    用法:
+    Usage:
         GET /api/coexpression/projects/PRJNA976214
     """
     rows = _query_bioprojects(

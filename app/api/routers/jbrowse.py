@@ -53,13 +53,14 @@ def _loads_json(value):
 
 @router.get("/jbrowse/datasets")
 def list_jbrowse_datasets() -> dict:
-    """列出所有 JBrowse 数据集及轨道数。
+    """List all JBrowse datasets and their track counts.
 
-    用法:
+    Usage:
         GET /api/jbrowse/datasets
 
-    数据来自 jbrowse_meta.jbrowse_datasets（由 scripts/import_jbrowse_meta.py
-    从 JBrowse 数据目录的 trackList.json 导入）。
+    Data comes from jbrowse_meta.jbrowse_datasets (imported by
+    scripts/import_jbrowse_meta.py from the trackList.json files in the
+    JBrowse data directory).
     """
     with mysql_cursor(settings.DB_JBROWSE) as cursor:
         cursor.execute(
@@ -82,14 +83,16 @@ def list_jbrowse_datasets() -> dict:
 
 @router.get("/jbrowse/datasets/{dataset}/trackList")
 def get_jbrowse_tracklist(dataset: str) -> Response:
-    """返回某个数据集的 JBrowse trackList.json 配置。
+    """Return the JBrowse trackList.json config of a dataset.
 
-    用法:
+    Usage:
         GET /api/jbrowse/datasets/Chinese_Spring1.0/trackList
 
-    响应为裸的 JBrowse 配置对象（非统一 ok() 信封），与磁盘上的静态
-    trackList.json 等价：{formatVersion, dataset_id?, names?, tracks[]}。
-    tracks 按原始顺序（ord）重建，轨道对象逐字段保留。
+    The response is the bare JBrowse config object (not the unified ok()
+    envelope), equivalent to the static trackList.json on disk:
+    {formatVersion, dataset_id?, names?, tracks[]}.
+    Tracks are rebuilt in their original order (ord) and each track object is
+    preserved field by field.
     """
     _ensure_dataset_name(dataset)
 

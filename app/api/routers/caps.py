@@ -44,8 +44,8 @@ _REGION_RE = re.compile(r"^(.+?):(\d+)-(\d+)$")
 # Enzyme library
 # ---------------------------------------------------------------------------
 @router.get("/enzymes")
-def list_enzymes(q: str | None = Query(None, description="按酶名过滤")) -> dict:
-    """列出内置限制酶库（名称、识别序列、切点、是否常用）。"""
+def list_enzymes(q: str | None = Query(None, description="Filter by enzyme name")) -> dict:
+    """List the built-in restriction enzyme library (name, recognition sequence, cut positions, whether common)."""
     enzymes = RESTRICTION_ENZYMES
     if q:
         ql = q.lower()
@@ -71,14 +71,14 @@ class CapsDesignRequest(BaseModel):
     chrom: str | None = None
     # Shared
     enzymes: list[str] | None = Field(
-        None, description="酶名子集；null = 全部内置酶")
+        None, description="Subset of enzyme names; null = all built-in enzymes")
     custom_enzymes: list[dict] | None = Field(
-        None, description="自定义酶 [{'name','recognition','cut':[l,r]}]")
+        None, description="Custom enzymes [{'name','recognition','cut':[l,r]}]")
     mismatch_max: int = Field(1, ge=0, le=3)
     primer_len: tuple[int, int] = (20, 27)
     tm_range: tuple[float, float] = (55.0, 65.0)
     product_size: tuple[int, int] = (100, 1000)
-    flank: int = Field(250, ge=60, le=2000, description="坐标/VCF 模式下 SNP 两侧各取多少 bp")
+    flank: int = Field(250, ge=60, le=2000, description="How many bp to take on each side of the SNP in coordinate/VCF mode")
     top_n: int = Field(20, ge=1, le=100)
 
 
@@ -290,12 +290,12 @@ def _resolve_sequences(req: CapsDesignRequest) -> tuple[str, str, dict]:
 
 @router.post("/design")
 def design_caps_primers(req: CapsDesignRequest) -> dict:
-    """设计 CAPS/dCAPS 引物对（三种输入模式，见 CapsDesignRequest）。
+    """Design CAPS/dCAPS primer pairs (three input modes, see CapsDesignRequest).
 
-    用法:
+    Usage:
         POST /api/caps/design
         {
-          "seq1": "...", "seq2": "...",          // 模式 1：粘贴序列
+          "seq1": "...", "seq2": "...",          // mode 1: pasted sequences
           "mismatch_max": 1
         }
     """

@@ -23,35 +23,37 @@ def query_ppi(
     table: str = Query("PPI_result"),
     min_score: float = Query(0.5),
 ) -> dict:
-    """查询蛋白质互作（PPI）关系。
+    """Query protein-protein interaction (PPI) relationships.
 
-    ⚠️  基因 ID 说明:
-        本模块使用小麦蛋白互作数据（wheatPPI），基于中国春 IWGSC v2.1 注释。
-        需要输入转录本 ID（即基因 ID 后加 ".1" 后缀），例如
-        "TraesCS6D02G084800.1"。若输入不带 ".1" 的基因 ID，
-        查询将无法匹配到结果。
+    ⚠️  Gene ID notes:
+        This module uses wheat protein interaction data (wheatPPI), based on
+        the Chinese Spring IWGSC v2.1 annotation. Input must be transcript IDs
+        (the gene ID with a ".1" suffix appended), e.g.
+        "TraesCS6D02G084800.1". If a gene ID without ".1" is supplied, the
+        query will not match any results.
 
-    功能:
-        根据基因 ID 列表，在蛋白质互作数据库中查询与该蛋白
-        存在相互作用的蛋白对。返回互作双方的基因 ID、
-        eggNOG ID、功能注释和互作得分（Score）。
+    Purpose:
+        Given a list of gene IDs, query the protein pairs that interact with
+        those proteins in the protein interaction database. Returns the gene
+        IDs of both interacting partners, eggNOG IDs, functional annotations
+        and interaction scores (Score).
 
-        Score 筛选阈值说明（CF-MS 得分）:
-        - 0.5: 中等置信度（默认）
-        - 0.2: 低置信度
-        - 0: 不筛选，返回所有记录
+        Score threshold notes (CF-MS score):
+        - 0.5: medium confidence (default)
+        - 0.2: low confidence
+        - 0: no filtering, return all records
 
-    用法:
-        GET /api/ppi/query?gene_ids=<基因1,基因2>&table=<表名>&min_score=<最小得分>
-        - gene_ids: 必填，逗号分隔的基因 ID 列表（需带 ".1" 后缀的转录本 ID）
-        - table: 可选，PPI 数据表名，默认 PPI_result
-        - min_score: 可选，CF-MS 互作得分阈值，默认 0.5。常用值 0.5（中）、0.2（低）、0（全部）
+    Usage:
+        GET /api/ppi/query?gene_ids=<gene1,gene2>&table=<table>&min_score=<minimum score>
+        - gene_ids: required, comma-separated list of gene IDs (transcript IDs with the ".1" suffix)
+        - table: optional, PPI data table name, default PPI_result
+        - min_score: optional, CF-MS interaction score threshold, default 0.5. Common values: 0.5 (medium), 0.2 (low), 0 (all)
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/ppi/query?gene_ids=TraesCS6D02G084800.1&table=PPI_result&min_score=0.5"
 
-        响应:
+        Response:
           {
             "success": true,
             "data": {

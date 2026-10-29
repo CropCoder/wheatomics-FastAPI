@@ -1,31 +1,32 @@
-"""KnownGene 写接口路由：API Key 鉴权 + 新增 / 更新 / 批量 + 审计查询。
+"""KnownGene write API routes: API Key auth + create / update / bulk + audit query.
 
-挂载方式（main.py）::
+Mounting (main.py)::
 
     from app.api.routers import gene_write
     ... for router in [... gene_write]: app.include_router(router, prefix="/api")
 
-最终路径（prefix 已由 include_router 补 ``/api``，本文件不再写 ``/api``）:
+Final paths (include_router already adds the ``/api`` prefix, so this file never writes ``/api``):
 
 ===============================  ======  ========================================
-路径                             方法    说明
+Path                             Method  Description
 ===============================  ======  ========================================
-/api/genes/known/write           POST    新增一条 KnownGene（支持 dry_run）
-/api/genes/known/write/{clone_id} PATCH  按 clone_id 更新（只改传入字段，支持 dry_run）
-/api/genes/known/write/bulk      POST    批量新增/更新（≤500 行，支持 dry_run）
-/api/genes/known/write/changes   GET     审计日志查询（需要 admin scope）
-/api/genes/known/write/whoami    GET     当前 API Key 信息（任意有效 key）
+/api/genes/known/write           POST    Create one KnownGene (dry_run supported)
+/api/genes/known/write/{clone_id}  PATCH   Update by clone_id (only supplied fields change, dry_run supported)
+/api/genes/known/write/bulk      POST    Bulk create/update (<=500 rows, dry_run supported)
+/api/genes/known/write/changes   GET     Audit-log query (requires admin scope)
+/api/genes/known/write/whoami    GET     Current API Key info (any valid key)
 ===============================  ======  ========================================
 
-鉴权 / 限流 / 请求体保护见 ``app/core/known_gene_auth.py``；字段规格、派生、事务
-写入与审计见 ``app/services/known_gene_ingest.py``。返回统一 ``ok(...)`` 信封；
-错误用 401/403/404/409/413/422/429/503 + 中文 detail。
+Auth / rate limiting / request-body protection live in ``app/core/known_gene_auth.py``;
+field specs, derivation, transactional writes and auditing live in
+``app/services/known_gene_ingest.py``. Responses use the unified ``ok(...)`` envelope;
+errors use 401/403/404/409/413/422/429/503 + a Chinese detail message.
 
-安全设计（验收点）:
-- 校验/限流在依赖层完成，业务函数全部参数化 SQL（无字符串拼接值）；
-- 每次写操作与审计写**同一事务**（``with mysql_cursor(...)`` 成功才 commit）；
-- 更新前 ``SELECT ... FOR UPDATE`` 锁行，避免并发覆盖；
-- 日志只记录 key_id / label / key_prefix / client_ip，绝不记录 raw key。
+Security design (acceptance points):
+- validation / rate limiting happen in the dependency layer; all business functions use parameterized SQL (no string-concatenated values);
+- every write and its audit record share **one transaction** (``with mysql_cursor(...)`` commits only on success);
+- rows are locked with ``SELECT ... FOR UPDATE`` before update, avoiding concurrent overwrites;
+- logs record only key_id / label / key_prefix / client_ip, never the raw key.
 """
 
 from __future__ import annotations
@@ -58,15 +59,15 @@ router = APIRouter(prefix="/genes/known/write", tags=["Known Genes (write)"])
 
 #: 写端点通用错误响应说明（OpenAPI 文档用）。
 _WRITE_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
-    400: {"description": "请求体不是合法 JSON / 参数格式错误"},
-    401: {"description": "缺少或无效的 API Key（不存在/停用/过期统一 401）"},
-    403: {"description": "API Key scope 不足，或来源 IP 不在白名单"},
-    404: {"description": "clone_id 不存在"},
-    409: {"description": "(gene_id, gene_name) 已存在"},
-    413: {"description": "请求体超过 2MB"},
-    422: {"description": "业务字段校验失败（detail.errors 为逐条中文错误）"},
-    429: {"description": "超过每 Key 每分钟写请求上限"},
-    503: {"description": "鉴权表未初始化 / 数据库不可用"},
+    400: {"description": "Request body is not valid JSON / malformed parameters"},
+    401: {"description": "Missing or invalid API Key (not found / disabled / expired all return 401)"},
+    403: {"description": "API Key scope insufficient, or the source IP is not allowlisted"},
+    404: {"description": "clone_id does not exist"},
+    409: {"description": "(gene_id, gene_name) already exists"},
+    413: {"description": "Request body exceeds 2MB"},
+    422: {"description": "Business field validation failed (detail.errors lists each field error)"},
+    429: {"description": "Write requests per Key per minute exceeded"},
+    503: {"description": "Auth table not initialized / database unavailable"},
 }
 
 #: ``POST /`` 的 OpenAPI 请求体声明（实际解析用手写逻辑，以兼容"裸对象"形式）。
@@ -78,15 +79,15 @@ _CREATE_REQUEST_BODY: dict[str, Any] = {
                 "schema": {
                     "type": "object",
                     "description": (
-                        "推荐形式 {\"dry_run\": false, \"gene\": {...}}；"
-                        "也可直接把基因字段放在顶层（裸对象）。"
+                        "Recommended form {\"dry_run\": false, \"gene\": {...}}; "
+                        "the gene fields may also be placed at the top level (bare object)."
                     ),
                     "properties": {
                         "dry_run": {"type": "boolean", "default": False},
                         "gene": {
                             "type": "object",
                             "additionalProperties": True,
-                            "description": "基因字段；详见 GET /api/genes/known/write/whoami 同页文档字段表",
+                            "description": "Gene fields; see the field table in the docs on the GET /api/genes/known/write/whoami page",
                         },
                     },
                     "additionalProperties": True,
@@ -121,15 +122,15 @@ _PATCH_REQUEST_BODY: dict[str, Any] = {
                 "schema": {
                     "type": "object",
                     "description": (
-                        "推荐形式 {\"dry_run\": false, \"fields\": {...}}；"
-                        "也可直接把要改的字段放在顶层（裸对象）。"
+                        "Recommended form {\"dry_run\": false, \"fields\": {...}}; "
+                        "the fields to change may also be placed at the top level (bare object)."
                     ),
                     "properties": {
                         "dry_run": {"type": "boolean", "default": False},
                         "fields": {
                             "type": "object",
                             "additionalProperties": True,
-                            "description": "要更新的字段（白名单同新增，不含 clone_id）",
+                            "description": "Fields to update (same whitelist as create, excluding clone_id)",
                         },
                     },
                     "additionalProperties": True,
@@ -164,12 +165,12 @@ _BULK_REQUEST_BODY: dict[str, Any] = {
                             "type": "string",
                             "enum": ["insert_only", "upsert"],
                             "default": "upsert",
-                            "description": "insert_only：任一 (gene_id,gene_name) 已存在则整批拒绝；upsert：已存在则更新",
+                            "description": "insert_only: reject the whole batch if any (gene_id,gene_name) already exists; upsert: update it if it exists",
                         },
                         "dry_run": {
                             "type": "boolean",
                             "default": True,
-                            "description": "默认 true（先预演）；确认后再显式传 false 落库",
+                            "description": "Defaults to true (dry-run first); pass false explicitly to persist after confirming",
                         },
                     },
                     "additionalProperties": False,
@@ -202,7 +203,7 @@ _BULK_REQUEST_BODY: dict[str, Any] = {
 # 内部辅助
 # ---------------------------------------------------------------------------
 def _http_validation_error(exc: ingest.GeneWriteValidationError) -> HTTPException:
-    """业务校验错误 → 422（detail 保留逐条中文错误 + 提示）。"""
+    """Business validation error -> 422 (detail keeps the per-item error messages + hints)."""
 
     return HTTPException(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -211,7 +212,7 @@ def _http_validation_error(exc: ingest.GeneWriteValidationError) -> HTTPExceptio
 
 
 def _http_duplicate_error(exc: ingest.DuplicateGeneError) -> HTTPException:
-    """唯一键冲突 → 409。"""
+    """Unique-key conflict -> 409."""
 
     detail = (
         f"KnownGene 已存在：gene_id={exc.gene_id!r}, gene_name={exc.gene_name!r}"
@@ -222,13 +223,13 @@ def _http_duplicate_error(exc: ingest.DuplicateGeneError) -> HTTPException:
 
 
 def _detail_payload(row: dict) -> dict:
-    """DB 行 → 详情 payload（复用读接口 ``_row_to_known_detail``，形状完全一致）。"""
+    """DB row -> detail payload (reuses the read endpoint's ``_row_to_known_detail``; identical shape)."""
 
     return _row_to_known_detail(row).model_dump()
 
 
 def _iso(value: object) -> Optional[str]:
-    """date/datetime → ISO 字符串（审计/密钥信息返回用）。"""
+    """date/datetime -> ISO string (used in audit and key-info responses)."""
 
     if isinstance(value, (datetime, date)):
         return value.isoformat()
@@ -241,12 +242,13 @@ def _split_body(
     *,
     default_dry_run: bool = False,
 ) -> tuple[dict[str, Any], bool]:
-    """把请求体拆成 (字段 dict, dry_run)。
+    """Split the request body into (fields dict, dry_run).
 
-    兼容两种写法:
-    1. 推荐：``{"dry_run": false, "<nested_key>": {...}}``；
-    2. 便捷：裸字段对象（如 ``{"gene_id": "..."}``，不含 dry_run）。
-    嵌套字段名允许 ``gene``（新增）/ ``fields``（更新），见各端点 docstring。
+    Two forms are accepted:
+    1. Recommended: ``{"dry_run": false, "<nested_key>": {...}}``;
+    2. Convenience: a bare field object (e.g. ``{"gene_id": "..."}``, no dry_run).
+    The nested field name may be ``gene`` (create) or ``fields`` (update); see each
+    endpoint's docstring.
     """
 
     if "dry_run" in payload:
@@ -287,7 +289,7 @@ def _split_body(
 
 
 def _parse_bulk_payload(payload: dict[str, Any]) -> tuple[list[dict], str, bool]:
-    """解析批量请求体，返回 ``(rows, mode, dry_run)``。"""
+    """Parse the bulk request body and return ``(rows, mode, dry_run)``."""
 
     extra = sorted(set(payload) - {"rows", "mode", "dry_run"})
     if extra:
@@ -335,37 +337,40 @@ async def create_known_gene(
     request: Request,
     ctx: AuthContext = Depends(require_known_gene_scope("write")),
 ) -> dict:
-    """新增一条 KnownGene 记录（需要 write scope；支持 dry_run）。
+    """Create one KnownGene record (requires write scope; dry_run supported).
 
-    功能:
-        校验并写入一条已知功能基因记录，自动派生 ``species_primary``
-        （296 条原文映射 + 学名别名，回退时给 warning）、``chromosome``
-        （chrom_pos 的 chr 正则）和 ``publication_year``（多值年份的最小值）；
-        多值 ``paper_title`` / ``paper_doi`` / ``publication_years`` 接受 list 或
-        ``"; "`` 分隔字符串，按位置对齐后以 ``###`` 存库。
-        同一 (gene_id, gene_name) 重复 → 409。写入主表与审计
-        （``known_gene_change_log``，action=create，after_json=完整行）同一事务。
+    Purpose:
+        Validate and write one known-function gene record, automatically deriving
+        ``species_primary`` (296 source-text mappings + scientific-name aliases,
+        with a warning when falling back), ``chromosome`` (chr regex over chrom_pos)
+        and ``publication_year`` (minimum of the multi-valued years); multi-valued
+        ``paper_title`` / ``paper_doi`` / ``publication_years`` accept a list or a
+        ``"; "``-separated string, are aligned positionally and stored with ``###``.
+        A duplicate (gene_id, gene_name) -> 409. The main-table write and the audit
+        record (``known_gene_change_log``, action=create, after_json=full row) share
+        one transaction.
 
-    参数:
-        - ``dry_run``: true 时只校验/查重并返回"将要写入的完整记录"，不落库；
-        - ``gene``: 基因字段对象（也可直接把字段放顶层）。
-        必填: gene_id / gene_name / reference_genome_id / gene_species / chrom_pos /
-        gene_phenotype / functional_category / research_strategy / key_result；
-        且 paper_doi 与 paper_title 至少一个。
-        可选: protein_family / validation_method / cloning_method /
+    Parameters:
+        - ``dry_run``: when true, only validate/deduplicate and return the "record that would be written"; nothing is persisted;
+        - ``gene``: gene field object (the fields may also be placed at the top level).
+        Required: gene_id / gene_name / reference_genome_id / gene_species / chrom_pos /
+        gene_phenotype / functional_category / research_strategy / key_result;
+        and at least one of paper_doi and paper_title.
+        Optional: protein_family / validation_method / cloning_method /
         cloning_method_description / function_description / author / author_mail /
         submission_date / publication_year / publication_years / paper_title /
-        paper_doi；派生列 species_primary / chromosome 可显式覆盖（会校验）。
-        缺省: author='WheatOmics API'、author_mail='shengweima@icloud.com'、
-        submission_date=今天。
+        paper_doi; the derived columns species_primary / chromosome may be explicitly
+        overridden (they are validated).
+        Defaults: author='WheatOmics API', author_mail='shengweima@icloud.com',
+        submission_date=today.
 
-    用法:
+    Usage:
         POST /api/genes/known/write
-        Header: Authorization: Bearer kgw_xxx（或 X-API-Key: kgw_xxx）
+        Header: Authorization: Bearer kgw_xxx (or X-API-Key: kgw_xxx)
         Body: {"dry_run": false, "gene": {...}}
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X POST "http://localhost:8000/api/genes/known/write" \\
             -H "Authorization: Bearer $KNOWN_GENE_API_KEY" \\
             -H "Content-Type: application/json" \\
@@ -380,15 +385,15 @@ async def create_known_gene(
                   "key_result": "Overexpression improves drought tolerance.",
                   "paper_doi": "10.1007/s11103-007-9237-9"}}'
 
-        响应:
-          {"success": true, "message": "dry-run：校验通过，未写入",
+        Response:
+          {"success": true, "message": "dry-run: validation passed, nothing written",
            "timestamp": "...", "data": {"dry_run": true,
              "record": {"gene_id": "...", "species_primary": "Triticum aestivum",
                         "chromosome": "7B", "publication_year": 2007, ...},
              "warnings": []}}
 
-        落库响应 data: {"dry_run": false, "clone_id": 1626, "audit_id": 1,
-                        "record": {<detail 形状，同 /api/genes/known/{clone_id}>},
+        Persisted response data: {"dry_run": false, "clone_id": 1626, "audit_id": 1,
+                        "record": {<detail shape, same as /api/genes/known/{clone_id}>},
                         "warnings": []}
     """
 
@@ -479,37 +484,40 @@ async def update_known_gene(
     request: Request,
     ctx: AuthContext = Depends(require_known_gene_scope("write")),
 ) -> dict:
-    """按 clone_id 更新 KnownGene（需要 write scope；只改传入字段；支持 dry_run）。
+    """Update a KnownGene by clone_id (requires write scope; only supplied fields change; dry_run supported).
 
-    功能:
-        只更新 body 中出现的字段（白名单同新增，不含 clone_id）；源字段变化时
-        重算派生列（gene_species→species_primary、chrom_pos→chromosome、
-        publication_years→publication_year）。更新前 ``SELECT ... FOR UPDATE``
-        锁行；clone_id 不存在 → 404。审计写 before/after 完整行 +
-        真实变化列 ``changed_fields``，与 UPDATE 同一事务。
-        若传入值与库中完全一致，不执行 UPDATE、不写审计（changed_fields=[]）。
+    Purpose:
+        Update only the fields present in the body (same whitelist as create,
+        excluding clone_id); when a source field changes, recompute the derived
+        columns (gene_species->species_primary, chrom_pos->chromosome,
+        publication_years->publication_year). Rows are locked with
+        ``SELECT ... FOR UPDATE`` before update; a missing clone_id -> 404. The audit
+        record stores the full before/after rows plus the columns that actually
+        changed (``changed_fields``), in the same transaction as the UPDATE.
+        If the supplied values are identical to the stored row, no UPDATE is run and
+        no audit is written (changed_fields=[]).
 
-    参数:
-        - ``clone_id``: 路径参数，内部自增主键（详情页 URL 的 id）；
-        - ``dry_run``: true 时返回合并后的记录与 changed_fields，不落库；
-        - ``fields``: 要更新的字段对象（也可直接把字段放顶层）。
+    Parameters:
+        - ``clone_id``: path parameter, the internal auto-increment primary key (the id in the detail-page URL);
+        - ``dry_run``: when true, return the merged record and changed_fields without persisting;
+        - ``fields``: object of fields to update (the fields may also be placed at the top level).
 
-    用法:
+    Usage:
         PATCH /api/genes/known/write/{clone_id}
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X PATCH "http://localhost:8000/api/genes/known/write/1626" \\
             -H "Authorization: Bearer $KNOWN_GENE_API_KEY" \\
             -H "Content-Type: application/json" \\
             -d '{"fields": {"gene_phenotype": "Drought tolerance; Salt tolerance",
                             "publication_years": "2007; 2024"}}'
 
-        响应:
-          {"success": true, "message": "更新成功", "data": {
+        Response:
+          {"success": true, "message": "updated successfully", "data": {
             "dry_run": false, "clone_id": 1626, "audit_id": 2,
             "changed_fields": ["gene_phenotype", "publication_year", "publication_years"],
-            "record": {<detail 形状>}, "warnings": []}}
+            "record": {<detail shape>}, "warnings": []}}
     """
 
     payload = await read_json_object(request)
@@ -587,38 +595,41 @@ async def bulk_upsert_known_genes(
     request: Request,
     ctx: AuthContext = Depends(require_known_gene_scope("write")),
 ) -> dict:
-    """批量新增/更新 KnownGene（≤500 行/次，需要 write scope；默认 dry_run）。
+    """Bulk create/update KnownGene (<=500 rows per call, requires write scope; dry_run by default).
 
-    功能:
-        逐行按"完整新增记录"校验；``mode=insert_only`` 时任一
-        (gene_id, gene_name) 已存在则整批拒绝；``mode=upsert`` 时已存在则更新
-        （审计 action=bulk_update），否则插入（action=bulk_create）。
-        非 dry-run 时**全有或全无**：任一行校验失败 → 422 + 每行错误，不写库；
-        全部通过后所有行在同一事务内写入并逐行写审计。
-        dry_run（默认）返回每行 ``would_create`` / ``would_update`` / ``error``。
+    Purpose:
+        Validate each row as a "complete create record"; with ``mode=insert_only``
+        the whole batch is rejected if any (gene_id, gene_name) already exists;
+        with ``mode=upsert`` existing rows are updated (audit action=bulk_update),
+        otherwise inserted (action=bulk_create).
+        When not a dry run it is **all or nothing**: any row failing validation ->
+        422 + per-row errors, nothing is written; after all rows pass, every row is
+        written in one transaction with an audit record per row.
+        dry_run (the default) returns ``would_create`` / ``would_update`` / ``error``
+        for each row.
 
-    参数:
-        - ``rows``: 基因对象数组（每行字段规格同 POST /，必须完整）；
-        - ``mode``: ``insert_only`` | ``upsert``（默认 upsert）；
-        - ``dry_run``: 默认 true；确认预演结果后传 false 落库。
+    Parameters:
+        - ``rows``: array of gene objects (the per-row field spec is the same as POST / and must be complete);
+        - ``mode``: ``insert_only`` | ``upsert`` (default upsert);
+        - ``dry_run``: defaults to true; pass false to persist after confirming the dry-run result.
 
-    用法:
+    Usage:
         POST /api/genes/known/write/bulk
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X POST "http://localhost:8000/api/genes/known/write/bulk" \\
             -H "Authorization: Bearer $KNOWN_GENE_API_KEY" \\
             -H "Content-Type: application/json" \\
             -d '{"mode": "upsert", "dry_run": true, "rows": [{...}, {...}]}'
 
-        响应（dry-run）:
+        Response (dry-run):
           {"success": true, "data": {"created": 1, "updated": 0, "errors": 0,
             "dry_run": true, "total": 1,
             "results": [{"row": 1, "status": "would_create", "clone_id": null}],
             "audit_ids": []}}
 
-        落库响应 data: {"created": 0, "updated": 1, "errors": 0, "dry_run": false,
+        Persisted response data: {"created": 0, "updated": 1, "errors": 0, "dry_run": false,
             "total": 1, "results": [{"row": 1, "status": "updated", "clone_id": 1626,
             "audit_id": 3, "changed_fields": ["gene_phenotype"]}], "audit_ids": [3]}
     """
@@ -664,38 +675,39 @@ async def bulk_upsert_known_genes(
 # ---------------------------------------------------------------------------
 @router.get("/changes", responses=_WRITE_ERROR_RESPONSES)
 def list_known_gene_changes(
-    clone_id: Optional[int] = Query(None, description="只看某个 clone_id 的变更历史"),
+    clone_id: Optional[int] = Query(None, description="Only show the change history of a given clone_id"),
     action: Optional[str] = Query(
         None,
-        description="按动作过滤：create / update / delete / bulk_create / bulk_update",
+        description="Filter by action: create / update / delete / bulk_create / bulk_update",
     ),
-    since: Optional[str] = Query(None, description="起始时间（YYYY-MM-DD 或 ISO 8601）"),
-    limit: int = Query(50, ge=1, le=500, description="返回条数（默认 50，最大 500）"),
-    offset: int = Query(0, ge=0, description="分页偏移"),
+    since: Optional[str] = Query(None, description="Start time (YYYY-MM-DD or ISO 8601)"),
+    limit: int = Query(50, ge=1, le=500, description="Number of rows to return (default 50, max 500)"),
+    offset: int = Query(0, ge=0, description="Pagination offset"),
     include_snapshot: bool = Query(
         False,
-        description="是否返回 before/after 完整行快照（含长文本，默认不返回）",
+        description="Whether to return the full before/after row snapshots (includes long text; not returned by default)",
     ),
     ctx: AuthContext = Depends(require_known_gene_scope("admin")),
 ) -> dict:
-    """查询 KnownGene 写操作审计日志（需要 admin scope）。
+    """Query the KnownGene write audit log (requires admin scope).
 
-    功能:
-        返回 ``known_gene_change_log`` 记录（按 id 倒序），含动作、clone_id、
-        gene_id/gene_name、changed_fields、操作者 key label、client_ip、时间、
-        reason。默认不返回 before/after 快照（可能很大），
-        ``include_snapshot=true`` 时返回解析后的完整行 dict。
+    Purpose:
+        Return ``known_gene_change_log`` records (newest id first), including the
+        action, clone_id, gene_id/gene_name, changed_fields, actor key label,
+        client_ip, timestamp and reason. The before/after snapshots are not returned
+        by default (they can be large); with ``include_snapshot=true`` the parsed
+        full row dicts are returned.
 
-    用法:
+    Usage:
         GET /api/genes/known/write/changes?limit=20&action=update
-        Header: Authorization: Bearer kgw_xxx（需要 admin scope）
+        Header: Authorization: Bearer kgw_xxx (requires admin scope)
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl "http://localhost:8000/api/genes/known/write/changes?clone_id=1626&limit=10" \\
             -H "Authorization: Bearer $KNOWN_GENE_ADMIN_KEY"
 
-        响应:
+        Response:
           {"success": true, "data": {"total": 2, "limit": 10, "offset": 0,
             "records": [{"id": 2, "action": "update", "clone_id": 1626,
               "gene_id": "...", "gene_name": "...",
@@ -728,22 +740,23 @@ def list_known_gene_changes(
 def known_gene_write_whoami(
     ctx: AuthContext = Depends(verify_known_gene_key),
 ) -> dict:
-    """返回当前 API Key 的身份信息（任意有效 key 均可调用）。
+    """Return the identity info of the current API Key (any valid key may call it).
 
-    功能:
-        用于维护者自查：key_id、label、scopes、expires_at、last_used_at
-        （鉴权时已尽力更新 last_used_at）。响应**不含** key 本身或哈希。
+    Purpose:
+        For maintainer self-checks: key_id, label, scopes, expires_at,
+        last_used_at (auth refreshes last_used_at on a best-effort basis). The
+        response does **not** include the key itself or its hash.
 
-    用法:
+    Usage:
         GET /api/genes/known/write/whoami
         Header: Authorization: Bearer kgw_xxx
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl "http://localhost:8000/api/genes/known/write/whoami" \\
             -H "Authorization: Bearer $KNOWN_GENE_API_KEY"
 
-        响应:
+        Response:
           {"success": true, "data": {"key_id": 1, "label": "maintainer-key",
             "scopes": ["write"], "expires_at": "2027-10-28T00:00:00",
             "last_used_at": "2026-10-28T19:21:03"}}
