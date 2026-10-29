@@ -107,18 +107,15 @@ def motif_meta(c):
     _MOTIF_META_CACHE[key]=out
     return out
 
-def _upstream_rows(c,g,limit):
-    """Query hits per region id so idx_hits_region_start supplies the order.
-
-    Joining regions->hits makes SQLite plan a temp B-tree for ORDER BY; looking
-    the region ids up first keeps the scan ordered and lets LIMIT stop early.
-    """
+def _iter_upstream_rows(c,g,limit):
+    """Yield upstream hits per region id so idx_hits_region_start supplies the
+    order (a join makes SQLite plan a temp B-tree for ORDER BY)."""
     name,source=motif_metadata_columns(c)
     source_sql=f"m.{source}" if source else "NULL"
     region_ids=[r["region_id"] for r in c.execute(
         "SELECT region_id FROM regions WHERE gene_id=? AND kind='upstream' "
         "ORDER BY start0",(g,))]
-    rows=[]
+    n=0
     for rid in region_ids:
         sql=f"""SELECT h.hit_id,h.region_id,h.motif_id,h.chrom,h.start0,h.end0,
                       h.strand,h.score,h.pvalue,h.qvalue,h.matched_sequence,
@@ -127,38 +124,66 @@ def _upstream_rows(c,g,limit):
                       m.{name} AS motif_model,
                       {source_sql} AS motif_source
                FROM hits h LEFT JOIN motifs m ON m.motif_id=h.motif_id
-               WHERE h.region_id=? ORDER BY h.start0 LIMIT ?"""
-        rows+=[dict(x) for x in c.execute(sql,(rid,limit))]
-        if len(rows)>=limit:
-            break
-    return rows[:limit]
+               WHERE h.region_id=? ORDER BY h.start0"""
+        for row in c.execute(sql,(rid,)):
+            if n>=limit:
+                return
+            n+=1
+            yield dict(row)
 
 def shard_path(chrom):
     return SHARDS/f"{chrom}.sqlite"
 
-def _downstream_rows(c,gene,limit):
-    """Downstream hits live in the per-chromosome shard for this gene."""
+def _iter_downstream_rows(c,gene,limit):
+    """Yield downstream hits from the per-chromosome shard for this gene."""
     path=shard_path(gene.get("chrom") or "")
     if not path.is_file():
-        return []
+        return
     con=sqlite3.connect(path.resolve().as_uri()+"?mode=ro",uri=True)
     con.row_factory=sqlite3.Row
     try:
-        rows=[dict(x) for x in con.execute(
+        meta=motif_meta(c)
+        n=0
+        for row in con.execute(
             "SELECT hit_id,region_id,motif_id,chrom,start0,end0,strand,"
             "score,pvalue,qvalue,matched_sequence FROM hits "
-            "WHERE region_id=? ORDER BY start0 LIMIT ?",
-            (f"{gene['gene_id']}|downstream",limit))]
+            "WHERE region_id=? ORDER BY start0",
+            (f"{gene['gene_id']}|downstream",)):
+            if n>=limit:
+                break
+            n+=1
+            d=dict(row)
+            name,source=meta.get(d["motif_id"],(None,None))
+            d["motif_name"]=name
+            d["motif_model"]=name
+            d["motif_source"]=source
+            d["kind"]="downstream"
+            yield d
     finally:
         con.close()
-    meta=motif_meta(c)
-    for r in rows:
-        name,source=meta.get(r["motif_id"],(None,None))
-        r["motif_name"]=name
-        r["motif_model"]=name
-        r["motif_source"]=source
-        r["kind"]="downstream"
-    return rows
+
+def _upstream_rows(c,g,limit):
+    return list(_iter_upstream_rows(c,g,limit))
+
+def _downstream_rows(c,gene,limit):
+    return list(_iter_downstream_rows(c,gene,limit))
+
+def _iter_motifs(c,gene,region,limit):
+    """Motif hits in display order: upstream first, then downstream."""
+    kinds=REGION_KINDS[region]
+    n=0
+    if "upstream" in kinds:
+        for row in _iter_upstream_rows(c,gene["gene_id"],limit):
+            yield row
+            n+=1
+            if n>=limit:
+                return
+    if "downstream" in kinds and n<limit:
+        for row in _iter_downstream_rows(c,gene,limit-n):
+            yield row
+            n+=1
+            if n>=limit:
+                return
 
 def get_motifs(c,gene,region,limit):
     kinds=REGION_KINDS[region]
@@ -184,12 +209,15 @@ def profile(gene_id:str,region:str="upstream",motif_limit:int=Query(100,ge=1,le=
     g=valid_gene(gene_id)
     if region not in REGION_KINDS:
         raise HTTPException(400,"Invalid region")
-    with conn() as c:
+    c=conn()
+    try:
         gene=gene_lookup(c,g)
         if not gene:raise HTTPException(404,"Gene not present in regulatory.sqlite genes")
         motifs,truncated=get_motifs(c,gene,region,motif_limit)
         regions=[dict(r) for r in c.execute(
             "SELECT * FROM regions WHERE gene_id=? ORDER BY start0",(g,))]
+    finally:
+        c.close()
     tf=tf_info(g)
     expression=table(EXPR).get(g) if tf["is_candidate_tf"] else None
     return {"gene":gene,"tf":tf,"classification":classification(g),
@@ -217,7 +245,8 @@ def motif_variants(gene_id:str,dataset_id:str,region:str="upstream",
     if ds["status"]!="ready":raise HTTPException(409,f"Dataset not ready: {ds['status']}")
     if ds["assembly"]!="IWGSC RefSeq v1.0":raise HTTPException(409,"Assembly mismatch")
     ph=",".join("?"*len(kinds))
-    with conn() as c:
+    c=conn()
+    try:
         gene=gene_lookup(c,g)
         if not gene:raise HTTPException(404,"Gene not present")
         regions=[dict(r) for r in c.execute(
@@ -225,6 +254,8 @@ def motif_variants(gene_id:str,dataset_id:str,region:str="upstream",
             "ORDER BY start0",(g,*kinds))]
         if not regions:raise HTTPException(404,"Region not found")
         motifs,truncated=get_motifs(c,gene,region,motif_limit)
+    finally:
+        c.close()
     if truncated:raise HTTPException(413,"Too many motifs; raise motif_limit or narrow region")
     for r in regions:
         if r["end0"]-r["start0"]>100000:
@@ -303,16 +334,23 @@ def motifs_csv(gene_id:str,region:str="upstream",
     g=valid_gene(gene_id)
     if region not in REGION_KINDS:
         raise HTTPException(400,"Invalid region")
-    with conn() as c:
+    c=conn()
+    try:
         gene=gene_lookup(c,g)
-        if not gene:
-            raise HTTPException(404,"Gene not present")
-        motifs,_=get_motifs(c,gene,region,limit)
+    finally:
+        c.close()
+    if not gene:
+        raise HTTPException(404,"Gene not present")
     def rows():
-        for x in motifs:
-            yield [x["kind"],x.get("motif_model") or x.get("motif_name") or "Unannotated",
-                   x["motif_id"],x["chrom"],x["start0"]+1,x["end0"],x["strand"],
-                   x["score"],x["pvalue"],x.get("matched_sequence") or ""]
+        # One row at a time: a long export must not buffer the whole hit list.
+        con=conn()
+        try:
+            for x in _iter_motifs(con,gene,region,limit):
+                yield [x["kind"],x.get("motif_model") or x.get("motif_name") or "Unannotated",
+                       x["motif_id"],x["chrom"],x["start0"]+1,x["end0"],x["strand"],
+                       x["score"],x["pvalue"],x.get("matched_sequence") or ""]
+        finally:
+            con.close()
     return _csv_stream(f"{g}_motif_hits_{region.replace('+','_')}.csv",
                        MOTIF_CSV_HEADER,rows())
 
