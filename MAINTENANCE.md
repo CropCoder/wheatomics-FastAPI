@@ -168,16 +168,33 @@ makeblastdb 四个可执行文件、`BLAST_DB_PATH` 目录、job workdir 是否�
    ```
 4. 在 `main.py` 中导入并加入 `app.include_router()`
 
-### OpenAPI 分组说明
+### OpenAPI 文档语言规范（2026-10-29 起）
 
-模块说明表格在 `main.py` 的 `FastAPI(description=...)` 参数里维护，格式为字符串隐式连接：
+`/api/docs`、`/api/redoc` 与 `/api/openapi.json` 面向国际用户，**所有文档可见内容必须为英文**：
 
-```python
-"<tr><td><b>模块名</b></td><td><code>/api/path</code></td>"
-"<td>中文描述</td></tr>"
+- `FastAPI(description=...)` 的总览 / 模块表格（`main.py`；HTML 字符串用隐式连接，每行开头必须保留缩进，否则会失败；改完 `ast.parse()` 确认语法）；
+- 每个路由函数的 docstring（FastAPI 会把整段 docstring 渲染成 operation description）；
+- OpenAPI 可见的 `description=` / `summary=` 参数（`Query` / `Body` / `Header` / `Field`，**包括共享依赖里的 Header description**，例如 `app/core/known_gene_auth.py` 的 `X-API-Key`）；
+- Pydantic schema 的类 / 字段说明。
+
+运行期返回的中文提示、代码注释不在检查范围（可保留中文）。新增/修改接口后用检查脚本确认：
+
+```bash
+# 线上 schema（无需 Python 依赖，任何机器可跑）
+python3 scripts/check_api_docs_en.py --url https://wheatomics.sdau.edu.cn/api/openapi.json
+# 已下载的 schema 文件
+python3 scripts/check_api_docs_en.py --file /tmp/openapi.json
+# 服务器 conda zjw 环境下直接导入 app 生成 schema
+python3 scripts/check_api_docs_en.py
 ```
 
-每行开头必须保留缩进，否则 Python 字符串隐式连接会失败。修改后需 `ast.parse()` 确认语法正确。
+期望输出 `PASS: all docs-visible strings are English`。改完 Python 文档字符串后需重启 `wheatomics-api` 才会反映到线上 OpenAPI：
+
+```bash
+sudo -n systemctl restart wheatomics-api
+```
+
+模块说明表格仍按原格式在 `main.py` 的字符串隐式连接里维护（表格内容同样用英文）。
 
 ---
 

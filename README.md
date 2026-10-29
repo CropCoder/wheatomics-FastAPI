@@ -79,6 +79,8 @@ nohup gunicorn main:app \
 }
 ```
 
+接口文档（`/api/docs` Swagger UI、`/api/redoc` ReDoc、`/api/openapi.json`）的文档字符串统一为英文，面向国际用户；运行期提示文本与代码注释仍可为中文。可用 `python3 scripts/check_api_docs_en.py --url https://wheatomics.sdau.edu.cn/api/openapi.json` 校验。
+
 | 模块 | 前缀 | 主要功能 |
 |------|------|----------|
 | Genes | `/api/genes` | 已知基因搜索、详情、功能注释、基因提交与更新 |
