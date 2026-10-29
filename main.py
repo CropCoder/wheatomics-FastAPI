@@ -107,7 +107,7 @@ app = FastAPI(
         "本服务内置 MCP (Model Context Protocol) 服务器，"
         "AI Agent 可通过标准化协议直接调用数据接口。"
         "SSE 端点: <code>GET /api/mcp/sse</code>，消息端点: <code>POST /api/mcp/messages</code>。"
-        "详细说明见 <a href='https://wheatomics.sdau.edu.cn/V2/MCP-ServerUsage.html'>MCP 服务器文档</a>。"
+        "详细说明见 <a href='https://wheatomics.sdau.edu.cn/agent.html'>Agent &amp; API 接入文档</a>。"
         "<br>For issues and feedback, please email: "
         "<a href='mailto:shengweima@icloud.com'>shengweima@icloud.com</a>。"
     ),

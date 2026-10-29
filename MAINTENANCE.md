@@ -949,14 +949,40 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.htm
 | `app/static/_v2/shell.css` | V2.0 主题 + header/footer/hero 样式 + **Bootstrap 4 桥接**（`.card` / `.btn` / `.form-control` / `.table` / `.nav-tabs` / `.badge` / `.alert` / `.modal` / `.dropdown-menu` / `.pagination` / `.progress`、`h1–h4`、`.container`、`.text-muted`） |
 | `app/static/_v2/shell.js` | 注入 SVG sprite、header、footer；接管移动端菜单、下拉、Back to top、footer 访问统计；高亮当前模块导航 |
 | `app/static/_v2/template.html` | 转换模板（head + hero + main + footer 占位 + 脚本顺序） |
-| `app/static/_v2/README.md` | 逐页改造 checklist / 验证命令 / 页面清单 |
-| `scripts/extract_v2_shell.py` | 从 canonical BLAST 页（`app/static/blast2/index.html`，即线上 `/blast/blast.html`）重新抽取上述资产 |
+| `app/static/_v2/README.md` | 逐页改造 checklist / 验证命令 / 页面清单 / 顶部菜单结构 |
+| `scripts/extract_v2_shell.py` | 从 canonical BLAST 页（`app/static/blast2/index.html`，即线上 `/blast/blast.html`）重新抽取上述资产（CSS/theme） |
+| `scripts/update_v2_home_nav.py` | 给**仓库外**的生产 V2.0 首页（`/var/www/html/index.html` 与 `/V2.0/index.html`）同步顶部菜单 |
+| `scripts/remove_v2_home_tool.py` | 从**仓库外**生产首页移除已下线工具的两个入口（Tools 菜单项 + Analysis Tools 卡片），默认 `SyntenySearch` |
 
 - 服务地址：**`/api/v2shell/shell.css|shell.js|template.html`**（`main.py` 里 `app.mount("/api/v2shell", …)`）。
   放 `/api/` 前缀是有意为之：Apache 已把 `/api` 反代到 FastAPI，**新增挂载不需要改 Apache**。
-- 修改 chrome：改 canonical BLAST 页 → `python3 scripts/extract_v2_shell.py` → 提交生成物（勿手改 `_v2/shell.*`）。
+- 修改 chrome 分两类：
+  - **CSS / theme**：改 canonical BLAST 页 → `python3 scripts/extract_v2_shell.py` → 提交生成物；
+  - **header / footer / 导航**：`shell.js` 里的 `HEADER`/`FOOTER` 是 canonical chrome 的本地化镜像
+    （Home、`#tools`/`#data`/`#citation` 用根相对 `/…`，logo/footer 图走 `/api/v2shell/img/…` 以便
+    SPA 在无 docroot 的临时目录里也能预览）。因此导航改动要**手工同步到 `shell.js` 的 HEADER 字符串**，
+    同时改 `blast2/index.html`（canonical）、`wheatPTM/index.html`（内联整份 chrome）和
+    `coexpression/stats.html`（旧版 hover 导航）。改完再跑 extractor 时它会用 canonical header 覆盖
+    shell.js 的镜像版本，务必 review diff（详见 `app/static/_v2/README.md`）。
 - docroot 的 Bootstrap 4.5.3 是站点定制版：`.card-body` 有 6px `#1a659e` 顶条、`.card-title` 是
   `#00aadc` 居中。shell.css 的桥接已覆盖，老页面转换后不会串色。
+
+### 顶部菜单结构（2026-10-29 起）
+
+`Home · Tools（mega） · JBrowse ▾ · Download Data · Agent ▾ · More ▾`
+
+| 菜单 | 子项 |
+|---|---|
+| `Agent` ▾ | Agent & API（`/agent.html`，见下「仓库外页面收编」）、MCP Server (SSE)（`/agent.html#mcp`）、API Documentation（`/api/docs`）、API Reference（`/api/redoc`）、OpenAPI Schema（`/api/openapi.json`） |
+| `More` ▾ | External Links（`/outsitelink.html`，**不再是顶级菜单**）、Citation（`/#citation`）、News、Contact |
+
+- 旧菜单的 `About` 已整体改名为 `More`；`External Links` 从顶级链接移入 `More` 下拉第一项。
+- 站点根首页（以及兼容副本 `/V2.0/index.html`）不在本仓库：部署后用
+  `python3 scripts/update_v2_home_nav.py`（服务器 conda `zjw` 环境，支持 `--check` / `--dry-run`，
+  自动时间戳备份、幂等）把同样的 Agent/More 菜单补上；未部署该脚本前首页仍是旧菜单。
+- 2026-10-29 同时下线 `SyntenySearch`（`/symap/index.html`，其功能由 `Collinearity` 覆盖）：Tools 菜单项
+  已从仓库 3 处 chrome 与旧版 `coexpression/stats.html` 移除；仓库外首页的 Tools 菜单项和 Analysis
+  Tools 卡片用 `python3 scripts/remove_v2_home_tool.py` 移除（`/symap/` 页面本身保留，只是不再被链接）。
 
 ### 单页改造步骤（摘要，完整版见 `app/static/_v2/README.md`）
 
@@ -997,7 +1023,8 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/<module>/ --widt
 `app/static/docpages/` + `scripts/deploy_doc_pages.py` 管理（repo 为源，脚本负责带时间戳备份地
 发布到 `/var/www/html`；不需要改 Apache、不需要重启服务；支持 `--check/--dry-run/--only`）。
 覆盖页面：`/jbrowse.html`、`/download.html`、`/help/contact.html`、`/help/news.html`、
-`/outsitelink.html`、`/GeneHub/index.html`，以及 GeneHub 结果 CGI `/cgi-bin/geneDetail.py`
+`/outsitelink.html`、`/agent.html`（2026-10-29 新增：AI Agent (MCP) + REST API 说明页，头部
+`Agent` 菜单的落地页）、`/GeneHub/index.html`，以及 GeneHub 结果 CGI `/cgi-bin/geneDetail.py`
 （该 CGI 目标文件属 root：2026-10-27 已通过 docker root 步骤安装并上线，安装/回滚方式见
 `app/static/docpages/README.md`；以后更新这个 CGI 仍需一次 root/docker 操作）。
 
@@ -1013,6 +1040,16 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/<module>/ --widt
 
 - 只改静态文件也要 `sudo -n systemctl restart wheatomics-api`（StaticFiles 目录内容会即时生效，
   但 `/api/v2shell` 是 Python 侧挂载，需重启；重启后端口 8000 通常要 2–3 分钟才恢复监听，期间 Apache 返回 503 属正常）。
+- 2026-10-29 顶部菜单改造（About→More / External Links 二级化 / 新增 Agent 菜单）的部署顺序
+  （服务器上是 conda `zjw` 环境）：
+  1. `git pull`（更新 shell.js、blast2、wheatPTM、coexpression stats、docpages、脚本）；
+  2. `python3 scripts/deploy_doc_pages.py --only agent`（发布新 `/agent.html`）；
+  3. `python3 scripts/deploy_blast2_preview.py`（canonical BLAST 页在 docroot，需重新拷贝）；
+  4. `python3 scripts/update_v2_home_nav.py`（把同样的菜单补到仓库外首页 `/` 与 `/V2.0/`）；
+  5. `python3 scripts/remove_v2_home_tool.py`（移除 SyntenySearch 的首页 Tools 菜单项与工具卡片）；
+  6. `sudo -n systemctl restart wheatomics-api`；
+  7. 线上验收：`spa_visual_check.sh` 跑 `/blast/blast.html`、`/wheatPTM/`、`/outsitelink.html`、
+     `/agent.html`，并人工点开 Agent / More 下拉确认二级菜单。
 - 批量改造时按批次提交/部署，每批部署后跑一遍该批的线上 `spa_visual_check`。
 
 ### 进度清单（2026-10-27 全部完成）
@@ -1029,6 +1066,12 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/<module>/ --widt
   内容（仅把 `home.png` / `footer-plot.png` / `Logo-small.png` 改成 `/V2.0/…` 绝对路径），旧首页备份在
   `/var/www/html/index.html.bak-20261027_081021`；`/V2.0/` 目录保留兼容旧书签。同步把 shell / BLAST 页的
   Home、brand、`#tools`/`#data`/`#citation` 链接从 `/V2.0/` 改成 `/`。
+- **2026-10-29 顶部菜单改造**：`About` → `More`，`External Links` 移入 `More` 下拉（不再顶级），
+  新增 `Agent` 下拉（Agent & API / MCP Server / API docs / ReDoc / OpenAPI）。同步了 4 处 chrome
+  （`blast2` canonical、`_v2/shell.js`、`wheatPTM`、`coexpression/stats.html`），新增 docroot 页
+  `/agent.html`（`app/static/docpages/agent.html`），并新增 `scripts/update_v2_home_nav.py` 处理仓库外首页。
+  同日下线 `SyntenySearch`：仓库 4 处 chrome 删除其 Tools 菜单项，仓库外首页的菜单项与工具卡片由新增的
+  `scripts/remove_v2_home_tool.py` 移除（`/symap/` 页面保留但不被链接）。
 - ⚠️ `/neighborhood/` 的 Apache vhost **没有** `ProxyPass`，线上用 docroot 符号链接指向仓库目录：
   `ln -s /var/www/FastAPI_backend_Port8000/app/static/neighborhood /var/www/html/neighborhood`
   （`/var/www/html` 开了 `FollowSymLinks`，`git pull` 后自动生效；若以后补 ProxyPass 记得删符号链接）。

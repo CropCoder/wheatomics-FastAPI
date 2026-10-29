@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="WheatOmics 2.0 AI Agent and API access: connect the built-in MCP server over SSE, or query the public REST API with its unified JSON envelope and OpenAPI 3 schema.">
+  <title>Agent &amp; API | WheatOmics 2.0</title>
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="/api/v2shell/shell.css">
+  <style>
+    /* Page-specific layout only; the V2.0 theme (header, footer, hero, cards,
+       tables, inline code) comes from /api/v2shell/shell.css. */
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      align-items: start;
+    }
+    .agent-card { margin-bottom: 0; min-width: 0; }
+    .agent-card.wide { grid-column: 1 / -1; }
+    @media (max-width: 900px) {
+      /* minmax(0, 1fr) lets the card shrink below the table's min-width;
+         the table itself scrolls inside .agent-table-wrap. */
+      .agent-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    .agent-section { margin-top: 46px; scroll-margin-top: 96px; }
+    .agent-section:first-child { margin-top: 8px; }
+    .agent-section-head { max-width: 900px; margin-bottom: 22px; }
+    .agent-kicker {
+      margin: 0 0 10px;
+      color: var(--leaf);
+      font-family: var(--utility);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .agent-section-head h2 {
+      margin: 0 0 12px;
+      color: var(--forest-deep);
+      font-family: var(--display);
+      font-size: clamp(24px, 3.2vw, 34px);
+      font-weight: 800;
+      letter-spacing: -.045em;
+      line-height: 1.12;
+    }
+    .agent-intro { margin: 0; color: #4d6258; font-size: 14.5px; line-height: 1.8; }
+    .agent-intro a, .agent-card a, .agent-note a { color: var(--leaf); font-weight: 700; }
+    .agent-intro a:hover, .agent-card a:hover, .agent-note a:hover { color: var(--forest); }
+
+    .agent-card .card-body { padding: 20px 22px; }
+    .agent-card h3 {
+      margin: 0 0 10px;
+      color: var(--forest-deep);
+      font-family: var(--display);
+      font-size: 18px;
+      font-weight: 750;
+      letter-spacing: -.02em;
+      line-height: 1.3;
+    }
+    .agent-card p { margin: 0 0 12px; color: #4d6258; font-size: 14px; line-height: 1.75; }
+    .agent-card p:last-child { margin-bottom: 0; }
+    .agent-card .agent-small { color: #52665c; font-size: 12.5px; line-height: 1.7; }
+
+    .agent-table-wrap {
+      margin: 4px 0 0;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+    }
+    .agent-table { width: 100%; min-width: 540px; margin: 0; }
+    .agent-table thead th { white-space: nowrap; }
+    .agent-table td, .agent-table th { font-size: 12.5px; }
+    .agent-table tbody th { color: var(--forest-deep); font-weight: 700; white-space: nowrap; }
+    .agent-table td { color: #4d6258; line-height: 1.6; }
+    .agent-table td code, .agent-table th code { white-space: nowrap; font-size: 11.5px; }
+
+    .agent-code {
+      margin: 0 0 12px;
+      padding: 12px 14px;
+      overflow-x: auto;
+      color: #24483a;
+      background: var(--mist);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-family: var(--utility);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+    .agent-code code {
+      padding: 0;
+      color: inherit;
+      background: none;
+      font-family: inherit;
+      font-size: inherit;
+      white-space: pre;
+    }
+    .agent-code:last-child { margin-bottom: 0; }
+
+    .agent-note {
+      margin: 34px 0 0;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: #52665c;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    @media print {
+      .news-hero { background: #fff; box-shadow: none; }
+      .news-hero::before { display: none; }
+      .agent-grid { display: block; }
+      .agent-card { margin-bottom: 12px; break-inside: avoid; box-shadow: none; }
+      .agent-table-wrap, .agent-code { overflow: visible; }
+      .agent-table { min-width: 0; }
+      .agent-note a { color: inherit; }
+    }
+  </style>
+</head>
+<body>
+  <div id="v2-shell-header"></div>
+
+  <main id="main-content">
+    <section class="news-hero">
+      <div class="container news-hero-inner">
+        <div>
+          <p class="news-kicker">WheatOmics 2.0 · AI &amp; API</p>
+          <h1 class="news-title">Agent &amp; <em>API</em></h1>
+          <p class="news-lead">WheatOmics opens its wheat multi-omics data to AI agents and scripts: a built-in MCP server for tool-using LLM clients, plus a documented REST API for everything else.</p>
+          <div class="news-stats">
+            <span class="news-stat">MCP · Model Context Protocol</span>
+            <span class="news-stat">REST · JSON</span>
+            <span class="news-stat">OpenAPI 3</span>
+          </div>
+        </div>
+        <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-nodes"/></svg></div>
+      </div>
+    </section>
+
+    <section class="news-body">
+      <div class="container">
+
+        <!-- ============ A. MCP server ============ -->
+        <section class="agent-section" id="mcp" aria-labelledby="mcp-title">
+          <header class="agent-section-head">
+            <p class="agent-kicker">A · Model Context Protocol</p>
+            <h2 id="mcp-title">AI agents: built-in MCP server</h2>
+            <p class="agent-intro">WheatOmics runs an MCP (Model Context Protocol) server over SSE (Server-Sent Events), so an MCP-capable AI client can connect remotely, discover the tools below and call them as native tools. The server exposes sequence retrieval and CAPS/dCAPS primer design; the REST API described <a href="#api">in the next section</a> covers the remaining data modules.</p>
+          </header>
+
+          <div class="agent-grid">
+            <article class="card agent-card">
+              <div class="card-body">
+                <h3>Server and endpoints</h3>
+                <p>Connect to the public host <code>https://wheatomics.sdau.edu.cn</code>:</p>
+                <div class="agent-table-wrap">
+                  <table class="table agent-table">
+                    <thead>
+                      <tr><th scope="col">Item</th><th scope="col">Value</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><th scope="row">Server name</th><td><code>wheatomics</code></td></tr>
+                      <tr><th scope="row">Transport</th><td>SSE (Server-Sent Events)</td></tr>
+                      <tr><th scope="row">SSE endpoint</th><td><code>GET /api/mcp/sse</code></td></tr>
+                      <tr><th scope="row">Message endpoint</th><td><code>POST /api/mcp/messages</code></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </article>
+
+            <article class="card agent-card">
+              <div class="card-body">
+                <h3>Connect an MCP client</h3>
+                <p>Add the remote SSE server to your MCP client's JSON configuration. The <code>mcpServers</code> form shown here is what Cursor and many other clients use; some clients spell the key <code>servers</code> and accept the transport implicitly, so check your client's schema:</p>
+                <pre class="agent-code"><code>{
+  "mcpServers": {
+    "wheatomics": {
+      "type": "sse",
+      "url": "https://wheatomics.sdau.edu.cn/api/mcp/sse"
+    }
+  }
+}</code></pre>
+                <p>Claude Code can register the same server from a shell:</p>
+                <pre class="agent-code"><code>claude mcp add --transport sse wheatomics https://wheatomics.sdau.edu.cn/api/mcp/sse</code></pre>
+                <p>Check connectivity — the stream opens with an SSE <code>endpoint</code> event that carries the message URL:</p>
+                <pre class="agent-code"><code>curl -N https://wheatomics.sdau.edu.cn/api/mcp/sse</code></pre>
+                <p class="agent-small">Your client must support remote SSE MCP servers; local stdio-only clients cannot connect to this endpoint directly.</p>
+              </div>
+            </article>
+
+            <article class="card agent-card wide">
+              <div class="card-body">
+                <h3>Registered tools</h3>
+                <p>Four tools are registered on the server. Arguments are passed as the tool input object; errors come back as text so the model can adjust and retry.</p>
+                <div class="agent-table-wrap">
+                  <table class="table agent-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Tool</th>
+                        <th scope="col">Required arguments</th>
+                        <th scope="col">Optional arguments</th>
+                        <th scope="col">Returns</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>get_sequence_by_gene</code></td>
+                        <td><code>gene_id</code></td>
+                        <td><code>gene_db</code> (default <code>all_gene</code>), <code>protein_db</code> (default <code>all_protein</code>)</td>
+                        <td>Gene and protein FASTA records for one gene ID.</td>
+                      </tr>
+                      <tr>
+                        <td><code>get_sequence_by_interval</code></td>
+                        <td><code>region</code> (legacy format, e.g. <code>chr1A:10-100</code>), <code>database</code> (a genome database name)</td>
+                        <td>—</td>
+                        <td>FASTA sequence for the requested genomic interval.</td>
+                      </tr>
+                      <tr>
+                        <td><code>batch_sequence</code></td>
+                        <td><code>database</code>, <code>ids</code> (space-separated gene IDs)</td>
+                        <td>—</td>
+                        <td>Direct-entry FASTA records for multiple gene IDs.</td>
+                      </tr>
+                      <tr>
+                        <td><code>design_caps_primers</code></td>
+                        <td><code>seq1</code>, <code>seq2</code> (equal length, one base differs)</td>
+                        <td><code>mismatch_max</code> (0–3, default <code>1</code>), <code>top_n</code> (default <code>10</code>)</td>
+                        <td>Ranked CAPS/dCAPS designs with enzyme, primer sequences, mismatches, cut position and Tm.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ============ B. REST API ============ -->
+        <section class="agent-section" id="api" aria-labelledby="api-title">
+          <header class="agent-section-head">
+            <p class="agent-kicker">B · Representational State Transfer</p>
+            <h2 id="api-title">REST API</h2>
+            <p class="agent-intro">Every data module is also reachable over plain HTTP under the base URL <code>https://wheatomics.sdau.edu.cn/api</code>. The interactive references are the quickest way to explore the endpoints: <a href="/api/docs" target="_blank" rel="noopener">Swagger UI</a>, the <a href="/api/redoc" target="_blank" rel="noopener">ReDoc reference</a>, or the machine-readable <a href="/api/openapi.json" target="_blank" rel="noopener">OpenAPI 3.x schema</a>.</p>
+          </header>
+
+          <div class="agent-grid">
+            <article class="card agent-card">
+              <div class="card-body">
+                <h3>Response envelope</h3>
+                <p>Successful calls are wrapped consistently, with the payload under <code>data</code>:</p>
+                <pre class="agent-code"><code>{
+  "success": true,
+  "message": "ok",
+  "timestamp": "2026-10-29T02:15:00+00:00",
+  "data": { }
+}</code></pre>
+                <p>The <code>timestamp</code> is regenerated on every response. Validation errors (HTTP 422) and unexpected server errors (HTTP 500) return the same envelope with <code>"success": false</code>, an <code>error</code> summary and a <code>detail</code> field; endpoints can also answer with a plain HTTP error status and a <code>detail</code> message.</p>
+              </div>
+            </article>
+
+            <article class="card agent-card">
+              <div class="card-body">
+                <h3>Quick start</h3>
+                <p>Application metadata:</p>
+                <pre class="agent-code"><code>curl https://wheatomics.sdau.edu.cn/api/about</code></pre>
+                <p>It returns the API <code>name</code>, <code>version</code>, <code>docs</code>, <code>api_prefix</code>, <code>server_time</code> and <code>client_ip</code>.</p>
+                <p>One page of the curated known-gene list:</p>
+                <pre class="agent-code"><code>curl "https://wheatomics.sdau.edu.cn/api/genes/known/all?limit=2"</code></pre>
+                <p><code>GET /api/genes/known/all</code> accepts optional <code>limit</code> (1–5000) and <code>offset</code> (≥ 0); without <code>limit</code> it returns the full list.</p>
+              </div>
+            </article>
+
+            <article class="card agent-card wide">
+              <div class="card-body">
+                <h3>Main API modules</h3>
+                <p>These are the main module prefixes; the Swagger UI and ReDoc pages list every path and parameter in full.</p>
+                <div class="agent-table-wrap">
+                  <table class="table agent-table">
+                    <thead>
+                      <tr><th scope="col">Module</th><th scope="col">Prefix</th><th scope="col">Module</th><th scope="col">Prefix</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>Known Genes</td><td><code>/api/genes/known</code></td><td>Co-expression</td><td><code>/api/coexpression</code></td></tr>
+                      <tr><td>GeneHub</td><td><code>/api/genes/detail/{gene_id}</code></td><td>WheatPPI</td><td><code>/api/ppi</code></td></tr>
+                      <tr><td>PfamSearch</td><td><code>/api/genes/functions/pfam</code></td><td>Comparative</td><td><code>/api/comparative</code></td></tr>
+                      <tr><td>IntervalTool</td><td><code>/api/genes/functions/interval</code></td><td>Triticeae Papers</td><td><code>/api/papers</code></td></tr>
+                      <tr><td>Sequences</td><td><code>/api/sequence</code></td><td>GO / KEGG</td><td><code>/api/go</code> · <code>/api/kegg</code></td></tr>
+                      <tr><td>BLAST</td><td><code>/api/blast</code></td><td>VariantHub</td><td><code>/api/VariantHub</code></td></tr>
+                      <tr><td>Expression</td><td><code>/api/expression</code></td><td>eQTL Atlas</td><td><code>/api/eqtl</code></td></tr>
+                      <tr><td>OrthoFinder</td><td><code>/api/orthofinder</code></td><td>CAPS / dCAPS</td><td><code>/api/caps</code></td></tr>
+                      <tr><td>JBrowse</td><td><code>/api/jbrowse</code></td><td>PrimerServer2</td><td><code>/api/PrimerServer2</code></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </article>
+
+            <article class="card agent-card">
+              <div class="card-body">
+                <h3>Long-running BLAST jobs</h3>
+                <p>BLAST is asynchronous: <code>POST /api/blast/search</code> queues a job (form fields such as <code>program</code>, <code>database</code> and <code>query</code>), and <code>GET /api/blast/status/{job_id}</code> reports the status and download links. Send <code>wait=false</code> to get a <code>job_id</code> back immediately instead of waiting for the result.</p>
+              </div>
+            </article>
+
+            <article class="card agent-card">
+              <div class="card-body">
+                <h3>Why this matters for agents</h3>
+                <p>Give an LLM the <a href="/api/openapi.json" target="_blank" rel="noopener">OpenAPI JSON</a> — or connect the <a href="#mcp">MCP server</a> — and it can discover the available data endpoints and call them on its own. Responses are already machine-friendly JSON under the unified envelope, so no scraping or ad-hoc parsing is needed.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ============ C. Access & support ============ -->
+        <section class="agent-section" id="access" aria-labelledby="access-title">
+          <header class="agent-section-head">
+            <p class="agent-kicker">C · Access &amp; support</p>
+            <h2 id="access-title">Access &amp; support</h2>
+          </header>
+
+          <div class="agent-grid">
+            <article class="card agent-card">
+              <div class="card-body">
+                <h3>Access</h3>
+                <p>All read endpoints are public and need no API key. Write endpoints — such as the curated known-gene write API at <code>/api/genes/known/write</code> — require an API key issued by the maintainers; the key is sent in the <code>Authorization: Bearer</code> or <code>X-API-Key</code> header.</p>
+                <p>Keys are scoped, rate-limited and audited, and are only issued for curation work. Email <a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a> to request one or to report a problem.</p>
+              </div>
+            </article>
+
+            <article class="card agent-card">
+              <div class="card-body">
+                <h3>Support</h3>
+                <p>Questions, bug reports and feature requests are welcome by email at <a href="mailto:shengweima@icloud.com">shengweima@icloud.com</a>.</p>
+                <p>See the <a href="/help/contact.html">contact page</a> for the project team and the <a href="/help/news.html">news page</a> for updates about the platform and its data releases.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <p class="agent-note">Cite WheatOmics through the <a href="/#citation">platform citation on the homepage</a>. This page was last updated on 2026-10-29 and describes the MCP server and REST API as deployed at that time.</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="v2-shell-footer"></div>
+
+  <script src="/api/v2shell/shell.js"></script>
+</body>
+</html>

@@ -268,6 +268,9 @@ curl "https://wheatomics.sdau.edu.cn/api/blast/status"
 
 MCP 工具目前提供序列查询等功能，可通过配置 MCP 客户端连接使用。使用中遇到问题可邮件反馈至 shengweima@icloud.com。
 
+面向 Agent / API 用户的公开说明页：<https://wheatomics.sdau.edu.cn/agent.html>（MCP 工具、连接方式、REST API 模块与示例）。
+REST API 文档入口：`/api/docs`（Swagger UI）、`/api/redoc`（ReDoc）、`/api/openapi.json`（OpenAPI schema）。
+
 ## 配置说明
 
 所有配置通过环境变量注入，详见 `app/core/config.py`：

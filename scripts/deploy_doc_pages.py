@@ -43,6 +43,7 @@ PAGES = {
     "contact": ("help_contact.html", DOCROOT / "help" / "contact.html", "Contact page"),
     "news": ("help_news.html", DOCROOT / "help" / "news.html", "News & updates"),
     "outsitelink": ("outsitelink.html", DOCROOT / "outsitelink.html", "External links"),
+    "agent": ("agent.html", DOCROOT / "agent.html", "AI agent & API access"),
     "genehub_index": ("genehub_index.html", DOCROOT / "GeneHub" / "index.html", "GeneHub search page"),
     "genehub_result": ("geneDetail.py", CGI_BIN / "geneDetail.py", "GeneHub result CGI"),
 }
