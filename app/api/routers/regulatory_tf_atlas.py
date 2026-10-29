@@ -1,10 +1,11 @@
 """Mount with: from app.api.routers.regulatory_tf_atlas import router as tf_atlas_router
 app.include_router(tf_atlas_router)
 """
-import csv, sqlite3
+import csv, io, sqlite3
 from functools import lru_cache
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import StreamingResponse
 
 router=APIRouter(prefix="/api/regulatory/atlas",tags=["Regulatory TF Atlas"])
 ROOT=Path("/var/www/html/wheat-regulatory-hub/data/processed")
@@ -261,3 +262,56 @@ def motif_variants(gene_id:str,dataset_id:str,region:str="upstream",
             "items":_order(items),"truncated":variant_truncated,
             "vcf_records_examined":min(vcf_count,variant_limit),
             "note":"Genomic overlap only; no REF/ALT PWM effect"}
+
+# ---------------------------------------------------------------------------
+# CSV export. These stream every hit for the selected region rather than the
+# page's 500-row preview, so the download is the complete result set.
+# ---------------------------------------------------------------------------
+MOTIF_CSV_HEADER=["Region","Motif model","Motif ID","Chromosome",
+                  "Start (1-based)","End (1-based)","Strand","Score","p-value",
+                  "Matched sequence"]
+VARIANT_CSV_HEADER=["Region","Motif model","Motif ID","Chromosome",
+                    "Variant position","REF","ALT","Overlap (bp)"]
+
+def _csv_stream(filename,header,rows):
+    def gen():
+        buf=io.StringIO();writer=csv.writer(buf)
+        writer.writerow(header)
+        yield "﻿"+buf.getvalue()
+        for r in rows:
+            buf.seek(0);buf.truncate(0)
+            writer.writerow(r)
+            yield buf.getvalue()
+    return StreamingResponse(gen(),media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition":f'attachment; filename="{filename}"'})
+
+@router.get("/gene/{gene_id}/motifs.csv")
+def motifs_csv(gene_id:str,region:str="upstream",
+               limit:int=Query(200000,ge=1,le=1000000)):
+    g=valid_gene(gene_id)
+    if region not in REGION_KINDS:
+        raise HTTPException(400,"Invalid region")
+    with conn() as c:
+        gene=gene_lookup(c,g)
+        if not gene:
+            raise HTTPException(404,"Gene not present")
+        motifs,_=get_motifs(c,gene,region,limit)
+    def rows():
+        for x in motifs:
+            yield [x["kind"],x.get("motif_model") or x.get("motif_name") or "Unannotated",
+                   x["motif_id"],x["chrom"],x["start0"]+1,x["end0"],x["strand"],
+                   x["score"],x["pvalue"],x.get("matched_sequence") or ""]
+    return _csv_stream(f"{g}_motif_hits_{region.replace('+','_')}.csv",
+                       MOTIF_CSV_HEADER,rows())
+
+@router.get("/gene/{gene_id}/motif-variants.csv")
+def motif_variants_csv(gene_id:str,dataset_id:str,region:str="upstream"):
+    data=motif_variants(gene_id=gene_id,dataset_id=dataset_id,region=region,
+                        motif_limit=100000,variant_limit=50000,result_limit=50000)
+    def rows():
+        for x in data["items"]:
+            yield [x["region_kind"],
+                   x.get("motif_model") or x.get("motif_name") or "Unannotated",
+                   x["motif_id"],x["chrom"],x["pos1"],x["ref"],x["alt"],x["overlap_bp"]]
+    return _csv_stream(f"{valid_gene(gene_id)}_motif_variants_{region.replace('+','_')}.csv",
+                       VARIANT_CSV_HEADER,rows())

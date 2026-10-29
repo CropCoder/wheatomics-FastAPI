@@ -14,6 +14,7 @@ table.wide{min-width:940px}
 .seg{display:inline-flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .seg button{padding:6px 12px;font-size:13px;background:#e7efec;color:#16453e;border-color:#a7c5bb}
 .seg button.active{background:#206b5c;color:#fff;border-color:#206b5c}
+.seg button:disabled{opacity:.45;cursor:not-allowed}
 </style></head><body><main>
 <header><h1>Wheat TF & Regulatory Hub</h1><p>TF identity · Tissue expression · Promoter motifs · Regulatory variants</p></header>
 <section><label for="gene">Gene ID</label>
@@ -34,8 +35,8 @@ table.wide{min-width:940px}
 <button type="button" data-region="upstream">Upstream</button>
 <button type="button" data-region="downstream">Downstream</button>
 <button type="button" data-region="upstream+downstream">Upstream + downstream</button>
+<button id="download-motifs" type="button" disabled>Download CSV</button>
 </div>
-<button id="download-motifs" type="button" class="secondary" disabled>Download CSV</button>
 <p class="muted" id="motifstatus"></p>
 <div id="motifs" class="scroll"></div></section>
 <section id="variantsec" hidden><h2>Motif–Variant overlap</h2>
@@ -43,10 +44,10 @@ table.wide{min-width:940px}
 <button type="button" data-region="upstream">Upstream</button>
 <button type="button" data-region="downstream">Downstream</button>
 <button type="button" data-region="upstream+downstream">Upstream + downstream</button>
+<button id="download-variants" type="button" disabled>Download CSV</button>
 </div>
 <label>VariantHub dataset <select id="dataset"></select></label>
 <button id="variants">Intersect variants with motifs</button>
-<button id="download-variants" type="button" class="secondary" disabled>Download CSV</button>
 <p id="vstatus" class="muted"></p>
 <div id="varianttable" class="scroll"></div></section>
 <section><h2>Data citation</h2><small>Ren K., Wang Y., Cui Y., et al. (2026).
@@ -63,8 +64,6 @@ let currentGene="";
 let motifRegion="upstream";
 let variantRegion="upstream";
 let lastExpression=null;
-let lastMotifs=[];
-let lastVariantItems=[];
 function text(el,s){el.textContent=s==null?"":String(s)}
 function table(rows,columns,opts){
 opts=opts||{};
@@ -93,28 +92,18 @@ function bindRegions(id,setter,rerun){$(id).querySelectorAll("button[data-region
 btn.addEventListener("click",()=>{setter(btn.dataset.region);markActive(id,btn.dataset.region);rerun()})})}
 function regionLabel(r){return{"upstream":"upstream","downstream":"downstream","upstream+downstream":"upstream + downstream"}[r]||r}
 function dash(v){return v==null||v===""?"—":v}
-function safeName(s){return String(s||"gene").replace(/[^A-Za-z0-9_.-]+/g,"_")}
-function csvCell(v){const s=v==null?"":String(v);return '"'+s.replace(/"/g,'""')+'"'}
-function downloadCsv(filename,header,rows){
-const lines=[header.map(csvCell).join(",")];
-for(const r of rows)lines.push(r.map(csvCell).join(","));
-const blob=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
-const a=document.createElement("a");
-a.href=URL.createObjectURL(blob);a.download=filename;
-document.body.appendChild(a);a.click();document.body.removeChild(a);
-URL.revokeObjectURL(a.href)}
-const MOTIF_CSV_HEADER=["Region","Motif model","Motif ID","Chromosome","Start (1-based)","End (1-based)","Strand","Score","p-value","Matched sequence"];
-const VARIANT_CSV_HEADER=["Region","Motif model","Motif ID","Chromosome","Variant position","REF","ALT","Overlap (bp)"];
+// Downloads are served by the API so the file holds every hit for the selected
+// region, not just the 500 rows the table previews.
 function downloadMotifs(){
-if(!lastMotifs.length)return;
-downloadCsv(`${safeName(currentGene)}_motif_hits_${safeName(motifRegion)}.csv`,MOTIF_CSV_HEADER,
-lastMotifs.map(x=>[x.kind,x.motif_model||x.motif_name||"Unannotated",x.motif_id,x.chrom,
-x.start0+1,x.end0,x.strand,x.score,x.pvalue,x.matched_sequence||""]))}
+if(!currentGene)return;
+location.href="/api/regulatory/atlas/gene/"+encodeURIComponent(currentGene)
+ +"/motifs.csv?region="+encodeURIComponent(motifRegion)}
 function downloadVariants(){
-if(!lastVariantItems.length)return;
-downloadCsv(`${safeName(currentGene)}_motif_variants_${safeName(variantRegion)}.csv`,VARIANT_CSV_HEADER,
-lastVariantItems.map(x=>[x.region_kind||"",x.motif_model||x.motif_name||"Unannotated",x.motif_id,
-x.chrom,x.pos1,x.ref,x.alt,x.overlap_bp]))}
+if(!currentGene)return;
+const ds=$("dataset").value;if(!ds)return;
+location.href="/api/regulatory/atlas/gene/"+encodeURIComponent(currentGene)
+ +"/motif-variants.csv?dataset_id="+encodeURIComponent(ds)
+ +"&region="+encodeURIComponent(variantRegion)}
 const ID_SUP={"TF classification":"a","PlantTFDB":"b","Classification from Reference":"c","IWGSC RefSeq v1.1 TF_family":"d"};
 const ID_TITLES={
 "TF classification":"Transcription factor family classification based on PlantTFDB, published papers and genome annotation.",
@@ -151,8 +140,7 @@ $("exprsec").hidden=false;$("show-expr").textContent="Hide expression across 26 
 }else{$("exprsec").hidden=true;$("show-expr").textContent="Show expression across 26 tissues"}
 }
 function renderMotifTable(motifs){
-lastMotifs=motifs||[];
-$("download-motifs").disabled=!lastMotifs.length;
+$("download-motifs").disabled=false;
 $("motifs").replaceChildren();
 const rows=motifs.map(x=>({
   "Region":x.kind,
@@ -172,7 +160,7 @@ $("motifs").appendChild(table(rows,["Region","Motif model","Motif ID","Chromosom
 async function loadMotifs(){
 const g=currentGene||$("gene").value.trim();if(!g)return;
 text($("motifstatus"),`Loading ${regionLabel(motifRegion)} motif hits...`);
-lastMotifs=[];$("download-motifs").disabled=true;
+$("download-motifs").disabled=true;
 $("motifs").replaceChildren();
 try{const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(g)+"?region="+encodeURIComponent(motifRegion)+"&motif_limit=500");
 renderMotifTable(d.motifs);
@@ -198,7 +186,7 @@ text($("status"),`Loaded ${currentGene}.`);
 }
 async function variants(){if(!currentGene)return;const id=$("dataset").value;
 text($("vstatus"),"Checking genomic overlap...");$("varianttable").replaceChildren();
-lastVariantItems=[];$("download-variants").disabled=true;
+$("download-variants").disabled=true;
 try{const q=new URLSearchParams({dataset_id:id,region:variantRegion});
 const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(currentGene)+"/motif-variants?"+q);
 $("varianttable").appendChild(table(d.items.map(x=>({
@@ -210,11 +198,10 @@ $("varianttable").appendChild(table(d.items.map(x=>({
   "REF":x.ref,"ALT":x.alt,
   "Overlap (bp)":x.overlap_bp
 })),["Region","Motif model","Motif ID","Chromosome","Variant position","REF","ALT","Overlap (bp)"]));
-lastVariantItems=d.items||[];
-$("download-variants").disabled=!lastVariantItems.length;
+$("download-variants").disabled=false;
 text($("vstatus"),`${d.items.length} motif–variant intersections in ${regionLabel(variantRegion)}${d.truncated?" (truncated)":""}; genomic overlap only, no PWM effect.`);
 }catch(e){text($("vstatus"),"Error: "+e.message)}}
-function clearAll(){currentGene="";lastExpression=null;lastMotifs=[];lastVariantItems=[];
+function clearAll(){currentGene="";lastExpression=null;
 $("download-motifs").disabled=true;$("download-variants").disabled=true;
 $("gene").value="";
 for(const id of ["profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
