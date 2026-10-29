@@ -23,7 +23,7 @@ from app.api.routers.regulatory import router as regulatory_router
 from app.api.routers.regulatory_integration import router as regulatory_integration_router
 from app.api.routers.regulatory_tf_atlas import router as regulatory_tf_atlas_router
 from app.core.config import settings
-from app.mcp.sequence_tools import sequence_mcp_server
+from app.mcp.wheatomics_tools import wheatomics_mcp_server
 from app.primerserver2.dependencies import verify_api_key
 from app.primerserver2.routers import config as ps2_config
 from app.primerserver2.routers import jobs as ps2_jobs
@@ -105,7 +105,8 @@ app = FastAPI(
         "</table>"
 
         "<h2>AI Agent access (MCP)</h2>"
-        "This service embeds an MCP (Model Context Protocol) server, so AI agents can call the data endpoints through a standardized protocol. "
+        "This service embeds an MCP (Model Context Protocol) server with 28 data tools, two documentation "
+        "resources and a copy-ready prompt, so AI agents can query the platform through a standardized protocol. "
         "SSE endpoint: <code>GET /api/mcp/sse</code>; message endpoint: <code>POST /api/mcp/messages</code>. "
         "See <a href='https://wheatomics.sdau.edu.cn/agent.html'>Agent &amp; API documentation</a> for details."
         "<br>For issues and feedback, please email: "
@@ -285,10 +286,10 @@ async def mcp_sse_endpoint(request: Request):
         request.receive, 
         request._send
     ) as (read_stream, write_stream):
-        await sequence_mcp_server.run(
+        await wheatomics_mcp_server.run(
             read_stream, 
             write_stream, 
-            sequence_mcp_server.create_initialization_options()
+            wheatomics_mcp_server.create_initialization_options()
         )
 
 async def mcp_messages_endpoint(request: Request):
