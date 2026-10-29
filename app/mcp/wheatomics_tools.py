@@ -201,9 +201,78 @@ async def _run_tool(name: str, arguments: dict[str, Any]) -> Any:
     if name in _SYNC_TOOLS:
         fn, extra = _SYNC_TOOLS[name]
         kwargs = _build_kwargs(fn, arguments, extra)
+        # Some route handlers are async even though they do trivial work
+        # (e.g. blast_job_status / list_databases); awaiting is both correct
+        # and cheaper than a thread hop. Everything else is blocking DB or
+        # subprocess work and belongs in a thread.
+        if inspect.iscoroutinefunction(fn):
+            return await fn(**kwargs)
         return await asyncio.to_thread(lambda: fn(**kwargs))
 
     raise ValueError(f"Unknown tool: {name}")
+
+
+#: Compact views for the two tools whose raw REST payload is too large to put
+#: into an agent context (expression projects ~600 KB, BLAST databases ~600 KB).
+def _compact_expression_projects(result: dict, include_details: bool) -> dict:
+    if include_details:
+        return result
+    data = result.get("data", {})
+    projects = data.get("projects", []) if isinstance(data, dict) else []
+    compact = [
+        {
+            "id": project.get("id"),
+            "description": project.get("description"),
+            "categories": project.get("categories"),
+            "group": project.get("group"),
+            "subgroup": project.get("subgroup"),
+        }
+        for project in projects
+    ]
+    return {
+        "success": result.get("success", True),
+        "count": len(compact),
+        "projects": compact,
+        "hint": "Compact catalog. Use include_details=true or GET /api/expression/projects for citations and the nested group tree.",
+    }
+
+
+def _compact_blast_databases(
+    result: dict, include_databases: bool, include_metadata: bool
+) -> dict:
+    if include_metadata:
+        return result
+    protein = result.get("protein", {}) or {}
+    nucleotide = result.get("nucleotide", {}) or {}
+    protein_dbs = protein.get("databases", []) or []
+    nucleotide_dbs = nucleotide.get("databases", []) or []
+    categories = [
+        {
+            "id": category.get("id"),
+            "label": category.get("label"),
+            "description": category.get("description"),
+            "count": category.get("count"),
+        }
+        for category in (result.get("categories", []) or [])
+    ]
+    compact = {
+        "success": result.get("success", True),
+        "program": result.get("program"),
+        "total": result.get("total"),
+        "kind_counts": result.get("kind_counts"),
+        "protein": {"count": protein.get("count"), "databases": protein_dbs},
+        "nucleotide": {
+            "count": nucleotide.get("count"),
+            "databases": nucleotide_dbs if include_databases else nucleotide_dbs[:80],
+        },
+        "categories": categories,
+        "hint": (
+            "Compact summary: all protein database names plus a sample of nucleotide names. "
+            "Use include_databases=true for every name, include_metadata=true for per-database metadata, "
+            "or call with program=blastn/blastp to narrow the list."
+        ),
+    }
+    return compact
 
 
 # ---------------------------------------------------------------------------
@@ -234,6 +303,14 @@ async def handle_call_tool(name: str, arguments: dict | None) -> list[types.Text
     try:
         async with semaphore:
             result = await _run_tool(name, arguments)
+        if name == "list_expression_projects":
+            result = _compact_expression_projects(result, bool(arguments.get("include_details", False)))
+        elif name == "list_blast_databases":
+            result = _compact_blast_databases(
+                result,
+                bool(arguments.get("include_databases", False)),
+                bool(arguments.get("include_metadata", False)),
+            )
         return [types.TextContent(type="text", text=_as_text(result))]
     except Exception as exc:  # noqa: BLE001 - MCP protocol wants text errors
         return [

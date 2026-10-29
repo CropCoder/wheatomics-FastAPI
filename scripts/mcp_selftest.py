@@ -131,7 +131,26 @@ async def in_process(include_blast: bool) -> int:
     ]
     for name, args, *rest in samples:
         await call(name, args, bool(rest and rest[0]))
-        failures += 0
+
+    # Large list tools must return a compact view by default (agent context safety).
+    expr_text = (await wt.handle_call_tool("list_expression_projects", {}))[0].text
+    if len(expr_text) < 80_000 and '"projects"' in expr_text:
+        _ok("compact list_expression_projects", f"{len(expr_text)} chars")
+    else:
+        _fail("compact list_expression_projects", f"{len(expr_text)} chars")
+        failures += 1
+    blast_text = (await wt.handle_call_tool("list_blast_databases", {}))[0].text
+    if len(blast_text) < 50_000 and '"protein"' in blast_text:
+        _ok("compact list_blast_databases", f"{len(blast_text)} chars")
+    else:
+        _fail("compact list_blast_databases", f"{len(blast_text)} chars")
+        failures += 1
+    blast_all = (await wt.handle_call_tool("list_blast_databases", {"include_databases": True}))[0].text
+    if len(blast_all) > len(blast_text):
+        _ok("list_blast_databases include_databases", f"{len(blast_all)} chars")
+    else:
+        _fail("list_blast_databases include_databases", f"{len(blast_all)} chars")
+        failures += 1
 
     if include_blast:
         from app.api.routers.blast import delete_blast_job

@@ -213,8 +213,16 @@ TOOL_SPECS: list[dict] = [
     _tool(
         "list_expression_projects",
         "Expression & networks",
-        "List the gene-expression projects available for query_expression (project keys and descriptions).",
-        {},
+        "List the gene-expression projects available for query_expression (project keys, descriptions, "
+        "categories and genome groups). Returns a compact catalog by default; set include_details=true "
+        "for the raw REST payload with citations and the nested group tree (large, ~600 KB).",
+        {
+            "include_details": _p(
+                "boolean",
+                "Return the raw REST payload (citations + nested group tree, ~600 KB)",
+                default=False,
+            ),
+        },
         [],
     ),
     _tool(
@@ -421,12 +429,20 @@ TOOL_SPECS: list[dict] = [
         "list_blast_databases",
         "Genomes, JBrowse & BLAST",
         "List BLAST databases grouped by protein/nucleotide and genome category. Use it to choose valid "
-        "database names for submit_blast.",
+        "database names for submit_blast. Returns a compact summary by default (all protein databases, a "
+        "sample of nucleotide database names and per-category counts); set include_databases=true for every "
+        "database name (large) or include_metadata=true for the full REST payload with per-database metadata.",
         {
             "program": _p(
                 "string",
                 "Restrict to one program's databases",
                 enum=["blastp", "blastn", "blastx", "tblastn", "tblastx"],
+            ),
+            "include_databases": _p("boolean", "Return every database name (large, ~100 KB)", default=False),
+            "include_metadata": _p(
+                "boolean",
+                "Return the full REST payload with per-database metadata (very large, ~600 KB)",
+                default=False,
             ),
         },
         [],
