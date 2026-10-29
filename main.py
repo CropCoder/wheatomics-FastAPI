@@ -36,7 +36,8 @@ from mcp.server import Server
 from mcp.server.sse import SseServerTransport
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 
-from starlette.routing import Mount, Route
+from starlette.responses import Response
+from starlette.routing import Route
 
 
 
@@ -343,17 +344,32 @@ app.routes.append(Route("/api/mcp/sse", endpoint=mcp_sse_endpoint, methods=["GET
 app.routes.append(Route("/api/mcp/messages", endpoint=mcp_messages_endpoint, methods=["POST"]))
 
 
-async def mcp_http_app(scope, receive, send):
-    """Raw ASGI app for MCP Streamable HTTP (stateless; multi-worker safe).
+class _NoOpResponse(Response):
+    """Placeholder response while the response itself has already been sent."""
 
-    The session manager writes the HTTP response itself, so it must be mounted
-    as an ASGI app instead of a Starlette endpoint (an endpoint wrapper would
-    attempt a second response send on every request).
+    async def __call__(self, scope, receive, send) -> None:  # noqa: D401 - ASGI no-op
+        return
+
+
+async def mcp_http_endpoint(request: Request):
+    """Handle MCP Streamable HTTP requests (stateless; multi-worker safe).
+
+    ``StreamableHTTPSessionManager`` writes the HTTP response itself over the
+    raw ASGI send channel. A Starlette ``Route`` still expects the endpoint to
+    return a response and would send a second one (previous "TypeError: NoneType
+    object is not callable"), so return a no-op response. Using a route (instead
+    of a Mount) keeps the canonical ``/api/mcp`` path without a 307 redirect.
     """
-    await mcp_http_manager.handle_request(scope, receive, send)
+    await mcp_http_manager.handle_request(request.scope, request.receive, request._send)
+    return _NoOpResponse()
 
 
-app.routes.append(Mount("/api/mcp", app=mcp_http_app))
+app.routes.append(
+    Route("/api/mcp/", endpoint=mcp_http_endpoint, methods=["GET", "POST", "DELETE"])
+)
+app.routes.append(
+    Route("/api/mcp", endpoint=mcp_http_endpoint, methods=["GET", "POST", "DELETE"])
+)
 
 @app.get("/api/about")
 async def root(request: Request) -> dict:
