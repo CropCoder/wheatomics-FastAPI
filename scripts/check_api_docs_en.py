@@ -29,6 +29,12 @@ import json
 import re
 import sys
 import urllib.request
+from pathlib import Path
+
+# Allow `python3 scripts/check_api_docs_en.py` to import the repo's `main` module.
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 CJK = re.compile(r"[\u4e00-\u9fff]")
 METHODS = {"get", "post", "put", "patch", "delete", "options", "head"}
