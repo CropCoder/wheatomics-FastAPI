@@ -154,7 +154,8 @@ def get_motifs(c,gene,region,limit):
         rows+=_upstream_rows(c,gene["gene_id"],limit+1)
     if "downstream" in kinds:
         rows+=_downstream_rows(c,gene,limit+1)
-    rows.sort(key=lambda r:(r["start0"],r["hit_id"]))
+    # Upstream rows first, then downstream; position order within each block.
+    rows.sort(key=lambda r:(0 if r["kind"]=="upstream" else 1,r["start0"],r["hit_id"]))
     return rows[:limit],len(rows)>limit
 
 @router.get("/search")
@@ -217,6 +218,10 @@ def motif_variants(gene_id:str,dataset_id:str,region:str="upstream",
             raise HTTPException(413,"Region too large for interactive VCF scan")
     items=[];vcf_count=0;variant_truncated=False
     seen=set()
+    def _order(rows):
+        """Upstream hits first, then downstream; position order within each."""
+        return sorted(rows,key=lambda x:(0 if x["region_kind"]=="upstream" else 1,
+                                         x["variant_start0"],x["hit_id"]))
     try:
         with pysam.VariantFile(ds["vcf_path"]) as vcf:
             for r in regions:
@@ -247,12 +252,12 @@ def motif_variants(gene_id:str,dataset_id:str,region:str="upstream",
                               "overlap_bp":right-left,"dataset_id":dataset_id})
                             if len(items)>=result_limit:
                                 return {"gene_id":g,"dataset_id":dataset_id,
-                                    "region":region,"regions":regions,"items":items,
+                                    "region":region,"regions":regions,"items":_order(items),
                                     "truncated":True,"note":"Genomic overlap only; no REF/ALT PWM effect"}
                 if variant_truncated:break
     except (OSError,ValueError) as exc:
         raise HTTPException(422,f"VCF query failed: {str(exc)[:250]}")
     return {"gene_id":g,"dataset_id":dataset_id,"region":region,"regions":regions,
-            "items":items,"truncated":variant_truncated,
+            "items":_order(items),"truncated":variant_truncated,
             "vcf_records_examined":min(vcf_count,variant_limit),
             "note":"Genomic overlap only; no REF/ALT PWM effect"}

@@ -14,7 +14,6 @@ table.wide{min-width:940px}
 .seg{display:inline-flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .seg button{padding:6px 12px;font-size:13px;background:#e7efec;color:#16453e;border-color:#a7c5bb}
 .seg button.active{background:#206b5c;color:#fff;border-color:#206b5c}
-.legend{display:block;margin-top:10px;color:#63776f}
 </style></head><body><main>
 <header><h1>Wheat TF & Regulatory Hub</h1><p>TF identity · Tissue expression · Promoter motifs · Regulatory variants</p></header>
 <section><label for="gene">Gene ID</label>
@@ -27,13 +26,7 @@ table.wide{min-width:940px}
 <p class="muted" id="genemeta"></p>
 <div id="tfinfo"></div>
 <p><button id="show-expr" type="button" class="secondary">Show expression across 26 tissues</button></p>
-<small class="legend">
-<sup>a</sup> Gene stable ID v1.1 represents the stable gene identifier from IWGSC RefSeq v1.1.<br>
-<sup>b</sup> Transcription factor family classification based on PlantTFDB, published papers and genome annotation.<br>
-<sup>c</sup> Transcription factor family classification from PlantTFDB.<br>
-<sup>d</sup> Transcription factor family classification from "Ramírez-González RH, Borrill P, Lang D, et al. The transcriptional landscape of polyploid wheat. Science. 2018;361(6403):eaar6089. doi:10.1126/science.aar6089."<br>
-<sup>e</sup> "IWGSC RefSeq v1.1 TF_family" factor family classification based on the genome annotation of IWGSC RefSeq v1.1.
-</small></section>
+</section>
 <section id="exprsec" hidden><h2>Expression across 26 tissues</h2>
 <p class="muted">Tissue expression data are from Ren et al. (2026).</p><div id="expr"></div></section>
 <section id="motifsec" hidden><h2>Motif hits</h2>
@@ -69,9 +62,16 @@ let variantRegion="upstream";
 let lastExpression=null;
 function text(el,s){el.textContent=s==null?"":String(s)}
 function table(rows,columns,opts){
+opts=opts||{};
 const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
-if(opts&&opts.wide)t.className="wide";
-for(const c of columns){const th=document.createElement("th");text(th,c);tr.appendChild(th)}
+if(opts.wide)t.className="wide";
+for(const c of columns){const th=document.createElement("th");
+th.appendChild(document.createTextNode(c));
+const sup=opts.sup&&opts.sup[c];
+if(sup){const s=document.createElement("sup");s.textContent=sup;th.appendChild(s)}
+const tip=opts.titles&&opts.titles[c];
+if(tip){th.title=tip;th.style.cursor="help"}
+tr.appendChild(th)}
 const body=t.createTBody();for(const r of rows){const tr=body.insertRow();for(const c of columns){const td=tr.insertCell();text(td,r[c])}}
 return t}
 async function api(path){const r=await fetch(path);let x;try{x=await r.json()}catch{x={detail:"Invalid JSON response"}}
@@ -88,16 +88,22 @@ function bindRegions(id,setter,rerun){$(id).querySelectorAll("button[data-region
 btn.addEventListener("click",()=>{setter(btn.dataset.region);markActive(id,btn.dataset.region);rerun()})})}
 function regionLabel(r){return{"upstream":"upstream","downstream":"downstream","upstream+downstream":"upstream + downstream"}[r]||r}
 function dash(v){return v==null||v===""?"—":v}
+const ID_SUP={"TF classification":"a","PlantTFDB":"b","Classification from Reference":"c","IWGSC RefSeq v1.1 TF_family":"d"};
+const ID_TITLES={
+"TF classification":"Transcription factor family classification based on PlantTFDB, published papers and genome annotation.",
+"PlantTFDB":"Transcription factor family classification from PlantTFDB.",
+"Classification from Reference":'Transcription factor family classification from "Ramírez-González RH, Borrill P, Lang D, et al. The transcriptional landscape of polyploid wheat. Science. 2018;361(6403):eaar6089. doi:10.1126/science.aar6089."',
+"IWGSC RefSeq v1.1 TF_family":'"IWGSC RefSeq v1.1 TF_family" factor family classification based on the genome annotation of IWGSC RefSeq v1.1.'};
 function renderIdentity(d){
 const g=d.gene||{},c=d.classification||{},tf=d.tf||{};
 const row={
-"Gene stable ID v1.1 a":dash(g.gene_id||currentGene),
+"Gene stable ID v1.1":dash(g.gene_id||currentGene),
 "Gene name":dash(c.gene_name),
-"TF classification b":dash(c.tf_classification),
-"PlantTFDB c":dash(c.planttfdb),
-"Classification from Reference d":dash(c.ref_classification),
-"IWGSC RefSeq v1.1 TF_family e":dash(c.iwgsc_v11_tf_family)};
-$("geneinfo").replaceChildren(table([row],Object.keys(row)));
+"TF classification":dash(c.tf_classification),
+"PlantTFDB":dash(c.planttfdb),
+"Classification from Reference":dash(c.ref_classification),
+"IWGSC RefSeq v1.1 TF_family":dash(c.iwgsc_v11_tf_family)};
+$("geneinfo").replaceChildren(table([row],Object.keys(row),{sup:ID_SUP,titles:ID_TITLES}));
 const meta=[`${g.chrom}:${g.start0+1}-${g.end0}`,`strand ${g.strand}`];
 if(c.transcript_length)meta.push(`transcript ${c.transcript_length} bp`);
 if(c.gc_content)meta.push(`GC ${c.gc_content}%`);
@@ -117,19 +123,9 @@ $("expr").appendChild(table(rows,["Tissue","TPM"]))}
 $("exprsec").hidden=false;$("show-expr").textContent="Hide expression across 26 tissues"
 }else{$("exprsec").hidden=true;$("show-expr").textContent="Show expression across 26 tissues"}
 }
-async function search(){
-const g=$("gene").value.trim();if(!g)return;
-text($("status"),"Loading...");for(const id of ["profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
-try{const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(g)+"?region="+encodeURIComponent(motifRegion)+"&motif_limit=500");
-currentGene=d.gene.gene_id;
-lastExpression=d.expression||null;
-$("expr").replaceChildren();
-$("show-expr").textContent="Show expression across 26 tissues";
-$("show-expr").hidden=!lastExpression;
-renderIdentity(d);
-$("profile").hidden=false;
+function renderMotifTable(motifs){
 $("motifs").replaceChildren();
-const motifRows=d.motifs.map(x=>({
+const rows=motifs.map(x=>({
   "Region":x.kind,
   "Motif model":x.motif_model||x.motif_name||"Unannotated",
   "Motif ID":x.motif_id,
@@ -141,7 +137,30 @@ const motifRows=d.motifs.map(x=>({
   "p-value":x.pvalue,
   "Matched sequence":x.matched_sequence||""
 }));
-$("motifs").appendChild(table(motifRows,["Region","Motif model","Motif ID","Chromosome","Start (1-based)","End (1-based)","Strand","Score","p-value","Matched sequence"]));
+$("motifs").appendChild(table(rows,["Region","Motif model","Motif ID","Chromosome","Start (1-based)","End (1-based)","Strand","Score","p-value","Matched sequence"]))}
+// Refresh only the motif table so switching region does not collapse and
+// re-expand the page (which scrolled the view back to the top).
+async function loadMotifs(){
+const g=currentGene||$("gene").value.trim();if(!g)return;
+text($("motifstatus"),`Loading ${regionLabel(motifRegion)} motif hits...`);
+$("motifs").replaceChildren();
+try{const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(g)+"?region="+encodeURIComponent(motifRegion)+"&motif_limit=500");
+renderMotifTable(d.motifs);
+text($("motifstatus"),`${d.motifs.length} motif hits in ${regionLabel(motifRegion)}${d.motifs_truncated?" (truncated, showing the first 500)":""}.`);
+}catch(e){text($("motifstatus"),"Error: "+e.message)}
+}
+async function search(){
+const g=$("gene").value.trim();if(!g)return;
+text($("status"),"Loading...");for(const id of ["profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
+try{const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(g)+"?region="+encodeURIComponent(motifRegion)+"&motif_limit=500");
+currentGene=d.gene.gene_id;
+lastExpression=d.expression||null;
+$("expr").replaceChildren();
+$("show-expr").textContent="Show expression across 26 tissues";
+$("show-expr").hidden=!lastExpression;
+renderIdentity(d);
+$("profile").hidden=false;
+renderMotifTable(d.motifs);
 $("motifsec").hidden=false;$("variantsec").hidden=false;
 text($("motifstatus"),`${d.motifs.length} motif hits in ${regionLabel(motifRegion)}${d.motifs_truncated?" (truncated, showing the first 500)":""}.`);
 text($("status"),`Loaded ${currentGene}.`);
@@ -171,7 +190,7 @@ $("gene").focus()}
 $("search").addEventListener("click",search);$("clear").addEventListener("click",clearAll);$("variants").addEventListener("click",variants);
 $("show-expr").addEventListener("click",toggleExpr);
 $("gene").addEventListener("keydown",e=>{if(e.key==="Enter")search()});
-bindRegions("motif-regions",r=>{motifRegion=r},search);
+bindRegions("motif-regions",r=>{motifRegion=r},loadMotifs);
 bindRegions("variant-regions",r=>{variantRegion=r},variants);
 markActive("motif-regions",motifRegion);markActive("variant-regions",variantRegion);
 loadDatasets();search();
