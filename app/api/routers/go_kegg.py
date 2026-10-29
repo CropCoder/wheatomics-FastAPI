@@ -207,11 +207,11 @@ class EnrichmentResponse(BaseModel):
 @router.post(
     "/go",
     summary="GO Enrichment Analysis",
-    description="对用户提交的基因列表进行 **GO (Gene Ontology) 富集分析**。\n\n"
-                "**统计方法**: 超几何检验 (hypergeometric test) + Benjamini-Hochberg FDR 多重检验校正。\n\n"
-                "**背景基因集**: wheat_function.gene_go 中所有有 GO 注释的基因。\n\n"
-                "**输入**: 基因 ID 列表 (IWGSC RefSeq v1.1, 如 `TraesCS1A02G045300.1`)。\n\n"
-                "**输出**: 显著富集的 GO term 列表。",
+    description="Run **GO (Gene Ontology) enrichment analysis** on the gene list submitted by the user.\n\n"
+                "**Statistical method**: hypergeometric test + Benjamini-Hochberg FDR multiple-testing correction.\n\n"
+                "**Background gene set**: all genes with GO annotations in wheat_function.gene_go.\n\n"
+                "**Input**: list of gene IDs (IWGSC RefSeq v1.1, e.g. `TraesCS1A02G045300.1`).\n\n"
+                "**Output**: list of significantly enriched GO terms.",
     response_model=EnrichmentResponse,
 )
 @router.post("/go-kegg/go", include_in_schema=False)
@@ -297,11 +297,11 @@ def go_enrichment(req: EnrichmentRequest):
 @router.post(
     "/kegg",
     summary="KEGG Pathway Enrichment Analysis",
-    description="对用户提交的基因列表进行 **KEGG 通路富集分析**。\n\n"
-                "**统计方法**: 超几何检验 + Benjamini-Hochberg FDR 校正。\n\n"
-                "**背景基因集**: wheat_function.gene_kegg 中所有有 KEGG 注释的基因。\n\n"
-                "**映射链**: gene_id → KO → pathway (通过 ko_pathway 和 kegg_pathway 表关联)。\n\n"
-                "**输入/输出**: 格式与 GO 富集一致。",
+    description="Run **KEGG pathway enrichment analysis** on the gene list submitted by the user.\n\n"
+                "**Statistical method**: hypergeometric test + Benjamini-Hochberg FDR correction.\n\n"
+                "**Background gene set**: all genes with KEGG annotations in wheat_function.gene_kegg.\n\n"
+                "**Mapping chain**: gene_id → KO → pathway (linked through the ko_pathway and kegg_pathway tables).\n\n"
+                "**Input/Output**: same format as GO enrichment.",
     response_model=EnrichmentResponse,
 )
 @router.post("/go-kegg/kegg", include_in_schema=False)

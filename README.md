@@ -277,7 +277,7 @@ REST API 文档入口：`/api/docs`（Swagger UI）、`/api/redoc`（ReDoc）、
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `APP_NAME` | 应用名称 | WheatOmics API for Ai Agent - FastAPI |
+| `APP_NAME` | 应用名称 | WheatOmics API for AI Agent - FastAPI |
 | `APP_VERSION` | 版本号 | 2.0 |
 | `API_PREFIX` | API 路由前缀 | /api |
 | `DEBUG` | 调试模式 | true |

@@ -1,17 +1,18 @@
-"""Genome registry (基因组信息库) routes.
+"""Genome registry routes.
 
 The authoritative store is ``wheatomics_db.genome_registry``, rebuilt from
 platform facts by ``scripts/rebuild_genome_registry.py``:
 
-- JBrowse 数据集目录
-- Genefuncdb.Genefunc_registry（基因注释表 / DOI / 倍数性）
-- getfasta blastdb（核酸库 / CDS/PEP 库 / .fai）
-- blast.html（Web BLAST 前端分组）
-- all_genomes.nal（getfasta 聚合库成员）
-- synteny_mysql.genome_info / orthofinder_n.genome_type（比较基因组 / OrthoFinder 登记）
+- JBrowse dataset directory
+- Genefuncdb.Genefunc_registry (gene annotation table / DOI / ploidy)
+- getfasta blastdb (nucleotide DB / CDS/PEP DB / .fai)
+- blast.html (Web BLAST frontend groups)
+- all_genomes.nal (getfasta aggregate DB members)
+- synteny_mysql.genome_info / orthofinder_n.genome_type (comparative genomics / OrthoFinder registry)
 
-每条记录同时保留 ``aliases_json``（各模块中的命名）与 ``usage_json``
-（网站各模块使用证据：表名 / 路径 / 接口），便于溯源追踪。
+Each record keeps both ``aliases_json`` (naming in each module) and
+``usage_json`` (evidence of use by each site module: table name / path /
+endpoint) so that provenance can be traced.
 """
 
 from __future__ import annotations
@@ -62,7 +63,7 @@ def _decode_json(row: dict) -> dict:
 
 @router.get("/genomes/stats")
 def genome_registry_stats() -> dict:
-    """基因组信息库统计（按倍数性/注释状态/模块覆盖）。"""
+    """Genome registry statistics (by ploidy / annotation status / module coverage)."""
     with mysql_cursor(settings.DB_LITERATURE) as cursor:
         cursor.execute(
             "SELECT ploidy, COUNT(*) AS n FROM genome_registry "
@@ -97,19 +98,19 @@ def genome_registry_stats() -> dict:
 
 @router.get("/genomes")
 def list_genomes(
-    ploidy: str | None = Query(None, description="按倍数性过滤，如 AABBDD / AABBRR"),
+    ploidy: str | None = Query(None, description="Filter by ploidy, e.g. AABBDD / AABBRR"),
     annotation_status: str | None = Query(
-        None, description="注释状态：none / pending / available"
+        None, description="Annotation status: none / pending / available"
     ),
     has_annotation: bool | None = Query(
-        None, description="True=仅有注释；False=无注释/待补"
+        None, description="True = annotated only; False = unannotated / pending"
     ),
-    q: str | None = Query(None, description="按 dataset_id/展示名/物种/品种模糊搜索"),
-    include_hidden: bool = Query(False, description="是否包含 visible=0 的记录"),
+    q: str | None = Query(None, description="Fuzzy search over dataset_id / display_name / species / cultivar"),
+    include_hidden: bool = Query(False, description="Whether to include records with visible=0"),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ) -> dict:
-    """列出基因组信息库记录（支持倍数性/注释状态/关键词过滤）。"""
+    """List genome registry records (filterable by ploidy / annotation status / keyword)."""
     where: list[str] = []
     params: list[object] = []
     if ploidy:
@@ -159,7 +160,7 @@ def list_genomes(
 
 @router.get("/genomes/{dataset_id}")
 def get_genome(dataset_id: str) -> dict:
-    """单条基因组记录（含 aliases_json / usage_json 完整溯源信息）。"""
+    """Single genome record (with full provenance in aliases_json / usage_json)."""
     dataset = _ensure_dataset_name(dataset_id)
     with mysql_cursor(settings.DB_LITERATURE) as cursor:
         cursor.execute(

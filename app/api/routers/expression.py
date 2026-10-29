@@ -18,21 +18,22 @@ router = APIRouter(prefix="/expression", tags=["Expression"])
 
 @router.get("/projects")
 def get_expression_projects() -> dict:
-    """获取可用的基因表达项目列表。
+    """Get the list of available gene expression projects.
 
-    功能:
-        返回系统支持的所有表达谱项目，按分类（Tissue、Abiotic、Biotic、Development）
-        组织，每个项目包含名称和对应的数据表名。
+    Purpose:
+        Return all expression profiling projects supported by the system, organized
+        by category (Tissue, Abiotic, Biotic, Development); each project contains
+        its name and the corresponding data table name.
 
-    用法:
+    Usage:
         GET /api/expression/projects
-        无需参数。
+        No parameters required.
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/expression/projects"
 
-        响应:
+        Response:
           {
             "success": true,
             "data": {
@@ -56,34 +57,37 @@ def query_expression(
     gene_ids: str | list[str] = Query(
         ...,
         description="Gene IDs: comma-separated string (gene_ids=a,b) or repeated "
-                    "params (gene_ids=a&gene_ids=b). 表达数据基于中国春 IWGSC v2.1 (02G)，详见注释。"),
+                    "params (gene_ids=a&gene_ids=b). Expression data is based on Chinese Spring IWGSC v2.1 (02G); see the notes."),
     project: str = Query("PRJEB5314_paired_tbl", examples=["PRJEB5314_paired_tbl", "PRJEB25639_tbl", "ABA_JA_6BA_DMSO3h_mean_tbl"]),
 ) -> dict:
-    """查询基因在指定表达项目中的表达量。
+    """Query gene expression values in a given expression project.
 
-    功能:
-        查询一个或多个基因在指定表达谱项目中的表达值及标准差。
-        支持多个基因同时查询（逗号分隔字符串或重复参数），返回每个基因
-        在不同实验条件下的表达量点数据（含误差棒）。
-        响应为平台标准信封 {success, message, timestamp, data}。
+    Purpose:
+        Query the expression values and standard deviations of one or more genes
+        in a given expression profiling project. Multiple genes can be queried at
+        once (comma-separated string or repeated parameters); returns each gene's
+        expression points under different experimental conditions (with error bars).
+        The response uses the platform's standard envelope
+        {success, message, timestamp, data}.
 
-    ⚠️  基因 ID 版本说明:
-        表达量数据基于中国春 IWGSC v2.1 注释（基因 ID 含 02G 格式）。
-        如果输入的是 v1（01G）或 v3（03G）格式的基因 ID，API 会自动
-        将其转换为 v2 后再查询。转换结果记录在响应的 genes_converted 字段中。
-        若转换失败则按原始 ID 查询，此时大概率会返回基因未找到。
+    ⚠️  Gene ID version note:
+        Expression data is based on the Chinese Spring IWGSC v2.1 annotation
+        (gene IDs use the 02G format). If a v1 (01G) or v3 (03G) gene ID is
+        provided, the API converts it to v2 before querying. Conversion results
+        are recorded in the response's genes_converted field. If conversion fails,
+        the query uses the original ID and most likely returns gene not found.
 
-    用法:
-        GET /api/expression/query?gene_ids=<基因1,基因2>&project=<项目表名>
-        - gene_ids: 必填，逗号分隔的基因 ID 列表（或重复 gene_ids 参数）
-        - project: 可选，表达项目表名，默认 PRJEB5314_paired_tbl
+    Usage:
+        GET /api/expression/query?gene_ids=<gene1,gene2>&project=<project table name>
+        - gene_ids: required, comma-separated gene ID list (or repeated gene_ids parameters)
+        - project: optional, expression project table name, default PRJEB5314_paired_tbl
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/expression/query?gene_ids=TraesCS5A02G391700&project=PRJEB5314_paired_tbl"
           curl -X GET "http://localhost:8000/api/expression/query?gene_ids=TraesCS5A02G391700&gene_ids=TraesCS1A02G001000"
 
-        响应:
+        Response:
           {
             "success": true, "message": "ok", "timestamp": "...",
             "data": {

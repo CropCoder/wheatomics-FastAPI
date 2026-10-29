@@ -376,7 +376,7 @@ def _check_rate_limit(key_id: int) -> None:
 def verify_known_gene_key(
     request: Request,
     authorization: Optional[str] = Header(None, description="Bearer <kgw_xxx>"),
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key", description="兼容头，等价于 Bearer"),
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key", description="Compatibility header; equivalent to Bearer"),
 ) -> AuthContext:
     """KnownGene 写接口的统一鉴权依赖（任意有效 key 即可，不校验具体 scope）。
 

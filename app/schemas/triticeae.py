@@ -8,132 +8,132 @@ from pydantic import BaseModel, Field
 
 
 class TriticeaePaper(BaseModel):
-    """一篇论文的完整功能基因标注信息
-    (functional_gene_annotations LEFT JOIN papers)。"""
+    """Full functional-gene annotation of one paper
+    (functional_gene_annotations LEFT JOIN papers)."""
 
     # ===== functional_gene_annotations 表 (f.) — AI/人工标注层 =====
     # 这一层记录的是"这篇论文被 AI 标注为什么"，是核心标注产出
 
     fga_id: int | None = None
-    """标注记录 ID (functional_gene_annotations.id)"""
+    """Annotation record ID (functional_gene_annotations.id)"""
 
     pubmedid: str | None = None
-    """PubMed 唯一标识符 (f.pubmedid)，用于关联论文表"""
+    """PubMed unique identifier (f.pubmedid), used to link the papers table"""
 
     fga_title: str | None = None
-    """标注时的论文标题快照 (f.title)，与 papers.title 可能略有差异"""
+    """Snapshot of the paper title at annotation time (f.title); may differ slightly from papers.title"""
 
     is_functional_gene: bool | None = None
-    """AI 判断是否为功能基因 (1=是, 0=否)，核心筛选字段"""
+    """AI verdict on whether this is a functional gene (1=yes, 0=no); core filter field"""
 
     confidence: float | None = None
-    """AI 判断置信度 (0~1)，越高越可信"""
+    """AI confidence (0~1); higher means more reliable"""
 
     gene_name: list[str] = Field(default_factory=list)
-    """论文涉及的功能基因名称列表，如 ["TaCPK-1", "TaCDPK2"]"""
+    """List of functional gene names mentioned in the paper, e.g. ["TaCPK-1", "TaCDPK2"]"""
 
     gene_type: str | None = None
-    """基因类型标签，如 known_positive_by_seed_title (种子正样本)、nlr、rlp 等"""
+    """Gene type label, e.g. known_positive_by_seed_title (positive seed sample), nlr, rlp, etc."""
 
     trait_label: str | None = None
-    """性状标签，如 stripe_rust、heat_tolerance、yield，标注所涉农艺性状"""
+    """Trait label, e.g. stripe_rust, heat_tolerance, yield; the agronomic trait involved"""
 
     function_summary: str | None = None
-    """功能基因判断依据的简要文字说明"""
+    """Brief textual rationale for the functional gene verdict"""
 
     evidence_type: str | None = None
-    """证据类型，如 seed_title_match (标题匹配)、llm_determined (LLM 判断)"""
+    """Evidence type, e.g. seed_title_match (title match), llm_determined (LLM verdict)"""
 
     new_tags: str | None = None
-    """新标注的标签 (JSON 数组字符串)"""
+    """Newly annotated tags (JSON array string)"""
 
     llm_reason: str | None = None
-    """LLM 判断该论文属于功能基因的详细推理过程 (自然语言)"""
+    """Detailed LLM reasoning behind the functional gene verdict (natural language)"""
 
     source_method: str | None = None
-    """标注来源方法，如 seed_title_match (种子标题匹配)、llm_review (LLM 重审)"""
+    """Annotation source method, e.g. seed_title_match (seed title match), llm_review (LLM re-review)"""
 
     review_status: str | None = None
-    """审核状态：auto_pass (自动通过)、pending_review (待人工审核) 等"""
+    """Review status: auto_pass (automatic pass), pending_review (awaiting manual review), etc."""
 
     fga_created_at: str | None = None
-    """标注记录创建时间 (f.created_at)，即该论文首次被 AI 标注的时间"""
+    """Annotation record creation time (f.created_at), i.e. when the paper was first annotated by AI"""
 
     fga_updated_at: str | None = None
-    """标注记录最后更新时间 (f.updated_at)，即 AI 重新判断或人工修改的时间"""
+    """Annotation record last update time (f.updated_at), i.e. when the AI re-judged it or a human edited it"""
 
     fga_disease_gene_tags: str | None = None
-    """病害/抗病基因标签 (JSON 字符串)"""
+    """Disease/resistance gene tags (JSON string)"""
 
     # ===== papers 表 (p.) — 论文元数据层 =====
     # 这一层记录的是"这篇论文本身的基本信息"，来自 PubMed 导入
 
     paper_id: int | None = None
-    """论文元数据记录 ID (papers.id)"""
+    """Paper metadata record ID (papers.id)"""
 
     pmid: str | None = None
-    """PubMed ID (p.pmid)，与 pubmedid 相同，用于跨表关联"""
+    """PubMed ID (p.pmid), equal to pubmedid; used for cross-table joins"""
 
     pub_date: str | None = None
-    """论文发表时间，如 2024 Jun 或 2024 Jun 15"""
+    """Publication date, e.g. 2024 Jun or 2024 Jun 15"""
 
     paper_title: str | None = None
-    """PubMed 中的论文完整标题 (p.title)"""
+    """Full paper title from PubMed (p.title)"""
 
     journal: str | None = None
-    """期刊名称，如 3 Biotech、BMC Plant Biol"""
+    """Journal name, e.g. 3 Biotech, BMC Plant Biol"""
 
     authors: str | None = None
-    """作者列表字符串"""
+    """Author list string"""
 
     abstract: str | None = None
-    """论文摘要全文"""
+    """Full paper abstract"""
 
     pubmed_keywords: str | None = None
-    """PubMed 自带的关键词列表 (分号分隔)"""
+    """Keyword list supplied by PubMed (semicolon-separated)"""
 
     ai_tags: str | None = None
-    """AI 生成的论文标签 (自动打标)，分号或空格分隔"""
+    """AI-generated paper tags (automatic tagging), semicolon- or space-separated"""
 
     keywords_source: str | None = None
-    """关键词来源标记: ai_generated (AI生成)、pubmed (PubMed原生)、mixed (混合)"""
+    """Keyword source marker: ai_generated (AI-generated), pubmed (native PubMed), mixed (mixed)"""
 
     link: str | None = None
-    """PubMed 原文链接"""
+    """Link to the PubMed record"""
 
     doi: str | None = None
-    """DOI（papers.doi，每周导入/回填脚本维护）"""
+    """DOI (papers.doi, maintained by the weekly import/backfill script)"""
 
     paper_created_at: str | None = None
-    """论文元数据首次导入 WheatOmics 的时间 (p.created_at)"""
+    """Time the paper metadata was first imported into WheatOmics (p.created_at)"""
 
     functional_gene_flag: str | None = None
-    """论文级的功能基因标记 (1/0/空)，与 is_functional_gene 类似但独立标注"""
+    """Paper-level functional gene flag (1/0/empty), similar to is_functional_gene but annotated independently"""
 
     functional_gene_tags: str | None = None
-    """论文级的功能基因名称标签，如 TaCPK-1 (单/多基因逗号分隔)"""
+    """Paper-level functional gene name tags, e.g. TaCPK-1 (single/multiple genes, comma-separated)"""
 
     functional_gene_source: str | None = None
-    """论文级功能基因标注的来源，如 seed_title_match"""
+    """Source of the paper-level functional gene annotation, e.g. seed_title_match"""
 
     paper_disease_gene_tags: str | None = None
-    """论文级的病害/抗病基因标签 (JSON 字符串)"""
+    """Paper-level disease/resistance gene tags (JSON string)"""
 
     function_gene_flag: str | None = None
-    """[备用] 功能基因标记 (第二套标注体系，暂存新方法标注结果)"""
+    """[Backup] Functional gene flag (second annotation scheme; temporarily stores results of the new method)"""
 
     function_gene_tags: str | None = None
-    """[备用] 功能基因标签 (第二套标注体系，与 function_gene_flag 对应)"""
+    """[Backup] Functional gene tags (second annotation scheme, corresponding to function_gene_flag)"""
 
 
 class TriticeaeSearchResult(BaseModel):
-    """分页搜索结果。"""
+    """Paginated search result."""
 
     total: int = 0
-    """匹配的总论文数"""
+    """Total number of matching papers"""
     limit: int = 20
-    """每页返回条数 (默认 20, 上限 200)"""
+    """Number of results per page (default 20, max 200)"""
     offset: int = 0
-    """分页偏移量"""
+    """Pagination offset"""
     papers: list[TriticeaePaper] = Field(default_factory=list)
-    """当前页的论文列表"""
+    """Papers on the current page"""

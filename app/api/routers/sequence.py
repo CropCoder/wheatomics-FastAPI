@@ -251,25 +251,28 @@ def sequence_by_gene(
                     "to fetch that side alone. Omit both to use the defaults "
                     "(all_gene + all_protein)."),
 ) -> SequenceBundle:
-    """根据基因 ID 获取基因和蛋白质序列（FASTA 格式）。
+    """Fetch gene and protein sequences (FASTA format) by gene ID.
 
-    功能:
-        通过 blastdbcmd 工具，根据基因 ID 从本地 BLAST 数据库中提取
-        对应的基因序列（CDS）和蛋白质序列。如果基因 ID 不以 .1 结尾，
-        将自动追加 .1 后缀进行查找。
+    Purpose:
+        Use the blastdbcmd tool to extract the corresponding gene sequence
+        (CDS) and protein sequence from the local BLAST databases, based on
+        the gene ID. If the gene ID does not end with .1, the .1 suffix is
+        appended automatically before lookup.
 
-    用法:
-        GET /api/sequence/by-gene?gene_id=<基因ID>&gene_db=<基因库>&protein_db=<蛋白库>
-        - gene_id: 必填，如 TraesCS5A02G391700
-        - 两个 db 参数都省略时使用默认值（gene_db=all_gene, protein_db=all_protein）
-        - 只传其中一个时仅查询该侧（如只传 protein_db=all_protein → 仅蛋白序列）
+    Usage:
+        GET /api/sequence/by-gene?gene_id=<gene ID>&gene_db=<gene DB>&protein_db=<protein DB>
+        - gene_id: required, e.g. TraesCS5A02G391700
+        - when both db parameters are omitted the defaults are used
+          (gene_db=all_gene, protein_db=all_protein)
+        - passing only one of them queries that side only (e.g. passing only
+          protein_db=all_protein → protein sequence only)
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/sequence/by-gene?gene_id=TraesCS5A02G391700"
           curl -X GET "http://localhost:8000/api/sequence/by-gene?gene_id=TraesCS5A02G391700&protein_db=all_protein"
 
-        响应:
+        Response:
           {
             "gene_id": "TraesCS5A02G391700",
             "gene_sequence": ">TraesCS5A02G391700.1\nATGGCG...",
@@ -410,21 +413,22 @@ def batch_sequence(
     database: str = Query(...),
     ids: str = Query(..., alias="ID"),
 ) -> dict:
-    """批量获取多个基因/区间的 FASTA 序列。
+    """Batch-fetch FASTA sequences for multiple genes/intervals.
 
-    功能:
-        一次性查询多个基因 ID 或基因组区间。ID 用空格分隔
-        （URL 中可用 %20 或 + 编码空格）。基因 ID 自动补充转录本版本号 .1。
-        区间格式：chr:start-end（如 Chr1A_Chinese_Spring1.0:200-500）。
+    Purpose:
+        Query multiple gene IDs or genomic intervals in one request. IDs are
+        space-separated (use %20 or + to encode spaces in the URL). Gene IDs
+        get the transcript version suffix .1 appended automatically.
+        Interval format: chr:start-end (e.g. Chr1A_Chinese_Spring1.0:200-500).
 
-    用法:
-        GET /api/sequence/batch?ID=<id1 id2>&database=<数据库名>
+    Usage:
+        GET /api/sequence/batch?ID=<id1 id2>&database=<database name>
 
-    案例:
+    Example:
         curl -X GET "http://localhost:8000/api/sequence/batch?ID=TraesCS5A02G391700%20TraesCS5A02G391701&database=all_gene"
         curl -X GET "http://localhost:8000/api/sequence/batch?ID=Chr1A:200-500%20Chr5B:1000-2000&database=all_genomes"
 
-    响应:
+    Response:
         {
           "success": true,
           "data": {
@@ -556,24 +560,26 @@ def search_blastp(
 ) -> dict:
     """Triticeae protein pre-blastp results.
 
-    功能:
-        可以用来搜索 query 基因在小麦族里的目标基因，
-        可以用来做同源基因搜索或不同基因组版本/不同材料之间的基因 ID 转换。
-        根据基因 ID 在 all_protein_blastp 表中搜索，同时匹配 query_id 和 subject_id。
-        自动处理多种基因 ID 格式（带 .1、transcript: 前缀、.cds 后缀等）。
-        结果按 bit_score 降序、evalue 升序排列。
+    Purpose:
+        Can be used to search for the target genes of a query gene across the
+        Triticeae, and for homolog searches or gene ID conversion between
+        different genome versions / different materials.
+        Searches the all_protein_blastp table by gene ID, matching both
+        query_id and subject_id. Handles several gene ID formats (with .1,
+        transcript: prefix, .cds suffix, etc.).
+        Results are ordered by bit_score descending, then evalue ascending.
 
-    用法:
-        GET /api/blastp?gene=<基因ID>&limit=5000&offset=0
-        - gene: 必填，基因 ID
-        - limit: 可选，最多返回条数，默认 5000
-        - offset: 可选，偏移量，默认 0
+    Usage:
+        GET /api/blastp?gene=<gene ID>&limit=5000&offset=0
+        - gene: required, gene ID
+        - limit: optional, maximum number of records to return, default 5000
+        - offset: optional, offset, default 0
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/blastp?gene=TraesCS5A02G391700"
 
-        响应:
+        Response:
           {
             "success": true,
             "data": {

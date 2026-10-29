@@ -221,7 +221,7 @@ def _iter_filtered_tsv(file: Path, gene_set: set) -> Iterator[str]:
 
 @router.get("/genomes")
 def api_genomes():
-    """列出可用的 scRNA 基因组及其数据集。"""
+    """List the available scRNA genomes and their datasets."""
     return ok({"genomes": SCRNNA_GENOMES})
 
 
@@ -231,7 +231,7 @@ def api_annotation(
     page: int = Query(1, ge=1),
     per_page: int = Query(10),
 ):
-    """marker gene 预览表（合并该基因组下所有 annotation CSV/TSV，分页）。"""
+    """Marker-gene preview table (all annotation CSV/TSV files under the genome merged, paginated)."""
     if genome not in SCRNNA_GENOMES:
         raise ValidationFailure(f"Unknown genome: {genome!r}")
     if per_page not in _ALLOWED_PER_PAGE:
@@ -261,7 +261,7 @@ def api_dotplot(
     genome: str = Query(..., description="Genome key, e.g. Chinese_Spring"),
     genes: str = Query(..., description="Comma/space/newline separated gene IDs"),
 ):
-    """按基因查询各数据集的 dotplot 数据。"""
+    """Query dotplot data for each dataset by gene."""
     if genome not in SCRNNA_GENOMES:
         raise ValidationFailure(f"Unknown genome: {genome!r}")
     gene_list = _split_genes(genes)
@@ -300,7 +300,7 @@ def api_dotplot_download(
     folder: str = Query(...),
     genes: str = Query(...),
 ):
-    """下载按基因过滤后的 dotplot TSV。"""
+    """Download the gene-filtered dotplot TSV."""
     if genome not in SCRNNA_GENOMES:
         raise ValidationFailure(f"Unknown genome: {genome!r}")
     gene_list = _split_genes(genes)

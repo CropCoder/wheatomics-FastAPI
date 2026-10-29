@@ -11,7 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Runtime settings loaded from environment variables."""
 
-    APP_NAME: str = "WheatOmics API for Ai Agent - FastAPI"
+    APP_NAME: str = "WheatOmics API for AI Agent - FastAPI"
     APP_VERSION: str = "2.0"
     API_PREFIX: str = "/api"
     DEBUG: bool = False

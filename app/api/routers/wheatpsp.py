@@ -82,7 +82,7 @@ def _iter_download(table: str) -> Iterator[str]:
 
 @router.get("/stats")
 def api_stats():
-    """数据库统计：总蛋白数、预测 PSP 数、PrD 蛋白数（含百分比）+ 关键得分分布。"""
+    """Database statistics: total proteins, predicted PSPs, PrD proteins (with percentages) + key score distributions."""
     with mysql_connection(settings.DB_WHEATPSP) as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -133,11 +133,11 @@ def api_stats():
 
 @router.get("/search")
 def api_search(
-    q: str = Query("", description="seq_id / gene_id 模糊搜索"),
+    q: str = Query("", description="seq_id / gene_id fuzzy search"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20),
 ):
-    """按 seq_id / gene_id 搜索蛋白，分页。"""
+    """Search proteins by seq_id / gene_id, paginated."""
     q = q.strip()
     where = "WHERE cs_gene_id IS NOT NULL"
     args: list = []
@@ -152,9 +152,9 @@ def api_search(
 def api_psp(
     page: int = Query(1, ge=1),
     per_page: int = Query(20),
-    q: str = Query("", description="seq_id / gene_id 模糊过滤"),
+    q: str = Query("", description="seq_id / gene_id fuzzy filter"),
 ):
-    """预测的相分离相关蛋白（is_psp=1）列表，分页。"""
+    """List of predicted phase-separation-associated proteins (is_psp=1), paginated."""
     where = "WHERE is_psp = 1 AND cs_gene_id IS NOT NULL"
     args: list = []
     if q.strip():
@@ -168,9 +168,9 @@ def api_psp(
 def api_prd(
     page: int = Query(1, ge=1),
     per_page: int = Query(20),
-    q: str = Query("", description="seq_id / gene_id 模糊过滤"),
+    q: str = Query("", description="seq_id / gene_id fuzzy filter"),
 ):
-    """预测的 PrD（prion-like domain）蛋白（has_prd=1）列表，分页。"""
+    """List of predicted PrD (prion-like domain) proteins (has_prd=1), paginated."""
     where = "WHERE has_prd = 1 AND cs_gene_id IS NOT NULL"
     args: list = []
     if q.strip():
@@ -182,7 +182,7 @@ def api_prd(
 
 @router.get("/gene/{cs_gene_id}")
 def api_gene(cs_gene_id: str):
-    """一个基因（CS 02G id）下的所有转录本，相分离预测并列对比。"""
+    """All transcripts of one gene (CS 02G id), with phase-separation predictions side by side."""
     with mysql_connection(settings.DB_WHEATPSP) as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -199,7 +199,7 @@ def api_gene(cs_gene_id: str):
 
 @router.get("/protein/{seq_id}")
 def api_protein(seq_id: str):
-    """单个蛋白的完整预测结果 + 序列 + 理化性质（来自 fangenome.csv）。"""
+    """Complete prediction result for a single protein + sequence + physicochemical properties (from fangenome.csv)."""
     with mysql_connection(settings.DB_WHEATPSP) as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -221,7 +221,7 @@ def api_protein(seq_id: str):
 
 @router.get("/download/{table}")
 def api_download(table: str):
-    """下载拆分表：allProteins / PredPSPs / PrD_Pro（ZIP 内的 TSV，DEFLATE 压缩）。"""
+    """Download split tables: allProteins / PredPSPs / PrD_Pro (TSV inside a ZIP, DEFLATE-compressed)."""
     table = table.strip()
     if table not in _DOWNLOAD_TABLES:
         raise ValidationFailure(f"Unknown table: {table!r} (expected allProteins / PredPSPs / PrD_Pro)")

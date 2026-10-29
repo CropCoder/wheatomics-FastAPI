@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-WheatOmics BLAST API 端点
+WheatOmics BLAST API endpoints
 ========================================
-部署到: /var/www/FastAPI_backend_Port8000/routers/api_blast.py
+Deployed to: /var/www/FastAPI_backend_Port8000/routers/api_blast.py
 
-路径和 get_fasta_bedtools.py CGI 脚本一致:
-  - blast 程序路径: /usr/bin/blastp, /usr/bin/blastn (和 /usr/bin/blastdbcmd 同目录)
-  - 数据库路径:    /var/www/html/getfasta/blastdb/ (和 get sequence 一致)
-  - 数据库名:      和前端 <select> 的 value 一致（Fielder_protein, AK58_protein.fasta 等）
+Paths and behavior match the get_fasta_bedtools.py CGI script:
+  - BLAST program paths: /usr/bin/blastp, /usr/bin/blastn (same directory as /usr/bin/blastdbcmd)
+  - Database path:       /var/www/html/getfasta/blastdb/ (same as get sequence)
+  - Database names:      match the front-end <select> values (Fielder_protein, AK58_protein.fasta, etc.)
 
-用法:
+Usage:
   POST /api/blast/search
     program=blastp
     database=Fielder_protein
@@ -401,7 +401,7 @@ DB_CLASSIFICATION = [
 
 
 def _classify_db(db_name: str) -> str:
-    """根据数据库名判断所属分类 ID"""
+    """Return the category ID for a database name."""
     name_lower = db_name.lower()
     for cat in DB_CLASSIFICATION:
         if any(kw in name_lower for kw in cat["keywords"]):
@@ -420,17 +420,17 @@ _DB_LIST_TTL_SECONDS = 3600.0
 
 # blast 输出格式（outfmt 6 的列）
 def _program_db_type(program: str) -> str:
-    """返回程序对应的数据库类型: prot（蛋白）或 nuc（核酸）"""
+    """Return the database type for a program: prot (protein) or nuc (nucleotide)."""
     return "prot" if program in ("blastp", "blastx", "tblastx") else "nuc"
 
 
 def _strip_volume(name: str) -> str:
-    """去掉 BLAST 多卷库的 .00 .01 等后缀，返回基础库名"""
+    """Strip the .00/.01 volume suffix from a multi-volume BLAST DB and return the base name."""
     return re.sub(r"\.\d{2,}$", "", name)
 
 
 def list_dbs(program: str) -> List[str]:
-    """列出可用的 BLAST 数据库（disk-cached，TTL 1h）
+    """List the available BLAST databases (disk-cached, TTL 1h).
 
     /var/www/html/getfasta/blastdb/ has thousands of multi-volume index
     files across hundreds of genomes; scanning it per request takes 90+
@@ -470,7 +470,7 @@ def list_dbs(program: str) -> List[str]:
 
 
 def check_db_exists(db_name: str, program: str) -> bool:
-    """检查数据库是否有 BLAST 索引"""
+    """Return whether a database has BLAST index files."""
     exts = (".pin", ".phr", ".phd", ".psq", ".psd", ".pal") \
         if _program_db_type(program) == "prot" \
         else (".nin", ".nsq", ".nhr", ".ndb", ".not", ".ntf", ".nto", ".nal")
@@ -534,30 +534,31 @@ async def _wait_for_job(job_id: str, program: str, dbs: list[str],
 @router.post("/search")
 async def blast_search(
     program: str = Form(default="blastp",
-        description="blastp（蛋白→蛋白库）/ blastn（核酸→核酸库）/ blastx（核酸翻译→蛋白库）/ tblastn（蛋白→核酸库翻译）/ tblastx（核酸翻译→蛋白库翻译）"),
+        description="blastp (protein→protein DB) / blastn (nucleotide→nucleotide DB) / blastx (translated nucleotide→protein DB) / tblastn (protein→translated nucleotide DB) / tblastx (translated nucleotide→translated nucleotide DB)"),
     database: str = Form(default=...,
-        description="数据库名，多个用逗号分隔，如 Fielder_protein,AK58_protein.fasta"),
+        description="Database name(s), comma-separated, e.g. Fielder_protein,AK58_protein.fasta"),
     query: str = Form(default=...,
-        description="FASTA 格式的查询序列"),
+        description="Query sequence in FASTA format"),
     evalue: float = Form(default=10.0, ge=0, le=1000,
-        description="E-value 阈值 (0-1000)"),
+        description="E-value threshold (0-1000)"),
     max_targets: int = Form(default=1000, ge=1, le=50000, alias="max_target_seqs",
-        description="最多返回的匹配数 (1-50000)"),
+        description="Maximum number of hits to return (1-50000)"),
     word_size: Optional[int] = Form(default=None),
     matrix: Optional[str] = Form(default=None),
     outfmt: str = Form(default="tabular",
-        description="结果格式: tabular (默认, outfmt 6, 含 ppos/btop 列) / traditional (outfmt 0 逐位比对) / both (两种都生成)"),
+        description="Result format: tabular (default, outfmt 6, includes ppos/btop columns) / traditional (outfmt 0 pairwise alignments) / both (generate both)"),
     wait: bool = Form(default=True,
-        description="true=等待结果完成（默认，兼容现有调用方）；false=立即返回 job_id，轮询 /api/blast/status/{job_id}"),
+        description="true=wait for completion (default, backward-compatible for existing callers); false=return job_id immediately and poll /api/blast/status/{job_id}"),
 ):
-    """执行 BLAST 搜索，结果保存为文件返回下载链接。
+    """Run a BLAST search; results are saved to files and download links are returned.
 
-    所有 job 都由独立的 blast daemon（wheatomics-blastd.service）执行，
-    不受 API worker 回收/重启影响。wait=true（默认）: 提交后轮询到完成，
-    返回 download_url（现有 agent/脚本零改动）；wait=false: 立即返回
-    job_id，GET /api/blast/status/{job_id} 轮询。
+    All jobs are executed by the standalone blast daemon (wheatomics-blastd.service),
+    unaffected by API worker recycling/restarts. wait=true (default): enqueue and
+    poll to completion, returning download_url (no changes needed for existing
+    agents/scripts); wait=false: return job_id immediately and poll
+    GET /api/blast/status/{job_id}.
 
-    调用示例:
+    Example call:
       curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \\n        -d "program=blastp" \\n        -d "database=Fielder_protein" \\n        --data-urlencode "query=>test\\nMSSSTG..."
     """
     query = _validate_and_normalize_query(program, query)
@@ -625,11 +626,11 @@ async def blast_search(
 
 @router.get("/status/{job_id}")
 async def blast_job_status(job_id: str):
-    """轮询 BLAST job 状态（wait=false 提交的 job）。
+    """Poll a BLAST job's status (jobs submitted with wait=false).
 
-    返回 {"success", "job_id", "status": pending|running|done|error|stale,
-    "message", "download_urls"}。done 时 download_urls 填充；error/stale 看
-    message。job_id 必须为 uuid4 格式，否则 404。
+    Returns {"success", "job_id", "status": pending|running|done|error|stale,
+    "message", "download_urls"}. download_urls is populated when done; for
+    error/stale check message. job_id must be in uuid4 format, otherwise 404.
     """
     if not _JOB_ID_RE.match(job_id):
         raise HTTPException(404, "Invalid job id")
@@ -647,13 +648,13 @@ async def blast_job_status(job_id: str):
 
 @router.get("/databases")
 async def list_databases(
-    program: Optional[str] = Query(None, description="blastp/blastn/blastx/tblastn/tblastx/留空=全部")
+    program: Optional[str] = Query(None, description="blastp/blastn/blastx/tblastn/tblastx/empty=all")
 ):
-    """列出可用 BLAST 数据库（按蛋白/核酸分组）。
+    """List the available BLAST databases (grouped by protein/nucleotide).
 
-    仅用于取序列的超大聚合库（SEQUENCE_ONLY_DBS：all_genomes /
-    all_other_genomes / all_Allohexaploid）不在此列表中；它们仍可通过
-    /api/sequence/* 使用。
+    The huge sequence-retrieval-only aggregate databases (SEQUENCE_ONLY_DBS:
+    all_genomes / all_other_genomes / all_Allohexaploid) are not included in
+    this list; they remain available through /api/sequence/*.
     """
     db_type = _program_db_type(program) if program else None
     prot_dbs = list_dbs("blastp") if db_type in (None, "prot") else []
@@ -709,7 +710,7 @@ async def list_databases(
 
 @router.get("/database-example")
 async def database_example(db: str = Query(...)):
-    """返回 blast 数据库的第一个序列名（从 .fai 索引），供前端作为示例。"""
+    """Return the first sequence name of a BLAST database (from its .fai index) as a front-end example."""
     if not _DB_NAME_RE.fullmatch(db):
         raise HTTPException(status_code=400, detail=f"Invalid database name: {db}")
     fai_path = os.path.join(DB_DIR, f"{db}.fai")
@@ -761,7 +762,7 @@ async def delete_blast_job(job_id: str):
 
 @router.get("/status")
 async def blast_status():
-    """检查 BLAST 环境"""
+    """Check the BLAST environment."""
     def check(path):
         exists = os.path.exists(path)
         ver = ""

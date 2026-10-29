@@ -117,7 +117,7 @@ def _query_sites(protein: str, scope: str = "all") -> tuple[list[dict], list[dic
 
 
 def _query_length(protein: str) -> int | None:
-    """查蛋白序列长度（用于 lollipop 图的 x 轴 0~length）。"""
+    """Look up the protein sequence length (for the lollipop plot x-axis, 0~length)."""
     try:
         with mysql_connection(settings.DB_PTM) as conn:
             with conn.cursor() as cur:
@@ -162,9 +162,9 @@ def search_ptm(
     protein: str = Query(..., min_length=1, description="Protein ID, e.g. TraesCS1A02G000100LC.1"),
     scope: str = Query("all", description="all | ptm | high"),
 ) -> dict:
-    """按蛋白 ID 搜索其所有 PTM 位点（跨 9 种 PTM 类型）。
+    """Search all PTM sites of a protein by protein ID (across 9 PTM types).
 
-    用法:
+    Usage:
         GET /api/ptm/search?protein=TraesCS1A02G000100LC.1
         GET /api/ptm/search?protein=TraesCS1A02G000100LC.1&scope=ptm
 
@@ -205,7 +205,7 @@ def download_ptm(
     protein: str = Query(..., min_length=1, description="Protein ID"),
     scope: str = Query("all", description="all | ptm | high"),
 ) -> Response:
-    """下载某蛋白的全部 PTM 位点为 CSV（``scope`` 与搜索接口一致）。"""
+    """Download all PTM sites of a protein as CSV (``scope`` matches the search endpoint)."""
     protein = protein.strip()
     if not protein:
         raise ValidationFailure("protein is required")

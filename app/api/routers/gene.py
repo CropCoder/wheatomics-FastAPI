@@ -556,44 +556,46 @@ def _build_known_stats(
 
 @router.get("/known/search")
 def search_known_genes(
-    search: str = Query(..., alias="searchid", description="搜索关键词（必填，支持部分匹配）"),
+    search: str = Query(..., alias="searchid", description="Search keyword (required, partial match supported)"),
     field: str = Query(
         "all",
         description=(
-            "搜索字段白名单：all | gene_id | gene_name | reference_genome_id | "
+            "Search field whitelist: all | gene_id | gene_name | reference_genome_id | "
             "phenotype | species | doi | protein_family | functional_category | "
-            "chrom_pos | research_strategy；未知值返回 400"
+            "chrom_pos | research_strategy; unknown values return 400"
         ),
     ),
     limit: int | None = Query(
-        None, ge=1, le=5000, description="可选，返回条数上限（1–5000）；不传 = 全量（旧行为）"
+        None, ge=1, le=5000, description="Optional cap on returned rows (1-5000); omit = all rows (legacy behavior)"
     ),
-    offset: int = Query(0, ge=0, description="可选，分页偏移；仅与 limit 同用时生效"),
+    offset: int = Query(0, ge=0, description="Optional pagination offset; only effective together with limit"),
 ) -> dict:
-    """搜索已知功能的克隆基因（v2056：字段定向搜索 + 分页 + 多年份修复）。
+    """Search cloned genes with known functions (v2056: field-targeted search + pagination + multi-year fix).
 
-    功能:
-        根据用户输入的关键词，在已知功能的克隆基因库中模糊搜索。
-        默认 field=all 覆盖旧版 9 个字段 + v2056 新增的 6 个字段，返回与
-        /known/all 完全同构的摘要列表（含 dois / publication_years 等）。
-        v2056 顺带修复：SQL 补选 publication_year（此前该字段恒为 null）。
+    Purpose:
+        Fuzzy-search the curated cloned-gene library of known-function genes using a
+        user-supplied keyword. The default field=all covers the 9 legacy fields plus
+        the 6 fields added in v2056, and returns a summary list structurally identical
+        to /known/all (including dois / publication_years, etc.).
+        v2056 also fixes: the SQL now selects publication_year (this field used to be
+        always null).
 
-    用法:
-        GET /api/genes/known/search?searchid=<关键词>[&field=all][&limit=50&offset=0]
-        - searchid: 必填，搜索关键词（LIKE 通配符 % / _ 会被转义成字面量）
-        - field: 可选，默认 all；白名单：
+    Usage:
+        GET /api/genes/known/search?searchid=<keyword>[&field=all][&limit=50&offset=0]
+        - searchid: required, search keyword (LIKE wildcards % / _ are escaped to literals)
+        - field: optional, default all; whitelist:
           all | gene_id | gene_name | reference_genome_id | phenotype | species |
           doi | protein_family | functional_category | chrom_pos | research_strategy
-          未知值返回 400
-        - limit: 可选 1–5000；不传 = 全量（旧行为）
-        - offset: 可选 ≥0，默认 0；仅与 limit 同用时生效
-        total: 不分页时 = 返回条数（旧行为）；分页时 = 全量命中数
+          unknown values return 400
+        - limit: optional 1-5000; omit = all rows (legacy behavior)
+        - offset: optional >=0, default 0; only effective together with limit
+        total: without pagination = number of rows returned (legacy behavior); with pagination = total number of matches
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/genes/known/search?searchid=TaCRT"
 
-        响应:
+        Response:
           {
             "success": true, "message": "ok", "data": {
               "query": "TaCRT",
@@ -616,7 +618,7 @@ def search_known_genes(
             }
           }
 
-        错误示例:
+        Error example:
           ?searchid=x&field=bogus -> 400 Unsupported search field
           ?searchid=%20%20        -> 400 searchid is required
     """
@@ -658,30 +660,30 @@ def search_known_genes(
 @router.get("/known/all")
 def list_known_genes(
     limit: int | None = Query(
-        None, ge=1, le=5000, description="可选，返回条数上限（1–5000）；不传 = 全量（旧行为）"
+        None, ge=1, le=5000, description="Optional cap on returned rows (1-5000); omit = all rows (legacy behavior)"
     ),
-    offset: int = Query(0, ge=0, description="可选，分页偏移；仅与 limit 同用时生效"),
+    offset: int = Query(0, ge=0, description="Optional pagination offset; only effective together with limit"),
 ) -> dict:
-    """获取所有已知功能克隆基因的列表（v2056 摘要字段）。
+    """List all cloned genes with known functions (v2056 summary fields).
 
-    功能:
-        从 cloned_gene_tbl 查询全部已知功能基因摘要。旧 6 键（clone_id /
-        gene_id / gene_name / chrom_pos / phenotype / species）保持不变；
-        v2056 新增 reference_genome_id、species_primary、chromosome、
-        genome_ref、phenotype_brief、functional_category、research_strategy、
-        dois[] 与 publication_years[]。
-        total 语义：不传 limit 时 = 返回条数（旧行为）；传 limit 时 = 全表总数，
-        records 为当前页。
+    Purpose:
+        Query summary records for all known-function genes from cloned_gene_tbl.
+        The 6 legacy keys (clone_id / gene_id / gene_name / chrom_pos / phenotype /
+        species) are unchanged; v2056 adds reference_genome_id, species_primary,
+        chromosome, genome_ref, phenotype_brief, functional_category,
+        research_strategy, dois[] and publication_years[].
+        total semantics: when limit is omitted = number of rows returned (legacy
+        behavior); with limit = total row count of the table, records = current page.
 
-    用法:
+    Usage:
         GET /api/genes/known/all[?limit=50&offset=0]
-        - limit: 可选 1–5000；不传 = 全量（旧行为，约 1.1 MB，gzip 后约 190 KB）
-        - offset: 可选 ≥0，默认 0；仅与 limit 同用时生效
+        - limit: optional 1-5000; omit = all rows (legacy behavior, about 1.1 MB, about 190 KB after gzip)
+        - offset: optional >=0, default 0; only effective together with limit
 
-    案例:
+    Example:
         curl "http://localhost:8000/api/genes/known/all?limit=2"
 
-        响应:
+        Response:
         {
           "total": 1420,
           "records": [{
@@ -725,32 +727,34 @@ def list_known_genes(
 def list_known_genes_on_chromosome(
     chromosome: str,
 ) -> dict:
-    """获取指定染色体上的所有已知功能克隆基因。
+    """List all cloned genes with known functions on a given chromosome.
 
-    功能:
-        染色体名大小写不敏感并兼容 chr 前缀（5A / chr5A / 3h / 54 / chr54）。
-        v2056 优先按规范化的 chromosome 列匹配（新 chrom_pos 是
-        "<参考基因组> chr..." 自由格式，旧 LIKE '5A%' 对新数据 0 命中）；
-        对未迁移/CGI 提交行（chromosome 为 NULL）回退到 chrom_pos 正则匹配。
-        非法染色体名返回 400。返回记录与 /known/all 同构。
+    Purpose:
+        Chromosome names are case-insensitive and tolerate a chr prefix
+        (5A / chr5A / 3h / 54 / chr54). v2056 first matches the normalized
+        chromosome column (the new chrom_pos is free-form
+        "<reference genome> chr...", so the old LIKE '5A%' matched 0 new rows);
+        rows not migrated / CGI-era submissions (chromosome is NULL) fall back to
+        a chrom_pos regex match. Illegal chromosome names return 400. Returned
+        records are structurally identical to /known/all.
 
-    用法:
+    Usage:
         GET /api/genes/known/by-chromosome/{chromosome}
-        - chromosome: 染色体标签，如 5A、chr5A、3H、1R、54、chr54
+        - chromosome: chromosome label, e.g. 5A, chr5A, 3H, 1R, 54, chr54
 
-    案例:
+    Example:
         curl "http://localhost:8000/api/genes/known/by-chromosome/chr7B"
 
-        响应:
+        Response:
         {
           "success": true, "data": {
             "total": 60,
             "chromosome": "7B",
-            "records": [ ... 同 /known/all 的记录 ... ]
+            "records": [ ... same records as /known/all ... ]
           }
         }
 
-        错误示例:
+        Error example:
           /api/genes/known/by-chromosome/XX -> 400 Invalid chromosome
     """
 
@@ -775,28 +779,32 @@ def list_known_genes_on_chromosome(
 
 @router.get("/known/stats")
 def get_known_gene_stats() -> dict:
-    """已知功能克隆基因库的统计聚合（Stats tab 专用，替代前端全量聚合）。
+    """Statistical aggregates for the known-function cloned-gene library (for the Stats tab, replacing client-side aggregation).
 
-    功能:
-        服务端聚合 v2056 数据集：总量、归一化物种分布（含原始形态数
-        raw_forms 与 NCBI 常用名）、染色体分布（38 条，group=wheat|other）、
-        功能大类、研究策略、表型标签 Top 100、出版年份分布（多值按 token
-        重复计数）、参考文献/唯一 DOI 计数与数据质量 notes。
-        响应约 8–12 KB，替代前端拉取 /known/all 全量（约 1.1 MB）后聚合。
-        实现为 7 条小表扫描（4 个受控维度 GROUP BY + 1 条轻量列查询在
-        Python 侧聚合自由文本），1420 行数据单次 < 50 ms，因此未加缓存。
+    Purpose:
+        Server-side aggregation of the v2056 dataset: total count, normalized
+        species distribution (with raw_forms and the NCBI common name),
+        chromosome distribution (38 entries, group=wheat|other), functional
+        categories, research strategies, top 100 phenotype tags, publication-year
+        distribution (multi-valued entries counted once per token), reference /
+        unique-DOI counts, and data-quality notes.
+        The response is about 8-12 KB, replacing the client-side fetch of the full
+        /known/all payload (about 1.1 MB) followed by aggregation.
+        Implemented as 7 small table scans (4 GROUP BYs on controlled dimensions
+        plus 1 light column query aggregated in Python); 1420 rows take < 50 ms per
+        call, so no cache is added.
 
-    注意:
-        本路由必须注册在 /known/{gene_id} 之前，否则 "stats" 会被当作
-        gene_id 命中详情路由并返回 404。
+    Notes:
+        This route must be registered before /known/{gene_id}; otherwise "stats"
+        is treated as a gene_id, hits the detail route and returns 404.
 
-    用法:
+    Usage:
         GET /api/genes/known/stats
 
-    案例:
+    Example:
         curl "http://localhost:8000/api/genes/known/stats"
 
-        响应（节选）:
+        Response (excerpt):
         {
           "success": true, "data": {
             "total": 1420,
@@ -911,32 +919,35 @@ def get_known_gene_stats() -> dict:
 
 @router.get("/known/{gene_id}")
 def get_known_gene(gene_id: str) -> dict:
-    """获取指定克隆基因的详细信息（v2056 结构化字段 + references 位置对齐）。
+    """Get detailed information for a given cloned gene (v2056 structured fields + positionally aligned references).
 
-    功能:
-        根据基因 ID 查询克隆基因的完整信息。数字 ID 仍按 clone_id 查询（旧
-        语义，详情页 URL ?id=<clone_id>）；非数字按 gene_id / gene_name 精确
-        匹配（旧语义）。旧返回键全部保留；v2056 新增 reference_genome_id、
-        protein_family、validation_method、validation_methods[]、
-        research_strategy、functional_category、species_primary、chromosome、
-        genome_ref、phenotype_brief、publication_years[]。
-        references[] 由 paper_title / paper_doi / publication_years 三列按
-        `###` 位置对齐构建，每项 {doi, title, year}；缺失位置为 null（v2056
-        有 1 行 4 题名/3 DOI，第 4 条只有题名，因此 doi 允许 null）。
-        key_result 保留旧数组语义（`###` 拆分；新数据单段 -> 1 元素数组）。
-        归一化：reference_genome_id 非空的新数据行保留字面 `#`；legacy 行
-        继续旧的 # -> ' 转义行为。
+    Purpose:
+        Look up the full record of a cloned gene by gene ID. Numeric IDs still
+        query by clone_id (legacy semantics, detail page URL ?id=<clone_id>);
+        non-numeric values match gene_id / gene_name exactly (legacy semantics).
+        All legacy response keys are kept; v2056 adds reference_genome_id,
+        protein_family, validation_method, validation_methods[],
+        research_strategy, functional_category, species_primary, chromosome,
+        genome_ref, phenotype_brief, publication_years[].
+        references[] is built positionally from the paper_title / paper_doi /
+        publication_years columns aligned on `###`, each entry {doi, title, year};
+        missing positions are null (v2056 has one row with 4 titles / 3 DOIs, so
+        the 4th entry has a title only and doi may be null).
+        key_result keeps the legacy array semantics (`###` split; a single segment
+        in new data -> a 1-element array).
+        Normalization: new-data rows with a non-null reference_genome_id keep a
+        literal `#`; legacy rows keep the old # -> ' escape behavior.
 
-    用法:
+    Usage:
         GET /api/genes/known/{gene_id}
-        - gene_id: 路径参数；数字 = clone_id，如 12；或基因 ID/名称，如
-          TraesCS3A03G0936700
+        - gene_id: path parameter; a number = clone_id, e.g. 12; or a gene ID/name,
+          e.g. TraesCS3A03G0936700
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/genes/known/5"
 
-        响应（节选）:
+        Response (excerpt):
           {
             "success": true, "data": {
               "clone_id": 5, "gene_id": "EF452301",
@@ -1001,22 +1012,23 @@ def get_known_gene(gene_id: str) -> dict:
 
 @genehub_router.get("/detail/{gene_id}")
 def get_gene_detail(gene_id: str) -> dict:
-    """获取基因的标准化详细信息。
+    """Get normalized detailed information for a gene.
 
-    功能:
-        根据基因 ID（支持 IWGSC v1/v2/v3 三种版本），查询 GenePageIWGSCv1_table，
-        返回基因的描述、染色体位置、蛋白长度、分子量、等电点、功能注释等信息，
-        以及 JBrowse 基因组浏览器链接和 Ensembl 外部链接。
+    Purpose:
+        Look up GenePageIWGSCv1_table by gene ID (IWGSC v1/v2/v3 versions all
+        supported) and return the gene description, chromosome location, protein
+        length, molecular weight, isoelectric point, functional annotations, etc.,
+        plus a JBrowse genome-browser link and an Ensembl external link.
 
-    用法:
+    Usage:
         GET /api/genes/detail/{gene_id}
-        - gene_id: 路径参数，支持 v1 (TraesCS5A02G391700)、v2 (TraesCS5A02G391700.1)、v3 (TraesCS5A03G1158600) 任一格式
+        - gene_id: path parameter, any of v1 (TraesCS5A02G391700), v2 (TraesCS5A02G391700.1), v3 (TraesCS5A03G1158600)
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/genes/detail/TraesCS5A02G391700"
 
-        响应:
+        Response:
           {
             "success": true,
             "data": {
@@ -1169,28 +1181,29 @@ def search_pfam(
     domain: str = Query(..., alias="ID"),
     table: str = Query("Genefunc_CS_IWGSC03G_table"),
 ) -> dict:
-    """PfamSearch: 按 PFAM 结构域搜索基因 [gene family]
+    """PfamSearch: search genes by PFAM domain [gene family]
 
-    功能:
-        输入 PFAM 结构域 ID（以 PF 开头），返回包含该结构域的
-        所有基因列表。可指定查询表（默认 Genefunc_CS_IWGSC03G_table，
-        完整列表见 /api/genes/functions/tables）。
-        注意方向：本端点按 PFAM 找基因；若要查单个基因的结构域，
-        请用 /api/genes/functions/interval（返回的 Domain 列即 PFAM 注释）。
+    Purpose:
+        Given a PFAM domain ID (starting with PF), return the list of all genes
+        containing that domain. The queried table can be specified (default
+        Genefunc_CS_IWGSC03G_table; see /api/genes/functions/tables for the full
+        list). Note the direction: this endpoint finds genes by PFAM; to look up
+        the domains of a single gene, use /api/genes/functions/interval (the
+        returned Domain column is the PFAM annotation).
 
-    关联网站:
-        对应 PfamSearch 工具: https://wheatomics.sdau.edu.cn/tools/proteinfamily.html
+    Related site:
+        Corresponds to the PfamSearch tool: https://wheatomics.sdau.edu.cn/tools/proteinfamily.html
 
-    用法:
-        GET /api/genes/functions/pfam?ID=<PFAM域名>&table=<表名>
-        - ID: 必填，PFAM 结构域 ID，如 PF00319
-        - table: 可选，默认 Genefunc_CS_IWGSC03G_table（中国春 IWGSC v2.1）
+    Usage:
+        GET /api/genes/functions/pfam?ID=<PFAM domain ID>&table=<table name>
+        - ID: required, PFAM domain ID, e.g. PF00319
+        - table: optional, default Genefunc_CS_IWGSC03G_table (Chinese Spring IWGSC v2.1)
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/genes/functions/pfam?ID=PF00319"
 
-        响应:
+        Response:
           {
             "success": true,
             "data": {
@@ -1228,21 +1241,22 @@ def search_pfam(
 
 @interval_router.get("/tables")
 def list_gene_function_tables() -> dict:
-    """查询 Genefuncdb 中所有表的信息。
+    """Query information about all tables in Genefuncdb.
 
-    功能:
-        直接连接 Genefuncdb 数据库，执行 SHOW TABLES 获取所有表名，
-        同时查询每个表的行数和字段列表，返回结构化信息。
+    Purpose:
+        Connect directly to the Genefuncdb database, run SHOW TABLES to get all
+        table names, and query each table's row count and column list, returning
+        the structured information.
 
-    用法:
+    Usage:
         GET /api/genes/functions/tables
-        无需参数。
+        No parameters.
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/genes/functions/tables"
 
-        响应:
+        Response:
           {
             "success": true,
             "data": {
@@ -1318,10 +1332,12 @@ def _friendly_name(tbl):
 
 
 def _infer_karyotype(table_name):
-    """从表名推断染色体组成（Genefunc_AABBDD_xxx_table → AABBDD）。
+    """Infer the chromosome composition from the table name (Genefunc_AABBDD_xxx_table -> AABBDD).
 
-    Genefunc_* 表名的第一段通常是染色体组成（AABBDD/AABB/AA/DD/HH/RR/SS/...），
-    中国春 IWGSC 表用 CS 前缀（六倍体 AABBDD）。用于 Polyploidy 列为空时兜底。
+    The first segment of a Genefunc_* table name is usually the chromosome
+    composition (AABBDD/AABB/AA/DD/HH/RR/SS/...); Chinese Spring IWGSC tables use
+    the CS prefix (hexaploid AABBDD). Used as a fallback when the Polyploidy
+    column is empty.
     """
     if not table_name:
         return None
@@ -1339,7 +1355,7 @@ def _infer_karyotype(table_name):
 
 
 def _display_name(polyploidy, table_name):
-    """构造显示名，避免 karyotype 前缀重复（新表名已含前缀）。"""
+    """Build the display name, avoiding a duplicated karyotype prefix (new table names already include it)."""
     friendly = _friendly_name(table_name)
     if polyploidy and friendly and not friendly.startswith(polyploidy + "_"):
         return f"{polyploidy}_{friendly}"
@@ -1348,21 +1364,21 @@ def _display_name(polyploidy, table_name):
 
 @interval_router.get("/examples")
 def list_genome_examples() -> dict:
-    """获取所有基因组的示例查询数据。
+    """Get example query data for all genomes.
 
-    功能:
-        返回每个基因组对应的示例 Region、Gene ID、Pfam ID，
-        用于 Interval Tool 前端的示例链接展示。
+    Purpose:
+        Return the example Region, Gene ID and Pfam ID for each genome, used by
+        the Interval Tool frontend to display example links.
 
-    用法:
+    Usage:
         GET /api/genes/functions/examples
-        无需参数。
+        No parameters.
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/genes/functions/examples"
 
-        响应:
+        Response:
           {
             "success": true,
             "data": {
@@ -1451,26 +1467,28 @@ def list_genome_examples() -> dict:
     return ok({"examples": examples})
 @interval_router.get("/registry")
 def list_gene_function_registry() -> dict:
-    """查询 Genefuncdb.Genefunc_registry 表。
+    """Query the Genefuncdb.Genefunc_registry table.
 
-    功能:
-        返回 Genefunc_registry 表中所有注册的基因功能表元数据。
-        包含 id, table_name, display_name, Subgenome, Polyploidy, chromosome_level,
-        Doi, title, Abstract, example_chr, example_id 等字段。
+    Purpose:
+        Return the metadata of all registered gene-function tables in the
+        Genefunc_registry table. Includes id, table_name, display_name, Subgenome,
+        Polyploidy, chromosome_level, Doi, title, Abstract, example_chr, example_id
+        and other fields.
 
-    注意:
-        表名大小写敏感（Linux 下 MySQL `lower_case_table_names=0`），必须写
-        `Genefunc_registry`（首字母大写），否则 MySQL 抛 1146 表不存在。
+    Notes:
+        Table names are case-sensitive (MySQL `lower_case_table_names=0` on Linux),
+        so `Genefunc_registry` must be written with a capital G; otherwise MySQL
+        raises 1146 table does not exist.
 
-    用法:
+    Usage:
         GET /api/genes/functions/registry
-        无需参数。
+        No parameters.
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/genes/functions/registry"
 
-        响应:
+        Response:
           {
             "success": true,
             "data": {
@@ -1550,26 +1568,27 @@ def search_gene_interval(
     region: str = Query(..., alias="ID"),
     table: str = Query("Genefunc_CS_IWGSC03G_table"),
 ) -> dict:
-    """按染色体区间搜索基因。
+    """Search genes by chromosomal interval.
 
-    功能:
-        输入染色体区间（如 chr5A:587000000..587200000），返回该区间内
-        的所有基因列表。可指定查询表（默认 Genefunc_CS_IWGSC03G_table，
-        完整列表见 /api/genes/functions/tables）。
+    Purpose:
+        Given a chromosomal interval (e.g. chr5A:587000000..587200000), return the
+        list of all genes within that interval. The queried table can be specified
+        (default Genefunc_CS_IWGSC03G_table; see /api/genes/functions/tables for
+        the full list).
 
-    关联网站:
-        对应 IntervalTool: https://wheatomics.sdau.edu.cn/tools/intervalTools.html
+    Related site:
+        Corresponds to IntervalTool: https://wheatomics.sdau.edu.cn/tools/intervalTools.html
 
-    用法:
-        GET /api/genes/functions/interval?ID=<区间>&table=<表名>
-        - ID: 必填，染色体区间，格式 chr5A:587000000..587200000
-        - table: 可选，默认 Genefunc_CS_IWGSC03G_table（中国春 IWGSC v2.1）
+    Usage:
+        GET /api/genes/functions/interval?ID=<interval>&table=<table name>
+        - ID: required, chromosomal interval in the form chr5A:587000000..587200000
+        - table: optional, default Genefunc_CS_IWGSC03G_table (Chinese Spring IWGSC v2.1)
 
-    案例:
-        请求:
+    Example:
+        Request:
           curl -X GET "http://localhost:8000/api/genes/functions/interval?ID=chr5A:587000000..587200000"
 
-        响应:
+        Response:
           {
             "success": true,
             "data": {
@@ -1654,10 +1673,11 @@ def search_gene_interval(
 def resolve_gene_id(
     gene_id: str = Query(..., alias="ID"),
 ) -> dict:
-    """跨 Genefunc 表解析基因 ID，并返回中国春 02G 对应关系。
+    """Resolve a gene ID across the Genefunc tables and return its Chinese Spring 02G mappings.
 
-    用于 GeneHub 非中国春 ID 的兜底：按 Gene/Gene02G/Gene03G 列扫描所有
-    visible 的 Genefunc 表，返回命中记录及其 ChineseSpring02G 映射。
+    Fallback for non-Chinese-Spring IDs in GeneHub: scans the Gene/Gene02G/Gene03G
+    columns of all visible Genefunc tables and returns the matching records with
+    their ChineseSpring02G mappings.
     """
     gene_id = (gene_id or "").strip()
     if not re.match(r"^[A-Za-z0-9_.:-]{2,200}$", gene_id):
