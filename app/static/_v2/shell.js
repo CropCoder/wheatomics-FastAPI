@@ -34,7 +34,7 @@
   var HEADER = `  <header class="site-header">
       <div class="container header-row">
         <a class="brand" href="/" aria-label="WheatOmics 2.0 home">
-          <img class="brand-mark" src="/V2.0/Logo-small.png" alt="WheatOmics 2.0 logo">
+          <img class="brand-mark" src="/api/v2shell/img/logo-small.png?v=20261029" width="424" height="80" fetchpriority="high" alt="WheatOmics 2.0 logo">
           <span class="brand-version">2.0</span>
         </a>
 
@@ -129,7 +129,7 @@
         <a class="contact-line" href="mailto:shengweima@icloud.com"><svg class="icon"><use href="#i-mail"/></svg><span>shengweima@icloud.com</span></a>
       </div>
     </div>
-    <img class="footer-plot" src="/V2.0/footer-plot.png?v=20261025lab" alt="WheatOmics data overview plot">
+    <img class="footer-plot" src="/api/v2shell/img/footer-plot.webp?v=20261029" width="1720" height="70" loading="lazy" decoding="async" alt="WheatOmics data overview plot">
     <div class="container footer-bottom">
       <span class="copyright">© 2026 WheatOmics. All rights reserved. <span class="footer-visits" aria-label="WheatOmics visit statistics"><span class="footer-visit-item"><svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg>Visits <strong data-visit-total>—</strong></span><span class="visit-sep">/</span><span class="footer-visit-item"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Today <strong data-visit-today>—</strong></span><span class="visit-sep">/</span><span class="footer-visit-item"><svg class="icon" aria-hidden="true"><use href="#i-wave"/></svg>Online <strong data-visit-online>—</strong></span></span></span>
       <span class="icp">鲁公网安备 37090202000305号 ｜ 鲁ICP备05002369号-1</span>

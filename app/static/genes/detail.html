@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KnownGene - WheatOmics</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="/api/v2shell/shell.css">
 
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
-<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.bundle.js"></script>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.min.js"></script>
 
 <!-- Baidu Tongji (async) -->
 <script>
@@ -175,7 +175,19 @@ html, body { margin: 0; padding: 0; }
   padding: 1px 6px;
   flex: none;
 }
-.kg-ref-title { flex: 1 1 320px; min-width: 0; color: var(--ink); overflow-wrap: anywhere; }
+.kg-ref-body { display: flex; flex-direction: column; gap: 3px; flex: 1 1 320px; min-width: 0; }
+.kg-ref-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 0; font-size: 12px; color: #4d6559; }
+.kg-ref-authors { overflow-wrap: anywhere; }
+.kg-ref-authors-toggle {
+  background: none; border: 0; padding: 0; margin-left: 4px;
+  color: var(--forest); font: inherit; font-size: 12px; cursor: pointer;
+  text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px;
+}
+.kg-ref-authors-toggle:hover { color: var(--ink); }
+.kg-ref-authors-full[hidden], .kg-ref-authors-preview[hidden] { display: none; }
+.kg-ref-venue { font-style: italic; color: #315a44; }
+.kg-ref-sep { padding: 0 6px; color: var(--line, #c9d4cb); }
+.kg-ref-title { flex: none; min-width: 0; color: var(--ink); overflow-wrap: anywhere; }
 /* title doubles as the DOI link: keep title typography, add a subtle clickable cue */
 .kg-ref a.kg-ref-title {
   font-family: inherit;
@@ -465,7 +477,10 @@ html, body { margin: 0; padding: 0; }
         refs.push({
           doi: KG.str(item.doi).trim(),
           title: KG.str(item.title).trim(),
-          year: KG.str(item.year).trim()
+          year: KG.str(item.year).trim(),
+          authors: (item.authors && item.authors.length) ? item.authors : [],
+          journal: KG.str(item.journal).trim(),
+          pmid: KG.str(item.pmid).trim()
         });
       }
       return refs;
@@ -479,7 +494,10 @@ html, body { margin: 0; padding: 0; }
       refs.push({
         doi: i < dois.length ? dois[i] : '',
         title: i < titles.length ? titles[i] : '',
-        year: i < years.length ? years[i] : ''
+        year: i < years.length ? years[i] : '',
+        authors: [],
+        journal: '',
+        pmid: ''
       });
     }
     return refs;
@@ -703,6 +721,46 @@ html, body { margin: 0; padding: 0; }
     }
   }
 
+  // Enriched reference metadata (Crossref/PubMed): "Given Family" -> "Family G."
+  function shortAuthor(name) {
+    var parts = KG.str(name).trim().split(/\s+/).filter(function (x) { return x; });
+    if (parts.length < 2) return parts[0] || '';
+    var family = parts[parts.length - 1];
+    var initials = '';
+    for (var i = 0; i < parts.length - 1; i++) {
+      initials += parts[i].charAt(0).toUpperCase() + '.';
+    }
+    return family + ' ' + initials;
+  }
+
+  function formatAuthors(list) {
+    if (!list || !list.length) return '';
+    var names = [];
+    for (var i = 0; i < list.length; i++) names.push(shortAuthor(list[i]));
+    return names.join(', ');
+  }
+
+  // Default: first 5 authors + "et al. (N more)"; hover shows the full list in a
+  // native tooltip, click expands/collapses it inline.
+  function authorsMarkup(list) {
+    if (!list || !list.length) return '';
+    var names = [];
+    for (var i = 0; i < list.length; i++) names.push(shortAuthor(list[i]));
+    var full = names.join(', ');
+    if (names.length <= 5) {
+      return '<span class="kg-ref-authors">' + KG.esc(full) + '</span>';
+    }
+    var preview = names.slice(0, 5).join(', ');
+    var more = names.length - 5;
+    return '<span class="kg-ref-authors" data-expanded="0" title="' + KG.escAttr(full) + '">' +
+      '<span class="kg-ref-authors-preview">' + KG.esc(preview) + '</span>' +
+      '<span class="kg-ref-authors-full" hidden>' + KG.esc(full) + '</span>' +
+      '<button type="button" class="kg-ref-authors-toggle" aria-expanded="false" ' +
+      'data-more="' + more + '" data-total="' + names.length + '" ' +
+      'aria-label="Show all ' + names.length + ' authors">et al. (' + more + ' more)</button>' +
+      '</span>';
+  }
+
   function renderReferences(data) {
     var refs = buildReferences(data);
     var $list = $('#d-references');
@@ -726,9 +784,27 @@ html, body { margin: 0; padding: 0; }
       var year = ref.year
         ? '<span class="kg-ref-year">' + KG.esc(ref.year) + '</span>'
         : '<span class="kg-ref-year kg-empty">\u2014</span>';
-      html.push('<li class="kg-ref">' + year + title + '</li>');
+      var metaBits = [];
+      var authorsHtml = authorsMarkup(ref.authors);
+      if (authorsHtml) metaBits.push(authorsHtml);
+      if (ref.journal) metaBits.push('<span class="kg-ref-venue">' + KG.esc(ref.journal) + '</span>');
+      var metaLine = metaBits.length ? '<span class="kg-ref-meta">' + metaBits.join('<span class="kg-ref-sep"> · </span>') + '</span>' : '';
+      html.push('<li class="kg-ref">' + year + '<span class="kg-ref-body">' + metaLine + title + '</span></li>');
     }
     $list.html(html.join(''));
+    $list.off('click.kgAuthors').on('click.kgAuthors', '.kg-ref-authors-toggle', function (e) {
+      e.preventDefault();
+      var $wrap = $(this).closest('.kg-ref-authors');
+      var expanded = $wrap.attr('data-expanded') === '1';
+      var more = $(this).attr('data-more');
+      var total = $(this).attr('data-total');
+      $wrap.attr('data-expanded', expanded ? '0' : '1');
+      $wrap.find('.kg-ref-authors-preview').prop('hidden', !expanded);
+      $wrap.find('.kg-ref-authors-full').prop('hidden', expanded);
+      $(this).attr('aria-expanded', expanded ? 'false' : 'true')
+        .attr('aria-label', expanded ? ('Show all ' + total + ' authors') : 'Show fewer authors')
+        .text(expanded ? ('et al. (' + more + ' more)') : 'show less');
+    });
   }
 
   function renderSpecies(data) {

@@ -140,7 +140,10 @@ async def no_cache_known_gene_assets(request: Request, call_next):
     """
     response = await call_next(request)
     path = request.url.path
-    if path.startswith(("/genes/", "/api/v2shell/")):
+    if path.startswith("/api/v2shell/img/"):
+        # versioned image URLs (shell.js appends ?v=...) can be cached for good
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    elif path.startswith(("/genes/", "/api/v2shell/")):
         ctype = response.headers.get("content-type", "")
         if ctype.startswith(("text/html", "text/css", "text/javascript", "application/javascript")):
             response.headers["Cache-Control"] = "no-cache, must-revalidate"
