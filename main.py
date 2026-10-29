@@ -36,7 +36,7 @@ from mcp.server import Server
 from mcp.server.sse import SseServerTransport
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 
-from starlette.routing import Route
+from starlette.routing import Mount, Route
 
 
 
@@ -149,9 +149,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+class _SelectiveGZipMiddleware(GZipMiddleware):
+    """GZipMiddleware that skips the MCP endpoints.
+
+    MCP Streamable HTTP / SSE responses may be streamed (text/event-stream) and
+    must not be buffered/compressed by the middleware; everything else keeps the
+    normal JSON compression.
+    """
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") == "http" and scope.get("path", "").startswith("/api/mcp"):
+            await self.app(scope, receive, send)
+            return
+        await super().__call__(scope, receive, send)
+
+
 # Compress large JSON responses (VariantHub /samples ~865 KB -> ~100 KB,
 # VCF query payloads) — avoids Apache proxy buffering timeouts.
-app.add_middleware(GZipMiddleware, minimum_size=1000)
+app.add_middleware(_SelectiveGZipMiddleware, minimum_size=1000)
 
 @app.middleware("http")
 async def no_cache_known_gene_assets(request: Request, call_next):
@@ -328,14 +343,17 @@ app.routes.append(Route("/api/mcp/sse", endpoint=mcp_sse_endpoint, methods=["GET
 app.routes.append(Route("/api/mcp/messages", endpoint=mcp_messages_endpoint, methods=["POST"]))
 
 
-async def mcp_http_endpoint(request: Request):
-    """Handle MCP Streamable HTTP requests (stateless; multi-worker safe)."""
-    await mcp_http_manager.handle_request(request.scope, request.receive, request._send)
+async def mcp_http_app(scope, receive, send):
+    """Raw ASGI app for MCP Streamable HTTP (stateless; multi-worker safe).
+
+    The session manager writes the HTTP response itself, so it must be mounted
+    as an ASGI app instead of a Starlette endpoint (an endpoint wrapper would
+    attempt a second response send on every request).
+    """
+    await mcp_http_manager.handle_request(scope, receive, send)
 
 
-app.routes.append(
-    Route("/api/mcp", endpoint=mcp_http_endpoint, methods=["GET", "POST", "DELETE"])
-)
+app.routes.append(Mount("/api/mcp", app=mcp_http_app))
 
 @app.get("/api/about")
 async def root(request: Request) -> dict:
