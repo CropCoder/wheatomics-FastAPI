@@ -45,7 +45,7 @@ so no new `ProxyPass` rule is needed.
 
 | menu | items |
 |---|---|
-| `Agent` ▾ | Agent & API (`/agent.html`, docroot page managed from `app/static/docpages/agent.html`), MCP Server (SSE) (`/agent.html#mcp`), API Documentation (`/api/docs`), API Reference (`/api/redoc`), OpenAPI Schema (`/api/openapi.json`) |
+| `Agent` ▾ | How to Use the Agent (`/agent.html#howto`, copy-ready prompt), Agent & API (`/agent.html`, docroot page managed from `app/static/docpages/agent.html`), MCP Server (SSE) (`/agent.html#mcp`), API Documentation (`/api/docs`), API Reference (`/api/redoc`), OpenAPI Schema (`/api/openapi.json`) |
 | `More` ▾ | External Links (`/outsitelink.html` — no longer a top-level item), Citation (`/#citation`), News, Contact |
 
 The production V2.0 homepage (`/var/www/html/index.html` plus its `/V2.0/`

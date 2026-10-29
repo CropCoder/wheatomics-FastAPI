@@ -66,12 +66,15 @@ DOWNLOAD_ITEM = (
 )
 ABOUT_TRIGGER = 'aria-expanded="false">About'
 EXTERNAL_LI = f'<li><a href="{DOMAIN}/outsitelink.html">External Links</a></li>'
+AGENT_PRIMARY_LI = f'<li><a href="{DOMAIN}/agent.html">Agent &amp; API</a></li>'
+HOWTO_LI = f'<li><a href="{DOMAIN}/agent.html#howto">How to Use the Agent</a></li>'
 
 AGENT_BLOCK = f"""          <div class="nav-item">
             <button class="nav-trigger" type="button" aria-expanded="false">Agent
               <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
             </button>
             <ul class="dropdown">
+              <li><a href="{DOMAIN}/agent.html#howto">How to Use the Agent</a></li>
               <li><a href="{DOMAIN}/agent.html">Agent &amp; API</a></li>
               <li><a href="{DOMAIN}/agent.html#mcp">MCP Server (SSE)</a></li>
               <li><a href="/api/docs">API Documentation</a></li>
@@ -107,6 +110,28 @@ def is_patched(text: str) -> bool:
         and count(text, f'aria-expanded="false">Agent') == 1
         and count(text, EXTERNAL_LI) == 1
     )
+
+
+def with_howto_item(text: str) -> tuple[str, list[str]]:
+    """Add the "How to Use the Agent" item to an already-migrated page.
+
+    Homepages patched before 2026-10-29 carry the Agent dropdown without the
+    how-to entry; insert it before "Agent & API" instead of re-patching the
+    whole nav (keeps the operation idempotent and non-destructive).
+    """
+    if count(text, HOWTO_LI) == 1:
+        return text, []
+    lines = [line for line in text.splitlines() if AGENT_PRIMARY_LI in line]
+    if len(lines) != 1:
+        raise SystemExit(
+            "[ERR] cannot locate the Agent & API menu item to insert the How-to item"
+        )
+    line = lines[0]
+    indent = line[: len(line) - len(line.lstrip())]
+    updated = text.replace(line, indent + HOWTO_LI + "\n" + line, 1)
+    if count(updated, HOWTO_LI) != 1 or updated.index(HOWTO_LI) > updated.index(AGENT_PRIMARY_LI):
+        raise SystemExit("[ERR] How-to item assertion failed")
+    return updated, ["How-to item inserted before Agent & API", "How-to item present exactly once"]
 
 
 def patch(text: str) -> tuple[str, list[str]]:
@@ -145,6 +170,12 @@ def patch(text: str) -> tuple[str, list[str]]:
         ('exactly one "Agent" trigger', count(updated, 'aria-expanded="false">Agent') == 1),
         ('exactly one "More" trigger', count(updated, 'aria-expanded="false">More') == 1),
         ('no "About" trigger left', count(updated, ABOUT_TRIGGER) == 0),
+        ("How-to item present", count(updated, HOWTO_LI) == 1),
+        (
+            "How-to item before Agent & API",
+            count(updated, AGENT_PRIMARY_LI) == 1
+            and updated.index(HOWTO_LI) < updated.index(AGENT_PRIMARY_LI),
+        ),
         ("External Links inside More", count(updated, EXTERNAL_LI) == 1),
         ("External Links kept Citation indentation", external_li_line in updated),
         (
@@ -175,17 +206,26 @@ def process(path: Path, *, check: bool, dry_run: bool) -> bool:
         return False
 
     if is_patched(text):
-        print(f"[ok] {path}: already up to date (Agent + More menus present)")
-        return True
-    if check:
-        print(f"[MISMATCH] {path}: old About / top-level External Links nav is still live")
-        return False
-
-    try:
-        updated, checks = patch(text)
-    except SystemExit as exc:
-        print(str(exc))
-        return False
+        if count(text, HOWTO_LI) == 1:
+            print(f"[ok] {path}: already up to date (Agent + More menus + How-to item present)")
+            return True
+        if check:
+            print(f"[MISMATCH] {path}: Agent dropdown is missing the How to Use the Agent item")
+            return False
+        try:
+            updated, checks = with_howto_item(text)
+        except SystemExit as exc:
+            print(str(exc))
+            return False
+    else:
+        if check:
+            print(f"[MISMATCH] {path}: old About / top-level External Links nav is still live")
+            return False
+        try:
+            updated, checks = patch(text)
+        except SystemExit as exc:
+            print(str(exc))
+            return False
 
     added = len(updated.splitlines()) - len(text.splitlines())
     print(f"[{'dry-run' if dry_run else 'patch'}] {path}")

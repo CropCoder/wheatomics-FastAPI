@@ -108,6 +108,34 @@
       line-height: 1.7;
     }
 
+    /* How-to section: copy-ready prompt, steps and copy button */
+    .agent-prompt {
+      max-height: 430px;
+      overflow: auto;
+      margin: 0 0 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .agent-prompt code { white-space: pre-wrap; }
+    .agent-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; }
+    .agent-copy {
+      padding: 8px 18px;
+      color: #fff;
+      background: var(--forest);
+      border: 0;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 160ms ease;
+    }
+    .agent-copy:hover, .agent-copy:focus { background: var(--forest-deep); }
+    .agent-copy[data-copied="true"] { background: var(--leaf); }
+    .agent-steps { margin: 0 0 12px; padding-left: 20px; color: #4d6258; font-size: 14px; line-height: 1.75; }
+    .agent-steps li { margin-bottom: 4px; }
+    .agent-steps strong { color: var(--forest-deep); }
+    .agent-steps code { white-space: nowrap; }
+
     @media print {
       .news-hero { background: #fff; box-shadow: none; }
       .news-hero::before { display: none; }
@@ -133,6 +161,7 @@
             <span class="news-stat">MCP · Model Context Protocol</span>
             <span class="news-stat">REST · JSON</span>
             <span class="news-stat">OpenAPI 3</span>
+            <span class="news-stat">Copy-ready agent prompt</span>
           </div>
         </div>
         <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-nodes"/></svg></div>
@@ -142,10 +171,70 @@
     <section class="news-body">
       <div class="container">
 
-        <!-- ============ A. MCP server ============ -->
+        <!-- ============ A. How to use the agent ============ -->
+        <section class="agent-section" id="howto" aria-labelledby="howto-title">
+          <header class="agent-section-head">
+            <p class="agent-kicker">A · Quick start</p>
+            <h2 id="howto-title">How to use the agent</h2>
+            <p class="agent-intro">WheatOmics is built to be operated by AI agents. The fastest way to start is to give your assistant — Claude Code, Cursor, VS Code, ChatGPT or any agent that can read a URL or accept pasted text — the ready-to-copy prompt below. The agent reads the live OpenAPI schema and writes a reusable <strong>WheatOmics Data Query</strong> skill for your own workspace.</p>
+          </header>
+
+          <div class="agent-grid">
+            <article class="card agent-card wide">
+              <div class="card-body">
+                <h3>Copy-ready prompt</h3>
+                <ol class="agent-steps">
+                  <li><strong>Copy</strong> the prompt below.</li>
+                  <li><strong>Paste</strong> it into your AI assistant, or attach it as a task in your agent's workspace.</li>
+                  <li><strong>Keep the output</strong> — the assistant returns a reusable skill file (for example <code>SKILL.md</code>) plus an optional <code>wheatomics.py</code> helper; load it in later conversations to query the platform directly.</li>
+                </ol>
+                <pre class="agent-code agent-prompt" id="agent-prompt"><code>Please read the WheatOmics platform OpenAPI documentation:
+https://wheatomics.sdau.edu.cn/api/docs
+Machine-readable schema:
+https://wheatomics.sdau.edu.cn/api/openapi.json
+
+Based on that documentation, generate a "WheatOmics Data Query" skill for me.
+
+Requirements:
+1. Cover every module in the documentation — gene search, expression profiles, sequence retrieval, BLAST, synteny, variation data, literature, and any other module you find.
+2. For each module, document its endpoints, parameters, response format, call examples and important notes.
+3. Organize the result into a reusable skill file that can be loaded directly in later conversations.
+4. Generate everything strictly from the actual endpoint definitions in the OpenAPI document — never invent endpoints that do not exist.
+5. Write this hard rule into the skill: whenever an answer involves a specific gene ID, pathway ID (GO/KEGG) or cited reference (PMID/DOI), you MUST call the corresponding API endpoint to verify it in real time. Never rely on memory or guesswork, and never present anything as fact unless it came from an actual API response.
+6. Add an "automatic result persistence" convention to the skill: whenever a query produces results the user may want to cite or reproduce later (gene details, expression profiles, BLAST hits, enrichment results, literature, etc.), write them to local files (JSON / Markdown report) by default instead of leaving them only in the conversation. Document the save-to-file usage `wheatomics.py ... -o &lt;file&gt;` and suggest an output directory (for example `./wheatomics_results/`).</code></pre>
+                <div class="agent-actions">
+                  <button class="agent-copy" type="button" id="copy-agent-prompt">Copy prompt</button>
+                  <span class="agent-small">Works in any assistant that accepts pasted text. Prefer a native MCP connection instead? See <a href="#mcp">the MCP server section</a>.</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="card agent-card">
+              <div class="card-body">
+                <h3>What the generated skill contains</h3>
+                <ul class="agent-steps">
+                  <li>Every platform module: gene search, expression profiles, sequences, BLAST, synteny, variation data, literature and more.</li>
+                  <li>For each module: endpoints, parameters, response format, call examples and notes.</li>
+                  <li>A verification rule for gene IDs, GO/KEGG pathway IDs and PMID/DOI references.</li>
+                  <li>An output convention that saves query results to JSON / Markdown files.</li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="card agent-card">
+              <div class="card-body">
+                <h3>Why the verification rule matters</h3>
+                <p>WheatOmics identifiers are easy to misremember: one gene ID may exist in several reference genomes, GO/KEGG terms change between releases, and a cited paper may not support the claim it is attached to. The generated skill therefore requires a live API call before any concrete ID or reference is reported — every answer stays traceable to an actual API response instead of model memory.</p>
+                <p class="agent-small">Read access needs no API key; see <a href="#access">access &amp; support</a> for write access and contacts.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ============ B. MCP server ============ -->
         <section class="agent-section" id="mcp" aria-labelledby="mcp-title">
           <header class="agent-section-head">
-            <p class="agent-kicker">A · Model Context Protocol</p>
+            <p class="agent-kicker">B · Model Context Protocol</p>
             <h2 id="mcp-title">AI agents: built-in MCP server</h2>
             <p class="agent-intro">WheatOmics runs an MCP (Model Context Protocol) server over SSE (Server-Sent Events), so an MCP-capable AI client can connect remotely, discover the tools below and call them as native tools. The server exposes sequence retrieval and CAPS/dCAPS primer design; the REST API described <a href="#api">in the next section</a> covers the remaining data modules.</p>
           </header>
@@ -241,7 +330,7 @@
         <!-- ============ B. REST API ============ -->
         <section class="agent-section" id="api" aria-labelledby="api-title">
           <header class="agent-section-head">
-            <p class="agent-kicker">B · Representational State Transfer</p>
+            <p class="agent-kicker">C · Representational State Transfer</p>
             <h2 id="api-title">REST API</h2>
             <p class="agent-intro">Every data module is also reachable over plain HTTP under the base URL <code>https://wheatomics.sdau.edu.cn/api</code>. The interactive references are the quickest way to explore the endpoints: <a href="/api/docs" target="_blank" rel="noopener">Swagger UI</a>, the <a href="/api/redoc" target="_blank" rel="noopener">ReDoc reference</a>, or the machine-readable <a href="/api/openapi.json" target="_blank" rel="noopener">OpenAPI 3.x schema</a>.</p>
           </header>
@@ -317,7 +406,7 @@
         <!-- ============ C. Access & support ============ -->
         <section class="agent-section" id="access" aria-labelledby="access-title">
           <header class="agent-section-head">
-            <p class="agent-kicker">C · Access &amp; support</p>
+            <p class="agent-kicker">D · Access &amp; support</p>
             <h2 id="access-title">Access &amp; support</h2>
           </header>
 
@@ -340,7 +429,7 @@
           </div>
         </section>
 
-        <p class="agent-note">Cite WheatOmics through the <a href="/#citation">platform citation on the homepage</a>. This page was last updated on 2026-10-29 and describes the MCP server and REST API as deployed at that time.</p>
+        <p class="agent-note">Cite WheatOmics through the <a href="/#citation">platform citation on the homepage</a>. This page was last updated on 2026-10-29 and describes the MCP server, REST API and the copy-ready agent prompt as deployed at that time.</p>
       </div>
     </section>
   </main>
@@ -348,5 +437,41 @@
   <div id="v2-shell-footer"></div>
 
   <script src="/api/v2shell/shell.js"></script>
+  <script>
+    /* Copy-ready agent prompt: clipboard API with a textarea fallback. */
+    (function () {
+      var button = document.getElementById('copy-agent-prompt');
+      var promptBlock = document.getElementById('agent-prompt');
+      if (!button || !promptBlock) return;
+      function markCopied() {
+        button.textContent = 'Copied!';
+        button.setAttribute('data-copied', 'true');
+        window.setTimeout(function () {
+          button.textContent = 'Copy prompt';
+          button.removeAttribute('data-copied');
+        }, 2200);
+      }
+      function fallbackCopy(text) {
+        var area = document.createElement('textarea');
+        area.value = text;
+        area.setAttribute('readonly', '');
+        area.style.position = 'absolute';
+        area.style.left = '-9999px';
+        document.body.appendChild(area);
+        area.select();
+        try { document.execCommand('copy'); } catch (error) { /* clipboard unavailable */ }
+        document.body.removeChild(area);
+        markCopied();
+      }
+      button.addEventListener('click', function () {
+        var text = promptBlock.innerText;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(markCopied, function () { fallbackCopy(text); });
+        } else {
+          fallbackCopy(text);
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

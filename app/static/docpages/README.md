@@ -13,7 +13,7 @@ Apache needs no changes and no service restart is required.
 | `help_contact.html` | `/help/contact.html` | V2.0 contact page |
 | `help_news.html` | `/help/news.html` | V2.0 news page; the feed still loads `/V2.0/news.json` at runtime |
 | `outsitelink.html` | `/outsitelink.html` | V2.0 external links; hero image `/css/wheat.jpeg` |
-| `agent.html` | `/agent.html` | V2.0 AI Agent (MCP) + REST API overview; target of the header "Agent" menu |
+| `agent.html` | `/agent.html` | V2.0 AI Agent (MCP) + REST API overview, copy-ready "How to use the agent" prompt; target of the header "Agent" menu |
 | `genehub_index.html` | `/GeneHub/index.html` | V2.0 GeneHub search page (form + `/api/genes/resolve` mapping table) |
 | `geneDetail.py` | `/cgi-bin/geneDetail.py` | GeneHub gene-result CGI, V2.0 frame; **root-owned target — see below** |
 

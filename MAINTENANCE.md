@@ -990,7 +990,7 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.htm
 
 | 菜单 | 子项 |
 |---|---|
-| `Agent` ▾ | Agent & API（`/agent.html`，见下「仓库外页面收编」）、MCP Server (SSE)（`/agent.html#mcp`）、API Documentation（`/api/docs`）、API Reference（`/api/redoc`）、OpenAPI Schema（`/api/openapi.json`） |
+| `Agent` ▾ | How to Use the Agent（`/agent.html#howto`，复制即用 prompt）、Agent & API（`/agent.html`，见下「仓库外页面收编」）、MCP Server (SSE)（`/agent.html#mcp`）、API Documentation（`/api/docs`）、API Reference（`/api/redoc`）、OpenAPI Schema（`/api/openapi.json`） |
 | `More` ▾ | External Links（`/outsitelink.html`，**不再是顶级菜单**）、Citation（`/#citation`）、News、Contact |
 
 - 旧菜单的 `About` 已整体改名为 `More`；`External Links` 从顶级链接移入 `More` 下拉第一项。
@@ -1000,6 +1000,8 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.htm
 - 2026-10-29 同时下线 `SyntenySearch`（`/symap/index.html`，其功能由 `Collinearity` 覆盖）：Tools 菜单项
   已从仓库 3 处 chrome 与旧版 `coexpression/stats.html` 移除；仓库外首页的 Tools 菜单项和 Analysis
   Tools 卡片用 `python3 scripts/remove_v2_home_tool.py` 移除（`/symap/` 页面本身保留，只是不再被链接）。
+- 2026-10-29 下午：`Agent` 下拉新增 `How to Use the Agent`（`/agent.html#howto`）；`/agent.html` 新增英文
+  「How to use the agent」区块（复制即用 prompt，要求 AI 依据 OpenAPI 生成「WheatOmics 数据查询」技能）。
 
 ### 单页改造步骤（摘要，完整版见 `app/static/_v2/README.md`）
 
