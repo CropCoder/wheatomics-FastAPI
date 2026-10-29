@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="WheatOmics 2.0 AI Agent and API access: connect the built-in MCP server over SSE, or query the public REST API with its unified JSON envelope and OpenAPI 3 schema.">
+  <meta name="description" content="WheatOmics 2.0 AI Agent and API access: connect the built-in 28-tool MCP server over SSE, read its documentation resources and prompt, or query the public REST API with its unified JSON envelope and OpenAPI 3 schema.">
   <title>Agent &amp; API | WheatOmics 2.0</title>
   <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="/api/v2shell/shell.css">
@@ -76,6 +76,30 @@
     .agent-table tbody th { color: var(--forest-deep); font-weight: 700; white-space: nowrap; }
     .agent-table td { color: #4d6258; line-height: 1.6; }
     .agent-table td code, .agent-table th code { white-space: nowrap; font-size: 11.5px; }
+
+    /* MCP tool catalog: one table per TOOL_GROUPS entry */
+    .agent-tool-group { margin: 26px 0 0; }
+    .agent-tool-group h4 {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 4px 10px;
+      margin: 0 0 8px;
+      color: var(--forest-deep);
+      font-family: var(--display);
+      font-size: 15px;
+      font-weight: 750;
+      letter-spacing: -.01em;
+      line-height: 1.35;
+    }
+    .agent-tool-group h4 span {
+      color: #52665c;
+      font-family: var(--utility);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
 
     .agent-code {
       margin: 0 0 12px;
@@ -158,7 +182,7 @@
           <h1 class="news-title">Agent &amp; <em>API</em></h1>
           <p class="news-lead">WheatOmics opens its wheat multi-omics data to AI agents and scripts: a built-in MCP server for tool-using LLM clients, plus a documented REST API for everything else.</p>
           <div class="news-stats">
-            <span class="news-stat">MCP · Model Context Protocol</span>
+            <span class="news-stat"><strong>28</strong> MCP tools</span>
             <span class="news-stat">REST · JSON</span>
             <span class="news-stat">OpenAPI 3</span>
             <span class="news-stat">Copy-ready agent prompt</span>
@@ -236,7 +260,7 @@ Requirements:
           <header class="agent-section-head">
             <p class="agent-kicker">B · Model Context Protocol</p>
             <h2 id="mcp-title">AI agents: built-in MCP server</h2>
-            <p class="agent-intro">WheatOmics runs an MCP (Model Context Protocol) server over SSE (Server-Sent Events), so an MCP-capable AI client can connect remotely, discover the tools below and call them as native tools. The server exposes sequence retrieval and CAPS/dCAPS primer design; the REST API described <a href="#api">in the next section</a> covers the remaining data modules.</p>
+            <p class="agent-intro">WheatOmics runs an MCP (Model Context Protocol) server over SSE (Server-Sent Events), so an MCP-capable AI client can connect remotely, discover the tools below and call them as native tools. The server exposes 28 tools spanning genes and annotation, sequences, expression, networks, comparative genomics, enrichment, literature, reference genomes, JBrowse and BLAST, plus two documentation resources and a copy-ready prompt; the REST API described <a href="#api">in the next section</a> covers anything else.</p>
           </header>
 
           <div class="agent-grid">
@@ -254,6 +278,7 @@ Requirements:
                       <tr><th scope="row">Transport</th><td>SSE (Server-Sent Events)</td></tr>
                       <tr><th scope="row">SSE endpoint</th><td><code>GET /api/mcp/sse</code></td></tr>
                       <tr><th scope="row">Message endpoint</th><td><code>POST /api/mcp/messages</code></td></tr>
+                      <tr><th scope="row">Tools / resources / prompt</th><td><strong>28</strong> tools · <strong>2</strong> resources · <strong>1</strong> prompt</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -283,45 +308,259 @@ Requirements:
             <article class="card agent-card wide">
               <div class="card-body">
                 <h3>Registered tools</h3>
-                <p>Four tools are registered on the server. Arguments are passed as the tool input object; errors come back as text so the model can adjust and retry.</p>
+                <p>The server registers 28 tools, grouped below by data module. Arguments are passed as the tool input object; required arguments are marked with <strong>*</strong> and a default value follows <code>=</code>. Errors come back as text rather than raised exceptions, so the model can adjust and retry.</p>
+                <p class="agent-small">The full JSON input schema of every tool is discoverable through the MCP <code>tools/list</code> request and in the <a href="/api/docs" target="_blank" rel="noopener">REST API documentation</a>.</p>
+                <p class="agent-small">Tools whose raw payload would be too large for an agent context (the expression-project and BLAST-database lists) return a compact view by default; set the documented <code>include_*</code> argument to get the full payload.</p>
+
+                <div class="agent-tool-group">
+                  <h4>Sequences &amp; primers <span>4 tools</span></h4>
+                  <div class="agent-table-wrap">
+                    <table class="table agent-table">
+                      <thead>
+                        <tr><th scope="col">Tool</th><th scope="col">Key arguments</th><th scope="col">What it returns / notes</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><code>get_sequence_by_gene</code></td>
+                          <td><code>gene_id</code> <strong>*</strong> · <code>gene_db</code>=<code>all_gene</code> · <code>protein_db</code>=<code>all_protein</code></td>
+                          <td>Gene and protein FASTA records for one gene ID.</td>
+                        </tr>
+                        <tr>
+                          <td><code>get_sequence_by_interval</code></td>
+                          <td><code>region</code> <strong>*</strong> (legacy format, e.g. <code>chr1A:10-100</code>) · <code>database</code> <strong>*</strong> (a genome database name)</td>
+                          <td>FASTA sequence for a genomic interval, via <code>blastdbcmd</code>.</td>
+                        </tr>
+                        <tr>
+                          <td><code>batch_sequence</code></td>
+                          <td><code>database</code> <strong>*</strong> · <code>ids</code> <strong>*</strong> (space-separated gene IDs)</td>
+                          <td>Direct-entry FASTA records for many gene IDs in one call.</td>
+                        </tr>
+                        <tr>
+                          <td><code>design_caps_primers</code></td>
+                          <td><code>seq1</code> <strong>*</strong>, <code>seq2</code> <strong>*</strong> (same length, one base differs) · <code>mismatch_max</code>=<code>1</code> (0–3) · <code>top_n</code>=<code>10</code></td>
+                          <td>Ranked CAPS/dCAPS designs with enzyme, primer sequences, mismatches, cut position and Tm. <code>mismatch_max</code> 0 = CAPS only (natural site), 1–3 = dCAPS.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="agent-tool-group">
+                  <h4>Genes &amp; annotation <span>6 tools</span></h4>
+                  <div class="agent-table-wrap">
+                    <table class="table agent-table">
+                      <thead>
+                        <tr><th scope="col">Tool</th><th scope="col">Key arguments</th><th scope="col">What it returns / notes</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><code>search_known_genes</code></td>
+                          <td><code>search</code> <strong>*</strong> · <code>field</code>=<code>all</code> (gene ID, gene name, phenotype, DOI, …) · <code>limit</code>=<code>20</code> (max 5000) · <code>offset</code>=<code>0</code></td>
+                          <td>Curated KnownGene hits with phenotype, functional category, species, reference-genome IDs and publications.</td>
+                        </tr>
+                        <tr>
+                          <td><code>get_known_gene</code></td>
+                          <td><code>gene_id</code> <strong>*</strong> (gene ID, gene name or numeric clone_id)</td>
+                          <td>One curated KnownGene record with structured phenotype, validation-method and publication fields.</td>
+                        </tr>
+                        <tr>
+                          <td><code>get_gene_detail</code></td>
+                          <td><code>gene_id</code> <strong>*</strong> (IWGSC v1 / v2 / v3)</td>
+                          <td>GeneHub details: genome location, protein length / MW / pI, functional annotations, cross-version IDs and JBrowse / Ensembl links.</td>
+                        </tr>
+                        <tr>
+                          <td><code>resolve_gene_id</code></td>
+                          <td><code>gene_id</code> <strong>*</strong> (any annotation version)</td>
+                          <td>Chinese Spring 02G mapping for a gene ID from another annotation version.</td>
+                        </tr>
+                        <tr>
+                          <td><code>search_pfam</code></td>
+                          <td><code>domain</code> <strong>*</strong> (PFAM ID starting with <code>PF</code>) · <code>table</code>=<code>Genefunc_CS_IWGSC03G_table</code></td>
+                          <td>All genes carrying a PFAM domain (gene-family search); the table selects the annotation.</td>
+                        </tr>
+                        <tr>
+                          <td><code>genes_in_interval</code></td>
+                          <td><code>region</code> <strong>*</strong> (e.g. <code>chr5A:587000000..587200000</code>) · <code>table</code>=<code>Genefunc_CS_IWGSC03G_table</code></td>
+                          <td>All genes within a chromosomal interval, with their PFAM / domain annotation column.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="agent-tool-group">
+                  <h4>Expression &amp; networks <span>4 tools</span></h4>
+                  <div class="agent-table-wrap">
+                    <table class="table agent-table">
+                      <thead>
+                        <tr><th scope="col">Tool</th><th scope="col">Key arguments</th><th scope="col">What it returns / notes</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><code>list_expression_projects</code></td>
+                          <td><code>include_details</code>=<code>false</code></td>
+                          <td>Compact project catalog (id, description, categories, group / subgroup, ~73 KB); call it first to discover valid <code>project</code> values for <code>query_expression</code>. <code>include_details</code>=<code>true</code> returns the raw REST payload with citations and the nested group tree (~600 KB).</td>
+                        </tr>
+                        <tr>
+                          <td><code>query_expression</code></td>
+                          <td><code>gene_ids</code> <strong>*</strong> (comma-separated, IWGSC v2.1) · <code>project</code>=<code>PRJEB5314_paired_tbl</code></td>
+                          <td>Expression values and standard deviations for the genes in one project.</td>
+                        </tr>
+                        <tr>
+                          <td><code>query_coexpression</code></td>
+                          <td><code>gene_ids</code> <strong>*</strong> (comma-separated) · <code>database</code>=<code>CO_PRJEB25639</code> · <code>filter_value</code>=<code>300</code> (PCC threshold when below 1, mutual rank otherwise)</td>
+                          <td>Co-expression partners of the input genes, filtered by PCC or mutual rank.</td>
+                        </tr>
+                        <tr>
+                          <td><code>query_ppi</code></td>
+                          <td><code>gene_ids</code> <strong>*</strong> (transcript IDs with the <code>.1</code> suffix) · <code>table</code>=<code>PPI_result</code> · <code>min_score</code>=<code>0.5</code></td>
+                          <td>Protein-protein interactions from wheatPPI (CF-MS).</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="agent-tool-group">
+                  <h4>Comparative &amp; variation <span>4 tools</span></h4>
+                  <div class="agent-table-wrap">
+                    <table class="table agent-table">
+                      <thead>
+                        <tr><th scope="col">Tool</th><th scope="col">Key arguments</th><th scope="col">What it returns / notes</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><code>find_homologs</code></td>
+                          <td><code>gene_id</code> <strong>*</strong> (wheat or another species) · <code>max_targets</code>=<code>3</code> (per species, 1–50)</td>
+                          <td>Rice and Arabidopsis homologs with Qcovs, identity, E-value and score.</td>
+                        </tr>
+                        <tr>
+                          <td><code>search_synteny</code></td>
+                          <td><code>query</code> <strong>*</strong> (gene ID or interval, e.g. <code>chr5A:100000-200000</code>) · <code>table</code>=<code>CSsymaptbl</code></td>
+                          <td>Synteny relationships between Chinese Spring and durum wheat, wild emmer, T. urartu and Ae. tauschii.</td>
+                        </tr>
+                        <tr>
+                          <td><code>convert_gene_ids</code></td>
+                          <td><code>gene_ids</code> <strong>*</strong> (transcript IDs with <code>.1</code>, newline- or space-separated) · <code>version</code> <strong>*</strong> (<code>MIPS_result</code> · <code>TGACv1_result</code> · <code>IWGSCv1_result</code>)</td>
+                          <td>Transcript IDs converted to IWGSC v1.1 (02G).</td>
+                        </tr>
+                        <tr>
+                          <td><code>search_eqtl</code></td>
+                          <td><code>gene</code> <strong>*</strong> (e.g. <code>TraesCS5A02G391700</code>)</td>
+                          <td>eQTL records for the gene, plus each project's FarmCPU Manhattan-plot information.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="agent-tool-group">
+                  <h4>Enrichment &amp; literature <span>4 tools</span></h4>
+                  <div class="agent-table-wrap">
+                    <table class="table agent-table">
+                      <thead>
+                        <tr><th scope="col">Tool</th><th scope="col">Key arguments</th><th scope="col">What it returns / notes</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><code>go_enrichment</code></td>
+                          <td><code>genes</code> <strong>*</strong> (array of gene IDs) · <code>padj_threshold</code>=<code>0.05</code></td>
+                          <td>GO terms enriched by hypergeometric test with Benjamini-Hochberg FDR.</td>
+                        </tr>
+                        <tr>
+                          <td><code>kegg_enrichment</code></td>
+                          <td><code>genes</code> <strong>*</strong> (array of gene IDs) · <code>padj_threshold</code>=<code>0.05</code></td>
+                          <td>KEGG pathways enriched by hypergeometric test with Benjamini-Hochberg FDR.</td>
+                        </tr>
+                        <tr>
+                          <td><code>search_papers</code></td>
+                          <td><code>q</code>, <code>title</code>, <code>abstract</code>, <code>journal</code>, <code>authors</code>, <code>pubmed_keywords</code>, <code>gene_name</code>, <code>pmid</code>, <code>pub_date_start</code>, <code>pub_date_end</code>, <code>since_days</code> (all optional) · <code>limit</code>=<code>20</code> (max 200) · <code>offset</code>=<code>0</code></td>
+                          <td>Triticeae literature hits (12K+ papers); verify PMID / DOI claims with <code>get_paper</code> before citing.</td>
+                        </tr>
+                        <tr>
+                          <td><code>get_paper</code></td>
+                          <td><code>pubmedid</code> <strong>*</strong></td>
+                          <td>One paper record with the metadata needed to verify a citation.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="agent-tool-group">
+                  <h4>Genomes, JBrowse &amp; BLAST <span>6 tools</span></h4>
+                  <div class="agent-table-wrap">
+                    <table class="table agent-table">
+                      <thead>
+                        <tr><th scope="col">Tool</th><th scope="col">Key arguments</th><th scope="col">What it returns / notes</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><code>list_genomes</code></td>
+                          <td><code>ploidy</code>, <code>annotation_status</code>, <code>has_annotation</code>, <code>q</code>, <code>include_hidden</code>=<code>false</code>, <code>limit</code>=<code>100</code>, <code>offset</code>=<code>0</code> (all optional)</td>
+                          <td>Reference genomes with assembly metadata, ploidy and annotation status.</td>
+                        </tr>
+                        <tr>
+                          <td><code>get_genome</code></td>
+                          <td><code>dataset_id</code> <strong>*</strong></td>
+                          <td>One genome record: assembly, ploidy, annotation and download links.</td>
+                        </tr>
+                        <tr>
+                          <td><code>list_jbrowse_datasets</code></td>
+                          <td>—</td>
+                          <td>JBrowse datasets and their track counts, for genome-browser links.</td>
+                        </tr>
+                        <tr>
+                          <td><code>submit_blast</code></td>
+                          <td><code>database</code> <strong>*</strong> (comma-separated, max 20) · <code>query</code> <strong>*</strong> (FASTA) · <code>program</code>=<code>blastp</code> · <code>evalue</code>=<code>10.0</code> · <code>max_target_seqs</code>=<code>1000</code> · <code>word_size</code> · <code>matrix</code> · <code>outfmt</code>=<code>tabular</code></td>
+                          <td>A <code>job_id</code> immediately — BLAST is always asynchronous; poll <code>get_blast_status</code>. Call <code>list_blast_databases</code> first to discover valid database names.</td>
+                        </tr>
+                        <tr>
+                          <td><code>get_blast_status</code></td>
+                          <td><code>job_id</code> <strong>*</strong></td>
+                          <td>Job state (pending / running / done / error / stale) and download links when finished.</td>
+                        </tr>
+                        <tr>
+                          <td><code>list_blast_databases</code></td>
+                          <td><code>program</code> (optional) · <code>include_databases</code>=<code>false</code> · <code>include_metadata</code>=<code>false</code></td>
+                          <td>Compact summary (~12 KB): all protein database names, a sample of nucleotide names and per-category counts. <code>include_databases</code>=<code>true</code> returns every database name (~105 KB); <code>include_metadata</code>=<code>true</code> the full REST payload with per-database metadata (~600 KB).</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="card agent-card wide">
+              <div class="card-body">
+                <h3>Resources and prompt</h3>
+                <p>Beyond tools, the server publishes two read-only documentation resources and one prompt over the same MCP connection, so an agent can load the platform guide without extra requests to the REST API:</p>
                 <div class="agent-table-wrap">
                   <table class="table agent-table">
                     <thead>
-                      <tr>
-                        <th scope="col">Tool</th>
-                        <th scope="col">Required arguments</th>
-                        <th scope="col">Optional arguments</th>
-                        <th scope="col">Returns</th>
-                      </tr>
+                      <tr><th scope="col">Item</th><th scope="col">URI / name</th><th scope="col">Contents</th></tr>
                     </thead>
                     <tbody>
                       <tr>
-                        <td><code>get_sequence_by_gene</code></td>
-                        <td><code>gene_id</code></td>
-                        <td><code>gene_db</code> (default <code>all_gene</code>), <code>protein_db</code> (default <code>all_protein</code>)</td>
-                        <td>Gene and protein FASTA records for one gene ID.</td>
+                        <td>Resource</td>
+                        <td><code>wheatomics://docs/modules</code><br><span class="agent-small">application/json</span></td>
+                        <td>JSON module and tool catalog: every platform module, its REST prefix, the MCP tools that cover it, and the total tool count.</td>
                       </tr>
                       <tr>
-                        <td><code>get_sequence_by_interval</code></td>
-                        <td><code>region</code> (legacy format, e.g. <code>chr1A:10-100</code>), <code>database</code> (a genome database name)</td>
-                        <td>—</td>
-                        <td>FASTA sequence for the requested genomic interval.</td>
+                        <td>Resource</td>
+                        <td><code>wheatomics://docs/agent-guide</code><br><span class="agent-small">text/markdown</span></td>
+                        <td>Markdown guide: endpoints, tool conventions, the mandatory live-verification rule and the result-persistence convention.</td>
                       </tr>
                       <tr>
-                        <td><code>batch_sequence</code></td>
-                        <td><code>database</code>, <code>ids</code> (space-separated gene IDs)</td>
-                        <td>—</td>
-                        <td>Direct-entry FASTA records for multiple gene IDs.</td>
-                      </tr>
-                      <tr>
-                        <td><code>design_caps_primers</code></td>
-                        <td><code>seq1</code>, <code>seq2</code> (equal length, one base differs)</td>
-                        <td><code>mismatch_max</code> (0–3, default <code>1</code>), <code>top_n</code> (default <code>10</code>)</td>
-                        <td>Ranked CAPS/dCAPS designs with enzyme, primer sequences, mismatches, cut position and Tm.</td>
+                        <td>Prompt</td>
+                        <td><code>generate_wheatomics_skill</code><br><span class="agent-small">no arguments</span></td>
+                        <td>The copy-ready prompt from <a href="#howto">the How-to section</a>, served through <code>prompts/get</code> so a client can offer it as a one-click action.</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
+                <p class="agent-small">Clients list and read these with the standard MCP <code>resources/list</code>, <code>resources/read</code>, <code>prompts/list</code> and <code>prompts/get</code> requests; there is nothing to install or configure beyond the SSE connection above.</p>
               </div>
             </article>
           </div>
@@ -429,7 +668,7 @@ Requirements:
           </div>
         </section>
 
-        <p class="agent-note">Cite WheatOmics through the <a href="/#citation">platform citation on the homepage</a>. This page was last updated on 2026-10-29 and describes the MCP server, REST API and the copy-ready agent prompt as deployed at that time.</p>
+        <p class="agent-note">Cite WheatOmics through the <a href="/#citation">platform citation on the homepage</a>. This page was last updated on 2026-10-29 and describes the 28-tool MCP server, its resources and prompt, the REST API and the copy-ready agent prompt as deployed at that time.</p>
       </div>
     </section>
   </main>

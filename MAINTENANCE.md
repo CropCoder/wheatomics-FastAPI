@@ -196,6 +196,34 @@ sudo -n systemctl restart wheatomics-api
 
 模块说明表格仍按原格式在 `main.py` 的字符串隐式连接里维护（表格内容同样用英文）。
 
+### MCP 工具目录维护（2026-10-29 起）
+
+MCP 服务器从最初的 4 个序列工具扩展到 **28 个工具 + 2 个 resources + 1 个 prompt**，`/agent.html#mcp` 上的分组表就是这份目录的对外展示。目录的单一来源是：
+
+- `app/mcp/tool_specs.py`：纯数据、不依赖 `mcp` 包。`TOOL_SPECS`（每个工具的 `name` / `group` / `description` / `inputSchema`）、`TOOL_GROUPS`（agent 页每张分组表及行数）、`RESOURCE_SPECS`（2 个 resources：`wheatomics://docs/modules`、`wheatomics://docs/agent-guide`）、`AGENT_PROMPT`（与 `/agent.html#howto` 的复制即用 prompt 必须逐字一致）。
+- `app/mcp/wheatomics_tools.py`：把 spec 转成 `mcp.types.Tool`，并把 `call_tool` 分发到已有 FastAPI 路由函数；同步工具登记在 `_SYNC_TOOLS`（经线程池执行，不阻塞事件循环），异步工具登记在 `_ASYNC_TOOLS`（目前只有 `submit_blast`）。
+- `app/mcp/sequence_tools.py`：仅为兼容旧 import 的 shim，新工具不要加在这里。
+
+新增 / 修改一个 MCP 工具：
+
+1. 在 `tool_specs.py` 的 `TOOL_SPECS` 中加 / 改 spec（`group` 必须与现有 `TOOL_GROUPS` 名称一致，`inputSchema.required` 要准确——agent 依赖它判断必填参数）；
+2. 在 `wheatomics_tools.py` 的 `_SYNC_TOOLS` 或 `_ASYNC_TOOLS` 中登记 handler 与默认参数（`extra`）；
+3. 同步更新 `app/static/docpages/agent.html` 的 MCP 分组表（工具名、参数、返回说明、分组标题里的 `N tools` 与 hero 的 `28 MCP tools`）；resources / prompt 有变动时，同时改 `RESOURCE_SPECS` / `AGENT_PROMPT` 和页面上的 "Resources and prompt" 卡片；
+4. 跑 MCP 自测（默认只测只读工具；`--include-blast` 会真的排队一个 BLAST 任务，按需使用）：
+   ```bash
+   python3 scripts/mcp_selftest.py                                           # 进程内：工具/资源/prompt 清单 + 只读工具
+   python3 scripts/mcp_selftest.py --live http://127.0.0.1:8000/api/mcp/sse  # 走 SSE 完成握手后调 tools/list
+   ```
+   期望全部 `PASS`；
+5. 改的是 Python（`tool_specs.py` / `wheatomics_tools.py` / handler），需要重启服务才生效（webhook 只 `git pull`，不重启）：
+   ```bash
+   sudo -n systemctl restart wheatomics-api
+   ```
+
+注意：MCP 只在 `GET /api/mcp/sse` + `POST /api/mcp/messages` 上暴露，新增工具不需要在 `main.py` 里加路由；但 handler 必须复用已有路由函数，避免 MCP 与 REST 行为分叉。
+
+工具响应要保持 agent 上下文友好：大列表默认返回紧凑视图，完整载荷只在显式 `include_*` 参数下返回（现有例子：`list_expression_projects` 的 `include_details`，`list_blast_databases` 的 `include_databases` / `include_metadata`）；新增列表类工具时沿用该约定，并在 `tool_specs.py` 的 description 与 `/agent.html` 表格里写清默认/完整两档。
+
 ---
 
 ## 三、常见问题

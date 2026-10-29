@@ -267,8 +267,13 @@ curl "https://wheatomics.sdau.edu.cn/api/blast/status"
 
 - **SSE 端点**: `GET /api/mcp/sse`
 - **消息端点**: `POST /api/mcp/messages`
+- **工具（28 个）**: 按模块分组覆盖基因/注释（KnownGene、GeneHub、Pfam、区间）、序列与 CAPS/dCAPS 引物设计、表达/共表达、WheatPPI 网络、比较基因组与 eQTL、GO/KEGG 富集、文献、参考基因组、JBrowse 与 BLAST
+- **Resources（2 个）**: `wheatomics://docs/modules`（模块与工具 JSON 目录）、`wheatomics://docs/agent-guide`（Markdown 使用指南）
+- **Prompt（1 个）**: `generate_wheatomics_skill`（与 `/agent.html#howto` 相同的复制即用 prompt，经 `prompts/get` 获取）
+- **大载荷列表工具**: 表达项目、BLAST 数据库列表默认返回紧凑视图（`list_expression_projects` 可用 `include_details`，`list_blast_databases` 可用 `include_databases` / `include_metadata` 取完整载荷），避免占满 agent 上下文
+- **异步 BLAST 约定**: `submit_blast` 立即返回 `job_id`（始终异步），再用 `get_blast_status` 轮询状态与下载链接
 
-MCP 工具目前提供序列查询等功能，可通过配置 MCP 客户端连接使用。使用中遇到问题可邮件反馈至 shengweima@icloud.com。
+工具/资源清单的单一来源是 `app/mcp/tool_specs.py`，`app/mcp/wheatomics_tools.py` 负责 SSE 服务与调用分发（维护方式见 MAINTENANCE.md §二）。使用中遇到问题可邮件反馈至 shengweima@icloud.com。
 
 面向 Agent / API 用户的公开说明页：<https://wheatomics.sdau.edu.cn/agent.html>（MCP 工具、连接方式、REST API 模块与示例）。
 如何使用 Agent（复制即用的英文 prompt，可让 AI 自动生成「WheatOmics 数据查询」技能）：<https://wheatomics.sdau.edu.cn/agent.html#howto>。
