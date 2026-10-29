@@ -155,11 +155,25 @@ async def in_process(include_blast: bool) -> int:
     if include_blast:
         from app.api.routers.blast import delete_blast_job
 
+        catalog = json.loads(
+            (await wt.handle_call_tool("list_blast_databases", {"program": "blastp"}))[0].text
+        )
+        protein_dbs = (catalog.get("protein") or {}).get("databases") or []
+        # Pick a real database from the live catalog; prefer plain protein entries.
+        database = next(
+            (name for name in protein_dbs if "protein" in name.lower() or "pep" in name.lower()),
+            protein_dbs[0] if protein_dbs else None,
+        )
+        if not database:
+            _fail("call submit_blast", "no protein BLAST database available")
+            failures += 1
+            return 1 if failures else 0
+        _ok("blast database for self-test", database)
         submitted = await wt.handle_call_tool(
             "submit_blast",
             {
                 "program": "blastp",
-                "database": "Fielder_protein",
+                "database": database,
                 "query": ">selftest\nMSSSTGAVTSGIKK",
                 "evalue": 10,
                 "max_target_seqs": 5,
