@@ -211,8 +211,9 @@ MCP 服务器从最初的 4 个序列工具扩展到 **28 个工具 + 2 个 reso
 3. 同步更新 `app/static/docpages/agent.html` 的 MCP 分组表（工具名、参数、返回说明、分组标题里的 `N tools` 与 hero 的 `28 MCP tools`）；resources / prompt 有变动时，同时改 `RESOURCE_SPECS` / `AGENT_PROMPT` 和页面上的 "Resources and prompt" 卡片；
 4. 跑 MCP 自测（默认只测只读工具；`--include-blast` 会真的排队一个 BLAST 任务，按需使用）：
    ```bash
-   python3 scripts/mcp_selftest.py                                           # 进程内：工具/资源/prompt 清单 + 只读工具
-   python3 scripts/mcp_selftest.py --live http://127.0.0.1:8000/api/mcp/sse  # 走 SSE 完成握手后调 tools/list
+   python3 scripts/mcp_selftest.py                                            # 进程内：工具/资源/prompt 清单 + 只读工具
+   python3 scripts/mcp_selftest.py --live-http http://127.0.0.1:8000/api/mcp  # 推荐：Streamable HTTP 完成握手后调 tools/list
+   python3 scripts/mcp_selftest.py --live http://127.0.0.1:8000/api/mcp/sse   # 旧 SSE（仅单 worker / 本地调试）
    ```
    期望全部 `PASS`；
 5. 改的是 Python（`tool_specs.py` / `wheatomics_tools.py` / handler），需要重启服务才生效（webhook 只 `git pull`，不重启）：
@@ -220,7 +221,7 @@ MCP 服务器从最初的 4 个序列工具扩展到 **28 个工具 + 2 个 reso
    sudo -n systemctl restart wheatomics-api
    ```
 
-注意：MCP 只在 `GET /api/mcp/sse` + `POST /api/mcp/messages` 上暴露，新增工具不需要在 `main.py` 里加路由；但 handler 必须复用已有路由函数，避免 MCP 与 REST 行为分叉。
+传输层：生产是 8 个 round-robin gunicorn worker，SSE（`GET /api/mcp/sse` + `POST /api/mcp/messages`）的会话无法固定到同一 worker，握手/消息会 404，因此推荐 **stateless Streamable HTTP**：`GET/POST/DELETE /api/mcp`（`main.py` 里 `StreamableHTTPSessionManager(stateless=True)`，无跨请求会话状态，多 worker 安全）。SSE 路由仅为单 worker / 本地调试保留。新增工具不需要在 `main.py` 里加路由（两种传输共用同一个 `wheatomics_mcp_server`）；但 handler 必须复用已有路由函数，避免 MCP 与 REST 行为分叉。
 
 工具响应要保持 agent 上下文友好：大列表默认返回紧凑视图，完整载荷只在显式 `include_*` 参数下返回（现有例子：`list_expression_projects` 的 `include_details`，`list_blast_databases` 的 `include_databases` / `include_metadata`）；新增列表类工具时沿用该约定，并在 `tool_specs.py` 的 description 与 `/agent.html` 表格里写清默认/完整两档。
 
@@ -1018,7 +1019,7 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.htm
 
 | 菜单 | 子项 |
 |---|---|
-| `Agent` ▾ | How to Use the Agent（`/agent.html#howto`，复制即用 prompt）、Agent & API（`/agent.html`，见下「仓库外页面收编」）、MCP Server (SSE)（`/agent.html#mcp`）、API Documentation（`/api/docs`）、API Reference（`/api/redoc`）、OpenAPI Schema（`/api/openapi.json`） |
+| `Agent` ▾ | How to Use the Agent（`/agent.html#howto`，复制即用 prompt）、Agent & API（`/agent.html`，见下「仓库外页面收编」）、MCP Server（`/agent.html#mcp`）、API Documentation（`/api/docs`）、API Reference（`/api/redoc`）、OpenAPI Schema（`/api/openapi.json`） |
 | `More` ▾ | External Links（`/outsitelink.html`，**不再是顶级菜单**）、Citation（`/#citation`）、News、Contact |
 
 - 旧菜单的 `About` 已整体改名为 `More`；`External Links` 从顶级链接移入 `More` 下拉第一项。

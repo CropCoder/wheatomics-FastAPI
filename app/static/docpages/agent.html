@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="WheatOmics 2.0 AI Agent and API access: connect the built-in 28-tool MCP server over SSE, read its documentation resources and prompt, or query the public REST API with its unified JSON envelope and OpenAPI 3 schema.">
+  <meta name="description" content="WheatOmics 2.0 AI Agent and API access: connect the built-in 28-tool MCP server over stateless Streamable HTTP (or legacy SSE), read its documentation resources and prompt, or query the public REST API with its unified JSON envelope and OpenAPI 3 schema.">
   <title>Agent &amp; API | WheatOmics 2.0</title>
   <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="/api/v2shell/shell.css">
@@ -260,7 +260,7 @@ Requirements:
           <header class="agent-section-head">
             <p class="agent-kicker">B · Model Context Protocol</p>
             <h2 id="mcp-title">AI agents: built-in MCP server</h2>
-            <p class="agent-intro">WheatOmics runs an MCP (Model Context Protocol) server over SSE (Server-Sent Events), so an MCP-capable AI client can connect remotely, discover the tools below and call them as native tools. The server exposes 28 tools spanning genes and annotation, sequences, expression, networks, comparative genomics, enrichment, literature, reference genomes, JBrowse and BLAST, plus two documentation resources and a copy-ready prompt; the REST API described <a href="#api">in the next section</a> covers anything else.</p>
+            <p class="agent-intro">WheatOmics runs an MCP (Model Context Protocol) server over stateless Streamable HTTP at <code>/api/mcp</code> — the recommended transport, safe behind the multi-worker production deployment — so an MCP-capable AI client can connect remotely, discover the tools below and call them as native tools. The legacy SSE transport at <code>/api/mcp/sse</code> + <code>/api/mcp/messages</code> remains for single-worker or local-development clients only. The server exposes 28 tools spanning genes and annotation, sequences, expression, networks, comparative genomics, enrichment, literature, reference genomes, JBrowse and BLAST, plus two documentation resources and a copy-ready prompt; the REST API described <a href="#api">in the next section</a> covers anything else.</p>
           </header>
 
           <div class="agent-grid">
@@ -275,9 +275,10 @@ Requirements:
                     </thead>
                     <tbody>
                       <tr><th scope="row">Server name</th><td><code>wheatomics</code></td></tr>
-                      <tr><th scope="row">Transport</th><td>SSE (Server-Sent Events)</td></tr>
-                      <tr><th scope="row">SSE endpoint</th><td><code>GET /api/mcp/sse</code></td></tr>
-                      <tr><th scope="row">Message endpoint</th><td><code>POST /api/mcp/messages</code></td></tr>
+                      <tr><th scope="row">Transport</th><td>Streamable HTTP (stateless) — recommended; SSE (legacy)</td></tr>
+                      <tr><th scope="row">Streamable HTTP endpoint (recommended)</th><td><code>GET/POST/DELETE /api/mcp</code></td></tr>
+                      <tr><th scope="row">SSE endpoint (legacy, single-worker / dev only)</th><td><code>GET /api/mcp/sse</code></td></tr>
+                      <tr><th scope="row">Message endpoint (legacy)</th><td><code>POST /api/mcp/messages</code></td></tr>
                       <tr><th scope="row">Tools / resources / prompt</th><td><strong>28</strong> tools · <strong>2</strong> resources · <strong>1</strong> prompt</td></tr>
                     </tbody>
                   </table>
@@ -288,20 +289,27 @@ Requirements:
             <article class="card agent-card">
               <div class="card-body">
                 <h3>Connect an MCP client</h3>
-                <p>Add the remote SSE server to your MCP client's JSON configuration. The <code>mcpServers</code> form shown here is what Cursor and many other clients use; some clients spell the key <code>servers</code> and accept the transport implicitly, so check your client's schema:</p>
+                <p>Point your MCP client at the stateless Streamable HTTP endpoint. The <code>mcpServers</code> form shown here is what Cursor, VS Code and many other clients use; some clients spell the key <code>servers</code> and accept the transport implicitly, so check your client's schema:</p>
                 <pre class="agent-code"><code>{
   "mcpServers": {
     "wheatomics": {
-      "type": "sse",
-      "url": "https://wheatomics.sdau.edu.cn/api/mcp/sse"
+      "type": "http",
+      "url": "https://wheatomics.sdau.edu.cn/api/mcp"
     }
   }
 }</code></pre>
                 <p>Claude Code can register the same server from a shell:</p>
+                <pre class="agent-code"><code>claude mcp add --transport http wheatomics https://wheatomics.sdau.edu.cn/api/mcp</code></pre>
+                <p>Check connectivity with an MCP <code>initialize</code> JSON-RPC call; the <code>Accept</code> header must allow both a JSON response and an event stream:</p>
+                <pre class="agent-code"><code>curl -sS -X POST https://wheatomics.sdau.edu.cn/api/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize",
+       "params":{"protocolVersion":"2025-06-18","capabilities":{},
+       "clientInfo":{"name":"curl","version":"1.0"}}}'</code></pre>
+                <p class="agent-small"><strong>Legacy SSE (single-worker / local development only).</strong> The original transport is still registered at <code>GET /api/mcp/sse</code> (messages: <code>POST /api/mcp/messages</code>). Use the same client config with <code>"type": "sse"</code> and <code>"url": "https://wheatomics.sdau.edu.cn/api/mcp/sse"</code>, or register it with Claude Code:</p>
                 <pre class="agent-code"><code>claude mcp add --transport sse wheatomics https://wheatomics.sdau.edu.cn/api/mcp/sse</code></pre>
-                <p>Check connectivity — the stream opens with an SSE <code>endpoint</code> event that carries the message URL:</p>
-                <pre class="agent-code"><code>curl -N https://wheatomics.sdau.edu.cn/api/mcp/sse</code></pre>
-                <p class="agent-small">Your client must support remote SSE MCP servers; local stdio-only clients cannot connect to this endpoint directly.</p>
+                <p class="agent-small">Production runs multiple workers that cannot pin an SSE session, so use Streamable HTTP there. Your client must support remote Streamable HTTP MCP servers (or the legacy SSE transport); local stdio-only clients cannot connect to these endpoints directly.</p>
               </div>
             </article>
 

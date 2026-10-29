@@ -41,7 +41,7 @@ There is no `requirements.txt` or `pyproject.toml` in the repo.
 ## Architecture
 
 ```
-main.py                          # App factory, middleware, router registration, 11 static mounts, MCP SSE wiring, webhook
+main.py                          # App factory, middleware, router registration, 11 static mounts, MCP Streamable HTTP + SSE wiring, webhook
 app/
 ├── api/routers/                 # 12 route modules → 15 routers (gene.py exports 4)
 ├── core/
@@ -51,7 +51,7 @@ app/
 │   └── security.py              # Table allowlists + regex validators (ensure_gene_like, ensure_interval_like)
 ├── db/mysql.py                  # pymysql + DictCursor; context-managed mysql_cursor(database) committing on success
 ├── mcp/
-│   ├── wheatomics_tools.py      # MCP Server("wheatomics") — SSE wiring, 28-tool dispatch, 2 resources + 1 prompt
+│   ├── wheatomics_tools.py      # MCP Server("wheatomics") — 28-tool dispatch, 2 resources + 1 prompt (transport-agnostic)
 │   ├── tool_specs.py            # declarative 28-tool catalog (TOOL_SPECS / TOOL_GROUPS), RESOURCE_SPECS, AGENT_PROMPT
 │   └── sequence_tools.py        # compatibility shim re-exporting the server for the original 4-tool import names
 ├── primerserver2/               # Standalone FastAPI sub-app for PCR primer design (mounted at /api/PrimerServer2)
@@ -76,7 +76,7 @@ app/
 
 **External tools**: Bioinfo tools (BLAST, primer3, samtools) are called via `app.services.command_runner.run_command()` — no shell, captured output, structured `ExternalToolFailure` on non-zero exit.
 
-**MCP server**: `app/mcp/wheatomics_tools.py` owns the `Server("wheatomics")` object and routes `call_tool` to 28 tools (genes/annotation, sequences + CAPS/dCAPS primers, expression/co-expression/PPI, comparative genomics + eQTL, GO/KEGG enrichment, literature, genomes, JBrowse, BLAST), plus 2 resources (`wheatomics://docs/modules`, `wheatomics://docs/agent-guide`) and the `generate_wheatomics_skill` prompt. The catalog is declarative in `app/mcp/tool_specs.py` (`TOOL_SPECS` / `TOOL_GROUPS` / `RESOURCE_SPECS` / `AGENT_PROMPT`, the single source of truth for the `/agent.html` tables); every tool wraps an existing FastAPI route handler via `_SYNC_TOOLS` or `_ASYNC_TOOLS`, and `submit_blast` is always asynchronous (`job_id` → `get_blast_status`). Large list tools return compact agent-friendly views by default (`list_expression_projects` → `include_details`; `list_blast_databases` → `include_databases` / `include_metadata`) so an agent context is not flooded. Errors are serialized as JSON text (not raised) so the LLM can adapt. Wired via SSE transport with raw `Route` objects in `main.py`; `app/mcp/sequence_tools.py` is a compatibility shim for the original 4-tool import names only.
+**MCP server**: `app/mcp/wheatomics_tools.py` owns the `Server("wheatomics")` object and routes `call_tool` to 28 tools (genes/annotation, sequences + CAPS/dCAPS primers, expression/co-expression/PPI, comparative genomics + eQTL, GO/KEGG enrichment, literature, genomes, JBrowse, BLAST), plus 2 resources (`wheatomics://docs/modules`, `wheatomics://docs/agent-guide`) and the `generate_wheatomics_skill` prompt. The catalog is declarative in `app/mcp/tool_specs.py` (`TOOL_SPECS` / `TOOL_GROUPS` / `RESOURCE_SPECS` / `AGENT_PROMPT`, the single source of truth for the `/agent.html` tables); every tool wraps an existing FastAPI route handler via `_SYNC_TOOLS` or `_ASYNC_TOOLS`, and `submit_blast` is always asynchronous (`job_id` → `get_blast_status`). Large list tools return compact agent-friendly views by default (`list_expression_projects` → `include_details`; `list_blast_databases` → `include_databases` / `include_metadata`) so an agent context is not flooded. Errors are serialized as JSON text (not raised) so the LLM can adapt. Wired in `main.py` as raw `Route` objects: the recommended transport is stateless Streamable HTTP at `/api/mcp` (`StreamableHTTPSessionManager(stateless=True)`, multi-worker safe), with the legacy SSE routes `/api/mcp/sse` + `/api/mcp/messages` kept for single-worker / local-development clients; `app/mcp/sequence_tools.py` is a compatibility shim for the original 4-tool import names only.
 
 **Webhook**: `POST /api/webhook/gitee` validates `X-Gitee-Token` header, then runs `auto_pull.sh` as a background task. It does **not** restart the API service — after a `git pull`, run `sudo systemctl restart wheatomics-api` for Python changes to take effect.
 

@@ -68,6 +68,8 @@ ABOUT_TRIGGER = 'aria-expanded="false">About'
 EXTERNAL_LI = f'<li><a href="{DOMAIN}/outsitelink.html">External Links</a></li>'
 AGENT_PRIMARY_LI = f'<li><a href="{DOMAIN}/agent.html">Agent &amp; API</a></li>'
 HOWTO_LI = f'<li><a href="{DOMAIN}/agent.html#howto">How to Use the Agent</a></li>'
+OLD_MCP_ITEM = f'<li><a href="{DOMAIN}/agent.html#mcp">MCP Server (SSE)</a></li>'
+NEW_MCP_ITEM = f'<li><a href="{DOMAIN}/agent.html#mcp">MCP Server</a></li>'
 
 AGENT_BLOCK = f"""          <div class="nav-item">
             <button class="nav-trigger" type="button" aria-expanded="false">Agent
@@ -76,7 +78,7 @@ AGENT_BLOCK = f"""          <div class="nav-item">
             <ul class="dropdown">
               <li><a href="{DOMAIN}/agent.html#howto">How to Use the Agent</a></li>
               <li><a href="{DOMAIN}/agent.html">Agent &amp; API</a></li>
-              <li><a href="{DOMAIN}/agent.html#mcp">MCP Server (SSE)</a></li>
+              <li><a href="{DOMAIN}/agent.html#mcp">MCP Server</a></li>
               <li><a href="/api/docs">API Documentation</a></li>
               <li><a href="/api/redoc">API Reference</a></li>
               <li><a href="/api/openapi.json">OpenAPI Schema</a></li>
@@ -170,6 +172,7 @@ def patch(text: str) -> tuple[str, list[str]]:
         ('exactly one "Agent" trigger', count(updated, 'aria-expanded="false">Agent') == 1),
         ('exactly one "More" trigger', count(updated, 'aria-expanded="false">More') == 1),
         ('no "About" trigger left', count(updated, ABOUT_TRIGGER) == 0),
+        ("MCP label current", count(updated, OLD_MCP_ITEM) == 0 and count(updated, NEW_MCP_ITEM) == 1),
         ("How-to item present", count(updated, HOWTO_LI) == 1),
         (
             "How-to item before Agent & API",
@@ -206,14 +209,25 @@ def process(path: Path, *, check: bool, dry_run: bool) -> bool:
         return False
 
     if is_patched(text):
-        if count(text, HOWTO_LI) == 1:
-            print(f"[ok] {path}: already up to date (Agent + More menus + How-to item present)")
+        outdated = []
+        if count(text, HOWTO_LI) != 1:
+            outdated.append("missing the How to Use the Agent item")
+        if count(text, OLD_MCP_ITEM) == 1:
+            outdated.append("outdated 'MCP Server (SSE)' label")
+        if not outdated:
+            print(f"[ok] {path}: already up to date (Agent menus current)")
             return True
         if check:
-            print(f"[MISMATCH] {path}: Agent dropdown is missing the How to Use the Agent item")
+            print(f"[MISMATCH] {path}: {'; '.join(outdated)}")
             return False
         try:
-            updated, checks = with_howto_item(text)
+            updated, checks = text, []
+            if count(updated, HOWTO_LI) != 1:
+                updated, howto_checks = with_howto_item(updated)
+                checks += howto_checks
+            if count(updated, OLD_MCP_ITEM) == 1:
+                updated = updated.replace(OLD_MCP_ITEM, NEW_MCP_ITEM, 1)
+                checks.append("MCP label updated to 'MCP Server'")
         except SystemExit as exc:
             print(str(exc))
             return False
