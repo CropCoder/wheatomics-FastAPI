@@ -11,6 +11,9 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:8px;borde
 th{background:#f2f7f5;font-weight:600}
 table.wide{min-width:940px}
 .scroll{overflow:auto;max-height:450px}a{color:#145d70}small{line-height:1.6}
+.seg{display:inline-flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.seg button{padding:6px 12px;font-size:13px;background:#e7efec;color:#16453e;border-color:#a7c5bb}
+.seg button.active{background:#206b5c;color:#fff;border-color:#206b5c}
 .legend{display:block;margin-top:10px;color:#63776f}
 </style></head><body><main>
 <header><h1>Wheat TF & Regulatory Hub</h1><p>TF identity · Tissue expression · Promoter motifs · Regulatory variants</p></header>
@@ -33,10 +36,20 @@ table.wide{min-width:940px}
 </small></section>
 <section id="exprsec" hidden><h2>Expression across 26 tissues</h2>
 <p class="muted">Tissue expression data are from Ren et al. (2026).</p><div id="expr"></div></section>
-<section id="motifsec" hidden><h2>Motif hits (upstream)</h2>
+<section id="motifsec" hidden><h2>Motif hits</h2>
+<div class="seg" id="motif-regions">
+<button type="button" data-region="upstream">Upstream</button>
+<button type="button" data-region="downstream">Downstream</button>
+<button type="button" data-region="upstream+downstream">Upstream + downstream</button>
+</div>
 <p class="muted" id="motifstatus"></p>
 <div id="motifs" class="scroll"></div></section>
-<section id="variantsec" hidden><h2>Motif–Variant overlap (upstream)</h2>
+<section id="variantsec" hidden><h2>Motif–Variant overlap</h2>
+<div class="seg" id="variant-regions">
+<button type="button" data-region="upstream">Upstream</button>
+<button type="button" data-region="downstream">Downstream</button>
+<button type="button" data-region="upstream+downstream">Upstream + downstream</button>
+</div>
 <label>VariantHub dataset <select id="dataset"></select></label>
 <button id="variants">Intersect variants with motifs</button><p id="vstatus" class="muted"></p>
 <div id="varianttable" class="scroll"></div></section>
@@ -51,6 +64,8 @@ TF classifications are candidate annotations; motif hits and variant overlaps do
 </main><script>
 const $=id=>document.getElementById(id);
 let currentGene="";
+let motifRegion="upstream";
+let variantRegion="upstream";
 let lastExpression=null;
 function text(el,s){el.textContent=s==null?"":String(s)}
 function table(rows,columns,opts){
@@ -68,6 +83,10 @@ for(const d of x.items||[]){if(d.status!=="ready"||d.assembly!=="IWGSC RefSeq v1
 const o=document.createElement("option");o.value=d.dataset_id;text(o,d.label||d.dataset_id);sel.appendChild(o)}
 if(sel.querySelector('option[value="'+DEFAULT_DATASET+'"]'))sel.value=DEFAULT_DATASET;
 }catch(e){text($("vstatus"),"Dataset list error: "+e.message)}}
+function markActive(id,region){$(id).querySelectorAll("button[data-region]").forEach(b=>b.classList.toggle("active",b.dataset.region===region))}
+function bindRegions(id,setter,rerun){$(id).querySelectorAll("button[data-region]").forEach(btn=>{
+btn.addEventListener("click",()=>{setter(btn.dataset.region);markActive(id,btn.dataset.region);rerun()})})}
+function regionLabel(r){return{"upstream":"upstream","downstream":"downstream","upstream+downstream":"upstream + downstream"}[r]||r}
 function dash(v){return v==null||v===""?"—":v}
 function renderIdentity(d){
 const g=d.gene||{},c=d.classification||{},tf=d.tf||{};
@@ -101,7 +120,7 @@ $("exprsec").hidden=false;$("show-expr").textContent="Hide expression across 26 
 async function search(){
 const g=$("gene").value.trim();if(!g)return;
 text($("status"),"Loading...");for(const id of ["profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
-try{const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(g)+"?region=upstream&motif_limit=500");
+try{const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(g)+"?region="+encodeURIComponent(motifRegion)+"&motif_limit=500");
 currentGene=d.gene.gene_id;
 lastExpression=d.expression||null;
 $("expr").replaceChildren();
@@ -111,6 +130,7 @@ renderIdentity(d);
 $("profile").hidden=false;
 $("motifs").replaceChildren();
 const motifRows=d.motifs.map(x=>({
+  "Region":x.kind,
   "Motif model":x.motif_model||x.motif_name||"Unannotated",
   "Motif ID":x.motif_id,
   "Chromosome":x.chrom,
@@ -121,25 +141,26 @@ const motifRows=d.motifs.map(x=>({
   "p-value":x.pvalue,
   "Matched sequence":x.matched_sequence||""
 }));
-$("motifs").appendChild(table(motifRows,["Motif model","Motif ID","Chromosome","Start (1-based)","End (1-based)","Strand","Score","p-value","Matched sequence"]));
+$("motifs").appendChild(table(motifRows,["Region","Motif model","Motif ID","Chromosome","Start (1-based)","End (1-based)","Strand","Score","p-value","Matched sequence"]));
 $("motifsec").hidden=false;$("variantsec").hidden=false;
-text($("motifstatus"),`${d.motifs.length} motif hits in the upstream region${d.motifs_truncated?" (truncated, showing the first 500)":""}.`);
+text($("motifstatus"),`${d.motifs.length} motif hits in ${regionLabel(motifRegion)}${d.motifs_truncated?" (truncated, showing the first 500)":""}.`);
 text($("status"),`Loaded ${currentGene}.`);
 }catch(e){text($("status"),"Error: "+e.message)}
 }
 async function variants(){if(!currentGene)return;const id=$("dataset").value;
 text($("vstatus"),"Checking genomic overlap...");$("varianttable").replaceChildren();
-try{const q=new URLSearchParams({dataset_id:id,region:"upstream"});
+try{const q=new URLSearchParams({dataset_id:id,region:variantRegion});
 const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(currentGene)+"/motif-variants?"+q);
 $("varianttable").appendChild(table(d.items.map(x=>({
+  "Region":x.region_kind||"",
   "Motif model":x.motif_model||x.motif_name||"Unannotated",
   "Motif ID":x.motif_id,
   "Chromosome":x.chrom,
   "Variant position":x.pos1,
   "REF":x.ref,"ALT":x.alt,
   "Overlap (bp)":x.overlap_bp
-})),["Motif model","Motif ID","Chromosome","Variant position","REF","ALT","Overlap (bp)"]));
-text($("vstatus"),`${d.items.length} motif–variant intersections in the upstream region${d.truncated?" (truncated)":""}; genomic overlap only, no PWM effect.`);
+})),["Region","Motif model","Motif ID","Chromosome","Variant position","REF","ALT","Overlap (bp)"]));
+text($("vstatus"),`${d.items.length} motif–variant intersections in ${regionLabel(variantRegion)}${d.truncated?" (truncated)":""}; genomic overlap only, no PWM effect.`);
 }catch(e){text($("vstatus"),"Error: "+e.message)}}
 function clearAll(){currentGene="";lastExpression=null;$("gene").value="";
 for(const id of ["profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
@@ -150,5 +171,8 @@ $("gene").focus()}
 $("search").addEventListener("click",search);$("clear").addEventListener("click",clearAll);$("variants").addEventListener("click",variants);
 $("show-expr").addEventListener("click",toggleExpr);
 $("gene").addEventListener("keydown",e=>{if(e.key==="Enter")search()});
+bindRegions("motif-regions",r=>{motifRegion=r},search);
+bindRegions("variant-regions",r=>{variantRegion=r},variants);
+markActive("motif-regions",motifRegion);markActive("variant-regions",variantRegion);
 loadDatasets();search();
 </script></body></html>

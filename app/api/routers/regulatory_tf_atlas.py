@@ -14,13 +14,14 @@ EXPR=ROOT/"wheat_tf_expression.tsv"
 CLASS=ROOT/"wheat_tf_classification.tsv"
 CITATION="Ren et al. (2026), Journal of Integrative Agriculture 25(10):4378–4382; DOI:10.1016/j.jia.2026.07.037"
 
-# Region presets offered by the UI. "all" = upstream + downstream + gene_body.
+# Upstream hits live in the main database. Downstream hits are sharded one file
+# per chromosome under regulatory_shards/, where hits.region_id is the text
+# "<gene_id>|downstream" rather than the main database's integer region id.
+SHARDS=ROOT/"regulatory_shards"
 REGION_KINDS={
     "upstream":("upstream",),
     "downstream":("downstream",),
-    "gene_body":("gene_body",),
     "upstream+downstream":("upstream","downstream"),
-    "all":("upstream","downstream","gene_body"),
 }
 
 @lru_cache(maxsize=8)
@@ -89,10 +90,24 @@ def motif_metadata_columns(c):
     _META_CACHE[key]=(name,source)
     return name,source
 
-def get_motifs(c,g,region,limit):
+# motif_id -> (model name, source), loaded once per database release. The
+# downstream shards carry no motifs table, so their hits are annotated here.
+_MOTIF_META_CACHE={}
+def motif_meta(c):
+    key=(str(DB),DB.stat().st_mtime_ns)
+    hit=_MOTIF_META_CACHE.get(key)
+    if hit is not None:
+        return hit
     name,source=motif_metadata_columns(c)
-    kinds=REGION_KINDS[region]
-    ph=",".join("?"*len(kinds))
+    source_sql=f", {source} AS s" if source else ", NULL AS s"
+    rows=c.execute(f"SELECT motif_id, {name} AS n"+source_sql+" FROM motifs").fetchall()
+    out={r["motif_id"]:(r["n"],r["s"]) for r in rows}
+    _MOTIF_META_CACHE.clear()
+    _MOTIF_META_CACHE[key]=out
+    return out
+
+def _upstream_rows(c,g,limit):
+    name,source=motif_metadata_columns(c)
     source_sql=f"m.{source}" if source else "NULL"
     sql=f"""SELECT h.hit_id,h.region_id,h.motif_id,h.chrom,h.start0,h.end0,
                   h.strand,h.score,h.pvalue,h.qvalue,h.matched_sequence,r.kind,
@@ -101,10 +116,45 @@ def get_motifs(c,g,region,limit):
                   {source_sql} AS motif_source
            FROM regions r JOIN hits h ON h.region_id=r.region_id
            LEFT JOIN motifs m ON m.motif_id=h.motif_id
-           WHERE r.gene_id=? AND r.kind IN ({ph})"""
-    params=[g,*kinds]
-    sql+=" ORDER BY h.start0,h.hit_id LIMIT ?";params.append(limit+1)
-    rows=[dict(x) for x in c.execute(sql,params).fetchall()]
+           WHERE r.gene_id=? AND r.kind='upstream'
+           ORDER BY h.start0,h.hit_id LIMIT ?"""
+    return [dict(x) for x in c.execute(sql,(g,limit))]
+
+def shard_path(chrom):
+    return SHARDS/f"{chrom}.sqlite"
+
+def _downstream_rows(c,gene,limit):
+    """Downstream hits live in the per-chromosome shard for this gene."""
+    path=shard_path(gene.get("chrom") or "")
+    if not path.is_file():
+        return []
+    con=sqlite3.connect(path.resolve().as_uri()+"?mode=ro",uri=True)
+    con.row_factory=sqlite3.Row
+    try:
+        rows=[dict(x) for x in con.execute(
+            "SELECT hit_id,region_id,motif_id,chrom,start0,end0,strand,"
+            "score,pvalue,qvalue,matched_sequence FROM hits "
+            "WHERE region_id=? ORDER BY start0,hit_id LIMIT ?",
+            (f"{gene['gene_id']}|downstream",limit))]
+    finally:
+        con.close()
+    meta=motif_meta(c)
+    for r in rows:
+        name,source=meta.get(r["motif_id"],(None,None))
+        r["motif_name"]=name
+        r["motif_model"]=name
+        r["motif_source"]=source
+        r["kind"]="downstream"
+    return rows
+
+def get_motifs(c,gene,region,limit):
+    kinds=REGION_KINDS[region]
+    rows=[]
+    if "upstream" in kinds:
+        rows+=_upstream_rows(c,gene["gene_id"],limit+1)
+    if "downstream" in kinds:
+        rows+=_downstream_rows(c,gene,limit+1)
+    rows.sort(key=lambda r:(r["start0"],r["hit_id"]))
     return rows[:limit],len(rows)>limit
 
 @router.get("/search")
@@ -123,7 +173,7 @@ def profile(gene_id:str,region:str="upstream",motif_limit:int=Query(100,ge=1,le=
     with conn() as c:
         gene=gene_lookup(c,g)
         if not gene:raise HTTPException(404,"Gene not present in regulatory.sqlite genes")
-        motifs,truncated=get_motifs(c,g,region,motif_limit)
+        motifs,truncated=get_motifs(c,gene,region,motif_limit)
         regions=[dict(r) for r in c.execute(
             "SELECT * FROM regions WHERE gene_id=? ORDER BY start0",(g,))]
     tf=tf_info(g)
@@ -138,8 +188,8 @@ def motif_variants(gene_id:str,dataset_id:str,region:str="upstream",
                    variant_limit:int=Query(10000,ge=1,le=50000),
                    result_limit:int=Query(500,ge=1,le=2000)):
     """Precise motif-variant genomic interval intersection; NO PWM scoring.
-    One VCF fetch per regulatory region (upstream / downstream / gene body),
-    then in-memory interval checks.
+    One VCF fetch per regulatory region (upstream in the main database,
+    downstream in the per-chromosome shard), then in-memory interval checks.
     """
     import pysam
     from app.api.routers.regulatory_integration import load_catalog
@@ -160,7 +210,7 @@ def motif_variants(gene_id:str,dataset_id:str,region:str="upstream",
             f"SELECT * FROM regions WHERE gene_id=? AND kind IN ({ph}) "
             "ORDER BY start0",(g,*kinds))]
         if not regions:raise HTTPException(404,"Region not found")
-        motifs,truncated=get_motifs(c,g,region,motif_limit)
+        motifs,truncated=get_motifs(c,gene,region,motif_limit)
     if truncated:raise HTTPException(413,"Too many motifs; raise motif_limit or narrow region")
     for r in regions:
         if r["end0"]-r["start0"]>100000:
@@ -172,7 +222,8 @@ def motif_variants(gene_id:str,dataset_id:str,region:str="upstream",
             for r in regions:
                 if r["chrom"] not in vcf.header.contigs:
                     raise HTTPException(422,"Chromosome not in VCF header")
-                chrom_motifs=[h for h in motifs if h["chrom"]==r["chrom"]]
+                chrom_motifs=[h for h in motifs
+                              if h["chrom"]==r["chrom"] and h["kind"]==r["kind"]]
                 if not chrom_motifs:continue
                 for v in vcf.fetch(r["chrom"],r["start0"],r["end0"]):
                     vcf_count+=1
@@ -184,7 +235,7 @@ def motif_variants(gene_id:str,dataset_id:str,region:str="upstream",
                         for h in chrom_motifs:
                             left=max(vs,h["start0"]);right=min(ve,h["end0"])
                             if left>=right:continue
-                            key=(h["hit_id"],vs,ve,alt)
+                            key=(r["kind"],h["hit_id"],vs,ve,alt)
                             if key in seen:continue
                             seen.add(key)
                             items.append({"hit_id":h["hit_id"],"motif_id":h["motif_id"],
