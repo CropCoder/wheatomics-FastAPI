@@ -6,6 +6,7 @@ import logging
 import subprocess
 import threading
 import time
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
@@ -33,6 +34,7 @@ from app.primerserver2.routers import server as ps2_server
 # 导入 MCP 核心组件
 from mcp.server import Server
 from mcp.server.sse import SseServerTransport
+from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 
 from starlette.routing import Route
 
@@ -46,9 +48,30 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+# Streamable HTTP transport (stateless) — the recommended MCP transport.
+# The legacy SSE transport keeps per-session state inside one gunicorn worker,
+# but the API runs 8 round-robin workers, so the SSE stream (GET /api/mcp/sse)
+# and its message POSTs can land on different workers and lose the session.
+# Stateless Streamable HTTP has no cross-request affinity; the SSE endpoints
+# stay registered for single-worker/dev compatibility.
+mcp_http_manager = StreamableHTTPSessionManager(
+    app=wheatomics_mcp_server,
+    json_response=True,
+    stateless=True,
+)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Run the MCP Streamable HTTP session manager for the app lifetime."""
+    async with mcp_http_manager.run():
+        yield
+
+
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
+    lifespan=lifespan,
     openapi_tags=[
         {
             "name": "PrimerServer2",
@@ -107,7 +130,8 @@ app = FastAPI(
         "<h2>AI Agent access (MCP)</h2>"
         "This service embeds an MCP (Model Context Protocol) server with 28 data tools, two documentation "
         "resources and a copy-ready prompt, so AI agents can query the platform through a standardized protocol. "
-        "SSE endpoint: <code>GET /api/mcp/sse</code>; message endpoint: <code>POST /api/mcp/messages</code>. "
+        "Recommended Streamable HTTP endpoint: <code>/api/mcp</code> (stateless, multi-worker safe); "
+        "legacy SSE endpoints: <code>GET /api/mcp/sse</code> and <code>POST /api/mcp/messages</code>. "
         "See <a href='https://wheatomics.sdau.edu.cn/agent.html'>Agent &amp; API documentation</a> for details."
         "<br>For issues and feedback, please email: "
         "<a href='mailto:shengweima@icloud.com'>shengweima@icloud.com</a>."
@@ -302,6 +326,16 @@ async def mcp_messages_endpoint(request: Request):
 
 app.routes.append(Route("/api/mcp/sse", endpoint=mcp_sse_endpoint, methods=["GET"]))
 app.routes.append(Route("/api/mcp/messages", endpoint=mcp_messages_endpoint, methods=["POST"]))
+
+
+async def mcp_http_endpoint(request: Request):
+    """Handle MCP Streamable HTTP requests (stateless; multi-worker safe)."""
+    await mcp_http_manager.handle_request(request.scope, request.receive, request._send)
+
+
+app.routes.append(
+    Route("/api/mcp", endpoint=mcp_http_endpoint, methods=["GET", "POST", "DELETE"])
+)
 
 @app.get("/api/about")
 async def root(request: Request) -> dict:

@@ -9,9 +9,12 @@ Two modes:
 
        /home/fei/mambaforge/envs/zjw/bin/python3 scripts/mcp_selftest.py
 
-2. Live MCP client — connects to a running server over SSE, performs the MCP
-   handshake and calls ``tools/list`` / ``tools/call`` / the two resources::
+2. Live MCP client — connects to a running server, performs the MCP handshake
+   and calls ``tools/list`` / ``tools/call`` / the two resources::
 
+       # recommended: stateless Streamable HTTP (multi-worker safe)
+       python3 scripts/mcp_selftest.py --live-http http://127.0.0.1:8000/api/mcp
+       # legacy SSE transport (single-worker/dev only)
        python3 scripts/mcp_selftest.py --live http://127.0.0.1:8000/api/mcp/sse
 
 Exit code 0 = PASS, 1 = failures, 2 = could not run (missing deps / server).
@@ -203,58 +206,101 @@ async def in_process(include_blast: bool) -> int:
     return 1 if failures else 0
 
 
+async def _verify_session(session, label: str) -> int:
+    """Run the shared MCP client assertions against an initialized session."""
+    failures = 0
+    tools = await session.list_tools()
+    names = [tool.name for tool in tools.tools]
+    print(f"[{label}] tools advertised: {len(names)}")
+    if len(names) >= 20:
+        _ok("tools/list", f"{len(names)} tools")
+    else:
+        _fail("tools/list", f"only {len(names)} tools")
+        failures += 1
+    expected = {
+        "get_sequence_by_gene", "get_gene_detail", "search_known_genes", "query_expression",
+        "query_coexpression", "query_ppi", "find_homologs", "search_synteny", "convert_gene_ids",
+        "search_eqtl", "go_enrichment", "kegg_enrichment", "search_papers", "get_paper",
+        "list_genomes", "get_genome", "list_jbrowse_datasets", "submit_blast", "get_blast_status",
+        "list_blast_databases", "design_caps_primers",
+    }
+    missing = sorted(expected - set(names))
+    if missing:
+        _fail("expected tools present", ", ".join(missing))
+        failures += 1
+    else:
+        _ok("expected tools present", f"{len(expected)} core tools")
+
+    result = await session.call_tool("get_gene_detail", {"gene_id": "TraesCS1A02G001000"})
+    text = result.content[0].text if result.content else ""
+    if "TraesCS1A02G001000" in text:
+        _ok("tools/call get_gene_detail", f"{len(text)} chars")
+    else:
+        _fail("tools/call get_gene_detail", text[:160])
+        failures += 1
+
+    resources = await session.list_resources()
+    if len(resources.resources) == 2:
+        _ok("resources/list", "2 resources")
+        read = await session.read_resource("wheatomics://docs/modules")
+        if read.contents and len(read.contents[0].text) > 100:
+            _ok("resources/read wheatomics://docs/modules")
+        else:
+            _fail("resources/read", "empty")
+            failures += 1
+    else:
+        _fail("resources/list", str(len(resources.resources)))
+        failures += 1
+
+    prompts = await session.list_prompts()
+    if any(p.name == "generate_wheatomics_skill" for p in prompts.prompts):
+        _ok("prompts/list", "generate_wheatomics_skill")
+    else:
+        _fail("prompts/list", "prompt missing")
+        failures += 1
+    return 1 if failures else 0
+
+
+async def live_http(url: str) -> int:
+    """Verify the recommended stateless Streamable HTTP transport."""
+    try:
+        from mcp import ClientSession
+        from mcp.client.streamable_http import streamablehttp_client
+    except Exception as exc:  # pragma: no cover - depends on environment
+        print(f"[live-http] mcp client unavailable: {exc}")
+        return 2
+    async with streamablehttp_client(url) as (read, write, _get_session_id):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            return await _verify_session(session, "live-http")
+
+
 async def live(url: str) -> int:
+    """Verify the legacy SSE transport (single-worker/dev only)."""
     try:
         from mcp import ClientSession
         from mcp.client.sse import sse_client
     except Exception as exc:  # pragma: no cover - depends on environment
         print(f"[live] mcp client unavailable: {exc}")
         return 2
-    failures = 0
     async with sse_client(url) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
-            tools = await session.list_tools()
-            names = [tool.name for tool in tools.tools]
-            print(f"[live] tools advertised: {len(names)}")
-            if len(names) >= 20:
-                _ok("tools/list", f"{len(names)} tools")
-            else:
-                _fail("tools/list", f"only {len(names)} tools")
-                failures += 1
-            result = await session.call_tool("get_gene_detail", {"gene_id": "TraesCS1A02G001000"})
-            text = result.content[0].text if result.content else ""
-            if "TraesCS1A02G001000" in text:
-                _ok("tools/call get_gene_detail", f"{len(text)} chars")
-            else:
-                _fail("tools/call get_gene_detail", text[:160])
-                failures += 1
-            resources = await session.list_resources()
-            if len(resources.resources) == 2:
-                _ok("resources/list", "2 resources")
-                read = await session.read_resource("wheatomics://docs/modules")
-                if read.contents and len(read.contents[0].text) > 100:
-                    _ok("resources/read wheatomics://docs/modules")
-                else:
-                    _fail("resources/read", "empty")
-                    failures += 1
-            else:
-                _fail("resources/list", str(len(resources.resources)))
-                failures += 1
-            prompts = await session.list_prompts()
-            if any(p.name == "generate_wheatomics_skill" for p in prompts.prompts):
-                _ok("prompts/list", "generate_wheatomics_skill")
-            else:
-                _fail("prompts/list", "prompt missing")
-                failures += 1
-    return 1 if failures else 0
+            return await _verify_session(session, "live-sse")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--live", metavar="SSE_URL", help="connect to a running MCP SSE endpoint")
+    parser.add_argument(
+        "--live-http",
+        metavar="URL",
+        help="connect to a running MCP Streamable HTTP endpoint (e.g. http://127.0.0.1:8000/api/mcp)",
+    )
+    parser.add_argument("--live", metavar="SSE_URL", help="connect to a legacy MCP SSE endpoint")
     parser.add_argument("--include-blast", action="store_true", help="also submit a tiny BLAST job")
     args = parser.parse_args()
+    if args.live_http:
+        return asyncio.run(live_http(args.live_http))
     if args.live:
         return asyncio.run(live(args.live))
     return asyncio.run(in_process(args.include_blast))
