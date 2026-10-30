@@ -76,7 +76,7 @@
     var input = document.getElementById('search');
     var status = document.getElementById('gh-status');
     var result = document.getElementById('gh-result');
-    var GENE_PAGE = '/gene/?gene=';
+    var GENE_PAGE = '/GeneHub/gene.html?gene=';
 
     function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
     function isCsId(q){ return /^TraesCS\d/i.test(q) || /^Traes_/i.test(q); }

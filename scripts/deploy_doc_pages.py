@@ -46,6 +46,7 @@ PAGES = {
     "agent": ("agent.html", DOCROOT / "agent.html", "AI agent & API access"),
     "genehub_index": ("genehub_index.html", DOCROOT / "GeneHub" / "index.html", "GeneHub search page"),
     "genehub_result": ("geneDetail.py", CGI_BIN / "geneDetail.py", "GeneHub result CGI"),
+    "genehub_gene": ("gene.html", DOCROOT / "GeneHub" / "gene.html", "GeneHub gene page SPA"),
 }
 
 

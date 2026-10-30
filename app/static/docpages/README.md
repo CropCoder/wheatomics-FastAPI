@@ -63,3 +63,5 @@ root step — the rest of the docpages deploy normally with the script.
 `/favicon.ico`, the JBrowse instances (`/jbrowse-1.12.3-release/`, `/jbrowse2/`),
 and the third-party Sequence Manipulation Suite pages under `/sms2/` (only the
 `sms2/index.html` entry page is tracked in the repo).
+
+- `gene.html` — GeneHub gene page SPA, published to `/GeneHub/gene.html`.
