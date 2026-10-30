@@ -163,6 +163,7 @@ var lastResults = []; // for download
 $(function() {
   loadDatabases();
   loadGenomes();
+  applyUrlQuery(0);
   // Auto-detect query type on input change
   $('#query-input').on('input', function() {
     autoDetectMode();
@@ -173,6 +174,25 @@ $(function() {
     loadExample(this.value);
   });
 });
+
+function applyUrlQuery(attempt) {
+  var params;
+  try { params = new URLSearchParams(window.location.search); } catch (e) { return; }
+  var q = params.get('query') || params.get('gene') || params.get('region');
+  if (!q) return;
+  if (!databaseOptions.length && attempt < 40) {
+    setTimeout(function () { applyUrlQuery(attempt + 1); }, 250);
+    return;
+  }
+  $('#query-input').val(q);
+  var db = params.get('database') || params.get('db');
+  if (db && (db === 'auto' || databaseOptions.some(function (o) { return o.value === db; }))) {
+    $('#db-select').val(db);
+    userPickedDatabase = true;
+  }
+  autoDetectMode();
+  querySequence();
+}
 
 // ----- mode detection -----
 
