@@ -14,6 +14,20 @@ form = cgi.FieldStorage()
 
 geneid = form["search"].value.strip()
 
+# The legacy page embeds an http:// JBrowse iframe, which browsers block on the
+# https site (mixed content); send users to the new SPA gene page instead.
+if not form.getvalue("legacy"):
+    try:
+        import urllib
+        quoted = urllib.quote(geneid, safe="")
+    except Exception:
+        from urllib.parse import quote
+        quoted = quote(geneid, safe="")
+    print("Status: 302 Found")
+    print("Location: /GeneHub/gene.html?gene=" + quoted)
+    print("")
+    raise SystemExit
+
 
 def escape_html(value):
     """Minimal HTML escaping for values this script echoes itself.

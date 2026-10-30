@@ -185,6 +185,7 @@
       $('#gene-jbrowse-wrap').html(
         '<p class="mb-2"><a class="gene-tool-link" target="_blank" rel="noopener" href="' +
         esc(httpsJb) + '">Open locus in JBrowse ↗</a></p>' +
+        '<p class="gene-note">Loading JBrowse tracks may take 10–20 seconds for the full Chinese Spring 1.0 track set.</p>' +
         '<iframe class="gene-jbrowse" src="' + esc(httpsJb) + '" title="JBrowse context" loading="lazy"></iframe>'
       );
     } else {
