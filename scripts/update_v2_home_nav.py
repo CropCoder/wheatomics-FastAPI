@@ -72,7 +72,7 @@ OLD_MCP_ITEM = f'<li><a href="{DOMAIN}/agent.html#mcp">MCP Server (SSE)</a></li>
 NEW_MCP_ITEM = f'<li><a href="{DOMAIN}/agent.html#mcp">MCP Server</a></li>'
 
 AGENT_BLOCK = f"""          <div class="nav-item">
-            <button class="nav-trigger" type="button" aria-expanded="false">Agent
+            <button class="nav-trigger" type="button" aria-expanded="false">Agent/Bot
               <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
             </button>
             <ul class="dropdown">
@@ -109,7 +109,7 @@ def is_patched(text: str) -> bool:
     return (
         count(text, EXTERNAL_TOP) == 0
         and count(text, f'aria-expanded="false">More') == 1
-        and count(text, f'aria-expanded="false">Agent') == 1
+        and count(text, f'aria-expanded="false">Agent/Bot') == 1
         and count(text, EXTERNAL_LI) == 1
     )
 
@@ -169,7 +169,7 @@ def patch(text: str) -> tuple[str, list[str]]:
     citation_after = CITATION_LI_RE.search(updated)
     checks = [
         ("no top-level External Links left", count(updated, EXTERNAL_TOP) == 0),
-        ('exactly one "Agent" trigger', count(updated, 'aria-expanded="false">Agent') == 1),
+        ('exactly one "Agent/Bot" trigger', count(updated, 'aria-expanded="false">Agent/Bot') == 1),
         ('exactly one "More" trigger', count(updated, 'aria-expanded="false">More') == 1),
         ('no "About" trigger left', count(updated, ABOUT_TRIGGER) == 0),
         ("MCP label current", count(updated, OLD_MCP_ITEM) == 0 and count(updated, NEW_MCP_ITEM) == 1),

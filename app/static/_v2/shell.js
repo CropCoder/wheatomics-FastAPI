@@ -83,7 +83,7 @@
           </div>
           <div class="nav-item"><a class="nav-link" href="https://wheatomics.sdau.edu.cn/download.html">Download Data</a></div>
           <div class="nav-item">
-            <button class="nav-trigger" type="button" aria-expanded="false">Agent
+            <button class="nav-trigger" type="button" aria-expanded="false">Agent/Bot
               <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
             </button>
             <ul class="dropdown">
