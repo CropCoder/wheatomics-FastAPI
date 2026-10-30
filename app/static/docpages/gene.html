@@ -40,6 +40,12 @@
   #gene-error { display: none; margin-top: 14px; white-space: pre-wrap; }
   #gene-loading { display: none; text-align: center; padding: 48px 0; color: var(--muted); }
   #gene-loading .spinner-border { width: 2.2rem; height: 2.2rem; color: var(--leaf); }
+  .gene-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; }
+  .gene-controls select { width: auto; max-width: 100%; height: 32px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; }
+  .gene-controls .btn { min-height: 32px; padding: 5px 14px; font-size: 12px; }
+  .gene-scroll { max-height: 320px; overflow: auto; }
+  .gene-scroll table { font-size: 12px; }
+  .gene-scroll th { background: var(--mist) !important; white-space: nowrap; }
   .gene-search-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
   .gene-search-row input { flex: 1 1 280px; max-width: 460px; }
   @media (max-width: 760px) { .gene-kv { grid-template-columns: 1fr; } .gene-table th { width: 120px; } }
@@ -107,6 +113,46 @@
         <div class="gene-card gene-homologs">
           <h2>Homologs in rice and Arabidopsis</h2>
           <div id="gene-homologs-body"><p class="gene-note mb-0">Loading homologs…</p></div>
+        </div>
+
+        <div class="gene-card">
+          <h2>GeneExpression</h2>
+          <div class="gene-controls">
+            <select id="expr-project" class="form-control form-control-sm"></select>
+            <button id="expr-run" class="btn btn-primary btn-sm" type="button">Get expression</button>
+            <span id="expr-status" class="gene-note"></span>
+          </div>
+          <div id="expr-body" class="gene-scroll"><p class="gene-note mb-0">Loading expression…</p></div>
+        </div>
+
+        <div class="gene-card">
+          <h2>Co-expression</h2>
+          <div class="gene-controls">
+            <select id="coexp-database" class="form-control form-control-sm"></select>
+            <select id="coexp-filter" class="form-control form-control-sm">
+              <option value="0.8">PCC ≥ 0.8</option>
+              <option value="0.9">PCC ≥ 0.9</option>
+              <option value="0.7">PCC ≥ 0.7</option>
+              <option value="0.5">PCC ≥ 0.5</option>
+            </select>
+            <button id="coexp-run" class="btn btn-primary btn-sm" type="button">Get co-expression</button>
+            <span id="coexp-status" class="gene-note"></span>
+          </div>
+          <div id="coexp-body" class="gene-scroll"><p class="gene-note mb-0">Loading co-expression…</p></div>
+        </div>
+
+        <div class="gene-card">
+          <h2>WheatPPI</h2>
+          <div class="gene-controls">
+            <select id="ppi-score" class="form-control form-control-sm">
+              <option value="0.5">Score &gt; 0.5</option>
+              <option value="0.2">Score &gt; 0.2</option>
+              <option value="0">all scores</option>
+            </select>
+            <button id="ppi-run" class="btn btn-primary btn-sm" type="button">Get protein interactions</button>
+            <span id="ppi-status" class="gene-note"></span>
+          </div>
+          <div id="ppi-body" class="gene-scroll"><p class="gene-note mb-0">Loading protein interactions…</p></div>
         </div>
 
         <div class="gene-card">
@@ -243,6 +289,130 @@
       });
   }
 
+  var currentGene = '';
+  function transcriptId(gene) { return /\.\d+$/.test(gene) ? gene : (gene + '.1'); }
+  function setStatus(id, msg) { var el = document.getElementById(id); if (el) el.textContent = msg || ''; }
+
+  function loadExpressionOptions() {
+    $.getJSON('/api/expression/projects')
+      .done(function (resp) {
+        var projects = (resp && resp.data && resp.data.projects) || [];
+        var sel = $('#expr-project').empty();
+        if (!projects.length) {
+          sel.append($('<option>').val('PRJEB5314_paired_tbl').text('Chinese Spring cv-1 Development (pair)'));
+        } else {
+          projects.forEach(function (p) {
+            sel.append($('<option>').val(p.id).text(p.description ? (p.description + ' (' + p.id + ')') : p.id));
+          });
+          if (projects.some(function (p) { return p.id === 'PRJEB5314_paired_tbl'; })) {
+            sel.val('PRJEB5314_paired_tbl');
+          }
+        }
+        loadExpression();
+      })
+      .fail(function () {
+        $('#expr-project').html('<option value="PRJEB5314_paired_tbl">Chinese Spring cv-1 Development (pair)</option>');
+        loadExpression();
+      });
+  }
+
+  function loadExpression() {
+    var project = $('#expr-project').val();
+    if (!currentGene || !project) return;
+    setStatus('expr-status', 'Loading…');
+    $('#expr-body').html('<p class="gene-note mb-0">Loading expression…</p>');
+    $.getJSON('/api/expression/query', { gene_ids: currentGene, project: project })
+      .done(function (resp) {
+        var d = (resp && resp.data) || {};
+        setStatus('expr-status', d.project ? ('Project: ' + d.project) : '');
+        var result = (d.results || [])[0];
+        var points = (result && result.points) || [];
+        if (!points.length) {
+          $('#expr-body').html('<p class="gene-note mb-0">No expression values returned for this gene in the selected project.</p>');
+          return;
+        }
+        var rows = points.map(function (pt) {
+          return '<tr><td>' + esc(pt.label) + '</td><td>' + (pt.value != null ? Number(pt.value).toFixed(2) : '—') +
+            '</td><td>' + (pt.std != null ? Number(pt.std).toFixed(2) : '—') + '</td></tr>';
+        }).join('');
+        $('#expr-body').html('<table class="table table-sm table-bordered mb-0"><thead><tr><th>Stage / tissue</th><th>Value</th><th>Std</th></tr></thead><tbody>' + rows + '</tbody></table>');
+      })
+      .fail(function (xhr) {
+        setStatus('expr-status', 'HTTP ' + xhr.status);
+        $('#expr-body').html('<p class="gene-note mb-0">Could not load expression values.</p>');
+      });
+  }
+
+  function loadCoexpressionOptions() {
+    $.getJSON('/api/coexpression/databases')
+      .done(function (resp) {
+        var dbs = (resp && resp.data) || [];
+        var sel = $('#coexp-database').empty();
+        dbs.forEach(function (db) { sel.append($('<option>').val(db.id).text(db.description ? (db.description + ' (' + db.id + ')') : db.id)); });
+        if (!dbs.length) sel.append($('<option>').val('CO_PRJEB25639').text('Wheat multiple tissues (CO_PRJEB25639)'));
+        loadCoexpression();
+      })
+      .fail(function () {
+        $('#coexp-database').html('<option value="CO_PRJEB25639">Wheat multiple tissues (CO_PRJEB25639)</option>');
+        loadCoexpression();
+      });
+  }
+
+  function loadCoexpression() {
+    var db = $('#coexp-database').val();
+    var filter = $('#coexp-filter').val();
+    if (!currentGene || !db) return;
+    setStatus('coexp-status', 'Loading…');
+    $('#coexp-body').html('<p class="gene-note mb-0">Loading co-expression…</p>');
+    $.getJSON('/api/coexpression/query', { gene_ids: currentGene, database: db, filter_value: filter })
+      .done(function (resp) {
+        var d = (resp && resp.data) || {};
+        setStatus('coexp-status', d.database ? ('Database: ' + d.database) : '');
+        if (d.gene_present === false) {
+          $('#coexp-body').html('<p class="gene-note mb-0">This gene is not present in the selected co-expression database.</p>');
+          return;
+        }
+        var pairs = d.pairs || [];
+        if (!pairs.length) {
+          $('#coexp-body').html('<p class="gene-note mb-0">No co-expression pairs pass the selected PCC threshold.</p>');
+          return;
+        }
+        var rows = pairs.map(function (pair) {
+          return '<tr><td>' + esc(pair.gene1) + '</td><td>' + esc(pair.gene2) + '</td><td>' + esc(pair.pcc) + '</td><td>' + esc(pair.mr) + '</td></tr>';
+        }).join('');
+        $('#coexp-body').html('<table class="table table-sm table-bordered mb-0"><thead><tr><th>Gene 1</th><th>Gene 2</th><th>PCC</th><th>MR</th></tr></thead><tbody>' + rows + '</tbody></table>');
+      })
+      .fail(function (xhr) {
+        setStatus('coexp-status', 'HTTP ' + xhr.status);
+        $('#coexp-body').html('<p class="gene-note mb-0">Could not load co-expression data.</p>');
+      });
+  }
+
+  function loadPPI() {
+    var score = $('#ppi-score').val();
+    if (!currentGene) return;
+    setStatus('ppi-status', 'Loading…');
+    $('#ppi-body').html('<p class="gene-note mb-0">Loading protein interactions…</p>');
+    $.getJSON('/api/ppi/query', { gene_ids: transcriptId(currentGene), min_score: score })
+      .done(function (resp) {
+        var hits = (resp && resp.data && resp.data.interactions) || [];
+        setStatus('ppi-status', hits.length + ' interaction record(s)');
+        if (!hits.length) {
+          $('#ppi-body').html('<p class="gene-note mb-0">No protein interactions pass the selected score threshold.</p>');
+          return;
+        }
+        var rows = hits.map(function (hit) {
+          return '<tr><td>' + esc((hit.wheat_id1 || []).join(', ')) + '</td><td>' + esc((hit.wheat_id2 || []).join(', ')) +
+            '</td><td>' + esc(hit.score) + '</td><td>' + esc(hit.annotation1 || '') + '</td><td>' + esc(hit.annotation2 || '') + '</td></tr>';
+        }).join('');
+        $('#ppi-body').html('<table class="table table-sm table-bordered mb-0"><thead><tr><th>Wheat ID 1</th><th>Wheat ID 2</th><th>Score</th><th>Annotation 1</th><th>Annotation 2</th></tr></thead><tbody>' + rows + '</tbody></table>');
+      })
+      .fail(function (xhr) {
+        setStatus('ppi-status', 'HTTP ' + xhr.status);
+        $('#ppi-body').html('<p class="gene-note mb-0">Could not load protein interactions (PPI uses transcript IDs with .1).</p>');
+      });
+  }
+
   function loadGene(gene) {
     if (!gene) return;
     $('#gene-error').hide();
@@ -255,8 +425,12 @@
           $('#gene-error').text((resp && resp.message) || 'Gene not found.').show();
           return;
         }
+        currentGene = gene;
         renderGene(gene, resp.data);
         renderHomologs(gene);
+        loadExpressionOptions();
+        loadCoexpressionOptions();
+        loadPPI();
       })
       .fail(function (xhr) {
         $('#gene-loading').hide();
@@ -275,6 +449,9 @@
       $('#gene-search-input').val(gene);
       loadGene(gene);
     }
+    $('#expr-run').on('click', loadExpression);
+    $('#coexp-run').on('click', loadCoexpression);
+    $('#ppi-run').on('click', loadPPI);
     $('#gene-search-form').on('submit', function (e) {
       e.preventDefault();
       var val = $('#gene-search-input').val().trim();
