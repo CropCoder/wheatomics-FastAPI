@@ -53,7 +53,7 @@
               <li><a href="https://wheatomics.sdau.edu.cn/tools/proteinfamily.html">PfamSearch</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/PrimerServer2/">PrimerServer2</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/idConvert/">IDConverter</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/homologtools/index.html">HomologFinder</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/HomologFinder/">HomologFinder</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/expression/index.html">GeneExpression</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/coexpression/index.html">Co-expression</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/tools/intervalTools.html">IntervalTool</a></li>
