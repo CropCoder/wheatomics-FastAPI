@@ -85,3 +85,164 @@ ORDER BY (cloning_method = 'Map-based cloning') DESC, clone_id
 | 前端 | 列表显示 `map-based cloning first`；Stats KPI=6、图表 6 类；类别徽章新值正常；`spa_visual_check`/ego-browser 截图验证 |
 
 截图：`docs/known_genes/_evidence/ui/prod/v2061-browse-w1440.png`、`v2061-stats-w1440.png`（PNG 本地留档，gitignore）。
+
+
+---
+
+## 7. 2026-10-28 增量新增记录（v2062）
+
+- 需求：v2061 之后 Excel/DB 要支持"新增基因"增量上线，且**数据库不能已有重复**。
+- 流程与防重：见 `INCREMENTAL_UPDATE.md`（预检多键查重 → insert_only → 写后验证/审计）。
+- 实际新增：**YrKB/TaEDR2-B**（TraesCS7B03G1236800，Nat Genet 2025 `10.1038/s41588-025-02259-2`）
+  → **clone_id = 1629**，审计 `bulk_create`（id=10），`/all` total **1420 → 1421**。
+- 冻结：`已知基因逐条提取清单_20261019-合集_修正版v2062_20261028.xlsx`（1421 行，v2061+YrKB）+ `frozen_20261028/`；JSONL `scripts/known_genes_v2055/out/known_genes_v2062.jsonl`。
+- 一致性：用 v2062 JSONL 复跑预检 → `EXACT_KEY 1421`、`计划写入 0`（DB 与冻结表一致）。
+- 未处理：TaHDA8（正文无 TraesCS ID，待 Supplementary Table S1）；PmL270（与 PmNCA6 共用 TraesCS7A03G1212700，待确认等位关系）。
+- 注意：公网写接口对较长科研文本会被边缘 WAF 断开（Empty reply）；本次增量写入是在**服务器本机**
+  `http://127.0.0.1:8000` 执行的（详见 `INCREMENTAL_UPDATE.md` §5）。
+
+
+---
+
+## 9. 2026-10-28 v2063 增量发布（建辉 NG 2025，Yr5x / Yr6-Pm5 / YrKB）
+
+- 输入：用户提供 Wu J. et al. 2025 Nat Genet 57:2017–2027（doi `10.1038/s41588-025-02259-2`）全文 PDF。
+- 冻结：`已知基因逐条提取清单_20261019-合集_修正版v2063_20261028.xlsx`（v2062 + Yr5x，**1422 行**）+ `frozen_20261028/`；JSONL `scripts/known_genes_v2055/out/known_genes_v2063.jsonl`。
+- 行变更：新增 **Yr5x**（TraesCS2B03G1231900，Yr5 位点新等位，与 Yr5b 共位点但不同等位）；**Yr6-Yr6CNLI**（clone 1524）与 **Pm5e**（clone 197）并入 NG 2025 的 Yr6/Pm5 双特异性/等位关系（多文献聚合）。YrKB 已在 v2062（clone 1629），不变。
+- 上线：预检 `EXACT_KEY 1421 / CONFLICT_LOCUS 1`（Yr5x 共位点，按 D7 用 `--allow-locus-shared` 人工放行）→ push `created=1 updated=2 errors=0`；审计 id 11–13。
+- 上线后：DB **1422 行**；Yr5x = **clone_id 1630**；Yr6CNLI/Pm5e 更新成功；v2063 JSONL 再预检 `EXACT_KEY 1422 / 计划写入 0`。
+- 详见数据目录 `wheatomics_results/import_建辉NG/v2063_变更说明.md`。
+
+
+---
+
+## 10. 2026-10-28 v2064：gene_phenotype 全表规范化
+
+- 依据 `docs/known_genes/2026-10-25_已知基因表_字段规范草案_v0.1.md` §4(3)：表型不得含方法/验证词、基因名、句号，长度 ≤200。
+- v2063 体检：762/1422 行违规（741 行 >200，最长 1,688；715 含方法词；573 含基因名；552 含句号）。
+- v2064：仅改 762 违规行（660 行已合规不动）；旧→新映射 `wheatomics_results/validation_20261019/phenotype_map_v2064.tsv`；原始长文本保留在映射表，细节与 function/key 重合校验 762/762 ≥35%。
+- 校验：技能规则 0 issues；validator 错误 0 / 需复核 8（历史 W11）；verifier 规则 0、全文需复核 0。
+- 上线：服务器本机 write API，`updated=762 / errors=0`（3 批）+ Rht 三行精修；DB 仍 1422 行，表型最大长度 200、>200 行 0；审计新增 764 条 bulk_update。
+- 示例：Rht-B1（clone 50）748 字符 → `Plant height (semi-dwarf; GA-insensitive)`（41 字符）；Yr10CG → `Stripe rust susceptibility (Yr)`。
+
+
+---
+
+## 11. 2026-10-28 v2065：蛋白家族列规范化
+
+- 依据 `docs/known_genes/2026-10-25_已知基因表_字段规范草案_v0.1.md`（第 36/91 行）：`Family (subfamily/domain)`；单一家族；禁止多家族堆叠/整段说明/PMID。
+- v2064 体检：844 行 >200，最长 2,657；905 行含 ` - ` 整段说明；434 行含句号句子。
+- v2065：改 1,142 行（切到顶层 ` - `/`; `/`: ` 前家族部分，人工兜底 7 行），旧→新映射 `wheatomics_results/validation_20261019/protein_family_map_v2065.tsv`。
+- 规范化后：最长 168 字符，>200 行 0。
+- 上线：bulk upsert 1,140 行（去重后）`updated=1140/errors=0`；TaVRN-A1 三行同键单独 PATCH clone 17/972/973；DB 仍 1422 行，最长 168。
+
+
+---
+
+## 12. 2026-10-28 v2066：Sm1 表型修正
+
+- 用户指定 Sm1 表型为 `Orange wheat blossom midge (OWBM) resistance`（规范化为单个空格、首字母大写）。
+- v2066 = v2065 + 该单行修改（excel row 1410，clone_id 9）；映射 `wheatomics_results/validation_20261019/sm1_phenotype_update_v2066.tsv`。
+- 上线：单行 upsert，`updated=1/errors=0`；DB clone_id 9 已显示新表型。
+
+
+---
+
+## 13. 2026-10-29 v2067：物种信息列规范化
+
+- 依据字段规范 v0.1 第 31 行/§3.1/§4.6：物种只写拉丁名（+俗名），命中标准清单，不写来源说明。
+- v2066 体检：225 种原始字符串，380 行 >60 字符，最长 668；大量材料/群体描述在括号内。
+- v2067：改 388 行，只保留标准物种名；多物种用 `; ` 保留（宿主+供体），材料/群体/转基因说明移出；野大麻（wild emmer）对齐服务端受控名 `Triticum turgidum subsp. dicoccoides`。
+- 规范化后：最长 119 字符，46 种规范字符串，species_primary 21 个受控学名、0 非法值。
+- 上线：bulk upsert 388 行 `updated=388/errors=0`；API/页面已显示规范物种名。
+- 附：extractor `derive_species_primary` 修复多物种截断；技能表结构/检查器同步物种规则。
+
+
+---
+
+## 14. 2026-10-30 v2068：新增 TaRLCK176（一次一个基因批次）
+
+- 来源 2026 功能基因候选 PMID 41163539（PCE 2026, doi 10.1111/pce.70261）；全文 PDF 已存档/抽文本。
+- 新行：excel row 1424；gene_id/ref `TraesCS1A03G0070800`（v1.0 `TraesCS1A02G031200`）；phenotype `Stripe rust resistance (Yr)`。
+- QC：技能规则 0；validator 错误 0；verifier 通过 1308/轻微 115、规则 0；参考文献 884/884 verified。
+- 上线：insert_only `created=1/errors=0`，clone_id **1631**；DB 1422→1423；详情 API 与 References 卡片已复核。
+
+
+---
+
+## 15. 2026-10-30 v2069：TaPYR10 并入已有 TaPYL1-1A（不新增行）
+
+- 2026 PCE 论文 PMID 41186021（doi 10.1111/pce.70275）的 TaPYR10 = v2068 row 1346 的 TaPYL1-1A（同一 v2.1 ID TraesCS1A03G0514200）。
+- 按同基因多篇论文规则合并：追加 title/doi/year、key_result、function NOTE、cloning/validation 方法；行数保持 1423。
+- 校验：skill 0；validator 错误 0（仅多文献 W01/W20 提示）；verifier 通过 1308/轻微 115、规则 0；参考文献 885/885 verified。
+- 上线：更新已有 clone_id 400（updated=1/errors=0），References 卡片显示 2 条文献。
+
+
+---
+
+## 16. 2026-10-30 v2070：新增 TaCYP2
+
+- 来源 PMID 41494041（Functional Plant Biology 2026, doi 10.1071/FP24271）；全文 PDF 已存档/抽文本。
+- 新行：excel row 1425；gene_id/ref `TraesCS6B03G0219500`（v1.0 `TraesCS6B02G093100`）；phenotype `Cold tolerance`。
+- 功能验证：拟南芥异源过表达（−5°C 存活率、膜损伤/渗透/ROS、AtDREB1a/AtLEA）；NOTE 已注明 B 拷贝且未做小麦转基因。
+- QC：skill 0；validator 错误 0；verifier 通过 1309/轻微 115、规则 0；insert_only created=1，clone_id **1632**；DB 1423→1424。
+
+
+---
+
+## 17. 2026-10-30 v2071：新增 TaCYPA-1
+
+- 来源 PMID 42549924（Plant, Cell & Environment 2026, doi 10.1111/pce.70788）；全文 PDF 已存档/抽文本。
+- 新行：excel row 1426；gene_id/ref `TraesCS6D03G0139300`（v1.0 `TraesCS6D02G066700`）；phenotype `Cereal cyst nematode resistance`。
+- 功能：Hf70514 效应子–TaCYPA-1 互作；BSMV 瞬时沉默增强线虫寄生；NOTE 注明 D 拷贝、A/B 未验证。
+- QC：skill 0；validator 错误 0；verifier 通过 1309/轻微 116、规则 0；insert_only created=1，clone_id **1633**；DB 1424→1425。
+
+
+---
+
+## 18. 2026-10-30 v2072：新增 TaSGO1-6A/6B/6D
+
+- 来源 PMID 41872739（BMC Plant Biology 2026, doi 10.1186/s12870-026-08619-2）；全文 PDF 已存档/抽文本。
+- 新行 3 个：excel rows 1427–1429；gene_ids `TraesCS6A03G0930900` / `TraesCS6B03G1129200` / `TraesCS6D03G0805400`。
+- 功能：SGO1 保护着丝粒 cohesin；三个拷贝分别在拟南芥 sgo1 突变体异源互补，恢复育性/染色体分离；NOTE 注明异源验证、非小麦突变体。
+- QC：skill 0；validator 错误 0；verifier 通过 1312/轻微 116、规则 0；insert_only created=3，clone_ids 1634/1635/1636；DB 1425→1428。
+
+
+---
+
+## 19. 2026-10-30 v2073：新增 TaR3H
+
+- 来源 PMID 42334443（Journal of Experimental Botany 2026, doi 10.1093/jxb/erag297）；全文 PDF 已存档/抽文本。
+- 新行：excel row 1430；gene_id/ref `TraesCS5D03G0354400`（v1.0 `TraesCS5D02G141400`）；phenotype `Powdery mildew resistance (Pm; Bgt)`。
+- 功能：R3H 转录因子；与 Pm21 CC 互作；BSMV 沉默降低抗性、过表达增强抗性；DAP-seq/RNA-seq；NOTE 注明 D 拷贝、A/B 未验证。
+- QC：skill 0；validator 错误 0；verifier 通过 1313/轻微 116、规则 0；insert_only created=1，clone_id **1637**；DB 1428→1429。
+
+
+---
+
+## 20. 2026-10-30 v2074：新增 TaGAD2
+
+- 来源 PMID 42584474（Theoretical and Applied Genetics 2026, doi 10.1007/s00122-026-05338-y）；全文 PDF 已存档/抽文本。
+- 新行：excel row 1431；gene_id/ref `TraesCS3B03G0052400`（v1.0 `TraesCS3B02G022900`）；phenotype `Plant height`。
+- 功能：GAD/GABA 合成；Rht5 下游；过表达降低株高、敲低增加株高/抗倒伏；单倍型关联；NOTE 注明 B 拷贝、A/D 未验证。
+- QC：skill 0；validator 错误 0；verifier 通过 1314/轻微 116、规则 0；insert_only created=1，clone_id **1638**；DB 1429→1430。
+
+
+---
+
+## 21. 2026-10-30 v2075：新增 TaMTP1-A/B/D
+
+- 来源 PMID 41989928（The Plant Journal 2026, doi 10.1111/tpj.70870）；全文 PDF 已存档/抽文本。
+- 新行 3 个：excel rows 1432–1434；gene_ids `TraesCS1A03G0175400` / `TraesCS1B03G0239900` / `TraesCS1D03G0170600`。
+- 功能：MTP/CDF 液泡 Zn 转运；三重 TILLING 突变体 aabbdd 不育/籽粒 Zn 分配；NOTE 明确联合突变体证据、不归因单一拷贝。
+- QC：skill 0；validator 错误 0；verifier 通过 1316/轻微 116、规则 0；insert_only created=3，clone_ids 1639/1640/1641；DB 1430→1433。
+
+
+---
+
+## 22. 2026-10-30 v2076：新增 TaMSRB5-6A
+
+- 来源 PMID 41874712（Plant Molecular Biology 2026, doi 10.1007/s11103-026-01703-z）；全文 PDF 已存档/抽文本。
+- 新行：excel row 1435；gene_id/ref `TraesCS6A03G0856300`（v1.0 `TraesCS6A02G332000`）；phenotype `Metal toxicity tolerance`。
+- 功能：MSRB/SelR；铜胁迫；仅 TaMSRB5-6A 在拟南芥过表达验证；6B/6D 仅表达分析；NOTE 已注明。
+- QC：skill 0；validator 错误 0；verifier 通过 1315/轻微 119、规则 0；insert_only created=1，clone_id **1642**；DB 1433→1434。

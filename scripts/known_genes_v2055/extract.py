@@ -128,8 +128,9 @@ def derive_species_primary(raw: str, raw_to_canonical: dict[str, str]) -> tuple[
     key = raw.strip()
     if key in raw_to_canonical:
         return raw_to_canonical[key], None
-    # fall back to the leading Latin binomial before the first '('
-    head = re.split(r"\s+\(", key, maxsplit=1)[0].strip()
+    # fall back to the leading Latin binomial before the first '(' or ';'
+    # (multi-species cells keep the first/primary species for species_primary)
+    head = re.split(r"\s+\(|;", key, maxsplit=1)[0].strip()
     head = re.sub(r"\s+$", "", head)
     if head:
         return head, f"species not in mapping table; fallback={head!r}"

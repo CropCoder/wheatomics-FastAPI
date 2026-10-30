@@ -19,6 +19,10 @@ class DOIReference(BaseModel):
     doi: str | None = None
     title: str | None = None
     year: int | str | None = None
+    # --- 2026-10-29: enriched reference metadata (Crossref/PubMed, title-verified) ---
+    authors: list[str] | None = None
+    journal: str | None = None
+    pmid: str | None = None
 
 
 class KnownGeneSummary(BaseModel):

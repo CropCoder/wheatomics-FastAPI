@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import html
+import json
 import re
 from collections import Counter
+from functools import lru_cache
+from pathlib import Path
 
 from fastapi import APIRouter, Query
 
@@ -299,6 +303,37 @@ def _row_to_known_summary(row: dict) -> KnownGeneSummary:
     )
 
 
+_REF_META_PATH = Path(__file__).resolve().parents[3] / "app/services/data/known_gene_reference_meta.json"
+
+
+@lru_cache(maxsize=1)
+def _reference_meta() -> dict:
+    """Load the Crossref/PubMed-enriched reference metadata cache (once)."""
+    try:
+        return json.loads(_REF_META_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return {"doi": {}, "title": {}}
+
+
+def _ref_norm_title(text: object) -> str:
+    value = html.unescape(re.sub(r"<[^>]+>", " ", str(text or ""))).lower()
+    value = re.sub(r"[^a-z0-9]+", " ", value)
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def _reference_meta_for(doi: str | None, title: str | None) -> dict | None:
+    meta = _reference_meta()
+    if doi:
+        hit = (meta.get("doi") or {}).get(doi.strip().lower())
+        if hit:
+            return hit
+    if title:
+        hit = (meta.get("title") or {}).get(_ref_norm_title(title))
+        if hit:
+            return hit
+    return None
+
+
 def _build_known_references(row: dict) -> list[DOIReference]:
     """Build the positionally-aligned ``references[]`` list.
 
@@ -336,7 +371,22 @@ def _build_known_references(row: dict) -> list[DOIReference]:
         year: int | str | None = year_text
         if year_text is not None and year_text.isdigit():
             year = int(year_text)
-        references.append(DOIReference(doi=doi, title=title, year=year))
+        meta = _reference_meta_for(doi, title)
+        if meta:
+            if meta.get("year") and year is None:
+                year = meta["year"]
+            if meta.get("title") and not title:
+                title = meta["title"]
+        references.append(
+            DOIReference(
+                doi=doi,
+                title=title,
+                year=year,
+                authors=(meta or {}).get("authors") or None,
+                journal=(meta or {}).get("journal") or None,
+                pmid=(meta or {}).get("pmid") or None,
+            )
+        )
     return references
 
 
@@ -957,8 +1007,10 @@ def get_known_gene(gene_id: str) -> dict:
               "species": "Triticum aestivum (bread wheat)",
               "paper_title": ["...", "..."],
               "references": [
-                {"doi": "10.1093/jxb/erm369", "title": "...", "year": 2008},
-                {"doi": "10.1094/phyto-08-23-0276-r", "title": "...", "year": 2024}
+                {"doi": "10.1093/jxb/erm369", "title": "...", "year": 2008,
+                 "authors": ["Family A", "Family B"], "journal": "Journal of Experimental Botany", "pmid": null},
+                {"doi": "10.1094/phyto-08-23-0276-r", "title": "...", "year": 2024,
+                 "authors": ["..."], "journal": "Phytopathology", "pmid": null}
               ],
               "key_result": ["..."],
               "publication_year": 2008,
