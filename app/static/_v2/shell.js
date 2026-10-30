@@ -46,7 +46,7 @@
             </button>
                         <ul class="dropdown tools-dropdown">
               <li><a href="https://wheatomics.sdau.edu.cn/getfasta/">GetSequence</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/blast/blast.html">BLAST</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/blast/blast.html">Triticeae WebBLAST</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/GeneHub/">GeneHub</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/genes/">KnownGene</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/neighborhood/">Neighborhood</a></li>
