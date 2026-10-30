@@ -76,11 +76,11 @@
     var input = document.getElementById('search');
     var status = document.getElementById('gh-status');
     var result = document.getElementById('gh-result');
-    var CGI = '/cgi-bin/geneDetail.py';
+    var GENE_PAGE = '/gene/?gene=';
 
     function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
     function isCsId(q){ return /^TraesCS\d/i.test(q) || /^Traes_/i.test(q); }
-    function openGene(cs){ location.href = CGI + '?search=' + encodeURIComponent(cs); }
+    function openGene(cs){ location.href = GENE_PAGE + encodeURIComponent(cs); }
 
     function render(mappings, query){
       result.innerHTML = '';
@@ -93,8 +93,8 @@
       mappings.forEach(function(m){
         var cs = m.chinese_spring_02g || '';
         var region = (m.chromosome ? esc(m.chromosome) : '') + ((m.start_mb != null && m.end_mb != null) ? ':' + Math.round(m.start_mb * 1000000) + '-' + Math.round(m.end_mb * 1000000) : '');
-        var csCell = cs ? '<a href="' + CGI + '?search=' + encodeURIComponent(cs) + '">' + esc(cs) + '</a>' : '<span class="text-muted">no CS mapping</span>';
-        var open = cs ? '<a class="btn btn-sm btn-outline-primary gh-open" href="' + CGI + '?search=' + encodeURIComponent(cs) + '">Open</a>' : '';
+        var csCell = cs ? '<a href="' + GENE_PAGE + encodeURIComponent(cs) + '">' + esc(cs) + '</a>' : '<span class="text-muted">no CS mapping</span>';
+        var open = cs ? '<a class="btn btn-sm btn-outline-primary gh-open" href="' + GENE_PAGE + encodeURIComponent(cs) + '">Open</a>' : '';
         html += '<tr><td>' + esc(m.dataset || m.table) + '</td><td><code>' + esc(m.gene_primary) + '</code></td><td>' + csCell + '</td><td>' + region + '</td><td>' + esc(m.description || m.domain || '') + '</td><td>' + open + '</td></tr>';
       });
       html += '</tbody></table></div>';

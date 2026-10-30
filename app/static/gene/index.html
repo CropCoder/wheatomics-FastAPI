@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="GeneHub gene page — gene IDs, genome location, protein properties, JBrowse, homologs and external resources for a wheat gene.">
+<title>GeneHub gene | WheatOmics 2.0</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+<link rel="stylesheet" href="/api/v2shell/shell.css">
+<style>
+  .gene-shell { max-width: 1180px; }
+  .gene-card { border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 20px 22px; margin-top: 18px; }
+  .gene-card h2 { margin: 0 0 14px; color: var(--forest-deep); font-family: var(--display); font-size: 16px; font-weight: 750; letter-spacing: -.01em; }
+  .gene-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; margin: 0 0 4px; }
+  .gene-head h1 { margin: 0; color: var(--forest-deep); font-family: var(--display); font-size: 26px; font-weight: 800; letter-spacing: -.02em; word-break: break-all; }
+  .gene-head .gene-query { color: var(--muted); font-size: 12px; }
+  .gene-sub { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+  .gene-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; }
+  .gene-badge { display: inline-flex; gap: 5px; align-items: baseline; padding: 3px 9px; border-radius: 999px; background: var(--mist); color: var(--forest); font-family: var(--utility); font-size: 10.5px; }
+  .gene-badge em { color: var(--muted); font-style: normal; }
+  .gene-table-wrap { overflow-x: auto; }
+  .gene-table { width: 100%; border-collapse: collapse; }
+  .gene-table th, .gene-table td { border: 1px solid var(--line); padding: 9px 12px; font-size: 13px; line-height: 1.65; vertical-align: top; }
+  .gene-table th { width: 190px; background: var(--mist); color: #4d6559; text-align: left; font-weight: 700; white-space: nowrap; }
+  .gene-table td { background: #fff; color: var(--ink); }
+  .gene-kv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .gene-kv > div { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fbfdfb; }
+  .gene-kv dt { margin: 0 0 4px; color: var(--muted); font-family: var(--utility); font-size: 10px; font-weight: 400; letter-spacing: .02em; }
+  .gene-kv dd { margin: 0; color: var(--forest-deep); font-size: 13px; font-weight: 700; word-break: break-word; }
+  .gene-links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .gene-links a, .gene-tool-link { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--leaf); font-size: 11.5px; font-weight: 700; text-decoration: none; }
+  .gene-links a:hover, .gene-tool-link:hover { border-color: rgba(17,134,83,.45); background: var(--mist); color: var(--forest); text-decoration: none; }
+  .gene-jbrowse { width: 100%; max-width: 100%; height: 260px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+  .gene-homologs table { font-size: 12px; }
+  .gene-homologs th { background: var(--mist) !important; }
+  .gene-note { color: var(--muted); font-size: 12px; }
+  #gene-error { display: none; margin-top: 14px; white-space: pre-wrap; }
+  #gene-loading { display: none; text-align: center; padding: 48px 0; color: var(--muted); }
+  #gene-loading .spinner-border { width: 2.2rem; height: 2.2rem; color: var(--leaf); }
+  .gene-search-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .gene-search-row input { flex: 1 1 280px; max-width: 460px; }
+  @media (max-width: 760px) { .gene-kv { grid-template-columns: 1fr; } .gene-table th { width: 120px; } }
+</style>
+</head>
+<body>
+<div id="v2-shell-header"></div>
+
+<main id="main-content">
+  <section class="news-hero">
+    <div class="container news-hero-inner">
+      <div>
+        <p class="news-kicker">WheatOmics 2.0 · GeneHub</p>
+        <h1 class="news-title">Gene<em>Hub</em> gene page</h1>
+        <p class="news-lead">Gene IDs across annotation versions, genome location, protein properties, JBrowse context, homologs and external resources for a wheat gene.</p>
+        <div class="news-stats">
+          <span class="news-stat">IWGSC annotation</span>
+          <span class="news-stat">JBrowse context</span>
+          <span class="news-stat">Homologs &amp; external links</span>
+        </div>
+      </div>
+      <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-gene"/></svg></div>
+    </div>
+  </section>
+
+  <section class="news-body">
+    <div class="container gene-shell">
+      <div class="gene-card">
+        <form id="gene-search-form" class="gene-search-row" autocomplete="off">
+          <label for="gene-search-input" class="font-weight-bold mb-0">Gene ID</label>
+          <input id="gene-search-input" class="form-control" placeholder="e.g. TraesCS1A02G000500">
+          <button type="submit" class="btn btn-primary">Open gene page</button>
+          <a class="gene-tool-link" href="/GeneHub/">← GeneHub search</a>
+        </form>
+        <div id="gene-error" class="alert alert-danger" role="alert"></div>
+        <div id="gene-loading"><div class="spinner-border" role="status" aria-hidden="true"></div><p class="mt-2 mb-0">Loading gene record…</p></div>
+      </div>
+
+      <div id="gene-content" style="display:none;">
+        <div class="gene-card">
+          <div class="gene-head">
+            <h1 id="gene-title">—</h1>
+            <span class="gene-query" id="gene-query"></span>
+          </div>
+          <p class="gene-sub" id="gene-description">—</p>
+          <div class="gene-badges" id="gene-ids"></div>
+          <div class="gene-kv" id="gene-kv"></div>
+        </div>
+
+        <div class="gene-card">
+          <h2>Annotation</h2>
+          <div class="gene-table-wrap">
+            <table class="gene-table">
+              <tbody id="gene-annotation"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="gene-card">
+          <h2>Genome context (JBrowse)</h2>
+          <div id="gene-jbrowse-wrap"></div>
+          <p class="gene-note mt-2 mb-0">The embedded browser uses the Chinese Spring 1.0 annotation; the full-screen link above opens the same locus in JBrowse.</p>
+        </div>
+
+        <div class="gene-card gene-homologs">
+          <h2>Homologs in rice and Arabidopsis</h2>
+          <div id="gene-homologs-body"><p class="gene-note mb-0">Loading homologs…</p></div>
+        </div>
+
+        <div class="gene-card">
+          <h2>Related tools</h2>
+          <div class="gene-links" id="gene-tools"></div>
+        </div>
+
+        <div class="gene-card">
+          <h2>External resources</h2>
+          <div class="gene-links" id="gene-external"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="v2-shell-footer"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  function getParam(name) {
+    var m = new RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : '';
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function dash(v) { return (v == null || v === '') ? '—' : v; }
+
+  function geneUrl(gene) { return '/gene/?gene=' + encodeURIComponent(gene); }
+
+  function renderGene(gene, data) {
+    var q = data.query_gene || gene;
+    var ids = data.gene_ids || [];
+    document.title = q + ' | GeneHub | WheatOmics 2.0';
+    $('#gene-title').text(q);
+    $('#gene-query').text(data.genome ? ('Genome: ' + data.genome) : '');
+    $('#gene-description').text(data.description || 'No description available for this gene.');
+    $('#gene-ids').html(ids.map(function (id) {
+      return '<span class="gene-badge">' + esc(id) + '</span>';
+    }).join(''));
+
+    var kv = [
+      ['Genome', dash(data.genome)],
+      ['Chromosome', dash(data.chromosome)],
+      ['Position', (data.start != null && data.end != null) ? (data.start + '–' + data.end) : '—'],
+      ['Strand', dash(data.strand)],
+      ['Protein length', data.protein_length != null ? (data.protein_length + ' aa') : '—'],
+      ['Molecular weight', data.molecular_weight != null ? (data.molecular_weight + ' Da') : '—'],
+      ['Isoelectric point', dash(data.isoelectric_point)],
+      ['Phase separation', dash(data.phase_separation)],
+      ['Annotation', dash(data.genome)]
+    ];
+    $('#gene-kv').html(kv.map(function (row) {
+      return '<div><dt>' + esc(row[0]) + '</dt><dd>' + esc(row[1]) + '</dd></div>';
+    }).join(''));
+
+    var ann = [
+      ['Gene IDs (v1 / v2 / v3)', ids.length ? ids.join(' · ') : '—'],
+      ['Description', dash(data.description)],
+      ['Functional annotation', (data.functions && data.functions.length) ? data.functions.join('; ') : '—']
+    ];
+    $('#gene-annotation').html(ann.map(function (row) {
+      return '<tr><th>' + esc(row[0]) + '</th><td>' + esc(row[1]) + '</td></tr>';
+    }).join(''));
+
+    var jb = (data.jbrowse_links && data.jbrowse_links.structure_center) || '';
+    if (jb) {
+      var httpsJb = jb.replace(/^http:\/\//i, 'https://');
+      $('#gene-jbrowse-wrap').html(
+        '<p class="mb-2"><a class="gene-tool-link" target="_blank" rel="noopener" href="' +
+        esc(httpsJb) + '">Open locus in JBrowse ↗</a></p>' +
+        '<iframe class="gene-jbrowse" src="' + esc(httpsJb) + '" title="JBrowse context" loading="lazy"></iframe>'
+      );
+    } else {
+      $('#gene-jbrowse-wrap').html('<p class="gene-note mb-0">No JBrowse link is available for this gene.</p>');
+    }
+
+    var geneForSeq = /\.\d+$/.test(q) ? q : (q + '.1');
+    var tools = [
+      ['GetSequence', '/getfasta/?query=' + encodeURIComponent(geneForSeq) + '&database=all_genes'],
+      ['GeneExpression', '/expression/index.html'],
+      ['Co-expression', '/coexpression/index.html'],
+      ['WheatPPI', '/wheatPPI/index.html'],
+      ['HomologFinder', '/HomologFinder/'],
+      ['KnownGene search', '/genes/']
+    ];
+    $('#gene-tools').html(tools.map(function (t) {
+      return '<a class="gene-tool-link" href="' + esc(t[1]) + '">' + esc(t[0]) + ' →</a>';
+    }).join(''));
+
+    var ext = data.external_links || {};
+    var extLabels = { ensembl: 'Ensembl Plants', uniprot: 'UniProt', croppal: 'CropPAL', knetminer: 'KnetMiner', tgt: 'TGT' };
+    var extHtml = Object.keys(ext).filter(function (k) { return ext[k]; }).map(function (k) {
+      return '<a class="gene-tool-link" target="_blank" rel="noopener" href="' + esc(ext[k]) + '">' +
+        esc(extLabels[k] || k) + ' ↗</a>';
+    }).join('');
+    $('#gene-external').html(extHtml || '<p class="gene-note mb-0">No external resource links are available for this gene.</p>');
+
+    $('#gene-content').show();
+  }
+
+  function renderHomologs(gene) {
+    $.getJSON('/api/homologs/wheat-rice-arabidopsis', { gene_id: gene, max_targets: 5 })
+      .done(function (resp) {
+        var data = resp && resp.data;
+        var hits = (data && data.hits) || [];
+        if (!hits.length) {
+          $('#gene-homologs-body').html('<p class="gene-note mb-0">No rice or Arabidopsis homologs returned for this gene.</p>');
+          return;
+        }
+        var rows = hits.map(function (h) {
+          return '<tr><td>' + esc(h.species || '') + '</td><td><code>' + esc(h.target_gene || '') + '</code></td>' +
+            '<td>' + esc(h.description || '') + '</td><td>' + esc(h.qcovs != null ? h.qcovs : '') + '</td>' +
+            '<td>' + esc(h.identity != null ? h.identity : '') + '</td><td>' + esc(h.evalue != null ? h.evalue : '') + '</td>' +
+            '<td>' + esc(h.score != null ? h.score : '') + '</td></tr>';
+        }).join('');
+        $('#gene-homologs-body').html(
+          '<p class="gene-note">' + hits.length + ' homolog hit(s).</p>' +
+          '<div class="table-responsive"><table class="table table-sm table-bordered mb-0">' +
+          '<thead><tr><th>Species</th><th>Target gene</th><th>Description</th><th>Qcovs</th><th>Identity</th><th>E value</th><th>Score</th></tr></thead>' +
+          '<tbody>' + rows + '</tbody></table></div>'
+        );
+      })
+      .fail(function () {
+        $('#gene-homologs-body').html('<p class="gene-note mb-0">Could not load homologs (the comparative API may be unavailable for this gene).</p>');
+      });
+  }
+
+  function loadGene(gene) {
+    if (!gene) return;
+    $('#gene-error').hide();
+    $('#gene-content').hide();
+    $('#gene-loading').show();
+    $.getJSON('/api/genes/detail/' + encodeURIComponent(gene))
+      .done(function (resp) {
+        $('#gene-loading').hide();
+        if (!resp || !resp.success || !resp.data) {
+          $('#gene-error').text((resp && resp.message) || 'Gene not found.').show();
+          return;
+        }
+        renderGene(gene, resp.data);
+        renderHomologs(gene);
+      })
+      .fail(function (xhr) {
+        $('#gene-loading').hide();
+        var msg = 'HTTP ' + xhr.status;
+        try {
+          var j = xhr.responseJSON;
+          msg = (j && (j.detail || j.message)) || msg;
+        } catch (e) {}
+        $('#gene-error').text('Could not load gene: ' + msg).show();
+      });
+  }
+
+  $(function () {
+    var gene = getParam('gene') || getParam('id');
+    if (gene) {
+      $('#gene-search-input').val(gene);
+      loadGene(gene);
+    }
+    $('#gene-search-form').on('submit', function (e) {
+      e.preventDefault();
+      var val = $('#gene-search-input').val().trim();
+      if (!val) return;
+      window.location.href = geneUrl(val);
+    });
+  });
+})();
+</script>
+</body>
+</html>

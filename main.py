@@ -205,6 +205,7 @@ app.mount("/sms2", StaticFiles(directory=Path(__file__).parent / "app" / "static
 app.mount("/coexpression", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "coexpression", html=True), name="coexpression")
 app.mount("/papers", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "papers", html=True), name="papers")
 app.mount("/genes", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "genes", html=True), name="genes")
+app.mount("/gene", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "gene", html=True), name="gene")
 app.mount("/GO_KEGG", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "GO_KEGG", html=True), name="GO_KEGG")
 app.mount("/VariantHub", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "VariantHub", html=True), name="VariantHub")
 app.mount("/syntenyview", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "syntenyview", html=True), name="syntenyview")
