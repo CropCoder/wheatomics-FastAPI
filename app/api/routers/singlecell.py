@@ -365,6 +365,23 @@ def _safe_filename(*parts: str) -> str:
     return "_".join(x for x in cleaned if x) or "geneset"
 
 
+def _strip_key(celltype_key: str) -> str:
+    """Drop the trailing hash from a cell type key: Epi_cells_3e2b16a2 -> Epi_cells."""
+    return re.sub(r"_[0-9a-fA-F]{6,}$", "", celltype_key or "")
+
+
+def _celltype_label(cur, sample: str, celltype_key: str) -> str:
+    cur.execute(
+        "SELECT celltype_label FROM scrna_networks "
+        "WHERE sample = %s AND celltype_key = %s",
+        (sample, celltype_key),
+    )
+    row = cur.fetchone()
+    if row and row["celltype_label"]:
+        return row["celltype_label"]
+    return _strip_key(celltype_key)
+
+
 def _csv_response(filename: str, header: list[str], rows: list[list]) -> StreamingResponse:
     def gen():
         buf = io.StringIO()
@@ -398,8 +415,9 @@ def api_module_genes(sample: str, celltype_key: str, module: str) -> dict:
     m = _param(module, "module")
     with mysql_cursor(settings.DB_SCRNA_DATA) as cur:
         genes = _module_genes(cur, s, k, m)
-    return ok({"sample": s, "celltype_key": k, "module": m,
-               "count": len(genes), "genes": genes})
+        label = _celltype_label(cur, s, k)
+    return ok({"sample": s, "celltype_key": k, "celltype_label": label,
+               "module": m, "count": len(genes), "genes": genes})
 
 
 @router.get("/module/genes.csv")
@@ -409,8 +427,9 @@ def api_module_genes_csv(sample: str, celltype_key: str, module: str) -> Streami
     m = _param(module, "module")
     with mysql_cursor(settings.DB_SCRNA_DATA) as cur:
         genes = _module_genes(cur, s, k, m)
+        label = _celltype_label(cur, s, k)
     return _csv_response(
-        _safe_filename(s, k, m) + ".csv", _GENESET_HEADER, _geneset_rows(genes))
+        _safe_filename(s, label, m) + ".csv", _GENESET_HEADER, _geneset_rows(genes))
 
 
 @router.get("/hub/genes")
@@ -420,7 +439,8 @@ def api_hub_genes(sample: str, celltype_key: str) -> dict:
     k = _param(celltype_key, "celltype_key")
     with mysql_cursor(settings.DB_SCRNA_DATA) as cur:
         genes = _hub_genes(cur, s, k)
-    return ok({"sample": s, "celltype_key": k,
+        label = _celltype_label(cur, s, k)
+    return ok({"sample": s, "celltype_key": k, "celltype_label": label,
                "count": len(genes), "genes": genes})
 
 
@@ -430,6 +450,97 @@ def api_hub_genes_csv(sample: str, celltype_key: str) -> StreamingResponse:
     k = _param(celltype_key, "celltype_key")
     with mysql_cursor(settings.DB_SCRNA_DATA) as cur:
         genes = _hub_genes(cur, s, k)
+        label = _celltype_label(cur, s, k)
     return _csv_response(
-        _safe_filename(s, k, "hub_genes") + ".csv", _GENESET_HEADER,
+        _safe_filename(s, label, "hub_genes") + ".csv", _GENESET_HEADER,
         _geneset_rows(genes))
+
+
+# ---------------------------------------------------------------------------
+# Batch lookup: a summary row per gene so a pasted list can be screened quickly.
+# ---------------------------------------------------------------------------
+BATCH_LIMIT = 50
+
+
+def _parse_genes(raw: str) -> list[str]:
+    parts = [p.strip() for p in re.split(r"[\s,;]+", raw or "") if p.strip()]
+    ids: list[str] = []
+    for p in parts:
+        if p not in ids:
+            ids.append(p)
+    if not ids:
+        raise ValidationFailure("No gene IDs provided")
+    if len(ids) > BATCH_LIMIT:
+        raise ValidationFailure(
+            f"Too many gene IDs ({len(ids)}); maximum is {BATCH_LIMIT} per query")
+    for p in ids:
+        if not _GENE_RE.match(p):
+            raise ValidationFailure(f"Invalid gene ID: {p!r}")
+    return ids
+
+
+@router.get("/genes")
+def genes_batch(genes: str) -> dict:
+    """Summarise up to 50 genes: datasets, cell types, modules and hub status."""
+    ids = _parse_genes(genes)
+    mapping = class_map()
+    ph = ",".join(["%s"] * len(ids))
+
+    with mysql_cursor(settings.DB_SCRNA_DATA) as cur:
+        cur.execute(
+            f"SELECT gene_id, sample FROM scrna_dotplot_expression "
+            f"WHERE gene_id IN ({ph}) GROUP BY gene_id, sample", ids)
+        expr_pairs = cur.fetchall()
+
+        cur.execute(
+            f"SELECT gene_id, COUNT(DISTINCT celltype) AS nct "
+            f"FROM scrna_dotplot_expression WHERE gene_id IN ({ph}) "
+            f"GROUP BY gene_id", ids)
+        expr_counts = {r["gene_id"]: r["nct"] for r in cur.fetchall()}
+
+        cur.execute(
+            f"SELECT gene_id, COUNT(*) AS n FROM scrna_gene_modules "
+            f"WHERE gene_id IN ({ph}) GROUP BY gene_id", ids)
+        module_counts = {r["gene_id"]: r["n"] for r in cur.fetchall()}
+
+        cur.execute(
+            f"SELECT gene_id, sample, celltype_key FROM scrna_hub_genes "
+            f"WHERE gene_id IN ({ph})", ids)
+        hub_rows = cur.fetchall()
+        labels = _celltype_labels(cur)
+
+    samples_of: dict[str, list[str]] = {}
+    for r in expr_pairs:
+        samples_of.setdefault(r["gene_id"], []).append(r["sample"])
+
+    hubs_of: dict[str, list[str]] = {}
+    hub_count: dict[str, int] = {}
+    for r in hub_rows:
+        gid = r["gene_id"]
+        hub_count[gid] = hub_count.get(gid, 0) + 1
+        label = labels.get((r["sample"], r["celltype_key"]),
+                           _strip_key(r["celltype_key"]))
+        bucket = hubs_of.setdefault(gid, [])
+        if label not in bucket:
+            bucket.append(label)
+
+    out = []
+    for g in ids:
+        sams = sorted(samples_of.get(g, []))
+        displays: list[str] = []
+        for s in sams:
+            display, _ = _label(s, mapping["by_sample"])
+            if display not in displays:
+                displays.append(display)
+        hub_labels = sorted(hubs_of.get(g, []))
+        out.append({
+            "gene": g,
+            "found": bool(sams or module_counts.get(g) or hub_labels),
+            "n_samples": len(sams),
+            "displays": displays,
+            "n_celltypes": expr_counts.get(g, 0),
+            "n_modules": module_counts.get(g, 0),
+            "n_hubs": hub_count.get(g, 0),
+            "hub_celltypes": hub_labels,
+        })
+    return ok({"total": len(out), "limit": BATCH_LIMIT, "genes": out})

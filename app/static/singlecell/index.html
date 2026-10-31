@@ -8,7 +8,8 @@ main{max-width:1280px;margin:35px auto;padding:0 20px}
 header{background:#16453e;color:white;padding:24px;border-radius:14px}
 header p{margin:8px 0 0;opacity:.85}
 section{background:white;padding:22px;border:1px solid #dce8e3;border-radius:12px;margin-top:16px}
-input,select,button{padding:11px;border-radius:7px;border:1px solid #a7c5bb;font:inherit}
+input,select,textarea,button{padding:11px;border-radius:7px;border:1px solid #a7c5bb;font:inherit}
+textarea{width:100%;box-sizing:border-box;resize:vertical}
 button{background:#206b5c;color:white;cursor:pointer}
 button.secondary{background:#e7efec;color:#16453e;border-color:#a7c5bb}
 button.mini{padding:4px 10px;font-size:12px;border-radius:5px}
@@ -29,6 +30,7 @@ a.csv{display:inline-block;padding:4px 10px;font-size:12px;border-radius:5px;
   background:#206b5c;color:#fff;text-decoration:none}
 a.csv:hover{background:#16453e}
 #geneset-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px}
 .empty{text-align:center;color:#8a9a94;padding:30px 0}
 </style></head><body><main>
 <header>
@@ -37,11 +39,21 @@ a.csv:hover{background:#16453e}
 </header>
 
 <section>
-  <label for="gene">Gene ID</label>
-  <input id="gene" size="30" placeholder="e.g. TraesCS3D03G0096000">
-  <button id="search">Analyze gene</button>
-  <button id="clear" type="button" class="secondary">Clear</button>
-  <p class="muted" id="status">Search any gene present in the single-cell datasets.</p>
+  <label for="gene"><strong>Gene ID(s)</strong></label>
+  <textarea id="gene" rows="3" placeholder="One gene per line, or comma/space separated — up to 50 genes"></textarea>
+  <div class="row">
+    <button id="search">Analyze</button>
+    <button id="clear" type="button" class="secondary">Clear</button>
+    <span class="muted">or load a list:</span>
+    <input type="file" id="gene-file" accept=".txt,.csv,.tsv">
+  </div>
+  <p class="muted" id="status">Enter one gene for its full profile, or several genes (max 50) for a summary table.</p>
+</section>
+
+<section id="batchsec" hidden>
+  <h2>Batch summary</h2>
+  <p class="muted" id="batch-meta"></p>
+  <div id="batchtable" class="scroll"></div>
 </section>
 
 <section id="summarysec" hidden>
@@ -59,6 +71,7 @@ a.csv:hover{background:#16453e}
   </div>
   <p class="muted">Dot size is the percentage of cells expressing the gene; colour is the mean normalised expression. Scroll the plot sideways when many cell types are shown.</p>
   <div id="chart-wrap"><div id="chart"></div></div>
+  <h3 style="font-size:16px;margin:18px 0 8px">Expression level per cell population</h3>
   <div id="exprtable" class="scroll"></div>
 </section>
 
@@ -84,8 +97,9 @@ a.csv:hover{background:#16453e}
 </section>
 </main><script>
 const $=id=>document.getElementById(id);
+const MAX_GENES=50;
 let chart=null;
-const state={data:null,meta:{}};   // meta: sample -> {display, type}
+const state={data:null,meta:{}};
 
 function text(el,s){el.textContent=s==null?"":String(s)}
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
@@ -93,18 +107,67 @@ function q(v){return encodeURIComponent(v)}
 function fmt(v,d){return v==null||isNaN(v)?"—":Number(v).toFixed(d)}
 async function api(path){const r=await fetch(path);let x;try{x=await r.json()}catch{x={detail:"Invalid JSON response"}}
 if(!r.ok)throw Error(typeof x.detail==="string"?x.detail:"HTTP "+r.status);return x}
-function hideAll(){for(const id of ["summarysec","exprsec","modulesec","hubsec","genesetsec"])$(id).hidden=true}
-function typeOf(sample){const m=state.meta[sample];return m?m.type:sample}
-function displayOf(sample){const m=state.meta[sample];return m?m.display:sample}
+function hideAll(){
+  for(const id of ["batchsec","summarysec","exprsec","modulesec","hubsec","genesetsec"])$(id).hidden=true;
+}
+function typeOf(s){const m=state.meta[s];return m?m.type:s}
+function displayOf(s){const m=state.meta[s];return m?m.display:s}
 
-/* ---------- search ---------- */
+/* ---------- input ---------- */
+function parseGenes(){
+  const parts=($("gene").value||"").split(/[\s,;]+/).map(s=>s.trim()).filter(Boolean);
+  const out=[];
+  for(const p of parts)if(!out.includes(p))out.push(p);
+  return out;
+}
+
 async function search(){
-  const g=$("gene").value.trim();
-  if(!g)return;
+  const genes=parseGenes();
+  if(!genes.length){text($("status"),"Please enter at least one gene ID.");return}
+  if(genes.length>MAX_GENES){
+    text($("status"),`Too many genes (${genes.length}). Maximum is ${MAX_GENES}.`);
+    return;
+  }
+  hideAll();
+  if(genes.length===1)return singleSearch(genes[0]);
+  return batchSearch(genes);
+}
+
+/* ---------- batch ---------- */
+async function batchSearch(genes){
+  text($("status"),`Loading ${genes.length} genes...`);
+  try{
+    const d=(await api("/api/singlecell/genes?genes="+q(genes.join(",")))).data;
+    let html='<table><thead><tr><th>Gene</th><th>Datasets</th><th>Cell types</th><th>Modules</th><th>Hub cell types</th><th></th></tr></thead><tbody>';
+    d.genes.forEach(g=>{
+      html+=`<tr><td>${esc(g.gene)}</td>`+
+            `<td>${g.displays.length?esc(g.displays.join("; ")):"—"}</td>`+
+            `<td>${g.n_celltypes||0}</td>`+
+            `<td>${g.n_modules||0}</td>`+
+            `<td>${g.hub_celltypes.length?esc(g.hub_celltypes.join("; ")):"—"}</td>`+
+            `<td><button class="mini" data-gene="${esc(g.gene)}">View</button></td></tr>`;
+    });
+    html+='</tbody></table>';
+    $("batchtable").innerHTML=html;
+    const found=d.genes.filter(g=>g.found).length;
+    text($("batch-meta"),`${d.total} genes queried · ${found} present in the single-cell data · limit ${d.limit} per query`);
+    $("batchsec").hidden=false;
+    text($("status"),`Loaded ${d.total} genes.`);
+  }catch(e){text($("status"),"Error: "+e.message)}
+}
+
+$("batchtable").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-gene]");
+  if(!b)return;
+  $("gene").value=b.dataset.gene;
+  singleSearch(b.dataset.gene);
+});
+
+/* ---------- single gene ---------- */
+async function singleSearch(gene){
   text($("status"),"Loading...");hideAll();
   try{
-    const resp=await api("/api/singlecell/gene/"+q(g));
-    const d=resp.data;
+    const d=(await api("/api/singlecell/gene/"+q(gene))).data;
     if(!d.found){
       text($("status"),`No single-cell data for ${d.gene}. It may not be expressed, or not be present in these datasets.`);
       return;
@@ -112,12 +175,9 @@ async function search(){
     state.data=d;
     state.meta={};
     (d.samples||[]).forEach(s=>{state.meta[s.sample]={display:s.display,type:s.type}});
-
     renderSummary(d);
     renderDisplayPicker(d);
-    renderExpression();
-    renderModules(d);
-    renderHubs(d);
+    refreshDisplayViews();
     text($("status"),`Loaded ${d.gene}.`);
   }catch(e){text($("status"),"Error: "+e.message)}
 }
@@ -137,34 +197,37 @@ function renderSummary(d){
   $("summarysec").hidden=false;
 }
 
-/* ---------- dataset (display) picker ---------- */
 function renderDisplayPicker(d){
   const sel=$("display");
   sel.replaceChildren();
   const withExpr=new Set(d.summary.displays_with_expression||[]);
-  const displays=(d.displays||[]);
-  displays.forEach(x=>{
+  (d.displays||[]).forEach(x=>{
     const o=document.createElement("option");
     o.value=x.display;
     o.textContent=x.display+(withExpr.has(x.display)?"":" (no expression)");
     sel.appendChild(o);
   });
-  // default: first dataset where this gene is expressed, else the first one
-  const first=displays.find(x=>withExpr.has(x.display))||displays[0];
+  const first=(d.displays||[]).find(x=>withExpr.has(x.display))||(d.displays||[])[0];
   if(first)sel.value=first.display;
-  sel.onchange=()=>{renderExpression()};
+  sel.onchange=refreshDisplayViews;
+}
+
+function refreshDisplayViews(){
+  if(!state.data)return;
+  const display=$("display").value;
+  renderExpression(display);
+  renderModules(state.data,display);
+  renderHubs(state.data,display);
 }
 
 function samplesForDisplay(display){
   return Object.keys(state.data.expression_by_sample||{})
-    .filter(s=>displayOf(s)===display)
-    .sort();
+    .filter(s=>displayOf(s)===display).sort();
 }
 
-/* ---------- expression dot plot ---------- */
-function renderExpression(){
-  const d=state.data;if(!d)return;
-  const display=$("display").value;
+/* ---------- expression ---------- */
+function renderExpression(display){
+  const d=state.data;
   const samples=samplesForDisplay(display);
   const bySample=d.expression_by_sample||{};
 
@@ -180,25 +243,28 @@ function renderExpression(){
   const celltypes=[...new Set(samples.flatMap(s=>bySample[s].map(e=>e.celltype)))].sort();
   const types=samples.map(typeOf);
 
-  const data=[];const rows=[];let expMin=Infinity,expMax=-Infinity;
+  const data=[];let expMin=Infinity,expMax=-Infinity;
+  const pivot={};   // celltype -> {type: mean}
   samples.forEach((sample,yi)=>{
+    const t=typeOf(sample);
     bySample[sample].forEach(e=>{
       const pct=Number(e.pct_expr)||0, mean=Number(e.mean_normalized)||0;
       if(Number.isFinite(mean)){expMin=Math.min(expMin,mean);expMax=Math.max(expMax,mean)}
       data.push([celltypes.indexOf(e.celltype),yi,pct,mean]);
-      rows.push({
-        "Type":typeOf(sample),"Cell type":e.celltype,"Cells":e.n_cells,
-        "Cells expressing":e.n_expr_cells,"% expressing":fmt(pct,2),
-        "Mean normalised":fmt(mean,3),"Mean log1p":fmt(e.avg_log1p,3)
-      });
+      (pivot[e.celltype]||(pivot[e.celltype]={}))[t]=e.mean_normalized;
     });
   });
 
-  const cols=["Type","Cell type","Cells","Cells expressing","% expressing","Mean normalised","Mean log1p"];
+  // compact pivot: one row per cell population, one column per type
+  const cols=["Cell population",...types];
   const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
   cols.forEach(c=>{const th=document.createElement("th");text(th,c);tr.appendChild(th)});
   const body=t.createTBody();
-  rows.forEach(r=>{const tr=body.insertRow();cols.forEach(c=>text(tr.insertCell(),r[c]))});
+  Object.keys(pivot).sort().forEach(ct=>{
+    const row=body.insertRow();
+    text(row.insertCell(),ct);
+    types.forEach(ty=>text(row.insertCell(),pivot[ct][ty]==null?"—":fmt(pivot[ct][ty],3)));
+  });
   $("exprtable").replaceChildren(t);
 
   if(!Number.isFinite(expMin)||expMin===expMax){expMin=0;expMax=Math.max(expMax,1)}
@@ -234,7 +300,7 @@ function renderExpression(){
   $("exprsec").hidden=false;
 }
 
-/* ---------- modules & hubs ---------- */
+/* ---------- modules & hubs (filtered by the selected dataset) ---------- */
 function genesetUrl(kind,sample,ct,mod,ext){
   if(kind==="module"){
     return `/api/singlecell/module/genes${ext}?sample=${q(sample)}&celltype_key=${q(ct)}&module=${q(mod)}`;
@@ -242,13 +308,13 @@ function genesetUrl(kind,sample,ct,mod,ext){
   return `/api/singlecell/hub/genes${ext}?sample=${q(sample)}&celltype_key=${q(ct)}`;
 }
 
-function renderModules(d){
-  const items=d.modules||[];
-  if(!items.length){$("modulesec").hidden=true;return}
-  let html='<table><thead><tr><th>Dataset</th><th>Type</th><th>Cell type</th><th>Module</th><th>kME</th><th>Genes</th><th>Gene set</th></tr></thead><tbody>';
+function renderModules(d,display){
+  const items=(d.modules||[]).filter(m=>m.display===display);
+  if(!items.length){$("modulesec").hidden=true;$("moduletable").replaceChildren();return}
+  let html='<table><thead><tr><th>Type</th><th>Cell type</th><th>Module</th><th>kME</th><th>Genes</th><th>Gene set</th></tr></thead><tbody>';
   items.forEach(m=>{
-    html+=`<tr><td>${esc(m.display)}</td><td>${esc(m.type)}</td><td>${esc(m.celltype_label)}</td>`+
-          `<td>${esc(m.module)}</td><td>${fmt(m.kME,3)}</td><td>${m.n_genes==null?"—":m.n_genes}</td>`+
+    html+=`<tr><td>${esc(m.type)}</td><td>${esc(m.celltype_label)}</td><td>${esc(m.module)}</td>`+
+          `<td>${fmt(m.kME,3)}</td><td>${m.n_genes==null?"—":m.n_genes}</td>`+
           `<td><button class="mini" data-action="show" data-kind="module" data-sample="${esc(m.sample)}" `+
           `data-ct="${esc(m.celltype_key)}" data-mod="${esc(m.module)}">Show genes</button> `+
           `<a class="csv" href="${genesetUrl("module",m.sample,m.celltype_key,m.module,".csv")}">CSV</a></td></tr>`;
@@ -258,13 +324,13 @@ function renderModules(d){
   $("modulesec").hidden=false;
 }
 
-function renderHubs(d){
-  const items=d.hub_genes||[];
-  if(!items.length){$("hubsec").hidden=true;return}
-  let html='<table><thead><tr><th>Dataset</th><th>Type</th><th>Cell type</th><th>Module</th><th>kME</th><th>Hub genes</th><th>Gene set</th></tr></thead><tbody>';
+function renderHubs(d,display){
+  const items=(d.hub_genes||[]).filter(h=>h.display===display);
+  if(!items.length){$("hubsec").hidden=true;$("hubtable").replaceChildren();return}
+  let html='<table><thead><tr><th>Type</th><th>Cell type</th><th>Module</th><th>kME</th><th>Hub genes</th><th>Gene set</th></tr></thead><tbody>';
   items.forEach(h=>{
-    html+=`<tr><td>${esc(h.display)}</td><td>${esc(h.type)}</td><td>${esc(h.celltype_label)}</td>`+
-          `<td>${esc(h.module)}</td><td>${fmt(h.kME,3)}</td><td>${h.n_genes==null?"—":h.n_genes}</td>`+
+    html+=`<tr><td>${esc(h.type)}</td><td>${esc(h.celltype_label)}</td><td>${esc(h.module)}</td>`+
+          `<td>${fmt(h.kME,3)}</td><td>${h.n_genes==null?"—":h.n_genes}</td>`+
           `<td><button class="mini" data-action="show" data-kind="hub" data-sample="${esc(h.sample)}" `+
           `data-ct="${esc(h.celltype_key)}">Show genes</button> `+
           `<a class="csv" href="${genesetUrl("hub",h.sample,h.celltype_key,"",".csv")}">CSV</a></td></tr>`;
@@ -280,9 +346,10 @@ async function loadGeneset(kind,sample,ct,mod){
   $("geneset-table").replaceChildren();
   try{
     const d=(await api(genesetUrl(kind,sample,ct,mod,""))).data;
+    const ctLabel=d.celltype_label||d.celltype_key;
     const label=kind==="module"
-      ? `Module ${mod} — ${typeOf(sample)}, ${d.celltype_key}`
-      : `Hub genes — ${typeOf(sample)}, ${d.celltype_key}`;
+      ? `Module ${mod} — ${typeOf(sample)}, ${ctLabel}`
+      : `Hub genes — ${typeOf(sample)}, ${ctLabel}`;
     text($("geneset-title"),`${label} (${d.count} genes)`);
     text($("geneset-meta"),`Dataset: ${displayOf(sample)} · Download the CSV or copy the list for GO/KEGG enrichment.`);
     $("geneset-download").href=genesetUrl(kind,sample,ct,mod,".csv");
@@ -311,21 +378,43 @@ $("hubtable").addEventListener("click",e=>{
   if(b)loadGeneset("hub",b.dataset.sample,b.dataset.ct,"");
 });
 
+$("gene-file").addEventListener("change",function(){
+  const f=this.files&&this.files[0];
+  if(!f)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const found=[];
+    String(e.target.result).split(/\r\n|\r|\n/).forEach(line=>{
+      const cell=(line.split(/[\t,]/)[0]||"").trim();
+      const low=cell.toLowerCase();
+      if(cell&&!["gene","gene_id","geneid","id"].includes(low)&&!found.includes(cell))found.push(cell);
+    });
+    if(found.length>MAX_GENES){
+      text($("status"),`File has ${found.length} gene IDs; only the first ${MAX_GENES} are used.`);
+    }
+    $("gene").value=found.slice(0,MAX_GENES).join("\n");
+  };
+  reader.readAsText(f);
+});
+
 function clearAll(){
   $("gene").value="";hideAll();
   state.data=null;state.meta={};
-  ["chips","exprtable","moduletable","hubtable","geneset-table"]
+  ["chips","exprtable","moduletable","hubtable","geneset-table","batchtable"]
     .forEach(id=>$(id).replaceChildren());
   $("display").replaceChildren();
-  text($("samplesline"),"");text($("geneset-title"),"");text($("geneset-meta"),"");text($("display-hint"),"");
+  text($("samplesline"),"");text($("geneset-title"),"");text($("geneset-meta"),"");
+  text($("display-hint"),"");text($("batch-meta"),"");
   if(chart)chart.clear();
-  text($("status"),"Search any gene present in the single-cell datasets.");
+  text($("status"),"Enter one gene for its full profile, or several genes (max 50) for a summary table.");
   $("gene").focus();
 }
 
 $("search").addEventListener("click",search);
 $("clear").addEventListener("click",clearAll);
-$("gene").addEventListener("keydown",e=>{if(e.key==="Enter")search()});
-window.addEventListener("resize",()=>{if(chart&&state.data)renderExpression()});
+$("gene").addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))search();
+});
+window.addEventListener("resize",()=>{if(chart&&state.data)refreshDisplayViews()});
 $(function(){const g=new URLSearchParams(location.search).get("gene");if(g){$("gene").value=g;search()}});
 </script></body></html>
