@@ -26,6 +26,12 @@ th{background:#f2f7f5;font-weight:600;position:sticky;top:0}
 .picker select{min-width:340px}
 #chart-wrap{overflow-x:auto;overflow-y:hidden;margin-top:10px}
 #chart{height:460px}
+.plot-legend{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:6px;
+  padding:10px 12px;background:#f7fbf9;border:1px solid #e2ece8;border-radius:8px;font-size:12px;color:#3c5a50}
+.plot-legend .lg-title{color:#63776f}
+.plot-legend .lg-item{display:inline-flex;align-items:center;gap:6px}
+.plot-legend .lg-dot{display:inline-block;border-radius:50%;background:#7fc3a8;opacity:.85}
+.plot-legend .lg-sep{width:1px;height:16px;background:#dbe6e1}
 a.csv{display:inline-block;padding:4px 10px;font-size:12px;border-radius:5px;
   background:#206b5c;color:#fff;text-decoration:none}
 a.csv:hover{background:#16453e}
@@ -71,6 +77,15 @@ a.csv:hover{background:#16453e}
   </div>
   <p class="muted">Dot size is the percentage of cells expressing the gene; colour is the mean normalised expression. Scroll the plot sideways when many cell types are shown.</p>
   <div id="chart-wrap"><div id="chart"></div></div>
+  <div class="plot-legend">
+    <span class="lg-title">Dot size = % of cells expressing</span>
+    <span class="lg-item"><i class="lg-dot" style="width:5px;height:5px"></i>1%</span>
+    <span class="lg-item"><i class="lg-dot" style="width:11px;height:11px"></i>10%</span>
+    <span class="lg-item"><i class="lg-dot" style="width:17px;height:17px"></i>25%</span>
+    <span class="lg-item"><i class="lg-dot" style="width:24px;height:24px"></i>50%</span>
+    <span class="lg-sep"></span>
+    <span class="lg-title">Colour = mean normalised expression (Low → High)</span>
+  </div>
   <h3 style="font-size:16px;margin:18px 0 8px">Expression level per cell population</h3>
   <div id="exprtable" class="scroll"></div>
 </section>
@@ -293,18 +308,6 @@ function renderExpression(display){
       text:["High","Low"],textGap:8,
       textStyle:{fontSize:11,color:"#4a5f57"},
       inRange:{color:["#eaf3ef","#7fc3a8","#206b5c","#0b2b26"]}},
-    graphic:[
-      {type:"text",right:46,top:150,style:{text:"Mean normalised",font:"12px sans-serif",
-        fill:"#4a5f57",textAlign:"right"}},
-      {type:"text",right:46,top:308,style:{text:"Dot size = % cells expressing",font:"12px sans-serif",
-        fill:"#4a5f57",textAlign:"right"}},
-      {type:"circle",right:150,top:336,shape:{r:11},style:{fill:"#7fc3a8",opacity:.85}},
-      {type:"text",right:120,top:330,style:{text:"50%",font:"11px sans-serif",fill:"#4a5f57"}},
-      {type:"circle",right:150,top:372,shape:{r:6},style:{fill:"#7fc3a8",opacity:.85}},
-      {type:"text",right:120,top:366,style:{text:"10%",font:"11px sans-serif",fill:"#4a5f57"}},
-      {type:"circle",right:150,top:398,shape:{r:4},style:{fill:"#7fc3a8",opacity:.85}},
-      {type:"text",right:120,top:392,style:{text:"1%",font:"11px sans-serif",fill:"#4a5f57"}}
-    ],
     series:[{type:"scatter",data,
       symbolSize:v=>Math.max(9,Math.min(38,Math.sqrt(v[2])*3.6)),
       itemStyle:{borderColor:"#ffffff",borderWidth:0.6,opacity:.95}}]
@@ -323,7 +326,14 @@ function genesetUrl(kind,sample,ct,mod,ext){
 
 function renderModules(d,display){
   const all=d.modules||[];
-  if(!all.length){$("modulesec").hidden=true;$("moduletable").replaceChildren();return}
+  // The section stays on screen whenever a gene is loaded: an empty dataset is
+  // information, not a reason to hide the panel.
+  $("modulesec").hidden=false;
+  if(!all.length){
+    $("moduletable").innerHTML=
+      '<div class="empty">This gene has no co-expression modules in these datasets.</div>';
+    return;
+  }
   const items=all.filter(m=>m.display===display);
   if(!items.length){
     // keep the section visible: the gene does have modules, just not here
@@ -349,7 +359,12 @@ function renderModules(d,display){
 
 function renderHubs(d,display){
   const all=d.hub_genes||[];
-  if(!all.length){$("hubsec").hidden=true;$("hubtable").replaceChildren();return}
+  $("hubsec").hidden=false;
+  if(!all.length){
+    $("hubtable").innerHTML=
+      '<div class="empty">This gene is not a hub gene in these datasets.</div>';
+    return;
+  }
   const items=all.filter(h=>h.display===display);
   if(!items.length){
     const others=[...new Set(all.map(h=>h.display))];
