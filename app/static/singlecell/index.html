@@ -290,10 +290,23 @@ function renderExpression(display){
     yAxis:{type:"category",data:types,axisLabel:{fontSize:11,color:"#3c5a50"}},
     visualMap:{min:expMin,max:expMax,dimension:3,orient:"vertical",right:10,top:"middle",
       itemWidth:14,itemHeight:120,calculable:false,precision:2,
+      text:["High","Low"],textGap:8,
       textStyle:{fontSize:11,color:"#4a5f57"},
       inRange:{color:["#eaf3ef","#7fc3a8","#206b5c","#0b2b26"]}},
+    graphic:[
+      {type:"text",right:46,top:150,style:{text:"Mean normalised",font:"12px sans-serif",
+        fill:"#4a5f57",textAlign:"right"}},
+      {type:"text",right:46,top:308,style:{text:"Dot size = % cells expressing",font:"12px sans-serif",
+        fill:"#4a5f57",textAlign:"right"}},
+      {type:"circle",right:150,top:336,shape:{r:11},style:{fill:"#7fc3a8",opacity:.85}},
+      {type:"text",right:120,top:330,style:{text:"50%",font:"11px sans-serif",fill:"#4a5f57"}},
+      {type:"circle",right:150,top:372,shape:{r:6},style:{fill:"#7fc3a8",opacity:.85}},
+      {type:"text",right:120,top:366,style:{text:"10%",font:"11px sans-serif",fill:"#4a5f57"}},
+      {type:"circle",right:150,top:398,shape:{r:4},style:{fill:"#7fc3a8",opacity:.85}},
+      {type:"text",right:120,top:392,style:{text:"1%",font:"11px sans-serif",fill:"#4a5f57"}}
+    ],
     series:[{type:"scatter",data,
-      symbolSize:v=>Math.max(5,Math.min(26,Math.sqrt(v[2])*2)),
+      symbolSize:v=>Math.max(9,Math.min(38,Math.sqrt(v[2])*3.6)),
       itemStyle:{borderColor:"#ffffff",borderWidth:0.6,opacity:.95}}]
   },true);
   chart.resize();
@@ -309,8 +322,18 @@ function genesetUrl(kind,sample,ct,mod,ext){
 }
 
 function renderModules(d,display){
-  const items=(d.modules||[]).filter(m=>m.display===display);
-  if(!items.length){$("modulesec").hidden=true;$("moduletable").replaceChildren();return}
+  const all=d.modules||[];
+  if(!all.length){$("modulesec").hidden=true;$("moduletable").replaceChildren();return}
+  const items=all.filter(m=>m.display===display);
+  if(!items.length){
+    // keep the section visible: the gene does have modules, just not here
+    const others=[...new Set(all.map(m=>m.display))];
+    $("moduletable").innerHTML=
+      `<div class="empty">No co-expression modules for <b>${esc(display)}</b>.<br>`+
+      `This gene has modules in: ${others.map(esc).join(", ")} — switch the Dataset above.</div>`;
+    $("modulesec").hidden=false;
+    return;
+  }
   let html='<table><thead><tr><th>Type</th><th>Cell type</th><th>Module</th><th>kME</th><th>Genes</th><th>Gene set</th></tr></thead><tbody>';
   items.forEach(m=>{
     html+=`<tr><td>${esc(m.type)}</td><td>${esc(m.celltype_label)}</td><td>${esc(m.module)}</td>`+
@@ -325,8 +348,17 @@ function renderModules(d,display){
 }
 
 function renderHubs(d,display){
-  const items=(d.hub_genes||[]).filter(h=>h.display===display);
-  if(!items.length){$("hubsec").hidden=true;$("hubtable").replaceChildren();return}
+  const all=d.hub_genes||[];
+  if(!all.length){$("hubsec").hidden=true;$("hubtable").replaceChildren();return}
+  const items=all.filter(h=>h.display===display);
+  if(!items.length){
+    const others=[...new Set(all.map(h=>h.display))];
+    $("hubtable").innerHTML=
+      `<div class="empty">Not a hub gene in <b>${esc(display)}</b>.<br>`+
+      `It is a hub in: ${others.map(esc).join(", ")} — switch the Dataset above.</div>`;
+    $("hubsec").hidden=false;
+    return;
+  }
   let html='<table><thead><tr><th>Type</th><th>Cell type</th><th>Module</th><th>kME</th><th>Hub genes</th><th>Gene set</th></tr></thead><tbody>';
   items.forEach(h=>{
     html+=`<tr><td>${esc(h.type)}</td><td>${esc(h.celltype_label)}</td><td>${esc(h.module)}</td>`+
