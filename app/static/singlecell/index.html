@@ -11,7 +11,6 @@ section{background:white;padding:22px;border:1px solid #dce8e3;border-radius:12p
 input,select,button{padding:11px;border-radius:7px;border:1px solid #a7c5bb;font:inherit}
 button{background:#206b5c;color:white;cursor:pointer}
 button.secondary{background:#e7efec;color:#16453e;border-color:#a7c5bb}
-button:disabled{opacity:.45;cursor:not-allowed}
 button.mini{padding:4px 10px;font-size:12px;border-radius:5px}
 .muted{color:#63776f}
 table{border-collapse:collapse;width:100%;font-size:13px}
@@ -22,21 +21,19 @@ th{background:#f2f7f5;font-weight:600;position:sticky;top:0}
 .chip{padding:5px 12px;border-radius:14px;background:#eef5f2;color:#16453e;font-size:13px}
 .chip b{color:#0b2b26}
 .chip.hub{background:#fff4e5;color:#8a5a00;border:1px solid #ffd9a8}
-.picker{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
-.picker label{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid #cfe0d8;
-  border-radius:14px;font-size:13px;background:#f7fbf9;cursor:pointer}
-.picker label input{padding:0;margin:0}
-.picker label.checked{background:#e7efec;border-color:#206b5c}
+.picker{display:flex;align-items:center;gap:10px;margin:10px 0;flex-wrap:wrap}
+.picker select{min-width:340px}
 #chart-wrap{overflow-x:auto;overflow-y:hidden;margin-top:10px}
 #chart{height:460px}
 a.csv{display:inline-block;padding:4px 10px;font-size:12px;border-radius:5px;
   background:#206b5c;color:#fff;text-decoration:none}
 a.csv:hover{background:#16453e}
 #geneset-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.empty{text-align:center;color:#8a9a94;padding:30px 0}
 </style></head><body><main>
 <header>
   <h1>Wheat single-cell atlas</h1>
-  <p>Gene expression across samples and cell types · co-expression modules · hub genes</p>
+  <p>Gene expression across datasets and cell types · co-expression modules · hub genes</p>
 </header>
 
 <section>
@@ -54,8 +51,12 @@ a.csv:hover{background:#16453e}
 </section>
 
 <section id="exprsec" hidden>
-  <h2>Expression by sample and cell type</h2>
-  <div class="picker" id="sample-picker"></div>
+  <h2>Expression by dataset and cell type</h2>
+  <div class="picker">
+    <label for="display"><strong>Dataset</strong></label>
+    <select id="display"></select>
+    <span class="muted" id="display-hint"></span>
+  </div>
   <p class="muted">Dot size is the percentage of cells expressing the gene; colour is the mean normalised expression. Scroll the plot sideways when many cell types are shown.</p>
   <div id="chart-wrap"><div id="chart"></div></div>
   <div id="exprtable" class="scroll"></div>
@@ -84,7 +85,7 @@ a.csv:hover{background:#16453e}
 </main><script>
 const $=id=>document.getElementById(id);
 let chart=null;
-const state={data:null,selected:new Set()};
+const state={data:null,meta:{}};   // meta: sample -> {display, type}
 
 function text(el,s){el.textContent=s==null?"":String(s)}
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
@@ -93,6 +94,8 @@ function fmt(v,d){return v==null||isNaN(v)?"—":Number(v).toFixed(d)}
 async function api(path){const r=await fetch(path);let x;try{x=await r.json()}catch{x={detail:"Invalid JSON response"}}
 if(!r.ok)throw Error(typeof x.detail==="string"?x.detail:"HTTP "+r.status);return x}
 function hideAll(){for(const id of ["summarysec","exprsec","modulesec","hubsec","genesetsec"])$(id).hidden=true}
+function typeOf(sample){const m=state.meta[sample];return m?m.type:sample}
+function displayOf(sample){const m=state.meta[sample];return m?m.display:sample}
 
 /* ---------- search ---------- */
 async function search(){
@@ -107,11 +110,11 @@ async function search(){
       return;
     }
     state.data=d;
-    const withExpr=Object.keys(d.expression_by_sample||{}).sort();
-    const picker=withExpr.length?withExpr:["__none__"];
-    state.selected=new Set(picker.slice(0,1));
+    state.meta={};
+    (d.samples||[]).forEach(s=>{state.meta[s.sample]={display:s.display,type:s.type}});
+
     renderSummary(d);
-    renderSamplePicker(withExpr);
+    renderDisplayPicker(d);
     renderExpression();
     renderModules(d);
     renderHubs(d);
@@ -122,62 +125,60 @@ async function search(){
 function renderSummary(d){
   const s=d.summary||{};
   const chips=[
-    `<span class="chip">Samples with expression: <b>${(s.samples_with_expression||[]).length}</b></span>`,
+    `<span class="chip">Datasets with expression: <b>${(s.displays_with_expression||[]).length}</b></span>`,
     `<span class="chip">Cell types: <b>${s.n_celltypes||0}</b></span>`,
     `<span class="chip">Modules: <b>${s.n_modules||0}</b></span>`,
     s.is_hub?`<span class="chip hub">Hub gene in <b>${(s.hub_celltypes||[]).join(", ")}</b></span>`
             :`<span class="chip">Not a hub gene in these datasets</span>`
   ];
   $("chips").innerHTML=chips.join("");
-  text($("samplesline"),"Datasets loaded: "+(d.samples||[]).map(x=>x.sample).join(" · "));
+  const ds=(d.displays||[]).map(x=>x.display);
+  text($("samplesline"),"Datasets: "+(ds.length?ds.join(" · "):"—"));
   $("summarysec").hidden=false;
 }
 
-/* ---------- sample picker ---------- */
-function renderSamplePicker(samples){
-  const box=$("sample-picker");box.replaceChildren();
-  if(!samples.length)return;
-  const all=document.createElement("button");
-  all.type="button";all.className="mini secondary";all.textContent="Select all";
-  all.addEventListener("click",()=>{state.selected=new Set(samples);syncPicker();renderExpression()});
-  box.appendChild(all);
-  const none=document.createElement("button");
-  none.type="button";none.className="mini secondary";none.textContent="Clear";
-  none.addEventListener("click",()=>{state.selected=new Set();syncPicker();renderExpression()});
-  box.appendChild(none);
-  samples.forEach(s=>{
-    const lab=document.createElement("label");
-    const cb=document.createElement("input");
-    cb.type="checkbox";cb.value=s;cb.checked=state.selected.has(s);
-    cb.addEventListener("change",()=>{
-      if(cb.checked)state.selected.add(s); else state.selected.delete(s);
-      syncPicker();renderExpression();
-    });
-    lab.appendChild(cb);
-    lab.appendChild(document.createTextNode(s));
-    lab.dataset.sample=s;
-    box.appendChild(lab);
+/* ---------- dataset (display) picker ---------- */
+function renderDisplayPicker(d){
+  const sel=$("display");
+  sel.replaceChildren();
+  const withExpr=new Set(d.summary.displays_with_expression||[]);
+  const displays=(d.displays||[]);
+  displays.forEach(x=>{
+    const o=document.createElement("option");
+    o.value=x.display;
+    o.textContent=x.display+(withExpr.has(x.display)?"":" (no expression)");
+    sel.appendChild(o);
   });
-  syncPicker();
+  // default: first dataset where this gene is expressed, else the first one
+  const first=displays.find(x=>withExpr.has(x.display))||displays[0];
+  if(first)sel.value=first.display;
+  sel.onchange=()=>{renderExpression()};
 }
-function syncPicker(){
-  $("sample-picker").querySelectorAll("label").forEach(lab=>{
-    lab.classList.toggle("checked",state.selected.has(lab.dataset.sample));
-  });
+
+function samplesForDisplay(display){
+  return Object.keys(state.data.expression_by_sample||{})
+    .filter(s=>displayOf(s)===display)
+    .sort();
 }
 
 /* ---------- expression dot plot ---------- */
 function renderExpression(){
   const d=state.data;if(!d)return;
+  const display=$("display").value;
+  const samples=samplesForDisplay(display);
   const bySample=d.expression_by_sample||{};
-  const samples=[...state.selected].filter(s=>bySample[s]).sort();
+
   if(!samples.length){
-    $("exprtable").innerHTML='<div class="empty">Select at least one sample to plot.</div>';
+    $("exprtable").innerHTML='<div class="empty">This dataset has no expression for the gene.</div>';
+    text($("display-hint"),"");
     if(chart)chart.clear();
     $("exprsec").hidden=false;
     return;
   }
+  text($("display-hint"),`${samples.length} sample${samples.length===1?"":"s"} in this dataset`);
+
   const celltypes=[...new Set(samples.flatMap(s=>bySample[s].map(e=>e.celltype)))].sort();
+  const types=samples.map(typeOf);
 
   const data=[];const rows=[];let expMin=Infinity,expMax=-Infinity;
   samples.forEach((sample,yi)=>{
@@ -186,26 +187,22 @@ function renderExpression(){
       if(Number.isFinite(mean)){expMin=Math.min(expMin,mean);expMax=Math.max(expMax,mean)}
       data.push([celltypes.indexOf(e.celltype),yi,pct,mean]);
       rows.push({
-        "Sample":sample,"Cell type":e.celltype,"Cells":e.n_cells,
+        "Type":typeOf(sample),"Cell type":e.celltype,"Cells":e.n_cells,
         "Cells expressing":e.n_expr_cells,"% expressing":fmt(pct,2),
         "Mean normalised":fmt(mean,3),"Mean log1p":fmt(e.avg_log1p,3)
       });
     });
   });
 
-  // table
+  const cols=["Type","Cell type","Cells","Cells expressing","% expressing","Mean normalised","Mean log1p"];
   const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
-  ["Sample","Cell type","Cells","Cells expressing","% expressing","Mean normalised","Mean log1p"]
-    .forEach(c=>{const th=document.createElement("th");text(th,c);tr.appendChild(th)});
+  cols.forEach(c=>{const th=document.createElement("th");text(th,c);tr.appendChild(th)});
   const body=t.createTBody();
-  rows.forEach(r=>{const tr=body.insertRow();
-    ["Sample","Cell type","Cells","Cells expressing","% expressing","Mean normalised","Mean log1p"]
-      .forEach(c=>text(tr.insertCell(),r[c]))});
+  rows.forEach(r=>{const tr=body.insertRow();cols.forEach(c=>text(tr.insertCell(),r[c]))});
   $("exprtable").replaceChildren(t);
 
   if(!Number.isFinite(expMin)||expMin===expMax){expMin=0;expMax=Math.max(expMax,1)}
 
-  // widen the canvas with the number of categories, wrapper scrolls
   const wrap=$("chart-wrap");
   const width=Math.max(wrap.clientWidth||900, celltypes.length*78);
   const el=$("chart");
@@ -216,14 +213,15 @@ function renderExpression(){
     animation:false,
     tooltip:{trigger:"item",confine:true,formatter:p=>{
       const v=p.value;
-      return `<b>${esc(samples[v[1]])}</b><br>${esc(celltypes[v[0]])}<br>`+
-             `Percent expressing: ${v[2].toFixed(2)}%<br>Mean normalised: ${v[3].toFixed(3)}`;
+      return `<b>${esc(types[v[1]])}</b><br><span style="color:#6b7f76">${esc(display)}</span><br>`+
+             `${esc(celltypes[v[0]])}<br>Percent expressing: ${v[2].toFixed(2)}%<br>`+
+             `Mean normalised: ${v[3].toFixed(3)}`;
     }},
     grid:{left:200,right:120,top:24,bottom:150},
     xAxis:{type:"category",data:celltypes,
       axisLabel:{rotate:-45,fontSize:11,interval:0,color:"#3c5a50"},
       splitLine:{show:true,lineStyle:{color:"#eef3f1"}}},
-    yAxis:{type:"category",data:samples,axisLabel:{fontSize:11,color:"#3c5a50"}},
+    yAxis:{type:"category",data:types,axisLabel:{fontSize:11,color:"#3c5a50"}},
     visualMap:{min:expMin,max:expMax,dimension:3,orient:"vertical",right:10,top:"middle",
       itemWidth:14,itemHeight:120,calculable:false,precision:2,
       textStyle:{fontSize:11,color:"#4a5f57"},
@@ -244,22 +242,13 @@ function genesetUrl(kind,sample,ct,mod,ext){
   return `/api/singlecell/hub/genes${ext}?sample=${q(sample)}&celltype_key=${q(ct)}`;
 }
 
-function renderGeneSetTable(container,items,columns){
-  const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
-  columns.forEach(c=>{const th=document.createElement("th");text(th,c);tr.appendChild(th)});
-  const body=t.createTBody();
-  items.forEach(it=>{const tr=body.insertRow();
-    columns.forEach(c=>text(tr.insertCell(),it[c]))});
-  container.replaceChildren(t);
-}
-
 function renderModules(d){
   const items=d.modules||[];
   if(!items.length){$("modulesec").hidden=true;return}
-  let html='<table><thead><tr><th>Sample</th><th>Cell type</th><th>Module</th><th>kME</th><th>Genes</th><th>Gene set</th></tr></thead><tbody>';
+  let html='<table><thead><tr><th>Dataset</th><th>Type</th><th>Cell type</th><th>Module</th><th>kME</th><th>Genes</th><th>Gene set</th></tr></thead><tbody>';
   items.forEach(m=>{
-    html+=`<tr><td>${esc(m.sample)}</td><td>${esc(m.celltype_label)}</td><td>${esc(m.module)}</td>`+
-          `<td>${fmt(m.kME,3)}</td><td>${m.n_genes==null?"—":m.n_genes}</td>`+
+    html+=`<tr><td>${esc(m.display)}</td><td>${esc(m.type)}</td><td>${esc(m.celltype_label)}</td>`+
+          `<td>${esc(m.module)}</td><td>${fmt(m.kME,3)}</td><td>${m.n_genes==null?"—":m.n_genes}</td>`+
           `<td><button class="mini" data-action="show" data-kind="module" data-sample="${esc(m.sample)}" `+
           `data-ct="${esc(m.celltype_key)}" data-mod="${esc(m.module)}">Show genes</button> `+
           `<a class="csv" href="${genesetUrl("module",m.sample,m.celltype_key,m.module,".csv")}">CSV</a></td></tr>`;
@@ -272,10 +261,10 @@ function renderModules(d){
 function renderHubs(d){
   const items=d.hub_genes||[];
   if(!items.length){$("hubsec").hidden=true;return}
-  let html='<table><thead><tr><th>Sample</th><th>Cell type</th><th>Module</th><th>kME</th><th>Hub genes</th><th>Gene set</th></tr></thead><tbody>';
+  let html='<table><thead><tr><th>Dataset</th><th>Type</th><th>Cell type</th><th>Module</th><th>kME</th><th>Hub genes</th><th>Gene set</th></tr></thead><tbody>';
   items.forEach(h=>{
-    html+=`<tr><td>${esc(h.sample)}</td><td>${esc(h.celltype_label)}</td><td>${esc(h.module)}</td>`+
-          `<td>${fmt(h.kME,3)}</td><td>${h.n_genes==null?"—":h.n_genes}</td>`+
+    html+=`<tr><td>${esc(h.display)}</td><td>${esc(h.type)}</td><td>${esc(h.celltype_label)}</td>`+
+          `<td>${esc(h.module)}</td><td>${fmt(h.kME,3)}</td><td>${h.n_genes==null?"—":h.n_genes}</td>`+
           `<td><button class="mini" data-action="show" data-kind="hub" data-sample="${esc(h.sample)}" `+
           `data-ct="${esc(h.celltype_key)}">Show genes</button> `+
           `<a class="csv" href="${genesetUrl("hub",h.sample,h.celltype_key,"",".csv")}">CSV</a></td></tr>`;
@@ -291,13 +280,20 @@ async function loadGeneset(kind,sample,ct,mod){
   $("geneset-table").replaceChildren();
   try{
     const d=(await api(genesetUrl(kind,sample,ct,mod,""))).data;
-    const label=kind==="module"?`Module ${mod} — ${d.celltype_key}`:`Hub genes — ${d.celltype_key}`;
+    const label=kind==="module"
+      ? `Module ${mod} — ${typeOf(sample)}, ${d.celltype_key}`
+      : `Hub genes — ${typeOf(sample)}, ${d.celltype_key}`;
     text($("geneset-title"),`${label} (${d.count} genes)`);
-    text($("geneset-meta"),`Sample: ${d.sample} · Copy the list or download the CSV for GO/KEGG enrichment.`);
+    text($("geneset-meta"),`Dataset: ${displayOf(sample)} · Download the CSV or copy the list for GO/KEGG enrichment.`);
     $("geneset-download").href=genesetUrl(kind,sample,ct,mod,".csv");
-    renderGeneSetTable($("geneset-table"),
-      d.genes.map(g=>({Gene:g.gene_id,Module:g.module,"kME":fmt(g.kME,3),"Gene name":g.gene_name||""})),
-      ["Gene","Module","kME","Gene name"]);
+    const cols=["Gene","Module","kME","Gene name"];
+    const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
+    cols.forEach(c=>{const th=document.createElement("th");text(th,c);tr.appendChild(th)});
+    const body=t.createTBody();
+    d.genes.forEach(g=>{const tr=body.insertRow();
+      text(tr.insertCell(),g.gene_id);text(tr.insertCell(),g.module);
+      text(tr.insertCell(),fmt(g.kME,3));text(tr.insertCell(),g.gene_name||"")});
+    $("geneset-table").replaceChildren(t);
     $("genesetsec").scrollIntoView({behavior:"smooth",block:"start"});
   }catch(e){
     text($("geneset-title"),"Gene set");
@@ -317,10 +313,11 @@ $("hubtable").addEventListener("click",e=>{
 
 function clearAll(){
   $("gene").value="";hideAll();
-  state.data=null;state.selected=new Set();
-  ["chips","sample-picker","exprtable","moduletable","hubtable","geneset-table"]
+  state.data=null;state.meta={};
+  ["chips","exprtable","moduletable","hubtable","geneset-table"]
     .forEach(id=>$(id).replaceChildren());
-  text($("samplesline"),"");text($("geneset-title"),"");text($("geneset-meta"),"");
+  $("display").replaceChildren();
+  text($("samplesline"),"");text($("geneset-title"),"");text($("geneset-meta"),"");text($("display-hint"),"");
   if(chart)chart.clear();
   text($("status"),"Search any gene present in the single-cell datasets.");
   $("gene").focus();
@@ -329,6 +326,6 @@ function clearAll(){
 $("search").addEventListener("click",search);
 $("clear").addEventListener("click",clearAll);
 $("gene").addEventListener("keydown",e=>{if(e.key==="Enter")search()});
-window.addEventListener("resize",()=>{if(chart){renderExpression()}});
+window.addEventListener("resize",()=>{if(chart&&state.data)renderExpression()});
 $(function(){const g=new URLSearchParams(location.search).get("gene");if(g){$("gene").value=g;search()}});
 </script></body></html>

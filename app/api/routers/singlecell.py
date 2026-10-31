@@ -18,6 +18,7 @@ import csv
 import io
 import json
 import re
+from functools import lru_cache
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
@@ -30,6 +31,66 @@ from app.db.mysql import mysql_cursor
 router = APIRouter(prefix="/singlecell", tags=["Single-cell atlas"])
 
 _GENE_RE = re.compile(r"^[A-Za-z0-9_.:-]{3,80}$")
+
+
+# ---------------------------------------------------------------------------
+# Display grouping
+#
+# class.txt maps each imported sample onto a user-facing dataset ("display")
+# and a short within-dataset label ("type"):
+#
+#     display<TAB>type<TAB>sample
+#
+# One display owns several samples (e.g. the salt-stress experiment has CK and
+# NaCl runs), so the UI picks a display and plots all of its types together.
+# ---------------------------------------------------------------------------
+@lru_cache(maxsize=4)
+def _read_class(path: str, mtime: int) -> list[tuple[str, str, str]]:
+    rows: list[tuple[str, str, str]] = []
+    with open(path, encoding="utf-8-sig", newline="") as fh:
+        reader = csv.reader(fh, delimiter="\t")
+        header = next(reader, None)
+        if not header:
+            return rows
+        lower = [h.strip().lower() for h in header]
+        try:
+            di, ti, si = lower.index("display"), lower.index("type"), lower.index("sample")
+        except ValueError:
+            return rows
+        for row in reader:
+            if len(row) <= max(di, ti, si):
+                continue
+            display, typ, sample = (row[di].strip(), row[ti].strip(), row[si].strip())
+            if sample:
+                rows.append((display or sample, typ or sample, sample))
+    return rows
+
+
+def class_map() -> dict:
+    """{'by_sample': {sample: {display, type}}, 'displays': [{display, entries}]}"""
+    path = settings.SCRNNA_CLASS_FILE
+    by_sample: dict[str, dict] = {}
+    order: list[str] = []
+    if path.is_file():
+        for display, typ, sample in _read_class(str(path), path.stat().st_mtime_ns):
+            if sample not in by_sample:
+                by_sample[sample] = {"display": display, "type": typ}
+            if display not in order:
+                order.append(display)
+    displays = []
+    for display in order:
+        entries = [{"type": v["type"], "sample": s}
+                   for s, v in by_sample.items() if v["display"] == display]
+        displays.append({"display": display, "entries": entries})
+    return {"by_sample": by_sample, "displays": displays}
+
+
+def _label(sample: str, mapping: dict) -> tuple[str, str]:
+    """(display, type) for a sample; falls back to the sample name."""
+    entry = mapping.get(sample)
+    if entry:
+        return entry["display"], entry["type"]
+    return sample, sample
 
 
 def _gene_id(value: str) -> str:
@@ -63,20 +124,23 @@ def _num(value):
         return None
 
 
-def _samples(cur) -> list[dict]:
+def _samples(cur, mapping: dict) -> list[dict]:
     cur.execute(
         "SELECT sample, imported_at, expression_rows, network_count "
         "FROM scrna_samples ORDER BY sample"
     )
-    return [
-        {
+    out = []
+    for r in cur.fetchall():
+        display, typ = _label(r["sample"], mapping)
+        out.append({
             "sample": r["sample"],
+            "display": display,
+            "type": typ,
             "imported_at": r["imported_at"],
             "expression_rows": r["expression_rows"],
             "network_count": r["network_count"],
-        }
-        for r in cur.fetchall()
-    ]
+        })
+    return out
 
 
 def _celltype_labels(cur) -> dict:
@@ -92,19 +156,31 @@ def _celltype_labels(cur) -> dict:
 
 @router.get("/samples")
 def list_samples() -> dict:
-    """List every imported single-cell dataset."""
+    """List every imported single-cell dataset with its display grouping."""
+    mapping = class_map()
     with mysql_cursor(settings.DB_SCRNA_DATA) as cur:
-        samples = _samples(cur)
-    return ok({"total": len(samples), "samples": samples})
+        samples = _samples(cur, mapping["by_sample"])
+    return ok({"total": len(samples),
+               "samples": samples,
+               "displays": mapping["displays"]})
+
+
+@router.get("/displays")
+def list_displays() -> dict:
+    """Datasets (display) with their samples/types, as maintained in class.txt."""
+    mapping = class_map()
+    return ok({"total": len(mapping["displays"]),
+               "displays": mapping["displays"]})
 
 
 @router.get("/gene/{gene_id}")
 def gene_profile(gene_id: str) -> dict:
     """Expression by sample/cell type, co-expression modules and hub status."""
     g = _gene_id(gene_id)
+    mapping = class_map()
 
     with mysql_cursor(settings.DB_SCRNA_DATA) as cur:
-        samples = _samples(cur)
+        samples = _samples(cur, mapping["by_sample"])
         labels = _celltype_labels(cur)
 
         cur.execute(
@@ -166,8 +242,11 @@ def gene_profile(gene_id: str) -> dict:
     for r in module_rows:
         a = _attrs(r["attributes"])
         module = r["module_name"] or a.get("module") or ""
+        display, typ = _label(r["sample"], mapping["by_sample"])
         modules.append({
             "sample": r["sample"],
+            "display": display,
+            "type": typ,
             "celltype_key": r["celltype_key"],
             "celltype_label": labels.get((r["sample"], r["celltype_key"]),
                                          r["celltype_key"]),
@@ -181,8 +260,11 @@ def gene_profile(gene_id: str) -> dict:
     hubs = []
     for r in hub_rows:
         a = _attrs(r["attributes"])
+        display, typ = _label(r["sample"], mapping["by_sample"])
         hubs.append({
             "sample": r["sample"],
+            "display": display,
+            "type": typ,
             "celltype_key": r["celltype_key"],
             "celltype_label": labels.get((r["sample"], r["celltype_key"]),
                                          r["celltype_key"]),
@@ -194,16 +276,29 @@ def gene_profile(gene_id: str) -> dict:
     hubs.sort(key=lambda h: (h["sample"], h["celltype_label"]))
 
     celltypes = sorted({e["celltype"] for e in expression_rows})
+    imported = {s["sample"] for s in samples}
+    displays = [
+        {"display": d["display"],
+         "entries": [e for e in d["entries"] if e["sample"] in imported]}
+        for d in mapping["displays"]
+    ]
+    displays = [d for d in displays if d["entries"]]
+    disp_of = {s["sample"]: s["display"] for s in samples}
+    expr_samples = set(expression_by_sample)
+    displays_with_expression = sorted({disp_of[s] for s in expr_samples if s in disp_of})
+
     return ok({
         "gene": g,
         "found": bool(expression_rows or modules or hubs),
         "samples": samples,
+        "displays": displays,
         "expression_by_sample": expression_by_sample,
         "modules": modules,
         "hub_genes": hubs,
         "summary": {
             "celltypes": celltypes,
-            "samples_with_expression": sorted(expression_by_sample),
+            "samples_with_expression": sorted(expr_samples),
+            "displays_with_expression": displays_with_expression,
             "n_celltypes": len(celltypes),
             "n_modules": len(modules),
             "n_hubs": len(hubs),
