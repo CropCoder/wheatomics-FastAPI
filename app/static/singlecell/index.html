@@ -4,7 +4,7 @@
 <script src="/js/echarts.min.js"></script>
 <style>
 body{font-family:system-ui,-apple-system,sans-serif;background:#f5f8f6;color:#1c3631;margin:0}
-main{max-width:1200px;margin:35px auto;padding:0 20px}
+main{max-width:1280px;margin:35px auto;padding:0 20px}
 header{background:#16453e;color:white;padding:24px;border-radius:14px}
 header p{margin:8px 0 0;opacity:.85}
 section{background:white;padding:22px;border:1px solid #dce8e3;border-radius:12px;margin-top:16px}
@@ -12,22 +12,33 @@ input,select,button{padding:11px;border-radius:7px;border:1px solid #a7c5bb;font
 button{background:#206b5c;color:white;cursor:pointer}
 button.secondary{background:#e7efec;color:#16453e;border-color:#a7c5bb}
 button:disabled{opacity:.45;cursor:not-allowed}
+button.mini{padding:4px 10px;font-size:12px;border-radius:5px}
 .muted{color:#63776f}
 table{border-collapse:collapse;width:100%;font-size:13px}
-td,th{padding:8px;border-bottom:1px solid #e0e9e5;text-align:left}
+td,th{padding:8px;border-bottom:1px solid #e0e9e5;text-align:left;vertical-align:middle}
 th{background:#f2f7f5;font-weight:600;position:sticky;top:0}
 .scroll{overflow:auto;max-height:460px}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .chip{padding:5px 12px;border-radius:14px;background:#eef5f2;color:#16453e;font-size:13px}
 .chip b{color:#0b2b26}
 .chip.hub{background:#fff4e5;color:#8a5a00;border:1px solid #ffd9a8}
-#chart{width:100%;height:440px}
-.empty{text-align:center;color:#8a9a94;padding:36px 0}
+.picker{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.picker label{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid #cfe0d8;
+  border-radius:14px;font-size:13px;background:#f7fbf9;cursor:pointer}
+.picker label input{padding:0;margin:0}
+.picker label.checked{background:#e7efec;border-color:#206b5c}
+#chart-wrap{overflow-x:auto;overflow-y:hidden;margin-top:10px}
+#chart{height:460px}
+a.csv{display:inline-block;padding:4px 10px;font-size:12px;border-radius:5px;
+  background:#206b5c;color:#fff;text-decoration:none}
+a.csv:hover{background:#16453e}
+#geneset-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 </style></head><body><main>
 <header>
   <h1>Wheat single-cell atlas</h1>
   <p>Gene expression across samples and cell types · co-expression modules · hub genes</p>
 </header>
+
 <section>
   <label for="gene">Gene ID</label>
   <input id="gene" size="30" placeholder="e.g. TraesCS3D03G0096000">
@@ -35,107 +46,184 @@ th{background:#f2f7f5;font-weight:600;position:sticky;top:0}
   <button id="clear" type="button" class="secondary">Clear</button>
   <p class="muted" id="status">Search any gene present in the single-cell datasets.</p>
 </section>
+
 <section id="summarysec" hidden>
   <h2>Summary</h2>
   <div class="chips" id="chips"></div>
   <p class="muted" id="samplesline"></p>
 </section>
+
 <section id="exprsec" hidden>
   <h2>Expression by sample and cell type</h2>
-  <p class="muted">Dot size is the percentage of cells expressing the gene; colour is the mean normalised expression.</p>
-  <div id="chart"></div>
+  <div class="picker" id="sample-picker"></div>
+  <p class="muted">Dot size is the percentage of cells expressing the gene; colour is the mean normalised expression. Scroll the plot sideways when many cell types are shown.</p>
+  <div id="chart-wrap"><div id="chart"></div></div>
   <div id="exprtable" class="scroll"></div>
 </section>
+
 <section id="modulesec" hidden>
   <h2>Co-expression modules</h2>
+  <p class="muted">Each row links to the module's full gene set — ready for GO/KEGG enrichment.</p>
   <div id="moduletable" class="scroll"></div>
 </section>
+
 <section id="hubsec" hidden>
   <h2>Hub genes</h2>
+  <p class="muted">Hub gene sets for the cell types where this gene is a hub.</p>
   <div id="hubtable" class="scroll"></div>
+</section>
+
+<section id="genesetsec" hidden>
+  <div id="geneset-head">
+    <h2 id="geneset-title" style="margin:0"></h2>
+    <a class="csv" id="geneset-download" href="#">Download CSV</a>
+  </div>
+  <p class="muted" id="geneset-meta"></p>
+  <div id="geneset-table" class="scroll"></div>
 </section>
 </main><script>
 const $=id=>document.getElementById(id);
 let chart=null;
+const state={data:null,selected:new Set()};
+
 function text(el,s){el.textContent=s==null?"":String(s)}
-function table(rows,columns){const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
-for(const c of columns){const th=document.createElement("th");text(th,c);tr.appendChild(th)}
-const body=t.createTBody();for(const r of rows){const tr=body.insertRow();for(const c of columns){const td=tr.insertCell();text(td,r[c])}}
-return t}
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function q(v){return encodeURIComponent(v)}
+function fmt(v,d){return v==null||isNaN(v)?"—":Number(v).toFixed(d)}
 async function api(path){const r=await fetch(path);let x;try{x=await r.json()}catch{x={detail:"Invalid JSON response"}}
 if(!r.ok)throw Error(typeof x.detail==="string"?x.detail:"HTTP "+r.status);return x}
-function fmt(v,d){return v==null||isNaN(v)?"—":Number(v).toFixed(d)}
-function hideAll(){for(const id of ["summarysec","exprsec","modulesec","hubsec"])$(id).hidden=true}
+function hideAll(){for(const id of ["summarysec","exprsec","modulesec","hubsec","genesetsec"])$(id).hidden=true}
 
+/* ---------- search ---------- */
 async function search(){
   const g=$("gene").value.trim();
   if(!g)return;
   text($("status"),"Loading...");hideAll();
   try{
-    const resp=await api("/api/singlecell/gene/"+encodeURIComponent(g));
+    const resp=await api("/api/singlecell/gene/"+q(g));
     const d=resp.data;
     if(!d.found){
       text($("status"),`No single-cell data for ${d.gene}. It may not be expressed, or not be present in these datasets.`);
       return;
     }
-    renderSummary(d);renderExpression(d);renderModules(d);renderHubs(d);
+    state.data=d;
+    const withExpr=Object.keys(d.expression_by_sample||{}).sort();
+    const picker=withExpr.length?withExpr:["__none__"];
+    state.selected=new Set(picker.slice(0,1));
+    renderSummary(d);
+    renderSamplePicker(withExpr);
+    renderExpression();
+    renderModules(d);
+    renderHubs(d);
     text($("status"),`Loaded ${d.gene}.`);
   }catch(e){text($("status"),"Error: "+e.message)}
 }
 
 function renderSummary(d){
   const s=d.summary||{};
-  const chips=[];
-  chips.push(`<span class="chip">Samples with expression: <b>${(s.samples_with_expression||[]).length}</b></span>`);
-  chips.push(`<span class="chip">Cell types: <b>${s.n_celltypes||0}</b></span>`);
-  chips.push(`<span class="chip">Modules: <b>${s.n_modules||0}</b></span>`);
-  chips.push(s.is_hub
-    ? `<span class="chip hub">Hub gene in <b>${(s.hub_celltypes||[]).join(", ")}</b></span>`
-    : `<span class="chip">Not a hub gene in these datasets</span>`);
+  const chips=[
+    `<span class="chip">Samples with expression: <b>${(s.samples_with_expression||[]).length}</b></span>`,
+    `<span class="chip">Cell types: <b>${s.n_celltypes||0}</b></span>`,
+    `<span class="chip">Modules: <b>${s.n_modules||0}</b></span>`,
+    s.is_hub?`<span class="chip hub">Hub gene in <b>${(s.hub_celltypes||[]).join(", ")}</b></span>`
+            :`<span class="chip">Not a hub gene in these datasets</span>`
+  ];
   $("chips").innerHTML=chips.join("");
-  const sm=(d.samples||[]).map(x=>`${x.sample} (${Number(x.expression_rows).toLocaleString()} rows, ${x.network_count} networks)`);
-  text($("samplesline"),"Datasets: "+sm.join(" · "));
+  text($("samplesline"),"Datasets loaded: "+(d.samples||[]).map(x=>x.sample).join(" · "));
   $("summarysec").hidden=false;
 }
 
-function renderExpression(d){
+/* ---------- sample picker ---------- */
+function renderSamplePicker(samples){
+  const box=$("sample-picker");box.replaceChildren();
+  if(!samples.length)return;
+  const all=document.createElement("button");
+  all.type="button";all.className="mini secondary";all.textContent="Select all";
+  all.addEventListener("click",()=>{state.selected=new Set(samples);syncPicker();renderExpression()});
+  box.appendChild(all);
+  const none=document.createElement("button");
+  none.type="button";none.className="mini secondary";none.textContent="Clear";
+  none.addEventListener("click",()=>{state.selected=new Set();syncPicker();renderExpression()});
+  box.appendChild(none);
+  samples.forEach(s=>{
+    const lab=document.createElement("label");
+    const cb=document.createElement("input");
+    cb.type="checkbox";cb.value=s;cb.checked=state.selected.has(s);
+    cb.addEventListener("change",()=>{
+      if(cb.checked)state.selected.add(s); else state.selected.delete(s);
+      syncPicker();renderExpression();
+    });
+    lab.appendChild(cb);
+    lab.appendChild(document.createTextNode(s));
+    lab.dataset.sample=s;
+    box.appendChild(lab);
+  });
+  syncPicker();
+}
+function syncPicker(){
+  $("sample-picker").querySelectorAll("label").forEach(lab=>{
+    lab.classList.toggle("checked",state.selected.has(lab.dataset.sample));
+  });
+}
+
+/* ---------- expression dot plot ---------- */
+function renderExpression(){
+  const d=state.data;if(!d)return;
   const bySample=d.expression_by_sample||{};
-  const samples=Object.keys(bySample).sort();
-  if(!samples.length){$("exprsec").hidden=true;return}
+  const samples=[...state.selected].filter(s=>bySample[s]).sort();
+  if(!samples.length){
+    $("exprtable").innerHTML='<div class="empty">Select at least one sample to plot.</div>';
+    if(chart)chart.clear();
+    $("exprsec").hidden=false;
+    return;
+  }
   const celltypes=[...new Set(samples.flatMap(s=>bySample[s].map(e=>e.celltype)))].sort();
 
-  const data=[];const rows=[];let pctMax=0,expMin=Infinity,expMax=-Infinity;
+  const data=[];const rows=[];let expMin=Infinity,expMax=-Infinity;
   samples.forEach((sample,yi)=>{
     bySample[sample].forEach(e=>{
       const pct=Number(e.pct_expr)||0, mean=Number(e.mean_normalized)||0;
-      pctMax=Math.max(pctMax,pct);
       if(Number.isFinite(mean)){expMin=Math.min(expMin,mean);expMax=Math.max(expMax,mean)}
       data.push([celltypes.indexOf(e.celltype),yi,pct,mean]);
       rows.push({
-        "Sample":sample,
-        "Cell type":e.celltype,
-        "Cells":e.n_cells,
-        "Cells expressing":e.n_expr_cells,
-        "% expressing":fmt(pct,2),
-        "Mean normalised":fmt(mean,3),
-        "Mean log1p":fmt(e.avg_log1p,3)
+        "Sample":sample,"Cell type":e.celltype,"Cells":e.n_cells,
+        "Cells expressing":e.n_expr_cells,"% expressing":fmt(pct,2),
+        "Mean normalised":fmt(mean,3),"Mean log1p":fmt(e.avg_log1p,3)
       });
     });
   });
-  $("exprtable").replaceChildren(table(rows,["Sample","Cell type","Cells","Cells expressing","% expressing","Mean normalised","Mean log1p"]));
+
+  // table
+  const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
+  ["Sample","Cell type","Cells","Cells expressing","% expressing","Mean normalised","Mean log1p"]
+    .forEach(c=>{const th=document.createElement("th");text(th,c);tr.appendChild(th)});
+  const body=t.createTBody();
+  rows.forEach(r=>{const tr=body.insertRow();
+    ["Sample","Cell type","Cells","Cells expressing","% expressing","Mean normalised","Mean log1p"]
+      .forEach(c=>text(tr.insertCell(),r[c]))});
+  $("exprtable").replaceChildren(t);
 
   if(!Number.isFinite(expMin)||expMin===expMax){expMin=0;expMax=Math.max(expMax,1)}
 
-  if(!chart)chart=echarts.init($("chart"));
+  // widen the canvas with the number of categories, wrapper scrolls
+  const wrap=$("chart-wrap");
+  const width=Math.max(wrap.clientWidth||900, celltypes.length*78);
+  const el=$("chart");
+  el.style.width=width+"px";
+  if(!chart)chart=echarts.init(el);
+
   chart.setOption({
     animation:false,
-    tooltip:{trigger:"item",formatter:p=>{
+    tooltip:{trigger:"item",confine:true,formatter:p=>{
       const v=p.value;
-      return `<b>${samples[v[1]]}</b><br>${celltypes[v[0]]}<br>Percent expressing: ${v[2].toFixed(2)}%<br>Mean normalised: ${v[3].toFixed(3)}`;
+      return `<b>${esc(samples[v[1]])}</b><br>${esc(celltypes[v[0]])}<br>`+
+             `Percent expressing: ${v[2].toFixed(2)}%<br>Mean normalised: ${v[3].toFixed(3)}`;
     }},
-    grid:{left:180,right:110,top:24,bottom:120},
-    xAxis:{type:"category",data:celltypes,axisLabel:{rotate:45,fontSize:11,interval:0},splitLine:{show:true,lineStyle:{color:"#eef3f1"}}},
-    yAxis:{type:"category",data:samples,axisLabel:{fontSize:11}},
+    grid:{left:200,right:120,top:24,bottom:150},
+    xAxis:{type:"category",data:celltypes,
+      axisLabel:{rotate:-45,fontSize:11,interval:0,color:"#3c5a50"},
+      splitLine:{show:true,lineStyle:{color:"#eef3f1"}}},
+    yAxis:{type:"category",data:samples,axisLabel:{fontSize:11,color:"#3c5a50"}},
     visualMap:{min:expMin,max:expMax,dimension:3,orient:"vertical",right:10,top:"middle",
       itemWidth:14,itemHeight:120,calculable:false,precision:2,
       textStyle:{fontSize:11,color:"#4a5f57"},
@@ -143,40 +231,97 @@ function renderExpression(d){
     series:[{type:"scatter",data,
       symbolSize:v=>Math.max(5,Math.min(26,Math.sqrt(v[2])*2)),
       itemStyle:{borderColor:"#ffffff",borderWidth:0.6,opacity:.95}}]
-  });
+  },true);
   chart.resize();
   $("exprsec").hidden=false;
 }
 
-function moduleRows(items){
-  return (items||[]).map(m=>({
-    "Sample":m.sample,
-    "Cell type":m.celltype_label,
-    "Module":m.module,
-    "kME":fmt(m.kME,3),
-    "Gene name":m.gene_name||""
-  }));
+/* ---------- modules & hubs ---------- */
+function genesetUrl(kind,sample,ct,mod,ext){
+  if(kind==="module"){
+    return `/api/singlecell/module/genes${ext}?sample=${q(sample)}&celltype_key=${q(ct)}&module=${q(mod)}`;
+  }
+  return `/api/singlecell/hub/genes${ext}?sample=${q(sample)}&celltype_key=${q(ct)}`;
+}
+
+function renderGeneSetTable(container,items,columns){
+  const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
+  columns.forEach(c=>{const th=document.createElement("th");text(th,c);tr.appendChild(th)});
+  const body=t.createTBody();
+  items.forEach(it=>{const tr=body.insertRow();
+    columns.forEach(c=>text(tr.insertCell(),it[c]))});
+  container.replaceChildren(t);
 }
 
 function renderModules(d){
-  const rows=moduleRows(d.modules);
-  if(!rows.length){$("modulesec").hidden=true;return}
-  $("moduletable").replaceChildren(table(rows,["Sample","Cell type","Module","kME","Gene name"]));
+  const items=d.modules||[];
+  if(!items.length){$("modulesec").hidden=true;return}
+  let html='<table><thead><tr><th>Sample</th><th>Cell type</th><th>Module</th><th>kME</th><th>Genes</th><th>Gene set</th></tr></thead><tbody>';
+  items.forEach(m=>{
+    html+=`<tr><td>${esc(m.sample)}</td><td>${esc(m.celltype_label)}</td><td>${esc(m.module)}</td>`+
+          `<td>${fmt(m.kME,3)}</td><td>${m.n_genes==null?"—":m.n_genes}</td>`+
+          `<td><button class="mini" data-action="show" data-kind="module" data-sample="${esc(m.sample)}" `+
+          `data-ct="${esc(m.celltype_key)}" data-mod="${esc(m.module)}">Show genes</button> `+
+          `<a class="csv" href="${genesetUrl("module",m.sample,m.celltype_key,m.module,".csv")}">CSV</a></td></tr>`;
+  });
+  html+='</tbody></table>';
+  $("moduletable").innerHTML=html;
   $("modulesec").hidden=false;
 }
 
 function renderHubs(d){
-  const rows=moduleRows(d.hub_genes);
-  if(!rows.length){$("hubsec").hidden=true;return}
-  $("hubtable").replaceChildren(table(rows,["Sample","Cell type","Module","kME","Gene name"]));
+  const items=d.hub_genes||[];
+  if(!items.length){$("hubsec").hidden=true;return}
+  let html='<table><thead><tr><th>Sample</th><th>Cell type</th><th>Module</th><th>kME</th><th>Hub genes</th><th>Gene set</th></tr></thead><tbody>';
+  items.forEach(h=>{
+    html+=`<tr><td>${esc(h.sample)}</td><td>${esc(h.celltype_label)}</td><td>${esc(h.module)}</td>`+
+          `<td>${fmt(h.kME,3)}</td><td>${h.n_genes==null?"—":h.n_genes}</td>`+
+          `<td><button class="mini" data-action="show" data-kind="hub" data-sample="${esc(h.sample)}" `+
+          `data-ct="${esc(h.celltype_key)}">Show genes</button> `+
+          `<a class="csv" href="${genesetUrl("hub",h.sample,h.celltype_key,"",".csv")}">CSV</a></td></tr>`;
+  });
+  html+='</tbody></table>';
+  $("hubtable").innerHTML=html;
   $("hubsec").hidden=false;
 }
 
+async function loadGeneset(kind,sample,ct,mod){
+  text($("geneset-title"),"Loading gene set...");
+  $("genesetsec").hidden=false;
+  $("geneset-table").replaceChildren();
+  try{
+    const d=(await api(genesetUrl(kind,sample,ct,mod,""))).data;
+    const label=kind==="module"?`Module ${mod} — ${d.celltype_key}`:`Hub genes — ${d.celltype_key}`;
+    text($("geneset-title"),`${label} (${d.count} genes)`);
+    text($("geneset-meta"),`Sample: ${d.sample} · Copy the list or download the CSV for GO/KEGG enrichment.`);
+    $("geneset-download").href=genesetUrl(kind,sample,ct,mod,".csv");
+    renderGeneSetTable($("geneset-table"),
+      d.genes.map(g=>({Gene:g.gene_id,Module:g.module,"kME":fmt(g.kME,3),"Gene name":g.gene_name||""})),
+      ["Gene","Module","kME","Gene name"]);
+    $("genesetsec").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(e){
+    text($("geneset-title"),"Gene set");
+    text($("geneset-meta"),"Error: "+e.message);
+  }
+}
+
+/* ---------- wiring ---------- */
+$("moduletable").addEventListener("click",e=>{
+  const b=e.target.closest('button[data-action="show"]');
+  if(b)loadGeneset("module",b.dataset.sample,b.dataset.ct,b.dataset.mod);
+});
+$("hubtable").addEventListener("click",e=>{
+  const b=e.target.closest('button[data-action="show"]');
+  if(b)loadGeneset("hub",b.dataset.sample,b.dataset.ct,"");
+});
+
 function clearAll(){
   $("gene").value="";hideAll();
-  $("chips").replaceChildren();$("exprtable").replaceChildren();
-  $("moduletable").replaceChildren();$("hubtable").replaceChildren();
-  text($("samplesline"),"");
+  state.data=null;state.selected=new Set();
+  ["chips","sample-picker","exprtable","moduletable","hubtable","geneset-table"]
+    .forEach(id=>$(id).replaceChildren());
+  text($("samplesline"),"");text($("geneset-title"),"");text($("geneset-meta"),"");
+  if(chart)chart.clear();
   text($("status"),"Search any gene present in the single-cell datasets.");
   $("gene").focus();
 }
@@ -184,6 +329,6 @@ function clearAll(){
 $("search").addEventListener("click",search);
 $("clear").addEventListener("click",clearAll);
 $("gene").addEventListener("keydown",e=>{if(e.key==="Enter")search()});
-window.addEventListener("resize",()=>{if(chart)chart.resize()});
-$(function(){const q=new URLSearchParams(location.search).get("gene");if(q){$("gene").value=q;search()}});
+window.addEventListener("resize",()=>{if(chart){renderExpression()}});
+$(function(){const g=new URLSearchParams(location.search).get("gene");if(g){$("gene").value=g;search()}});
 </script></body></html>
