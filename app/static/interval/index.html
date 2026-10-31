@@ -23,6 +23,29 @@
   .example-links a { margin-right: 12px; font-size: 13px; }
   .help-text { color: var(--muted); font-size: 11px; }
   .radio-inline { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; cursor: pointer; }
+
+  /* Genome / Table picker (BLAST-style searchable grouped picker) */
+  .genome-picker { position: relative; }
+  .genome-trigger { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; text-align: left; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+  .genome-trigger:hover, .genome-trigger[aria-expanded="true"] { border-color: rgba(17,134,83,.45); box-shadow: 0 0 0 4px rgba(17,134,83,.08); }
+  .genome-trigger-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .genome-trigger-label { color: var(--muted); font-family: var(--utility); font-size: 10px; letter-spacing: .02em; }
+  .genome-trigger strong { overflow: hidden; color: var(--forest-deep); font-size: 12.5px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+  .genome-trigger-group { flex: none; padding: 3px 8px; border-radius: 999px; background: var(--mist); color: var(--forest); font-size: 10px; font-weight: 700; }
+  .genome-trigger-caret { flex: none; color: var(--muted); font-size: 10px; }
+  .genome-panel { position: absolute; z-index: 60; left: 0; top: calc(100% + 6px); width: min(440px, 92vw); padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: 0 18px 40px rgba(20,50,35,.16); }
+  .genome-search { width: 100%; height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: #fbfdfb; color: var(--ink); font-size: 12px; }
+  .genome-search:focus { outline: none; border-color: rgba(17,134,83,.45); box-shadow: 0 0 0 4px rgba(17,134,83,.10); }
+  .genome-groups { max-height: 340px; margin-top: 10px; overflow: auto; padding-right: 2px; }
+  .genome-group + .genome-group { margin-top: 6px; }
+  .genome-group-title { display: flex; align-items: center; justify-content: space-between; padding: 6px 4px 3px; color: var(--forest-deep); font-family: var(--display); font-size: 10.5px; font-weight: 700; }
+  .genome-group-title span { color: var(--muted); font-family: var(--utility); font-size: 10px; font-weight: 400; }
+  .genome-option { display: flex; align-items: baseline; gap: 8px; width: 100%; padding: 7px 9px; border: 0; border-radius: 8px; background: none; color: var(--ink); font-size: 12px; text-align: left; cursor: pointer; }
+  .genome-option:hover { background: var(--mist); color: var(--forest); }
+  .genome-option.selected { background: #eaf5ee; color: var(--forest-deep); font-weight: 700; }
+  .genome-option small { margin-left: auto; overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+  .genome-empty { padding: 18px 8px; color: var(--muted); font-size: 12px; text-align: center; }
+  @media (max-width: 767px) { .genome-panel { width: 100%; } }
 </style>
 
 <!-- Baidu Tongji (async) -->
@@ -63,9 +86,22 @@ var _hmt = _hmt || [];
   <div class="card-body">
   <div class="row">
     <div class="col-md-4">
-      <div class="form-group">
+      <div class="form-group genome-picker">
         <label><strong>Genome / Table</strong></label>
-        <select id="table-select" class="form-control" size="12"></select>
+        <select id="table-select" class="d-none"></select>
+        <button type="button" id="table-trigger" class="genome-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="table-picker-panel">
+          <span class="genome-trigger-main">
+            <span class="genome-trigger-label">Selected genome / table</span>
+            <strong id="table-selected-name">Loading genetic maps…</strong>
+          </span>
+          <span id="table-selected-group" class="genome-trigger-group"></span>
+          <span class="genome-trigger-caret" aria-hidden="true">▾</span>
+        </button>
+        <div id="table-picker-panel" class="genome-panel" hidden>
+          <input id="table-search" class="genome-search" type="search" placeholder="Filter genomes or tables…" autocomplete="off" aria-label="Filter genome tables">
+          <div id="table-groups" class="genome-groups" role="listbox" aria-label="Genome tables"></div>
+        </div>
+        <p class="help-text mt-2 mb-0">Search and pick a table; entries are grouped by subgenome composition.</p>
       </div>
     </div>
     <div class="col-md-8">
@@ -132,6 +168,23 @@ var exampleTexts = {};
 
 $(function(){
   loadTables();
+
+  $('#table-trigger').on('click', function() {
+    setTablePickerOpen($('#table-picker-panel').prop('hidden'));
+  });
+  $('#table-search').on('input keyup', renderTablePicker);
+  $('#table-groups').on('click', '.genome-option', function() {
+    $('#table-select').val($(this).data('table')).trigger('change');
+    renderTablePicker();
+    setTablePickerOpen(false);
+  });
+  $(document).on('click', function(e) {
+    if (!$(e.target).closest('.genome-picker').length) setTablePickerOpen(false);
+  });
+  $(document).on('keydown', function(e) {
+    if (e.key === 'Escape') setTablePickerOpen(false);
+  });
+
   $('input[name="queryType"]').change(function() {
     var t = $(this).val();
     var hints = {
@@ -153,9 +206,13 @@ function loadTables() {
       // already ordered by ploidy high->low, so optgroups appear in that order.
       var currentGroup = null;
       var optgroup = null;
+      tablePickerGroups = [];
+      var groupMap = {};
       resp.data.examples.forEach(function(item) {
         genomeExamples[item.table_name] = item;
         var key = item.karyotype || 'Other';
+        if (!groupMap[key]) { groupMap[key] = { name: key, items: [] }; tablePickerGroups.push(groupMap[key]); }
+        groupMap[key].items.push(item);
         if (key !== currentGroup) {
           currentGroup = key;
           optgroup = $('<optgroup>').attr('label', key);
@@ -167,11 +224,62 @@ function loadTables() {
       if (sel.find('option[value="Genefunc_CS_IWGSC03G_table"]').length) {
         sel.val('Genefunc_CS_IWGSC03G_table');
       }
+      renderTablePicker();
       updateExample();
       // 基因组切换时更新示例
       sel.change(updateExample);
     })
     .fail(function() { showError('Failed to load genome data'); });
+}
+
+var tablePickerGroups = [];
+
+function escHtml(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, function(c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+function setTablePickerOpen(open) {
+  $('#table-picker-panel').prop('hidden', !open);
+  $('#table-trigger').attr('aria-expanded', open ? 'true' : 'false');
+  if (open) {
+    $('#table-search').trigger('focus');
+    renderTablePicker();
+  }
+}
+
+function renderTablePicker() {
+  var selected = $('#table-select').val();
+  var query = ($('#table-search').val() || '').toLowerCase().trim();
+  var html = '';
+  var shown = 0;
+  tablePickerGroups.forEach(function(group) {
+    var items = group.items.filter(function(item) {
+      if (!query) return true;
+      return [item.display_name, item.table_name, group.name].join(' ').toLowerCase().indexOf(query) !== -1;
+    });
+    if (!items.length) return;
+    shown += items.length;
+    html += '<div class="genome-group"><div class="genome-group-title">' + escHtml(group.name) +
+      '<span>' + items.length + ' table' + (items.length === 1 ? '' : 's') + '</span></div>';
+    items.forEach(function(item) {
+      var isSel = item.table_name === selected;
+      html += '<button type="button" class="genome-option' + (isSel ? ' selected' : '') + '"' +
+        ' data-table="' + escHtml(item.table_name) + '" role="option" aria-selected="' + (isSel ? 'true' : 'false') + '">' +
+        '<span>' + escHtml(item.display_name || item.table_name) + '</span>' +
+        '<small>' + escHtml(item.table_name) + '</small></button>';
+    });
+    html += '</div>';
+  });
+  $('#table-groups').html(shown ? html : '<div class="genome-empty">No matching genome or table.</div>');
+}
+
+function updateTablePickerSummary() {
+  var table = $('#table-select').val();
+  var info = genomeExamples[table];
+  $('#table-selected-name').text(info ? (info.display_name || table) : 'Select a genome / table');
+  $('#table-selected-group').text(info && info.karyotype ? info.karyotype : '');
 }
 
 function updateExample() {
@@ -183,6 +291,7 @@ function updateExample() {
     $('#example_pfam').text('');
     return;
   }
+  updateTablePickerSummary();
   $('#example_region').text(info.region);
   $('#example_gene').text(info.gene);
   $('#example_pfam').text(info.pfam);
