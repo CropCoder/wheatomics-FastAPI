@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Single-cell Atlas | WheatOmics</title>
+<script src="/js/echarts.min.js"></script>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f8f6;color:#1c3631;margin:0}
+main{max-width:1200px;margin:35px auto;padding:0 20px}
+header{background:#16453e;color:white;padding:24px;border-radius:14px}
+header p{margin:8px 0 0;opacity:.85}
+section{background:white;padding:22px;border:1px solid #dce8e3;border-radius:12px;margin-top:16px}
+input,select,button{padding:11px;border-radius:7px;border:1px solid #a7c5bb;font:inherit}
+button{background:#206b5c;color:white;cursor:pointer}
+button.secondary{background:#e7efec;color:#16453e;border-color:#a7c5bb}
+button:disabled{opacity:.45;cursor:not-allowed}
+.muted{color:#63776f}
+table{border-collapse:collapse;width:100%;font-size:13px}
+td,th{padding:8px;border-bottom:1px solid #e0e9e5;text-align:left}
+th{background:#f2f7f5;font-weight:600;position:sticky;top:0}
+.scroll{overflow:auto;max-height:460px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{padding:5px 12px;border-radius:14px;background:#eef5f2;color:#16453e;font-size:13px}
+.chip b{color:#0b2b26}
+.chip.hub{background:#fff4e5;color:#8a5a00;border:1px solid #ffd9a8}
+#chart{width:100%;height:440px}
+.empty{text-align:center;color:#8a9a94;padding:36px 0}
+</style></head><body><main>
+<header>
+  <h1>Wheat single-cell atlas</h1>
+  <p>Gene expression across samples and cell types · co-expression modules · hub genes</p>
+</header>
+<section>
+  <label for="gene">Gene ID</label>
+  <input id="gene" size="30" placeholder="e.g. TraesCS3D03G0096000">
+  <button id="search">Analyze gene</button>
+  <button id="clear" type="button" class="secondary">Clear</button>
+  <p class="muted" id="status">Search any gene present in the single-cell datasets.</p>
+</section>
+<section id="summarysec" hidden>
+  <h2>Summary</h2>
+  <div class="chips" id="chips"></div>
+  <p class="muted" id="samplesline"></p>
+</section>
+<section id="exprsec" hidden>
+  <h2>Expression by sample and cell type</h2>
+  <p class="muted">Dot size is the percentage of cells expressing the gene; colour is the mean normalised expression.</p>
+  <div id="chart"></div>
+  <div id="exprtable" class="scroll"></div>
+</section>
+<section id="modulesec" hidden>
+  <h2>Co-expression modules</h2>
+  <div id="moduletable" class="scroll"></div>
+</section>
+<section id="hubsec" hidden>
+  <h2>Hub genes</h2>
+  <div id="hubtable" class="scroll"></div>
+</section>
+</main><script>
+const $=id=>document.getElementById(id);
+let chart=null;
+function text(el,s){el.textContent=s==null?"":String(s)}
+function table(rows,columns){const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
+for(const c of columns){const th=document.createElement("th");text(th,c);tr.appendChild(th)}
+const body=t.createTBody();for(const r of rows){const tr=body.insertRow();for(const c of columns){const td=tr.insertCell();text(td,r[c])}}
+return t}
+async function api(path){const r=await fetch(path);let x;try{x=await r.json()}catch{x={detail:"Invalid JSON response"}}
+if(!r.ok)throw Error(typeof x.detail==="string"?x.detail:"HTTP "+r.status);return x}
+function fmt(v,d){return v==null||isNaN(v)?"—":Number(v).toFixed(d)}
+function hideAll(){for(const id of ["summarysec","exprsec","modulesec","hubsec"])$(id).hidden=true}
+
+async function search(){
+  const g=$("gene").value.trim();
+  if(!g)return;
+  text($("status"),"Loading...");hideAll();
+  try{
+    const resp=await api("/api/singlecell/gene/"+encodeURIComponent(g));
+    const d=resp.data;
+    if(!d.found){
+      text($("status"),`No single-cell data for ${d.gene}. It may not be expressed, or not be present in these datasets.`);
+      return;
+    }
+    renderSummary(d);renderExpression(d);renderModules(d);renderHubs(d);
+    text($("status"),`Loaded ${d.gene}.`);
+  }catch(e){text($("status"),"Error: "+e.message)}
+}
+
+function renderSummary(d){
+  const s=d.summary||{};
+  const chips=[];
+  chips.push(`<span class="chip">Samples with expression: <b>${(s.samples_with_expression||[]).length}</b></span>`);
+  chips.push(`<span class="chip">Cell types: <b>${s.n_celltypes||0}</b></span>`);
+  chips.push(`<span class="chip">Modules: <b>${s.n_modules||0}</b></span>`);
+  chips.push(s.is_hub
+    ? `<span class="chip hub">Hub gene in <b>${(s.hub_celltypes||[]).join(", ")}</b></span>`
+    : `<span class="chip">Not a hub gene in these datasets</span>`);
+  $("chips").innerHTML=chips.join("");
+  const sm=(d.samples||[]).map(x=>`${x.sample} (${Number(x.expression_rows).toLocaleString()} rows, ${x.network_count} networks)`);
+  text($("samplesline"),"Datasets: "+sm.join(" · "));
+  $("summarysec").hidden=false;
+}
+
+function renderExpression(d){
+  const bySample=d.expression_by_sample||{};
+  const samples=Object.keys(bySample).sort();
+  if(!samples.length){$("exprsec").hidden=true;return}
+  const celltypes=[...new Set(samples.flatMap(s=>bySample[s].map(e=>e.celltype)))].sort();
+
+  const data=[];const rows=[];let pctMax=0,expMin=Infinity,expMax=-Infinity;
+  samples.forEach((sample,yi)=>{
+    bySample[sample].forEach(e=>{
+      const pct=Number(e.pct_expr)||0, mean=Number(e.mean_normalized)||0;
+      pctMax=Math.max(pctMax,pct);
+      if(Number.isFinite(mean)){expMin=Math.min(expMin,mean);expMax=Math.max(expMax,mean)}
+      data.push([celltypes.indexOf(e.celltype),yi,pct,mean]);
+      rows.push({
+        "Sample":sample,
+        "Cell type":e.celltype,
+        "Cells":e.n_cells,
+        "Cells expressing":e.n_expr_cells,
+        "% expressing":fmt(pct,2),
+        "Mean normalised":fmt(mean,3),
+        "Mean log1p":fmt(e.avg_log1p,3)
+      });
+    });
+  });
+  $("exprtable").replaceChildren(table(rows,["Sample","Cell type","Cells","Cells expressing","% expressing","Mean normalised","Mean log1p"]));
+
+  if(!Number.isFinite(expMin)||expMin===expMax){expMin=0;expMax=Math.max(expMax,1)}
+
+  if(!chart)chart=echarts.init($("chart"));
+  chart.setOption({
+    animation:false,
+    tooltip:{trigger:"item",formatter:p=>{
+      const v=p.value;
+      return `<b>${samples[v[1]]}</b><br>${celltypes[v[0]]}<br>Percent expressing: ${v[2].toFixed(2)}%<br>Mean normalised: ${v[3].toFixed(3)}`;
+    }},
+    grid:{left:180,right:110,top:24,bottom:120},
+    xAxis:{type:"category",data:celltypes,axisLabel:{rotate:45,fontSize:11,interval:0},splitLine:{show:true,lineStyle:{color:"#eef3f1"}}},
+    yAxis:{type:"category",data:samples,axisLabel:{fontSize:11}},
+    visualMap:{min:expMin,max:expMax,dimension:3,orient:"vertical",right:10,top:"middle",
+      itemWidth:14,itemHeight:120,calculable:false,precision:2,
+      textStyle:{fontSize:11,color:"#4a5f57"},
+      inRange:{color:["#eaf3ef","#7fc3a8","#206b5c","#0b2b26"]}},
+    series:[{type:"scatter",data,
+      symbolSize:v=>Math.max(5,Math.min(26,Math.sqrt(v[2])*2)),
+      itemStyle:{borderColor:"#ffffff",borderWidth:0.6,opacity:.95}}]
+  });
+  chart.resize();
+  $("exprsec").hidden=false;
+}
+
+function moduleRows(items){
+  return (items||[]).map(m=>({
+    "Sample":m.sample,
+    "Cell type":m.celltype_label,
+    "Module":m.module,
+    "kME":fmt(m.kME,3),
+    "Gene name":m.gene_name||""
+  }));
+}
+
+function renderModules(d){
+  const rows=moduleRows(d.modules);
+  if(!rows.length){$("modulesec").hidden=true;return}
+  $("moduletable").replaceChildren(table(rows,["Sample","Cell type","Module","kME","Gene name"]));
+  $("modulesec").hidden=false;
+}
+
+function renderHubs(d){
+  const rows=moduleRows(d.hub_genes);
+  if(!rows.length){$("hubsec").hidden=true;return}
+  $("hubtable").replaceChildren(table(rows,["Sample","Cell type","Module","kME","Gene name"]));
+  $("hubsec").hidden=false;
+}
+
+function clearAll(){
+  $("gene").value="";hideAll();
+  $("chips").replaceChildren();$("exprtable").replaceChildren();
+  $("moduletable").replaceChildren();$("hubtable").replaceChildren();
+  text($("samplesline"),"");
+  text($("status"),"Search any gene present in the single-cell datasets.");
+  $("gene").focus();
+}
+
+$("search").addEventListener("click",search);
+$("clear").addEventListener("click",clearAll);
+$("gene").addEventListener("keydown",e=>{if(e.key==="Enter")search()});
+window.addEventListener("resize",()=>{if(chart)chart.resize()});
+$(function(){const q=new URLSearchParams(location.search).get("gene");if(q){$("gene").value=q;search()}});
+</script></body></html>

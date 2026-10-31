@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     DB_EQTL: str = "eqtl"
     DB_WHEATPSP: str = "wheat_psp_db"
     DB_PTM: str = "ptm"
+    DB_SCRNA_DATA: str = "scrna_data"
 
     BLAST_DB_PATH: Path = Path("/var/www/html/getfasta/blastdb")
     BLAST_BIN_DIR: Path = Path("/var/www/html/blast/blast+/bin")
