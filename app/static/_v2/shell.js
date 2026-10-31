@@ -56,7 +56,7 @@
               <li><a href="https://wheatomics.sdau.edu.cn/HomologFinder/">HomologFinder</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/expression/index.html">GeneExpression</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/coexpression/index.html">Co-expression</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/tools/intervalTools.html">IntervalTool</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/interval/">IntervalTool</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/caps/">CAPS/dCAPS</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/preblast/">preBLAST</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/sms2/">SequenceToolkit</a></li>
