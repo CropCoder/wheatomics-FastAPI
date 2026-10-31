@@ -46,14 +46,15 @@ a.csv:hover{background:#16453e}
 
 <section>
   <label for="gene"><strong>Gene ID(s)</strong></label>
-  <textarea id="gene" rows="3" placeholder="One gene per line, or comma/space separated — up to 50 genes"></textarea>
+  <textarea id="gene" rows="3" placeholder="e.g. TraesCS3D03G0096000 — one gene per line, or comma/space separated, up to 50 genes"></textarea>
   <div class="row">
     <button id="search">Analyze</button>
     <button id="clear" type="button" class="secondary">Clear</button>
     <span class="muted">or load a list:</span>
     <input type="file" id="gene-file" accept=".txt,.csv,.tsv">
   </div>
-  <p class="muted" id="status">Enter one gene for its full profile, or several genes (max 50) for a summary table.</p>
+  <p class="muted" id="status">Enter one gene for its full profile (e.g. TraesCS3D03G0096000), or several genes (max 50) for a summary table.</p>
+  <p class="muted">Example: <a href="#" id="example-gene">TraesCS3D03G0096000</a></p>
 </section>
 
 <section id="batchsec" hidden>
@@ -453,12 +454,17 @@ function clearAll(){
   text($("samplesline"),"");text($("geneset-title"),"");text($("geneset-meta"),"");
   text($("display-hint"),"");text($("batch-meta"),"");
   if(chart)chart.clear();
-  text($("status"),"Enter one gene for its full profile, or several genes (max 50) for a summary table.");
+  text($("status"),"Enter one gene for its full profile (e.g. TraesCS3D03G0096000), or several genes (max 50) for a summary table.");
   $("gene").focus();
 }
 
 $("search").addEventListener("click",search);
 $("clear").addEventListener("click",clearAll);
+$("example-gene").addEventListener("click",e=>{
+  e.preventDefault();
+  $("gene").value="TraesCS3D03G0096000";
+  search();
+});
 $("gene").addEventListener("keydown",e=>{
   if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))search();
 });
