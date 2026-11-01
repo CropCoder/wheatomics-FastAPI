@@ -57,6 +57,17 @@
     .genome-cat-title { min-width: 0; }
     .genome-cat-desc { flex: 1 1 100%; white-space: normal; }
   }
+
+  /* Inline layout: category accordion is always visible in the page */
+  .genome-picker-block { margin-bottom: 18px; }
+  .genome-inline-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 8px 0 10px; }
+  .genome-selected { flex: 1 1 320px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fbfdfb; }
+  .genome-selected-label { color: var(--muted); font-family: var(--utility); font-size: 10px; letter-spacing: .02em; }
+  .genome-selected strong { color: var(--forest-deep); font-size: 12.5px; font-weight: 700; }
+  .genome-inline-toolbar .genome-search { flex: 1 1 260px; width: auto; }
+  .genome-groups-inline { max-height: none; overflow: visible; margin-top: 0; }
+  .genome-groups-inline .genome-cat-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px 10px; max-height: 260px; overflow: auto; }
+  @media (max-width: 767px) { .genome-groups-inline .genome-cat-body { grid-template-columns: 1fr; } }
 </style>
 
 <!-- Baidu Tongji (async) -->
@@ -95,27 +106,23 @@ var _hmt = _hmt || [];
 
   <div class="card">
   <div class="card-body">
-  <div class="row">
-    <div class="col-md-4">
-      <div class="form-group genome-picker">
-        <label><strong>Genome / Table</strong></label>
-        <select id="table-select" class="d-none"></select>
-        <button type="button" id="table-trigger" class="genome-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="table-picker-panel">
-          <span class="genome-trigger-main">
-            <span class="genome-trigger-label">Selected genome / table</span>
-            <strong id="table-selected-name">Loading genetic maps…</strong>
-          </span>
-          <span id="table-selected-group" class="genome-trigger-group"></span>
-          <span class="genome-trigger-caret" aria-hidden="true">▾</span>
-        </button>
-        <div id="table-picker-panel" class="genome-panel" hidden>
-          <input id="table-search" class="genome-search" type="search" placeholder="Filter genomes or tables…" autocomplete="off" aria-label="Filter genome tables">
-          <div id="table-groups" class="genome-groups" role="listbox" aria-label="Genome tables"></div>
-        </div>
-        <p class="help-text mt-2 mb-0">Browse categories (or search) and expand a category to choose its genome table.</p>
+  <div class="genome-picker-block">
+    <label><strong>Genome / Table</strong></label>
+    <select id="table-select" class="d-none"></select>
+    <div class="genome-inline-toolbar">
+      <div class="genome-selected">
+        <span class="genome-selected-label">Selected genome / table</span>
+        <strong id="table-selected-name">Loading tables…</strong>
+        <span id="table-selected-group" class="genome-trigger-group"></span>
       </div>
+      <input id="table-search" class="genome-search" type="search" placeholder="Filter genomes or tables…" autocomplete="off" aria-label="Filter genome tables">
     </div>
-    <div class="col-md-8">
+    <div id="table-groups" class="genome-groups genome-groups-inline" role="listbox" aria-label="Genome tables"></div>
+    <p class="help-text mt-2 mb-0">Browse categories or search; expand a category to choose its genome table.</p>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
       <div class="form-group">
         <label><strong>Query Type</strong></label>
         <div>
@@ -180,9 +187,6 @@ var exampleTexts = {};
 $(function(){
   loadTables();
 
-  $('#table-trigger').on('click', function() {
-    setTablePickerOpen($('#table-picker-panel').prop('hidden'));
-  });
   $('#table-search').on('input keyup', renderTablePicker);
   $('#table-groups').on('click', '.genome-cat-head', function() {
     var body = $(this).next('.genome-cat-body');
@@ -193,13 +197,6 @@ $(function(){
   $('#table-groups').on('click', '.genome-option', function() {
     $('#table-select').val($(this).data('table')).trigger('change');
     renderTablePicker();
-    setTablePickerOpen(false);
-  });
-  $(document).on('click', function(e) {
-    if (!$(e.target).closest('.genome-picker').length) setTablePickerOpen(false);
-  });
-  $(document).on('keydown', function(e) {
-    if (e.key === 'Escape') setTablePickerOpen(false);
   });
 
   $('input[name="queryType"]').change(function() {
@@ -274,15 +271,6 @@ function categoryIdForGroup(group) {
 
 function categoryForItem(item) {
   return categoryIdForGroup(item.karyotype || 'Other');
-}
-
-function setTablePickerOpen(open) {
-  $('#table-picker-panel').prop('hidden', !open);
-  $('#table-trigger').attr('aria-expanded', open ? 'true' : 'false');
-  if (open) {
-    $('#table-search').trigger('focus');
-    renderTablePicker();
-  }
 }
 
 function renderTablePicker() {
