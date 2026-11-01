@@ -17,6 +17,7 @@
   .result-table { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; margin-top:22px; box-shadow:var(--shadow); }
   .result-table table { font-size: 13px; }
   .result-table th { position: sticky; top: 0; background: var(--mist); }
+  .result-genome { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
   .loading { display: none; text-align: center; padding: 60px; }
   .loading .spinner-border { width: 3rem; height: 3rem; color: var(--leaf); }
   #error-msg { display: none; margin-top: 10px; }
@@ -163,7 +164,10 @@ var _hmt = _hmt || [];
   <div id="result-area" style="display:none;">
     <div class="result-table" id="table-container">
       <div class="d-flex align-items-center justify-content-between mb-2">
-        <h6 id="result-title" class="mb-0">Results</h6>
+        <div>
+          <h6 id="result-title" class="mb-0">Results</h6>
+          <small id="result-genome" class="result-genome"></small>
+        </div>
         <button type="button" id="export-btn" class="btn btn-success btn-sm" disabled>
           Export Results (CSV)
         </button>
@@ -420,7 +424,7 @@ function queryInterval() {
       $('#loading-indicator').hide();
       if (!resp.success) { showError('Query failed'); return; }
       var titles = { region: 'Region: ', pfam: 'Pfam: ', gene: 'Gene: ' };
-      renderResults(resp, (titles[qtype] || '') + query);
+      renderResults(resp, (titles[qtype] || '') + query, table);
     })
     .fail(function(jqXHR) {
       $('#loading-indicator').hide();
@@ -428,7 +432,9 @@ function queryInterval() {
     });
 }
 
-function renderResults(resp, title) {
+function renderResults(resp, title, table) {
+  var info = genomeExamples[table] || genomeExamples[$('#table-select').val()];
+  $('#result-genome').text(info ? ('Genome / table: ' + (info.display_name || table) + (info.karyotype ? ' · ' + info.karyotype : '')) : '');
   var records = [];
   if (resp.data && resp.data.records) {
     records = resp.data.records;
