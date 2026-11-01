@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps, eqtl, scrna, wheatpsp, genome, ptm
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps, eqtl, scrna, wheatpsp, genome, ptm, singlecell
 from app.api.routers.gene_write import router as gene_write
 from app.api.routers.regulatory import router as regulatory_router
 from app.api.routers.regulatory_integration import router as regulatory_integration_router
@@ -213,6 +213,7 @@ app.mount("/eqtl", StaticFiles(directory=Path(__file__).parent / "app" / "static
 app.mount("/scRNA", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "scRNA", html=True), name="scRNA")
 app.mount("/wheatPSP", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "wheatPSP", html=True), name="wheatPSP")
 app.mount("/wheatPTM", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "wheatPTM", html=True), name="wheatPTM")
+app.mount("/singlecell", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "singlecell", html=True), name="singlecell")
 # Shared WheatOmics 2.0 chrome (theme CSS + injected header/footer) used by
 # the converted SPAs. Deliberately mounted under /api/ because Apache already
 # proxies /api to the backend — a new top-level mount would need an extra
@@ -292,6 +293,7 @@ for router in [
     wheatpsp,
     genome,
     ptm,
+    singlecell,
     gene_write,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)
