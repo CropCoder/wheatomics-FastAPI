@@ -41,7 +41,6 @@
   .genome-cat-head { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; background: #fff; text-align: left; cursor: pointer; }
   .genome-cat-head:hover { background: #fbfdfb; }
   .genome-cat-title { flex: none; min-width: 150px; color: var(--forest-deep); font-family: var(--display); font-size: 12px; font-weight: 750; }
-  .genome-cat-desc { flex: 1; min-width: 0; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
   .genome-cat-count { flex: none; color: var(--forest-deep); font-family: var(--utility); font-size: 12px; font-weight: 700; }
   .genome-cat-chevron { flex: none; color: var(--muted); font-size: 10px; transition: transform .15s; }
   .genome-cat-head[aria-expanded="true"] .genome-cat-chevron { transform: rotate(180deg); }
@@ -55,7 +54,6 @@
     .genome-panel { width: 100%; }
     .genome-cat-head { flex-wrap: wrap; gap: 3px 8px; }
     .genome-cat-title { min-width: 0; }
-    .genome-cat-desc { flex: 1 1 100%; white-space: normal; }
   }
 
   /* Left column: selected table + category accordion, always visible */
@@ -67,9 +65,8 @@
   .genome-inline-toolbar .genome-search { width: 100%; }
   .genome-groups-inline { max-height: none; overflow: visible; margin-top: 0; }
   .genome-groups-inline .genome-cat-body { display: grid; grid-template-columns: 1fr; gap: 1px; max-height: 280px; overflow: auto; }
-  .genome-groups-inline .genome-cat-head { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 2px 8px; align-items: center; }
+  .genome-groups-inline .genome-cat-head { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 2px 10px; align-items: center; padding: 9px 11px; }
   .genome-groups-inline .genome-cat-title { min-width: 0; }
-  .genome-groups-inline .genome-cat-desc { grid-column: 1 / -1; overflow: visible; white-space: normal; line-height: 1.35; text-overflow: clip; }
   .genome-groups-inline .genome-cat-count { font-size: 11px; }
 </style>
 
@@ -310,7 +307,6 @@ function renderTablePicker() {
     html += '<div class="genome-cat" data-cat="' + cat.id + '">' +
       '<button type="button" class="genome-cat-head" aria-expanded="' + (open ? 'true' : 'false') + '">' +
       '<span class="genome-cat-title">' + escHtml(cat.title) + '</span>' +
-      '<span class="genome-cat-desc">' + escHtml(cat.desc) + '</span>' +
       '<span class="genome-cat-count">' + items.length + '</span>' +
       '<span class="genome-cat-chevron" aria-hidden="true">▾</span></button>' +
       '<div class="genome-cat-body"' + (open ? '' : ' hidden') + '>' + options + '</div></div>';
