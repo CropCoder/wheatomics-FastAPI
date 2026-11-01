@@ -17,7 +17,9 @@
   .result-table { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; margin-top:22px; box-shadow:var(--shadow); }
   .result-table table { font-size: 13px; }
   .result-table th { position: sticky; top: 0; background: var(--mist); }
-  .result-genome { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+  .result-header { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; }
+  .result-genome { flex: 1; min-width: 180px; color: var(--muted); font-size: 11px; text-align: center; }
+  @media (max-width: 640px) { .result-genome { flex-basis: 100%; text-align: left; } }
   .loading { display: none; text-align: center; padding: 60px; }
   .loading .spinner-border { width: 3rem; height: 3rem; color: var(--leaf); }
   #error-msg { display: none; margin-top: 10px; }
@@ -163,11 +165,9 @@ var _hmt = _hmt || [];
 
   <div id="result-area" style="display:none;">
     <div class="result-table" id="table-container">
-      <div class="d-flex align-items-center justify-content-between mb-2">
-        <div>
-          <h6 id="result-title" class="mb-0">Results</h6>
-          <small id="result-genome" class="result-genome"></small>
-        </div>
+      <div class="result-header mb-2">
+        <h6 id="result-title" class="mb-0">Results</h6>
+        <small id="result-genome" class="result-genome"></small>
         <button type="button" id="export-btn" class="btn btn-success btn-sm" disabled>
           Export Results (CSV)
         </button>
