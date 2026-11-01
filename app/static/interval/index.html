@@ -276,7 +276,6 @@ function categoryForItem(item) {
 
 function renderTablePicker() {
   var selected = $('#table-select').val();
-  var selectedCat = genomeExamples[selected] ? categoryForItem(genomeExamples[selected]) : '';
   var query = ($('#table-search').val() || '').toLowerCase().trim();
 
   var buckets = {};
@@ -296,7 +295,9 @@ function renderTablePicker() {
     });
     if (!items.length) return;
     shown += items.length;
-    var open = query ? true : (cat.id === selectedCat);
+    // Categories start collapsed; only expand while filtering or when the
+    // user opens one explicitly.
+    var open = query ? true : false;
     var options = items.map(function(item) {
       var isSel = item.table_name === selected;
       return '<button type="button" class="genome-option' + (isSel ? ' selected' : '') + '"' +
