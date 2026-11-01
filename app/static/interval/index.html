@@ -58,16 +58,19 @@
     .genome-cat-desc { flex: 1 1 100%; white-space: normal; }
   }
 
-  /* Inline layout: category accordion is always visible in the page */
-  .genome-picker-block { margin-bottom: 18px; }
-  .genome-inline-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 8px 0 10px; }
-  .genome-selected { flex: 1 1 320px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fbfdfb; }
+  /* Left column: selected table + category accordion, always visible */
+  .genome-picker-block { margin-bottom: 0; }
+  .genome-inline-toolbar { display: flex; flex-direction: column; gap: 8px; align-items: stretch; margin: 8px 0 10px; }
+  .genome-selected { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fbfdfb; }
   .genome-selected-label { color: var(--muted); font-family: var(--utility); font-size: 10px; letter-spacing: .02em; }
   .genome-selected strong { color: var(--forest-deep); font-size: 12.5px; font-weight: 700; }
-  .genome-inline-toolbar .genome-search { flex: 1 1 260px; width: auto; }
-  .genome-groups-inline { max-height: none; overflow: visible; margin-top: 0; }
-  .genome-groups-inline .genome-cat-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px 10px; max-height: 260px; overflow: auto; }
-  @media (max-width: 767px) { .genome-groups-inline .genome-cat-body { grid-template-columns: 1fr; } }
+  .genome-inline-toolbar .genome-search { width: 100%; }
+  .genome-groups-inline { max-height: 560px; overflow: auto; margin-top: 0; }
+  .genome-groups-inline .genome-cat-body { display: grid; grid-template-columns: 1fr; gap: 1px; max-height: 280px; overflow: auto; }
+  .genome-groups-inline .genome-cat-head { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 2px 8px; align-items: center; }
+  .genome-groups-inline .genome-cat-title { min-width: 0; }
+  .genome-groups-inline .genome-cat-desc { grid-column: 1 / -1; overflow: visible; white-space: normal; line-height: 1.35; text-overflow: clip; }
+  .genome-groups-inline .genome-cat-count { font-size: 11px; }
 </style>
 
 <!-- Baidu Tongji (async) -->
@@ -106,23 +109,24 @@ var _hmt = _hmt || [];
 
   <div class="card">
   <div class="card-body">
-  <div class="genome-picker-block">
-    <label><strong>Genome / Table</strong></label>
-    <select id="table-select" class="d-none"></select>
-    <div class="genome-inline-toolbar">
-      <div class="genome-selected">
-        <span class="genome-selected-label">Selected genome / table</span>
-        <strong id="table-selected-name">Loading tables…</strong>
-        <span id="table-selected-group" class="genome-trigger-group"></span>
-      </div>
-      <input id="table-search" class="genome-search" type="search" placeholder="Filter genomes or tables…" autocomplete="off" aria-label="Filter genome tables">
-    </div>
-    <div id="table-groups" class="genome-groups genome-groups-inline" role="listbox" aria-label="Genome tables"></div>
-    <p class="help-text mt-2 mb-0">Browse categories or search; expand a category to choose its genome table.</p>
-  </div>
-
   <div class="row">
-    <div class="col-md-12">
+    <div class="col-md-4">
+      <div class="genome-picker-block">
+        <label><strong>Genome / Table</strong></label>
+        <select id="table-select" class="d-none"></select>
+        <div class="genome-inline-toolbar">
+          <div class="genome-selected">
+            <span class="genome-selected-label">Selected genome / table</span>
+            <strong id="table-selected-name">Loading tables…</strong>
+            <span id="table-selected-group" class="genome-trigger-group"></span>
+          </div>
+          <input id="table-search" class="genome-search" type="search" placeholder="Filter genomes or tables…" autocomplete="off" aria-label="Filter genome tables">
+        </div>
+        <div id="table-groups" class="genome-groups genome-groups-inline" role="listbox" aria-label="Genome tables"></div>
+        <p class="help-text mt-2 mb-0">Browse categories or search; expand a category to choose its genome table.</p>
+      </div>
+    </div>
+    <div class="col-md-8">
       <div class="form-group">
         <label><strong>Query Type</strong></label>
         <div>
