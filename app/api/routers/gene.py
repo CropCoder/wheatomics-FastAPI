@@ -73,7 +73,8 @@ interval_router = APIRouter(prefix="/genes/functions", tags=["IntervalTool"])
 _KNOWN_SUMMARY_COLUMNS = (
     "clone_id, gene_id, gene_name, chrom_pos, gene_phenotype, gene_species, "
     "publication_year, paper_doi, reference_genome_id, species_primary, "
-    "chromosome, functional_category, research_strategy, publication_years"
+    "chromosome, functional_category, research_strategy, publication_years, "
+    "author"
 )
 
 _KNOWN_DETAIL_COLUMNS = _KNOWN_SUMMARY_COLUMNS + (
@@ -101,6 +102,7 @@ _KNOWN_SEARCH_FIELDS: dict[str, tuple[str, ...]] = {
         "validation_method",
         "functional_category",
         "research_strategy",
+        "author",
     ),
     "gene_id": ("gene_id",),
     "gene_name": ("gene_name",),
@@ -112,6 +114,7 @@ _KNOWN_SEARCH_FIELDS: dict[str, tuple[str, ...]] = {
     "protein_family": ("protein_family",),
     "functional_category": ("functional_category",),
     "research_strategy": ("research_strategy",),
+    "author": ("author",),
 }
 
 _KNOWN_CHROMOSOME_PATTERN = re.compile(r"^[0-9]{1,2}[A-Z]{0,2}$")
@@ -300,6 +303,7 @@ def _row_to_known_summary(row: dict) -> KnownGeneSummary:
         functional_category=_optional_text(row.get("functional_category")),
         research_strategy=_optional_text(row.get("research_strategy")),
         publication_years=publication_years,
+        author=_optional_text(row.get("author")),
     )
 
 
@@ -612,7 +616,7 @@ def search_known_genes(
         description=(
             "Search field whitelist: all | gene_id | gene_name | reference_genome_id | "
             "phenotype | species | doi | protein_family | functional_category | "
-            "chrom_pos | research_strategy; unknown values return 400"
+            "chrom_pos | research_strategy | author; unknown values return 400"
         ),
     ),
     limit: int | None = Query(
@@ -635,7 +639,7 @@ def search_known_genes(
         - searchid: required, search keyword (LIKE wildcards % / _ are escaped to literals)
         - field: optional, default all; whitelist:
           all | gene_id | gene_name | reference_genome_id | phenotype | species |
-          doi | protein_family | functional_category | chrom_pos | research_strategy
+          doi | protein_family | functional_category | chrom_pos | research_strategy | author
           unknown values return 400
         - limit: optional 1-5000; omit = all rows (legacy behavior)
         - offset: optional >=0, default 0; only effective together with limit

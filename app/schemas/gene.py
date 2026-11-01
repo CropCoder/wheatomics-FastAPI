@@ -51,6 +51,8 @@ class KnownGeneSummary(BaseModel):
     functional_category: str | None = None
     research_strategy: str | None = None
     publication_years: list[str] = Field(default_factory=list)
+    # --- 2026-11-01: author curator/author search + result display ---
+    author: str | None = None
 
 
 class KnownGeneDetail(BaseModel):

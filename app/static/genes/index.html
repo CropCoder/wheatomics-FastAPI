@@ -98,6 +98,8 @@ html, body { margin: 0; padding: 0; }
 .kg-refid .kg-mono, .kg-mono { font-family: var(--utility); font-size: 12px; }
 .kg-mono { overflow-wrap: anywhere; }
 .kg-species { font-size: 13px; color: #4d6559; overflow-wrap: anywhere; }
+.kg-author { font-size: 12px; color: var(--forest-deep); font-weight: 700; overflow-wrap: anywhere; }
+.kg-author .kg-author-label { color: var(--muted); font-weight: 400; margin-right: 4px; }
 .kg-years { font-family: var(--utility); font-size: 12px; color: #4d6559; }
 .kg-refcount { font-size: 12px; color: var(--forest); font-weight: 700; }
 
@@ -260,9 +262,9 @@ html, body { margin: 0; padding: 0; }
         <div>
           <p class="news-kicker">WheatOmics 2.0 · Data resource</p>
           <h1 class="news-title">Known <em>Genes</em></h1>
-          <p class="news-lead">Curated functional-gene annotations for wheat and its relatives. Search by gene ID, gene name, reference genome ID, phenotype, species, DOI, protein family or chromosome, and browse dataset statistics.</p>
+          <p class="news-lead">Curated functional-gene annotations for wheat and its relatives. Search by gene ID, gene name, reference genome ID, phenotype, species, DOI, protein family, chromosome or author, and browse dataset statistics.</p>
           <div class="news-stats">
-            <span class="news-stat"><strong>9</strong> search fields</span>
+            <span class="news-stat"><strong>10</strong> search fields</span>
             <span class="news-stat">Curated annotations</span>
             <span class="news-stat">Dataset statistics</span>
           </div>
@@ -302,6 +304,7 @@ html, body { margin: 0; padding: 0; }
                     <option value="protein_family">Protein family</option>
                     <option value="functional_category">Functional category</option>
                     <option value="chrom_pos">Chromosome</option>
+                    <option value="author">Author</option>
                   </select>
                 </div>
                 <div class="form-group col-md-7 mb-2">
@@ -428,7 +431,8 @@ html, body { margin: 0; padding: 0; }
       doi: 'DOI',
       protein_family: 'Protein family',
       functional_category: 'Functional category',
-      chrom_pos: 'Chromosome'
+      chrom_pos: 'Chromosome',
+      author: 'Author'
     };
 
     var CATEGORY_ORDER = [
@@ -693,6 +697,10 @@ html, body { margin: 0; padding: 0; }
           html.push('<span class="kg-refid">Ref: <span class="kg-mono" title="No GeneHub record for this reference genome ID">' +
             escapeHtml(refId) + '</span></span>');
         }
+      }
+      if (record.author) {
+        html.push('<span class="kg-author" title="Known-gene author"><span class="kg-author-label">Author:</span>' +
+          escapeHtml(record.author) + '</span>');
       }
       if (species) {
         html.push('<span class="kg-species" title="' + KG.escAttr(record.species || species) + '"><i>' +
@@ -972,7 +980,7 @@ html, body { margin: 0; padding: 0; }
     }
 
     // =====================================================================
-    //  CSV export (19 columns, UTF-8 BOM, formula-injection guard)
+    //  CSV export (20 columns, UTF-8 BOM, formula-injection guard)
     // =====================================================================
     var CSV_HEADERS = [
       'Gene ID',
@@ -986,6 +994,7 @@ html, body { margin: 0; padding: 0; }
       'Functional category',
       'Research strategy',
       'Phenotype',
+      'Author',
       'Protein family',
       'Validation methods',
       'Cloning method',
@@ -1149,6 +1158,7 @@ html, body { margin: 0; padding: 0; }
           record.functional_category || full.functional_category || '',
           record.research_strategy || full.research_strategy || '',
           record.phenotype || '',
+          full.author || record.author || '',
           full.protein_family || '',
           validation,
           full.cloning_method || '',
