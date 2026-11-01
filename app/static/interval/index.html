@@ -331,10 +331,10 @@ function updateExample() {
     return;
   }
   updateTablePickerSummary();
-  $('#example_region').text(info.region);
-  $('#example_gene').text(info.gene);
-  $('#example_pfam').text(info.pfam);
-  $('#query-input').val(info.region);
+  $('#example_region').text(info.region || '—');
+  $('#example_gene').text(info.gene || '—');
+  $('#example_pfam').text(info.pfam || '—');
+  if (info.region) $('#query-input').val(info.region);
 }
 
 function useExample(type) {
