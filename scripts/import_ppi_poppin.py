@@ -16,11 +16,12 @@ table keeps that layout and appends the two optional scores:
 Gene IDs are stored exactly as supplied (no transcript suffix), which is how
 this dataset is keyed.
 
-Run on the server:
+Run on the server (the recreate step needs DROP/CREATE, so use a privileged
+account; the app account has SELECT only):
 
-    export DB_PASSWORD=...
     python3 scripts/import_ppi_poppin.py --tsv /path/WheatPPI_eggNOG_STRING_matched_simple.tsv --dry-run
-    python3 scripts/import_ppi_poppin.py --tsv /path/WheatPPI_eggNOG_STRING_matched_simple.tsv
+    DB_USER=root DB_PASSWORD='...' python3 scripts/import_ppi_poppin.py \
+        --tsv /path/WheatPPI_eggNOG_STRING_matched_simple.tsv
 """
 
 from __future__ import annotations
@@ -153,8 +154,20 @@ def main() -> int:
         cur = conn.cursor()
         # The schema changed (rice_pair / experimental were added), so recreate
         # rather than reuse an older table; the TSV is the source of truth.
-        cur.execute(f"DROP TABLE IF EXISTS `{TABLE}`")
-        cur.execute(CREATE_SQL)
+        try:
+            cur.execute(f"DROP TABLE IF EXISTS `{TABLE}`")
+            cur.execute(CREATE_SQL)
+        except pymysql.err.OperationalError as exc:
+            code = exc.args[0] if exc.args else None
+            conn.close()
+            if code in (1044, 1142):     # access denied for database / table DDL
+                sys.exit(
+                    f"MySQL denied DDL to '{DB_USER}' ({exc.args[1]}).\n"
+                    "Recreating PPI_poppin needs DROP + CREATE, so run this once\n"
+                    "with a privileged account, e.g.:\n"
+                    f"  DB_USER=root DB_PASSWORD='...' python3 {__file__} --tsv {args.tsv}"
+                )
+            raise
         print(f"table {DB_NAME}.{TABLE} recreated")
 
     batch: list[tuple] = []
