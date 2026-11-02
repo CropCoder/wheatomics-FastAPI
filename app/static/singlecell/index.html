@@ -1,14 +1,16 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Single-cell Atlas | WheatOmics</title>
+<title>Single-cell Atlas | WheatOmics 2.0</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
 <script src="/js/echarts.min.js"></script>
+<link rel="stylesheet" href="/api/v2shell/shell.css">
 <style>
-body{font-family:system-ui,-apple-system,sans-serif;background:#f5f8f6;color:#1c3631;margin:0}
-main{max-width:1280px;margin:35px auto;padding:0 20px}
-header{background:#16453e;color:white;padding:24px;border-radius:14px}
-header p{margin:8px 0 0;opacity:.85}
-section{background:white;padding:22px;border:1px solid #dce8e3;border-radius:12px;margin-top:16px}
-input,select,textarea,button{padding:11px;border-radius:7px;border:1px solid #a7c5bb;font:inherit}
+.tool-shell{max-width:1280px}
+.tool-shell section{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-top:18px}
+.tool-shell section h2{font-family:var(--display);font-size:19px;color:var(--forest-deep);margin:0 0 10px}
+input,select,textarea,button{padding:11px;border-radius:7px;border:1px solid var(--line);font:inherit}
 textarea{width:100%;box-sizing:border-box;resize:vertical}
 button{background:#206b5c;color:white;cursor:pointer}
 button.secondary{background:#e7efec;color:#16453e;border-color:#a7c5bb}
@@ -38,11 +40,28 @@ a.csv:hover{background:#16453e}
 #geneset-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px}
 .empty{text-align:center;color:#8a9a94;padding:30px 0}
-</style></head><body><main>
-<header>
-  <h1>Wheat single-cell atlas</h1>
-  <p>Gene expression across datasets and cell types · co-expression modules · hub genes</p>
-</header>
+</style></head><body>
+<div id="v2-shell-header"></div>
+
+<main id="main-content">
+  <section class="news-hero">
+    <div class="container news-hero-inner">
+      <div>
+        <p class="news-kicker">WheatOmics 2.0 · Single-cell transcriptomics</p>
+        <h1 class="news-title">Single-cell <em>Atlas</em></h1>
+        <p class="news-lead">Enter one wheat gene for its expression across datasets and cell types, the co-expression modules it belongs to and whether it is a hub gene — or up to 50 genes for a summary table.</p>
+        <div class="news-stats">
+          <span class="news-stat"><strong>Multi-dataset</strong> atlas</span>
+          <span class="news-stat">Cell-type resolution</span>
+          <span class="news-stat">Module &amp; hub calls</span>
+        </div>
+      </div>
+      <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-cells"/></svg></div>
+    </div>
+  </section>
+
+  <section class="news-body">
+    <div class="container tool-shell">
 
 <section>
   <label for="gene"><strong>Gene ID(s)</strong></label>
@@ -111,7 +130,14 @@ a.csv:hover{background:#16453e}
   <p class="muted" id="geneset-meta"></p>
   <div id="geneset-table" class="scroll"></div>
 </section>
-</main><script>
+    </div>
+  </section>
+</main>
+
+<div id="v2-shell-footer"></div>
+
+<script src="/api/v2shell/shell.js"></script>
+<script>
 const $=id=>document.getElementById(id);
 const MAX_GENES=50;
 let chart=null;

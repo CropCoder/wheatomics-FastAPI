@@ -1,22 +1,46 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Wheat TF Atlas | WheatOmics</title>
+<title>Wheat TF Atlas | WheatOmics 2.0</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<link rel="stylesheet" href="/api/v2shell/shell.css">
 <style>
-body{font-family:system-ui,-apple-system,sans-serif;background:#f5f8f6;color:#1c3631;margin:0}
-main{max-width:1080px;margin:35px auto;padding:0 20px}header{background:#16453e;color:white;padding:24px;border-radius:14px}
-section{background:white;padding:22px;border:1px solid #dce8e3;border-radius:12px;margin-top:16px}
-input,select,button{padding:11px;border-radius:7px;border:1px solid #a7c5bb;font:inherit}
-button{background:#206b5c;color:white;cursor:pointer}button.secondary{background:#e7efec;color:#16453e;border-color:#a7c5bb}.muted{color:#63776f}
-table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:8px;border-bottom:1px solid #e0e9e5;text-align:left}
-th{background:#f2f7f5;font-weight:600}
+.tool-shell{max-width:1200px}
+.tool-shell section{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-top:18px}
+.tool-shell section h2{font-family:var(--display);font-size:19px;color:var(--forest-deep);margin:0 0 10px}
+input,select,button{padding:11px;border-radius:7px;border:1px solid var(--line);font:inherit}
+button{background:var(--leaf);color:white;cursor:pointer}button.secondary{background:var(--mist);color:var(--forest);border-color:var(--line)}.muted{color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left}
+th{background:var(--mist);font-weight:600}
 table.wide{min-width:940px}
-.scroll{overflow:auto;max-height:450px}a{color:#145d70}small{line-height:1.6}
+.scroll{overflow:auto;max-height:450px}a{color:var(--forest)}small{line-height:1.6}
 .seg{display:inline-flex;gap:6px;flex-wrap:wrap;margin:8px 0}
-.seg button{padding:6px 12px;font-size:13px;background:#e7efec;color:#16453e;border-color:#a7c5bb}
-.seg button.active{background:#206b5c;color:#fff;border-color:#206b5c}
+.seg button{padding:6px 12px;font-size:13px;background:var(--mist);color:var(--forest);border-color:var(--line)}
+.seg button.active{background:var(--leaf);color:#fff;border-color:var(--leaf)}
 .seg button:disabled{opacity:.45;cursor:not-allowed}
-</style></head><body><main>
-<header><h1>Wheat TF & Regulatory Hub</h1><p>TF identity · Tissue expression · Promoter motifs · Regulatory variants</p></header>
+</style></head><body>
+<div id="v2-shell-header"></div>
+
+<main id="main-content">
+  <section class="news-hero">
+    <div class="container news-hero-inner">
+      <div>
+        <p class="news-kicker">WheatOmics 2.0 · Gene regulation</p>
+        <h1 class="news-title">Wheat <em>TF Atlas</em></h1>
+        <p class="news-lead">Enter a wheat gene to see its TF family classification, tissue expression, promoter motif hits, co-expression modules and overlapping regulatory variants.</p>
+        <div class="news-stats">
+          <span class="news-stat"><strong>TF</strong> classification</span>
+          <span class="news-stat">Promoter motifs</span>
+          <span class="news-stat">Motif–variant overlap</span>
+        </div>
+      </div>
+      <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-nodes"/></svg></div>
+    </div>
+  </section>
+
+  <section class="news-body">
+    <div class="container tool-shell">
 <section><label for="gene">Gene ID</label>
 <input id="gene" value="TraesCS2A02G305400" size="28" placeholder="e.g. TraesCS2A02G305400">
 <button id="search">Analyze gene</button>
@@ -58,7 +82,14 @@ Journal of Integrative Agriculture, 25(10), 4378–4382.
 <em>Download PFM data for plants in JASPAR CORE</em>, JASPAR
 (<a href="https://jaspar.elixir.no/" target="_blank" rel="noopener noreferrer">https://jaspar.elixir.no/</a>).<br><br>
 TF classifications are candidate annotations; motif hits and variant overlaps do not prove TF–DNA binding.</small></section>
-</main><script>
+    </div>
+  </section>
+</main>
+
+<div id="v2-shell-footer"></div>
+
+<script src="/api/v2shell/shell.js"></script>
+<script>
 const $=id=>document.getElementById(id);
 let currentGene="";
 let motifRegion="upstream";
