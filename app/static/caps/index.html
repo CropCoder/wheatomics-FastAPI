@@ -109,7 +109,7 @@
       </div>
     </div>
     <div class="tab-pane" id="tab-coord">
-      <div class="genome-picker-block">
+      <div class="genome-picker-block" id="coord-picker-block">
         <label>BLAST DB name</label>
         <select id="coord-db" class="d-none"></select>
         <div class="genome-selected">
@@ -117,8 +117,8 @@
           <strong id="coord-db-selected-name">Loading databases…</strong>
           <span id="coord-db-selected-group" class="genome-trigger-group"></span>
         </div>
-        <input id="coord-db-search" class="genome-search" type="search" placeholder="Filter BLAST databases…" autocomplete="off">
-        <div id="coord-db-groups" class="genome-groups" role="listbox" aria-label="BLAST databases"></div>
+        <input id="coord-db-search" class="genome-search" type="search" placeholder="Search BLAST databases…" autocomplete="off">
+        <div id="coord-db-groups" class="genome-groups" role="listbox" aria-label="BLAST databases" hidden></div>
       </div>
       <div class="form-row">
         <div class="form-group col-md-3">
@@ -191,7 +191,7 @@
     </div>
   </div>
   <div class="form-group">
-    <label>Specificity check databases <small>(used when you click "Check specificity" on a design; checked = checked against)</small></label>
+    <label>Specificity check database <small>(used when you click "Check specificity" on a design; select one database)</small></label>
     <div id="db-selected" style="margin-bottom:4px; min-height:20px;" class="small"></div>
     <div style="margin-bottom:4px;">
       <input id="db-search" class="form-control form-control-sm d-inline-block" style="width:200px;" placeholder="Search database...">
@@ -373,10 +373,16 @@ function loadCoordChroms() {
 }
 
 $(document).on('change', '#coord-db', loadCoordChroms);
-$('#coord-db-search').on('input keyup', renderCoordPicker);
+function showCoordDbList() { $('#coord-db-groups').prop('hidden', false); }
+$('#coord-db-search').on('focus click', function() { showCoordDbList(); renderCoordPicker(); });
+$('#coord-db-search').on('input keyup', function() { showCoordDbList(); renderCoordPicker(); });
+$(document).on('click', function(e) {
+  if (!$(e.target).closest('#coord-picker-block').length) $('#coord-db-groups').prop('hidden', true);
+});
 $('#coord-db-groups').on('click', '.genome-option', function() {
   $('#coord-db').val($(this).data('db')).trigger('change');
   renderCoordPicker();
+  $('#coord-db-groups').prop('hidden', true);
 });
 
 var COORD_DB_ITEMS = [];
@@ -603,9 +609,12 @@ function updateDbSelected() {
 }
 
 $(document).on('change', '.check-db', function() {
-  if (this.checked) CHECKED_DBS[this.value] = true;
-  else delete CHECKED_DBS[this.value];
-  $(this).closest('.genome-option').toggleClass('selected', this.checked);
+  if (!this.checked) return;
+  CHECKED_DBS = {};
+  CHECKED_DBS[this.value] = true;
+  $('#db-list .check-db').not(this).prop('checked', false);
+  $('#db-list .genome-option').removeClass('selected');
+  $(this).closest('.genome-option').addClass('selected');
   updateDbSelected();
 });
 $(document).on('click', '.db-chip', function() {
@@ -640,7 +649,7 @@ function renderDbList() {
     var options = items.map(function(item) {
       var checked = !!CHECKED_DBS[item.name];
       return '<label class="genome-option' + (checked ? ' selected' : '') + '" title="' + escapeHtml(item.name) + '">' +
-        '<input type="checkbox" class="check-db" value="' + escapeHtml(item.name) + '"' + (checked ? ' checked' : '') + '>' +
+        '<input type="radio" name="specificity-db" class="check-db" value="' + escapeHtml(item.name) + '"' + (checked ? ' checked' : '') + '>' +
         '<span>' + escapeHtml(item.label) + '</span></label>';
     }).join('');
     box.append('<div class="genome-cat" data-cat="' + cat.id + '">' +
