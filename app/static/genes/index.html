@@ -701,9 +701,20 @@ html, body { margin: 0; padding: 0; }
       }
       var refAuthors = record.reference_authors || [];
       if (refAuthors.length) {
-        var authorPreview = refAuthors.slice(0, 3).join(', ');
-        if (refAuthors.length > 3) authorPreview += ' et al.';
-        html.push('<span class="kg-author" title="Reference authors: ' + KG.escAttr(refAuthors.join(', ')) + '">' +
+        // When the user searched for a name, surface matching authors first so
+        // the visible preview explains why this record matched.
+        var displayAuthors = refAuthors.slice();
+        if (state.mode === 'search' && state.term) {
+          var needle = state.term.toLowerCase();
+          displayAuthors.sort(function(a, b) {
+            var am = a.toLowerCase().indexOf(needle) !== -1;
+            var bm = b.toLowerCase().indexOf(needle) !== -1;
+            return (bm ? 1 : 0) - (am ? 1 : 0);
+          });
+        }
+        var authorPreview = displayAuthors.slice(0, 3).join(', ');
+        if (displayAuthors.length > 3) authorPreview += ' et al.';
+        html.push('<span class="kg-author" title="Reference authors: ' + KG.escAttr(displayAuthors.join(', ')) + '">' +
           '<span class="kg-author-label">Authors:</span>' + escapeHtml(authorPreview) + '</span>');
       } else if (record.author) {
         html.push('<span class="kg-author" title="Known-gene author"><span class="kg-author-label">Author:</span>' +
