@@ -659,8 +659,11 @@ function querySequence() {
       geneDb = null;       // skip CDS
       protDb = 'all_proteins';
     } else if (db === 'all_genes') {
-      geneDb = 'all_genes';
-      protDb = null;       // skip protein
+      // GeneHub's legacy GetSequence link points at all_genes.  Fetch the
+      // genomic + CDS + protein set here so the 2.0 page keeps the legacy
+      // three-sequence output instead of CDS only.
+      loadAllGeneSequences(gene);
+      return;
     } else {
       geneDb = db;
       protDb = 'all_proteins';
@@ -687,6 +690,70 @@ function querySequence() {
         showError(readErrorDetail(jqXHR));
       });
   }
+}
+
+function renderAllGeneSequences(gene, genome, cds, prot) {
+  var parts = [];
+  if (genome) parts.push('; Genomic sequence\n' + genome.trim());
+  if (cds) parts.push('; CDS sequence\n' + cds.trim());
+  if (prot) parts.push('; Protein sequence\n' + prot.trim());
+  var fasta = parts.join('\n\n');
+  var checks = [
+    '<strong>Gene:</strong> ' + escapeHtml(gene),
+    '<strong>Genomic:</strong> ' + (genome ? '✓' : '—'),
+    '<strong>CDS:</strong> ' + (cds ? '✓' : '—'),
+    '<strong>Protein:</strong> ' + (prot ? '✓' : '—')
+  ];
+  $('#summary-bar').html(checks.join(' &nbsp;|&nbsp; ')).show();
+  var html = '<div class="d-flex justify-content-between align-items-center mb-2">';
+  html += '<h6 class="mb-0">FASTA Output (genomic / CDS / protein)</h6>';
+  html += '<div>';
+  html += '<button class="btn btn-sm btn-outline-primary" onclick="copyFasta()">Copy</button> ';
+  html += '<button class="btn btn-sm btn-outline-success" onclick="downloadFasta(\'' + escapeHtml(gene) + '.fasta\')">Download FASTA</button>';
+  html += '</div></div>';
+  if (!fasta) {
+    html = '<div class="alert alert-warning">No sequence found for ' + escapeHtml(gene) + '.</div>';
+  } else {
+    html += '<div class="fasta-box" id="fasta-output">' + escapeHtml(fasta) + '</div>';
+  }
+  lastResults = fasta ? [{ name: gene, fasta: fasta }] : [];
+  $('#result-container').html(html);
+  $('#result-area').show();
+  $('html, body').animate({ scrollTop: $('#result-area').offset().top - 20 }, 300);
+}
+
+function loadAllGeneSequences(gene) {
+  var baseGene = String(gene).replace(/\.\d+$/, '');
+  var finish = function(genome, cds, prot) {
+    $('#loading-indicator').hide();
+    renderAllGeneSequences(gene, genome || '', cds || '', prot || '');
+  };
+  var fail = function(jqXHR) {
+    $('#loading-indicator').hide();
+    showError(readErrorDetail(jqXHR));
+  };
+  $.getJSON('/api/sequence/by-gene', { gene_id: gene, gene_db: 'all_genes', protein_db: 'all_proteins' })
+    .done(function(geneResp) {
+      var cds = geneResp.gene_sequence || '';
+      var prot = geneResp.protein_sequence || '';
+      $.getJSON('/api/genes/detail/' + encodeURIComponent(baseGene))
+        .done(function(detailResp) {
+          var d = (detailResp && detailResp.data) || {};
+          if (d.chromosome && d.start != null && d.end != null) {
+            var region = d.chromosome + ':' + d.start + '..' + d.end;
+            $.getJSON('/api/sequence/by-interval', { region: region, database: 'all_genomes' })
+              .done(function(genomeResp) {
+                var gd = (genomeResp && genomeResp.data) || {};
+                finish(gd.fasta || '', cds, prot);
+              })
+              .fail(function() { finish('', cds, prot); });
+          } else {
+            finish('', cds, prot);
+          }
+        })
+        .fail(function() { finish('', cds, prot); });
+    })
+    .fail(fail);
 }
 
 function renderGene(resp, gene, geneDb, protDb) {
