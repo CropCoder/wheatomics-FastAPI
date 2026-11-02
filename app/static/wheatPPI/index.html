@@ -67,7 +67,7 @@ var _hmt = _hmt || [];
                   <option value="PPI_poppin">Wheat PoppIn (predicted)</option>
                 </select>
               </div>
-              <div class="form-group">
+              <div class="form-group" id="score-group">
                 <label for="score-select"><strong id="score-label">Filter by CF-MS score</strong></label>
                 <select id="score-select" class="form-control"></select>
               </div>
@@ -121,6 +121,8 @@ var _hmt = _hmt || [];
 var DATASETS = {
   PPI_result: {
     scoreLabel: 'Filter by CF-MS score',
+    showScoreFilter: true,
+    placeholder: 'TraesCS6D02G084800.1',
     scoreOptions: [
       { value: '0.5', text: '> 0.5 (high confidence)' },
       { value: '0.2', text: '> 0.2 (medium confidence)' },
@@ -142,22 +144,27 @@ var DATASETS = {
       'https://doi.org/10.1016/j.cell.2020.02.049</a>'
   },
   PPI_poppin: {
-    scoreLabel: 'Filter by supporting edges',
-    scoreOptions: [
-      { value: '2', text: '&ge; 2 supporting edges' },
-      { value: '1', text: 'all (&ge; 1)' }
-    ],
-    headers: ['WheatID1', 'WheatID2', 'Subgenome1', 'Subgenome2', 'Supporting edges', 'Rice homolog pair', 'Identity'],
-    scoreDecimals: 0,
-    about: '<strong>About this data:</strong> PoppIn predicts wheat protein&ndash;protein ' +
-      'interactions by transferring curated rice (<em>Oryza sativa</em>) interactions onto wheat ' +
-      'proteins through ortholog mapping. <em>Supporting edges</em> is the number of independent ' +
-      'rice-supported mappings behind a pair; <em>Rice homolog pair</em> is the underlying rice ' +
-      'interaction and <em>Identity</em> is the best rice&rarr;wheat mapping identity. ' +
-      'These interactions are <strong>computationally predicted</strong>, not experimentally measured.',
+    scoreLabel: '',
+    showScoreFilter: false,
+    placeholder: 'TraesCS2D02G229900',
+    showRicePair: true,
+    scoreOptions: [],
+    headers: ['WheatID1', 'WheatID2', 'eggNOGID1', 'eggNOGID2', 'STRING score',
+              'Annotation1', 'Annotation2', 'Rice homolog pair'],
+    scoreDecimals: 3,
+    about: '<strong>About this data:</strong> predicted wheat protein&ndash;protein interactions ' +
+      'obtained by mapping rice (<em>Oryza sativa</em>) STRING interactions onto wheat proteins ' +
+      'through eggNOG orthogroups. <em>STRING score</em> is the rice STRING confidence of the ' +
+      'matching rice pair and <em>Rice homolog pair</em> lists that pair. Gene IDs are given ' +
+      'without a transcript suffix. These interactions are <strong>computationally predicted</strong>.',
     citation: '<strong>Citation:</strong><br>' +
-      'PoppIn wheat interaction predictions (rice&rarr;wheat ortholog transfer). ' +
-      'Please cite the PoppIn method paper when using this dataset.'
+      'STRING: Szklarczyk D, et al. The STRING database in 2023: protein&ndash;protein ' +
+      'association networks and functional enrichment analyses for any sequenced genome of ' +
+      'interest. Nucleic Acids Research, 2023.<br>' +
+      '<a href="https://string-db.org/" target="_blank">https://string-db.org/</a><br>' +
+      'eggNOG: Cantalapiedra CP, et al. eggNOG-mapper v2: functional annotation, orthology ' +
+      'assignments, and domain prediction at the metagenomic scale. Molecular Biology and ' +
+      'Evolution, 2021.'
   }
 };
 
@@ -167,12 +174,16 @@ function currentDataset() {
 
 function onTableChange() {
   var ds = currentDataset();
+  var showFilter = ds.showScoreFilter !== false;
+  $('#score-group').toggle(showFilter);
   $('#score-label').text(ds.scoreLabel);
 
   var sel = $('#score-select').empty();
-  ds.scoreOptions.forEach(function(o) {
+  (ds.scoreOptions || []).forEach(function(o) {
     sel.append($('<option>').val(o.value).html(o.text));
   });
+
+  if (ds.placeholder) { $('#gene-input').attr('placeholder', ds.placeholder); }
 
   $('#about-box').html(ds.about);
   $('#citation-box').html(ds.citation);
@@ -193,7 +204,8 @@ function queryPPI() {
   $('#loading-indicator').show();
 
   var table = $('#table-select').val();
-  var minScore = parseFloat($('#score-select').val());
+  var ds = DATASETS[table] || DATASETS.PPI_result;
+  var minScore = (ds.showScoreFilter !== false) ? parseFloat($('#score-select').val()) : 0;
 
   $.getJSON('/api/ppi/query', {
     gene_ids: genes.join(','),
@@ -239,6 +251,9 @@ function renderResults(interactions, table) {
     html += '<td>' + (r.score != null ? Number(r.score).toFixed(decimals) : '') + '</td>';
     html += '<td style="max-width:300px;word-break:break-word;font-size:12px;">' + escapeHtml(r.annotation1 || '') + '</td>';
     html += '<td style="max-width:300px;word-break:break-word;font-size:12px;">' + escapeHtml(r.annotation2 || '') + '</td>';
+    if (ds.showRicePair) {
+      html += '<td style="max-width:220px;word-break:break-word;font-size:12px;">' + escapeHtml(r.rice_pair || '') + '</td>';
+    }
     html += '</tr>';
   });
 
