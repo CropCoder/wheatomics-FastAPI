@@ -49,6 +49,18 @@
   .gene-search-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
   .gene-search-row input { flex: 1 1 280px; max-width: 460px; }
   @media (max-width: 760px) { .gene-kv { grid-template-columns: 1fr; } .gene-table th { width: 120px; } }
+
+  /* Inline sequence preview (Genomic / CDS / Protein) */
+  .gene-seq-actions { margin-bottom: 10px; }
+  .gene-seq-item { margin-bottom: 8px; border: 1px solid var(--line); border-radius: 10px; background: #fff; overflow: hidden; }
+  .gene-seq-item summary { display: flex; align-items: center; gap: 8px; padding: 8px 10px; color: var(--forest-deep); font-family: var(--display); font-size: 12px; font-weight: 700; cursor: pointer; list-style: none; }
+  .gene-seq-item summary::-webkit-details-marker { display: none; }
+  .gene-seq-item summary::before { content: '▸'; color: var(--muted); font-size: 9px; }
+  .gene-seq-item[open] summary::before { content: '▾'; }
+  .gene-seq-len { margin-left: auto; color: var(--muted); font-family: var(--utility); font-size: 10px; font-weight: 400; }
+  .gene-seq-pre { margin: 0; padding: 10px 12px; background: var(--mist); color: var(--ink); font-family: var(--utility); font-size: 11px; line-height: 1.55; white-space: pre-wrap; word-break: break-all; max-height: 220px; overflow: auto; }
+  .gene-seq-copy { margin: 8px 12px 10px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--forest); font-size: 11px; font-weight: 700; cursor: pointer; }
+  .gene-seq-copy:hover { background: var(--mist); }
 </style>
 </head>
 <body>
@@ -102,6 +114,11 @@
               <tbody id="gene-annotation"></tbody>
             </table>
           </div>
+        </div>
+
+        <div class="gene-card" id="gene-sequences-card">
+          <h2>Sequences</h2>
+          <div id="gene-sequences"><p class="gene-note mb-0">Loading genomic / CDS / protein sequences…</p></div>
         </div>
 
         <div class="gene-card">
@@ -293,6 +310,71 @@
   function transcriptId(gene) { return /\.\d+$/.test(gene) ? gene : (gene + '.1'); }
   function setStatus(id, msg) { var el = document.getElementById(id); if (el) el.textContent = msg || ''; }
 
+  function copyGeneSequence(button) {
+    var pre = button.parentNode ? button.parentNode.querySelector('.gene-seq-pre') : null;
+    var text = pre ? pre.textContent : '';
+    if (!text) return;
+    var done = function() { button.textContent = 'Copied'; setTimeout(function() { button.textContent = 'Copy'; }, 1200); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  function loadGeneSequences(gene, data) {
+    var geneForSeq = /\.\d+$/.test(gene) ? gene : (gene + '.1');
+    var cds = '', protein = '';
+    var done = function(genome) {
+      var items = [];
+      if (genome) items.push({ key: 'genomic', label: 'Genomic sequence', text: genome, unit: 'bp' });
+      if (cds) items.push({ key: 'cds', label: 'CDS sequence', text: cds, unit: 'bp' });
+      if (protein) items.push({ key: 'protein', label: 'Protein sequence', text: protein, unit: 'aa' });
+      var fullUrl = '/getfasta/?query=' + encodeURIComponent(geneForSeq) + '&database=all_genes';
+      var html = '<div class="gene-seq-actions"><a class="gene-tool-link" target="_blank" rel="noopener" href="' + fullUrl + '">Open full GetSequence page ↗</a></div>';
+      if (!items.length) {
+        $('#gene-sequences').html(html + '<p class="gene-note mb-0">No sequences returned for this gene.</p>');
+        return;
+      }
+      items.forEach(function(item) {
+        var len = item.text.replace(/^>.*$/gm, '').replace(/\s+/g, '').length;
+        html += '<details class="gene-seq-item"' + (item.key === 'cds' ? ' open' : '') + '>' +
+          '<summary>' + esc(item.label) + '<span class="gene-seq-len">' + len.toLocaleString() + ' ' + item.unit + '</span></summary>' +
+          '<pre class="gene-seq-pre">' + esc(item.text) + '</pre>' +
+          '<button type="button" class="gene-seq-copy" onclick="copyGeneSequence(this)">Copy</button>' +
+          '</details>';
+      });
+      window.copyGeneSequence = copyGeneSequence;
+      $('#gene-sequences').html(html);
+    };
+    var loadGenome = function() {
+      if (!data.chromosome || data.start == null || data.end == null) { done(''); return; }
+      var chrom = String(data.chromosome);
+      var assembly = String(data.genome || '').replace(/\s+/g, '_');
+      var baseChrom = chrom.indexOf('_') === -1 ? chrom.replace(/^chr/i, 'Chr') : chrom;
+      var preferred = baseChrom + (assembly && baseChrom.indexOf('_') === -1 ? '_' + assembly : '');
+      var candidates = [preferred + ':' + data.start + '..' + data.end];
+      var fallback = chrom + ':' + data.start + '..' + data.end;
+      if (candidates.indexOf(fallback) === -1) candidates.push(fallback);
+      (function tryGenome(i) {
+        if (i >= candidates.length) { done(''); return; }
+        $.getJSON('/api/sequence/by-interval', { region: candidates[i], database: 'all_genomes' })
+          .done(function(resp) { done((resp && resp.data && resp.data.fasta) || ''); })
+          .fail(function() { tryGenome(i + 1); });
+      })(0);
+    };
+    $.getJSON('/api/sequence/by-gene', { gene_id: geneForSeq, gene_db: 'all_genes', protein_db: 'all_proteins' })
+      .done(function(resp) {
+        cds = (resp && resp.gene_sequence) || '';
+        protein = (resp && resp.protein_sequence) || '';
+        loadGenome();
+      })
+      .fail(function() { loadGenome(); });
+  }
+
   function loadExpressionOptions() {
     $.getJSON('/api/expression/projects')
       .done(function (resp) {
@@ -427,6 +509,7 @@
         }
         currentGene = gene;
         renderGene(gene, resp.data);
+        loadGeneSequences(gene, resp.data);
         renderHomologs(gene);
         loadExpressionOptions();
         loadCoexpressionOptions();
