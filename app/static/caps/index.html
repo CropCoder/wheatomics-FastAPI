@@ -55,6 +55,12 @@
   .genome-option.selected { background: #eaf5ee; color: var(--forest-deep); font-weight: 700; }
   .genome-empty { padding: 18px 8px; color: var(--muted); font-size: 12px; text-align: center; }
   @media (max-width: 900px) { .genome-cat-body { grid-template-columns: 1fr; } }
+
+  /* multi-select options inside the specificity database accordion */
+  #db-list .genome-option input.check-db { flex: none; margin: 1px 0 0; accent-color: var(--leaf); }
+  #db-list .genome-option span { overflow-wrap: anywhere; }
+  #db-list .genome-cat-body { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 900px) { #db-list .genome-cat-body { grid-template-columns: 1fr; } }
 </style>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
 </head>
@@ -188,7 +194,7 @@
       <input id="db-search" class="form-control form-control-sm d-inline-block" style="width:200px;" placeholder="Search database...">
       <button type="button" class="btn btn-outline-secondary btn-sm" id="db-clear" style="margin-left:8px;">Clear</button>
     </div>
-    <div class="enzyme-box" id="db-list" style="max-height:180px;">Loading databases...</div>
+    <div class="genome-groups" id="db-list" style="max-height:520px;">Loading databases...</div>
   </div>
   <p>
     <a data-toggle="collapse" href="#adv-params" role="button">Advanced options</a>
@@ -617,13 +623,14 @@ function updateDbSelected() {
 $(document).on('change', '.check-db', function() {
   if (this.checked) CHECKED_DBS[this.value] = true;
   else delete CHECKED_DBS[this.value];
+  $(this).closest('.genome-option').toggleClass('selected', this.checked);
   updateDbSelected();
 });
 $(document).on('click', '.db-chip', function() {
   var full = $(this).attr('title');
   delete CHECKED_DBS[full];
   $('.check-db').each(function() {
-    if (this.value === full) { this.checked = false; return false; }
+    if (this.value === full) { this.checked = false; $(this).closest('.genome-option').removeClass('selected'); return false; }
   });
   updateDbSelected();
 });
@@ -631,26 +638,52 @@ $(document).on('click', '.db-chip', function() {
 function renderDbList() {
   var box = $('#db-list').empty();
   var q = DB_SEARCH_QUERY.toLowerCase();
-  PS2_DB_GROUPS.forEach(function(g) {
-    var shown = g.databases.filter(function(db) {
-      return !q || db.name.toLowerCase().indexOf(q) >= 0 || (db.label || '').toLowerCase().indexOf(q) >= 0;
-    });
-    if (!shown.length) return;
-    box.append('<div class="db-group-head"><b>' + escapeHtml(g.name) + '</b></div>');
-    shown.forEach(function(db) {
-      box.append(
-        '<label style="display:inline-block; margin:0 12px 3px 0; font-size:12px; white-space:nowrap;">' +
-        '<input type="checkbox" class="check-db" value="' + escapeHtml(db.name) + '"' +
-        (CHECKED_DBS[db.name] ? ' checked' : '') + '> ' + escapeHtml(db.label || db.name) + '</label>');
+  var buckets = {};
+  BLAST_CATEGORIES.concat([OTHER_BLAST_CATEGORY]).forEach(function(c) { buckets[c.id] = []; });
+  (PS2_DB_GROUPS || []).forEach(function(g) {
+    (g.databases || []).forEach(function(db) {
+      var item = { name: db.name, label: db.label || db.name, type: g.name };
+      (buckets[blastCategoryFor(item.name)] || buckets.other).push(item);
     });
   });
+  var shown = 0;
+  BLAST_CATEGORIES.concat([OTHER_BLAST_CATEGORY]).forEach(function(cat) {
+    var items = (buckets[cat.id] || []).filter(function(item) {
+      if (!q) return true;
+      return (item.name + ' ' + item.label).toLowerCase().indexOf(q) !== -1;
+    });
+    if (!items.length) return;
+    shown += items.length;
+    var open = !!q;
+    var options = items.map(function(item) {
+      var checked = !!CHECKED_DBS[item.name];
+      return '<label class="genome-option' + (checked ? ' selected' : '') + '" title="' + escapeHtml(item.name) + '">' +
+        '<input type="checkbox" class="check-db" value="' + escapeHtml(item.name) + '"' + (checked ? ' checked' : '') + '>' +
+        '<span>' + escapeHtml(item.label) + '</span></label>';
+    }).join('');
+    box.append('<div class="genome-cat" data-cat="' + cat.id + '">' +
+      '<button type="button" class="genome-cat-head" aria-expanded="' + (open ? 'true' : 'false') + '">' +
+      '<span class="genome-cat-title">' + escapeHtml(cat.title) + '</span>' +
+      '<span class="genome-cat-count">' + items.length + '</span>' +
+      '<span class="genome-cat-chevron" aria-hidden="true">▾</span></button>' +
+      '<div class="genome-cat-body"' + (open ? '' : ' hidden') + '>' + options + '</div></div>');
+  });
+  if (!shown) box.html('<div class="genome-empty">No matching database.</div>');
   updateDbSelected();
 }
+
+$(document).on('click', '#db-list .genome-cat-head', function() {
+  var body = $(this).next('.genome-cat-body');
+  var open = body.prop('hidden');
+  body.prop('hidden', !open);
+  $(this).attr('aria-expanded', open ? 'true' : 'false');
+});
 
 $('#db-search').on('input', function() { DB_SEARCH_QUERY = $(this).val(); renderDbList(); });
 $('#db-clear').on('click', function() {
   CHECKED_DBS = {};
   $('.check-db').prop('checked', false);
+  $('.genome-option').removeClass('selected');
   updateDbSelected();
 });
 
