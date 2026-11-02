@@ -740,13 +740,22 @@ function loadAllGeneSequences(gene) {
         .done(function(detailResp) {
           var d = (detailResp && detailResp.data) || {};
           if (d.chromosome && d.start != null && d.end != null) {
-            var region = d.chromosome + ':' + d.start + '..' + d.end;
-            $.getJSON('/api/sequence/by-interval', { region: region, database: 'all_genomes' })
-              .done(function(genomeResp) {
-                var gd = (genomeResp && genomeResp.data) || {};
-                finish(gd.fasta || '', cds, prot);
-              })
-              .fail(function() { finish('', cds, prot); });
+            var chrom = String(d.chromosome);
+            var assembly = String(d.genome || '').replace(/\s+/g, '_');
+            var baseChrom = chrom.indexOf('_') === -1 ? chrom.replace(/^chr/i, 'Chr') : chrom;
+            var preferred = baseChrom + (assembly && baseChrom.indexOf('_') === -1 ? '_' + assembly : '');
+            var candidates = [preferred + ':' + d.start + '..' + d.end];
+            var fallback = chrom + ':' + d.start + '..' + d.end;
+            if (candidates.indexOf(fallback) === -1) candidates.push(fallback);
+            (function tryGenome(i) {
+              if (i >= candidates.length) { finish('', cds, prot); return; }
+              $.getJSON('/api/sequence/by-interval', { region: candidates[i], database: 'all_genomes' })
+                .done(function(genomeResp) {
+                  var gd = (genomeResp && genomeResp.data) || {};
+                  finish(gd.fasta || '', cds, prot);
+                })
+                .fail(function() { tryGenome(i + 1); });
+            })(0);
           } else {
             finish('', cds, prot);
           }
