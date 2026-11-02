@@ -61,6 +61,9 @@
   #db-list .genome-option span { overflow-wrap: anywhere; }
   #db-list .genome-cat-body { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   @media (max-width: 900px) { #db-list .genome-cat-body { grid-template-columns: 1fr; } }
+
+  #coord-db-groups { max-height: 300px; }
+  #coord-db-groups .genome-option { font-family: var(--utility); }
 </style>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
 </head>
@@ -371,12 +374,6 @@ function loadCoordChroms() {
 
 $(document).on('change', '#coord-db', loadCoordChroms);
 $('#coord-db-search').on('input keyup', renderCoordPicker);
-$('#coord-db-groups').on('click', '.genome-cat-head', function() {
-  var body = $(this).next('.genome-cat-body');
-  var open = body.prop('hidden');
-  body.prop('hidden', !open);
-  $(this).attr('aria-expanded', open ? 'true' : 'false');
-});
 $('#coord-db-groups').on('click', '.genome-option', function() {
   $('#coord-db').val($(this).data('db')).trigger('change');
   renderCoordPicker();
@@ -417,30 +414,15 @@ function updateCoordPickerSummary() {
 function renderCoordPicker() {
   var selected = $('#coord-db').val();
   var q = ($('#coord-db-search').val() || '').toLowerCase().trim();
-  var buckets = {};
-  BLAST_CATEGORIES.concat([OTHER_BLAST_CATEGORY]).forEach(function(c) { buckets[c.id] = []; });
-  COORD_DB_ITEMS.forEach(function(item) { (buckets[blastCategoryFor(item.name)] || buckets.other).push(item); });
-  var html = ''; var shown = 0;
-  BLAST_CATEGORIES.concat([OTHER_BLAST_CATEGORY]).forEach(function(cat) {
-    var items = (buckets[cat.id] || []).filter(function(item) {
-      return !q || item.name.toLowerCase().indexOf(q) !== -1;
-    });
-    if (!items.length) return;
-    shown += items.length;
-    var open = !!q;
-    var options = items.map(function(item) {
-      var isSel = item.name === selected;
-      return '<button type="button" class="genome-option' + (isSel ? ' selected' : '') + '" data-db="' + escapeHtml(item.name) + '" role="option" aria-selected="' + (isSel ? 'true' : 'false') + '">' +
-        '<span>' + escapeHtml(item.name) + '</span></button>';
-    }).join('');
-    html += '<div class="genome-cat" data-cat="' + cat.id + '">' +
-      '<button type="button" class="genome-cat-head" aria-expanded="' + (open ? 'true' : 'false') + '">' +
-      '<span class="genome-cat-title">' + escapeHtml(cat.title) + '</span>' +
-      '<span class="genome-cat-count">' + items.length + '</span>' +
-      '<span class="genome-cat-chevron" aria-hidden="true">▾</span></button>' +
-      '<div class="genome-cat-body"' + (open ? '' : ' hidden') + '>' + options + '</div></div>';
+  var items = COORD_DB_ITEMS.filter(function(item) {
+    return !q || item.name.toLowerCase().indexOf(q) !== -1;
   });
-  $('#coord-db-groups').html(shown ? html : '<div class="genome-empty">No matching BLAST database.</div>');
+  var html = items.map(function(item) {
+    var isSel = item.name === selected;
+    return '<button type="button" class="genome-option' + (isSel ? ' selected' : '') + '" data-db="' + escapeHtml(item.name) + '" role="option" aria-selected="' + (isSel ? 'true' : 'false') + '">' +
+      '<span>' + escapeHtml(item.name) + '</span></button>';
+  }).join('');
+  $('#coord-db-groups').html(html || '<div class="genome-empty">No matching BLAST database.</div>');
   updateCoordPickerSummary();
 }
 
