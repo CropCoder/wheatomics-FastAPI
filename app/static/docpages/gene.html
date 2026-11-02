@@ -341,7 +341,7 @@
       }
       items.forEach(function(item) {
         var len = item.text.replace(/^>.*$/gm, '').replace(/\s+/g, '').length;
-        html += '<details class="gene-seq-item"' + (item.key === 'cds' ? ' open' : '') + '>' +
+        html += '<details class="gene-seq-item">' +
           '<summary>' + esc(item.label) + '<span class="gene-seq-len">' + len.toLocaleString() + ' ' + item.unit + '</span></summary>' +
           '<pre class="gene-seq-pre">' + esc(item.text) + '</pre>' +
           '<button type="button" class="gene-seq-copy" onclick="copyGeneSequence(this)">Copy</button>' +
