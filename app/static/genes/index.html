@@ -310,7 +310,8 @@ html, body { margin: 0; padding: 0; }
                 <div class="form-group col-md-7 mb-2">
                   <label for="searchInp" class="kg-small-label">Search term</label>
                   <input type="text" id="searchInp" class="form-control form-control-sm"
-                         placeholder="e.g. VRN1, TraesCS5A02G391700, HORVU.MOREX.r3.3HG0228170, drought">
+                         placeholder="e.g. VRN1, TraesCS5A02G391700, drought, Jianhui Wu">
+                  <small class="form-text text-muted">Author search matches the curator and publication authors.</small>
                 </div>
                 <div class="form-group col-md-1 mb-2 d-flex align-items-end">
                   <button type="button" id="search-btn" class="btn btn-primary btn-sm btn-block">Search</button>
@@ -698,7 +699,13 @@ html, body { margin: 0; padding: 0; }
             escapeHtml(refId) + '</span></span>');
         }
       }
-      if (record.author) {
+      var refAuthors = record.reference_authors || [];
+      if (refAuthors.length) {
+        var authorPreview = refAuthors.slice(0, 3).join(', ');
+        if (refAuthors.length > 3) authorPreview += ' et al.';
+        html.push('<span class="kg-author" title="Reference authors: ' + KG.escAttr(refAuthors.join(', ')) + '">' +
+          '<span class="kg-author-label">Authors:</span>' + escapeHtml(authorPreview) + '</span>');
+      } else if (record.author) {
         html.push('<span class="kg-author" title="Known-gene author"><span class="kg-author-label">Author:</span>' +
           escapeHtml(record.author) + '</span>');
       }
@@ -980,7 +987,7 @@ html, body { margin: 0; padding: 0; }
     }
 
     // =====================================================================
-    //  CSV export (20 columns, UTF-8 BOM, formula-injection guard)
+    //  CSV export (21 columns, UTF-8 BOM, formula-injection guard)
     // =====================================================================
     var CSV_HEADERS = [
       'Gene ID',
@@ -995,6 +1002,7 @@ html, body { margin: 0; padding: 0; }
       'Research strategy',
       'Phenotype',
       'Author',
+      'Reference authors',
       'Protein family',
       'Validation methods',
       'Cloning method',
@@ -1159,6 +1167,7 @@ html, body { margin: 0; padding: 0; }
           record.research_strategy || full.research_strategy || '',
           record.phenotype || '',
           full.author || record.author || '',
+          (full.reference_authors || record.reference_authors || []).join('; '),
           full.protein_family || '',
           validation,
           full.cloning_method || '',

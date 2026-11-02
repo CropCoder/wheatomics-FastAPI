@@ -83,6 +83,11 @@ _KNOWN_DETAIL_COLUMNS = _KNOWN_SUMMARY_COLUMNS + (
     "protein_family, validation_method"
 )
 
+#: Extra text columns scanned by the Python-side author / all-fields search.
+_KNOWN_ALL_SEARCH_COLUMNS = _KNOWN_SUMMARY_COLUMNS + (
+    ", paper_title, function_description, cloning_method"
+)
+
 #: `/known/search` field whitelist: public field name -> DB columns to LIKE.
 #: Only these names ever reach the SQL string, so the parameter cannot inject.
 _KNOWN_SEARCH_FIELDS: dict[str, tuple[str, ...]] = {
@@ -304,6 +309,7 @@ def _row_to_known_summary(row: dict) -> KnownGeneSummary:
         research_strategy=_optional_text(row.get("research_strategy")),
         publication_years=publication_years,
         author=_optional_text(row.get("author")),
+        reference_authors=_known_reference_authors(row),
     )
 
 
@@ -336,6 +342,20 @@ def _reference_meta_for(doi: str | None, title: str | None) -> dict | None:
         if hit:
             return hit
     return None
+
+
+def _known_reference_authors(row: dict) -> list[str]:
+    """Distinct paper authors for a row, resolved from the reference metadata."""
+    authors: list[str] = []
+    seen: set[str] = set()
+    for doi in split_legacy_multi_value(row.get("paper_doi")):
+        meta = _reference_meta_for(doi, None)
+        for name in (meta or {}).get("authors") or []:
+            key = str(name).strip().lower()
+            if key and key not in seen:
+                seen.add(key)
+                authors.append(str(name).strip())
+    return authors
 
 
 def _build_known_references(row: dict) -> list[DOIReference]:
@@ -640,7 +660,8 @@ def search_known_genes(
         - field: optional, default all; whitelist:
           all | gene_id | gene_name | reference_genome_id | phenotype | species |
           doi | protein_family | functional_category | chrom_pos | research_strategy | author
-          unknown values return 400
+          unknown values return 400.  author matches both the curation author and
+          the publication authors in the reference metadata.
         - limit: optional 1-5000; omit = all rows (legacy behavior)
         - offset: optional >=0, default 0; only effective together with limit
         total: without pagination = number of rows returned (legacy behavior); with pagination = total number of matches
@@ -690,6 +711,35 @@ def search_known_genes(
     pattern = f"%{_escape_like(term)}%"
     where_sql = " OR ".join(f"{column} LIKE %s" for column in columns)
     params: tuple = tuple(pattern for _ in columns)
+
+    # Paper authors live in known_gene_reference_meta.json (keyed by DOI), not
+    # in cloned_gene_tbl.author (which is the curation account).  For author and
+    # all-field searches, scan rows in Python so a name such as "Jianhui" also
+    # matches the citation authors.  The curated table is small (~1.5k rows).
+    if field in ("author", "all"):
+        needle = term.lower()
+        sql = f"SELECT {_KNOWN_ALL_SEARCH_COLUMNS} FROM cloned_gene_tbl ORDER BY {_KNOWN_LIST_ORDER}"
+        with mysql_cursor(settings.DB_CLONED_GENE) as cursor:
+            cursor.execute(sql)
+            all_rows = cursor.fetchall()
+        matched: list[dict] = []
+        for row in all_rows:
+            ref_authors = _known_reference_authors(row)
+            if field == "author":
+                hit = needle in str(row.get("author") or "").lower() or any(
+                    needle in author.lower() for author in ref_authors
+                )
+            else:
+                hit = any(
+                    needle in str(row.get(column) or "").lower()
+                    for column in _KNOWN_SEARCH_FIELDS["all"]
+                ) or any(needle in author.lower() for author in ref_authors)
+            if hit:
+                matched.append(row)
+        total = len(matched)
+        page = matched[offset : offset + limit] if limit is not None else matched
+        records = [_row_to_known_summary(row).model_dump() for row in page]
+        return ok({"query": term, "total": total, "records": records})
 
     sql = (
         f"SELECT {_KNOWN_SUMMARY_COLUMNS} FROM cloned_gene_tbl "

@@ -53,6 +53,7 @@ class KnownGeneSummary(BaseModel):
     publication_years: list[str] = Field(default_factory=list)
     # --- 2026-11-01: author curator/author search + result display ---
     author: str | None = None
+    reference_authors: list[str] = Field(default_factory=list)
 
 
 class KnownGeneDetail(BaseModel):
