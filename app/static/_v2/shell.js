@@ -50,7 +50,7 @@
               <li><a href="https://wheatomics.sdau.edu.cn/GeneHub/">GeneHub</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/genes/">KnownGene</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/neighborhood/">Neighborhood</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/tools/proteinfamily.html">PfamSearch</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/PfamSearch/">PfamSearch</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/PrimerServer2/">PrimerServer2</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/idConvert/">IDConverter</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/HomologFinder/">HomologFinder</a></li>
