@@ -26,6 +26,10 @@ class PPIInteraction(BaseModel):
     score: float
     annotation1: str
     annotation2: str
+    # Populated by the PoppIn dataset only; omitted from the payload when absent
+    # (see model_dump(exclude_none=True) in the router).
+    rice_pair: str | None = None
+    experimental_score: float | None = None
 
 
 class BioprojectMeta(BaseModel):

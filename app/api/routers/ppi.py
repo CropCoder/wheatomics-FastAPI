@@ -100,6 +100,7 @@ def query_ppi(
         )
         # Discover actual column names from cursor.description (positional, like CGI)
         col_map = {}
+        extras = {}
         if cursor.description:
             cnames = [d[0] for d in cursor.description]
             col_map = {
@@ -111,7 +112,17 @@ def query_ppi(
                 "Annotation1":  cnames[6] if len(cnames) > 6 else "Annotation1",
                 "Annotation2":  cnames[7] if len(cnames) > 7 else "Annotation2",
             }
+            # Optional columns that only the PoppIn table carries.
+            lowered = {c.lower(): c for c in cnames}
+            extras = {
+                "rice_pair": lowered.get("rice_pair"),
+                "experimental": lowered.get("experimental"),
+            }
         for row in cursor.fetchall():
+            rice_col = extras.get("rice_pair")
+            exp_col = extras.get("experimental")
+            rice_pair = normalize_text(str(row[rice_col])) if rice_col else ""
+            exp_value = row[exp_col] if exp_col else None
             interactions.append(
                 PPIInteraction(
                     wheat_id1=[item.strip() for item in str(row[col_map["WheatID1"]]).split("#") if item.strip()],
@@ -121,7 +132,9 @@ def query_ppi(
                     score=float(row[col_map["Score"]]),
                     annotation1=normalize_text(str(row[col_map["Annotation1"]])),
                     annotation2=normalize_text(str(row[col_map["Annotation2"]])),
+                    rice_pair=rice_pair or None,
+                    experimental_score=float(exp_value) if exp_value is not None else None,
                 )
             )
 
-    return ok({"interactions": [interaction.model_dump() for interaction in interactions]})
+    return ok({"interactions": [i.model_dump(exclude_none=True) for i in interactions]})

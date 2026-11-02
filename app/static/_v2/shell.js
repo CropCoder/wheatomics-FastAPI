@@ -62,10 +62,11 @@
               <li><a href="https://wheatomics.sdau.edu.cn/sms2/">SequenceToolkit</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/VariantHub/">VariantHub</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/eqtl/">eQTL Atlas</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/regulatoryhub/TF_Atlas.html">TF Atlas</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/GO_KEGG/">GO/KEGG Enrichment</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/syntenyview/">Collinearity</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/orthofinder/">OrthoFinder</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/scRNA/">scRNA</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/singlecell/">scRNA</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/wheatPPI/index.html">WheatPPI</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/wheatPSP/">wheatPSP</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/papers/">Triticeae Papers</a></li>
