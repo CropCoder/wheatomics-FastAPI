@@ -32,6 +32,29 @@
   .check-status { font-size: 13px; }
   #db-selected .badge { cursor: pointer; }
   .main-wrap a[data-toggle="collapse"] { display: inline-flex; align-items: center; min-height: 28px; }
+
+  /* BLAST database picker: category accordion + search */
+  .genome-picker-block { margin-bottom: 14px; }
+  .genome-selected { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fbfdfb; }
+  .genome-selected-label { color: var(--muted); font-family: var(--utility); font-size: 10px; letter-spacing: .02em; }
+  .genome-selected strong { color: var(--forest-deep); font-size: 12.5px; font-weight: 700; overflow-wrap: anywhere; }
+  .genome-trigger-group { flex: none; padding: 3px 8px; border-radius: 999px; background: var(--mist); color: var(--forest); font-size: 10px; font-weight: 700; }
+  .genome-search { width: 100%; height: 34px; margin-top: 8px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: #fbfdfb; color: var(--ink); font-size: 12px; }
+  .genome-search:focus { outline: none; border-color: rgba(17,134,83,.45); box-shadow: 0 0 0 4px rgba(17,134,83,.10); }
+  .genome-groups { max-height: 520px; margin-top: 10px; overflow: auto; padding-right: 2px; }
+  .genome-cat { margin-bottom: 8px; border: 1px solid var(--line); border-radius: 10px; background: #fff; overflow: hidden; }
+  .genome-cat-head { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 2px 10px; width: 100%; padding: 9px 11px; border: 0; background: #fff; text-align: left; cursor: pointer; }
+  .genome-cat-head:hover { background: #fbfdfb; }
+  .genome-cat-title { min-width: 0; color: var(--forest-deep); font-family: var(--display); font-size: 12px; font-weight: 750; }
+  .genome-cat-count { flex: none; color: var(--forest-deep); font-family: var(--utility); font-size: 11px; font-weight: 700; }
+  .genome-cat-chevron { flex: none; color: var(--muted); font-size: 10px; transition: transform .15s; }
+  .genome-cat-head[aria-expanded="true"] .genome-cat-chevron { transform: rotate(180deg); }
+  .genome-cat-body { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px 10px; max-height: 300px; overflow: auto; padding: 0 6px 6px; border-top: 1px solid var(--line); }
+  .genome-option { display: flex; align-items: baseline; gap: 8px; width: 100%; padding: 7px 9px; border: 0; border-radius: 8px; background: none; color: var(--ink); font-size: 11.5px; text-align: left; cursor: pointer; }
+  .genome-option:hover { background: var(--mist); color: var(--forest); }
+  .genome-option.selected { background: #eaf5ee; color: var(--forest-deep); font-weight: 700; }
+  .genome-empty { padding: 18px 8px; color: var(--muted); font-size: 12px; text-align: center; }
+  @media (max-width: 900px) { .genome-cat-body { grid-template-columns: 1fr; } }
 </style>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
 </head>
@@ -77,24 +100,31 @@
       </div>
     </div>
     <div class="tab-pane" id="tab-coord">
-      <div class="form-row">
-        <div class="form-group col-md-4">
-          <label>BLAST DB name</label>
-          <select id="coord-db" class="form-control"></select>
+      <div class="genome-picker-block">
+        <label>BLAST DB name</label>
+        <select id="coord-db" class="d-none"></select>
+        <div class="genome-selected">
+          <span class="genome-selected-label">Selected BLAST database</span>
+          <strong id="coord-db-selected-name">Loading databases…</strong>
+          <span id="coord-db-selected-group" class="genome-trigger-group"></span>
         </div>
+        <input id="coord-db-search" class="genome-search" type="search" placeholder="Filter BLAST databases…" autocomplete="off">
+        <div id="coord-db-groups" class="genome-groups" role="listbox" aria-label="BLAST databases"></div>
+      </div>
+      <div class="form-row">
         <div class="form-group col-md-3">
           <label>Chromosome</label>
           <select id="coord-chrom" class="form-control"><option value="">loading…</option></select>
         </div>
-        <div class="form-group col-md-2">
+        <div class="form-group col-md-3">
           <label>Region start</label>
           <input id="coord-start" class="form-control" type="number" placeholder="100000">
         </div>
-        <div class="form-group col-md-2">
+        <div class="form-group col-md-3">
           <label>Region end</label>
           <input id="coord-end" class="form-control" type="number" placeholder="100400">
         </div>
-        <div class="form-group col-md-1">
+        <div class="form-group col-md-3">
           <label>SNP pos</label>
           <input id="coord-pos" class="form-control" type="number" placeholder="100200">
         </div>
@@ -334,17 +364,96 @@ function loadCoordChroms() {
 }
 
 $(document).on('change', '#coord-db', loadCoordChroms);
+$('#coord-db-search').on('input keyup', renderCoordPicker);
+$('#coord-db-groups').on('click', '.genome-cat-head', function() {
+  var body = $(this).next('.genome-cat-body');
+  var open = body.prop('hidden');
+  body.prop('hidden', !open);
+  $(this).attr('aria-expanded', open ? 'true' : 'false');
+});
+$('#coord-db-groups').on('click', '.genome-option', function() {
+  $('#coord-db').val($(this).data('db')).trigger('change');
+  renderCoordPicker();
+});
+
+var COORD_DB_ITEMS = [];
+var BLAST_CATEGORIES = [
+  { id: 'hexaploid', title: 'Hexaploid wheat genome', groups: ['AABBDD'] },
+  { id: 'tetraploid', title: 'Tetraploid wheat genome', groups: ['AABB', 'AAGG'] },
+  { id: 'diploid', title: 'Diploid wheat genome and wild relatives', groups: ['AA', 'DD', 'SS', 'MM', 'TT', 'UU', 'VV', 'DDNN', 'MMUU'] },
+  { id: 'triticale', title: 'Triticale (AABBRR)', groups: ['AABBRR'] },
+  { id: 'thinopyrum', title: 'Thinopyrum genome', groups: ['StStVVJJ', 'EE', 'Thinopyrum'] },
+  { id: 'rye', title: 'Rye genome', groups: ['RR'] },
+  { id: 'other_triticeae', title: 'Other Triticeae genome', groups: ['StStYYHH', 'NsNsXmXm'] },
+  { id: 'barley', title: 'Barley genome', groups: ['HH'] }
+];
+var OTHER_BLAST_CATEGORY = { id: 'other', title: 'Other / Unclassified', groups: [] };
+
+function blastDbPrefix(name) { return String(name || '').split('_')[0]; }
+function blastCategoryFor(name) {
+  var prefix = blastDbPrefix(name);
+  for (var i = 0; i < BLAST_CATEGORIES.length; i++) {
+    if (BLAST_CATEGORIES[i].groups.indexOf(prefix) !== -1) return BLAST_CATEGORIES[i].id;
+  }
+  return OTHER_BLAST_CATEGORY.id;
+}
+function coordDbCategory(id) {
+  var all = BLAST_CATEGORIES.concat([OTHER_BLAST_CATEGORY]);
+  for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i];
+  return OTHER_BLAST_CATEGORY;
+}
+function updateCoordPickerSummary() {
+  var name = $('#coord-db').val();
+  if (!name) { $('#coord-db-selected-name').text('Select a BLAST database'); $('#coord-db-selected-group').text(''); return; }
+  $('#coord-db-selected-name').text(name);
+  $('#coord-db-selected-group').text(blastDbPrefix(name));
+}
+function renderCoordPicker() {
+  var selected = $('#coord-db').val();
+  var q = ($('#coord-db-search').val() || '').toLowerCase().trim();
+  var buckets = {};
+  BLAST_CATEGORIES.concat([OTHER_BLAST_CATEGORY]).forEach(function(c) { buckets[c.id] = []; });
+  COORD_DB_ITEMS.forEach(function(item) { (buckets[blastCategoryFor(item.name)] || buckets.other).push(item); });
+  var html = ''; var shown = 0;
+  BLAST_CATEGORIES.concat([OTHER_BLAST_CATEGORY]).forEach(function(cat) {
+    var items = (buckets[cat.id] || []).filter(function(item) {
+      return !q || item.name.toLowerCase().indexOf(q) !== -1;
+    });
+    if (!items.length) return;
+    shown += items.length;
+    var open = !!q;
+    var options = items.map(function(item) {
+      var isSel = item.name === selected;
+      return '<button type="button" class="genome-option' + (isSel ? ' selected' : '') + '" data-db="' + escapeHtml(item.name) + '" role="option" aria-selected="' + (isSel ? 'true' : 'false') + '">' +
+        '<span>' + escapeHtml(item.name) + '</span></button>';
+    }).join('');
+    html += '<div class="genome-cat" data-cat="' + cat.id + '">' +
+      '<button type="button" class="genome-cat-head" aria-expanded="' + (open ? 'true' : 'false') + '">' +
+      '<span class="genome-cat-title">' + escapeHtml(cat.title) + '</span>' +
+      '<span class="genome-cat-count">' + items.length + '</span>' +
+      '<span class="genome-cat-chevron" aria-hidden="true">▾</span></button>' +
+      '<div class="genome-cat-body"' + (open ? '' : ' hidden') + '>' + options + '</div></div>';
+  });
+  $('#coord-db-groups').html(shown ? html : '<div class="genome-empty">No matching BLAST database.</div>');
+  updateCoordPickerSummary();
+}
 
 // Coordinate mode reads a chromosome interval, so only whole-genome databases
 // make sense there — a CDS database is keyed by transcript, not coordinates.
 function renderCoordDbs() {
   var sel = $('#coord-db'), prev = sel.val();
   sel.empty();
+  COORD_DB_ITEMS = [];
   (PS2_DB_GROUPS || []).forEach(function(g) {
     if (g.name !== 'genome') return;
-    g.databases.forEach(function(d) { sel.append($('<option>').val(d.name).text(d.name)); });
+    g.databases.forEach(function(d) {
+      COORD_DB_ITEMS.push(d);
+      sel.append($('<option>').val(d.name).text(d.name));
+    });
   });
   if (prev) sel.val(prev);
+  if (!sel.val() && COORD_DB_ITEMS.length) sel.val(COORD_DB_ITEMS[0].name);
+  renderCoordPicker();
   loadCoordChroms();
 }
 
