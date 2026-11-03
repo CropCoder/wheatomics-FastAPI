@@ -252,12 +252,15 @@ TOOL_SPECS: list[dict] = [
     _tool(
         "query_ppi",
         "Expression & networks",
-        "Query protein-protein interactions for wheat proteins (wheatPPI, CF-MS). Input must be "
-        "transcript IDs with the '.1' suffix (e.g. TraesCS6D02G084800.1).",
+        "Query wheat protein-protein interactions. PPI_result is the plant.MAP CF-MS "
+        "map (input transcript IDs with '.1'; min_score filters CF-MS). PPI_poppin is "
+        "the PoppIn rice PPI network mapped to wheat A/B/D homoeologs (input RefSeq "
+        "v1.1/02G gene IDs; returns supporting edges, identities and rice pair; "
+        "min_score is ignored).",
         {
-            "gene_ids": _p("string", "Comma-separated transcript IDs ('.1' suffix required)"),
-            "table": _p("string", "PPI data table", default="PPI_result"),
-            "min_score": _p("number", "Minimum interaction score", default=0.5),
+            "gene_ids": _p("string", "Comma-separated wheat gene IDs; PPI_result needs the '.1' transcript suffix"),
+            "table": _p("string", "PPI_result (CF-MS) or PPI_poppin (rice PPI mapped)", default="PPI_result"),
+            "min_score": _p("number", "CF-MS score threshold for PPI_result", default=0.5),
         },
         ["gene_ids"],
     ),
