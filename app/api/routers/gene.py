@@ -80,7 +80,7 @@ _KNOWN_SUMMARY_COLUMNS = (
 _KNOWN_DETAIL_COLUMNS = _KNOWN_SUMMARY_COLUMNS + (
     ", paper_title, key_result, function_description, cloning_method, "
     "cloning_method_description, author, author_mail, submission_date, "
-    "protein_family, validation_method"
+    "protein_family, validation_method, paper_authors, paper_journal"
 )
 
 #: Extra text columns scanned by the Python-side author / all-fields search.
@@ -345,9 +345,19 @@ def _reference_meta_for(doi: str | None, title: str | None) -> dict | None:
 
 
 def _known_reference_authors(row: dict) -> list[str]:
-    """Distinct paper authors for a row, resolved from the reference metadata."""
+    """Distinct paper authors for a row: DB paper_authors first, cache fallback."""
     authors: list[str] = []
     seen: set[str] = set()
+    raw_db = str(row.get("paper_authors") or "").strip()
+    if raw_db:
+        for entry in split_aligned_multi_value(raw_db):
+            for name in re.split(r";\s*", entry):
+                name = str(name).strip()
+                key = name.lower()
+                if key and key not in seen:
+                    seen.add(key)
+                    authors.append(name)
+        return authors
     for doi in split_legacy_multi_value(row.get("paper_doi")):
         meta = _reference_meta_for(doi, None)
         for name in (meta or {}).get("authors") or []:
@@ -373,12 +383,14 @@ def _build_known_references(row: dict) -> list[DOIReference]:
     titles = split_aligned_multi_value(row.get("paper_title"))
     dois = split_aligned_multi_value(row.get("paper_doi"))
     years = split_aligned_multi_value(row.get("publication_years"))
+    authors_db = split_aligned_multi_value(row.get("paper_authors"))
+    journals_db = split_aligned_multi_value(row.get("paper_journal"))
     if not any(years):
         # Legacy/CGI rows have no multi-value year column: fall back to the
         # scalar publication_year so references still show a year.
         scalar_year = _optional_text(row.get("publication_year"))
         years = [scalar_year] if scalar_year else []
-    count = max(len(titles), len(dois), len(years))
+    count = max(len(titles), len(dois), len(years), len(authors_db), len(journals_db))
     if count == 0:
         return []
     known_years = [year for year in years if year]
@@ -401,13 +413,16 @@ def _build_known_references(row: dict) -> list[DOIReference]:
                 year = meta["year"]
             if meta.get("title") and not title:
                 title = meta["title"]
+        db_authors_entry = authors_db[index].strip() if index < len(authors_db) else ""
+        db_journal_entry = journals_db[index].strip() if index < len(journals_db) else ""
+        db_authors = [name.strip() for name in re.split(r";\s*", db_authors_entry) if name.strip()]
         references.append(
             DOIReference(
                 doi=doi,
                 title=title,
                 year=year,
-                authors=(meta or {}).get("authors") or None,
-                journal=(meta or {}).get("journal") or None,
+                authors=db_authors or ((meta or {}).get("authors") or None),
+                journal=db_journal_entry or ((meta or {}).get("journal") or None),
                 pmid=(meta or {}).get("pmid") or None,
             )
         )

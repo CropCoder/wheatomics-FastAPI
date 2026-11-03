@@ -58,7 +58,7 @@ DEFAULT_MAX_BYTES = 1_800_000
 #: JSONL 中仅存在于导入管线的辅助字段，不进 API。
 DROP_FIELDS = frozenset({"_row", "_tier", "_warn", "clone_id"})
 #: DB 里用 ### 连接的多值字段：转成 API 接受的 list 形式。
-MULTI_FIELDS = ("paper_title", "paper_doi", "publication_years")
+MULTI_FIELDS = ("paper_title", "paper_doi", "publication_years", "paper_authors", "paper_journal")
 
 
 # ---------------------------------------------------------------------------
@@ -103,9 +103,48 @@ def map_jsonl_row(raw: dict[str, Any]) -> dict[str, Any]:
     return payload
 
 
-def load_jsonl(path: str, limit: int | None) -> list[dict[str, Any]]:
-    """读 JSONL（忽略空行）；``limit`` 只取前 N 行（便于小批量试跑）。"""
+DEFAULT_REF_META = Path(__file__).resolve().parents[1] / "app/services/data/known_gene_reference_meta.json"
 
+
+def load_ref_meta(path: str | None) -> dict[str, Any]:
+    """Load the DOI→authors/journal cache; empty dict if unavailable."""
+    try:
+        p = Path(path) if path else DEFAULT_REF_META
+        data = json.loads(p.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception as exc:  # noqa: BLE001 - metadata is optional
+        print(f"WARN: 无法读取 reference metadata {path or DEFAULT_REF_META}: {exc}", file=sys.stderr)
+        return {}
+
+
+def attach_paper_meta(payload: dict[str, Any], meta: dict[str, Any]) -> dict[str, Any]:
+    """Attach paper_authors/paper_journal from the DOI cache (if not already set)."""
+    if payload.get("paper_authors") and payload.get("paper_journal"):
+        return payload
+    dois = payload.get("paper_doi") or []
+    if isinstance(dois, str):
+        dois = split_join_field(dois)
+    doi_map = meta.get("doi") or {}
+    authors: list[str] = []
+    journals: list[str] = []
+    for doi in dois:
+        rec = doi_map.get(str(doi or "").strip().lower()) or {}
+        authors.append("; ".join(str(a).strip() for a in (rec.get("authors") or []) if str(a).strip()))
+        journals.append(str(rec.get("journal") or "").strip())
+    while authors and not authors[-1]:
+        authors.pop()
+    while journals and not journals[-1]:
+        journals.pop()
+    if authors and not payload.get("paper_authors"):
+        payload["paper_authors"] = authors
+    if journals and not payload.get("paper_journal"):
+        payload["paper_journal"] = journals
+    return payload
+
+
+def load_jsonl(path: str, limit: int | None, ref_meta: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    """读 JSONL（忽略空行）；``limit`` 只取前 N 行（便于小批量试跑）。"""
+    ref_meta = ref_meta or {}
     rows: list[dict[str, Any]] = []
     with open(path, encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, start=1):
@@ -118,7 +157,7 @@ def load_jsonl(path: str, limit: int | None) -> list[dict[str, Any]]:
                 raise ValueError(f"{path}:{line_number} 不是合法 JSON: {exc}") from exc
             if not isinstance(raw, dict):
                 raise ValueError(f"{path}:{line_number} 不是 JSON object")
-            rows.append(map_jsonl_row(raw))
+            rows.append(attach_paper_meta(map_jsonl_row(raw), ref_meta))
             if limit is not None and len(rows) >= limit:
                 break
     return rows
@@ -272,6 +311,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--jsonl", required=True, help="extract.py 生成的 JSONL 路径")
     parser.add_argument(
+        "--ref-meta",
+        default=str(DEFAULT_REF_META),
+        help=f"DOI→authors/journal 缓存；默认 {DEFAULT_REF_META}",
+    )
+    parser.add_argument(
         "--base-url",
         default="https://wheatomics.sdau.edu.cn",
         help="API 根地址，默认生产 https://wheatomics.sdau.edu.cn（本地可 http://127.0.0.1:8000）",
@@ -311,7 +355,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     try:
-        rows = load_jsonl(args.jsonl, args.limit)
+        ref_meta = load_ref_meta(args.ref_meta)
+        rows = load_jsonl(args.jsonl, args.limit, ref_meta)
     except (OSError, ValueError) as exc:
         print(f"读取 JSONL 失败: {exc}", file=sys.stderr)
         return 2

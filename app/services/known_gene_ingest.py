@@ -107,6 +107,8 @@ OPTIONAL_WRITE_FIELDS: tuple[str, ...] = (
     "publication_years",
     "paper_title",
     "paper_doi",
+    "paper_authors",
+    "paper_journal",
     "species_primary",
     "chromosome",
 )
@@ -120,7 +122,7 @@ DERIVED_WRITE_FIELDS: tuple[str, ...] = (
     "publication_years",
 )
 
-#: INSERT 白名单（23 列，不含自增 clone_id；顺序对齐 v2056 迁移脚本）。
+#: INSERT 白名单（25 列，不含自增 clone_id；顺序对齐 v2056 迁移脚本 + v2172 论文元数据列）。
 DB_INSERT_COLUMNS: tuple[str, ...] = (
     "gene_id",
     "reference_genome_id",
@@ -139,6 +141,8 @@ DB_INSERT_COLUMNS: tuple[str, ...] = (
     "functional_category",
     "paper_title",
     "paper_doi",
+    "paper_authors",
+    "paper_journal",
     "publication_year",
     "publication_years",
     "species_primary",
@@ -168,6 +172,8 @@ MAX_LENGTHS: dict[str, int] = {
     "key_result": 15000,
     "paper_title": TEXT_SOFT_LIMIT,
     "paper_doi": TEXT_SOFT_LIMIT,
+    "paper_authors": TEXT_SOFT_LIMIT,
+    "paper_journal": TEXT_SOFT_LIMIT,
     "function_description": TEXT_SOFT_LIMIT,
     "cloning_method_description": TEXT_SOFT_LIMIT,
     "protein_family": TEXT_SOFT_LIMIT,
@@ -684,6 +690,8 @@ def validate_create_payload(payload: dict) -> NormalizedWrite:
         for doi in split_multi_value(columns["paper_doi"]):
             if doi and not _DOI_RE.match(doi):
                 warnings.append(f"paper_doi 中 {doi!r} 不符合标准 DOI 形式（10.xxxx/...），已原样保存")
+    for name in ("paper_authors", "paper_journal"):
+        columns[name] = _validate_multi_field(name, values.get(name), errors, warnings)
 
     # --- 年份 ---------------------------------------------------------------
     pub_years_text: Optional[str] = None
@@ -869,6 +877,9 @@ def validate_update_payload(payload: dict, before_row: dict) -> NormalizedWrite:
         columns["paper_title"] = _validate_multi_field("paper_title", values["paper_title"], errors, warnings)
     if "paper_doi" in values:
         columns["paper_doi"] = _validate_multi_field("paper_doi", values["paper_doi"], errors, warnings)
+    for name in ("paper_authors", "paper_journal"):
+        if name in values:
+            columns[name] = _validate_multi_field(name, values[name], errors, warnings)
     if "paper_title" in values or "paper_doi" in values:
         merged_title = columns.get("paper_title", before_row.get("paper_title"))
         merged_doi = columns.get("paper_doi", before_row.get("paper_doi"))
