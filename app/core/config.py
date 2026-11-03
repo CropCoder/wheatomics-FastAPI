@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     DB_WHEATPSP: str = "wheat_psp_db"
     DB_PTM: str = "ptm"
     DB_SCRNA_DATA: str = "scrna_data"
+    DB_TF: str = "wheatTFdb"
     SCRNNA_CLASS_FILE: Path = Path("/var/www/html/scRNA/class.txt")
 
     BLAST_DB_PATH: Path = Path("/var/www/html/getfasta/blastdb")

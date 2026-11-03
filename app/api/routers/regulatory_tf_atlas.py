@@ -7,6 +7,9 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
+from app.core.config import settings
+from app.db.mysql import mysql_cursor
+
 router=APIRouter(prefix="/api/regulatory/atlas",tags=["Regulatory TF Atlas"])
 ROOT=Path("/var/www/html/wheat-regulatory-hub/data/processed")
 DB=ROOT/"regulatory.sqlite"
@@ -14,6 +17,10 @@ ATLAS=ROOT/"wheat_tf_atlas.tsv"
 EXPR=ROOT/"wheat_tf_expression.tsv"
 CLASS=ROOT/"wheat_tf_classification.tsv"
 CITATION="Ren et al. (2026), Journal of Integrative Agriculture 25(10):4378–4382; DOI:10.1016/j.jia.2026.07.037"
+ITAK_CITATION=("iTAK: Zheng Y, Jiao C, Sun H, et al. (2016). iTAK: a program for "
+               "genome-wide prediction and classification of plant transcription "
+               "factors, transcriptional regulators, and protein kinases. "
+               "Molecular Plant 9(12):1667–1670. DOI:10.1016/j.molp.2016.09.014")
 
 # Upstream hits live in the main database. Downstream hits are sharded one file
 # per chromosome under regulatory_shards/, where hits.region_id is the text
@@ -65,6 +72,44 @@ def tf_info(g):
     item=table(ATLAS).get(g)
     if not item:return {"status":"not_annotated_in_ren2026","is_candidate_tf":False,"source":CITATION}
     return {"status":"annotated_candidate_tf","is_candidate_tf":True,**item}
+
+def _like_prefix(gene_id):
+    """``X`` -> ``X.%`` with LIKE metacharacters escaped."""
+    escaped=gene_id.replace("\\","\\\\").replace("%","\\%").replace("_","\\_")
+    return escaped+".%"
+
+def tf_domains(gene_id):
+    """Pfam domain hits and iTAK classification for one gene.
+
+    iTAK writes transcript-level IDs (``TraesCS2A02G116100.1``) while the atlas
+    works with the bare gene ID, so the lookup returns the bare ID plus every
+    suffixed transcript it has. MySQL is optional: if the database is missing
+    or the account cannot read it, the section reports ``unavailable`` instead
+    of breaking the whole profile request.
+    """
+    like=_like_prefix(gene_id)
+    try:
+        with mysql_cursor(settings.DB_TF) as cur:
+            cur.execute(
+                "SELECT source,gene_id,pfam,query_start,query_end,hit_start,hit_end,"
+                "align_query_end,align_hit_end,score,evalue,description,"
+                "protein_length FROM tf_alignment "
+                "WHERE gene_id=%s OR gene_id LIKE %s "
+                "ORDER BY gene_id,query_start IS NULL,query_start,score DESC",
+                (gene_id,like))
+            items=[dict(r) for r in cur.fetchall()]
+            cur.execute("SELECT source,gene_id,family,tf_type,hierarchy "
+                        "FROM tf_classification "
+                        "WHERE gene_id=%s OR gene_id LIKE %s ORDER BY gene_id",
+                        (gene_id,like))
+            classes=[dict(r) for r in cur.fetchall()]
+    except Exception as exc:
+        return {"status":"unavailable","message":str(exc)[:200],"items":[],
+                "classifications":[],"protein_length":None}
+    length=next((r["protein_length"] for r in items if r["protein_length"]),None)
+    return {"status":"ok" if (items or classes) else "not_found","items":items,
+            "classifications":classes,"protein_length":length,
+            "citation":ITAK_CITATION}
 # The motif metadata layout never changes between releases, so resolve it once
 # per database file instead of running two PRAGMA/schema queries per request.
 _META_CACHE={}
@@ -221,6 +266,7 @@ def profile(gene_id:str,region:str="upstream",motif_limit:int=Query(100,ge=1,le=
     tf=tf_info(g)
     expression=table(EXPR).get(g) if tf["is_candidate_tf"] else None
     return {"gene":gene,"tf":tf,"classification":classification(g),
+            "domains":tf_domains(g),
             "expression":expression,"regions":regions,"region":region,
             "motifs":motifs,"motifs_truncated":truncated,"citation":CITATION}
 

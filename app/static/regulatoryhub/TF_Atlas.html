@@ -19,6 +19,14 @@ table.wide{min-width:940px}
 .seg button{padding:6px 12px;font-size:13px;background:var(--mist);color:var(--forest);border-color:var(--line)}
 .seg button.active{background:var(--leaf);color:#fff;border-color:var(--leaf)}
 .seg button:disabled{opacity:.45;cursor:not-allowed}
+.arch{overflow-x:auto;margin:6px 0 12px}
+.arch svg{display:block}
+.arch text{font-size:11px;fill:var(--muted)}
+.dom-row{cursor:pointer}
+.dom-row:hover{background:var(--mist)}
+.dom-desc td{background:#f7faf8;border-bottom:1px solid var(--line)}
+.dom-desc pre{margin:6px 0 0;font-size:12px;line-height:1.45;color:#3d5247}
+.dom-desc .q{background:#99ffff}.dom-desc .a{background:#ffff99}.dom-desc .h{background:#ff99ff}
 </style></head><body>
 <div id="v2-shell-header"></div>
 
@@ -28,9 +36,10 @@ table.wide{min-width:940px}
       <div>
         <p class="news-kicker">WheatOmics 2.0 · Gene regulation</p>
         <h1 class="news-title">Wheat <em>TF Atlas</em></h1>
-        <p class="news-lead">Enter a wheat gene to see its TF family classification, tissue expression, promoter motif hits, co-expression modules and overlapping regulatory variants.</p>
+        <p class="news-lead">Enter a wheat gene to see its Pfam domain architecture and iTAK classification, then its TF family calls, tissue expression, promoter motif hits, co-expression modules and overlapping regulatory variants.</p>
         <div class="news-stats">
           <span class="news-stat"><strong>TF</strong> classification</span>
+          <span class="news-stat">Pfam domains</span>
           <span class="news-stat">Promoter motifs</span>
           <span class="news-stat">Motif–variant overlap</span>
         </div>
@@ -46,6 +55,13 @@ table.wide{min-width:940px}
 <button id="search">Analyze gene</button>
 <button id="clear" type="button" class="secondary">Clear</button>
 <p class="muted" id="status">Search any IWGSC RefSeq v1.1 (02G) gene, e.g. TraesCS2A02G305400.</p></section>
+<section id="domainsec" hidden><h2>Pfam domains &amp; iTAK classification</h2>
+<p class="muted" id="domstatus"></p>
+<div id="domclass"></div>
+<div id="arch" class="arch"></div>
+<div id="domtable" class="scroll"></div>
+<p class="muted" id="domnote"></p>
+</section>
 <section id="profile" hidden><h2>Gene &amp; TF identity</h2>
 <div id="geneinfo" class="scroll"></div>
 <p class="muted" id="genemeta"></p>
@@ -141,6 +157,123 @@ const ID_TITLES={
 "PlantTFDB":"Transcription factor family classification from PlantTFDB.",
 "Classification from Reference":'Transcription factor family classification from "Ramírez-González RH, Borrill P, Lang D, et al. The transcriptional landscape of polyploid wheat. Science. 2018;361(6403):eaar6089. doi:10.1126/science.aar6089."',
 "IWGSC RefSeq v1.1 TF_family":'"IWGSC RefSeq v1.1 TF_family" factor family classification based on the genome annotation of IWGSC RefSeq v1.1.'};
+const SVGNS="http://www.w3.org/2000/svg";
+const DOM_COLORS=["#3f7f5f","#4f86a8","#b0793f","#7a5ea8","#3f8f8f","#a8534f","#6b8e23","#8a6d3b"];
+function svgEl(tag,attrs){const e=document.createElementNS(SVGNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e}
+function domColor(name){let h=0;for(const ch of String(name||""))h=(h*31+ch.charCodeAt(0))>>>0;return DOM_COLORS[h%DOM_COLORS.length]}
+// iTAK-style protein diagram: one lane per hit so overlapping Pfam domains
+// stay visible, positioned on the query protein coordinates.
+function architecture(length,items){
+const laneEnd=[];
+const sorted=[...items].sort((a,b)=>(a.query_start||0)-(b.query_start||0));
+for(const it of sorted){
+const s=it.query_start||1,e=it.query_end||s;let lane=0;
+while(laneEnd[lane]!=null&&laneEnd[lane]>s)lane++;
+it.__lane=lane;laneEnd[lane]=e}
+const lanes=Math.max(1,laneEnd.length),rowH=20,top=16,W=1080,padL=52,padR=24;
+const H=top+lanes*rowH+28;
+const x=p=>padL+(Math.max(0,Math.min(length,p))-1)/Math.max(1,length-1)*(W-padL-padR);
+const svg=svgEl("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"Protein domain architecture"});
+svg.setAttribute("width","100%");
+const base=top+lanes*rowH;
+svg.appendChild(svgEl("line",{x1:x(1),y1:base,x2:x(length),y2:base,stroke:"#c9d6ce","stroke-width":2}));
+const ticks=[1,Math.round(length*0.25),Math.round(length*0.5),Math.round(length*0.75),length].filter((v,i,a)=>a.indexOf(v)===i);
+for(const t of ticks){
+const xx=x(t);
+svg.appendChild(svgEl("line",{x1:xx,y1:base,x2:xx,y2:base+5,stroke:"#c9d6ce"}));
+const label=svgEl("text",{x:xx,y:base+18,"text-anchor":"middle"});label.textContent=t;svg.appendChild(label)}
+for(const it of sorted){
+const y=top+it.__lane*rowH;
+const s=Math.max(1,it.query_start||1),e=Math.min(length,it.query_end||s);
+const w=Math.max(3,x(e)-x(s));
+const rect=svgEl("rect",{x:x(s),y:y-7,width:w,height:14,rx:4,fill:domColor(it.pfam)});
+rect.setAttribute("opacity","0.9");
+const tip=svgEl("title",{});
+tip.textContent=`${it.pfam} · ${s}-${e} aa · score ${it.score==null?"—":it.score} · E ${it.evalue||"—"}`;
+rect.appendChild(tip);svg.appendChild(rect);
+if(w>52){
+const t=svgEl("text",{x:x(s)+w/2,y:y+4,"text-anchor":"middle"});
+t.textContent=it.pfam;t.style.fill="#fff";t.style.fontSize="10px";svg.appendChild(t)}}
+return svg}
+function domainTable(items,multiSource){
+const t=document.createElement("table");t.className="wide";
+const cols=multiSource?["Transcript","Source","Order","Pfam ID","Query Start","Query End","Hit Start","Hit End","Score","E-value"]
+:["Transcript","Order","Pfam ID","Query Start","Query End","Hit Start","Hit End","Score","E-value"];
+const head=t.createTHead().insertRow();
+for(const c of cols){
+const th=document.createElement("th");th.appendChild(document.createTextNode(c));head.appendChild(th)}
+const body=t.createTBody();
+// The order restarts for every transcript suffix, like iTAK numbers the hits
+// of one protein.
+const seq=new Map();
+items.forEach(x=>{
+const n=(seq.get(x.gene_id)||0)+1;seq.set(x.gene_id,n);
+const tr=body.insertRow();tr.className="dom-row";
+tr.title="Click to show the description and alignment block";
+const values=[x.gene_id||"—"];
+if(multiSource)values.push(x.source||"—");
+values.push(n,x.pfam||"—",
+x.query_start==null?"—":x.query_start,x.query_end==null?"—":x.query_end,
+x.hit_start==null?"—":x.hit_start,x.hit_end==null?"—":x.hit_end,
+x.score==null?"—":Number(x.score).toFixed(1),x.evalue||"—");
+for(const v of values)text(tr.insertCell(),v);
+const dr=body.insertRow();dr.className="dom-desc";dr.hidden=true;
+const td=dr.insertCell();td.colSpan=cols.length;
+const box=document.createElement("div");box.style.padding="2px 0 8px";
+const b=document.createElement("b");b.textContent="Description: ";box.appendChild(b);
+box.appendChild(document.createTextNode(x.description||"—"));
+const pre=document.createElement("pre");
+const q=document.createElement("span");q.className="q";q.textContent="Query:"+(x.align_query_end==null?x.query_end:x.align_query_end);
+const a=document.createElement("span");a.className="a";a.textContent="Align:";
+const h=document.createElement("span");h.className="h";h.textContent="Hit  :"+(x.align_hit_end==null?x.hit_end:x.align_hit_end);
+pre.append(q,document.createTextNode("\n"),a,document.createTextNode("\n"),h);
+box.appendChild(pre);td.appendChild(box);
+tr.addEventListener("click",()=>{dr.hidden=!dr.hidden})});
+return t}
+function renderDomains(d){
+const sec=$("domainsec");
+$("arch").replaceChildren();$("domtable").replaceChildren();$("domclass").replaceChildren();
+text($("domstatus"),"");text($("domnote"),"");
+d=d||{status:"unavailable"};
+if(d.status==="unavailable"){
+text($("domstatus"),"Domain data unavailable"+(d.message?": "+d.message:"")+".");sec.hidden=false;return}
+const items=d.items||[];
+const classes=d.classifications||[];
+if(classes.length){
+const classMulti=new Set(classes.map(c=>c.source)).size>1;
+const cols=classMulti?["Transcript","Source","TF family (iTAK)","Type","Hierarchy"]
+:["Transcript","TF family (iTAK)","Type","Hierarchy"];
+const rows=classes.map(c=>{
+const r={"Transcript":c.gene_id||"—"};
+if(classMulti)r["Source"]=c.source||"—";
+r["TF family (iTAK)"]=c.family||"—";r["Type"]=c.tf_type||"—";r["Hierarchy"]=c.hierarchy||"—";
+return r});
+$("domclass").appendChild(table(rows,cols))}
+if(!items.length){
+text($("domstatus"),"No Pfam domain hits for this gene in the iTAK alignment table.");sec.hidden=false;return}
+// Every transcript suffix gets its own diagram so a gene with several
+// isoforms shows all of them, each scaled to its own protein length.
+const multiSource=new Set(items.map(x=>x.source)).size>1;
+const groups=[],index=new Map();
+for(const it of items){
+let g=index.get(it.gene_id);
+if(!g){g={gene_id:it.gene_id,protein_length:0,items:[]};index.set(it.gene_id,g);groups.push(g)}
+g.items.push(it);
+if(it.protein_length&&it.protein_length>g.protein_length)g.protein_length=it.protein_length}
+for(const g of groups){
+const length=g.protein_length||Math.max(...g.items.map(x=>x.query_end||0));
+const cap=document.createElement("p");cap.className="muted";
+cap.style.margin="4px 0 0";
+cap.textContent=`${g.gene_id} · ${length} aa · ${g.items.length} Pfam hit(s)`;
+if(multiSource){
+const src=[...new Set(g.items.map(x=>x.source).filter(Boolean))];
+if(src.length)cap.textContent+=" · "+src.join(", ")}
+$("arch").appendChild(cap);
+$("arch").appendChild(architecture(length,g.items))}
+text($("domstatus"),`${items.length} Pfam hit(s) in ${groups.length} transcript(s). Click a row for its description and alignment block.`);
+$("domtable").appendChild(domainTable(items,multiSource));
+if(d.citation)text($("domnote"),d.citation);
+sec.hidden=false}
 function renderIdentity(d){
 const g=d.gene||{},c=d.classification||{},tf=d.tf||{};
 const row={
@@ -200,13 +333,14 @@ text($("motifstatus"),`${d.motifs.length} motif hits in ${regionLabel(motifRegio
 }
 async function search(){
 const g=$("gene").value.trim();if(!g)return;
-text($("status"),"Loading...");for(const id of ["profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
+text($("status"),"Loading...");for(const id of ["domainsec","profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
 try{const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(g)+"?region="+encodeURIComponent(motifRegion)+"&motif_limit=500");
 currentGene=d.gene.gene_id;
 lastExpression=d.expression||null;
 $("expr").replaceChildren();
 $("show-expr").textContent="Show expression across 26 tissues";
 $("show-expr").hidden=!lastExpression;
+renderDomains(d.domains);
 renderIdentity(d);
 $("profile").hidden=false;
 renderMotifTable(d.motifs);
@@ -235,8 +369,8 @@ text($("vstatus"),`${d.items.length} motif–variant intersections in ${regionLa
 function clearAll(){currentGene="";lastExpression=null;
 $("download-motifs").disabled=true;$("download-variants").disabled=true;
 $("gene").value="";
-for(const id of ["profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
-for(const id of ["geneinfo","genemeta","tfinfo","expr","motifs","motifstatus","varianttable"])$(id).replaceChildren();
+for(const id of ["domainsec","profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
+for(const id of ["geneinfo","genemeta","tfinfo","expr","motifs","motifstatus","varianttable","arch","domtable","domclass","domstatus","domnote"])$(id).replaceChildren();
 text($("vstatus"),"");
 text($("status"),"Search any IWGSC RefSeq v1.1 (02G) gene, e.g. TraesCS2A02G305400.");
 $("gene").focus()}
