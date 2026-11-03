@@ -74,13 +74,13 @@ _KNOWN_SUMMARY_COLUMNS = (
     "clone_id, gene_id, gene_name, chrom_pos, gene_phenotype, gene_species, "
     "publication_year, paper_doi, reference_genome_id, species_primary, "
     "chromosome, functional_category, research_strategy, publication_years, "
-    "author"
+    "author, paper_authors"
 )
 
 _KNOWN_DETAIL_COLUMNS = _KNOWN_SUMMARY_COLUMNS + (
     ", paper_title, key_result, function_description, cloning_method, "
     "cloning_method_description, author, author_mail, submission_date, "
-    "protein_family, validation_method, paper_authors, paper_journal"
+    "protein_family, validation_method, paper_journal"
 )
 
 #: Extra text columns scanned by the Python-side author / all-fields search.
