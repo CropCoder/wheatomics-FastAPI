@@ -205,8 +205,8 @@ t.textContent=it.pfam;t.style.fill="#fff";t.style.fontSize="10px";svg.appendChil
 return svg}
 function domainTable(items,multiSource){
 const t=document.createElement("table");t.className="wide";
-const cols=multiSource?["Transcript","Source","Order","Pfam ID","Query Start","Query End","Hit Start","Hit End","Score","E-value"]
-:["Transcript","Order","Pfam ID","Query Start","Query End","Hit Start","Hit End","Score","E-value"];
+const cols=multiSource?["Transcript","Source","Order","Pfam ID","Query Start","Query End","Hit Start","Hit End","Score","E-value","Description"]
+:["Transcript","Order","Pfam ID","Query Start","Query End","Hit Start","Hit End","Score","E-value","Description"];
 const head=t.createTHead().insertRow();
 for(const c of cols){
 const th=document.createElement("th");th.appendChild(document.createTextNode(c));head.appendChild(th)}
@@ -223,8 +223,9 @@ if(multiSource)values.push(x.source||"—");
 values.push(n,x.pfam||"—",
 x.query_start==null?"—":x.query_start,x.query_end==null?"—":x.query_end,
 x.hit_start==null?"—":x.hit_start,x.hit_end==null?"—":x.hit_end,
-x.score==null?"—":Number(x.score).toFixed(1),x.evalue||"—");
-for(const v of values)text(tr.insertCell(),v);
+x.score==null?"—":Number(x.score).toFixed(1),x.evalue||"—",x.description||"—");
+values.forEach((v,i)=>{const td=tr.insertCell();text(td,v);
+if(i===values.length-1){td.style.maxWidth="320px";td.style.wordBreak="break-word"}});
 const dr=body.insertRow();dr.className="dom-desc";dr.hidden=true;
 const td=dr.insertCell();td.colSpan=cols.length;
 const box=document.createElement("div");box.style.padding="2px 0 8px";
