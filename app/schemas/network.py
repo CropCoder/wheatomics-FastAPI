@@ -17,19 +17,30 @@ class CoexpressionPair(BaseModel):
 
 
 class PPIInteraction(BaseModel):
-    """Protein interaction record."""
+    """Protein interaction record.
+
+    PPI_result (plant.MAP CF-MS) uses eggnog/score/annotation fields; PPI_poppin
+    (rice PoppIn mapped to wheat copies) uses subgenome/identity/supporting-edge
+    fields.  Both share wheat_id1/wheat_id2, and fields absent from a dataset are
+    omitted from the JSON payload.
+    """
 
     wheat_id1: list[str]
     wheat_id2: list[str]
-    eggnog_id1: str
-    eggnog_id2: str
-    score: float
-    annotation1: str
-    annotation2: str
+    eggnog_id1: str = ""
+    eggnog_id2: str = ""
+    score: float | None = None
+    annotation1: str = ""
+    annotation2: str = ""
     # Populated by the PoppIn dataset only; omitted from the payload when absent
     # (see model_dump(exclude_none=True) in the router).
     rice_pair: str | None = None
     experimental_score: float | None = None
+    subgenome1: str | None = None
+    subgenome2: str | None = None
+    supporting_edges: int | None = None
+    identity1: float | None = None
+    identity2: float | None = None
 
 
 class BioprojectMeta(BaseModel):

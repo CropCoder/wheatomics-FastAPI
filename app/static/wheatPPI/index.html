@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="WheatPPI — search wheat protein-protein interactions from the plant.MAP CF-MS complex map.">
+<meta name="description" content="WheatPPI — search wheat protein-protein interactions from the plant.MAP CF-MS complex map and the PoppIn rice PPI network mapped to wheat A/B/D homoeologs.">
 <title>WheatPPI | WheatOmics 2.0</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
@@ -43,7 +43,7 @@ var _hmt = _hmt || [];
       <div>
         <p class="news-kicker">WheatOmics 2.0 · Interaction atlas</p>
         <h1 class="news-title">Wheat<em>PPI</em></h1>
-        <p class="news-lead">Search wheat protein-protein interactions from the plant.MAP CF-MS complex map or the PoppIn predicted map, and filter hits by confidence score or supporting edges.</p>
+        <p class="news-lead">Search wheat protein-protein interactions from the plant.MAP CF-MS complex map or the PoppIn rice PPI network mapped to wheat A/B/D homoeologs.</p>
         <div class="news-stats">
           <span class="news-stat"><strong>2</strong> interaction datasets</span>
           <span class="news-stat">Confidence filters</span>
@@ -64,7 +64,7 @@ var _hmt = _hmt || [];
                 <label for="table-select"><strong>PPI Database</strong></label>
                 <select id="table-select" class="form-control" onchange="onTableChange()">
                   <option value="PPI_result">WheatPPI (CF-MS)</option>
-                  <option value="PPI_poppin">Wheat PoppIn (predicted)</option>
+                  <option value="PPI_poppin">Wheat PoppIn (rice PPI mapped)</option>
                 </select>
               </div>
               <div class="form-group" id="score-group">
@@ -149,22 +149,33 @@ var DATASETS = {
     placeholder: 'TraesCS2D02G229900',
     showRicePair: true,
     scoreOptions: [],
-    headers: ['WheatID1', 'WheatID2', 'eggNOGID1', 'eggNOGID2', 'STRING score',
-              'Annotation1', 'Annotation2', 'Rice homolog pair'],
-    scoreDecimals: 3,
-    about: '<strong>About this data:</strong> predicted wheat protein&ndash;protein interactions ' +
-      'obtained by mapping rice (<em>Oryza sativa</em>) STRING interactions onto wheat proteins ' +
-      'through eggNOG orthogroups. <em>STRING score</em> is the rice STRING confidence of the ' +
-      'matching rice pair and <em>Rice homolog pair</em> lists that pair. Gene IDs are given ' +
-      'without a transcript suffix. These interactions are <strong>computationally predicted</strong>.',
-    citation: '<strong>Citation:</strong><br>' +
-      'STRING: Szklarczyk D, et al. The STRING database in 2023: protein&ndash;protein ' +
-      'association networks and functional enrichment analyses for any sequenced genome of ' +
-      'interest. Nucleic Acids Research, 2023.<br>' +
-      '<a href="https://string-db.org/" target="_blank">https://string-db.org/</a><br>' +
-      'eggNOG: Cantalapiedra CP, et al. eggNOG-mapper v2: functional annotation, orthology ' +
-      'assignments, and domain prediction at the metagenomic scale. Molecular Biology and ' +
-      'Evolution, 2021.'
+    headers: ['WheatID1', 'WheatID2', 'Subgenome1', 'Subgenome2', 'Supporting edges',
+              'Identity 1 (%)', 'Identity 2 (%)', 'Rice homolog pair'],
+    scoreDecimals: 0,
+    about: '<strong>How this dataset was built:</strong> ' +
+      'We started from the PoppIn rice PPI network ' +
+      '(125,101 rice protein&ndash;protein edges / 32,350 rice proteins; ' +
+      '<a href="https://riceome.hzau.edu.cn/poppin/" target="_blank">riceome.hzau.edu.cn/poppin</a>) ' +
+      'and transferred each rice protein to its wheat A/B/D homoeologs. ' +
+      'Rice&rarr;wheat copies were identified by sequence homology ' +
+      '(identity &ge; 60%, query coverage &ge; 50%) and, where sequence matches were missing, ' +
+      'by Foldseek 3Di structural homology; each rice edge was expanded to wheat copy pairs and ' +
+      'duplicate pairs collapsed. In the final delivery, 49,435 / 125,101 rice edges (39.5%) ' +
+      'produced <strong>386,526 unique wheat&ndash;wheat interactions</strong>. ' +
+      '<em>Supporting edges</em> is the number of independent rice edges behind a wheat pair; ' +
+      '<em>Identity</em> is the best rice&rarr;wheat sequence identity and ' +
+      '<em>Rice homolog pair</em> is one underlying rice interaction. ' +
+      'Wheat IDs use IWGSC RefSeq v1.1 (02G) gene IDs without a transcript suffix. ' +
+      'These interactions are <strong>computationally predicted</strong>, not experimentally measured.',
+    citation: '<strong>Data sources:</strong><br>' +
+      'PoppIn rice PPI network: <a href="https://riceome.hzau.edu.cn/poppin/" target="_blank">' +
+      'https://riceome.hzau.edu.cn/poppin/</a><br>' +
+      'Foldseek structural homology: van Kempen M, et al. Fast and accurate protein structure ' +
+      'search with Foldseek. Nature Biotechnology, 2024. ' +
+      '<a href="https://doi.org/10.1038/s41587-023-01773-0" target="_blank">' +
+      'https://doi.org/10.1038/s41587-023-01773-0</a><br>' +
+      'Data construction details: <a href="https://mp.weixin.qq.com/s/s-096KleYpn1Io7dofuZoQ" ' +
+      'target="_blank">WheatOmics PoppIn construction note</a>'
   }
 };
 
@@ -246,13 +257,22 @@ function renderResults(interactions, table) {
     html += '<tr>';
     html += '<td style="max-width:200px;word-break:break-all;">' + escapeHtml(w1) + '</td>';
     html += '<td style="max-width:200px;word-break:break-all;">' + escapeHtml(w2) + '</td>';
-    html += '<td>' + escapeHtml(r.eggnog_id1 || '') + '</td>';
-    html += '<td>' + escapeHtml(r.eggnog_id2 || '') + '</td>';
-    html += '<td>' + (r.score != null ? Number(r.score).toFixed(decimals) : '') + '</td>';
-    html += '<td style="max-width:300px;word-break:break-word;font-size:12px;">' + escapeHtml(r.annotation1 || '') + '</td>';
-    html += '<td style="max-width:300px;word-break:break-word;font-size:12px;">' + escapeHtml(r.annotation2 || '') + '</td>';
-    if (ds.showRicePair) {
+    if (table === 'PPI_poppin') {
+      html += '<td>' + escapeHtml(r.subgenome1 || '') + '</td>';
+      html += '<td>' + escapeHtml(r.subgenome2 || '') + '</td>';
+      html += '<td>' + (r.supporting_edges != null ? r.supporting_edges : '') + '</td>';
+      html += '<td>' + (r.identity1 != null ? Number(r.identity1).toFixed(1) : '') + '</td>';
+      html += '<td>' + (r.identity2 != null ? Number(r.identity2).toFixed(1) : '') + '</td>';
       html += '<td style="max-width:220px;word-break:break-word;font-size:12px;">' + escapeHtml(r.rice_pair || '') + '</td>';
+    } else {
+      html += '<td>' + escapeHtml(r.eggnog_id1 || '') + '</td>';
+      html += '<td>' + escapeHtml(r.eggnog_id2 || '') + '</td>';
+      html += '<td>' + (r.score != null ? Number(r.score).toFixed(decimals) : '') + '</td>';
+      html += '<td style="max-width:300px;word-break:break-word;font-size:12px;">' + escapeHtml(r.annotation1 || '') + '</td>';
+      html += '<td style="max-width:300px;word-break:break-word;font-size:12px;">' + escapeHtml(r.annotation2 || '') + '</td>';
+      if (ds.showRicePair) {
+        html += '<td style="max-width:220px;word-break:break-word;font-size:12px;">' + escapeHtml(r.rice_pair || '') + '</td>';
+      }
     }
     html += '</tr>';
   });

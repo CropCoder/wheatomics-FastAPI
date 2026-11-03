@@ -25,51 +25,28 @@ def query_ppi(
 ) -> dict:
     """Query protein-protein interaction (PPI) relationships.
 
-    ⚠️  Gene ID notes:
-        This module uses wheat protein interaction data (wheatPPI), based on
-        the Chinese Spring IWGSC v2.1 annotation. Input must be transcript IDs
-        (the gene ID with a ".1" suffix appended), e.g.
-        "TraesCS6D02G084800.1". If a gene ID without ".1" is supplied, the
-        query will not match any results.
-
-    Purpose:
-        Given a list of gene IDs, query the protein pairs that interact with
-        those proteins in the protein interaction database. Returns the gene
-        IDs of both interacting partners, eggNOG IDs, functional annotations
-        and interaction scores (Score).
-
-        Score threshold notes (CF-MS score):
-        - 0.5: medium confidence (default)
-        - 0.2: low confidence
-        - 0: no filtering, return all records
+    Datasets:
+        PPI_result
+            plant.MAP CF-MS wheat complex map (McWhite et al. 2020).  Wheat
+            UniProt IDs were mapped to IWGSC RefSeq v1.1; Score is the CF-MS
+            confidence score.  Input transcript IDs should keep the ".1" suffix.
+        PPI_poppin
+            PoppIn rice PPI network (125,101 rice edges / 32,350 rice proteins)
+            transferred to wheat A/B/D homoeologs.  Rice proteins were mapped
+            by sequence homology (identity >= 60%, qcov >= 50%) plus Foldseek
+            structural homology to recover missing copies; each rice edge was
+            expanded to wheat copy pairs and duplicate pairs collapsed.  Input
+            wheat gene IDs are IWGSC RefSeq v1.1 (02G) IDs without a transcript
+            suffix.  supporting_edges is the number of rice edges supporting the
+            wheat pair; identity1/identity2 are the best rice-to-wheat mapping
+            identities; rice_pair is one underlying rice interaction.
 
     Usage:
-        GET /api/ppi/query?gene_ids=<gene1,gene2>&table=<table>&min_score=<minimum score>
-        - gene_ids: required, comma-separated list of gene IDs (transcript IDs with the ".1" suffix)
-        - table: optional, PPI data table name, default PPI_result
-        - min_score: optional, CF-MS interaction score threshold, default 0.5. Common values: 0.5 (medium), 0.2 (low), 0 (all)
-
-    Example:
-        Request:
-          curl -X GET "http://localhost:8000/api/ppi/query?gene_ids=TraesCS6D02G084800.1&table=PPI_result&min_score=0.5"
-
-        Response:
-          {
-            "success": true,
-            "data": {
-              "interactions": [
-                {
-                  "wheat_id1": ["TraesCS6D02G084800"],
-                  "wheat_id2": ["TraesCS6D02G084800.1"],
-                  "eggnog_id1": "ENOG410XNNN",
-                  "eggnog_id2": "ENOG410XMMM",
-                  "score": 0.95,
-                  "annotation1": "MADS-box transcription factor",
-                  "annotation2": "Flowering time protein"
-                }
-              ]
-            }
-          }
+        GET /api/ppi/query?gene_ids=<gene1,gene2>&table=<PPI_result|PPI_poppin>
+        - gene_ids: required, comma-separated (max 200)
+        - table: optional, PPI_result (default) or PPI_poppin
+        - min_score: CF-MS threshold for PPI_result (0.5/0.2/0); ignored for
+          PPI_poppin, which is a discrete rice-supported network
     """
 
     table = ensure_allowed_table(table, PPI_TABLES, "ppi table")
@@ -86,6 +63,32 @@ def query_ppi(
     # WheatID columns store multiple IDs joined by '#' (e.g. "A.1#B.1#C.1"), so
     # anchor each gene with (^|#)...(#|$) instead of ^...$ to match one ID inside
     # the multi-value field without matching an unrelated prefix.
+    if table == "PPI_poppin":
+        # PoppIn wheat IDs carry no transcript suffix; accept either form.
+        poppin_genes = [re.sub(r"\.\d+$", "", gene) for gene in genes]
+        poppin_patterns = [f"^{re.escape(gene)}$" for gene in poppin_genes]
+        poppin_combined = "|".join(poppin_patterns)
+        with mysql_cursor(settings.DB_PPI) as cursor:
+            cursor.execute(
+                "SELECT * FROM `PPI_poppin` "
+                "WHERE WheatID1 REGEXP %s OR WheatID2 REGEXP %s",
+                (poppin_combined, poppin_combined),
+            )
+            for row in cursor.fetchall():
+                interactions.append(
+                    PPIInteraction(
+                        wheat_id1=[str(row["WheatID1"])],
+                        wheat_id2=[str(row["WheatID2"])],
+                        subgenome1=row.get("Subgenome1") or None,
+                        subgenome2=row.get("Subgenome2") or None,
+                        supporting_edges=int(row.get("SupportingEdges") or 0),
+                        identity1=float(row["Identity1"]) if row.get("Identity1") is not None else None,
+                        identity2=float(row["Identity2"]) if row.get("Identity2") is not None else None,
+                        rice_pair=normalize_text(str(row.get("Rice_pair") or "")) or None,
+                    )
+                )
+        return ok({"interactions": [i.model_dump(exclude_none=True) for i in interactions]})
+
     patterns = [f"(^|#){re.escape(g)}(#|$)" for g in genes]
     # MySQL REGEXP supports alternation; join into one pattern so a single scan
     # matches any requested gene in either WheatID column.
