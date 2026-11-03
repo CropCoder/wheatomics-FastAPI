@@ -125,8 +125,16 @@ if(tip){th.title=tip;th.style.cursor="help"}
 tr.appendChild(th)}
 const body=t.createTBody();for(const r of rows){const tr=body.insertRow();for(const c of columns){const td=tr.insertCell();text(td,r[c])}}
 return t}
-async function api(path){const r=await fetch(path);let x;try{x=await r.json()}catch{x={detail:"Invalid JSON response"}}
-if(!r.ok)throw Error(typeof x.detail==="string"?x.detail:"HTTP "+r.status);return x}
+async function api(path){
+const r=await fetch(path);
+const raw=await r.text();
+let x=null;try{x=raw?JSON.parse(raw):null}catch(e){}
+if(!r.ok){
+if(x&&typeof x.detail==="string")throw Error(x.detail);
+const snippet=raw.replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim().slice(0,160);
+throw Error("HTTP "+r.status+(snippet?": "+snippet:""))}
+if(x===null)throw Error("Invalid JSON response (HTTP "+r.status+")");
+return x}
 const DEFAULT_DATASET="355_common_wheat_WGS";
 async function loadDatasets(){try{
 const x=await api("/api/regulatory/variant-datasets");const sel=$("dataset");sel.replaceChildren();

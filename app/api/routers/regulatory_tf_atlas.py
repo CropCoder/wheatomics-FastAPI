@@ -279,7 +279,10 @@ def motif_variants(gene_id:str,dataset_id:str,region:str="upstream",
     One VCF fetch per regulatory region (upstream in the main database,
     downstream in the per-chromosome shard), then in-memory interval checks.
     """
-    import pysam
+    try:
+        import pysam
+    except ImportError as exc:
+        raise HTTPException(503, "pysam unavailable in production environment") from exc
     from app.api.routers.regulatory_integration import load_catalog
     g=valid_gene(gene_id)
     if region not in REGION_KINDS:
