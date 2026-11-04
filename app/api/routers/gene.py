@@ -1138,7 +1138,7 @@ def _gene_external_links(row: dict, gene_v2: str) -> dict[str, str]:
     links: dict[str, str] = {}
     if gene_v2_clean:
         links["ensembl"] = f"https://ensembl.gramene.org/Triticum_aestivum/Gene/Summary?g={gene_v2_clean}"
-        links["knetminer"] = f"https://knetminer.rothamsted.ac.uk/wheatknet/genepage?list={gene_v2_clean}"
+        links["knetminer"] = f"https://app.knetminer.com/genepage/Triticum_aestivum/?list={gene_v2_clean}"
     if gene_v1:
         crop_v1 = gene_v1 if re.search(r"\.\d+$", gene_v1) else gene_v1 + ".1"
         links["croppal"] = f"https://croppal.org/factsheet/{crop_v1}.html"
@@ -1162,7 +1162,7 @@ def _gene_external_links(row: dict, gene_v2: str) -> dict[str, str]:
         else:
             species, table = "IWGSCv1p1_chrNA", "zavitan_chrNA,tu_TuN"
         links["tgt"] = (
-            "http://wheat.cau.edu.cn/TGT/m5/?navbar=MicroCollinearity"
+            "https://wheat.cau.edu.cn/TGT/m5/?navbar=MicroCollinearity"
             f"&mul_geneID={gene_v2_clean}&mul_gnum=5&mul_region="
             f"&mul_species1={species}&mul_spec_table_select={table}"
         )
