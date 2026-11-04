@@ -29,6 +29,7 @@ from app.core.exceptions import ResourceNotFound, ValidationFailure
 from app.core.response import ok
 from app.services import caps_designer
 from app.services.caps_designer import design_caps_dcaps
+from app.services.kasp_designer import design_kasp
 from app.services.command_runner import run_command
 from app.services.restriction_enzymes import ENZYME_BY_NAME, RESTRICTION_ENZYMES
 
@@ -286,6 +287,36 @@ def _resolve_sequences(req: CapsDesignRequest) -> tuple[str, str, dict]:
     raise ValidationFailure(
         "No input mode detected. Provide either (seq1+seq2), "
         "(db+region+pos+allele1+allele2), or (vcf_dataset+chrom+pos).")
+
+
+@router.post("/kasp-design")
+def design_kasp_primers(req: CapsDesignRequest) -> dict:
+    """Design KASP primers (two allele-specific primers + one common primer).
+
+    Uses the same three input modes as /design (pasted sequences, genomic
+    coordinates, VCF variant). The two allele sequences must differ at exactly
+    one SNP. KASP output primer sequences are the core primers; fluorescent
+    tails (FAM/HEX) still need to be added before ordering.
+    """
+    seq1, seq2, snp_meta = _resolve_sequences(req)
+    try:
+        designs = design_kasp(
+            seq1, seq2,
+            primer_len=tuple(req.primer_len),
+            tm_range=tuple(req.tm_range),
+            product_size=tuple(req.product_size),
+            top_n=req.top_n,
+        )
+    except ValueError as e:
+        raise ValidationFailure(str(e)) from e
+    snp_pos = next(
+        (i for i, (a, b) in enumerate(zip(seq1, seq2)) if a != b), None)
+    return ok({
+        "design_type": "kasp",
+        "snp": {"pos_in_seq": snp_pos, **snp_meta},
+        "total_designs": len(designs),
+        "designs": designs,
+    })
 
 
 @router.post("/design")
