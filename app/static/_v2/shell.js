@@ -66,7 +66,7 @@
               <li><a href="https://wheatomics.sdau.edu.cn/GO_KEGG/">GO/KEGG Enrichment</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/syntenyview/">Collinearity</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/orthofinder/">OrthoFinder</a></li>
-              <li><a href="https://wheatomics.sdau.edu.cn/singlecell/">scRNA</a></li>
+              <li><a href="https://wheatomics.sdau.edu.cn/scRNA-seq/">scRNA</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/wheatPPI/index.html">WheatPPI</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/wheatPSP/">wheatPSP</a></li>
               <li><a href="https://wheatomics.sdau.edu.cn/papers/">Triticeae Papers</a></li>

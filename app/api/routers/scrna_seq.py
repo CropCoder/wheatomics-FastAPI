@@ -1,4 +1,4 @@
-"""Single-cell wheat atlas: per-gene expression, co-expression modules, hub genes.
+"""scRNA-seq wheat atlas: per-gene expression, co-expression modules, hub genes.
 
 Backed by the ``scrna_data`` MySQL database:
 
@@ -28,7 +28,7 @@ from app.core.exceptions import ValidationFailure
 from app.core.response import ok
 from app.db.mysql import mysql_cursor
 
-router = APIRouter(prefix="/singlecell", tags=["Single-cell atlas"])
+router = APIRouter(prefix="/scRNA-seq", tags=["scRNA-seq atlas"])
 
 _GENE_RE = re.compile(r"^[A-Za-z0-9_.:-]{3,80}$")
 

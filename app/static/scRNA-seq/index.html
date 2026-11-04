@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Single-cell Atlas | WheatOmics 2.0</title>
+<title>scRNA-seq | WheatOmics 2.0</title>
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
@@ -48,7 +48,7 @@ a.csv:hover{background:#16453e}
     <div class="container news-hero-inner">
       <div>
         <p class="news-kicker">WheatOmics 2.0 · Single-cell transcriptomics</p>
-        <h1 class="news-title">Single-cell <em>Atlas</em></h1>
+        <h1 class="news-title">scRNA-<em>seq</em></h1>
         <p class="news-lead">Enter one wheat gene for its expression across datasets and cell types, the co-expression modules it belongs to and whether it is a hub gene — or up to 50 genes for a summary table.</p>
         <div class="news-stats">
           <span class="news-stat"><strong>Multi-dataset</strong> atlas</span>
@@ -179,7 +179,7 @@ async function search(){
 async function batchSearch(genes){
   text($("status"),`Loading ${genes.length} genes...`);
   try{
-    const d=(await api("/api/singlecell/genes?genes="+q(genes.join(",")))).data;
+    const d=(await api("/api/scRNA-seq/genes?genes="+q(genes.join(",")))).data;
     let html='<table><thead><tr><th>Gene</th><th>Datasets</th><th>Cell types</th><th>Modules</th><th>Hub cell types</th><th></th></tr></thead><tbody>';
     d.genes.forEach(g=>{
       html+=`<tr><td>${esc(g.gene)}</td>`+
@@ -209,7 +209,7 @@ $("batchtable").addEventListener("click",e=>{
 async function singleSearch(gene){
   text($("status"),"Loading...");hideAll();
   try{
-    const d=(await api("/api/singlecell/gene/"+q(gene))).data;
+    const d=(await api("/api/scRNA-seq/gene/"+q(gene))).data;
     if(!d.found){
       text($("status"),`No single-cell data for ${d.gene}. It may not be expressed, or not be present in these datasets.`);
       return;
@@ -346,9 +346,9 @@ function renderExpression(display){
 /* ---------- modules & hubs (filtered by the selected dataset) ---------- */
 function genesetUrl(kind,sample,ct,mod,ext){
   if(kind==="module"){
-    return `/api/singlecell/module/genes${ext}?sample=${q(sample)}&celltype_key=${q(ct)}&module=${q(mod)}`;
+    return `/api/scRNA-seq/module/genes${ext}?sample=${q(sample)}&celltype_key=${q(ct)}&module=${q(mod)}`;
   }
-  return `/api/singlecell/hub/genes${ext}?sample=${q(sample)}&celltype_key=${q(ct)}`;
+  return `/api/scRNA-seq/hub/genes${ext}?sample=${q(sample)}&celltype_key=${q(ct)}`;
 }
 
 function renderModules(d,display){
