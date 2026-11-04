@@ -9,8 +9,8 @@ is **NOT tracked in this repository**:
 
 This script patches both (same convention as ``update_v2_home_nav.py``):
 
-* every ``/scRNA/`` link becomes ``/singlecell/`` (the menu label stays
-  "scRNA");
+* every legacy ``/scRNA/`` or ``/singlecell/`` link becomes ``/scRNA-seq/``
+  (the menu label stays "scRNA");
 * a ``TF Atlas`` entry is cloned from the existing scRNA entry in the header
   ``Tools`` dropdown and in the ``Analysis Tools`` card grid, so the markup,
   the icon and the ``data-keywords`` used by the instant filter all match the
@@ -40,8 +40,7 @@ from datetime import datetime
 from pathlib import Path
 
 DOMAIN = "https://wheatomics.sdau.edu.cn"
-OLD_SCRNA = f"{DOMAIN}/scRNA"
-NEW_SCRNA = f"{DOMAIN}/singlecell"
+SCRNA_PATH = "/scRNA-seq"
 TF_ATLAS = f"{DOMAIN}/regulatoryhub/TF_Atlas.html"
 
 DEFAULT_TARGETS = (
@@ -49,13 +48,11 @@ DEFAULT_TARGETS = (
     Path("/var/www/html/V2.0/index.html"),
 )
 
-# Absolute form first, then the root-relative form some copies use.
-SUBS = (
-    (f"{DOMAIN}/scRNA/", f"{DOMAIN}/singlecell/"),
-    (f"{DOMAIN}/scRNA", f"{DOMAIN}/singlecell"),
-    ('"/scRNA/', '"/singlecell/'),
-    ("'/scRNA/", "'/singlecell/"),
-)
+# Both the legacy /scRNA/ links and the short-lived /singlecell/ ones point at
+# /scRNA-seq/ now. The lookaheads keep the rewrite idempotent: an already
+# migrated /scRNA-seq is never matched again (and would not become -seq-seq).
+SINGLECELL_RE = re.compile(r"/singlecell(?![\w-])")
+SCRNA_RE = re.compile(r"/scRNA(?!-seq)(?![\w-])")
 
 NAV_ENTRY = f'<li><a href="{TF_ATLAS}">TF Atlas</a></li>'
 CARD_KEYWORDS = (
@@ -68,7 +65,7 @@ CARD_TEXT = "Transcription Factor and Regulatory Atlas"
 # Whole-line anchor for the nav item (it is always a single ``<li>`` line);
 # the lookaheads keep the match independent of attribute order.
 NAV_RE = re.compile(
-    r'^([ \t]*)(?=[^\n]*/singlecell/)(?=[^\n]*>scRNA</a>)[^\n]*</li>[ \t]*$',
+    r'^([ \t]*)(?=[^\n]*/scRNA-seq/)(?=[^\n]*>scRNA</a>)[^\n]*</li>[ \t]*$',
     re.MULTILINE,
 )
 CARD_OPEN_RE = re.compile(r'^([ \t]*)<a\b[^>]*>', re.MULTILINE)
@@ -86,13 +83,9 @@ def pick_icon(text: str) -> str:
 
 
 def retarget(text: str) -> tuple[str, int]:
-    hits = 0
-    for old, new in SUBS:
-        found = text.count(old)
-        if found:
-            text = text.replace(old, new)
-            hits += found
-    return text, hits
+    text, singlecell = SINGLECELL_RE.subn(SCRNA_PATH, text)
+    text, legacy = SCRNA_RE.subn(SCRNA_PATH, text)
+    return text, singlecell + legacy
 
 
 def clone_nav(line: str) -> str:
@@ -138,8 +131,8 @@ def patch(text: str) -> tuple[str, list[str]]:
 
     text, hits = retarget(text)
     if hits:
-        notes.append(f"scRNA links retargeted to /singlecell/: {hits}")
-    elif "/scRNA/" not in text:
+        notes.append(f"scRNA links retargeted to {SCRNA_PATH}/: {hits}")
+    elif f"{SCRNA_PATH}/" in text:
         notes.append("scRNA links already retargeted")
 
     if NAV_ENTRY in text:
@@ -158,7 +151,7 @@ def patch(text: str) -> tuple[str, list[str]]:
     if find_card(text, TF_ATLAS) is not None:
         notes.append("tool card already present")
     else:
-        match = find_card(text, "/singlecell/")
+        match = find_card(text, f"{SCRNA_PATH}/")
         if match is None:
             raise SystemExit(
                 "[ERR] anchor not found: the scRNA card in the Analysis Tools grid"
@@ -170,7 +163,8 @@ def patch(text: str) -> tuple[str, list[str]]:
 
     checks = {
         "no /scRNA/ links left": text.count("/scRNA/") == 0,
-        "/singlecell/ references (>=2)": text.count("/singlecell/") >= 2,
+        "no /singlecell/ links left": text.count("/singlecell") == 0,
+        f"{SCRNA_PATH}/ references (>=2)": text.count(f"{SCRNA_PATH}/") >= 2,
         "TF Atlas nav entry": text.count(NAV_ENTRY) == 1,
         "TF Atlas tool card": find_card(text, TF_ATLAS) is not None,
         "TF Atlas references (2)": text.count(TF_ATLAS) == 2,
@@ -193,8 +187,8 @@ def process(path: Path, *, check: bool, dry_run: bool) -> bool:
 
     if check and not dry_run:
         missing = []
-        if "/scRNA/" in text:
-            missing.append("scRNA links still point at /scRNA/")
+        if "/scRNA/" in text or "/singlecell" in text:
+            missing.append(f"scRNA links still point at /scRNA/ or /singlecell/ instead of {SCRNA_PATH}/")
         if NAV_ENTRY not in text:
             missing.append("no TF Atlas nav entry")
         if find_card(text, TF_ATLAS) is None:

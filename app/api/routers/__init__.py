@@ -24,4 +24,4 @@ from .scrna import router as scrna
 from .wheatpsp import router as wheatpsp
 from .genome import router as genome
 from .ptm import router as ptm
-from .singlecell import router as singlecell
+from .scrna_seq import router as scrna_seq

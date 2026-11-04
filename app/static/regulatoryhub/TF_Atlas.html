@@ -57,14 +57,10 @@ table.wide{min-width:940px}
 <p class="muted" id="status">Search any IWGSC RefSeq v1.1 (02G) gene, e.g. TraesCS2A02G305400.</p></section>
 <section id="domainsec" hidden><h2>Pfam domains &amp; iTAK classification</h2>
 <p class="muted" id="domstatus"></p>
-<div id="domclass"></div>
+<div id="domclass" class="scroll"></div>
+<p class="muted" id="genemeta"></p>
 <div id="arch" class="arch"></div>
 <div id="domtable" class="scroll"></div>
-</section>
-<section id="profile" hidden><h2>Gene &amp; TF identity</h2>
-<div id="geneinfo" class="scroll"></div>
-<p class="muted" id="genemeta"></p>
-<div id="tfinfo"></div>
 <p><button id="show-expr" type="button" class="secondary">Show expression across 26 tissues</button></p>
 </section>
 <section id="exprsec" hidden><h2>Expression across 26 tissues</h2>
@@ -162,12 +158,13 @@ const ds=$("dataset").value;if(!ds)return;
 location.href="/api/regulatory/atlas/gene/"+encodeURIComponent(currentGene)
  +"/motif-variants.csv?dataset_id="+encodeURIComponent(ds)
  +"&region="+encodeURIComponent(variantRegion)}
-const ID_SUP={"TF classification":"a","PlantTFDB":"b","Classification from Reference":"c","IWGSC RefSeq v1.1 TF_family":"d"};
+const ID_SUP={"TF classification":"a","PlantTFDB":"b","Classification from Reference":"c","IWGSC RefSeq v1.1 TF_family":"d","Cloned":"e"};
 const ID_TITLES={
 "TF classification":"Transcription factor family classification based on PlantTFDB, published papers and genome annotation.",
 "PlantTFDB":"Transcription factor family classification from PlantTFDB.",
 "Classification from Reference":'Transcription factor family classification from "Ramírez-González RH, Borrill P, Lang D, et al. The transcriptional landscape of polyploid wheat. Science. 2018;361(6403):eaar6089. doi:10.1126/science.aar6089."',
-"IWGSC RefSeq v1.1 TF_family":'"IWGSC RefSeq v1.1 TF_family" factor family classification based on the genome annotation of IWGSC RefSeq v1.1.'};
+"IWGSC RefSeq v1.1 TF_family":'"IWGSC RefSeq v1.1 TF_family" factor family classification based on the genome annotation of IWGSC RefSeq v1.1.',
+"Cloned":'Cloned in the monoclonal yeast transcription factor library: "Ren K., Wang Y., Cui Y., et al. (2026). Construction and validation of a monoclonal yeast transcription factor library for high-throughput interaction screening in wheat. Journal of Integrative Agriculture, 25(10), 4378–4382. doi:10.1016/j.jia.2026.07.037."'};
 const SVGNS="http://www.w3.org/2000/svg";
 const DOM_COLORS=["#3f7f5f","#4f86a8","#b0793f","#7a5ea8","#3f8f8f","#a8534f","#6b8e23","#8a6d3b"];
 function svgEl(tag,attrs){const e=document.createElementNS(SVGNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e}
@@ -242,10 +239,11 @@ pre.append(q,document.createTextNode("\n"),a,document.createTextNode("\n"),h);
 box.appendChild(pre);td.appendChild(box);
 tr.addEventListener("click",()=>{dr.hidden=!dr.hidden})});
 return t}
-function renderDomains(d){
+function renderDomains(d,profile){
 const sec=$("domainsec");
 $("arch").replaceChildren();$("domtable").replaceChildren();$("domclass").replaceChildren();
 text($("domstatus"),"");
+renderGeneMeta(profile);
 d=d||{status:"unavailable"};
 if(d.status==="unavailable"){
 text($("domstatus"),"Domain data unavailable"+(d.message?": "+d.message:"")+".");sec.hidden=false;return}
@@ -253,14 +251,16 @@ const items=d.items||[];
 const classes=d.classifications||[];
 if(classes.length){
 const classMulti=new Set(classes.map(c=>c.source)).size>1;
-const cols=classMulti?["Transcript","Source","TF family (iTAK)","Type","Hierarchy"]
-:["Transcript","TF family (iTAK)","Type","Hierarchy"];
+const gene=classificationCells(profile);
+const cols=["Transcript"];
+if(classMulti)cols.push("Source");
+cols.push("TF family (iTAK)","Type","Hierarchy",...Object.keys(gene));
 const rows=classes.map(c=>{
 const r={"Transcript":c.gene_id||"—"};
 if(classMulti)r["Source"]=c.source||"—";
 r["TF family (iTAK)"]=c.family||"—";r["Type"]=c.tf_type||"—";r["Hierarchy"]=c.hierarchy||"—";
-return r});
-$("domclass").appendChild(table(rows,cols))}
+return Object.assign(r,gene)});
+$("domclass").appendChild(table(rows,cols,{wide:true,sup:ID_SUP,titles:ID_TITLES}))}
 if(!items.length){
 text($("domstatus"),"No Pfam domain hits for this gene in the iTAK alignment table.");sec.hidden=false;return}
 // Every transcript suffix gets its own diagram so a gene with several
@@ -285,25 +285,24 @@ $("arch").appendChild(architecture(length,g.items))}
 text($("domstatus"),`${items.length} Pfam hit(s) in ${groups.length} transcript(s). Click a row for its description and alignment block.`);
 $("domtable").appendChild(domainTable(items,multiSource));
 sec.hidden=false}
-function renderIdentity(d){
-const g=d.gene||{},c=d.classification||{},tf=d.tf||{};
-const row={
-"Gene stable ID v1.1":dash(g.gene_id||currentGene),
-"Gene name":dash(c.gene_name),
+// Gene-level annotation columns, repeated on every transcript row.
+function classificationCells(p){
+const c=(p&&p.classification)||{},tf=(p&&p.tf)||{};
+const cloned=!tf.is_candidate_tf?"—":(tf.cloned==="1"||tf.cloned===1)?"Yes":(tf.cloned==="0"||tf.cloned===0)?"No":dash(tf.cloned);
+return {"Gene name":dash(c.gene_name),
 "TF classification":dash(c.tf_classification),
 "PlantTFDB":dash(c.planttfdb),
 "Classification from Reference":dash(c.ref_classification),
-"IWGSC RefSeq v1.1 TF_family":dash(c.iwgsc_v11_tf_family)};
-$("geneinfo").replaceChildren(table([row],Object.keys(row),{sup:ID_SUP,titles:ID_TITLES}));
+"IWGSC RefSeq v1.1 TF_family":dash(c.iwgsc_v11_tf_family),
+"Cloned":cloned}
+}
+function renderGeneMeta(p){
+const g=(p&&p.gene)||{},c=(p&&p.classification)||{};
+if(!g.gene_id){text($("genemeta"),"");return}
 const meta=[`${g.chrom}:${g.start0+1}-${g.end0}`,`strand ${g.strand}`];
 if(c.transcript_length)meta.push(`transcript ${c.transcript_length} bp`);
 if(c.gc_content)meta.push(`GC ${c.gc_content}%`);
-$("genemeta").textContent=meta.join(" · ");
-const parts=[];
-parts.push(tf.is_candidate_tf?`Curated candidate TF (Ren et al. 2026): yes — family ${dash(tf.tf_family)}${tf.cloned==="1"?"; cloned":""}`:"Not in the curated candidate-TF list (Ren et al. 2026)");
-if(c.status==="not_in_tf_classification")parts.push("No TF classification for this gene in the atlas table.");
-if(c.status==="classification_not_configured")parts.push("TF classification table not configured on this server.");
-text($("tfinfo"),parts.join(" · "));
+text($("genemeta"),meta.join(" · "));
 }
 function toggleExpr(){
 if(!lastExpression)return;
@@ -344,16 +343,14 @@ text($("motifstatus"),`${d.motifs.length} motif hits in ${regionLabel(motifRegio
 }
 async function search(){
 const g=$("gene").value.trim();if(!g)return;
-text($("status"),"Loading...");for(const id of ["domainsec","profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
+text($("status"),"Loading...");for(const id of ["domainsec","exprsec","motifsec","variantsec"])$(id).hidden=true;
 try{const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(g)+"?region="+encodeURIComponent(motifRegion)+"&motif_limit=500");
 currentGene=d.gene.gene_id;
 lastExpression=d.expression||null;
 $("expr").replaceChildren();
 $("show-expr").textContent="Show expression across 26 tissues";
 $("show-expr").hidden=!lastExpression;
-renderDomains(d.domains);
-renderIdentity(d);
-$("profile").hidden=false;
+renderDomains(d.domains,d);
 renderMotifTable(d.motifs);
 $("motifsec").hidden=false;$("variantsec").hidden=false;
 text($("motifstatus"),`${d.motifs.length} motif hits in ${regionLabel(motifRegion)}${d.motifs_truncated?" (truncated, showing the first 500)":""}.`);
@@ -380,8 +377,8 @@ text($("vstatus"),`${d.items.length} motif–variant intersections in ${regionLa
 function clearAll(){currentGene="";lastExpression=null;
 $("download-motifs").disabled=true;$("download-variants").disabled=true;
 $("gene").value="";
-for(const id of ["domainsec","profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
-for(const id of ["geneinfo","genemeta","tfinfo","expr","motifs","motifstatus","varianttable","arch","domtable","domclass","domstatus"])$(id).replaceChildren();
+for(const id of ["domainsec","exprsec","motifsec","variantsec"])$(id).hidden=true;
+for(const id of ["genemeta","expr","motifs","motifstatus","varianttable","arch","domtable","domclass","domstatus"])$(id).replaceChildren();
 text($("vstatus"),"");
 text($("status"),"Search any IWGSC RefSeq v1.1 (02G) gene, e.g. TraesCS2A02G305400.");
 $("gene").focus()}
