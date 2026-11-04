@@ -269,7 +269,8 @@
     }).join(''));
 
     var ext = data.external_links || {};
-    var extLabels = { ensembl: 'Ensembl Plants', uniprot: 'UniProt', croppal: 'CropPAL', knetminer: 'KnetMiner', tgt: 'TGT' };
+    var extLabels = { ensembl: 'Ensembl Plants', uniprot: 'UniProt', uniprot_search: 'UniProt search',
+      croppal: 'CropPAL', knetminer: 'KnetMiner', tgt: 'TGT', wheatproteome: 'Wheat Proteome' };
     var extHtml = Object.keys(ext).filter(function (k) { return ext[k]; }).map(function (k) {
       return '<a class="gene-tool-link" target="_blank" rel="noopener" href="' + esc(ext[k]) + '">' +
         esc(extLabels[k] || k) + ' ↗</a>';

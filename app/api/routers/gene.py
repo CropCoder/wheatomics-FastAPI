@@ -1131,6 +1131,49 @@ def get_known_gene(gene_id: str) -> dict:
 
 
 
+def _gene_external_links(row: dict, gene_v2: str) -> dict[str, str]:
+    """External resource links for a GeneHub record (same resources as legacy page)."""
+    gene_v2_clean = re.sub(r"\.\d+$", "", gene_v2 or "")
+    gene_v1 = str(row.get("GeneIDv1") or "").strip()
+    links: dict[str, str] = {}
+    if gene_v2_clean:
+        links["ensembl"] = f"https://ensembl.gramene.org/Triticum_aestivum/Gene/Summary?g={gene_v2_clean}"
+        links["knetminer"] = f"https://knetminer.rothamsted.ac.uk/wheatknet/genepage?list={gene_v2_clean}"
+    if gene_v1:
+        crop_v1 = gene_v1 if re.search(r"\.\d+$", gene_v1) else gene_v1 + ".1"
+        links["croppal"] = f"https://croppal.org/factsheet/{crop_v1}.html"
+    # UniProt accession is the `Uniport` column in the legacy GenePage table;
+    # fall back to a UniProt search by gene ID when no accession is available.
+    uniprot = normalize_text(row.get("Uniport")) or ""
+    if uniprot:
+        links["uniprot"] = f"https://www.uniprot.org/uniprot/{uniprot}"
+    elif gene_v2_clean:
+        links["uniprot_search"] = f"https://www.uniprot.org/uniprotkb?query={gene_v2_clean}"
+    # TGT micro-collinearity uses subgenome-specific chromosome tables.
+    if gene_v2_clean:
+        sub = ""
+        m = re.search(r"(?:TraesCS\d)([ABD])0[0-9]G", gene_v2_clean)
+        if m:
+            sub = m.group(1)
+        if sub == "B":
+            species, table = "IWGSCv1p1_chrNB", "svevo_chrNB,zavitan_chrNB"
+        elif sub == "D":
+            species, table = "IWGSCv1p1_chrND", "aet_ChrN"
+        else:
+            species, table = "IWGSCv1p1_chrNA", "zavitan_chrNA,tu_TuN"
+        links["tgt"] = (
+            "http://wheat.cau.edu.cn/TGT/m5/?navbar=MicroCollinearity"
+            f"&mul_geneID={gene_v2_clean}&mul_gnum=5&mul_region="
+            f"&mul_species1={species}&mul_spec_table_select={table}"
+        )
+    # Legacy `Protein` column stores the numeric Wheat Proteome protein ID.
+    protein = normalize_text(row.get("Protein")) or ""
+    if protein:
+        protein_id = protein if protein.endswith(".html") else protein + ".html"
+        links["wheatproteome"] = f"https://wheatproteome.org/protein-details/{protein_id}"
+    return links
+
+
 @genehub_router.get("/detail/{gene_id}")
 def get_gene_detail(gene_id: str) -> dict:
     """Get normalized detailed information for a gene.
@@ -1218,9 +1261,7 @@ def get_gene_detail(gene_id: str) -> dict:
             if loc
             else ""
         },
-        external_links={
-            "ensembl": f"https://ensembl.gramene.org/Triticum_aestivum/Gene/Summary?g={gene_v2}" if gene_v2 else "",
-        },
+        external_links=_gene_external_links(row, gene_v2),
     )
 
     # wheatPSP: phase-separation predictions for this gene (any transcript).
