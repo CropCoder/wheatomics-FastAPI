@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+<script src="/js/echarts.min.js"></script>
 <link rel="stylesheet" href="/api/v2shell/shell.css">
 <style>
   .tool-shell { max-width: 1200px; }
@@ -105,7 +106,22 @@ var _hmt = _hmt || [];
       </div>
 
       <div id="result-area" style="display:none;">
-        <div class="result-table" id="table-container"></div>
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+          <div class="btn-group btn-group-sm" role="group" aria-label="Result view">
+            <button type="button" class="btn btn-outline-secondary active" id="view-table-btn">Table</button>
+            <button type="button" class="btn btn-outline-secondary" id="view-network-btn">Network</button>
+          </div>
+          <span class="small text-muted" id="network-note"></span>
+        </div>
+        <div id="table-view">
+          <div class="result-table" id="table-container"></div>
+        </div>
+        <div id="network-view" style="display:none;">
+          <div class="result-table">
+            <div id="network-chart" style="width:100%;height:600px;"></div>
+            <p class="small text-muted mb-0 mt-1">Click a node to open its GeneHub page. Edges are weighted by supporting edges (PoppIn) or CF-MS score.</p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -234,7 +250,23 @@ function queryPPI() {
   });
 }
 
+var networkChart = null;
+var lastNetworkData = null;
+
+function showResultView(view) {
+  var network = view === 'network';
+  $('#table-view').toggle(!network);
+  $('#network-view').toggle(network);
+  $('#view-table-btn').toggleClass('active', !network);
+  $('#view-network-btn').toggleClass('active', network);
+  if (network && lastNetworkData) renderNetwork(lastNetworkData.interactions, lastNetworkData.table);
+}
+
 function renderResults(interactions, table) {
+  lastNetworkData = { interactions: interactions, table: table };
+  if (networkChart) { networkChart.dispose(); networkChart = null; }
+  $('#network-note').text('');
+  showResultView('table');
   if (interactions.length === 0) {
     $('#table-container').html('<div class="alert alert-warning">No interactions found matching your query.</div>');
     $('#result-area').show();
@@ -282,6 +314,156 @@ function renderResults(interactions, table) {
   $('#result-area').show();
 }
 
+function shortGeneName(name) {
+  var s = String(name || '');
+  return s.length > 22 ? s.slice(0, 20) + '…' : s;
+}
+
+function subgenomeOf(gene) {
+  var m = String(gene || '').match(/^TraesCS\d([ABD])0[0-9]G/i);
+  return m ? m[1].toUpperCase() : 'Other';
+}
+
+function renderNetwork(interactions, table) {
+  var el = document.getElementById('network-chart');
+  if (!el) return;
+  if (typeof echarts === 'undefined') {
+    el.innerHTML = '<div class="alert alert-warning">Network library failed to load.</div>';
+    return;
+  }
+  var queryGenes = {};
+  String($('#gene-input').val() || '').split('\n').forEach(function(g) {
+    g = g.trim(); if (g) queryGenes[g.replace(/\.\d+$/, '')] = true;
+  });
+
+  var nodes = {};
+  var links = {};
+  var truncated = false;
+  function addNode(id) {
+    if (!id) return;
+    if (!nodes[id]) nodes[id] = { name: id, degree: 0, annotation: '', subgenome: subgenomeOf(id) };
+  }
+  function addLink(a, b, info) {
+    if (!a || !b || a === b) return;
+    var key = a < b ? a + '\u0001' + b : b + '\u0001' + a;
+    var hit = links[key];
+    if (!hit) {
+      links[key] = { source: a, target: b, support: 0, score: null, identity1: null, identity2: null, ricePair: null };
+      hit = links[key];
+    }
+    hit.support += Number(info.supporting_edges || 0);
+    if (info.score != null) hit.score = Math.max(hit.score == null ? -Infinity : hit.score, Number(info.score));
+    if (info.identity1 != null) hit.identity1 = info.identity1;
+    if (info.identity2 != null) hit.identity2 = info.identity2;
+    if (!hit.ricePair && info.rice_pair) hit.ricePair = info.rice_pair;
+  }
+
+  interactions.forEach(function(r) {
+    var lefts = r.wheat_id1 || [], rights = r.wheat_id2 || [];
+    lefts.forEach(function(a) { addNode(a); });
+    rights.forEach(function(b) { addNode(b); });
+    lefts.forEach(function(a) {
+      rights.forEach(function(b) {
+        if (!a || !b || a === b) return;
+        addLink(a, b, r);
+        if (Object.keys(links).length >= 700) { truncated = true; return; }
+      });
+    });
+  });
+  var nodeList = Object.keys(nodes).map(function(id) { return nodes[id]; });
+  nodeList.forEach(function(n) { n.degree = 0; });
+  var linkList = Object.keys(links).map(function(k) {
+    var e = links[k];
+    nodes[e.source].degree += 1; nodes[e.target].degree += 1;
+    return e;
+  });
+  // Keep a readable graph if a multi-gene query explodes.
+  if (linkList.length > 700) { linkList = linkList.slice(0, 700); truncated = true; }
+
+  var useSubgenomeColors = table === 'PPI_poppin';
+  var categories = useSubgenomeColors
+    ? [{name:'A'},{name:'B'},{name:'D'},{name:'Other'}]
+    : [{name:'Query'},{name:'Partner'}];
+  var colors = ['#118653', '#4f9e72', '#8ab58f', '#9aa8a1'];
+  if (!useSubgenomeColors) colors = ['#033f2d', '#65a37f'];
+  var catIndex = function(n) {
+    if (useSubgenomeColors) return ['A','B','D','Other'].indexOf(n.subgenome);
+    return queryGenes[n.name.replace(/\.\d+$/, '')] ? 0 : 1;
+  };
+  var chartNodes = nodeList.map(function(n) {
+    var isQuery = !!queryGenes[n.name.replace(/\.\d+$/, '')];
+    return {
+      name: n.name,
+      value: n.degree,
+      category: catIndex(n),
+      symbolSize: isQuery ? 22 : Math.max(9, Math.min(18, 8 + n.degree * 1.8)),
+      itemStyle: { borderColor: isQuery ? '#033f2d' : '#ffffff', borderWidth: isQuery ? 2.5 : 1 },
+      label: { show: isQuery || n.degree >= 4 },
+      info: { annotation: n.annotation, subgenome: n.subgenome, degree: n.degree }
+    };
+  });
+  var chartLinks = linkList.map(function(e) {
+    return {
+      source: e.source,
+      target: e.target,
+      value: e.support || 0,
+      lineStyle: { width: useSubgenomeColors ? Math.min(6, 1 + e.support / 2) : Math.min(6, 1 + (e.score || 0) * 3) },
+      info: e
+    };
+  });
+  if (!networkChart) networkChart = echarts.init(el);
+  networkChart.setOption({
+    tooltip: {
+      trigger: 'item',
+      formatter: function(p) {
+        if (p.dataType === 'edge') {
+          var e = p.data.info;
+          var parts = ['<b>' + escapeHtml(e.source) + '</b><br>' + escapeHtml(e.target)];
+          if (e.support) parts.push('Supporting edges: <b>' + e.support + '</b>');
+          if (e.score != null) parts.push('CF-MS score: <b>' + Number(e.score).toFixed(3) + '</b>');
+          if (e.identity1 != null) parts.push('Identity: ' + Number(e.identity1).toFixed(1) + '% / ' + (e.identity2 != null ? Number(e.identity2).toFixed(1) : '—') + '%');
+          if (e.ricePair) parts.push('Rice pair: ' + escapeHtml(e.ricePair));
+          return parts.join('<br>');
+        }
+        var n = p.data;
+        var info = n.info || {};
+        var out = ['<b>' + escapeHtml(n.name) + '</b>'];
+        if (info.subgenome && info.subgenome !== 'Other') out.push('Subgenome: ' + escapeHtml(info.subgenome));
+        if (info.degree != null) out.push('Degree: ' + info.degree);
+        out.push('<span style="color:#888">Click to open GeneHub</span>');
+        return out.join('<br>');
+      }
+    },
+    legend: [{ data: categories.map(function(c) { return c.name; }), bottom: 0, textStyle: { fontSize: 10 } }],
+    color: colors,
+    series: [{
+      type: 'graph',
+      layout: 'force',
+      roam: true,
+      draggable: true,
+      categories: categories,
+      data: chartNodes,
+      links: chartLinks,
+      label: { show: true, position: 'right', fontSize: 9, color: '#294a3a', formatter: function(p) { return shortGeneName(p.name); } },
+      lineStyle: { color: '#8fb5a5', curveness: 0.08, opacity: 0.65 },
+      emphasis: { focus: 'adjacency', lineStyle: { width: 3, opacity: 0.95 } },
+      force: { repulsion: 150, edgeLength: [45, 140], gravity: 0.12 },
+      edgeSymbol: ['none', 'none'],
+      animationDuration: 600
+    }]
+  }, true);
+  networkChart.resize();
+  if (networkChart.__bound !== true) {
+    networkChart.__bound = true;
+    networkChart.on('click', function(p) {
+      if (p.dataType === 'node' && p.name) {
+        window.open('/GeneHub/gene.html?gene=' + encodeURIComponent(p.name), '_blank');
+      }
+    });
+  }
+  $('#network-note').text(nodeList.length + ' nodes · ' + linkList.length + ' edges' + (truncated ? ' · truncated' : ''));
+}
+
 function showError(msg) {
   $('#error-msg').text(msg).show();
   $('#loading-indicator').hide();
@@ -290,6 +472,9 @@ function showError(msg) {
 function escapeHtml(s) {
   return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 }
+
+$('#view-table-btn').on('click', function() { showResultView('table'); });
+$('#view-network-btn').on('click', function() { showResultView('network'); });
 
 // Populate the score filter / info boxes for the initially selected dataset.
 $(onTableChange);
