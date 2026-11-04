@@ -36,7 +36,7 @@ table.wide{min-width:940px}
       <div>
         <p class="news-kicker">WheatOmics 2.0 · Gene regulation</p>
         <h1 class="news-title">Wheat <em>TF Atlas</em></h1>
-        <p class="news-lead">Enter a wheat gene to see its Pfam domain architecture and iTAK classification, then its TF family calls, tissue expression, promoter motif hits, co-expression modules and overlapping regulatory variants.</p>
+        <p class="news-lead">Enter a wheat gene to see its Pfam domain architecture and iTAK classification, then its TF family calls, tissue expression, promoter motif hits and overlapping regulatory variants.</p>
         <div class="news-stats">
           <span class="news-stat"><strong>TF</strong> classification</span>
           <span class="news-stat">Pfam domains</span>
@@ -60,7 +60,6 @@ table.wide{min-width:940px}
 <div id="domclass"></div>
 <div id="arch" class="arch"></div>
 <div id="domtable" class="scroll"></div>
-<p class="muted" id="domnote"></p>
 </section>
 <section id="profile" hidden><h2>Gene &amp; TF identity</h2>
 <div id="geneinfo" class="scroll"></div>
@@ -97,6 +96,10 @@ Journal of Integrative Agriculture, 25(10), 4378–4382.
 <strong>Motif data:</strong> promoter motif scanning used the plant position frequency matrices (PFMs) from
 <em>Download PFM data for plants in JASPAR CORE</em>, JASPAR
 (<a href="https://jaspar.elixir.no/" target="_blank" rel="noopener noreferrer">https://jaspar.elixir.no/</a>).<br><br>
+<strong>Pfam domain data:</strong> Zheng Y., Jiao C., Sun H., et al. (2016).
+<i>iTAK: a program for genome-wide prediction and classification of plant transcription factors, transcriptional regulators, and protein kinases.</i>
+Molecular Plant, 9(12), 1667–1670.
+<a href="https://doi.org/10.1016/j.molp.2016.09.014" target="_blank" rel="noopener noreferrer">https://doi.org/10.1016/j.molp.2016.09.014</a>.<br><br>
 TF classifications are candidate annotations; motif hits and variant overlaps do not prove TF–DNA binding.</small></section>
     </div>
   </section>
@@ -242,7 +245,7 @@ return t}
 function renderDomains(d){
 const sec=$("domainsec");
 $("arch").replaceChildren();$("domtable").replaceChildren();$("domclass").replaceChildren();
-text($("domstatus"),"");text($("domnote"),"");
+text($("domstatus"),"");
 d=d||{status:"unavailable"};
 if(d.status==="unavailable"){
 text($("domstatus"),"Domain data unavailable"+(d.message?": "+d.message:"")+".");sec.hidden=false;return}
@@ -281,7 +284,6 @@ $("arch").appendChild(cap);
 $("arch").appendChild(architecture(length,g.items))}
 text($("domstatus"),`${items.length} Pfam hit(s) in ${groups.length} transcript(s). Click a row for its description and alignment block.`);
 $("domtable").appendChild(domainTable(items,multiSource));
-if(d.citation)text($("domnote"),d.citation);
 sec.hidden=false}
 function renderIdentity(d){
 const g=d.gene||{},c=d.classification||{},tf=d.tf||{};
@@ -379,7 +381,7 @@ function clearAll(){currentGene="";lastExpression=null;
 $("download-motifs").disabled=true;$("download-variants").disabled=true;
 $("gene").value="";
 for(const id of ["domainsec","profile","exprsec","motifsec","variantsec"])$(id).hidden=true;
-for(const id of ["geneinfo","genemeta","tfinfo","expr","motifs","motifstatus","varianttable","arch","domtable","domclass","domstatus","domnote"])$(id).replaceChildren();
+for(const id of ["geneinfo","genemeta","tfinfo","expr","motifs","motifstatus","varianttable","arch","domtable","domclass","domstatus"])$(id).replaceChildren();
 text($("vstatus"),"");
 text($("status"),"Search any IWGSC RefSeq v1.1 (02G) gene, e.g. TraesCS2A02G305400.");
 $("gene").focus()}
