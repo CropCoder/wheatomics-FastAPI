@@ -224,6 +224,9 @@
     Restriction-enzyme and mismatch settings do not apply. Fluorescent tails (FAM/HEX) must be
     added to the two allele-specific primers before ordering. Use Check specificity to test both
     allele-specific pairs against the selected database.
+    <label class="d-block mt-2 mb-0" style="font-weight:600;">
+      <input type="checkbox" id="kasp-tails"> Append standard FAM/HEX tails (allele 1 = FAM, allele 2 = HEX)
+    </label>
   </div>
 
   <div id="results-section">
@@ -523,6 +526,7 @@ function buildRequest() {
   if (tm)  req.tm_range   = [parseFloat(tm[0]), parseFloat(tm[1])];
   if (prod) req.product_size = [parseInt(prod[0],10), parseInt(prod[1],10)];
   req.flank = parseInt($('#p-flank').val(), 10);
+  req.kasp_tails = $('#kasp-tails').is(':checked');
 
   var mode = activeMode();
   if (mode === 'seq') {
@@ -583,13 +587,20 @@ function renderKaspResults(data) {
     showError('No KASP design found. Try relaxing the primer length / Tm range or use a longer sequence around the SNP.');
     return;
   }
+  var hasTails = LAST_KASP_DESIGNS.some(function(d) { return d.allele1_primer_tailed; });
+  $('#kasp-results-table th').eq(2).text(hasTails ? 'Allele 1 primer (FAM)' : 'Allele 1 primer');
+  $('#kasp-results-table th').eq(3).text(hasTails ? 'Allele 2 primer (HEX)' : 'Allele 2 primer');
   LAST_KASP_DESIGNS.forEach(function(d, idx) {
     var row = $('<tr>');
     row.append($('<td>').text(d.rank));
     row.append($('<td>').text(d.orientation));
-    row.append($('<td>').html('<code>' + d.allele1_primer + '</code>'));
-    row.append($('<td>').html('<code>' + d.allele2_primer + '</code>'));
-    row.append($('<td>').html('<code>' + d.common_primer + '</code>'));
+    var p1 = d.allele1_primer_tailed || d.allele1_primer;
+    var p2 = d.allele2_primer_tailed || d.allele2_primer;
+    row.append($('<td>').html('<code>' + escapeHtml(p1) + '</code>' +
+      (d.allele1_primer_tailed ? '<br><small class="text-muted">core: ' + escapeHtml(d.allele1_primer) + '</small>' : '')));
+    row.append($('<td>').html('<code>' + escapeHtml(p2) + '</code>' +
+      (d.allele2_primer_tailed ? '<br><small class="text-muted">core: ' + escapeHtml(d.allele2_primer) + '</small>' : '')));
+    row.append($('<td>').html('<code>' + escapeHtml(d.common_primer) + '</code>'));
     row.append($('<td>').text(d.product_size));
     row.append($('<td>').text(d.tm_allele1 + ' / ' + d.tm_allele2 + ' / ' + d.tm_common));
     row.append($('<td>').text(d.gc_allele1 + ' / ' + d.gc_allele2 + ' / ' + d.gc_common));
@@ -608,6 +619,8 @@ $(document).on('click', '.btn-kasp-detail', function() {
     '<h6>KASP design ' + d.rank + ' (' + d.orientation + ')</h6>' +
     '<p class="small mb-2">Allele-specific primers differ at the 3′ SNP base. ' +
     'Amplicon ' + d.amplicon_start + '–' + d.amplicon_end + ' (' + d.product_size + ' bp).</p>' +
+    (d.allele1_primer_tailed ? '<p class="small"><b>FAM-tailed allele 1:</b> <code>' + escapeHtml(d.allele1_primer_tailed) +
+      '</code><br><b>HEX-tailed allele 2:</b> <code>' + escapeHtml(d.allele2_primer_tailed) + '</code></p>' : '') +
     '<pre class="alignment-pre">' + $('<div>').text(d.amplicon).html() + '</pre>');
 });
 
@@ -660,9 +673,10 @@ $(document).on('click', '.btn-kasp-check', function() {
 
 $('#btn-kasp-tsv').on('click', function() {
   if (!LAST_KASP_DESIGNS.length) return;
-  var lines = ['rank\torientation\tallele1_primer\tallele2_primer\tcommon_primer\tproduct_size\ttm_allele1\ttm_allele2\ttm_common\tgc_allele1\tgc_allele2\tgc_common'];
+  var lines = ['rank\torientation\tallele1_primer_core\tallele1_primer_tailed\tallele2_primer_core\tallele2_primer_tailed\tcommon_primer\tproduct_size\ttm_allele1\ttm_allele2\ttm_common\tgc_allele1\tgc_allele2\tgc_common'];
   LAST_KASP_DESIGNS.forEach(function(d) {
-    lines.push([d.rank, d.orientation, d.allele1_primer, d.allele2_primer, d.common_primer,
+    lines.push([d.rank, d.orientation, d.allele1_primer, d.allele1_primer_tailed || '',
+      d.allele2_primer, d.allele2_primer_tailed || '', d.common_primer,
       d.product_size, d.tm_allele1, d.tm_allele2, d.tm_common, d.gc_allele1, d.gc_allele2, d.gc_common].join('\t'));
   });
   var blob = new Blob([lines.join('\n') + '\n'], {type: 'text/tab-separated-values;charset=utf-8'});

@@ -23,6 +23,11 @@ _ALLOWED = frozenset("ACGT")
 _MIN_PRODUCT = 50
 _MAX_PRODUCT = 250
 
+# Standard LGC/KASP tails: FAM on allele 1, HEX on allele 2.  They are 5'
+# extensions and therefore do not change annealing/Tm of the core primers.
+FAM_TAIL = "GAAGGTGACCAAGTTCATGCT"
+HEX_TAIL = "GAAGGTCGGAGTCAACGGATT"
+
 
 def _rc(seq: str) -> str:
     return reverse_complement(seq)
@@ -75,6 +80,7 @@ def design_kasp(
     tm_range: tuple[float, float] = (55.0, 65.0),
     product_size: tuple[int, int] = (_MIN_PRODUCT, _MAX_PRODUCT),
     top_n: int = 20,
+    append_tails: bool = False,
 ) -> list[dict]:
     """Design KASP primers discriminating seq1 vs seq2 (one SNP)."""
     seq1 = seq1.upper()
@@ -142,6 +148,9 @@ def design_kasp(
             "amplicon": _amplicon(seq1, amp_start, amp_end),
             "score": score,
         }
+        if append_tails:
+            row["allele1_primer_tailed"] = FAM_TAIL + p1
+            row["allele2_primer_tailed"] = HEX_TAIL + p2
         designs.append(row)
 
     # Orientation 1: allele-specific forward primers, common reverse primer.

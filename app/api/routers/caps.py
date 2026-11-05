@@ -81,6 +81,8 @@ class CapsDesignRequest(BaseModel):
     product_size: tuple[int, int] = (100, 1000)
     flank: int = Field(250, ge=60, le=2000, description="How many bp to take on each side of the SNP in coordinate/VCF mode")
     top_n: int = Field(20, ge=1, le=100)
+    kasp_tails: bool = Field(
+        False, description="Append standard FAM/HEX tails to KASP allele-specific primers")
 
 
 def _resolve_enzymes(req: CapsDesignRequest) -> list[dict]:
@@ -306,6 +308,7 @@ def design_kasp_primers(req: CapsDesignRequest) -> dict:
             tm_range=tuple(req.tm_range),
             product_size=tuple(req.product_size),
             top_n=req.top_n,
+            append_tails=req.kasp_tails,
         )
     except ValueError as e:
         raise ValidationFailure(str(e)) from e
