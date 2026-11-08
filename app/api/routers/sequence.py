@@ -55,6 +55,42 @@ def _blastdbcmd(*args: str, stdin_data: str | None = None) -> str:
     return result.stdout.strip()
 
 
+def _dedupe_fasta(fasta: str) -> str:
+    """Collapse identical FASTA records returned by a BLAST DB alias.
+
+    `blastdbcmd -entry` can return the same sequence more than once when the
+    BLAST database alias chains duplicate volumes.  The gene page counts
+    sequence characters, so duplicate records made the CDS/protein lengths
+    look twice as large as the genomic interval.  Keep one record per unique
+    sequence and re-wrap it at 60 characters.
+    """
+    if not fasta:
+        return fasta
+    records: list[tuple[str, str]] = []
+    header: str | None = None
+    chunks: list[str] = []
+    for line in fasta.splitlines():
+        line = line.strip()
+        if line.startswith(">"):
+            if header is not None:
+                records.append((header, "".join(chunks)))
+            header, chunks = line[1:].strip(), []
+        elif line and header is not None:
+            chunks.append(line)
+    if header is not None:
+        records.append((header, "".join(chunks)))
+
+    seen: set[str] = set()
+    kept: list[str] = []
+    for h, seq in records:
+        if not seq or seq in seen:
+            continue
+        seen.add(seq)
+        wrapped = "\n".join(seq[i:i + 60] for i in range(0, len(seq), 60))
+        kept.append(">" + h + "\n" + wrapped)
+    return "\n".join(kept)
+
+
 def _check_db_exists(db_path: Path) -> bool:
     """A BLAST DB is a set of index files (.nsq/.nin/.nhr or .psq/.pin/.phr),
     not necessarily a single path. Return True if any of those exist.
@@ -320,9 +356,9 @@ def sequence_by_gene(
     bundle = SequenceBundle(gene_id=gene_id)
     if gene_db and gene_entry:
         try:
-            bundle.gene_sequence = _blastdbcmd(
+            bundle.gene_sequence = _dedupe_fasta(_blastdbcmd(
                 "-db", str(settings.BLAST_DB_PATH / gene_db),
-                "-entry", gene_entry)
+                "-entry", gene_entry))
         except Exception:
             bundle.gene_sequence = None
     else:
@@ -332,9 +368,9 @@ def sequence_by_gene(
                     if protein_db else None
     if protein_db and protein_entry:
         try:
-            bundle.protein_sequence = _blastdbcmd(
+            bundle.protein_sequence = _dedupe_fasta(_blastdbcmd(
                 "-db", str(settings.BLAST_DB_PATH / protein_db),
-                "-entry", protein_entry)
+                "-entry", protein_entry))
         except Exception:
             bundle.protein_sequence = None
     else:
