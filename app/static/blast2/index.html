@@ -1448,6 +1448,8 @@
 
     .blast-row-align { margin-left: 6px; padding: 1px 8px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--leaf); font-family: var(--utility); font-size: 9px; font-weight: 700; cursor: pointer; }
     .blast-row-align:hover { border-color: rgba(17, 134, 83, .45); }
+    .blast-hit-db { margin-left: 6px; padding: 1px 8px; border: 1px solid rgba(17, 134, 83, .3); border-radius: 999px; background: #f4f9f1; color: var(--forest-deep); font-family: var(--utility); font-size: 9px; font-weight: 700; white-space: nowrap; }
+    .blast-detail-note { color: var(--muted); font-size: 10px; font-weight: 400; }
     .blast-aln-card.flash > summary { background: #eaf7ea; }
 
     .blast-aln-query-title { margin: 16px 0 8px; padding: 6px 12px; border-left: 3px solid var(--leaf); background: #f4f9f1; border-radius: 6px; color: var(--forest-deep); font-family: var(--display); font-size: 12px; font-weight: 700; }
@@ -2759,7 +2761,17 @@ function parseTsv(text) {
     if (!line.trim()) return;
     var c = line.split('\t');
     if (c.length < 15) return;
-    var stitle = c.slice(14).join('\t');
+    // Column 16 is "sdb" (subject database), appended server-side because
+    // outfmt 6 has no database column. Results produced before that column
+    // existed have 15 columns; an empty sdb cell means the hit is present in
+    // more than one selected database (ambiguous) and is kept as "".
+    var stitleCols = c.slice(14);
+    var sdb = '';
+    if (c.length >= 16) {
+      var last = c[c.length - 1];
+      if (last === '' || /^[\w.\-]+$/.test(last)) { sdb = last; stitleCols = c.slice(14, -1); }
+    }
+    var stitle = stitleCols.join('\t');
     var region = '';
     var m = stitle.match(/^(\S+:\d+[-–]\d+)/);
     if (m) region = m[1];
@@ -2770,7 +2782,7 @@ function parseTsv(text) {
       qstart: parseInt(c[7], 10), qend: parseInt(c[8], 10),
       sstart: parseInt(c[9], 10), send: parseInt(c[10], 10),
       evalue: parseFloat(c[11]), bitscore: parseFloat(c[12]),
-      btop: c[13], stitle: stitle, region: region,
+      btop: c[13], stitle: stitle, region: region, sdb: sdb,
       description: stitle.replace(region, '').replace(/^[\s\-–]+/, '').slice(0, 400)
     });
   });
@@ -2847,9 +2859,14 @@ function aggregateSubjects() {
     });
     if (curStart !== null) covered += curEnd - curStart + 1;
     var qlen = lengths[g.qseqid] || Math.max.apply(null, hsps.map(function (h) { return Math.max(h.qstart, h.qend); }));
+    // All HSPs of one subject normally come from one database; keep every
+    // distinct value (sorted) so a merged multi-database hit is visible.
+    var dbSet = {};
+    hsps.forEach(function (h) { if (h.sdb) dbSet[h.sdb] = 1; });
+    var sdb = Object.keys(dbSet).sort().join(', ');
     return {
       key: g.key, qseqid: g.qseqid, sseqid: g.sseqid, stitle: g.stitle, region: g.region,
-      description: g.description, hsps: hsps, hsp: hsps.length,
+      description: g.description, hsps: hsps, hsp: hsps.length, sdb: sdb,
       maxscore: maxScore, totalscore: totalScore, evalue: evalue, pident: pident,
       length: length, coverage: qlen ? Math.min(100, covered / qlen * 100) : 0, qlength: qlen
     };
@@ -2886,6 +2903,15 @@ function renderDescriptions() {
   var grouped = !state.queryFilter && state.queries.length > 1;
   var rows = [];
   var lastQuery = null;
+  // Show the sdb badge only when the result really mixes databases: either
+  // the job (from localStorage ctx) searched several, or the hit table itself
+  // carries more than one value (works for shared links without ctx too).
+  var seenDb = {};
+  state.subjects.forEach(function (s) {
+    String(s.sdb || '').split(', ').forEach(function (d) { if (d) seenDb[d] = 1; });
+  });
+  var multiDb = (state.result && state.result.dbs && state.result.dbs.length > 1) ||
+                Object.keys(seenDb).length > 1;
   slice.forEach(function (s, i) {
     if (grouped && s.qseqid !== lastQuery) {
       var qi = queryOrderIndex(s.qseqid);
@@ -2896,11 +2922,16 @@ function renderDescriptions() {
     var subject = /^Traes/i.test(s.sseqid)
       ? '<a href="/GeneHub/?search=' + encodeURIComponent(s.sseqid) + '" target="_blank" rel="noopener">' + esc(s.sseqid) + '</a>'
       : esc(s.sseqid);
+    // Multi-database jobs: label each hit with the database it came from
+    // (sdb column, appended server-side). Single-database jobs stay clean.
+    var dbBadge = (multiDb && s.sdb)
+      ? ' <span class="blast-hit-db" title="Subject database">' + esc(s.sdb) + '</span>'
+      : '';
     var checked = state.selectedSubjects.has(s.key) ? ' checked' : '';
     rows.push('<tr class="data-row" data-key="' + esc(s.key) + '">' +
       '<td class="sel"><input type="checkbox" class="hit-check" data-key="' + esc(s.key) + '"' + checked + '></td>' +
       '<td class="num">' + (i + 1) + '</td>' +
-      '<td class="subject">' + subject + ' <button type="button" class="blast-row-align" data-sseqid="' + esc(s.sseqid) + '" title="Jump to this target alignment">alignment</button></td>' +
+      '<td class="subject">' + subject + ' <button type="button" class="blast-row-align" data-sseqid="' + esc(s.sseqid) + '" title="Jump to this target alignment">alignment</button>' + dbBadge + '</td>' +
       '<td class="desc" title="' + esc(s.stitle) + '">' + esc(s.description || '—') + '</td>' +
       '<td class="num">' + fmtFloat(s.maxscore, 1) + '</td>' +
       '<td class="num">' + fmtFloat(s.totalscore, 1) + '</td>' +
@@ -2949,7 +2980,11 @@ function attachDescriptionRows() {
       }).join('');
       var detail = document.createElement('tr');
       detail.className = 'blast-detail-row';
-      detail.innerHTML = '<td colspan="11"><strong>Full title</strong> ' + esc(subj.stitle) + list + '</td>';
+      var dbLine = subj.sdb
+        ? '<div><strong>Database</strong> ' + esc(subj.sdb) + (subj.hsps.some(function (h) { return h.sdb && h.sdb !== subj.hsps[0].sdb; })
+            ? ' <span class="blast-detail-note">(HSPs from different databases)</span>' : '') + '</div>'
+        : '';
+      detail.innerHTML = '<td colspan="11"><strong>Full title</strong> ' + esc(subj.stitle) + dbLine + list + '</td>';
       row.parentNode.insertBefore(detail, row.nextSibling);
     });
   });
@@ -3097,7 +3132,7 @@ function applyFilters() {
 
 function renderDownloads(urls) {
   var labels = {
-    tabular: 'Hit table (TSV, outfmt 6 + ppos/btop)',
+    tabular: 'Hit table (TSV, outfmt 6 + ppos/btop + sdb)',
     tabular_gz: 'Hit table — compressed (.tsv.gz)',
     traditional: 'Pairwise alignments (text, outfmt 0)',
     traditional_gz: 'Pairwise alignments — compressed (.txt.gz)'

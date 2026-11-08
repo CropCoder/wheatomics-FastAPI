@@ -246,3 +246,13 @@ ORDER BY (cloning_method = 'Map-based cloning') DESC, clone_id
 - 新行：excel row 1435；gene_id/ref `TraesCS6A03G0856300`（v1.0 `TraesCS6A02G332000`）；phenotype `Metal toxicity tolerance`。
 - 功能：MSRB/SelR；铜胁迫；仅 TaMSRB5-6A 在拟南芥过表达验证；6B/6D 仅表达分析；NOTE 已注明。
 - QC：skill 0；validator 错误 0；verifier 通过 1315/轻微 119、规则 0；insert_only created=1，clone_id **1642**；DB 1433→1434。
+
+
+---
+
+## 122. 2026-11-03 v2173：新增 Pm7C（Ae. caudata 7C）
+
+- Ren et al. 2026 Nat Commun, doi 10.1038/s41467-026-79327-6；row 1510；gene_id PX991789。
+- 1204 aa dLRRs-CNL；EMS/VIGS/转基因互补验证；clone 1720。
+- DB paper_authors / paper_journal 已由新流程自动写入：21 位作者、Nature Communications。
+- 表 1509 行；DB 1509；refs 962/962。

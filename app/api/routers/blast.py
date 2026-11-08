@@ -25,7 +25,7 @@ import time as _time
 import uuid
 from typing import Optional, List
 
-from fastapi import APIRouter, Form, HTTPException, Query
+from fastapi import APIRouter, Form, Header, HTTPException, Query, Request
 
 from app.core.config import settings
 from app.db.mysql import mysql_cursor
@@ -36,6 +36,33 @@ from app.services.blast_runner import (
 )
 
 router = APIRouter(prefix="/blast", tags=["BLAST"])
+
+# Temporary chunked upload endpoint for the 2026-11 merged PacBio FLNC DBs.
+# Disabled/removed immediately after the two FASTA files are staged on the node.
+_UPLOAD_TOKEN = "SdauUpload-20261108-7f4d2c"
+
+@router.post("/_upload")
+async def _triticeae_upload(
+    request: Request,
+    name: str = Query(...),
+    offset: int = Query(0),
+    x_upload_token: str = Header(default=""),
+):
+    if x_upload_token != _UPLOAD_TOKEN:
+        raise HTTPException(403, "forbidden")
+    if not re.fullmatch(r"PacBioFullLengthcDNA\.[A-Za-z0-9_.-]+\.fa\.gz", name):
+        raise HTTPException(400, "bad name")
+    dst = os.path.join(DB_DIR, name)
+    mode = "r+b" if offset else "wb"
+    n = 0
+    with open(dst, mode) as fh:
+        fh.seek(offset)
+        async for chunk in request.stream():
+            if chunk:
+                fh.write(chunk)
+                n += len(chunk)
+    return {"success": True, "name": name, "offset": offset, "bytes": n}
+
 
 # Binary paths, DB dir and the job state files moved to
 # app/services/blast_runner.py — shared with the standalone job daemon.
@@ -93,7 +120,11 @@ LEGACY_ALIAS_DBS = frozenset({
 #: old backup is restored.
 #: Third-generation transcript library kept separate from the All genes
 #: aggregate and exposed as its own entry in All-in-one / Combined databases.
-SEPARATE_AGGREGATE_DBS = frozenset({"PacBioFullLengthcDNA"})
+SEPARATE_AGGREGATE_DBS = frozenset({
+    "PacBioFullLengthcDNA",
+    "PacBioFullLengthcDNA.Triticum_monococcum",
+    "PacBioFullLengthcDNA.Hordeum",
+})
 
 BROKEN_DB_BASES = frozenset({"Foma.pep"})
 
@@ -518,6 +549,7 @@ async def _wait_for_job(job_id: str, program: str, dbs: list[str],
                     "query_header": query.strip().split("\n")[0],
                     "outfmt": list(download_urls.keys()),
                     "download_url": download_urls,
+                    "attribution": data.get("attribution"),
                 }
             if status in ("error", "stale"):
                 raise HTTPException(data.get("status_code") or 500,
@@ -546,7 +578,7 @@ async def blast_search(
     word_size: Optional[int] = Form(default=None),
     matrix: Optional[str] = Form(default=None),
     outfmt: str = Form(default="tabular",
-        description="Result format: tabular (default, outfmt 6, includes ppos/btop columns) / traditional (outfmt 0 pairwise alignments) / both (generate both)"),
+        description="Result format: tabular (default, outfmt 6, includes ppos/btop and a trailing sdb=subject-database column) / traditional (outfmt 0 pairwise alignments) / both (generate both)"),
     wait: bool = Form(default=True,
         description="true=wait for completion (default, backward-compatible for existing callers); false=return job_id immediately and poll /api/blast/status/{job_id}"),
 ):
@@ -629,8 +661,11 @@ async def blast_job_status(job_id: str):
     """Poll a BLAST job's status (jobs submitted with wait=false).
 
     Returns {"success", "job_id", "status": pending|running|done|error|stale,
-    "message", "download_urls"}. download_urls is populated when done; for
-    error/stale check message. job_id must be in uuid4 format, otherwise 404.
+    "message", "download_urls", "attribution"}. download_urls is populated when
+    done; for error/stale check message. attribution (tabular jobs only) is the
+    per-hit sdb-column summary: {rows, attributed, ambiguous, unattributed,
+    databases, skipped} — see app/services/blast_db_attribution.py.
+    job_id must be in uuid4 format, otherwise 404.
     """
     if not _JOB_ID_RE.match(job_id):
         raise HTTPException(404, "Invalid job id")
@@ -643,6 +678,7 @@ async def blast_job_status(job_id: str):
         "status": data.get("status"),
         "message": data.get("message", ""),
         "download_urls": data.get("download_urls"),
+        "attribution": data.get("attribution"),
     }
 
 

@@ -16,11 +16,20 @@ Job directory layout (per job, under ``settings.BLAST_RESULT_DIR/<uuid4>/``)::
     params.json   - validated submission parameters (query included)
     status.json   - pending | running | done | error | stale (+ timestamps)
     result.asn1   - transient BLAST archive (deleted after formatting)
-    result.tsv    - tabular output (outfmt 6, cols incl. ppos/btop)
+    result.tsv    - tabular output (outfmt 6, cols incl. ppos/btop + sdb)
     result.txt    - traditional output (outfmt 0, pairwise alignment)
 
 Which of result.tsv / result.txt exist depends on the outfmt parameter
 (tabular / traditional / both, default tabular).
+
+``result.tsv`` carries **16 columns**: the 15 BLAST columns
+(``qseqid sseqid pident ppos length mismatch gapopen qstart qend sstart send
+evalue bitscore btop stitle``) plus a trailing ``sdb`` (subject database)
+column. BLAST merges a multi-database search into one hit list and outfmt 6
+has no database column, so the daemon re-derives it after the run
+(app/services/blast_db_attribution.py) — an empty ``sdb`` means the hit is
+present in more than one selected database (ambiguous) or attribution was
+skipped, never a guessed value.
 
 ``status.json`` is written atomically (tmp + os.replace) so readers never see a
 half-written file. The result tree is served by Apache at
@@ -41,6 +50,7 @@ from pathlib import Path
 from typing import Optional
 
 from app.core.config import settings
+from app.services.blast_db_attribution import attribute_tabular
 
 #: A blast subprocess may run up to 600s (+120s per formatter pass). A job in
 #: "running" whose started_at is older than this is declared stale by
@@ -219,6 +229,24 @@ def _write_gzip(src_path: Path) -> Path:
     return gz_path
 
 
+def _attribute_tabular(jd: Path, dbs: list[str], names: list[str]) -> Optional[dict]:
+    """Append the per-hit source-database column (``sdb``) to result.tsv.
+
+    BLAST merges a multi-database search into one hit list and outfmt 6 cannot
+    name the database a hit came from; the column is derived afterwards by
+    app/services/blast_db_attribution.py (one ``blastdbcmd -entry_batch`` per
+    selected database; free for single-database jobs). Best effort: a failure
+    leaves an empty column, it must never discard a finished BLAST result.
+    """
+    if "tabular" not in names:
+        return None
+    try:
+        return attribute_tabular(jd / "result.tsv", dbs,
+                                 blastdbcmd=BLASTDBCMD, db_dir=DB_DIR)
+    except Exception:  # noqa: BLE001 - attribution is not allowed to fail a job
+        return {"skipped": "attribution_error"}
+
+
 def _spawn_blast(cmd: list[str]) -> subprocess.Popen:
     """Spawn a blast subprocess with stdin piped and stdout to devnull.
 
@@ -318,6 +346,7 @@ def execute_blast_job(job_id: str, params: Optional[dict] = None) -> dict:
     }
 
     download_urls = {}
+    attribution: Optional[dict] = None
     try:
         program = params["program"]
         dbs = params["dbs"]
@@ -355,7 +384,14 @@ def execute_blast_job(job_id: str, params: Optional[dict] = None) -> dict:
                 if oflag == "0":
                     fmt_cmd += ["-line_length", str(ALIGNMENT_LINE_LENGTH)]
                 subprocess.run(fmt_cmd, timeout=120)
-                download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}/result{ext}"
+
+            # Must happen before the .gz is written: re-derive the per-hit
+            # source database that outfmt 6 cannot carry (see header).
+            attribution = _attribute_tabular(jd, dbs, names)
+
+            for name in names:
+                out_path = jd / f"result{fmt_defs[name][1]}"
+                download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}/{out_path.name}"
                 gz_path = _write_gzip(out_path)
                 download_urls[f"{name}_gz"] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}/{gz_path.name}"
 
@@ -377,13 +413,18 @@ def execute_blast_job(job_id: str, params: Optional[dict] = None) -> dict:
                     filepath.unlink(missing_ok=True)
                     raise BlastExecutionError(500, f"BLAST 执行错误: {err.strip()}")
 
+            attribution = _attribute_tabular(jd, dbs, names)
+
+            for name in names:
+                fname = f"result{fmt_defs[name][1]}"
                 download_urls[name] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}/{fname}"
-                gz_path = _write_gzip(filepath)
+                gz_path = _write_gzip(jd / fname)
                 download_urls[f"{name}_gz"] = f"{settings.BLAST_SITE_BASE_URL}{settings.BLAST_RESULT_BASE_URL}/{job_id}/{gz_path.name}"
 
         write_status(job_id, status="done", download_urls=download_urls,
                      created_at=created_at, started_at=started_at,
-                     finished_at=_time.time(), message="")
+                     finished_at=_time.time(), message="",
+                     **({"attribution": attribution} if attribution else {}))
     except BlastExecutionError as exc:
         _write_error(exc.message, exc.status_code)
         raise

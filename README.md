@@ -129,7 +129,7 @@ curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \
 | `max_target_seqs` | int | `1000` | 最多返回的匹配数（1–50000） |
 | `word_size` | int | — | 可选，word 大小 |
 | `matrix` | string | — | 可选，打分矩阵 |
-| `outfmt` | string | `tabular` | 结果格式：`tabular`（默认，outfmt 6 表格，含 `ppos`/`btop` 变异信息列） / `traditional`（outfmt 0 逐位比对，标记行直接显示氨基酸差异） / `both`（两种都生成） |
+| `outfmt` | string | `tabular` | 结果格式：`tabular`（默认，outfmt 6 表格，含 `ppos`/`btop` 变异信息列 + 末尾 `sdb` 数据库列） / `traditional`（outfmt 0 逐位比对，标记行直接显示氨基酸差异） / `both`（两种都生成） |
 | `wait` | bool | `true` | `true`＝同步等待 job 完成（默认，与历史调用契约一致）；`false`＝立即返回 `job_id`，轮询状态接口 |
 
 **同步模式**（`wait=true`，默认）：请求等待 job 完成（轮询上限 1100 秒），返回结果文件下载链接：
@@ -148,7 +148,14 @@ curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \
 }
 ```
 
-`download_url` 与 `outfmt` 只包含提交时选择的格式：`traditional` 时是 `.txt` 逐位比对文件，`both` 时两个键都有。tabular 的 `.tsv` 除标准列外还带 `ppos`（正匹配百分比）与 `btop`（逐位变异编码）两列，不用 traditional 也能看出具体氨基酸差异。
+`download_url` 与 `outfmt` 只包含提交时选择的格式：`traditional` 时是 `.txt` 逐位比对文件，`both` 时两个键都有。tabular 的 `.tsv` 共 **16 列**：15 个 BLAST 标准列（`qseqid sseqid pident ppos length mismatch gapopen qstart qend sstart send evalue bitscore btop stitle`）+ 末尾 `sdb`（subject database，命中来自哪个库）。BLAST 把多库搜索合并成一张命中表，outfmt 6 本身没有数据库列，`sdb` 由 daemon 在跑完后用 `blastdbcmd -entry_batch` 逐库核对补上（见 `app/services/blast_db_attribution.py`）：
+
+- 单库任务：`sdb` 就是该库（无额外开销）；
+- 多库任务：命中只在 1 个库里出现 → 填该库；
+- 命中在多个库中都存在（如某个基因组库 + `all_*` 聚合库同时命中）→ `sdb` 留空，表示无法确定，**不猜**；
+- 归因失败/跳过时 `sdb` 同样为空，原因记录在 `status.json` 的 `attribution` 字段里。
+
+`ppos`（正匹配百分比）与 `btop`（逐位变异编码）不用 traditional 也能看出具体氨基酸差异。
 
 失败时返回对应状态码：400（参数错误）、404（数据库不存在）、429（任务队列已满，稍后重试）、500（BLAST 执行失败）、504（执行或轮询超时），错误消息在响应的 `message`/`detail` 字段。
 
@@ -188,7 +195,7 @@ curl "https://wheatomics.sdau.edu.cn/api/blast/status/<job_id>"
 }
 ```
 
-`status` 取值：`pending`（排队）→ `running`（执行中）→ `done` / `error` / `stale`（终态）。`done` 时 `download_urls` 填充（只含提交时 `outfmt` 指定的格式）；`error`/`stale` 时看 `message`——`stale` 表示 job 在 daemon 重启时被中断，需重新提交。`job_id` 必须为 uuid4 格式，非法或不存在返回 404。
+`status` 取值：`pending`（排队）→ `running`（执行中）→ `done` / `error` / `stale`（终态）。`done` 时 `download_urls` 填充（只含提交时 `outfmt` 指定的格式）；tabular 任务还会带 `attribution`（`sdb` 列的归因统计：`rows`/`attributed`/`ambiguous`/`unattributed`/`databases`/`skipped`）；`error`/`stale` 时看 `message`——`stale` 表示 job 在 daemon 重启时被中断，需重新提交。`job_id` 必须为 uuid4 格式，非法或不存在返回 404。
 
 ### 列出可用数据库
 
