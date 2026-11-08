@@ -125,6 +125,22 @@ class TriticeaePaper(BaseModel):
     function_gene_tags: str | None = None
     """[Backup] Functional gene tags (second annotation scheme, corresponding to function_gene_flag)"""
 
+    # ===== journal metrics (journal_metrics, joined by ISSN) =====
+    # Journal-level metric, NOT a paper-level score: every paper published in
+    # the same journal carries the same value.
+
+    impact_factor: float | None = None
+    """Journal impact factor (JCR) or SJR, from journal_metrics.jif; null when the journal has no metric row"""
+
+    jcr_quartile: str | None = None
+    """JCR quartile of the journal (Q1-Q4); null when unknown"""
+
+    metric_year: int | None = None
+    """Year the metric refers to (e.g. 2024)"""
+
+    metric_source: str | None = None
+    """Metric source label, e.g. JCR2024 or SJR2025; shown in the UI so users know what the number is"""
+
 
 class TriticeaeSearchResult(BaseModel):
     """Paginated search result."""

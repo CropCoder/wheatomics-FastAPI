@@ -339,11 +339,13 @@ TOOL_SPECS: list[dict] = [
     _tool(
         "search_papers",
         "Enrichment & literature",
-        "Search the Triticeae literature table (12K+ papers) by title, abstract, journal, authors, PubMed "
-        "keywords, gene name, PMID or date. Always verify PMID/DOI claims against get_paper or the paper "
-        "annotation endpoint.",
+        "Search the Triticeae literature table (17K+ papers) by title, abstract, journal, authors, PubMed "
+        "keywords, gene name, PMID or date. Text search is typo-tolerant and singular/plural- and "
+        "synonym-aware (e.g. 'strip rust' / 'yellow rust' both find 'stripe rust'). Results can be "
+        "filtered by journal impact factor / JCR quartile and sorted by impact factor. Always verify "
+        "PMID/DOI claims against get_paper or the paper annotation endpoint.",
         {
-            "q": _p("string", "Full-text keyword query"),
+            "q": _p("string", "Full-text keyword query (typo-tolerant)"),
             "title": _p("string", "Title keyword"),
             "abstract": _p("string", "Abstract keyword"),
             "journal": _p("string", "Journal keyword"),
@@ -351,9 +353,16 @@ TOOL_SPECS: list[dict] = [
             "pubmed_keywords": _p("string", "PubMed keyword"),
             "gene_name": _p("string", "Gene name keyword"),
             "pmid": _p("string", "PubMed ID"),
+            "pmids": _p("string", "Comma-separated PMID list (max 200, batch lookup)"),
             "pub_date_start": _p("string", "Publication date start (inclusive)"),
             "pub_date_end": _p("string", "Publication date end (inclusive)"),
             "since_days": _p("integer", "Only papers added to the table within the last N days"),
+            "min_if": _p("number", "Minimum journal impact factor (JCR, journal-level)"),
+            "max_if": _p("number", "Maximum journal impact factor"),
+            "quartile": _p("string", "JCR quartile filter, comma-separated (e.g. Q1 or Q1,Q2)"),
+            "sort": _p("string", "Sort field", enum=["relevance", "created_at", "pub_date", "journal", "title", "impact_factor"]),
+            "order": _p("string", "Sort direction", enum=["asc", "desc"]),
+            "fuzzy": _p("integer", "1 = typo-tolerant text search (default), 0 = plain LIKE matching", default=1, minimum=0, maximum=1),
             "limit": _p("integer", "Maximum rows", default=20, minimum=1, maximum=200),
             "offset": _p("integer", "Pagination offset", default=0, minimum=0),
         },

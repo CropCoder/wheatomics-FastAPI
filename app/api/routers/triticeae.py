@@ -17,6 +17,8 @@ from app.core.config import settings
 from app.core.response import ok
 from app.db.mysql import mysql_cursor
 from app.schemas.triticeae import TriticeaePaper, TriticeaeSearchResult
+from app.services import meili_search
+from app.services.literature_query import expand_text_variants, split_terms
 
 # Note: router prefix is empty so the route decorators below define the
 # full /api path themselves. include_router() in main.py already wraps
@@ -52,8 +54,63 @@ _SQL_COLUMNS = """p.id AS paper_id,
 
 _SQL_FROM = """FROM papers p"""
 
-_SQL_COUNT = f"""SELECT COUNT(*) AS cnt {_SQL_FROM}"""
-_SQL_SELECT = f"""SELECT {_SQL_COLUMNS} {_SQL_FROM}"""
+# --- journal metrics join (ISSN bridge, 2026-11-08) ------------------------
+# papers.journal stores PubMed MedAbbr strings which are inconsistent
+# ("Theor Appl Genet", "Journal of Experimental Botany " with trailing space…).
+# Matching them against a journal metric table by name is unreliable, so the
+# DB keeps journal_alias (journal string -> ISSN) and journal_metrics (ISSN ->
+# JIF/quartile/year), and queries join through ISSN.
+_JMETRIC_STATE: dict[str, bool] = {"checked": False, "ok": False}
+
+
+def _journal_metrics_available() -> bool:
+    """True when journal_alias + journal_metrics exist (cached once per worker)."""
+    if _JMETRIC_STATE["checked"]:
+        return _JMETRIC_STATE["ok"]
+    ok = False
+    try:
+        with mysql_cursor(settings.DB_TRITICEAE) as cursor:
+            cursor.execute(
+                "SELECT COUNT(*) AS n FROM information_schema.TABLES "
+                "WHERE TABLE_SCHEMA = %s AND TABLE_NAME IN ('journal_alias', 'journal_metrics')",
+                (settings.DB_TRITICEAE,),
+            )
+            row = cursor.fetchone()
+            ok = int((row or {}).get("n") or 0) == 2
+    except Exception:
+        ok = False
+    _JMETRIC_STATE.update(checked=True, ok=ok)
+    return ok
+
+
+def _from_sql() -> str:
+    sql = _SQL_FROM
+    if _journal_metrics_available():
+        sql += (
+            " LEFT JOIN journal_alias ja ON ja.journal_db = p.journal"
+            " LEFT JOIN journal_metrics jm ON jm.issn = ja.issn"
+        )
+    return sql
+
+
+def _select_sql() -> str:
+    cols = _SQL_COLUMNS
+    if _journal_metrics_available():
+        cols += (
+            ", jm.jif AS impact_factor, jm.quartile AS jcr_quartile,"
+            " jm.jcr_year AS metric_year, jm.source AS metric_source"
+        )
+    return f"SELECT {cols} {_from_sql()}"
+
+
+# Sorting whitelist. impact_factor requires the journal-metrics join; NULL
+# metrics always sort last so "highest impact first" stays useful.
+_SORT_MAP: dict[str, list[str]] = {
+    "created_at": ["p.created_at", "p.pub_date"],
+    "pub_date": ["p.pub_date", "p.created_at"],
+    "journal": ["p.journal", "p.pub_date"],
+    "title": ["p.title"],
+}
 
 # Columns searched by the "All Fields" (q) parameter.
 _Q_FIELDS = [
@@ -153,6 +210,14 @@ def _row_to_paper(row: dict) -> dict:
         paper_disease_gene_tags=str(row.get("paper_disease_gene_tags") or ""),
         function_gene_flag=str(row.get("function_gene_flag") or ""),
         function_gene_tags=str(row.get("function_gene_tags") or ""),
+
+        # journal-level metrics (joined by ISSN; null when the journal has none)
+        impact_factor=(
+            float(row["impact_factor"]) if row.get("impact_factor") is not None else None
+        ),
+        jcr_quartile=(str(row.get("jcr_quartile") or "") or None),
+        metric_year=(int(row["metric_year"]) if row.get("metric_year") is not None else None),
+        metric_source=(str(row.get("metric_source") or "") or None),
     ).model_dump()
 
 
@@ -187,35 +252,70 @@ def _build_search(
     pub_date_start: str | None = None,
     pub_date_end: str | None = None,
     since_days: int | None = None,
+    pmids: str | None = None,
+    min_if: float | None = None,
+    max_if: float | None = None,
+    quartile: str | None = None,
+    sort: str = "created_at",
+    order: str = "desc",
+    fuzzy: int = 1,
+    pmid_rank: list[str] | None = None,
+    skip_text_params: set[str] | None = None,
     limit: int = 20,
     offset: int = 0,
 ) -> dict:
-    """Search the papers table only (no JOIN). Annotation-only filters
-    were dropped — use /papers/{pmid}/annotation for that data.
+    """Search the papers table, optionally joined to journal metrics by ISSN.
+
+    Free-text terms are split on commas (AND) and each term is expanded into
+    singular/synonym LIKE variants (OR), so ``stripe rusts`` and
+    ``stripe rust`` return the same papers.  ``impact_factor``/``jcr_quartile``
+    are journal-level values from journal_metrics; they are null when the
+    journal has no metric row.
     """
+    if not _journal_metrics_available() and (
+        min_if is not None or max_if is not None or quartile or (sort or "").strip().lower() == "impact_factor"
+    ):
+        raise HTTPException(
+            status_code=503,
+            detail="journal metrics are not installed on this database",
+        )
+
     conditions: list[str] = []
     params: list = []
 
-    # Text filters (positive): LIKE across one or more columns.
+    # Text filters (positive): comma-separated terms are AND-ed; each term is
+    # expanded into singular/synonym variants which are OR-ed (LIKE), so
+    # "stripe rusts" == "stripe rust" and "yellow rust" finds stripe-rust papers.
+    skip_text = skip_text_params or set()
     for param_name, cols in _TEXT_FILTER_MAP.items():
+        if param_name in skip_text:
+            continue
         val = locals().get(param_name)
         if not val:
             continue
-        like = f"%{val}%"
-        clauses = [f"{col} LIKE %s" for col in cols]
-        conditions.append(f"({' OR '.join(clauses)})")
-        params.extend([like] * len(cols))
+        for term in split_terms(val):
+            clauses: list[str] = []
+            values: list[str] = []
+            for variant in expand_text_variants(term):
+                like = f"%{variant}%"
+                clauses.extend(f"{col} LIKE %s" for col in cols)
+                values.extend([like] * len(cols))
+            if clauses:
+                conditions.append("(" + " OR ".join(clauses) + ")")
+                params.extend(values)
 
-    # Text filters (exclude / NOT): NOT LIKE across all columns.
+    # Text filters (exclude / NOT): every variant must be absent.
     for param_name, cols in _TEXT_FILTER_MAP.items():
         exclude_param = f"{param_name}_exclude"
         val = locals().get(exclude_param)
         if not val:
             continue
-        like = f"%{val}%"
-        clauses = [f"{col} NOT LIKE %s" for col in cols]
-        conditions.append(f"({' AND '.join(clauses)})")
-        params.extend([like] * len(cols))
+        for term in split_terms(val):
+            for variant in expand_text_variants(term):
+                like = f"%{variant}%"
+                for col in cols:
+                    conditions.append(f"{col} NOT LIKE %s")
+                    params.append(like)
 
     # Exact-match filters (positive).
     for param_name, sql_expr in _EXACT_FILTER_MAP.items():
@@ -278,17 +378,58 @@ def _build_search(
         conditions.append("p.created_at >= (NOW() - INTERVAL %s DAY)")
         params.append(int(since_days))
 
+    # Batch PMID fetch (used by "export selected" in the front end; hard cap 200).
+    if pmids:
+        id_list = [x.strip() for x in split_terms(pmids) if x.strip().isdigit()][:200]
+        if id_list:
+            conditions.append(f"p.pmid IN ({', '.join(['%s'] * len(id_list))})")
+            params.extend(id_list)
+
+    # Ranked PMIDs from Meilisearch (text matching already done there; the SQL
+    # below only counts/paginates exactly and applies the structured filters).
+    if pmid_rank is not None:
+        if pmid_rank:
+            placeholders = ", ".join(["%s"] * len(pmid_rank))
+            conditions.append(f"p.pmid IN ({placeholders})")
+            params.extend(pmid_rank)
+        else:
+            conditions.append("1 = 0")
+
+    # Journal-level metric filters (require the journal_metrics join).
+    if min_if is not None:
+        conditions.append("jm.jif >= %s")
+        params.append(float(min_if))
+    if max_if is not None:
+        conditions.append("jm.jif <= %s")
+        params.append(float(max_if))
+    if quartile:
+        quartiles = [q.strip().upper() for q in split_terms(quartile) if q.strip()]
+        if quartiles:
+            conditions.append(f"jm.quartile IN ({', '.join(['%s'] * len(quartiles))})")
+            params.extend(quartiles)
+
     where = " WHERE " + " AND ".join(conditions) if conditions else ""
 
+    sort_key = (sort or "created_at").strip().lower()
+    direction = "ASC" if (order or "").strip().lower() == "asc" else "DESC"
+    order_params: list = []
+    if sort_key == "relevance" and pmid_rank:
+        placeholders = ", ".join(["%s"] * len(pmid_rank))
+        order_sql = f"ORDER BY FIELD(p.pmid, {placeholders})"
+        order_params = list(pmid_rank)
+    elif sort_key == "impact_factor" and _journal_metrics_available():
+        order_sql = f"ORDER BY (jm.jif IS NULL) ASC, jm.jif {direction}, p.pub_date DESC"
+    else:
+        order_cols = _SORT_MAP.get(sort_key, ["p.created_at", "p.pub_date"])
+        order_sql = "ORDER BY " + ", ".join(f"{col} {direction}" for col in order_cols)
+
     with mysql_cursor(settings.DB_TRITICEAE) as cursor:
-        cursor.execute(f"{_SQL_COUNT}{where}", params)
+        cursor.execute(f"SELECT COUNT(*) AS cnt {_from_sql()}{where}", params)
         total = cursor.fetchone()["cnt"]
 
         cursor.execute(
-            f"{_SQL_SELECT}{where} "
-            "ORDER BY p.created_at DESC, p.pub_date DESC "
-            "LIMIT %s OFFSET %s",
-            [*params, limit, offset],
+            f"{_select_sql()}{where} {order_sql} LIMIT %s OFFSET %s",
+            [*params, *order_params, limit, offset],
         )
         rows = cursor.fetchall()
 
@@ -329,6 +470,13 @@ def search_papers(
     pub_date_end: str | None = Query(None, description="Publication year end"),
     since_days: int | None = Query(None, ge=1, le=3650,
         description="Filter by papers-table insertion time (p.created_at) within the last N days"),
+    pmids: str | None = Query(None, description="Comma-separated PMID list (batch fetch for 'export selected'; max 200)"),
+    min_if: float | None = Query(None, ge=0, le=200, description="Minimum journal impact factor (journal_metrics.jif)"),
+    max_if: float | None = Query(None, ge=0, le=200, description="Maximum journal impact factor (journal_metrics.jif)"),
+    quartile: str | None = Query(None, description="JCR quartile filter, comma-separated (e.g. Q1,Q2)"),
+    sort: str = Query("created_at", description="Sort field: relevance | created_at | pub_date | journal | title | impact_factor"),
+    order: str = Query("desc", description="Sort direction: asc | desc"),
+    fuzzy: int = Query(1, ge=0, le=1, description="1 = typo-tolerant text search (Meilisearch), 0 = plain LIKE matching"),
     limit: int = Query(20, ge=1, le=200, description="Maximum number of results"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
 ) -> dict:
@@ -346,8 +494,34 @@ def search_papers(
     we add this week".
 
     Default order: paper_created_at DESC (most recently added first).
+
+    Text search goes through Meilisearch when it is available (typo tolerance,
+    e.g. ``strip rust`` finds ``stripe rust``); MySQL then applies every
+    structured filter and paginates. ``fuzzy=0`` forces the legacy LIKE path.
     """
-    return _build_search(**locals())
+    # Snapshot the public parameters before adding helper locals below; passing
+    # locals() at the end would leak those helpers into _build_search().
+    kwargs = dict(locals())
+
+    # --- Meilisearch text matching (falls back to LIKE when unavailable) -----
+    pmid_rank: list[str] | None = None
+    skip_text_params: set[str] | None = None
+    if fuzzy and meili_search.enabled():
+        text_names = ("q", "title", "abstract", "authors", "pubmed_keywords", "ai_tags", "gene_name")
+        terms: list[str] = []
+        for name in text_names:
+            value = locals().get(name)
+            if value:
+                terms.extend(split_terms(value))
+        if terms:
+            ranked = meili_search.search_pmids(terms)
+            if ranked is not None:
+                pmid_rank = ranked
+                skip_text_params = set(text_names)
+
+    kwargs["pmid_rank"] = pmid_rank
+    kwargs["skip_text_params"] = skip_text_params
+    return _build_search(**kwargs)
 
 
 # DOI enrichment for the papers list. The papers table has no DOI column, so
@@ -625,7 +799,7 @@ def get_paper(pubmedid: str) -> dict:
     pubmedid="42105133" plus an unknown "annotation" query parameter.
     """
     with mysql_cursor(settings.DB_TRITICEAE) as cursor:
-        cursor.execute(f"{_SQL_SELECT} WHERE p.pmid = %s", (pubmedid,))
+        cursor.execute(f"{_select_sql()} WHERE p.pmid = %s", (pubmedid,))
         row = cursor.fetchone()
 
     if not row:
