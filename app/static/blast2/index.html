@@ -1450,6 +1450,8 @@
     .blast-row-align:hover { border-color: rgba(17, 134, 83, .45); }
     .blast-hit-db { margin-left: 6px; padding: 1px 8px; border: 1px solid rgba(17, 134, 83, .3); border-radius: 999px; background: #f4f9f1; color: var(--forest-deep); font-family: var(--utility); font-size: 9px; font-weight: 700; white-space: nowrap; }
     .blast-detail-note { color: var(--muted); font-size: 10px; font-weight: 400; }
+    .blast-row-jbrowse { margin-left: 6px; padding: 1px 8px; border: 1px solid rgba(17, 134, 83, .45); border-radius: 999px; background: #eef8f1; color: var(--forest-deep); font-family: var(--utility); font-size: 9px; font-weight: 700; text-decoration: none; }
+    .blast-row-jbrowse:hover { background: #dff1e4; text-decoration: none; }
     .blast-aln-card.flash > summary { background: #eaf7ea; }
 
     .blast-aln-query-title { margin: 16px 0 8px; padding: 6px 12px; border-left: 3px solid var(--leaf); background: #f4f9f1; border-radius: 6px; color: var(--forest-deep); font-family: var(--display); font-size: 12px; font-weight: 700; }
@@ -2622,6 +2624,7 @@ function showResultView(id) {
   state.selectedSubjects = new Set();
   state.alignLoaded = false;
   state.alignHits = [];
+  state.jbrowse = {};
   state.result = null;
   state.shown = 100;
   state.sortKey = 'evalue';
@@ -2769,6 +2772,7 @@ function loadResult(id, urls) {
       aggregateSubjects();
       renderDescriptions();
       renderGraphicSummary();
+      prepareJbrowseLinks();
       switchTab('graphic');
     })
     .catch(function (err) { showResultError('Could not load the hit table: ' + err.message); });
@@ -2806,6 +2810,89 @@ function parseTsv(text) {
     });
   });
   return hits;
+}
+
+// ---------- JBrowse deep links (hit -> genome browser locus) ----------
+// A hit row only carries a subject id; the BLAST database it came from is the
+// trailing `sdb` column (multi-db jobs) or the job's single database. The
+// server maps (db, subject id) -> JBrowse refseq, because the same assembly is
+// spelled differently on each side (Chr1A_AK58 / Chr1A / chr1A) and some
+// assemblies have no browser at all (or a different assembly version - the
+// server refuses those instead of jumping to wrong coordinates).
+var JBROWSE_LOC_RE = /loc=(\S+?):(\d+)-(\d+)/;
+
+function parseLoc(stitle) {
+  var m = (stitle || '').match(JBROWSE_LOC_RE);
+  if (!m) return null;
+  return { token: m[1], start: parseInt(m[2], 10), end: parseInt(m[3], 10) };
+}
+
+function dbForHit(hit) {
+  if (hit && hit.sdb) return hit.sdb;
+  var r = state.result;
+  if (r && r.dbs && r.dbs.length === 1) return r.dbs[0];
+  return '';
+}
+
+function prepareJbrowseLinks() {
+  var jobId = state.job;
+  var perDb = {};
+  state.hits.forEach(function (h) {
+    var db = dbForHit(h);
+    if (!db) return;
+    var tokens = perDb[db] || (perDb[db] = {});
+    if (h.sseqid) tokens[h.sseqid] = 1;
+    var loc = parseLoc(h.stitle);
+    if (loc) tokens[loc.token] = 1;
+  });
+  var dbs = Object.keys(perDb);
+  state.jbrowse = {};
+  if (!dbs.length) return;
+  var pending = dbs.length;
+  dbs.forEach(function (db) {
+    var list = Object.keys(perDb[db]).filter(Boolean).slice(0, 200);
+    var url = '/api/blast/database/' + encodeURIComponent(db) + '/jbrowse?tokens=' +
+      encodeURIComponent(list.join(','));
+    fetch(url, { cache: 'no-store' })
+      .then(function (resp) { return resp.ok ? resp.json() : null; })
+      .then(function (json) { if (json && state.job === jobId) state.jbrowse[db] = json; })
+      .catch(function () {})
+      .then(function () {
+        pending -= 1;
+        if (pending === 0 && state.job === jobId) renderDescriptions();
+      });
+  });
+}
+
+function jbrowseLinkFor(subj) {
+  if (!subj || !subj.hsps || !subj.hsps.length) return '';
+  var db = dbForHit(subj.hsps[0]);
+  var map = db && state.jbrowse ? state.jbrowse[db] : null;
+  if (!map || !map.available || !map.template) return '';
+  var kind = map.kind;
+  var chosen = null;
+  var hsps = subj.hsps.slice().sort(function (a, b) { return b.bitscore - a.bitscore; });
+  if (kind === 'genome' || kind === 'chromosome') {
+    for (var i = 0; i < hsps.length && !chosen; i++) {
+      var h = hsps[i];
+      var ref = map.resolved[h.sseqid];
+      if (ref) { chosen = { ref: ref, start: Math.min(h.sstart, h.send), end: Math.max(h.sstart, h.send) }; break; }
+      var loc = parseLoc(h.stitle);
+      if (loc && map.resolved[loc.token]) { chosen = { ref: map.resolved[loc.token], start: loc.start, end: loc.end }; }
+    }
+  } else {
+    var loc2 = parseLoc(subj.stitle);
+    if (loc2 && map.resolved[loc2.token]) {
+      chosen = { ref: map.resolved[loc2.token], start: loc2.start, end: loc2.end };
+    }
+  }
+  if (!chosen) return '';
+  var pad = 2000;
+  var start = Math.max(1, chosen.start - pad);
+  var end = chosen.end + pad;
+  if (end - start > 100000) { start = Math.max(1, chosen.start - 1000); end = Math.min(end, start + 100000); }
+  var locText = encodeURIComponent(chosen.ref + ':' + start + '..' + end);
+  return map.template.replace('{loc}', locText);
 }
 
 function queryLengthMap() {
@@ -2916,6 +3003,13 @@ function queryOrderIndex(qid) {
   return -1;
 }
 
+function jbrowsePill(subj) {
+  var url = jbrowseLinkFor(subj);
+  if (!url) return '';
+  return ' <a class="blast-row-jbrowse" href="' + esc(url) + '" target="_blank" rel="noopener" ' +
+         'title="Open this hit in JBrowse">JBrowse</a>';
+}
+
 function renderDescriptions() {
   var list = filteredSubjects();
   var slice = list.slice(0, state.shown);
@@ -2950,7 +3044,7 @@ function renderDescriptions() {
     rows.push('<tr class="data-row" data-key="' + esc(s.key) + '">' +
       '<td class="sel"><input type="checkbox" class="hit-check" data-key="' + esc(s.key) + '"' + checked + '></td>' +
       '<td class="num">' + (i + 1) + '</td>' +
-      '<td class="subject">' + subject + ' <button type="button" class="blast-row-align" data-sseqid="' + esc(s.sseqid) + '" title="Jump to this target alignment">alignment</button>' + dbBadge + '</td>' +
+      '<td class="subject">' + subject + ' <button type="button" class="blast-row-align" data-sseqid="' + esc(s.sseqid) + '" title="Jump to this target alignment">alignment</button>' + dbBadge + jbrowsePill(s) + '</td>' +
       '<td class="desc" title="' + esc(s.stitle) + '">' + esc(s.description || '—') + '</td>' +
       '<td class="num">' + fmtFloat(s.maxscore, 1) + '</td>' +
       '<td class="num">' + fmtFloat(s.totalscore, 1) + '</td>' +
@@ -3003,7 +3097,12 @@ function attachDescriptionRows() {
         ? '<div><strong>Database</strong> ' + esc(subj.sdb) + (subj.hsps.some(function (h) { return h.sdb && h.sdb !== subj.hsps[0].sdb; })
             ? ' <span class="blast-detail-note">(HSPs from different databases)</span>' : '') + '</div>'
         : '';
-      detail.innerHTML = '<td colspan="11"><strong>Full title</strong> ' + esc(subj.stitle) + dbLine + list + '</td>';
+      var jbUrl = jbrowseLinkFor(subj);
+      var jbLine = jbUrl
+        ? '<div><a class="blast-row-jbrowse" href="' + esc(jbUrl) + '" target="_blank" rel="noopener">' +
+          'View this hit in JBrowse ↗</a></div>'
+        : '';
+      detail.innerHTML = '<td colspan="11"><strong>Full title</strong> ' + esc(subj.stitle) + dbLine + jbLine + list + '</td>';
       row.parentNode.insertBefore(detail, row.nextSibling);
     });
   });

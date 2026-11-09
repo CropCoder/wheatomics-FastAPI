@@ -412,6 +412,14 @@ function jbrowseButton(hit, db) {                 // db 由 §3.3 的归属规�
 
 ## 9. 分阶段落地
 
+> **状态（2026-11-09）**：P0 / P1 已实现并上线。
+> 新增 `app/services/blast_jbrowse_map.py`、`scripts/build_blast_jbrowse_map.py`、
+> `GET /api/blast/database/{db}/jbrowse`、`GET /api/jbrowse/datasets/{dataset}/refseqs`、
+> `GET /api/jbrowse/coverage`；前端在命中行/展开详情里加 `JBrowse` 按钮。
+> 与本节原计划的差异：`/api/blast/databases` 的 `database_meta` **没有**加 `jbrowse`
+> 字段（2922 个库会让响应膨胀 ~100KB），改为结果页按结果里出现的库懒加载
+> `/api/blast/database/{db}/jbrowse`；`status` 补 `program`/`database` 留待 P2 一起做。
+
 | 阶段 | 内容 | 产出 | 工作量 |
 |---|---|---|---|
 | **P0** | `_assembly_level_map` 带 `jbrowse_dataset`；`_db_meta` 加 `jbrowse` 三字段；`GET /api/jbrowse/coverage` | 判断结论可查、页面不动 | 0.5 d |

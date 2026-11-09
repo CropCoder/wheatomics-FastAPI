@@ -17,6 +17,7 @@ Usage:
 """
 
 import asyncio
+import base64
 import os
 import re
 import shutil
@@ -29,6 +30,8 @@ from fastapi import APIRouter, Form, Header, HTTPException, Query, Request
 
 from app.core.config import settings
 from app.db.mysql import mysql_cursor
+from app.services.blast_jbrowse_map import MAX_TOKENS as JBROWSE_MAX_TOKENS
+from app.services.blast_jbrowse_map import resolve_tokens as resolve_jbrowse_tokens
 from app.services.blast_runner import (
     BLASTDBCMD, BLAST_FORMATTER, BLASTN, BLASTP, BLASTX,
     BLAST_PROG_MAP, DB_DIR, TBLASTN, TBLASTX,
@@ -36,32 +39,6 @@ from app.services.blast_runner import (
 )
 
 router = APIRouter(prefix="/blast", tags=["BLAST"])
-
-# Temporary chunked upload endpoint for the 2026-11 merged PacBio FLNC DBs.
-# Disabled/removed immediately after the two FASTA files are staged on the node.
-_UPLOAD_TOKEN = "SdauUpload-20261108-7f4d2c"
-
-@router.post("/_upload")
-async def _triticeae_upload(
-    request: Request,
-    name: str = Query(...),
-    offset: int = Query(0),
-    x_upload_token: str = Header(default=""),
-):
-    if x_upload_token != _UPLOAD_TOKEN:
-        raise HTTPException(403, "forbidden")
-    if not re.fullmatch(r"PacBioFullLengthcDNA\.[A-Za-z0-9_.-]+\.fa\.gz", name):
-        raise HTTPException(400, "bad name")
-    dst = os.path.join(DB_DIR, name)
-    mode = "r+b" if offset else "wb"
-    n = 0
-    with open(dst, mode) as fh:
-        fh.seek(offset)
-        async for chunk in request.stream():
-            if chunk:
-                fh.write(chunk)
-                n += len(chunk)
-    return {"success": True, "name": name, "offset": offset, "bytes": n}
 
 
 # Binary paths, DB dir and the job state files moved to
@@ -680,6 +657,44 @@ async def blast_job_status(job_id: str):
         "download_urls": data.get("download_urls"),
         "attribution": data.get("attribution"),
     }
+
+
+@router.get("/database/{db}/jbrowse")
+async def blast_database_jbrowse(
+    db: str,
+    tokens: str = Query(
+        "",
+        description="Comma-separated subject ids / chromosome tokens taken from the hit table "
+                    "(e.g. Chr1A_AK58,Chr1B_AK58 or the chrom= token of a hit's loc= field).",
+    ),
+):
+    """Resolve a BLAST database's subject ids to JBrowse refseq names.
+
+    Usage:
+        GET /api/blast/database/AABBDD_AK58.genome/jbrowse?tokens=Chr1A_AK58,Chr1B_AK58
+
+    BLAST subject ids are not JBrowse ``loc`` names (``Chr1A_AK58`` vs
+    ``chr1A``), and a hit does not necessarily come from an assembly that has a
+    browser at all. The mapping is precomputed by
+    ``scripts/build_blast_jbrowse_map.py`` (length-first chromosome matching,
+    so a mismatched assembly version is rejected instead of jumping to wrong
+    coordinates). The response tells the caller:
+
+      available / reason  - whether a JBrowse link can be offered at all
+      dataset / browser   - which JBrowse dataset the db belongs to
+      template            - ``/jbrowse-1.12.3-release/?data=AK58&loc={loc}``
+      resolved            - {requested token: JBrowse refseq name}
+      unresolved          - tokens with no attributable refseq (empty links)
+    """
+    if not _DB_NAME_RE.fullmatch(db):
+        raise HTTPException(400, f"Invalid database name: {db!r}")
+    token_list = [t.strip() for t in tokens.split(",") if t.strip()]
+    if len(token_list) > JBROWSE_MAX_TOKENS:
+        raise HTTPException(
+            400,
+            f"Too many tokens ({len(token_list)}); max {JBROWSE_MAX_TOKENS} per call",
+        )
+    return {"success": True, **resolve_jbrowse_tokens(db, token_list)}
 
 
 @router.get("/databases")

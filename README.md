@@ -158,6 +158,24 @@ curl -X POST "https://wheatomics.sdau.edu.cn/api/blast/search" \
 `ppos`（正匹配百分比）与 `btop`（逐位变异编码）不用 traditional 也能看出具体氨基酸差异。
 
 失败时返回对应状态码：400（参数错误）、404（数据库不存在）、429（任务队列已满，稍后重试）、500（BLAST 执行失败）、504（执行或轮询超时），错误消息在响应的 `message`/`detail` 字段。
+#### 在 JBrowse 中查看命中位点
+
+BLAST 结果页（`/blast/blast.html`）对**能确定坐标**的命中显示 `JBrowse` 小按钮，点开即跳到对应基因组的命中位点（`loc=refseq:start..end`，两端各留 2 kb，跨度上限 100 kb）。判断逻辑是数据驱动的，不做名称猜测：
+
+1. 命中来自哪个库：`result.tsv` 末尾的 `sdb` 列（多库搜索）或任务只有 1 个库；
+2. 该库所属基因组有没有 JBrowse：`genome_registry.jbrowse_dataset` × `jbrowse_meta.jbrowse_datasets`；
+3. 该组装的 BLAST 库与 JBrowse 数据集是不是**同一版本**：`scripts/build_blast_jbrowse_map.py` 按染色体**长度**逐一比对 `.fai` 与 `seq/refSeqs.json`，长度不符（例如 Morex 的 BLAST 库 516 Mb vs JBrowse 里 scaffold 版）直接不给链接；
+4. 命中的 seqid / `loc=` 里的染色体名能否映射到 JBrowse refseq（`Chr1A_AK58`、`Chr1A` → `chr1A`）。
+
+相关接口与工具：
+
+| 接口 / 脚本 | 说明 |
+|---|---|
+| `GET /api/blast/database/{db}/jbrowse?tokens=a,b` | 返回 `available/reason/dataset/browser/template/resolved/unresolved`，前端据此渲染按钮 |
+| `GET /api/jbrowse/datasets/{dataset}/refseqs` | 该数据集的权威 refseq 名 + 长度（`seq/refSeqs.json`） |
+| `GET /api/jbrowse/coverage` | 运维报告：registry ↔ jbrowse_meta ↔ BLAST 映射三方覆盖率与缺口清单 |
+| `scripts/build_blast_jbrowse_map.py` | 生成 `app/services/data/blast_jbrowse_map.json`；服务器上重建 JBrowse 数据或新增 BLAST 库后需重跑 |
+
 
 **异步模式**（`wait=false`）：立即返回，适合浏览器前端与长查询：
 

@@ -23,3 +23,7 @@ scripts/known_genes_v2055/out/
 
 # KnownGene v2056 UI verification screenshots (large PNGs; reports are committed)
 docs/known_genes/_evidence/ui/**/*.png
+
+# BLAST -> JBrowse link map (generated on the web node by scripts/build_blast_jbrowse_map.py;
+# sizes >2 MB and must be rebuilt against the current BLAST/JBrowse data)
+app/services/data/blast_jbrowse_map.json

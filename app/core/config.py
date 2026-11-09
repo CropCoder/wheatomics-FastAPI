@@ -59,6 +59,13 @@ class Settings(BaseSettings):
     SYMAP_DEFAULT_BED: Path = Path("/var/www/html/symap/CS_CS_durum_emmer_urartu_tauschii.bed")
     VARIANTHUB_VCF_DIR: Path = Path("/var/www/html/variants")
     JBROWSE_DATA_ROOT: Path = Path("/var/www/html/jbrowse-1.12.3-release")
+    # URL prefix of the genome browser (relative, so links never mix
+    # http/https). JBrowse 1 deep links: <path>/?data=<dataset>&loc=<refseq>:<s>..<e>
+    JBROWSE_WEB_PATH: str = "/jbrowse-1.12.3-release"
+    # Second browser instance on the same host (JBrowse 2, used by a few
+    # assemblies); kept here so a future switch is a mapping field, not a
+    # frontend edit.
+    JBROWSE2_WEB_PATH: str = "/genome_browser"
     EQTL_IMAGE_DIR: Path = Path("/var/www/eqtl/static/image")
     SCRNNA_DATA_DIR: Path = Path("/var/www/html/scRNA")
     BCFTOOLS_BIN: Path = Path("/home/fei/data/tiantian_data/soft/bcftools-1.8/bin/bcftools")
