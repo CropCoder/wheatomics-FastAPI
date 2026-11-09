@@ -672,6 +672,16 @@ class PipelineRunner:
                             row["alignment"] = alignment_path.read_text(encoding="utf-8")
                         except Exception as exc:
                             logger.warning("Failed to read alignment %s: %s", alignment_path, exc)
+                    else:
+                        # No amplicon/alignment file: still return the input
+                        # primers together with their Tm values so the result
+                        # card remains useful (and Tm is never silently lost).
+                        lines = ["Primer Group:"]
+                        for j, (seq, tm) in enumerate(zip(row["primerSeqs"], row.get("primerTms") or []), 1):
+                            lines.append(f"{j}: {seq}    Tm: {tm if tm is not None else '—'} °C")
+                        lines.append(f"Database: {db_name}")
+                        lines.append("No amplicon found.")
+                        row["alignment"] = "\n".join(lines)
             except Exception as exc:
                 logger.warning("Failed to enrich check result details: %s", exc)
 
