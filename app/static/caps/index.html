@@ -858,7 +858,7 @@ function renderCheckResults(resp, el) {
       'Consider re-checking against other databases via PrimerServer2.</div>';
   } else {
     html += '<div style="overflow-x:auto;"><table class="table table-sm table-bordered table-striped">' +
-      '<thead><tr><th>Primer ID</th><th>Rank</th><th>Database</th><th>Amplicons</th><th>Sizes (bp)</th><th>Primers</th><th>Detail</th></tr></thead><tbody>';
+      '<thead><tr><th>Primer ID</th><th>Rank</th><th>Database</th><th>Tm (°C)</th><th>Amplicons</th><th>Sizes (bp)</th><th>Primers</th><th>Detail</th></tr></thead><tbody>';
     rows.forEach(function(r, i) {
       // A capped count is a floor, not the real number — say so. Zero is the
       // good outcome for a background database (nothing to amplify), so it must
@@ -879,6 +879,9 @@ function renderCheckResults(resp, el) {
         '<td>' + escapeHtml(r.siteId) + '</td>' +
         '<td>' + r.rank + '</td>' +
         '<td>' + escapeHtml(r.database) + '</td>' +
+        '<td><small>' + (r.primerTms && r.primerTms.length
+          ? r.primerTms.map(function(t) { return t == null ? '—' : t; }).join(' / ')
+          : '—') + '</small></td>' +
         '<td>' + verdict + '</td>' +
         // A long hit list would stretch the row to hundreds of pixels; show the
         // first few and point at the Detail panel for the rest.
