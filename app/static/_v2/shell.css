@@ -1292,3 +1292,22 @@ code, kbd, samp { color: var(--forest-deep); background: var(--mist); border-rad
 .v2-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .v2-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; color: var(--forest); background: var(--mist); border: 1px solid var(--line); border-radius: 999px; font-size: 11px; font-weight: 700; }
 .v2-mono { font-family: var(--utility); font-size: 12px; }
+
+/* De-emphasize the header Contact Us button (same as the homepage) */
+.header-actions { gap: 18px; }
+.header-actions .contact-button {
+  min-height: 34px;
+  padding: 0 14px;
+  background: rgba(255,255,255,0.55);
+  color: var(--forest);
+  border-color: rgba(7,88,61,0.22);
+  box-shadow: none;
+  font-weight: 600;
+}
+.header-actions .contact-button:hover {
+  background: #f0f8f1;
+  color: var(--forest);
+  border-color: rgba(7,88,61,0.35);
+  box-shadow: none;
+  transform: none;
+}

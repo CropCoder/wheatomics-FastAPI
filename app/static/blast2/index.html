@@ -1467,7 +1467,26 @@
     .blast-selected-card #blast-selected-count { color: var(--muted); font-family: var(--utility); font-size: 11.5px; font-weight: 400; }
     .blast-selected-card #blast-clear-dbs { margin-left: auto; }
     .blast-selected-card .blast-chips { margin-top: 10px; }
-  </style>
+  
+/* De-emphasize the header Contact Us button (same as the homepage) */
+.header-actions { gap: 18px; }
+.header-actions .contact-button {
+  min-height: 34px;
+  padding: 0 14px;
+  background: rgba(255,255,255,0.55);
+  color: var(--forest);
+  border-color: rgba(7,88,61,0.22);
+  box-shadow: none;
+  font-weight: 600;
+}
+.header-actions .contact-button:hover {
+  background: #f0f8f1;
+  color: var(--forest);
+  border-color: rgba(7,88,61,0.35);
+  box-shadow: none;
+  transform: none;
+}
+</style>
 </head>
 <body>
 
