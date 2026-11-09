@@ -481,6 +481,10 @@ class CheckResult(BaseModel):
         description="Where each amplicon sits. Empty when a job predates the "
                     "amplicon file being kept, so treat it as best-effort.",
     )
+    alignment: Optional[str] = Field(
+        default=None,
+        description="Alignment / per-primer Tm text for this database (best-effort).",
+    )
 
 
 class JobResultResponse(BaseModel):
