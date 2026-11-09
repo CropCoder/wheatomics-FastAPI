@@ -467,6 +467,10 @@ class CheckResult(BaseModel):
                     "amplicons exist — display it as 'N+' rather than N.",
     )
     primerSeqs: List[str] = Field(..., description="Input primer sequences.")
+    primerTms: List[Optional[float]] = Field(
+        default_factory=list,
+        description="Nearest-neighbour Tm (°C) for each input primer, in primerSeqs order.",
+    )
     sizes: List[int] = Field(
         default_factory=list,
         description="Amplicon sizes in bp, in the order the amplicons were found. "

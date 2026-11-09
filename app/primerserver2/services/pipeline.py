@@ -13,6 +13,7 @@ from ..config import PrimerServerConfig, blast_db_exists
 from ..dependencies import PrimerServer2Settings
 from ..models import CheckJobRequest, DesignJobRequest, JobResultResponse, JobStatus
 from . import pipeline_design, selection_runner, specificity_runner
+from .thermo import primer_tm
 from .fasta_utils import ensure_plain_fasta_index
 from .storage import JobManager
 
@@ -630,12 +631,20 @@ class PipelineRunner:
                 if len(parts) < 5:
                     continue
                 site_id, rank, database, amplicon_num, seqs = parts[:5]
+                primer_seqs = seqs.split()
+                primer_tms: List[Optional[float]] = []
+                for primer in primer_seqs:
+                    try:
+                        primer_tms.append(round(float(primer_tm(primer)), 1))
+                    except Exception:
+                        primer_tms.append(None)
                 results.append({
                     "siteId": site_id,
                     "rank": int(rank),
                     "database": database,
                     "ampliconNumber": int(amplicon_num) if amplicon_num.isdigit() else 0,
-                    "primerSeqs": seqs.split(),
+                    "primerSeqs": primer_seqs,
+                    "primerTms": primer_tms,
                     # Sixth column, written by the runner. Absent in results
                     # produced before it existed, hence the length check.
                     "ampliconsCapped": len(parts) > 5 and parts[5].strip() == "1",
