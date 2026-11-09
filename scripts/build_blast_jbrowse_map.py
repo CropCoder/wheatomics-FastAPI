@@ -37,7 +37,13 @@ genome_registry MySQL database):
 
     python3 scripts/build_blast_jbrowse_map.py                 # build + report
     python3 scripts/build_blast_jbrowse_map.py --dry-run       # report only
+    python3 scripts/build_blast_jbrowse_map.py --check         # CI: fail if the map is stale
     python3 scripts/build_blast_jbrowse_map.py --limit 5       # smoke test
+
+``--check`` recomputes the map in memory and diffs it against the file on disk:
+exit 2 when the file is missing or out of date (new/removed/changed assembly),
+exit 1 when less than ``--min-match-ratio`` of the assemblies match. It is the
+step that must run after adding a genome or rebuilding JBrowse/BLAST data.
 
 For tests / offline runs the registry can come from a JSON file instead of
 MySQL:  --registry-json dump.json  (list of genome_registry dicts).
@@ -159,8 +165,10 @@ def match_refseqs(
         elif candidates:
             want = normalize_token(seqid)
             ref = next((c for c in candidates if normalize_token(c) == want), None)
-        if ref is None:
-            ref = ref_by_norm.get(normalize_token(seqid))
+        # No name fallback here on purpose: a refseq with the same name but a
+        # different length means a different assembly release, and mapping it
+        # would jump to wrong coordinates. Name normalisation is only used to
+        # break ties between refseqs of identical length (above).
         if ref is None:
             mismatched.append(seqid)
         else:
@@ -298,6 +306,29 @@ def build(rows: list[dict], db_dir: Path, jbrowse_root: Path,
     return entries, stats
 
 
+def compare_maps(existing: dict, generated: dict) -> list[str]:
+    """Human-readable differences between the on-disk map and a fresh build."""
+    diffs: list[str] = []
+    ex = {k: v for k, v in (existing or {}).items() if k != "_meta"}
+    for base in sorted(set(ex) | set(generated)):
+        a, b = ex.get(base), generated.get(base)
+        if a is None:
+            diffs.append(f"+ new base {base} (dataset={b.get('dataset')})")
+        elif b is None:
+            diffs.append(f"- removed base {base}")
+        elif (a.get("dataset"), a.get("assembly_match")) != (b.get("dataset"), b.get("assembly_match")):
+            diffs.append(
+                f"~ {base}: dataset {a.get('dataset')} -> {b.get('dataset')}, "
+                f"assembly_match {a.get('assembly_match')} -> {b.get('assembly_match')}"
+            )
+        elif (a.get("matched"), a.get("total")) != (b.get("matched"), b.get("total")):
+            diffs.append(
+                f"~ {base}: matched {a.get('matched')}/{a.get('total')} -> "
+                f"{b.get('matched')}/{b.get('total')}"
+            )
+    return diffs
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -310,6 +341,11 @@ def main() -> int:
     parser.add_argument("--registry-json", help="genome_registry dump (skip MySQL)")
     parser.add_argument("--limit", type=int, help="only the first N registry rows (smoke test)")
     parser.add_argument("--dry-run", action="store_true", help="report only, do not write")
+    parser.add_argument("--check", action="store_true",
+                        help="recompute and fail (exit 2) if the on-disk map is missing or stale; "
+                             "exit 1 if fewer than --min-match-ratio assemblies match")
+    parser.add_argument("--min-match-ratio", type=float, default=0.9,
+                        help="minimum share of assemblies whose chromosomes match (default 0.9)")
     args = parser.parse_args()
 
     rows = load_registry(args.registry_json)
@@ -321,6 +357,34 @@ def main() -> int:
     print(f"assembly_match = true             : {usable}")
     print(f"length-mismatch / no .fai / no refseqs: "
           f"{stats['mismatched']} / {stats['no_fai']} / {stats['no_refseqs']}")
+
+    match_ratio = (usable / len(entries)) if entries else 0.0
+    if entries and match_ratio < args.min_match_ratio:
+        print(f"WARN: assembly_match ratio {match_ratio:.1%} < {args.min_match_ratio:.0%} "
+              f"(--min-match-ratio) — check the mismatch list above")
+
+    if args.check:
+        try:
+            existing = json.loads(args.out.read_text(encoding="utf-8"))
+        except OSError:
+            print(f"CHECK FAILED: {args.out} is missing — run the build")
+            return 2
+        except ValueError:
+            print(f"CHECK FAILED: {args.out} is not valid JSON — run the build")
+            return 2
+        diffs = compare_maps(existing, entries)
+        if diffs:
+            print(f"CHECK FAILED: map is stale ({len(diffs)} difference(s), first 20):")
+            for line in diffs[:20]:
+                print("  " + line)
+            print("run: python3 scripts/build_blast_jbrowse_map.py")
+            return 2
+        if entries and match_ratio < args.min_match_ratio:
+            print("CHECK FAILED: assembly_match ratio below threshold")
+            return 1
+        print(f"CHECK OK: {args.out} matches a fresh build "
+              f"({len(entries)} bases, {usable} matched, {match_ratio:.1%})")
+        return 0
 
     payload = {
         "_meta": {

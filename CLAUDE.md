@@ -82,6 +82,14 @@ app/
 
 **BLAST jobs**: All blast execution lives in the standalone daemon `wheatomics-blastd.service` (app/services/blast_daemon.py, systemd unit in scripts/). `POST /api/blast/search` writes `params.json` + `status.json` under `BLAST_RESULT_DIR/<uuid4>/`; the daemon claims pending jobs and runs them (thread pool = BLAST_MAX_CONCURRENT, a true global cap). `wait=true` (default) enqueues and polls to completion (1100s cap < gunicorn timeout=1200), preserving the old sync contract; `wait=false` returns job_id immediately for `GET /api/blast/status/{job_id}` polling. Jobs survive worker recycling and API deploys; stale detection in blast_runner.read_status(). Never move blast execution back into the API worker / BackgroundTasks.
 
+**BLAST → JBrowse hit links**: the BLAST result page's `JBrowse` button is driven by a generated
+mapping (`app/services/data/blast_jbrowse_map.json`, gitignored, built on the web node by
+`scripts/build_blast_jbrowse_map.py`; `--check` returns 0/2/1 for ok/stale/low-match). It matches
+BLAST `.fai` seqids to JBrowse `seq/refSeqs.json` **by chromosome length first**, so a mismatched
+assembly version gets no link instead of wrong coordinates. Rebuild it after adding a genome or
+rebuilding BLAST/JBrowse data; never hand-edit the JSON or guess chromosome names
+(`Chr1A_AK58` / `Chr1A` / `chr1A` all appear; the map + `/api/blast/database/{db}/jbrowse` resolve them).
+
 **KnownGene data updates**: the curated known-gene list lives in `cloned_gene_db.cloned_gene_tbl`
 and is refreshed from the curation spreadsheet (1420 rows as of v2061, derived from v2060 on 2026-10-28) with
 `scripts/known_genes_v2055/` (extract -> JSONL -> prepare -> DDL -> single-transaction swap -> verify).

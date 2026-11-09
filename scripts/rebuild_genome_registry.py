@@ -1196,6 +1196,9 @@ def main() -> int:
         print("dedupe merged/removed rows:", removed)
     except Exception as exc:  # noqa: BLE001
         print("dedupe failed:", exc)
+    print("next: rebuild the BLAST->JBrowse hit-link map after registry changes:")
+    print("      /home/fei/mambaforge/envs/zjw/bin/python3 scripts/build_blast_jbrowse_map.py")
+    print("      ... --check   # exit 0 ok / 2 stale / 1 match-ratio below threshold")
     return 0
 
 

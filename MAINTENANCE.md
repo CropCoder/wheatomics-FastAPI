@@ -919,6 +919,37 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.htm
 - Acc. len（subject 全长）当前 TSV 不提供，暂以 Aln length + HSP 数替代；如需 NCBI 同款列，可让
   `/api/blast` 在 outfmt 中增加 `slen` 字段。
 
+### BLAST 命中 → JBrowse 跳转（2026-11-09）
+
+结果页命中行（`alignment` 按钮旁）和展开详情里的 **`JBrowse` 按钮**由三份数据决定是否出现：
+
+1. 命中属于哪个库：TSV 末尾的 `sdb` 列（多库搜索）或任务只有一个库；
+2. 该库所属基因组有没有浏览器：`genome_registry.jbrowse_dataset` × `jbrowse_meta.jbrowse_datasets`；
+3. 该组装与 JBrowse 数据集是不是**同一版本**：离线映射
+   `app/services/data/blast_jbrowse_map.json` 按染色体**长度**逐一比对
+   `BLAST_DB_PATH/<base>.genome.fai` 与 `JBROWSE_DATA_ROOT/<ds>/seq/refSeqs.json`。
+
+维护方式（映射文件**不进 git**，在服务器生成）：
+
+```bash
+cd /var/www/FastAPI_backend_Port8000
+PY=/home/fei/mambaforge/envs/zjw/bin/python3
+$PY scripts/build_blast_jbrowse_map.py           # 重建映射（约 15 s）
+$PY scripts/build_blast_jbrowse_map.py --check   # 0=ok / 2=过期 / 1=匹配率低于 90%
+curl -s http://127.0.0.1:8000/api/jbrowse/coverage   # 覆盖率与缺口（ok=true 为准）
+```
+
+**必须重跑的场景**：新增/替换基因组、重命名或重建 BLAST 库（`.fai` 的 seqid/长度变化）、
+重做 JBrowse 数据集（`seq/refSeqs.json` 变化）。映射文件按 mtime 自动重载，**不需要重启 API**；
+只加 JBrowse 轨道（trackList 变化）不影响映射。
+
+长度对不上 = 不是同一组装（如 `AABB_IG77365`：1034 条 seqid 与 JBrowse refseq 全不等），
+该组装会被标 `assembly_match=false`，前端**故意不显示**按钮——这是保护，不是 bug。
+新基因组上线的收尾脚本 `finish_genome_integration.sh` 已把本步骤固化为第 9 步。
+
+相关接口：`GET /api/blast/database/{db}/jbrowse?tokens=…`、
+`GET /api/jbrowse/datasets/{dataset}/refseqs`、`GET /api/jbrowse/coverage`。
+
 ---
 
 ## 十一、BLAST 数据库体检 / 清理
@@ -965,6 +996,8 @@ bash scripts/spa_visual_check.sh https://wheatomics.sdau.edu.cn/blast/blast2.htm
 
 **约定**：以后重命名/重建 BLAST 库后，必须同步重建或删除相关 alias（否则 alias 会指向旧名），
 并在发布前跑一次本脚本；`--apply-clean` 只移动 alias 文件，永远不会动成员库。
+**BLAST 库的 seqid/长度一变，BLAST→JBrowse 命中跳转的映射也要重建**：
+`scripts/build_blast_jbrowse_map.py`（见第十节“BLAST 命中 → JBrowse 跳转”）。
 
 ### 附：重复库清理记录
 
