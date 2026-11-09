@@ -1,4 +1,5 @@
 import asyncio
+import html
 import json
 import logging
 import subprocess
@@ -617,6 +618,49 @@ class PipelineRunner:
             return None
         return round(float(value), digits)
 
+    @staticmethod
+    def _tm_comparison(primer_seqs: List[str], nn_tms: List[Optional[float]]) -> tuple[List[Dict[str, Any]], str | None]:
+        """Build Wallace / GC-formula / nearest-neighbour Tm rows + range table."""
+        rows: List[Dict[str, Any]] = []
+        values: List[float] = []
+        for i, seq in enumerate(primer_seqs):
+            seq = str(seq).upper()
+            if not seq:
+                continue
+            l = len(seq)
+            at = seq.count("A") + seq.count("T")
+            gc = seq.count("G") + seq.count("C")
+            wallace = 2.0 * at + 4.0 * gc
+            gc_formula = 64.9 + 41.0 * (gc - 16.4) / max(l, 1)
+            nn = nn_tms[i] if i < len(nn_tms) else None
+            row_values = [wallace, gc_formula] + ([float(nn)] if nn is not None else [])
+            values.extend(row_values)
+            rows.append({
+                "index": i + 1,
+                "primer": seq,
+                "length": l,
+                "gcCount": gc,
+                "wallace": round(wallace, 1),
+                "gcFormula": round(gc_formula, 1),
+                "nearestNeighbor": round(float(nn), 1) if nn is not None else None,
+            })
+        if not rows:
+            return rows, None
+        span = round(max(values) - min(values), 1) if values else None
+        cell = []
+        cell.append('<table class="tm-methods">')
+        cell.append('<thead><tr><th>Primer</th><th>Wallace (°C)</th><th>GC formula (°C)</th><th>Nearest-neighbour (°C)</th></tr></thead><tbody>')
+        for r in rows:
+            cell.append(
+                '<tr><td><span class="monospace">' + html.escape(r["primer"]) + '</span></td>' +
+                '<td>' + str(r["wallace"]) + '</td>' +
+                '<td>' + str(r["gcFormula"]) + '</td>' +
+                '<td>' + (str(r["nearestNeighbor"]) if r["nearestNeighbor"] is not None else '—') + '</td></tr>'
+            )
+        cell.append('</tbody><tfoot><tr class="tm-range"><th colspan="3">Range (max − min)</th><td>' +
+                    (str(span) if span is not None else '—') + ' °C</td></tr></tfoot></table>')
+        return rows, "".join(cell)
+
     def _parse_check_result(
         self, path: Path, job_dir: Path
     ) -> List[Dict[str, Any]]:
@@ -638,6 +682,7 @@ class PipelineRunner:
                         primer_tms.append(round(float(primer_tm(primer)), 1))
                     except Exception:
                         primer_tms.append(None)
+                tm_estimates, tm_table_html = self._tm_comparison(primer_seqs, primer_tms)
                 results.append({
                     "siteId": site_id,
                     "rank": int(rank),
@@ -645,6 +690,8 @@ class PipelineRunner:
                     "ampliconNumber": int(amplicon_num) if amplicon_num.isdigit() else 0,
                     "primerSeqs": primer_seqs,
                     "primerTms": primer_tms,
+                    "tmEstimates": tm_estimates,
+                    "tmTableHtml": tm_table_html,
                     # Sixth column, written by the runner. Absent in results
                     # produced before it existed, hence the length check.
                     "ampliconsCapped": len(parts) > 5 and parts[5].strip() == "1",

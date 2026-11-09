@@ -485,6 +485,14 @@ class CheckResult(BaseModel):
         default=None,
         description="Alignment / per-primer Tm text for this database (best-effort).",
     )
+    tmEstimates: List[Dict] = Field(
+        default_factory=list,
+        description="Per-primer Wallace, GC-formula and nearest-neighbour Tm estimates (°C).",
+    )
+    tmTableHtml: Optional[str] = Field(
+        default=None,
+        description="Ready-to-render three-method Tm comparison table, with the range row last.",
+    )
 
 
 class JobResultResponse(BaseModel):
