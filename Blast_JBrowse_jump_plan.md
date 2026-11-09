@@ -107,24 +107,24 @@ BLAST 命中 (db, sseqid, sstart, send, stitle)
 **按染色体长度匹配才是可靠的**：`.fai` 和 `refSeqs.json` 都带长度，同一组装的染色体长度逐一相等。
 
 ```
-203 个 .genome 库中：
-   197 个所属基因组有 JBrowse 数据集
-   196 个能读到 seq/refSeqs.json
-   195 个"首条染色体长度"与 refSeqs.json 精确相等（99.5%）→ 同一组装，可安全跳转
-     1 个长度不一致（RR_rye_weining：BLAST Chr1_part1_rye_weining 400,000,000 vs JBrowse 8 条 refseq）
-   名字精确匹配 9 / 203
+构建脚本实测（2026-11-09，196 个有 JBrowse 的基因组库）：
+   197 个基因组 base 进入映射表
+   196 个"染色体长度全部对得上" → 同一组装，可安全跳转（99.5%）
+     1 个对不上：AABB_IG77365（BLAST 侧 1034 条 seqid，JBrowse 数据集里 0 条长度相等）
+   若只按名字匹配，此前抽查 203 个 .genome 库只有 9 个能对上
 ```
 
-长度门禁还顺带抓出一个真实事故级风险：
+长度门禁的实际作用（反例 + 正例，2026-11-09 复核）：
 
 ```
-HH_Morex.genome  Chr1H_Morex = 516,505,932 bp
-Morex JBrowse 数据集首条 refseq = 680,018 bp（290 条，scaffold 版 Morex）
-⇒ 同一"Morex"名下 BLAST 库与 JBrowse 数据集是不同版本
-⇒ 如果按物种名判断，用户会被送到错误坐标上
+AABB_IG77365.genome : BLAST 侧 1034 条 seqid，JBrowse 数据集 0 条长度相等
+                      → assembly_match=false，禁用按钮（数据集与 BLAST 库不是同一组装）
+HH_Morex.genome     : 290 条 seqid 全部与 Morex JBrowse 的 290 条 refseq 长度相等
+                      → 可用（曾误判为"scaffold 版"—— 那是只看了 refSeqs.json 第一条，
+                        真正的 chr1H 在列表里，长度 516,505,932 完全一致）
 ```
 
-这类情况必须**禁用按钮 + 提示"该基因组 JBrowse 版本与 BLAST 库不一致"**，而不是硬跳。
+所以判断必须做**全量长度比对**，不能只看首条；对不上的组装**禁用按钮并给出原因**，而不是硬跳。
 
 ### 3.2 蛋白/CDS 命中也有坐标（不用查基因表）
 
@@ -437,7 +437,7 @@ function jbrowseButton(hit, db) {                 // db 由 §3.3 的归属规�
 
 | 风险 | 依据 | 对策 |
 |---|---|---|
-| 名称/版本不一致导致跳到错误坐标 | Morex：BLAST 516,505,932 vs JBrowse 680,018 | Gate 4 用**长度相等**做硬门禁；不相等 → 禁用 + 原因 |
+| 名称/版本不一致导致跳到错误坐标 | `AABB_IG77365`：1034 条 BLAST seqid 与 JBrowse refseq 长度全不等 | Gate 4 用**长度相等**做硬门禁（全量比对，不看首条）；不相等 → 禁用 + 原因 |
 | 按物种判断导致串组装 | `CS-IAAS`(无) vs `CS-IAAS_T2T`(有)；`CWI86942`(无) vs `TaesCWI86942`(有) | 判断粒度锁死到 assembly 行（`dataset_id`），永不按 species/ploidy 推断 |
 | 命名启发式在 scaffold 库翻车 | 名字精确匹配只有 9/203 | 长度优先 + 名字归一化仅作为同长度时的 tie-break |
 | registry 与 jbrowse_meta 失同步 | 4 个孤儿数据集；`AABB_IG77365` 缺 refSeqs.json | `/api/jbrowse/coverage` 每次重建 JBrowse / 跑 `import_jbrowse_meta.py` 后必查 |

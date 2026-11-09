@@ -164,7 +164,7 @@ BLAST 结果页（`/blast/blast.html`）对**能确定坐标**的命中显示 `J
 
 1. 命中来自哪个库：`result.tsv` 末尾的 `sdb` 列（多库搜索）或任务只有 1 个库；
 2. 该库所属基因组有没有 JBrowse：`genome_registry.jbrowse_dataset` × `jbrowse_meta.jbrowse_datasets`；
-3. 该组装的 BLAST 库与 JBrowse 数据集是不是**同一版本**：`scripts/build_blast_jbrowse_map.py` 按染色体**长度**逐一比对 `.fai` 与 `seq/refSeqs.json`，长度不符（例如 Morex 的 BLAST 库 516 Mb vs JBrowse 里 scaffold 版）直接不给链接；
+3. 该组装的 BLAST 库与 JBrowse 数据集是不是**同一版本**：`scripts/build_blast_jbrowse_map.py` 按染色体**长度**逐一比对 `.fai` 与 `seq/refSeqs.json`，长度不符（例如 `AABB_IG77365`：BLAST 侧 1034 条 seqid 与 JBrowse refseq 长度全不相等）直接不给链接；
 4. 命中的 seqid / `loc=` 里的染色体名能否映射到 JBrowse refseq（`Chr1A_AK58`、`Chr1A` → `chr1A`）。
 
 相关接口与工具：
