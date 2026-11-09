@@ -202,19 +202,21 @@ html, body { margin:0; padding:0; }
         </div>
       </div>
 
-      <!-- Custom date range -->
+      <!-- Custom date range (plain text input — type a year or a date, no picker) -->
       <div class="form-row align-items-end">
         <div class="form-group col-md-2 mb-2">
           <label for="dateStart" class="small-label">From</label>
-          <input type="date" id="dateStart" class="form-control form-control-sm">
+          <input type="text" id="dateStart" class="form-control form-control-sm"
+                 placeholder="e.g. 2020" autocomplete="off">
         </div>
         <div class="form-group col-md-2 mb-2">
           <label for="dateEnd" class="small-label">To</label>
-          <input type="date" id="dateEnd" class="form-control form-control-sm">
+          <input type="text" id="dateEnd" class="form-control form-control-sm"
+                 placeholder="e.g. 2024" autocomplete="off">
         </div>
         <div class="form-group col-md-8 mb-2 small-label text-muted d-flex align-items-end">
-          Leave blank to search all dates. Backend matches on year-only
-          (papers.pub_date) so either a year or a full date works.
+          Type a year or a date directly (2020, 2024-03, 2024-03-15 all work);
+          only the year is compared. Leave blank for all dates.
         </div>
       </div>
       <div class="helper-text mb-2">Multiple terms are combined with AND across fields. Search is typo-tolerant and matches singular/plural plus common synonyms (e.g. <em>strip rust</em> → <em>stripe rust</em>; <em>yellow rust</em> = <em>stripe rust</em>).</div>
