@@ -27,6 +27,11 @@
   .btn-outline-success { color: var(--forest); border-color: rgba(17,134,83,.45); }
   .btn-outline-success:hover, .btn-outline-success:focus { color: #fff; background: var(--forest); border-color: var(--forest); }
   .nav-tabs .nav-link { font-weight: 700; }
+  .tm-caps-compare table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 8px; }
+  .tm-caps-compare th, .tm-caps-compare td { border: 1px solid #d8e4dc; padding: 4px 7px; }
+  .tm-caps-compare thead th { background: #f3faf5; color: #1d5c40; }
+  .tm-caps-compare .tm-range th, .tm-caps-compare .tm-range td { background: #fbfdfb; font-weight: 700; }
+  .tm-caps-block { margin-bottom: 12px; }
   #results-section { display: none; }
   .table td, .table th { vertical-align: middle; }
   .check-status { font-size: 13px; }
@@ -895,6 +900,16 @@ function renderCheckResults(resp, el) {
         '<td><button class="btn btn-sm btn-outline-secondary btn-check-align" data-i="' + i + '">Alignment</button></td></tr>';
     });
     html += '</tbody></table></div>';
+    var tmBlocks = rows.map(function(r) {
+      if (!r.tmTableHtml) return '';
+      return '<div class="tm-caps-block"><p class="small mb-1"><strong>' +
+        escapeHtml(r.siteId) + '</strong> · ' + escapeHtml(r.database) + '</p>' +
+        r.tmTableHtml + '</div>';
+    }).filter(Boolean).join('');
+    if (tmBlocks) {
+      html += '<details class="mt-2"><summary>Tm comparison — Wallace / GC formula / nearest-neighbour</summary>' +
+        '<div class="tm-caps-compare">' + tmBlocks + '</div></details>';
+    }
     html += '<p class="small">0 表示该库内不产生扩增子（对背景库是期望结果）；1 表示唯一扩增；>1 表示会同时扩增其他位点（A/B/D 同源基因等）。带 “+” 表示命中数已达报告上限，实际更多。</p>';
   }
   if (resp.html) {
