@@ -112,17 +112,17 @@ def search_eqtl(
         the module docstring) plus the Manhattan plot info of the 5 projects.
 
     Usage:
-        GET /api/eqtl/search?gene=TraesCS5A02G391700
+        GET /api/eqtl/search?gene=TraesCS1A03G0001700
 
     Response:
         {
           "success": true,
           "data": {
-            "gene": "TraesCS5A02G391700",
+            "gene": "TraesCS1A03G0001700",
             "columns": ["Geneid", "Project", ...],
             "rows": [ {"Geneid": ..., "Project": ..., ...} ],
             "projects": [
-              {"project": "PRJNA670223", "desc": "...", "url": "...", "image": "/api/eqtl/image/PRJNA670223/TraesCS5A02G391700" | null}
+              {"project": "PRJNA670223", "desc": "...", "url": "...", "image": "/api/eqtl/image/PRJNA670223/TraesCS1A03G0001700" | null}
             ]
           }
         }
@@ -132,7 +132,7 @@ def search_eqtl(
     if not GENE_PATTERN.match(gene):
         raise ValidationFailure(
             f"Invalid gene ID: {gene!r}. eQTL Atlas genes follow the "
-            "TraesCS5A02G391700 (IWGSC) format."
+            "TraesCS1A03G0001700 (IWGSC RefSeq v2.1 / 03G) format."
         )
 
     with mysql_connection(settings.DB_EQTL) as conn:

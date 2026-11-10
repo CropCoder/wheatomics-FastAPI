@@ -53,7 +53,7 @@
             <div class="col-md-8">
               <div class="form-group">
                 <label for="gene-input"><strong>Gene ID</strong></label>
-                <input type="text" id="gene-input" class="form-control" placeholder="TraesCS5A02G391700">
+                <input type="text" id="gene-input" class="form-control" placeholder="TraesCS1A03G0001700">
               </div>
             </div>
             <div class="col-md-4 d-flex align-items-end">
@@ -68,7 +68,8 @@
       <div class="info-box">
         <strong>About this data:</strong> The wheat eQTL Atlas integrates expression quantitative
         trait loci (eQTL) across multiple public expression datasets. Enter a gene ID to view its
-        eQTL records and FarmCPU Manhattan plots per dataset.
+        eQTL records and FarmCPU Manhattan plots per dataset. Gene IDs use the IWGSC RefSeq v2.1
+        (03G) annotation, e.g. <code>TraesCS1A03G0001700</code>.
       </div>
 
       <div id="error-msg" class="alert alert-danger"></div>
@@ -171,7 +172,7 @@ function escapeHtml(s) {
   return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 }
 
-// Support deep links: /eqtl/?gene=TraesCS5A02G391700
+// Support deep links: /eqtl/?gene=TraesCS1A03G0001700
 $(function() {
   var q = new URLSearchParams(window.location.search).get('gene');
   if (q) {

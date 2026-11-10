@@ -126,7 +126,7 @@ async def in_process(include_blast: bool) -> int:
         ("query_expression", {"gene_ids": "TraesCS1A02G001000"}),
         ("query_coexpression", {"gene_ids": "TraesCS1A02G001000"}),
         ("find_homologs", {"gene_id": "TraesCS1A02G001000"}),
-        ("search_eqtl", {"gene": "TraesCS1A02G001000"}),
+        ("search_eqtl", {"gene": "TraesCS1A03G0001700"}),
         ("list_genomes", {"limit": 2}),
         ("list_jbrowse_datasets", {}),
         ("list_blast_databases", {"program": "blastp"}),
