@@ -48,6 +48,41 @@ _GENE_RE = re.compile(r"^[A-Za-z0-9_.:-]{3,80}$")
 # ---------------------------------------------------------------------------
 CLASS_FIELDS = ("description", "title", "doi", "link")
 
+# class.txt ends each description with a "Data: <accession>." sentence; the
+# page shows the biological context only, so that last sentence is dropped.
+_DATA_SENTENCE = re.compile(r"\s*\bData:\s*[^.]*\.?")
+
+# The descriptions also spell out how many cells/nuclei/clusters/cell types the
+# study recovered. The page shows the experimental context only, so those
+# count clauses are removed. Each rule targets a phrasing seen in class.txt.
+_COUNT_RULES = (
+    # "3,954 (CK) and 4,258 (T6) cells were obtained, 5,451 retained after filtering."
+    (re.compile(r"\s*\b\d[\d,]*(?:\s*\([^)]*\))?"
+                r"(?:\s*and\s+\d[\d,]*(?:\s*\([^)]*\))?)?"
+                r"\s+(?:cells|nuclei)\s+were\s+obtained\b[^.]*\.", re.I), ""),
+    # ", yielding 13,063 cells in 19 clusters annotated as 12 cell types."
+    (re.compile(r",?\s*\byielding\b[^.]*\.", re.I), ""),
+    # "26,009 cells were assigned to 23 clusters, "
+    (re.compile(r"\b\d[\d,]*\s+(?:cells|nuclei)\s+were\s+assigned\s+to\s+"
+                r"\d[\d,]*\s+clusters,\s*", re.I), ""),
+    # "resolving 22 cell types and cell-type-specific regulatory networks"
+    (re.compile(r"\bresolving\s+\d[\d,]*\s+cell\s+types\s+and\s+", re.I), "resolving "),
+    # This module plots scRNA-seq only, so the snATAC-seq arm is irrelevant.
+    (re.compile(r"\s*and\s+snATAC-seq\s*\([^)]*\)", re.I), ""),
+)
+
+
+def _clean_description(text: str) -> str:
+    text = _DATA_SENTENCE.sub("", text or "")
+    for rule, replacement in _COUNT_RULES:
+        text = rule.sub(replacement, text)
+    # Tidy the punctuation left behind by a removed clause.
+    text = re.sub(r"\s+([,.;:])", r"\1", text)
+    text = re.sub(r"\s{2,}", " ", text).strip()
+    if text and not text.endswith((".", "!", "?")):
+        text += "."
+    return text
+
 
 @lru_cache(maxsize=4)
 def _read_class(path: str, mtime: int) -> list[tuple[str, ...]]:
@@ -102,7 +137,9 @@ def class_map() -> dict:
     for display in order:
         entries = [{"type": v["type"], "sample": s}
                    for s, v in by_sample.items() if v["display"] == display]
-        displays.append({"display": display, "entries": entries, **meta[display]})
+        info = dict(meta[display])
+        info["description"] = _clean_description(info["description"])
+        displays.append({"display": display, "entries": entries, **info})
     return {"by_sample": by_sample, "displays": displays}
 
 
