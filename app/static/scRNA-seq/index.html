@@ -43,7 +43,13 @@ a.csv{display:inline-block;padding:4px 10px;font-size:12px;border-radius:5px;
   background:#206b5c;color:#fff;text-decoration:none}
 a.csv:hover{background:#16453e}
 #geneset-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-#enrich-chart{margin-top:12px}
+#enrich-charts{margin-top:4px}
+.enrich-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:16px 0 4px;flex-wrap:wrap}
+.enrich-head h3{font-size:15px;margin:0;color:var(--forest-deep)}
+.enrich-plot{margin-top:4px}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:10px;font-weight:700;
+  color:#fff;text-transform:uppercase;letter-spacing:.02em}
+.badge.bp{background:#2196F3}.badge.mf{background:#4CAF50}.badge.cc{background:#FF9800}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px}
 .empty{text-align:center;color:#8a9a94;padding:30px 0}
 </style></head><body>
@@ -146,9 +152,9 @@ a.csv:hover{background:#16453e}
   <p class="muted" id="enrich-meta"></p>
   <div class="row" id="enrich-actions" hidden>
     <button id="enrich-csv" type="button" class="secondary mini">Download table (CSV)</button>
-    <button id="enrich-png" type="button" class="secondary mini">Download plot (PNG)</button>
+    <span class="muted">Bubble size = number of genes in the list</span>
   </div>
-  <div id="enrich-chart"></div>
+  <div id="enrich-charts"></div>
   <div id="enrich-table" class="scroll"></div>
 </section>
     </div>
@@ -162,7 +168,7 @@ a.csv:hover{background:#16453e}
 const $=id=>document.getElementById(id);
 const MAX_GENES=50;
 let chart=null;
-let enrichChart=null;
+let enrichCharts=[];
 let enrichData=null;
 const state={data:null,meta:{}};
 
@@ -501,14 +507,25 @@ async function loadGeneset(kind,sample,ct,mod){
 }
 
 /* ---------- GO / KEGG enrichment ---------- */
-const ENRICH_COLORS={biological_process:"#3f7f5f",molecular_function:"#4f86a8",cellular_component:"#b0793f"};
+// Mirrors the GO/KEGG module: bubbles of -log10(p.adjust) against the term,
+// sized by the number of genes in the list. GO is split into BP / MF / CC.
+const ENRICH_ONTOLOGY=[
+  ["Biological Process","biological","#2196F3","bp"],
+  ["Molecular Function","molecular","#4CAF50","mf"],
+  ["Cellular Component","cellular","#FF9800","cc"],
+];
+
+function clearEnrichCharts(){
+  enrichCharts.forEach(c=>{try{c.dispose()}catch(e){}});
+  enrichCharts=[];
+  $("enrich-charts").replaceChildren();
+}
 
 function resetEnrichmentViews(){
   $("enrich-table").replaceChildren();
   $("enrich-actions").hidden=true;
-  $("enrich-csv").disabled=true;$("enrich-png").disabled=true;
-  if(enrichChart){enrichChart.dispose();enrichChart=null}
-  $("enrich-chart").replaceChildren();
+  $("enrich-csv").disabled=true;
+  clearEnrichCharts();
 }
 
 function clearEnrichment(){
@@ -518,47 +535,88 @@ function clearEnrichment(){
   enrichData=null;
 }
 
-// Horizontal bar chart of the top terms, coloured by GO ontology.
-function renderEnrichChart(d){
-  const res=(d.results||[]).slice(0,20);
-  const termOf=r=>d.database==="go"?(r.term||r.id):(r.name||r.id);
-  const el=$("enrich-chart");
-  el.style.height=Math.max(260,res.length*26+70)+"px";
-  if(!enrichChart)enrichChart=echarts.init(el);
-  enrichChart.setOption({
-    animation:false,
-    grid:{left:260,right:70,top:24,bottom:48},
-    tooltip:{trigger:"axis",axisPointer:{type:"shadow"},
-      formatter:p=>{const r=res[p[0].dataIndex];
-        return `<b>${esc(termOf(r))}</b><br>k / K: ${r.k} / ${r.K}<br>`+
-          `ratio: ${fmt(r.ratio,2)}<br>p: ${r.pvalue==null?"—":r.pvalue.toExponential(2)}<br>`+
-          `padj: ${r.padj==null?"—":r.padj.toExponential(2)}`;}},
-    xAxis:{type:"value",name:"−log10(padj)",nameLocation:"middle",nameGap:30,
-      axisLabel:{fontSize:11,color:"#3c5a50"},splitLine:{lineStyle:{color:"#eef3f1"}}},
-    yAxis:{type:"category",data:res.map(termOf),inverse:true,
-      axisLabel:{fontSize:11,color:"#3c5a50",width:240,overflow:"truncate"}},
-    series:[{type:"bar",barMaxWidth:18,
-      data:res.map(r=>({value:-Math.log10(Math.max(Number(r.padj)||1e-300,1e-300)),
-        itemStyle:{color:d.database==="go"?(ENRICH_COLORS[r.ontology]||"#7a8c83"):"#4f86a8"}}))}]
-  },true);
-  enrichChart.resize();
+function enrichmentBase(){
+  const d=enrichData||{};
+  return [d.database==="go"?"GO":"KEGG",d.kind||"set",
+    d.celltype_label||d.celltype_key||"",d.module||""].filter(Boolean).join("_")
+    .replace(/[^\w.-]+/g,"_");
 }
 
-function enrichFilename(ext){
-  const d=enrichData||{};
-  const base=[d.database==="go"?"GO":"KEGG",d.kind||"set",
-    d.celltype_label||d.celltype_key||"",d.module||""].filter(Boolean).join("_");
-  return base.replace(/[^\w.-]+/g,"_")+"."+ext;
+// One bubble chart for one ontology (GO) or for the KEGG pathway list.
+// maxK is shared across the charts of one run so bubble sizes stay comparable.
+function bubbleBlock(host,label,items,color,maxN,maxK){
+  const top=items.slice().sort((a,b)=>(a.padj||1)-(b.padj||1)).slice(0,maxN);
+  const box=document.createElement("div");
+  const head=document.createElement("div");head.className="enrich-head";
+  const h=document.createElement("h3");h.textContent=`${label} (${top.length} terms)`;
+  const dl=document.createElement("button");dl.type="button";dl.className="secondary mini";
+  dl.textContent="Download PNG";
+  dl.dataset.chart=String(enrichCharts.length);
+  dl.dataset.label=enrichmentBase()+"_"+label.replace(/\s+/g,"_");
+  head.appendChild(h);head.appendChild(dl);
+  const plot=document.createElement("div");plot.className="enrich-plot";
+  box.appendChild(head);box.appendChild(plot);
+  host.appendChild(box);
+
+  plot.style.height=Math.max(320,top.length*30+70)+"px";
+  const inst=echarts.init(plot);
+  enrichCharts.push(inst);
+  const names=top.map(r=>r.term||r.name||r.id||"");
+  const ks=top.map(r=>Math.max(Number(r.k)||1,1));
+  const scale=Math.max(Number(maxK)||1,1);
+  inst.setOption({
+    animation:false,
+    grid:{left:12,right:40,top:14,bottom:46,containLabel:true},
+    tooltip:{trigger:"item",confine:true,formatter:p=>{
+      const r=top[p.dataIndex];
+      return `<b>${esc(r.id||"")}</b><br>${esc(r.term||r.name||"")}<br>`+
+        `Genes: ${r.k||0} / ${r.K||0}<br>Ratio: ${fmt(r.ratio,2)}<br>`+
+        `p.adjust: ${r.padj==null?"—":r.padj.toExponential(2)}`;}},
+    xAxis:{type:"value",name:"-log10(p.adjust)",nameLocation:"middle",nameGap:30,
+      axisLabel:{fontSize:11,color:"#3c5a50"},splitLine:{lineStyle:{color:"#eef3f1"}}},
+    yAxis:{type:"category",data:names,inverse:true,
+      axisLabel:{fontSize:11,color:"#3c5a50",width:260,overflow:"truncate"}},
+    series:[{type:"scatter",
+      data:top.map((r,i)=>({value:[-Math.log10(Math.max(Number(r.padj)||1e-300,1e-300)),i],
+        symbolSize:Math.max(10,Math.sqrt(ks[i]/scale)*46)})),
+      itemStyle:{color:color,opacity:0.72,borderColor:"rgba(0,0,0,0.25)",borderWidth:1}}]
+  },true);
+}
+
+function renderEnrichCharts(d){
+  clearEnrichCharts();
+  const res=d.results||[];
+  if(!res.length)return;
+  const host=$("enrich-charts");
+  const maxK=Math.max(1,...res.map(r=>Number(r.k)||1));
+  if(d.database==="kegg"){
+    bubbleBlock(host,"KEGG Pathways",res,"#E91E63",30,maxK);
+    return;
+  }
+  const buckets=new Map();
+  res.forEach(r=>{
+    const ontology=String(r.ontology||"").toLowerCase();
+    const hit=ENRICH_ONTOLOGY.find(x=>ontology.includes(x[1]));
+    const key=hit?hit[1]:"other";
+    if(!buckets.has(key))buckets.set(key,[]);
+    buckets.get(key).push(r);
+  });
+  ENRICH_ONTOLOGY.forEach(([label,key,color])=>{
+    const items=buckets.get(key);
+    if(items&&items.length)bubbleBlock(host,label,items,color,20,maxK);
+  });
+  const other=buckets.get("other");
+  if(other&&other.length)bubbleBlock(host,"Other",other,"#78909C",20,maxK);
 }
 
 function downloadEnrichCsv(){
   if(!enrichData)return;
   const d=enrichData;
   const head=d.database==="go"
-    ?["GO ID","Ontology","Term","k","K","Ratio","p-value","padj"]
-    :["Pathway","Name","k","K","Ratio","p-value","padj"];
+    ?["GO_ID","Term","Ontology","Genes_in_list","Genes_in_BG","Enrichment_Ratio","pvalue","padj"]
+    :["Pathway_ID","Pathway_Name","Genes_in_list","Genes_in_BG","Enrichment_Ratio","pvalue","padj"];
   const rows=[head,...d.results.map(r=>d.database==="go"
-    ?[r.id,r.ontology||"",r.term||"",r.k,r.K,r.ratio,r.pvalue,r.padj]
+    ?[r.id,r.term||"",r.ontology||"",r.k,r.K,r.ratio,r.pvalue,r.padj]
     :[r.id,r.name||"",r.k,r.K,r.ratio,r.pvalue,r.padj])];
   const csv=rows.map(row=>row.map(v=>{
     const s=v==null?"":String(v);
@@ -566,16 +624,17 @@ function downloadEnrichCsv(){
   }).join(",")).join("\n");
   const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);a.download=enrichFilename("csv");
+  a.href=URL.createObjectURL(blob);a.download=enrichmentBase()+".csv";
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
-function downloadEnrichPng(){
-  if(!enrichChart)return;
+function downloadEnrichPng(index,label){
+  const inst=enrichCharts[Number(index)];
+  if(!inst)return;
   const a=document.createElement("a");
-  a.href=enrichChart.getDataURL({type:"png",pixelRatio:2,backgroundColor:"#ffffff"});
-  a.download=enrichFilename("png");
+  a.href=inst.getDataURL({type:"png",pixelRatio:2,backgroundColor:"#ffffff"});
+  a.download=(label||enrichmentBase()||"enrichment")+".png";
   document.body.appendChild(a);a.click();a.remove();
 }
 
@@ -596,31 +655,48 @@ async function runEnrichment(kind,sample,ct,mod,db){
     const parts=[`${s.genes||0} genes in ${what} — ${ctLabel}, ${typeOf(sample)}`];
     if(d.annotated!=null)parts.push(`${d.annotated} with ${dbLabel} annotation`);
     if(s.unmapped)parts.push(`${s.unmapped} not mapped to 02G`);
-    parts.push(`${(d.results||[]).length} enriched terms at padj ≤ ${d.padj_threshold}`);
+    parts.push(`${(d.results||[]).length} significant terms at p.adjust ≤ ${d.padj_threshold}`);
     text($("enrich-meta"),parts.join(" · "));
     if(!(d.results||[]).length){
-      $("enrich-table").innerHTML='<div class="empty">No significantly enriched terms. '+
+      $("enrich-table").innerHTML='<div class="empty">No significant terms. '+
         'Try the other database or a larger gene set.</div>';
       return;
     }
     enrichData=d;
     $("enrich-actions").hidden=false;
-    $("enrich-csv").disabled=false;$("enrich-png").disabled=false;
-    renderEnrichChart(d);
+    $("enrich-csv").disabled=false;
+    renderEnrichCharts(d);
     const cols=db==="go"
-      ?["GO ID","Ontology","Term","k / K","Ratio","p-value","padj"]
-      :["Pathway","Name","k / K","Ratio","p-value","padj"];
+      ?["GO ID","Term","Ontology","Genes","BG","Ratio","p-value","p.adjust"]
+      :["Pathway ID","Name","Genes","BG","Ratio","p-value","p.adjust"];
     const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
     cols.forEach(c=>{const th=document.createElement("th");text(th,c);tr.appendChild(th)});
     const body=t.createTBody();
     d.results.forEach(r=>{
       const row=body.insertRow();
+      const idCell=row.insertCell();
+      const link=document.createElement("a");
+      link.target="_blank";link.rel="noopener";link.style.color="#206b5c";
       if(db==="go"){
-        text(row.insertCell(),r.id);text(row.insertCell(),r.ontology||"");text(row.insertCell(),r.term||"");
+        link.href="https://amigo.geneontology.org/amigo/term/"+encodeURIComponent(r.id||"");
+        link.textContent=r.id||"";
+        idCell.appendChild(link);
+        text(row.insertCell(),r.term||"");
+        const ontology=String(r.ontology||"");
+        const badge=document.createElement("span");
+        badge.className="badge "+(/biological/i.test(ontology)?"bp":
+          /molecular/i.test(ontology)?"mf":/cellular/i.test(ontology)?"cc":"");
+        badge.textContent=ontology;
+        const cell=row.insertCell();cell.appendChild(badge);
       }else{
-        text(row.insertCell(),r.id);text(row.insertCell(),r.name||"");
+        link.href="https://www.kegg.jp/pathway/"+
+          encodeURIComponent(String(r.id||"").replace(/^(path:|ko:|map:)/,""));
+        link.textContent=r.id||"";
+        idCell.appendChild(link);
+        text(row.insertCell(),r.name||"");
       }
-      text(row.insertCell(),`${r.k} / ${r.K}`);
+      text(row.insertCell(),r.k==null?"—":r.k);
+      text(row.insertCell(),r.K==null?"—":r.K);
       text(row.insertCell(),fmt(r.ratio,2));
       text(row.insertCell(),r.pvalue==null?"—":r.pvalue.toExponential(2));
       text(row.insertCell(),r.padj==null?"—":r.padj.toExponential(2));
@@ -645,7 +721,10 @@ $("hubtable").addEventListener("click",e=>{
   else if(b.dataset.action==="enrich")runEnrichment("hub",b.dataset.sample,b.dataset.ct,"",b.dataset.db);
 });
 $("enrich-csv").addEventListener("click",downloadEnrichCsv);
-$("enrich-png").addEventListener("click",downloadEnrichPng);
+$("enrich-charts").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-chart]");
+  if(b)downloadEnrichPng(b.dataset.chart,b.dataset.label);
+});
 
 $("gene-file").addEventListener("change",function(){
   const f=this.files&&this.files[0];
@@ -692,7 +771,7 @@ $("gene").addEventListener("keydown",e=>{
 });
 window.addEventListener("resize",()=>{
   if(chart&&state.data)refreshDisplayViews();
-  if(enrichChart)enrichChart.resize();
+  enrichCharts.forEach(c=>c.resize());
 });
 $(function(){const g=new URLSearchParams(location.search).get("gene");if(g){$("gene").value=g;search()}});
 </script></body></html>
