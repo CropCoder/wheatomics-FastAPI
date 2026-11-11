@@ -37,51 +37,72 @@ _GENE_RE = re.compile(r"^[A-Za-z0-9_.:-]{3,80}$")
 # Display grouping
 #
 # class.txt maps each imported sample onto a user-facing dataset ("display")
-# and a short within-dataset label ("type"):
+# and a short within-dataset label ("type"). It may also carry study metadata
+# for the display (description / Title / DOI / link), which the page shows
+# above the dot plot:
 #
-#     display<TAB>type<TAB>sample
+#     display<TAB>type<TAB>sample<TAB>description<TAB>Title<TAB>DOI<TAB>link
 #
 # One display owns several samples (e.g. the salt-stress experiment has CK and
 # NaCl runs), so the UI picks a display and plots all of its types together.
 # ---------------------------------------------------------------------------
+CLASS_FIELDS = ("description", "title", "doi", "link")
+
+
 @lru_cache(maxsize=4)
-def _read_class(path: str, mtime: int) -> list[tuple[str, str, str]]:
-    rows: list[tuple[str, str, str]] = []
+def _read_class(path: str, mtime: int) -> list[tuple[str, ...]]:
+    rows: list[tuple[str, ...]] = []
     with open(path, encoding="utf-8-sig", newline="") as fh:
         reader = csv.reader(fh, delimiter="\t")
         header = next(reader, None)
         if not header:
             return rows
         lower = [h.strip().lower() for h in header]
-        try:
-            di, ti, si = lower.index("display"), lower.index("type"), lower.index("sample")
-        except ValueError:
+
+        def index(*names: str) -> int:
+            for name in names:
+                if name in lower:
+                    return lower.index(name)
+            return -1
+
+        di, ti, si = index("display"), index("type"), index("sample")
+        if min(di, ti, si) < 0:
             return rows
+        extra = (index("description"), index("title"), index("doi"),
+                 index("link", "url"))
+
+        def cell(row: list[str], i: int) -> str:
+            return row[i].strip() if 0 <= i < len(row) else ""
+
         for row in reader:
-            if len(row) <= max(di, ti, si):
-                continue
-            display, typ, sample = (row[di].strip(), row[ti].strip(), row[si].strip())
+            display, typ, sample = cell(row, di), cell(row, ti), cell(row, si)
             if sample:
-                rows.append((display or sample, typ or sample, sample))
+                rows.append((display or sample, typ or sample, sample,
+                             *[cell(row, i) for i in extra]))
     return rows
 
 
 def class_map() -> dict:
-    """{'by_sample': {sample: {display, type}}, 'displays': [{display, entries}]}"""
+    """{'by_sample': {sample: {display, type}}, 'displays': [{display, entries, ...}]}"""
     path = settings.SCRNNA_CLASS_FILE
     by_sample: dict[str, dict] = {}
     order: list[str] = []
+    meta: dict[str, dict] = {}
     if path.is_file():
-        for display, typ, sample in _read_class(str(path), path.stat().st_mtime_ns):
+        for display, typ, sample, *rest in _read_class(str(path), path.stat().st_mtime_ns):
             if sample not in by_sample:
                 by_sample[sample] = {"display": display, "type": typ}
             if display not in order:
                 order.append(display)
+            slot = meta.setdefault(display, {k: "" for k in CLASS_FIELDS})
+            for key, value in zip(CLASS_FIELDS, rest):
+                if value and not slot[key]:
+                    slot[key] = value
     displays = []
     for display in order:
         entries = [{"type": v["type"], "sample": s}
                    for s, v in by_sample.items() if v["display"] == display]
-        displays.append({"display": display, "entries": entries})
+        displays.append({"display": display, "entries": entries, **meta[display]})
     return {"by_sample": by_sample, "displays": displays}
 
 
@@ -279,7 +300,8 @@ def gene_profile(gene_id: str) -> dict:
     imported = {s["sample"] for s in samples}
     displays = [
         {"display": d["display"],
-         "entries": [e for e in d["entries"] if e["sample"] in imported]}
+         "entries": [e for e in d["entries"] if e["sample"] in imported],
+         **{k: d.get(k, "") for k in CLASS_FIELDS}}
         for d in mapping["displays"]
     ]
     displays = [d for d in displays if d["entries"]]

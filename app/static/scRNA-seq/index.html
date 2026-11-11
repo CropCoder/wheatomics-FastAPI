@@ -25,6 +25,11 @@ th{background:#f2f7f5;font-weight:600;position:sticky;top:0}
 .chip b{color:#0b2b26}
 .chip.hub{background:#fff4e5;color:#8a5a00;border:1px solid #ffd9a8}
 .picker{display:flex;align-items:center;gap:10px;margin:10px 0;flex-wrap:wrap}
+.display-meta{margin:10px 0 4px;padding:12px 14px;border-left:4px solid var(--leaf);
+  border-radius:0 10px 10px 0;background:var(--mist);font-size:13px;color:#42584d}
+.display-meta p{margin:0}
+.display-meta p+p{margin-top:6px}
+.display-meta a{color:var(--forest);font-weight:700}
 .picker select{min-width:340px}
 #chart-wrap{overflow-x:auto;overflow-y:hidden;margin-top:10px}
 #chart{height:460px}
@@ -94,6 +99,10 @@ a.csv:hover{background:#16453e}
     <label for="display"><strong>Dataset</strong></label>
     <select id="display"></select>
     <span class="muted" id="display-hint"></span>
+  </div>
+  <div class="display-meta" id="display-meta" hidden>
+    <p id="display-desc"></p>
+    <p id="display-doi-line" hidden><strong>DOI:</strong> <a id="display-doi" href="#" target="_blank" rel="noopener"></a></p>
   </div>
   <p class="muted">Dot size is the percentage of cells expressing the gene; colour is the mean normalised expression. Scroll the plot sideways when many cell types are shown.</p>
   <div id="chart-wrap"><div id="chart"></div></div>
@@ -254,9 +263,24 @@ function renderDisplayPicker(d){
   sel.onchange=refreshDisplayViews;
 }
 
+function renderDisplayMeta(display){
+  const meta=((state.data&&state.data.displays)||[]).find(x=>x.display===display)||{};
+  const desc=String(meta.description||"").trim();
+  const doi=String(meta.doi||"").trim();
+  // class.txt's link column is the article page; fall back to the DOI resolver.
+  const url=String(meta.link||"").trim()||(doi?"https://doi.org/"+doi:"");
+  text($("display-desc"),desc);
+  $("display-desc").hidden=!desc;
+  const a=$("display-doi");
+  if(doi&&url){a.textContent=doi;a.href=url}
+  $("display-doi-line").hidden=!(doi&&url);
+  $("display-meta").hidden=!(desc||(doi&&url));
+}
+
 function refreshDisplayViews(){
   if(!state.data)return;
   const display=$("display").value;
+  renderDisplayMeta(display);
   renderExpression(display);
   renderModules(state.data,display);
   renderHubs(state.data,display);
