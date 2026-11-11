@@ -16,6 +16,7 @@
 | **呈现粒度** | **3 个项目 × 6 个点**：`RNA-seq FPKM`、`Ribo-seq FPKM`、`TE` 各一个项目；**不要**做成 1 个项目 18 个点（RNA/Ribo/TE 单位不同、量级差 3–4 个数量级、且前端没有分组能力）。 |
 | **推荐路线** | **方案 B**：3 张 6 列表 + `project_meta` 3 行 + 新增 `project_meta.unit` 字段 + 前端 5 处单位绑定。现有 expression 页 / API / GeneHub 基因页 / MCP **全部自动生效**，不需要新路由、不需要改 Apache。 |
 | **Phase 2.5（已完成 2026-11-11）** | 底层升级为 **registry + manifest 驱动**：新增数据集 = 数据文件夹 + manifest + registry 一行，无需改代码；契约测试用临时假数据集验证，并通过真实数据回归。**`.gz` 资产移出仓库**，由 `TRANSLATOME_DATA_DIR`（默认 `/var/www/data/translatome`）指向服务器数据目录；仓库仅留 registry/manifest/脚本。 |
+| **生产上线（已完成 2026-11-11）** | `/translatome/` 页面 + API + MCP 已部署到生产：Apache `/translatome` 代理、API 重启、资产 `/var/www/data/translatome/`、`/agent.html` 与首页入口同步。线上验证与回滚见 `DEPLOYMENT_2026-11-11.md`。 |
 | **Phase 2（本次已实现原型）** | 独立 `/translatome/` 页面 + `/api/translatome/*`：多基因查询（**02G/03G 双 ID**）、TE 保真（null 不显示为 0）、DTG/DEG 检索、3 个下载包、作者 browser/GeneHub 外链、MCP 3 个工具（含数据集清单）。本地已跑通并完成 390–1440 宽度视觉验收；详见 `PHASE2_IMPLEMENTATION.md`。生产部署还差 Apache ProxyPass、首页/导航发布与作者授权。 |
 | **必须先解决** | ① 通讯作者授权（GB 2025 为 CC BY-NC-ND 4.0；PlCell 非 OA）② 全量 03G→02G 映射审计（已完成：60,125/60,125） ③ TE 缺失值/极端值展示口径 ④ 引用字符串与数据集说明。 |
 | **总工作量** | 方案 B：约 **2 人日**（含映射审计、建表、代码、验收）。Phase 2 原型：**约 1 人日（已完成）**；生产部署与增强另计。 |

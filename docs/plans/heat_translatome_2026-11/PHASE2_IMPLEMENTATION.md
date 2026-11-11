@@ -2,7 +2,7 @@
 
 - 日期：2026-11-11
 - 关联：`PLAN.md`（总体计划）、`DATA_AUDIT.md`（数据体检）、`PAPER_CONTEXT.md`（论文核实）、`REPO_INTEGRATION.md`（仓库审计）
-- 状态：**Phase 2 原型已实现；2026-11-11 已升级为 Phase 2.5（manifest + registry 驱动）**，本地跑通（未部署生产、未推送远端）。本地验证覆盖 API、页面渲染（390/768/1024/1440 宽度 PASS）与 deep link；生产部署还差 Apache ProxyPass、导航/首页发布与一次线上验收（见 §6）。
+- 状态：**已上线生产（2026-11-11 16:20 CST）**：Phase 2 原型 + Phase 2.5（manifest/registry 驱动）均已部署；线上页面 https://wheatomics.sdau.edu.cn/translatome/ ；部署记录见 `DEPLOYMENT_2026-11-11.md`。本地验证覆盖 API、页面渲染（390/768/1024/1440 宽度 PASS）与 deep link；生产部署还差 Apache ProxyPass、导航/首页发布与一次线上验收（见 §6）。
 
 ---
 
@@ -33,6 +33,7 @@
 | `scripts/heat_translatome/sync_assets.sh` | rsync 本地资产到服务器 `TRANSLATOME_DATA_DIR`（dry-run/delete 可选） |
 | `docs/plans/heat_translatome_2026-11/PHASE2_IMPLEMENTATION.md` | 本文件 |
 | `docs/plans/heat_translatome_2026-11/PHASE2_EXTENSIBILITY.md` | 多数据集扩展设计（manifest + registry，Phase 2.5 方案） |
+| `docs/plans/heat_translatome_2026-11/DEPLOYMENT_2026-11-11.md` | 上线记录：服务器变更、验证结果、回滚与备份 |
 
 ### 修改
 
