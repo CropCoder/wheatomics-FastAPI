@@ -204,25 +204,18 @@ class EnrichmentResponse(BaseModel):
 # ============================================================
 # GO Enrichment
 # ============================================================
-@router.post(
-    "/go",
-    summary="GO Enrichment Analysis",
-    description="Run **GO (Gene Ontology) enrichment analysis** on the gene list submitted by the user.\n\n"
-                "**Statistical method**: hypergeometric test + Benjamini-Hochberg FDR multiple-testing correction.\n\n"
-                "**Background gene set**: all genes with GO annotations in wheat_function.gene_go.\n\n"
-                "**Input**: list of gene IDs (IWGSC RefSeq v1.1, e.g. `TraesCS1A02G045300.1`).\n\n"
-                "**Output**: list of significantly enriched GO terms.",
-    response_model=EnrichmentResponse,
-)
-@router.post("/go-kegg/go", include_in_schema=False)
-def go_enrichment(req: EnrichmentRequest):
-    genes = list(set(req.genes))
+class EnrichmentError(ValueError):
+    """Bad enrichment input (empty list, or more genes than the limit)."""
+
+
+def enrich_go(genes: List[str], padj_threshold: float = 0.05) -> dict:
+    """Hypergeometric GO enrichment for a gene list (no HTTP layer)."""
+    genes = list(set(genes))
     if not genes:
-        return JSONResponse({"error": "No genes provided"}, status_code=400)
+        raise EnrichmentError("No genes provided")
     if len(genes) > 2000:
-        return JSONResponse(
-            {"error": f"Too many genes ({len(genes)}); maximum is 2000 per enrichment request"},
-            status_code=400,
+        raise EnrichmentError(
+            f"Too many genes ({len(genes)}); maximum is 2000 per enrichment request"
         )
 
     with mysql_cursor(settings.DB_WHEAT_FUNCTION) as cur:
@@ -285,34 +278,41 @@ def go_enrichment(req: EnrichmentRequest):
         )
 
     bh_correction(results)
-    results = [r for r in results if r["padj"] <= req.padj_threshold]
+    results = [r for r in results if r["padj"] <= padj_threshold]
     results.sort(key=lambda x: x["padj"])
 
     return {"N": N, "n": n, "results": results, "gene_count": len(genes)}
 
 
+@router.post(
+    "/go",
+    summary="GO Enrichment Analysis",
+    description="Run **GO (Gene Ontology) enrichment analysis** on the gene list submitted by the user.\n\n"
+                "**Statistical method**: hypergeometric test + Benjamini-Hochberg FDR multiple-testing correction.\n\n"
+                "**Background gene set**: all genes with GO annotations in wheat_function.gene_go.\n\n"
+                "**Input**: list of gene IDs (IWGSC RefSeq v1.1, e.g. `TraesCS1A02G045300.1`).\n\n"
+                "**Output**: list of significantly enriched GO terms.",
+    response_model=EnrichmentResponse,
+)
+@router.post("/go-kegg/go", include_in_schema=False)
+def go_enrichment(req: EnrichmentRequest):
+    try:
+        return enrich_go(req.genes, req.padj_threshold)
+    except EnrichmentError as exc:
+        return JSONResponse({"error": str(exc)}, status_code=400)
+
+
 # ============================================================
 # KEGG Enrichment
 # ============================================================
-@router.post(
-    "/kegg",
-    summary="KEGG Pathway Enrichment Analysis",
-    description="Run **KEGG pathway enrichment analysis** on the gene list submitted by the user.\n\n"
-                "**Statistical method**: hypergeometric test + Benjamini-Hochberg FDR correction.\n\n"
-                "**Background gene set**: all genes with KEGG annotations in wheat_function.gene_kegg.\n\n"
-                "**Mapping chain**: gene_id → KO → pathway (linked through the ko_pathway and kegg_pathway tables).\n\n"
-                "**Input/Output**: same format as GO enrichment.",
-    response_model=EnrichmentResponse,
-)
-@router.post("/go-kegg/kegg", include_in_schema=False)
-def kegg_enrichment(req: EnrichmentRequest):
-    genes = list(set(req.genes))
+def enrich_kegg(genes: List[str], padj_threshold: float = 0.05) -> dict:
+    """Hypergeometric KEGG pathway enrichment for a gene list (no HTTP layer)."""
+    genes = list(set(genes))
     if not genes:
-        return JSONResponse({"error": "No genes provided"}, status_code=400)
+        raise EnrichmentError("No genes provided")
     if len(genes) > 2000:
-        return JSONResponse(
-            {"error": f"Too many genes ({len(genes)}); maximum is 2000 per enrichment request"},
-            status_code=400,
+        raise EnrichmentError(
+            f"Too many genes ({len(genes)}); maximum is 2000 per enrichment request"
         )
 
     with mysql_cursor(settings.DB_WHEAT_FUNCTION) as cur:
@@ -390,10 +390,28 @@ def kegg_enrichment(req: EnrichmentRequest):
         )
 
     bh_correction(results)
-    results = [r for r in results if r["padj"] <= req.padj_threshold]
+    results = [r for r in results if r["padj"] <= padj_threshold]
     results.sort(key=lambda x: x["padj"])
 
     return {"N": N, "n": n, "results": results, "gene_count": len(genes)}
+
+
+@router.post(
+    "/kegg",
+    summary="KEGG Pathway Enrichment Analysis",
+    description="Run **KEGG pathway enrichment analysis** on the gene list submitted by the user.\n\n"
+                "**Statistical method**: hypergeometric test + Benjamini-Hochberg FDR correction.\n\n"
+                "**Background gene set**: all genes with KEGG annotations in wheat_function.gene_kegg.\n\n"
+                "**Mapping chain**: gene_id → KO → pathway (linked through the ko_pathway and kegg_pathway tables).\n\n"
+                "**Input/Output**: same format as GO enrichment.",
+    response_model=EnrichmentResponse,
+)
+@router.post("/go-kegg/kegg", include_in_schema=False)
+def kegg_enrichment(req: EnrichmentRequest):
+    try:
+        return enrich_kegg(req.genes, req.padj_threshold)
+    except EnrichmentError as exc:
+        return JSONResponse({"error": str(exc)}, status_code=400)
 
 
 # ============================================================

@@ -121,13 +121,13 @@ a.csv:hover{background:#16453e}
 
 <section id="modulesec" hidden>
   <h2>Co-expression modules</h2>
-  <p class="muted">Each row links to the module's full gene set — ready for GO/KEGG enrichment.</p>
+  <p class="muted">Each row links to the module's full gene set; run GO or KEGG enrichment below without leaving this page.</p>
   <div id="moduletable" class="scroll"></div>
 </section>
 
 <section id="hubsec" hidden>
   <h2>Hub genes</h2>
-  <p class="muted">Hub gene sets for the cell types where this gene is a hub.</p>
+  <p class="muted">Hub gene sets for the cell types where this gene is a hub; GO and KEGG enrichment run below.</p>
   <div id="hubtable" class="scroll"></div>
 </section>
 
@@ -138,6 +138,12 @@ a.csv:hover{background:#16453e}
   </div>
   <p class="muted" id="geneset-meta"></p>
   <div id="geneset-table" class="scroll"></div>
+</section>
+
+<section id="enrichsec" hidden>
+  <h2 id="enrich-title">GO / KEGG enrichment</h2>
+  <p class="muted" id="enrich-meta"></p>
+  <div id="enrich-table" class="scroll"></div>
 </section>
     </div>
   </section>
@@ -159,7 +165,7 @@ function fmt(v,d){return v==null||isNaN(v)?"—":Number(v).toFixed(d)}
 async function api(path){const r=await fetch(path);let x;try{x=await r.json()}catch{x={detail:"Invalid JSON response"}}
 if(!r.ok)throw Error(typeof x.detail==="string"?x.detail:"HTTP "+r.status);return x}
 function hideAll(){
-  for(const id of ["batchsec","summarysec","exprsec","modulesec","hubsec","genesetsec"])$(id).hidden=true;
+  for(const id of ["batchsec","summarysec","exprsec","modulesec","hubsec","genesetsec","enrichsec"])$(id).hidden=true;
 }
 function typeOf(s){const m=state.meta[s];return m?m.type:s}
 function displayOf(s){const m=state.meta[s];return m?m.display:s}
@@ -270,7 +276,8 @@ function renderDisplayPicker(d){
   });
   const first=(d.displays||[]).find(x=>withExpr.has(x.display))||(d.displays||[])[0];
   if(first)sel.value=first.display;
-  sel.onchange=refreshDisplayViews;
+  // Switching dataset invalidates an enrichment run from the previous one.
+  sel.onchange=()=>{clearEnrichment();refreshDisplayViews()};
 }
 
 function renderDisplayMeta(display){
@@ -412,6 +419,10 @@ function renderModules(d,display){
           `<td>${fmt(m.kME,3)}</td><td>${m.n_genes==null?"—":m.n_genes}</td>`+
           `<td><button class="mini" data-action="show" data-kind="module" data-sample="${esc(m.sample)}" `+
           `data-ct="${esc(m.celltype_key)}" data-mod="${esc(m.module)}">Show genes</button> `+
+          `<button class="mini" data-action="enrich" data-db="go" data-kind="module" data-sample="${esc(m.sample)}" `+
+          `data-ct="${esc(m.celltype_key)}" data-mod="${esc(m.module)}">GO</button> `+
+          `<button class="mini" data-action="enrich" data-db="kegg" data-kind="module" data-sample="${esc(m.sample)}" `+
+          `data-ct="${esc(m.celltype_key)}" data-mod="${esc(m.module)}">KEGG</button> `+
           `<a class="csv" href="${genesetUrl("module",m.sample,m.celltype_key,m.module,".csv")}">CSV</a></td></tr>`;
   });
   html+='</tbody></table>';
@@ -442,6 +453,10 @@ function renderHubs(d,display){
           `<td>${fmt(h.kME,3)}</td><td>${h.n_genes==null?"—":h.n_genes}</td>`+
           `<td><button class="mini" data-action="show" data-kind="hub" data-sample="${esc(h.sample)}" `+
           `data-ct="${esc(h.celltype_key)}">Show genes</button> `+
+          `<button class="mini" data-action="enrich" data-db="go" data-kind="hub" data-sample="${esc(h.sample)}" `+
+          `data-ct="${esc(h.celltype_key)}">GO</button> `+
+          `<button class="mini" data-action="enrich" data-db="kegg" data-kind="hub" data-sample="${esc(h.sample)}" `+
+          `data-ct="${esc(h.celltype_key)}">KEGG</button> `+
           `<a class="csv" href="${genesetUrl("hub",h.sample,h.celltype_key,"",".csv")}">CSV</a></td></tr>`;
   });
   html+='</tbody></table>';
@@ -477,14 +492,73 @@ async function loadGeneset(kind,sample,ct,mod){
   }
 }
 
+/* ---------- GO / KEGG enrichment ---------- */
+function clearEnrichment(){
+  $("enrichsec").hidden=true;
+  text($("enrich-title"),"");text($("enrich-meta"),"");
+  $("enrich-table").replaceChildren();
+}
+
+async function runEnrichment(kind,sample,ct,mod,db){
+  const dbLabel=db==="go"?"GO":"KEGG";
+  $("enrichsec").hidden=false;
+  text($("enrich-title"),`${dbLabel} enrichment`);
+  text($("enrich-meta"),"Running enrichment...");
+  $("enrich-table").replaceChildren();
+  $("enrichsec").scrollIntoView({behavior:"smooth",block:"start"});
+  try{
+    const params=new URLSearchParams({sample,celltype_key:ct,kind,database:db});
+    if(kind==="module")params.set("module",mod);
+    const d=(await api("/api/scRNA-seq/enrich?"+params)).data;
+    const ctLabel=d.celltype_label||d.celltype_key;
+    const what=kind==="module"?`module ${mod}`:"hub genes";
+    const s=d.stats||{};
+    const parts=[`${s.genes||0} genes in ${what} — ${ctLabel}, ${typeOf(sample)}`];
+    if(d.annotated!=null)parts.push(`${d.annotated} with ${dbLabel} annotation`);
+    if(s.unmapped)parts.push(`${s.unmapped} not mapped to 02G`);
+    parts.push(`${(d.results||[]).length} enriched terms at padj ≤ ${d.padj_threshold}`);
+    text($("enrich-meta"),parts.join(" · "));
+    if(!(d.results||[]).length){
+      $("enrich-table").innerHTML='<div class="empty">No significantly enriched terms. '+
+        'Try the other database or a larger gene set.</div>';
+      return;
+    }
+    const cols=db==="go"
+      ?["GO ID","Ontology","Term","k / K","Ratio","p-value","padj"]
+      :["Pathway","Name","k / K","Ratio","p-value","padj"];
+    const t=document.createElement("table"),thead=t.createTHead(),tr=thead.insertRow();
+    cols.forEach(c=>{const th=document.createElement("th");text(th,c);tr.appendChild(th)});
+    const body=t.createTBody();
+    d.results.forEach(r=>{
+      const row=body.insertRow();
+      if(db==="go"){
+        text(row.insertCell(),r.id);text(row.insertCell(),r.ontology||"");text(row.insertCell(),r.term||"");
+      }else{
+        text(row.insertCell(),r.id);text(row.insertCell(),r.name||"");
+      }
+      text(row.insertCell(),`${r.k} / ${r.K}`);
+      text(row.insertCell(),fmt(r.ratio,2));
+      text(row.insertCell(),r.pvalue==null?"—":r.pvalue.toExponential(2));
+      text(row.insertCell(),r.padj==null?"—":r.padj.toExponential(2));
+    });
+    $("enrich-table").replaceChildren(t);
+  }catch(e){
+    text($("enrich-meta"),"Error: "+e.message);
+  }
+}
+
 /* ---------- wiring ---------- */
 $("moduletable").addEventListener("click",e=>{
-  const b=e.target.closest('button[data-action="show"]');
-  if(b)loadGeneset("module",b.dataset.sample,b.dataset.ct,b.dataset.mod);
+  const b=e.target.closest("button[data-action]");
+  if(!b)return;
+  if(b.dataset.action==="show")loadGeneset("module",b.dataset.sample,b.dataset.ct,b.dataset.mod);
+  else if(b.dataset.action==="enrich")runEnrichment("module",b.dataset.sample,b.dataset.ct,b.dataset.mod,b.dataset.db);
 });
 $("hubtable").addEventListener("click",e=>{
-  const b=e.target.closest('button[data-action="show"]');
-  if(b)loadGeneset("hub",b.dataset.sample,b.dataset.ct,"");
+  const b=e.target.closest("button[data-action]");
+  if(!b)return;
+  if(b.dataset.action==="show")loadGeneset("hub",b.dataset.sample,b.dataset.ct,"");
+  else if(b.dataset.action==="enrich")runEnrichment("hub",b.dataset.sample,b.dataset.ct,"",b.dataset.db);
 });
 
 $("gene-file").addEventListener("change",function(){
@@ -511,6 +585,7 @@ function clearAll(){
   state.data=null;state.meta={};
   ["chips","exprtable","moduletable","hubtable","geneset-table","batchtable"]
     .forEach(id=>$(id).replaceChildren());
+  clearEnrichment();
   $("display").replaceChildren();
   text($("samplesline"),"");text($("geneset-title"),"");text($("geneset-meta"),"");
   text($("display-hint"),"");text($("batch-meta"),"");

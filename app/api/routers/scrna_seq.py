@@ -23,6 +23,7 @@ from functools import lru_cache
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
+from app.api.routers.go_kegg import EnrichmentError, enrich_go, enrich_kegg
 from app.core.config import settings
 from app.core.exceptions import ValidationFailure
 from app.core.response import ok
@@ -464,6 +465,136 @@ _GENESET_HEADER = ["gene_id", "module", "kME", "gene_name"]
 
 def _geneset_rows(genes: list[dict]) -> list[list]:
     return [[g["gene_id"], g["module"], g["kME"], g["gene_name"] or ""] for g in genes]
+
+
+# ---------------------------------------------------------------------------
+# GO / KEGG enrichment on module and hub gene sets
+#
+# The scRNA-seq tables use IWGSC RefSeq v2.1 (03G) gene IDs, while
+# wheat_function's gene_go / gene_kegg tables are keyed by v1.1 (02G).
+# CS_2G_3G_MAP is the two-column translation table that bridges them.
+# ---------------------------------------------------------------------------
+_GENE_SUFFIX = re.compile(r"\.\d+$")
+
+
+@lru_cache(maxsize=4)
+def _read_cs_map(path: str, mtime: int) -> dict[str, str]:
+    """03G gene ID -> 02G gene ID (the TSV lists CS-2G first, CS-3G second)."""
+    table: dict[str, str] = {}
+    with open(path, encoding="utf-8-sig", newline="") as fh:
+        reader = csv.reader(fh, delimiter="\t")
+        header = next(reader, None) or []
+        lower = [h.strip().lower() for h in header]
+        col2 = next((i for i, h in enumerate(lower) if "02g" in h), 0)
+        col3 = next((i for i, h in enumerate(lower) if "03g" in h), 1)
+        for row in reader:
+            if len(row) <= max(col2, col3):
+                continue
+            g2, g3 = row[col2].strip(), row[col3].strip()
+            if g2 and g3:
+                table[g3] = g2
+    return table
+
+
+def _annotation_ids(genes: list[str]) -> tuple[list[str], dict]:
+    """Map gene IDs onto the 02G annotation space used by GO/KEGG.
+
+    Both the bare ID and the ".1" transcript form are emitted: the annotation
+    tables store whichever form their pipeline produced, and the enrichment
+    queries match ``gene_id`` exactly. Genes without a mapping are counted so
+    the page can say how much of the set was actually tested.
+    """
+    path = settings.CS_2G_3G_MAP
+    table = _read_cs_map(str(path), path.stat().st_mtime_ns) if path.is_file() else {}
+    ids: list[str] = []
+    seen: set[str] = set()
+    mapped = 0
+    for gene in genes:
+        base = _GENE_SUFFIX.sub("", gene)
+        target = table.get(base) if table else base
+        if target is None:
+            continue
+        mapped += 1
+        for form in (target, target + ".1"):
+            if form not in seen:
+                seen.add(form)
+                ids.append(form)
+    return ids, {"genes": len(genes), "mapped": mapped,
+                 "unmapped": len(genes) - mapped}
+
+
+_ANNOT_TABLES = {"go": "gene_go", "kegg": "gene_kegg"}
+
+
+def _annotated_ids(ids: list[str], database: str) -> list[str]:
+    """Keep only the IDs that exist in the GO/KEGG annotation table.
+
+    Called before the enrichment so its 2000-gene input limit applies to the
+    annotated subset (the mapping step emits two ID forms per gene) and so the
+    page can report exactly how many genes carry an annotation.
+    """
+    table = _ANNOT_TABLES[database]
+    found: list[str] = []
+    with mysql_cursor(settings.DB_WHEAT_FUNCTION) as cur:
+        for start in range(0, len(ids), 500):
+            chunk = ids[start:start + 500]
+            ph = ",".join(["%s"] * len(chunk))
+            cur.execute(
+                f"SELECT DISTINCT gene_id FROM `{table}` WHERE gene_id IN ({ph})",
+                chunk,
+            )
+            found.extend(row["gene_id"] for row in cur.fetchall())
+    return found
+
+
+@router.get("/enrich")
+def api_enrich(sample: str, celltype_key: str, module: str = "",
+               kind: str = "module", database: str = "go",
+               padj_threshold: float = 0.05) -> dict:
+    """Run GO or KEGG enrichment on one co-expression module or hub gene set."""
+    if kind not in ("module", "hub"):
+        raise ValidationFailure(f"Unsupported gene set: {kind}")
+    if database not in ("go", "kegg"):
+        raise ValidationFailure(f"Unsupported database: {database}")
+    if not 0 < padj_threshold <= 1:
+        raise ValidationFailure("padj_threshold must be in (0, 1]")
+    s = _param(sample, "sample")
+    k = _param(celltype_key, "celltype_key")
+    with mysql_cursor(settings.DB_SCRNA_DATA) as cur:
+        if kind == "module":
+            module = _param(module, "module")
+            items = _module_genes(cur, s, k, module)
+        else:
+            module = ""
+            items = _hub_genes(cur, s, k)
+        label = _celltype_label(cur, s, k)
+
+    genes = [item["gene_id"] for item in items]
+    ids, stats = _annotation_ids(genes)
+    payload = {"kind": kind, "sample": s, "celltype_key": k,
+               "celltype_label": label, "module": module,
+               "database": database, "padj_threshold": padj_threshold,
+               "stats": stats, "N": 0, "n": 0, "annotated": 0, "results": []}
+    if not ids:
+        return ok(payload)
+
+    annotated = _annotated_ids(ids, database)
+    stats["annotated"] = len(annotated)
+    payload["annotated"] = len(annotated)
+    if not annotated:
+        return ok(payload)
+    if len(annotated) > 2000:
+        raise ValidationFailure(
+            f"{len(annotated)} annotated genes is above the 2000-gene enrichment "
+            "limit; narrow the gene set first"
+        )
+    try:
+        result = (enrich_go if database == "go" else enrich_kegg)(annotated, padj_threshold)
+    except EnrichmentError as exc:
+        raise ValidationFailure(str(exc))
+    payload.update({"N": result["N"], "n": result["n"],
+                    "results": result["results"]})
+    return ok(payload)
 
 
 @router.get("/module/genes")

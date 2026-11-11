@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     DB_SCRNA_DATA: str = "scrna_data"
     DB_TF: str = "wheatTFdb"
     SCRNNA_CLASS_FILE: Path = Path("/var/www/html/scRNA/class.txt")
+    # Two-column TSV (CS-2G, CS-3G) used to map scRNA-seq gene IDs onto the
+    # IWGSC RefSeq v1.1 (02G) space that wheat_function's GO/KEGG tables use.
+    CS_2G_3G_MAP: Path = Path("/var/www/html/expression/new/CS-2G-CS-3G.txt")
 
     BLAST_DB_PATH: Path = Path("/var/www/html/getfasta/blastdb")
     BLAST_BIN_DIR: Path = Path("/var/www/html/blast/blast+/bin")
