@@ -25,3 +25,4 @@ from .wheatpsp import router as wheatpsp
 from .genome import router as genome
 from .ptm import router as ptm
 from .scrna_seq import router as scrna_seq
+from .translatome import router as translatome

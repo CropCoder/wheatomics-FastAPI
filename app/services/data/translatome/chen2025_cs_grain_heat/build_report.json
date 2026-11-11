@@ -1,0 +1,11 @@
+{
+  "max_abs_diff_vs_published_table_s1": 0.0,
+  "genes": 60125,
+  "genes_without_02g": 0,
+  "unmatched_examples": [],
+  "many_to_one_02g": {},
+  "many_to_one_count": 0,
+  "dtg_rows": 11343,
+  "deg_rows": 21964,
+  "samples": 18
+}

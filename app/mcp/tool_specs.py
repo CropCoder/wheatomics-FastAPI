@@ -23,6 +23,7 @@ MODULE_CATALOG: list[dict[str, str]] = [
     {"module": "Sequences", "rest": "/api/sequence", "docs": "/agent.html#mcp"},
     {"module": "BLAST", "rest": "/api/blast", "docs": "/agent.html#mcp"},
     {"module": "Expression", "rest": "/api/expression", "docs": "/agent.html#mcp"},
+    {"module": "Translatome", "rest": "/api/translatome", "docs": "/agent.html#mcp"},
     {"module": "Co-expression", "rest": "/api/coexpression", "docs": "/agent.html#mcp"},
     {"module": "WheatPPI", "rest": "/api/ppi", "docs": "/agent.html#mcp"},
     {"module": "Comparative", "rest": "/api/comparative", "docs": "/agent.html#mcp"},
@@ -263,6 +264,44 @@ TOOL_SPECS: list[dict] = [
             "min_score": _p("number", "CF-MS score threshold for PPI_result", default=0.5),
         },
         ["gene_ids"],
+    ),
+    _tool(
+        "list_translatome_datasets",
+        "Expression & networks",
+        "List translatome datasets available for query_translatome / list_translatome_dtgs "
+        "(dataset id, title, species, tissue, stages, assays, counts, status).",
+        {},
+        [],
+    ),
+    _tool(
+        "query_translatome",
+        "Expression & networks",
+        "Query the translatome datasets (RNA-seq FPKM, Ribo-seq FPKM and translation efficiency "
+        "TE = Ribo/RNA). Call list_translatome_datasets first to discover dataset ids; the default "
+        "dataset is the Chen et al. 2025 heat-stress grain dataset (5/10/15 DAA, CK vs 1-h 42 °C). "
+        "Accepts 02G or 03G gene IDs (transcript suffix .1 tolerated) and always returns both IDs. "
+        "TE is null when RNA-seq FPKM < 0.2 (not zero).",
+        {
+            "gene_ids": _p("string", "Comma-separated gene IDs (02G or 03G, e.g. TraesCS1A02G000300)"),
+            "dataset": _p("string", "Translatome dataset id (default: first visible dataset)"),
+        },
+        ["gene_ids"],
+    ),
+    _tool(
+        "list_translatome_dtgs",
+        "Expression & networks",
+        "Browse differentially translated genes (DTG) in a translatome dataset "
+        "(e.g. Chen et al. 2025: RiboDiff FDR < 0.05, |log2FC| > 1; 11,343 genes, cluster 1-8). "
+        "Returns 02G and 03G IDs, cluster, Padj and log2FC for the selected stage.",
+        {
+            "dataset": _p("string", "Translatome dataset id (default: first visible dataset)"),
+            "stage": _p("string", "Developmental stage", default="5DAA", enum=["5DAA", "10DAA", "15DAA"]),
+            "direction": _p("string", "TE change direction", default="both", enum=["both", "up", "down"]),
+            "cluster": _p("string", "Co-translation cluster 1-8 (optional)"),
+            "gene": _p("string", "02G/03G gene ID prefix (optional)"),
+            "per_page": _p("integer", "Rows per page (1-100)", default=10, minimum=1, maximum=100),
+        },
+        [],
     ),
     # ------------------------------------------------------------------
     # Comparative & variation

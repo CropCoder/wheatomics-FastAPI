@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Translatome | WheatOmics 2.0</title>
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="/api/v2shell/shell.css">
+  <script src="/expression/highcharts.js"></script>
+  <style>
+    .tl-card { background:#fff; border:1px solid #dde5e1; border-radius:14px; padding:22px 24px; box-shadow:0 4px 16px rgba(31,61,43,.06); margin-bottom:22px; }
+    .tl-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:22px; }
+    .tl-label { font-size:13px; font-weight:700; color:#33513f; margin-bottom:6px; display:block; }
+    .tl-input,.tl-select { width:100%; box-sizing:border-box; padding:10px 12px; font-size:14px; border:1px solid #bfd0c6; border-radius:8px; background:#fbfdfc; color:#1d2f25; }
+    .tl-input:focus,.tl-select:focus { outline:2px solid #7fb69a; outline-offset:1px; }
+    .tl-btn { display:inline-block; padding:10px 22px; font-size:14px; font-weight:700; color:#fff; background:#2f6b4f; border:0; border-radius:8px; cursor:pointer; }
+    .tl-btn:hover { background:#265a43; }
+    .tl-btn.secondary { background:#e8f0eb; color:#2f6b4f; }
+    .tl-btn[disabled] { opacity:.55; cursor:not-allowed; }
+    .tl-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .tl-chip { border:1px dashed #9dc0ad; background:#f4faf6; color:#2f6b4f; border-radius:999px; padding:4px 12px; font-size:12px; cursor:pointer; }
+    .tl-chip:hover { background:#e6f3eb; }
+    .tl-help { font-size:12.5px; color:#5f7468; line-height:1.55; margin-top:8px; }
+    .tl-error { background:#fdf1ef; border:1px solid #efc4bd; color:#9d2f21; border-radius:8px; padding:10px 14px; font-size:13.5px; }
+    .tl-empty { color:#6b7f73; font-size:13.5px; padding:10px 2px; }
+    .tl-table-wrap { overflow-x:auto; margin-top:12px; }
+    table.tl-table { border-collapse:collapse; width:100%; font-size:13px; }
+    table.tl-table th, table.tl-table td { border:1px solid #dfe8e2; padding:6px 9px; text-align:left; white-space:nowrap; }
+    table.tl-table thead th { background:#eef5f0; color:#2c4a39; font-weight:700; }
+    table.tl-table tbody tr:nth-child(even) { background:#fafcfb; }
+    table.tl-table td.num { text-align:right; font-variant-numeric:tabular-nums; }
+    table.tl-table td.na { color:#a26a1f; font-style:italic; }
+    .tl-gene-head { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 12px; margin-bottom:4px; }
+    .tl-gene-head h3 { margin:0; font-size:19px; color:#1f3d2b; }
+    .tl-badge { display:inline-block; border-radius:6px; padding:2px 8px; font-size:11.5px; font-weight:700; background:#e5f0e9; color:#2f6b4f; }
+    .tl-badge.lc { background:#fff3d6; color:#8a5b00; }
+    .tl-badge.table { background:#e7eefb; color:#2c4f91; }
+    .tl-meta-line { color:#5f7468; font-size:13px; margin:2px 0 10px; }
+    .tl-links { display:flex; flex-wrap:wrap; gap:14px; margin:8px 0 2px; font-size:13px; }
+    .tl-links a { color:#22689e; text-decoration:underline; }
+    .tl-charts { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px; margin-top:14px; }
+    .tl-chart { min-height:300px; }
+    .tl-section-title { font-size:20px; color:#1f3d2b; margin:0 0 4px; }
+    .tl-sub { color:#5f7468; font-size:13px; margin:0 0 14px; }
+    .tl-toolbar { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
+    .tl-toolbar .field { min-width:150px; }
+    .tl-pager { display:flex; align-items:center; gap:12px; margin-top:10px; font-size:13px; color:#4a5f53; flex-wrap:wrap; }
+    .tl-stats { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+    .tl-stat { background:#f1f7f3; border:1px solid #d8e6dd; border-radius:10px; padding:8px 14px; font-size:13px; color:#2c4a39; }
+    .tl-stat b { font-size:16px; color:#1f3d2b; }
+    .tl-refs { font-size:13px; line-height:1.7; color:#33473c; }
+    .tl-refs a { color:#22689e; }
+    .tl-sample-table { font-size:12.5px; }
+    details.tl-details { margin-top:12px; }
+    details.tl-details summary { cursor:pointer; font-weight:700; color:#2f6b4f; font-size:14px; }
+    .tl-dataset-bar { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin-bottom:16px; }
+    .tl-dataset-bar .field { min-width:280px; max-width:100%; }
+    @media (max-width:640px) { .tl-card { padding:16px; } .tl-grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div id="v2-shell-header"></div>
+
+  <main id="main-content">
+    <section class="news-hero">
+      <div class="container news-hero-inner">
+        <div>
+          <p class="news-kicker">WheatOmics 2.0 · Translation</p>
+          <h1 class="news-title" id="hero-title">Translatome</h1>
+          <p class="news-lead" id="hero-lead"></p>
+          <div class="news-stats" id="hero-stats"></div>
+        </div>
+        <div class="news-hero-mark" aria-hidden="true"><svg class="icon"><use href="#i-dna"/></svg></div>
+      </div>
+    </section>
+
+    <section class="news-body">
+      <div class="container">
+        <div class="tl-card" id="search-card">
+          <div class="tl-dataset-bar" id="dataset-bar" style="display:none;">
+            <div class="field">
+              <label class="tl-label" for="dataset-select">Dataset</label>
+              <select id="dataset-select" class="tl-select"></select>
+            </div>
+          </div>
+          <div id="asset-warning"></div>
+          <h2 class="tl-section-title">Gene query</h2>
+          <p class="tl-sub" id="query-subtitle">Enter one or more gene IDs (02G or 03G); transcript suffix <code>.1</code> is tolerated.</p>
+          <form id="query-form" action="#" onsubmit="return false;">
+            <label class="tl-label" for="gene-input">Gene IDs</label>
+            <textarea id="gene-input" class="tl-input" rows="2" placeholder="e.g. TraesCS1A02G001800, TraesCS1A03G0004000"></textarea>
+            <div class="tl-chips" id="example-chips"></div>
+            <div style="margin-top:14px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+              <button class="tl-btn" id="query-btn" type="submit">Query translatome</button>
+              <span class="tl-help" id="query-hint"></span>
+            </div>
+          </form>
+          <div id="query-error"></div>
+        </div>
+
+        <div id="result-area"></div>
+        <div id="table-panels"></div>
+
+        <div class="tl-grid">
+          <div class="tl-card">
+            <h2 class="tl-section-title">Data downloads</h2>
+            <p class="tl-sub" id="download-sub">Gzipped TSV, one header line, empty values for undefined TE.</p>
+            <div style="display:flex; flex-direction:column; gap:10px;" id="download-links"></div>
+            <details class="tl-details">
+              <summary>Sample metadata &amp; sequencing runs</summary>
+              <div class="tl-table-wrap"><table class="tl-table tl-sample-table" id="sample-table"></table></div>
+            </details>
+          </div>
+          <div class="tl-card">
+            <h2 class="tl-section-title">Source &amp; citation</h2>
+            <div class="tl-refs" id="citation-block"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="v2-shell-footer"></div>
+
+  <script src="/api/v2shell/shell.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    var META = null;
+    var DATASETS = [];
+    var CURRENT_ID = null;
+    var TABLE_STATE = {};
+    var PER_PAGE = 20;
+    var API = '/api/translatome';
+
+    function $(id) { return document.getElementById(id); }
+    function esc(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+      });
+    }
+    function num(value, digits) {
+      if (value === null || value === undefined || value === '') return null;
+      var n = Number(value);
+      return isFinite(n) ? n.toFixed(digits === undefined ? 3 : digits) : null;
+    }
+    function fmtNum(value, digits) { var text = num(value, digits); return text === null ? 'n.a.' : text; }
+    function fmtP(value) {
+      if (value === null || value === undefined) return 'n.a.';
+      var n = Number(value);
+      if (!isFinite(n)) return 'n.a.';
+      if (n === 0) return '0';
+      if (n < 1e-4) return n.toExponential(1);
+      return n.toPrecision(3);
+    }
+    function link(href, label) {
+      if (!href) return '';
+      return '<a href="' + esc(href) + '" target="_blank" rel="noopener">' + esc(label || href) + '</a>';
+    }
+    function apiFetch(url) {
+      return fetch(url, { headers: { 'Accept': 'application/json' } }).then(function (response) {
+        return response.json().then(function (payload) {
+          if (!response.ok) throw new Error((payload && payload.detail) || ('HTTP ' + response.status));
+          return payload.data !== undefined ? payload.data : payload;
+        });
+      });
+    }
+    function apiUrl(path, params) {
+      var query = new URLSearchParams();
+      Object.keys(params || {}).forEach(function (key) {
+        var value = params[key];
+        if (value !== null && value !== undefined && value !== '') query.set(key, value);
+      });
+      if (CURRENT_ID) query.set('dataset', CURRENT_ID);
+      var text = query.toString();
+      return API + path + (text ? '?' + text : '');
+    }
+    function showError(id, message) { $(id).innerHTML = '<div class="tl-error">' + esc(message) + '</div>'; }
+    function clearError(id) { $(id).innerHTML = ''; }
+
+    // ------------------------------------------------------------ dataset/meta
+    function datasetsFromUrl() {
+      var wanted = new URLSearchParams(window.location.search).get('dataset');
+      if (wanted && DATASETS.some(function (item) { return item.id === wanted; })) return wanted;
+      if (DATASETS.length) return DATASETS[0].id;
+      return null;
+    }
+
+    function renderDatasetBar() {
+      $('dataset-bar').style.display = DATASETS.length > 1 ? '' : 'none';
+      if (DATASETS.length <= 1) return;
+      var select = $('dataset-select');
+      select.innerHTML = DATASETS.map(function (item) {
+        return '<option value="' + esc(item.id) + '">' + esc(item.short_title || item.title || item.id) +
+          (item.status && item.status !== 'public' ? ' (' + esc(item.status) + ')' : '') +
+          (item.assets_ready === false ? ' — assets missing' : '') + '</option>';
+      }).join('');
+      select.value = CURRENT_ID;
+    }
+
+    function renderMeta() {
+      var title = META.short_title || META.title || 'Translatome';
+      document.title = esc(title) + ' | WheatOmics 2.0';
+      $('hero-title').textContent = title;
+      $('hero-lead').innerHTML = esc(META.description || META.title || '');
+      if (META.assets_ready === false) {
+        $('asset-warning').innerHTML = '<div class="tl-error">Data assets for this dataset are not installed on this server yet ' +
+          '(set TRANSLATOME_DATA_DIR and upload the .tsv.gz files). Queries will return 503 until then.</div>';
+      } else {
+        $('asset-warning').innerHTML = '';
+      }
+      $('query-hint').textContent = META.rules && META.rules.te_rule
+        ? 'TE is reported only when RNA-seq FPKM ≥ 0.2 (otherwise n.a.).'
+        : '';
+
+      var counts = META.counts || {};
+      var stats = [];
+      if (counts.genes) stats.push('<span class="news-stat"><strong>' + counts.genes.toLocaleString() + '</strong> genes</span>');
+      (META.available_tables || []).forEach(function (table) {
+        if (counts[table.id]) stats.push('<span class="news-stat"><strong>' + counts[table.id].toLocaleString() +
+          '</strong> ' + esc(table.id.toUpperCase()) + '</span>');
+      });
+      (META.assays || []).forEach(function (assay) { stats.push('<span class="news-stat">' + esc(assay) + '</span>'); });
+      $('hero-stats').innerHTML = stats.join('');
+
+      var examples = META.examples || [];
+      $('example-chips').innerHTML = examples.map(function (item) {
+        return '<button class="tl-chip" type="button" data-gene="' + esc(item.gene) + '">' + esc(item.label || item.gene) + '</button>';
+      }).join('');
+      Array.prototype.forEach.call(document.querySelectorAll('.tl-chip'), function (chip) {
+        chip.addEventListener('click', function () {
+          $('gene-input').value = chip.getAttribute('data-gene');
+          runQuery();
+        });
+      });
+
+      // downloads
+      var downloads = Object.keys(META.files || {}).map(function (fileId) {
+        var entry = META.files[fileId];
+        var href = '/api/translatome/download/' + encodeURIComponent(CURRENT_ID) + '/' + encodeURIComponent(fileId);
+        return '<a class="tl-btn secondary" href="' + esc(href) + '">' + esc(entry.label || entry.file) + '</a>';
+      });
+      $('download-links').innerHTML = downloads.join('') || '<div class="tl-empty">No download files declared.</div>';
+
+      // samples
+      var samples = META.samples || [];
+      var sampleRows = ['<thead><tr><th>Library</th><th>Role</th><th>Assay</th><th>Stage</th><th>Treatment</th><th>Reps</th><th>SRA runs</th></tr></thead><tbody>'];
+      samples.forEach(function (sample) {
+        sampleRows.push('<tr><td>' + esc(sample.label || sample.id) + '</td><td>' + esc(sample.role) +
+          '</td><td>' + esc(sample.assay) + '</td><td>' + esc(sample.stage) + '</td><td>' + esc(sample.treatment) +
+          '</td><td class="num">' + esc(sample.n_reps == null ? '–' : sample.n_reps) + '</td><td>' +
+          esc((sample.sra_runs || []).join(', ')) + '</td></tr>');
+      });
+      sampleRows.push('</tbody>');
+      $('sample-table').innerHTML = sampleRows.join('');
+
+      renderCitation();
+      renderTablePanels();
+    }
+
+    function renderCitation() {
+      var sources = (META.sources || []).map(function (source) {
+        return '<div style="margin-bottom:10px;"><b>' + esc(source.role || 'Source') + '</b><br>' +
+          esc(source.citation || '') + '<br>' +
+          (source.doi ? 'DOI: ' + link('https://doi.org/' + source.doi, source.doi) : '') +
+          (source.pmid ? ' · PubMed: ' + link('https://pubmed.ncbi.nlm.nih.gov/' + source.pmid + '/', source.pmid) : '') +
+          (source.bioproject ? ' · BioProject: ' + link('https://www.ncbi.nlm.nih.gov/bioproject/' + source.bioproject, source.bioproject) : '') +
+          '</div>';
+      }).join('');
+      var rules = META.rules || {};
+      var links = META.links || {};
+      var browserLinks = Object.keys(links).filter(function (key) { return key.indexOf('authors_browser') === 0; })
+        .map(function (key) { return link(links[key], key.replace('authors_browser_', '') + ' browser'); }).join(' · ');
+      $('citation-block').innerHTML = sources +
+        (rules.te_rule ? '<p><b>TE definition:</b> ' + esc(rules.te_rule) + '</p>' : '') +
+        (META.replicates ? '<p><b>Replicates:</b> ' + esc(META.replicates) + '</p>' : '') +
+        (rules.dtg_note ? '<p><b>DTG:</b> ' + esc(rules.dtg_note) + '</p>' : '') +
+        (rules.deg_note ? '<p><b>DEG:</b> ' + esc(rules.deg_note) + '</p>' : '') +
+        (browserLinks ? '<p><b>Genome browser:</b> ' + browserLinks + '</p>' : '') +
+        (links.supplement ? '<p><b>Source table:</b> ' + link(links.supplement, 'Supplementary Table S1') + '</p>' : '') +
+        (META.license ? '<p><b>License:</b> ' + esc(META.license.heat_stress || META.license.control || '') + '. ' +
+          esc(META.license.note || '') + '</p>' : '') +
+        (META.provenance_note ? '<p><b>Provenance:</b> ' + esc(META.provenance_note) + '</p>' : '');
+    }
+
+    // ------------------------------------------------------------ gene cards
+    function geneCard(gene) {
+      var roles = gene.roles || [];
+      var treatments = gene.treatments || [];
+      var contrasts = gene.contrasts || [];
+      var head = '<div class="tl-gene-head"><h3>' + esc(gene.gene02g || gene.gene03g) + '</h3>' +
+        '<span class="tl-badge">02G: ' + esc(gene.gene02g || 'n.a.') + '</span>' +
+        '<span class="tl-badge">03G: ' + esc(gene.gene03g) + '</span>' +
+        (gene.is_lc ? '<span class="tl-badge lc">LC</span>' : '');
+      var hits = gene.table_hits || {};
+      Object.keys(hits).forEach(function (tableId) {
+        var hit = hits[tableId];
+        if (hit.kind === 'dtg') {
+          var sigStages = Object.keys(hit.stages || {}).filter(function (stage) {
+            var item = hit.stages[stage];
+            return item && item.padj !== null && item.padj <= 0.05 && Math.abs(item.log2fc || 0) >= 1;
+          });
+          if (sigStages.length) head += '<span class="tl-badge table">DTG ' + esc(sigStages.join('/')) +
+            (hit.cluster ? ' · cluster ' + esc(hit.cluster) : '') + '</span>';
+        } else if (hit.kind === 'deg') {
+          var sigComps = Object.keys(hit.comparisons || {}).filter(function (comp) {
+            var item = hit.comparisons[comp];
+            return item && item.padj !== null && item.padj <= 0.05 && Math.abs(item.log2fc || 0) >= 1;
+          });
+          if (sigComps.length) head += '<span class="tl-badge table">DEG ' + esc(sigComps.join(' / ')) + '</span>';
+        }
+      });
+      head += '</div>';
+
+      var metaLine = '<div class="tl-meta-line">' + esc(gene.description || 'No annotation') + ' · ' + esc(gene.chromosome || '') +
+        (gene.start ? ':' + gene.start + '-' + gene.end : '') + '</div>';
+      var geneHub = ((META.links || {}).genehub || '/GeneHub/gene.html?gene=') + encodeURIComponent(gene.gene03g);
+      var browserBase = (META.links || {}).authors_browser_hs || (META.links || {}).authors_browser ||
+        Object.keys(META.links || {}).filter(function (key) { return key.indexOf('authors_browser') === 0; })
+          .map(function (key) { return META.links[key]; })[0];
+      var browser = (browserBase && gene.chromosome && gene.start && gene.end)
+        ? browserBase + '?loc=' + encodeURIComponent(gene.chromosome + ':' + gene.start + '..' + gene.end) : '';
+      var links = '<div class="tl-links">' + link(geneHub, 'GeneHub') +
+        (browser ? ' · ' + link(browser, 'Genome browser (authors)') : '') + '</div>';
+
+      // table: rows = roles, columns = stage × (treatments + contrasts)
+      var table = ['<div class="tl-table-wrap"><table class="tl-table"><thead><tr><th>Metric</th>'];
+      gene.stages.forEach(function (stage) {
+        table.push('<th colspan="' + (treatments.length + contrasts.length) + '">' + esc(stage.label) + '</th>');
+      });
+      table.push('</tr><tr><th></th>');
+      gene.stages.forEach(function () {
+        treatments.forEach(function (treatment) { table.push('<th>' + esc(treatment.label || treatment.id) + '</th>'); });
+        contrasts.forEach(function (contrast) { table.push('<th>Δ ' + esc(contrast.label || contrast.id) + '</th>'); });
+      });
+      table.push('</tr></thead><tbody>');
+      roles.forEach(function (role) {
+        table.push('<tr><td>' + esc(role.label || role.id) + '</td>');
+        gene.stages.forEach(function (stage) {
+          var metric = stage.metrics[role.id] || { values: {}, contrasts: {} };
+          treatments.forEach(function (treatment) {
+            var value = metric.values[treatment.id];
+            var na = value === null || value === undefined;
+            table.push('<td class="num' + (na ? ' na' : '') + '">' + (na ? 'n.a.' : fmtNum(value, 2)) + '</td>');
+          });
+          contrasts.forEach(function (contrast) {
+            var delta = metric.contrasts[contrast.id];
+            table.push('<td class="num">' + (delta === null || delta === undefined ? 'n.a.' :
+              (delta > 0 ? '+' : '') + num(delta, 2)) + '</td>');
+          });
+        });
+        table.push('</tr>');
+      });
+      table.push('</tbody></table></div>');
+      if (roles.some(function (role) { return role.metric === 'te'; }) &&
+          gene.stages.some(function (stage) {
+            var metric = stage.metrics.te;
+            return metric && Object.keys(metric.values || {}).some(function (key) { return metric.values[key] === null; });
+          })) {
+        table.push('<p class="tl-help">n.a. = value not defined (e.g. TE when RNA-seq FPKM &lt; 0.2); a TE of 0 with Ribo = 0 is a real zero.</p>');
+      }
+
+      var chartId = 'charts-' + gene.gene03g.replace(/[^A-Za-z0-9]/g, '_');
+      return '<div class="tl-card"><div style="margin-top:4px;">' + head + metaLine + links + table.join('') +
+        '<div class="tl-charts" id="' + chartId + '"></div></div></div>';
+    }
+
+    function drawCharts(gene) {
+      if (typeof Highcharts === 'undefined') return;
+      var chartId = 'charts-' + gene.gene03g.replace(/[^A-Za-z0-9]/g, '_');
+      var container = $(chartId);
+      var categories = gene.stages.map(function (stage) { return stage.label; });
+      var treatments = gene.treatments || [];
+      var fpkmRoles = (gene.roles || []).filter(function (role) { return role.metric !== 'te'; });
+      var teRoles = (gene.roles || []).filter(function (role) { return role.metric === 'te'; });
+
+      if (fpkmRoles.length) {
+        var div1 = document.createElement('div');
+        div1.className = 'tl-chart';
+        container.appendChild(div1);
+        var series = [];
+        fpkmRoles.forEach(function (role) {
+          treatments.forEach(function (treatment) {
+            series.push({
+              name: (role.label || role.id) + ' · ' + (treatment.label || treatment.id),
+              data: gene.stages.map(function (stage) {
+                var metric = stage.metrics[role.id] || { values: {} };
+                return metric.values[treatment.id] === undefined ? null : metric.values[treatment.id];
+              })
+            });
+          });
+        });
+        Highcharts.chart(div1, {
+          chart: { type: 'column', backgroundColor: 'transparent' },
+          title: { text: 'Expression levels', style: { fontSize: '14px' } },
+          xAxis: { categories: categories },
+          yAxis: { title: { text: fpkmRoles[0].unit || 'FPKM' }, min: 0 },
+          tooltip: { shared: true, valueDecimals: 2 },
+          legend: { itemStyle: { fontSize: '11px' } },
+          series: series
+        });
+      }
+
+      var teValues = teRoles.length ? gene.stages.map(function (stage) {
+        return stage.metrics[teRoles[0].id];
+      }) : [];
+      var hasTe = teValues.some(function (metric) {
+        return metric && Object.keys(metric.values || {}).some(function (key) { return metric.values[key] !== null; });
+      });
+      var div2 = document.createElement('div');
+      div2.className = 'tl-chart';
+      container.appendChild(div2);
+      if (!teRoles.length) {
+        div2.innerHTML = '<div class="tl-empty" style="padding:60px 12px;text-align:center;">This dataset has no TE layer.</div>';
+      } else if (!hasTe) {
+        div2.innerHTML = '<div class="tl-empty" style="padding:60px 12px;text-align:center;">TE not available for this gene (RNA-seq FPKM &lt; 0.2 in all samples).</div>';
+      } else {
+        var teSeries = treatments.map(function (treatment) {
+          return {
+            name: (treatment.label || treatment.id),
+            data: gene.stages.map(function (stage) {
+              var metric = stage.metrics[teRoles[0].id] || { values: {} };
+              return metric.values[treatment.id] === undefined ? null : metric.values[treatment.id];
+            })
+          };
+        });
+        Highcharts.chart(div2, {
+          chart: { type: 'spline', backgroundColor: 'transparent' },
+          title: { text: 'Translation efficiency (TE)', style: { fontSize: '14px' } },
+          xAxis: { categories: categories },
+          yAxis: { title: { text: teRoles[0].unit || 'TE' }, min: 0 },
+          tooltip: { valueDecimals: 3 },
+          legend: { itemStyle: { fontSize: '11px' } },
+          plotOptions: { spline: { connectNulls: false, marker: { enabled: true } } },
+          series: teSeries
+        });
+      }
+    }
+
+    function runQuery() {
+      var raw = $('gene-input').value.trim();
+      if (!raw) { showError('query-error', 'Please enter at least one gene ID.'); return; }
+      var ids = raw.split(/[\s,;]+/).filter(Boolean).slice(0, 100);
+      clearError('query-error');
+      $('query-btn').disabled = true;
+      $('result-area').innerHTML = '';
+      apiFetch(apiUrl('/query', { gene_ids: ids.join(',') })).then(function (data) {
+        var html = '';
+        if (!data.results || !data.results.length) {
+          html = '<div class="tl-card"><div class="tl-empty">No gene found. Check the ID version (02G or 03G).</div></div>';
+        } else {
+          data.results.forEach(function (gene) { html += geneCard(gene); });
+        }
+        if (data.genes_not_found && data.genes_not_found.length) {
+          html += '<div class="tl-card"><div class="tl-help">Not found in this dataset: ' +
+            esc(data.genes_not_found.join(', ')) + '. Try the tables below or check the ID version.</div></div>';
+        }
+        $('result-area').innerHTML = html;
+        data.results.forEach(drawCharts);
+      }).catch(function (error) {
+        showError('query-error', error.message || String(error));
+      }).finally(function () { $('query-btn').disabled = false; });
+    }
+
+    // ------------------------------------------------------------ optional tables
+    function renderTablePanels() {
+      var tables = (META && META.available_tables) || [];
+      var stages = (META && META.stages) || [];
+      var panels = tables.map(function (table) {
+        var panelId = 'panel-' + table.id;
+        var html = '<div class="tl-card" id="' + panelId + '">' +
+          '<h2 class="tl-section-title">' + esc(table.label) + '</h2>' +
+          '<p class="tl-sub">' + esc(table.description || '') + '</p>' +
+          '<div class="tl-toolbar">';
+        if (table.kind === 'dtg') {
+          html += '<div class="field"><label class="tl-label">Stage</label><select class="tl-select" id="f-' + table.id + '-stage">' +
+            stages.map(function (stage) { return '<option value="' + esc(stage.id) + '">' + esc(stage.label || stage.id) + '</option>'; }).join('') +
+            '</select></div>';
+          html += '<div class="field"><label class="tl-label">Direction</label><select class="tl-select" id="f-' + table.id + '-direction">' +
+            '<option value="both">Up &amp; down</option><option value="up">Up</option><option value="down">Down</option></select></div>';
+          html += '<div class="field"><label class="tl-label">Cluster</label><input class="tl-input" id="f-' + table.id + '-cluster" placeholder="e.g. 7"></div>';
+        } else if (table.kind === 'deg') {
+          html += '<div class="field"><label class="tl-label">Comparison</label><select class="tl-select" id="f-' + table.id + '-comparison">' +
+            (table.comparisons || []).map(function (comp) { return '<option value="' + esc(comp.id) + '">' + esc(comp.label || comp.id) + '</option>'; }).join('') +
+            '</select></div>';
+          html += '<div class="field"><label class="tl-label">Direction</label><select class="tl-select" id="f-' + table.id + '-direction">' +
+            '<option value="both">Up &amp; down</option><option value="up">Higher after treatment</option><option value="down">Lower after treatment</option></select></div>';
+        }
+        html += '<div class="field"><label class="tl-label">Gene filter (optional)</label><input class="tl-input" id="f-' + table.id + '-gene" placeholder="02G / 03G prefix"></div>' +
+          '<div class="field" style="min-width:auto;"><button class="tl-btn" type="button" id="apply-' + table.id + '">Apply</button></div>' +
+          '</div><div id="error-' + table.id + '"></div><div class="tl-table-wrap" id="table-' + table.id + '"></div>' +
+          '<div class="tl-pager"><button class="tl-btn secondary" type="button" id="prev-' + table.id + '">← Prev</button>' +
+          '<span id="page-' + table.id + '">–</span>' +
+          '<button class="tl-btn secondary" type="button" id="next-' + table.id + '">Next →</button>' +
+          '<a class="tl-help" href="/api/translatome/download/' + encodeURIComponent(CURRENT_ID) + '/' + encodeURIComponent(table.id) + '">Download full table</a></div></div>';
+        return html;
+      });
+      var container = $('table-panels');
+      container.innerHTML = panels.join('');
+      tables.forEach(function (table) {
+        TABLE_STATE[table.id] = TABLE_STATE[table.id] || { page: 1 };
+        $('apply-' + table.id).addEventListener('click', function () { TABLE_STATE[table.id].page = 1; loadTable(table); });
+        $('prev-' + table.id).addEventListener('click', function () {
+          if (TABLE_STATE[table.id].page > 1) { TABLE_STATE[table.id].page -= 1; loadTable(table); }
+        });
+        $('next-' + table.id).addEventListener('click', function () { TABLE_STATE[table.id].page += 1; loadTable(table); });
+        loadTable(table);
+      });
+    }
+
+    function loadTable(table) {
+      var state = TABLE_STATE[table.id];
+      var params = { page: state.page, per_page: PER_PAGE };
+      var geneInput = $('f-' + table.id + '-gene');
+      if (geneInput && geneInput.value.trim()) params.gene = geneInput.value.trim();
+      var directionInput = $('f-' + table.id + '-direction');
+      if (directionInput) params.direction = directionInput.value;
+      if (table.kind === 'dtg') {
+        params.stage = $('f-' + table.id + '-stage').value;
+        var clusterInput = $('f-' + table.id + '-cluster');
+        if (clusterInput && clusterInput.value.trim()) params.cluster = clusterInput.value.trim();
+      } else if (table.kind === 'deg') {
+        params.comparison = $('f-' + table.id + '-comparison').value;
+      }
+      apiFetch(apiUrl('/table/' + encodeURIComponent(table.id), params)).then(function (data) {
+        renderGenericTable(table, data);
+      }).catch(function (error) {
+        showError('error-' + table.id, error.message || String(error));
+      });
+    }
+
+    function renderGenericTable(table, data) {
+      var items = data.items || [];
+      if (!items.length) {
+        $('table-' + table.id).innerHTML = '<div class="tl-empty">No rows match these filters.</div>';
+        $('page-' + table.id).textContent = '–';
+        $('prev-' + table.id).disabled = true;
+        $('next-' + table.id).disabled = true;
+        return;
+      }
+      var header = ['<table class="tl-table"><thead><tr><th>Gene (02G)</th><th>Gene (03G)</th><th>Description</th>'];
+      if (table.kind === 'dtg') header.push('<th>Cluster</th><th>Stage</th>');
+      if (table.kind === 'deg') header.push('<th>Comparison</th>');
+      header.push('<th>log2FC</th><th>Padj</th><th></th></tr></thead><tbody>');
+      var rows = items.map(function (item) {
+        var cells = '<td>' + esc(item.gene02g || 'n.a.') + '</td><td>' + esc(item.gene03g) +
+          '</td><td>' + esc(item.description || '') + '</td>';
+        if (table.kind === 'dtg') cells += '<td class="num">' + (item.cluster ? esc(item.cluster) : '–') + '</td><td>' + esc(item.stage || '') + '</td>';
+        if (table.kind === 'deg') cells += '<td>' + esc(item.comparison_label || item.comparison || '') + '</td>';
+        cells += '<td class="num">' + (item.log2fc > 0 ? '+' : '') + num(item.log2fc, 2) +
+          '</td><td class="num">' + fmtP(item.padj) + '</td>' +
+          '<td><button class="tl-btn secondary table-pick" type="button" data-gene="' + esc(item.gene02g || item.gene03g) + '">view</button></td>';
+        return '<tr>' + cells + '</tr>';
+      });
+      $('table-' + table.id).innerHTML = header.join('') + rows.join('') + '</tbody></table>';
+      $('page-' + table.id).textContent = 'Page ' + data.pagination.page + ' / ' + data.pagination.total_pages +
+        ' · ' + data.pagination.total.toLocaleString() + ' rows';
+      $('prev-' + table.id).disabled = data.pagination.page <= 1;
+      $('next-' + table.id).disabled = data.pagination.page >= data.pagination.total_pages;
+      Array.prototype.forEach.call($('table-' + table.id).querySelectorAll('.table-pick'), function (button) {
+        button.addEventListener('click', function () {
+          $('gene-input').value = button.getAttribute('data-gene');
+          $('query-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          runQuery();
+        });
+      });
+    }
+
+    // ------------------------------------------------------------ init
+    function loadDataset(datasetId) {
+      CURRENT_ID = datasetId;
+      if (DATASETS.length > 1) $('dataset-select').value = datasetId;
+      var url = new URL(window.location.href);
+      url.searchParams.set('dataset', datasetId);
+      window.history.replaceState({}, '', url);
+      $('result-area').innerHTML = '';
+      $('table-panels').innerHTML = '';
+      return apiFetch(API + '/meta?dataset=' + encodeURIComponent(datasetId)).then(function (meta) {
+        META = meta;
+        renderDatasetBar();
+        renderMeta();
+      }).catch(function (error) {
+        showError('query-error', 'Failed to load dataset metadata: ' + (error.message || error));
+      });
+    }
+
+    function init() {
+      apiFetch(API + '/datasets').then(function (data) {
+        DATASETS = data.datasets || [];
+        CURRENT_ID = datasetsFromUrl();
+        if (!CURRENT_ID) {
+          showError('query-error', 'No translatome dataset is available.');
+          return;
+        }
+        renderDatasetBar();
+        var select = $('dataset-select');
+        if (select) select.addEventListener('change', function () { loadDataset(select.value); });
+        var deepLink = new URLSearchParams(window.location.search).get('gene');
+        if (deepLink) $('gene-input').value = deepLink;
+        return loadDataset(CURRENT_ID).then(function () {
+          if (deepLink) runQuery();
+        });
+      }).catch(function (error) {
+        showError('query-error', 'Failed to load dataset list: ' + (error.message || error));
+      });
+
+      $('query-form').addEventListener('submit', function (event) { event.preventDefault(); runQuery(); });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  })();
+  </script>
+</body>
+</html>

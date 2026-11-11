@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="WheatOmics 2.0 AI Agent and API access: connect the built-in 28-tool MCP server over stateless Streamable HTTP (or legacy SSE), read its documentation resources and prompt, or query the public REST API with its unified JSON envelope and OpenAPI 3 schema.">
+  <meta name="description" content="WheatOmics 2.0 AI Agent and API access: connect the built-in 31-tool MCP server over stateless Streamable HTTP (or legacy SSE), read its documentation resources and prompt, or query the public REST API with its unified JSON envelope and OpenAPI 3 schema.">
   <title>Agent &amp; API | WheatOmics 2.0</title>
   <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="/api/v2shell/shell.css">
@@ -182,7 +182,7 @@
           <h1 class="news-title">Agent &amp; <em>API</em></h1>
           <p class="news-lead">WheatOmics opens its wheat multi-omics data to AI agents and scripts: a built-in MCP server for tool-using LLM clients, plus a documented REST API for everything else.</p>
           <div class="news-stats">
-            <span class="news-stat"><strong>28</strong> MCP tools</span>
+            <span class="news-stat"><strong>31</strong> MCP tools</span>
             <span class="news-stat">REST · JSON</span>
             <span class="news-stat">OpenAPI 3</span>
             <span class="news-stat">Copy-ready agent prompt</span>
@@ -260,7 +260,7 @@ Requirements:
           <header class="agent-section-head">
             <p class="agent-kicker">B · Model Context Protocol</p>
             <h2 id="mcp-title">AI agents: built-in MCP server</h2>
-            <p class="agent-intro">WheatOmics runs an MCP (Model Context Protocol) server over stateless Streamable HTTP at <code>/api/mcp</code> — the recommended transport, safe behind the multi-worker production deployment — so an MCP-capable AI client can connect remotely, discover the tools below and call them as native tools. The legacy SSE transport at <code>/api/mcp/sse</code> + <code>/api/mcp/messages</code> remains for single-worker or local-development clients only. The server exposes 28 tools spanning genes and annotation, sequences, expression, networks, comparative genomics, enrichment, literature, reference genomes, JBrowse and BLAST, plus two documentation resources and a copy-ready prompt; the REST API described <a href="#api">in the next section</a> covers anything else.</p>
+            <p class="agent-intro">WheatOmics runs an MCP (Model Context Protocol) server over stateless Streamable HTTP at <code>/api/mcp</code> — the recommended transport, safe behind the multi-worker production deployment — so an MCP-capable AI client can connect remotely, discover the tools below and call them as native tools. The legacy SSE transport at <code>/api/mcp/sse</code> + <code>/api/mcp/messages</code> remains for single-worker or local-development clients only. The server exposes 31 tools spanning genes and annotation, sequences, expression, networks, comparative genomics, enrichment, literature, reference genomes, JBrowse and BLAST, plus two documentation resources and a copy-ready prompt; the REST API described <a href="#api">in the next section</a> covers anything else.</p>
           </header>
 
           <div class="agent-grid">
@@ -279,7 +279,7 @@ Requirements:
                       <tr><th scope="row">Streamable HTTP endpoint (recommended)</th><td><code>GET/POST/DELETE /api/mcp</code></td></tr>
                       <tr><th scope="row">SSE endpoint (legacy, single-worker / dev only)</th><td><code>GET /api/mcp/sse</code></td></tr>
                       <tr><th scope="row">Message endpoint (legacy)</th><td><code>POST /api/mcp/messages</code></td></tr>
-                      <tr><th scope="row">Tools / resources / prompt</th><td><strong>28</strong> tools · <strong>2</strong> resources · <strong>1</strong> prompt</td></tr>
+                      <tr><th scope="row">Tools / resources / prompt</th><td><strong>31</strong> tools · <strong>2</strong> resources · <strong>1</strong> prompt</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -316,7 +316,7 @@ Requirements:
             <article class="card agent-card wide">
               <div class="card-body">
                 <h3>Registered tools</h3>
-                <p>The server registers 28 tools, grouped below by data module. Arguments are passed as the tool input object; required arguments are marked with <strong>*</strong> and a default value follows <code>=</code>. Errors come back as text rather than raised exceptions, so the model can adjust and retry.</p>
+                <p>The server registers 31 tools, grouped below by data module. Arguments are passed as the tool input object; required arguments are marked with <strong>*</strong> and a default value follows <code>=</code>. Errors come back as text rather than raised exceptions, so the model can adjust and retry.</p>
                 <p class="agent-small">The full JSON input schema of every tool is discoverable through the MCP <code>tools/list</code> request and in the <a href="/api/docs" target="_blank" rel="noopener">REST API documentation</a>.</p>
                 <p class="agent-small">Tools whose raw payload would be too large for an agent context (the expression-project and BLAST-database lists) return a compact view by default; set the documented <code>include_*</code> argument to get the full payload.</p>
 
@@ -397,7 +397,7 @@ Requirements:
                 </div>
 
                 <div class="agent-tool-group">
-                  <h4>Expression &amp; networks <span>4 tools</span></h4>
+                  <h4>Expression &amp; networks <span>7 tools</span></h4>
                   <div class="agent-table-wrap">
                     <table class="table agent-table">
                       <thead>
@@ -423,6 +423,21 @@ Requirements:
                           <td><code>query_ppi</code></td>
                           <td><code>gene_ids</code> <strong>*</strong> (transcript IDs with the <code>.1</code> suffix) · <code>table</code>=<code>PPI_result</code> · <code>min_score</code>=<code>0.5</code></td>
                           <td>Protein-protein interactions from wheatPPI (CF-MS).</td>
+                        </tr>
+                        <tr>
+                          <td><code>list_translatome_datasets</code></td>
+                          <td>—</td>
+                          <td>List manifest-driven translatome datasets (id, title, species, tissue, stages, assays, counts, status). The default dataset is the Chen et al. 2025 heat-stress grain translatome.</td>
+                        </tr>
+                        <tr>
+                          <td><code>query_translatome</code></td>
+                          <td><code>gene_ids</code> <strong>*</strong> (02G or 03G, comma-separated) · <code>dataset</code>=first visible</td>
+                          <td>RNA-seq FPKM, Ribo-seq FPKM and TE (manifest-driven stages/treatments). Returns both 02G and 03G IDs; TE is null when RNA-seq FPKM &lt; 0.2.</td>
+                        </tr>
+                        <tr>
+                          <td><code>list_translatome_dtgs</code></td>
+                          <td><code>dataset</code>=first visible · <code>stage</code>=<code>5DAA</code> · <code>direction</code>=<code>both</code> · <code>cluster</code> · <code>gene</code> · <code>per_page</code>=<code>10</code></td>
+                          <td>Differentially translated genes (11,343 DTG; RiboDiff FDR &lt; 0.05, |log2FC| &gt; 1) with cluster, Padj and log2FC.</td>
                         </tr>
                       </tbody>
                     </table>
@@ -676,7 +691,7 @@ Requirements:
           </div>
         </section>
 
-        <p class="agent-note">Cite WheatOmics through the <a href="/#citation">platform citation on the homepage</a>. This page was last updated on 2026-10-29 and describes the 28-tool MCP server, its resources and prompt, the REST API and the copy-ready agent prompt as deployed at that time.</p>
+        <p class="agent-note">Cite WheatOmics through the <a href="/#citation">platform citation on the homepage</a>. This page was last updated on 2026-10-29 and describes the 31-tool MCP server, its resources and prompt, the REST API and the copy-ready agent prompt as deployed at that time.</p>
       </div>
     </section>
   </main>

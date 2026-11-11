@@ -68,6 +68,11 @@ class Settings(BaseSettings):
     JBROWSE2_WEB_PATH: str = "/genome_browser"
     EQTL_IMAGE_DIR: Path = Path("/var/www/eqtl/static/image")
     SCRNNA_DATA_DIR: Path = Path("/var/www/html/scRNA")
+    # Translatome module: registry.json + per-dataset manifest.json are shipped
+    # with the code (app/services/data/translatome); the large gzipped gene
+    # matrices live outside the repo on the web node and are pointed to by this
+    # directory (each dataset = <TRANSLATOME_DATA_DIR>/<dataset_id>/*.tsv.gz).
+    TRANSLATOME_DATA_DIR: Path = Path("/var/www/data/translatome")
     BCFTOOLS_BIN: Path = Path("/home/fei/data/tiantian_data/soft/bcftools-1.8/bin/bcftools")
 
     CGI_SUBMISSION_PASSWORD: str = Field(default="")

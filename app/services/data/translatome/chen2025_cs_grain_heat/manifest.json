@@ -1,0 +1,500 @@
+{
+  "schema_version": 1,
+  "id": "chen2025_cs_grain_heat",
+  "title": "Heat-stress developing grain translatome (5/10/15 DAA, CK vs 42 °C 1 h)",
+  "short_title": "Grain heat-stress translatome",
+  "description": "RNA-seq, Ribo-seq and translation efficiency (TE) of developing wheat grains (cv. Chinese Spring) at 5, 10 and 15 DAA, control vs 1-h 42 °C heat stress. Every record carries both the platform 02G ID and the source 03G ID.",
+  "species": "Triticum aestivum",
+  "cultivar": "Chinese Spring",
+  "genome": "IWGSC RefSeq v2.1 (03G) + platform 02G",
+  "tissue": "developing grain",
+  "stages": [
+    {
+      "id": "5DAA",
+      "label": "5 DAA",
+      "days_after_anthesis": 5
+    },
+    {
+      "id": "10DAA",
+      "label": "10 DAA",
+      "days_after_anthesis": 10
+    },
+    {
+      "id": "15DAA",
+      "label": "15 DAA",
+      "days_after_anthesis": 15
+    }
+  ],
+  "treatments": [
+    {
+      "id": "CK",
+      "label": "Control"
+    },
+    {
+      "id": "HS",
+      "label": "42 °C, 1 h"
+    }
+  ],
+  "assays": [
+    "RNA-seq",
+    "Ribo-seq"
+  ],
+  "roles": [
+    {
+      "id": "rna",
+      "label": "RNA-seq FPKM",
+      "assay": "RNA-seq",
+      "unit": "FPKM",
+      "metric": "fpkm"
+    },
+    {
+      "id": "ribo",
+      "label": "Ribo-seq FPKM",
+      "assay": "Ribo-seq",
+      "unit": "FPKM",
+      "metric": "fpkm"
+    },
+    {
+      "id": "te",
+      "label": "TE (Ribo/RNA)",
+      "assay": "TE",
+      "unit": "ratio",
+      "metric": "te"
+    }
+  ],
+  "contrasts": [
+    {
+      "id": "hs_vs_ck",
+      "control": "CK",
+      "treated": "HS",
+      "label": "HS/CK"
+    }
+  ],
+  "samples": [
+    {
+      "id": "rna_5d_ck",
+      "label": "RNA 5 DAA CK",
+      "role": "rna",
+      "assay": "RNA-seq",
+      "stage": "5DAA",
+      "treatment": "CK",
+      "column": "rna_5d_ck",
+      "n_reps": 3,
+      "sra_runs": [
+        "SRR21146765",
+        "SRR21146764",
+        "SRR21146753"
+      ],
+      "bioproject": "PRJNA871371"
+    },
+    {
+      "id": "rna_10d_ck",
+      "label": "RNA 10 DAA CK",
+      "role": "rna",
+      "assay": "RNA-seq",
+      "stage": "10DAA",
+      "treatment": "CK",
+      "column": "rna_10d_ck",
+      "n_reps": 3,
+      "sra_runs": [
+        "SRR21146745",
+        "SRR21146744",
+        "SRR21146743"
+      ],
+      "bioproject": "PRJNA871371"
+    },
+    {
+      "id": "rna_15d_ck",
+      "label": "RNA 15 DAA CK",
+      "role": "rna",
+      "assay": "RNA-seq",
+      "stage": "15DAA",
+      "treatment": "CK",
+      "column": "rna_15d_ck",
+      "n_reps": 3,
+      "sra_runs": [
+        "SRR21146742",
+        "SRR21146741",
+        "SRR21146740"
+      ],
+      "bioproject": "PRJNA871371"
+    },
+    {
+      "id": "ribo_5d_ck",
+      "label": "Ribo 5 DAA CK",
+      "role": "ribo",
+      "assay": "Ribo-seq",
+      "stage": "5DAA",
+      "treatment": "CK",
+      "column": "ribo_5d_ck",
+      "n_reps": 2,
+      "sra_runs": [
+        "SRR21146755",
+        "SRR21146754"
+      ],
+      "bioproject": "PRJNA871371"
+    },
+    {
+      "id": "ribo_10d_ck",
+      "label": "Ribo 10 DAA CK",
+      "role": "ribo",
+      "assay": "Ribo-seq",
+      "stage": "10DAA",
+      "treatment": "CK",
+      "column": "ribo_10d_ck",
+      "n_reps": 2,
+      "sra_runs": [
+        "SRR21146752",
+        "SRR21146751"
+      ],
+      "bioproject": "PRJNA871371"
+    },
+    {
+      "id": "ribo_15d_ck",
+      "label": "Ribo 15 DAA CK",
+      "role": "ribo",
+      "assay": "Ribo-seq",
+      "stage": "15DAA",
+      "treatment": "CK",
+      "column": "ribo_15d_ck",
+      "n_reps": 2,
+      "sra_runs": [
+        "SRR21146750",
+        "SRR21146749"
+      ],
+      "bioproject": "PRJNA871371"
+    },
+    {
+      "id": "rna_5d_hs",
+      "label": "RNA 5 DAA HS",
+      "role": "rna",
+      "assay": "RNA-seq",
+      "stage": "5DAA",
+      "treatment": "HS",
+      "column": "rna_5d_hs",
+      "n_reps": 3,
+      "sra_runs": [
+        "SRR29816650",
+        "SRR29816649",
+        "SRR29816638"
+      ],
+      "bioproject": "PRJNA1135409"
+    },
+    {
+      "id": "rna_10d_hs",
+      "label": "RNA 10 DAA HS",
+      "role": "rna",
+      "assay": "RNA-seq",
+      "stage": "10DAA",
+      "treatment": "HS",
+      "column": "rna_10d_hs",
+      "n_reps": 3,
+      "sra_runs": [
+        "SRR29816636",
+        "SRR29816635",
+        "SRR29816634"
+      ],
+      "bioproject": "PRJNA1135409"
+    },
+    {
+      "id": "rna_15d_hs",
+      "label": "RNA 15 DAA HS",
+      "role": "rna",
+      "assay": "RNA-seq",
+      "stage": "15DAA",
+      "treatment": "HS",
+      "column": "rna_15d_hs",
+      "n_reps": 3,
+      "sra_runs": [
+        "SRR29816633",
+        "SRR29816632",
+        "SRR29816631"
+      ],
+      "bioproject": "PRJNA1135409"
+    },
+    {
+      "id": "ribo_5d_hs",
+      "label": "Ribo 5 DAA HS",
+      "role": "ribo",
+      "assay": "Ribo-seq",
+      "stage": "5DAA",
+      "treatment": "HS",
+      "column": "ribo_5d_hs",
+      "n_reps": 2,
+      "sra_runs": [
+        "SRR29816630",
+        "SRR29816648"
+      ],
+      "bioproject": "PRJNA1135409"
+    },
+    {
+      "id": "ribo_10d_hs",
+      "label": "Ribo 10 DAA HS",
+      "role": "ribo",
+      "assay": "Ribo-seq",
+      "stage": "10DAA",
+      "treatment": "HS",
+      "column": "ribo_10d_hs",
+      "n_reps": 2,
+      "sra_runs": [
+        "SRR29816647",
+        "SRR29816646"
+      ],
+      "bioproject": "PRJNA1135409"
+    },
+    {
+      "id": "ribo_15d_hs",
+      "label": "Ribo 15 DAA HS",
+      "role": "ribo",
+      "assay": "Ribo-seq",
+      "stage": "15DAA",
+      "treatment": "HS",
+      "column": "ribo_15d_hs",
+      "n_reps": 2,
+      "sra_runs": [
+        "SRR29816645",
+        "SRR29816644"
+      ],
+      "bioproject": "PRJNA1135409"
+    },
+    {
+      "id": "te_5daa_ck",
+      "label": "TE 5 DAA CK",
+      "role": "te",
+      "assay": "TE",
+      "stage": "5DAA",
+      "treatment": "CK",
+      "column": "te_5daa_ck"
+    },
+    {
+      "id": "te_5daa_hs",
+      "label": "TE 5 DAA HS",
+      "role": "te",
+      "assay": "TE",
+      "stage": "5DAA",
+      "treatment": "HS",
+      "column": "te_5daa_hs"
+    },
+    {
+      "id": "te_10daa_ck",
+      "label": "TE 10 DAA CK",
+      "role": "te",
+      "assay": "TE",
+      "stage": "10DAA",
+      "treatment": "CK",
+      "column": "te_10daa_ck"
+    },
+    {
+      "id": "te_10daa_hs",
+      "label": "TE 10 DAA HS",
+      "role": "te",
+      "assay": "TE",
+      "stage": "10DAA",
+      "treatment": "HS",
+      "column": "te_10daa_hs"
+    },
+    {
+      "id": "te_15daa_ck",
+      "label": "TE 15 DAA CK",
+      "role": "te",
+      "assay": "TE",
+      "stage": "15DAA",
+      "treatment": "CK",
+      "column": "te_15daa_ck"
+    },
+    {
+      "id": "te_15daa_hs",
+      "label": "TE 15 DAA HS",
+      "role": "te",
+      "assay": "TE",
+      "stage": "15DAA",
+      "treatment": "HS",
+      "column": "te_15daa_hs"
+    }
+  ],
+  "replicates": "RNA n=3; Ribo n=2 (CK and HS alike). Values are condition means; no per-replicate values or SD in the source table.",
+  "rules": {
+    "te_rule": "TE = mean Ribo-seq FPKM / mean RNA-seq FPKM. TE is treated as missing (null) when RNA-seq FPKM < 0.2; Ribo FPKM = 0 with RNA FPKM >= 0.2 gives TE = 0.",
+    "deg_note": "The source DEG table (Table S2) reports a signed log2 fold change (HS vs CK); negative values mean lower after heat stress.",
+    "dtg_note": "DTGs follow the publication: RiboDiff FDR < 0.05 and |log2FC| > 1; cluster = co-translation cluster 1-8 (Table S3)."
+  },
+  "units": {
+    "rna": "FPKM",
+    "ribo": "FPKM",
+    "te": "ratio (Ribo FPKM / RNA FPKM)"
+  },
+  "files": {
+    "matrix": {
+      "file": "genes.tsv.gz",
+      "label": "RNA / Ribo / TE matrix (60,125 genes)"
+    },
+    "dtg": {
+      "file": "dtg.tsv.gz",
+      "label": "DTG table (11,343 genes, Table S3)"
+    },
+    "deg": {
+      "file": "deg.tsv.gz",
+      "label": "DEG table (21,964 genes, Table S2)"
+    }
+  },
+  "tables": [
+    {
+      "id": "dtg",
+      "kind": "dtg",
+      "file_id": "dtg",
+      "label": "Differentially translated genes (DTG)",
+      "description": "Genes with altered translation efficiency (RiboDiff, FDR < 0.05, |log2FC| > 1); cluster = co-translation cluster 1-8.",
+      "gene_columns": {
+        "gene02g": "gene02g",
+        "gene03g": "gene03g",
+        "description": "description"
+      },
+      "cluster_column": "cluster",
+      "stage_columns": {
+        "5DAA": {
+          "padj": "dtg_5daa_padj",
+          "log2fc": "dtg_5daa_log2fc"
+        },
+        "10DAA": {
+          "padj": "dtg_10daa_padj",
+          "log2fc": "dtg_10daa_log2fc"
+        },
+        "15DAA": {
+          "padj": "dtg_15daa_padj",
+          "log2fc": "dtg_15daa_log2fc"
+        }
+      }
+    },
+    {
+      "id": "deg",
+      "kind": "deg",
+      "file_id": "deg",
+      "label": "Differentially expressed genes (DEG)",
+      "description": "Genes differentially expressed at the RNA or Ribo level (DESeq2); values are signed log2 fold changes (HS vs CK), FDR < 0.05, |log2FC| > 1.",
+      "gene_columns": {
+        "gene02g": "gene02g",
+        "gene03g": "gene03g",
+        "description": "description"
+      },
+      "comparisons": [
+        {
+          "id": "RNA_5",
+          "label": "RNA-seq, 5 DAA",
+          "assay": "RNA-seq",
+          "stage": "5DAA",
+          "log2fc_column": "rna_5_fold_change",
+          "padj_column": "rna_5_padj"
+        },
+        {
+          "id": "RNA_10",
+          "label": "RNA-seq, 10 DAA",
+          "assay": "RNA-seq",
+          "stage": "10DAA",
+          "log2fc_column": "rna_10_fold_change",
+          "padj_column": "rna_10_padj"
+        },
+        {
+          "id": "RNA_15",
+          "label": "RNA-seq, 15 DAA",
+          "assay": "RNA-seq",
+          "stage": "15DAA",
+          "log2fc_column": "rna_15_fold_change",
+          "padj_column": "rna_15_padj"
+        },
+        {
+          "id": "Ribo_5",
+          "label": "Ribo-seq, 5 DAA",
+          "assay": "Ribo-seq",
+          "stage": "5DAA",
+          "log2fc_column": "ribo_5_fold_change",
+          "padj_column": "ribo_5_padj"
+        },
+        {
+          "id": "Ribo_10",
+          "label": "Ribo-seq, 10 DAA",
+          "assay": "Ribo-seq",
+          "stage": "10DAA",
+          "log2fc_column": "ribo_10_fold_change",
+          "padj_column": "ribo_10_padj"
+        },
+        {
+          "id": "Ribo_15",
+          "label": "Ribo-seq, 15 DAA",
+          "assay": "Ribo-seq",
+          "stage": "15DAA",
+          "log2fc_column": "ribo_15_fold_change",
+          "padj_column": "ribo_15_padj"
+        }
+      ]
+    }
+  ],
+  "counts": {
+    "genes": 60125,
+    "genes_with_02g": 60125,
+    "genes_without_02g": 0,
+    "dtg": 11343,
+    "deg": 21964,
+    "rna_libraries": 12,
+    "ribo_libraries": 12,
+    "samples": 18
+  },
+  "sources": [
+    {
+      "role": "heat-stress RNA-seq/Ribo-seq + Table S1/S2/S3",
+      "citation": "Chen Y, et al. Translational regulation plasticity shapes wheat grain adaptation to heat stress. Genome Biol. 2025;26(1):382.",
+      "doi": "10.1186/s13059-025-03848-4",
+      "pmid": "41214722",
+      "pmcid": "PMC12599102",
+      "bioproject": "PRJNA1135409"
+    },
+    {
+      "role": "control RNA-seq/Ribo-seq libraries",
+      "citation": "Guo Y, et al. The translational landscape of bread wheat during grain development. Plant Cell. 2023;35(6):1848-1867.",
+      "doi": "10.1093/plcell/koad075",
+      "pmid": "36905284",
+      "pmcid": "PMC10226598",
+      "bioproject": "PRJNA871371"
+    }
+  ],
+  "citation": "Chen Y, Guo Y, Ma M, Wang Y, Guo W, Hu Z, Xin M, Yao Y, Ni Z, Sun Q, Peng H. Translational regulation plasticity shapes wheat grain adaptation to heat stress. Genome Biol. 2025;26(1):382. doi:10.1186/s13059-025-03848-4; Guo Y, Chen Y, Wang Y, Wu X, Zhang X, Mao W, Yu H, Guo K, Xu J, Ma L, Guo W, Hu Z, Xin M, Yao Y, Ni Z, Sun Q, Peng H. The translational landscape of bread wheat during grain development. Plant Cell. 2023;35(6):1848-1867. doi:10.1093/plcell/koad075",
+  "links": {
+    "paper_hs": "https://doi.org/10.1186/s13059-025-03848-4",
+    "paper_ck": "https://doi.org/10.1093/plcell/koad075",
+    "pubmed_hs": "https://pubmed.ncbi.nlm.nih.gov/41214722/",
+    "pubmed_ck": "https://pubmed.ncbi.nlm.nih.gov/36905284/",
+    "pmc_hs": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12599102/",
+    "pmc_ck": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10226598/",
+    "sra_hs": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA1135409",
+    "sra_ck": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA871371",
+    "supplement": "https://static-content.springer.com/esm/art%3A10.1186%2Fs13059-025-03848-4/MediaObjects/13059_2025_3848_MOESM2_ESM.xlsx",
+    "authors_browser_hs": "https://wheat.cau.edu.cn/heat_stress_response_wheat_grain_translatome_browser/",
+    "authors_browser_dev": "https://wheat.cau.edu.cn/wheat_grain_translatome_browser/",
+    "genehub": "/GeneHub/gene.html?gene="
+  },
+  "license": {
+    "heat_stress": "CC BY-NC-ND 4.0 (Genome Biology 2025)",
+    "control": "© American Society of Plant Biologists 2023 (Plant Cell); reuse by permission",
+    "note": "Academic, non-commercial display with attribution; contact the corresponding author for redistribution/derivative use."
+  },
+  "provenance_note": "The 18 numeric columns are identical to Supplementary Table S1 of Chen et al. 2025 (Genome Biology); the only transformations here are a 03G->02G gene-ID cross-reference and row/column renaming for web display.",
+  "examples": [
+    {
+      "label": "TraesCS1A02G001800 (TE-rich, 02G)",
+      "gene": "TraesCS1A02G001800"
+    },
+    {
+      "label": "TraesCS1A03G0004000 (TE-rich, 03G)",
+      "gene": "TraesCS1A03G0004000"
+    },
+    {
+      "label": "TraesCS1A02G000300 (02G)",
+      "gene": "TraesCS1A02G000300"
+    },
+    {
+      "label": "TraesCS5A02G391700 (02G)",
+      "gene": "TraesCS5A02G391700"
+    }
+  ],
+  "version": "v1",
+  "generated": "2026-11-11"
+}

@@ -27,3 +27,8 @@ docs/known_genes/_evidence/ui/**/*.png
 # BLAST -> JBrowse link map (generated on the web node by scripts/build_blast_jbrowse_map.py;
 # sizes >2 MB and must be rebuilt against the current BLAST/JBrowse data)
 app/services/data/blast_jbrowse_map.json
+
+# Translatome data assets: repo keeps only registry/manifests; .tsv.gz live
+# under TRANSLATOME_DATA_DIR on the web node.
+app/services/data/translatome/**/*.tsv.gz
+translatome_data/

@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps, eqtl, scrna, wheatpsp, genome, ptm, scrna_seq
+from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps, eqtl, scrna, wheatpsp, genome, ptm, scrna_seq, translatome
 from app.api.routers.gene_write import router as gene_write
 from app.api.routers.regulatory import router as regulatory_router
 from app.api.routers.regulatory_integration import router as regulatory_integration_router
@@ -129,7 +129,7 @@ app = FastAPI(
         "</table>"
 
         "<h2>AI Agent access (MCP)</h2>"
-        "This service embeds an MCP (Model Context Protocol) server with 28 data tools, two documentation "
+        "This service embeds an MCP (Model Context Protocol) server with 31 data tools, two documentation "
         "resources and a copy-ready prompt, so AI agents can query the platform through a standardized protocol. "
         "Recommended Streamable HTTP endpoint: <code>/api/mcp</code> (stateless, multi-worker safe); "
         "legacy SSE endpoints: <code>GET /api/mcp/sse</code> and <code>POST /api/mcp/messages</code>. "
@@ -184,7 +184,7 @@ async def no_cache_known_gene_assets(request: Request, call_next):
     if path.startswith("/api/v2shell/img/"):
         # versioned image URLs (shell.js appends ?v=...) can be cached for good
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-    elif path.startswith(("/genes/", "/api/v2shell/")):
+    elif path.startswith(("/genes/", "/translatome/", "/api/v2shell/")):
         ctype = response.headers.get("content-type", "")
         if ctype.startswith(("text/html", "text/css", "text/javascript", "application/javascript")):
             response.headers["Cache-Control"] = "no-cache, must-revalidate"
@@ -192,6 +192,7 @@ async def no_cache_known_gene_assets(request: Request, call_next):
 
 
 app.mount("/expression", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "expression", html=True), name="expression")
+app.mount("/translatome", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "translatome", html=True), name="translatome")
 app.mount("/getfasta", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "getfasta", html=True), name="getfasta")
 app.mount("/interval", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "interval", html=True), name="interval")
 app.mount("/preblast", StaticFiles(directory=Path(__file__).parent / "app" / "static" / "preblast", html=True), name="preblast")
@@ -294,6 +295,7 @@ for router in [
     genome,
     ptm,
     scrna_seq,
+    translatome,
     gene_write,
 ]:
     app.include_router(router, prefix=settings.API_PREFIX)

@@ -4,7 +4,7 @@ The server exposes the platform's main read-only query capabilities as MCP
 tools, plus two documentation resources and one copy-ready prompt, so an agent
 can discover the data model without scraping the website:
 
-* 28 tools covering genes/annotation, sequences, expression, networks,
+* 31 tools covering genes/annotation, sequences, expression, networks, translatome,
   comparative genomics, eQTL, enrichment, literature, genomes, JBrowse and
   BLAST (see :mod:`app.mcp.tool_specs` for the full catalog);
 * ``wheatomics://docs/modules`` — JSON module/tool catalog;
@@ -51,6 +51,7 @@ from app.api.routers.go_kegg import EnrichmentRequest, go_enrichment, kegg_enric
 from app.api.routers.jbrowse import list_jbrowse_datasets
 from app.api.routers.ppi import query_ppi
 from app.api.routers.sequence import batch_sequence, sequence_by_gene, sequence_by_interval
+from app.api.routers.translatome import list_dtgs, list_translatome_datasets, query_translatome
 from app.api.routers.triticeae import get_paper, search_papers
 from app.mcp.tool_specs import (
     AGENT_PROMPT,
@@ -108,6 +109,10 @@ _SYNC_TOOLS: dict[str, tuple[Callable[..., Any], dict[str, Any]]] = {
     "query_expression": (query_expression, {"project": "PRJEB5314_paired_tbl"}),
     "query_coexpression": (query_coexpression, {"database": "CO_PRJEB25639", "filter_value": 300}),
     "query_ppi": (query_ppi, {"table": "PPI_result", "min_score": 0.5}),
+    # translatome (manifest-driven datasets: RNA/Ribo/TE)
+    "list_translatome_datasets": (list_translatome_datasets, {}),
+    "query_translatome": (query_translatome, {}),
+    "list_translatome_dtgs": (list_dtgs, {"stage": "5DAA", "direction": "both", "per_page": 10}),
     # comparative & variation
     "find_homologs": (wheat_rice_arabidopsis_homologs, {"max_targets": 3}),
     "search_synteny": (search_synteny, {"table": "CSsymaptbl"}),
