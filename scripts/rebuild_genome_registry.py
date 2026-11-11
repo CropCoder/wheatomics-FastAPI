@@ -892,6 +892,7 @@ def main() -> int:
     # 数据集名 = ${PLOIDY}_Aegilops_<species>_<accession>；分类 other_triticeae。
     # 组装来自 NCBI GCA（FASTA 源），注释来自 Zenodo 22681907（HC+LC gene models + EDTA TE）。
     overrides["MM_Aegilops_comosa_IPK_AE783"] = {
+        "display_name": "Ae.comosa IPK-AE783 (M)", "subgenomes": "M",
         "ploidy": "MM", "species": "Aegilops comosa",
         "cultivar_or_line": "IPK-AE783",
         "assembly_accession": "GCA_052815735.2",
@@ -908,6 +909,7 @@ def main() -> int:
         "notes": "4DWheat GCA_052815735.2（17 seqs = 7 chr + 10 unplaced），51,203 基因（HC 37,622 / LC 13,581），BUSCO protein 97.2%；PacBio HiFi + Bionano + Hi-C 组装，注释 Zenodo 22681907",
     }
     overrides["CC_Aegilops_markgrafii_EKC105_RL5723"] = {
+        "display_name": "Ae.markgrafii EKC105_RL5723 (C)", "subgenomes": "C",
         "ploidy": "CC", "species": "Aegilops markgrafii",
         "cultivar_or_line": "EKC105_RL5723",
         "assembly_accession": "GCA_052815875.1",
@@ -924,6 +926,7 @@ def main() -> int:
         "notes": "4DWheat GCA_052815875.1（24 seqs = 7 chr + 17 unplaced），47,246 基因（HC 34,133 / LC 13,113），BUSCO protein 96.6%；PacBio HiFi + Bionano + Hi-C 组装，注释 Zenodo 22681907",
     }
     overrides["UU_Aegilops_umbellulata_IPK_AE740"] = {
+        "display_name": "Ae.umbellulata IPK-AE740 (U)", "subgenomes": "U",
         "ploidy": "UU", "species": "Aegilops umbellulata",
         "cultivar_or_line": "IPK-AE740",
         "assembly_accession": "GCA_060308565.1",
@@ -940,6 +943,7 @@ def main() -> int:
         "notes": "4DWheat GCA_060308565.1（250 seqs = 7 chr + 243 unplaced），49,677 基因（HC 35,799 / LC 13,878），BUSCO protein 96.9%；PacBio HiFi + Bionano + Hi-C 组装，注释 Zenodo 22681907",
     }
     overrides["NN_Aegilops_uniaristata_IPK_AE680"] = {
+        "display_name": "Ae.uniaristata IPK-AE680 (N)", "subgenomes": "N",
         "ploidy": "NN", "species": "Aegilops uniaristata",
         "cultivar_or_line": "IPK-AE680",
         "assembly_accession": "GCA_052815765.1",
