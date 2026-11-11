@@ -343,9 +343,8 @@ def build_manifest(counts: dict[str, int]) -> dict[str, Any]:
             "note": "Academic, non-commercial display with attribution; contact the corresponding "
                     "author for redistribution/derivative use.",
         },
-        "provenance_note": "The 18 numeric columns are identical to Supplementary Table S1 of "
-                           "Chen et al. 2025 (Genome Biology); the only transformations here are a "
-                           "03G->02G gene-ID cross-reference and row/column renaming for web display.",
+        "provenance_note": "The data were obtained from Chen et al., 2025 (DOI: 10.1186/s13059-025-03848-4); the only two transformations made here are a "
+                           "03G-to-02G gene-ID cross-reference and row/column renaming for web display.",
         "examples": [
             {"label": "TraesCS1A02G001800", "gene": "TraesCS1A02G001800"},
             {"label": "TraesCS1A03G0004000", "gene": "TraesCS1A03G0004000"},

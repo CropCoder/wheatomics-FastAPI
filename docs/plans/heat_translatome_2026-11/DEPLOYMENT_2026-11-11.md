@@ -112,3 +112,13 @@ but are not exposed in the UI; they can be removed later if not needed.
   (the `Full data` line already links the publication's S1–S3).
 - `manifest.json` drops `rules` / `replicates`; builder updated accordingly.
   Manifest change requires an API restart to reload the cached manifest.
+
+## Provenance wording (2026-11-11 evening)
+
+`manifest.provenance_note` now reads:
+
+> The data were obtained from Chen et al., 2025 (DOI: 10.1186/s13059-025-03848-4);
+> the only two transformations made here are a 03G-to-02G gene-ID cross-reference
+> and row/column renaming for web display.
+
+Builder updated accordingly; manifest change requires an API restart.
