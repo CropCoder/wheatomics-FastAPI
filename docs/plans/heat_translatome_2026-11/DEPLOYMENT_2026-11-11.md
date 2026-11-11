@@ -133,3 +133,23 @@ The page intro now reads:
 Rationale: readers may not know Ribo-seq is the translatome, and TE is not a raw
 data layer but a derived metric of the RNA-seq/Ribo-seq pair. The platform
 02G / source 03G IDs remain visible as per-record badges and in the query help.
+
+## Final ego-browser verification (2026-11-11 20:41 CST)
+
+Live page `https://wheatomics.sdau.edu.cn/translatome/` re-checked end-to-end with
+ego-browser + `scripts/spa_visual_check.sh`:
+
+- Hero: `RNA-seq (transcriptome) and Ribo-seq (translatome) ... control vs. 1-h 42 °C heat stress.`
+- Example chips: four plain gene IDs (no "TE-rich").
+- 02G query and 03G query both return cards showing `02G:` and `03G:` badges.
+- Table header `Δ log2 (HS/CK)`; each delta cell shows log2FC + converted percent
+  (`-0.13 / -8.5%`, `-0.66 / -36.8%`, `+0.33 / +25.3%`, TE `+0.95 / +92.8%`, ...).
+- No "Data downloads" card, no "Download full table", 0 download anchors in UI.
+- Source & citation: new role titles; no TE definition/Replicates/DTG/DEG block;
+  no `Source table:` line; `Full data` links the publisher's S1–S3 xlsx;
+  new Provenance text; sample metadata table (18 runs) still collapsible; license present.
+- DTG and DEG panels load 20 rows each with 0 download links.
+- Dataset selector hidden (single dataset).
+- `spa_visual_check.sh`: **390 / 768 / 1440 PASS**, 0 overflow, 0 JS errors,
+  contrast warnings cleared (percent small text darkened in `b4a5626`); only the
+  site-wide footer "Back to top" touch-target warning remains.
