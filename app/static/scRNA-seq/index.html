@@ -43,6 +43,7 @@ a.csv{display:inline-block;padding:4px 10px;font-size:12px;border-radius:5px;
   background:#206b5c;color:#fff;text-decoration:none}
 a.csv:hover{background:#16453e}
 #geneset-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+#enrich-chart{margin-top:12px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px}
 .empty{text-align:center;color:#8a9a94;padding:30px 0}
 </style></head><body>
@@ -143,6 +144,11 @@ a.csv:hover{background:#16453e}
 <section id="enrichsec" hidden>
   <h2 id="enrich-title">GO / KEGG enrichment</h2>
   <p class="muted" id="enrich-meta"></p>
+  <div class="row" id="enrich-actions" hidden>
+    <button id="enrich-csv" type="button" class="secondary mini">Download table (CSV)</button>
+    <button id="enrich-png" type="button" class="secondary mini">Download plot (PNG)</button>
+  </div>
+  <div id="enrich-chart"></div>
   <div id="enrich-table" class="scroll"></div>
 </section>
     </div>
@@ -156,6 +162,8 @@ a.csv:hover{background:#16453e}
 const $=id=>document.getElementById(id);
 const MAX_GENES=50;
 let chart=null;
+let enrichChart=null;
+let enrichData=null;
 const state={data:null,meta:{}};
 
 function text(el,s){el.textContent=s==null?"":String(s)}
@@ -493,10 +501,82 @@ async function loadGeneset(kind,sample,ct,mod){
 }
 
 /* ---------- GO / KEGG enrichment ---------- */
+const ENRICH_COLORS={biological_process:"#3f7f5f",molecular_function:"#4f86a8",cellular_component:"#b0793f"};
+
+function resetEnrichmentViews(){
+  $("enrich-table").replaceChildren();
+  $("enrich-actions").hidden=true;
+  $("enrich-csv").disabled=true;$("enrich-png").disabled=true;
+  if(enrichChart){enrichChart.dispose();enrichChart=null}
+  $("enrich-chart").replaceChildren();
+}
+
 function clearEnrichment(){
   $("enrichsec").hidden=true;
   text($("enrich-title"),"");text($("enrich-meta"),"");
-  $("enrich-table").replaceChildren();
+  resetEnrichmentViews();
+  enrichData=null;
+}
+
+// Horizontal bar chart of the top terms, coloured by GO ontology.
+function renderEnrichChart(d){
+  const res=(d.results||[]).slice(0,20);
+  const termOf=r=>d.database==="go"?(r.term||r.id):(r.name||r.id);
+  const el=$("enrich-chart");
+  el.style.height=Math.max(260,res.length*26+70)+"px";
+  if(!enrichChart)enrichChart=echarts.init(el);
+  enrichChart.setOption({
+    animation:false,
+    grid:{left:260,right:70,top:24,bottom:48},
+    tooltip:{trigger:"axis",axisPointer:{type:"shadow"},
+      formatter:p=>{const r=res[p[0].dataIndex];
+        return `<b>${esc(termOf(r))}</b><br>k / K: ${r.k} / ${r.K}<br>`+
+          `ratio: ${fmt(r.ratio,2)}<br>p: ${r.pvalue==null?"—":r.pvalue.toExponential(2)}<br>`+
+          `padj: ${r.padj==null?"—":r.padj.toExponential(2)}`;}},
+    xAxis:{type:"value",name:"−log10(padj)",nameLocation:"middle",nameGap:30,
+      axisLabel:{fontSize:11,color:"#3c5a50"},splitLine:{lineStyle:{color:"#eef3f1"}}},
+    yAxis:{type:"category",data:res.map(termOf),inverse:true,
+      axisLabel:{fontSize:11,color:"#3c5a50",width:240,overflow:"truncate"}},
+    series:[{type:"bar",barMaxWidth:18,
+      data:res.map(r=>({value:-Math.log10(Math.max(Number(r.padj)||1e-300,1e-300)),
+        itemStyle:{color:d.database==="go"?(ENRICH_COLORS[r.ontology]||"#7a8c83"):"#4f86a8"}}))}]
+  },true);
+  enrichChart.resize();
+}
+
+function enrichFilename(ext){
+  const d=enrichData||{};
+  const base=[d.database==="go"?"GO":"KEGG",d.kind||"set",
+    d.celltype_label||d.celltype_key||"",d.module||""].filter(Boolean).join("_");
+  return base.replace(/[^\w.-]+/g,"_")+"."+ext;
+}
+
+function downloadEnrichCsv(){
+  if(!enrichData)return;
+  const d=enrichData;
+  const head=d.database==="go"
+    ?["GO ID","Ontology","Term","k","K","Ratio","p-value","padj"]
+    :["Pathway","Name","k","K","Ratio","p-value","padj"];
+  const rows=[head,...d.results.map(r=>d.database==="go"
+    ?[r.id,r.ontology||"",r.term||"",r.k,r.K,r.ratio,r.pvalue,r.padj]
+    :[r.id,r.name||"",r.k,r.K,r.ratio,r.pvalue,r.padj])];
+  const csv=rows.map(row=>row.map(v=>{
+    const s=v==null?"":String(v);
+    return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+  }).join(",")).join("\n");
+  const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download=enrichFilename("csv");
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+function downloadEnrichPng(){
+  if(!enrichChart)return;
+  const a=document.createElement("a");
+  a.href=enrichChart.getDataURL({type:"png",pixelRatio:2,backgroundColor:"#ffffff"});
+  a.download=enrichFilename("png");
+  document.body.appendChild(a);a.click();a.remove();
 }
 
 async function runEnrichment(kind,sample,ct,mod,db){
@@ -504,7 +584,7 @@ async function runEnrichment(kind,sample,ct,mod,db){
   $("enrichsec").hidden=false;
   text($("enrich-title"),`${dbLabel} enrichment`);
   text($("enrich-meta"),"Running enrichment...");
-  $("enrich-table").replaceChildren();
+  resetEnrichmentViews();
   $("enrichsec").scrollIntoView({behavior:"smooth",block:"start"});
   try{
     const params=new URLSearchParams({sample,celltype_key:ct,kind,database:db});
@@ -523,6 +603,10 @@ async function runEnrichment(kind,sample,ct,mod,db){
         'Try the other database or a larger gene set.</div>';
       return;
     }
+    enrichData=d;
+    $("enrich-actions").hidden=false;
+    $("enrich-csv").disabled=false;$("enrich-png").disabled=false;
+    renderEnrichChart(d);
     const cols=db==="go"
       ?["GO ID","Ontology","Term","k / K","Ratio","p-value","padj"]
       :["Pathway","Name","k / K","Ratio","p-value","padj"];
@@ -560,6 +644,8 @@ $("hubtable").addEventListener("click",e=>{
   if(b.dataset.action==="show")loadGeneset("hub",b.dataset.sample,b.dataset.ct,"");
   else if(b.dataset.action==="enrich")runEnrichment("hub",b.dataset.sample,b.dataset.ct,"",b.dataset.db);
 });
+$("enrich-csv").addEventListener("click",downloadEnrichCsv);
+$("enrich-png").addEventListener("click",downloadEnrichPng);
 
 $("gene-file").addEventListener("change",function(){
   const f=this.files&&this.files[0];
@@ -604,6 +690,9 @@ $("example-gene").addEventListener("click",e=>{
 $("gene").addEventListener("keydown",e=>{
   if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))search();
 });
-window.addEventListener("resize",()=>{if(chart&&state.data)refreshDisplayViews()});
+window.addEventListener("resize",()=>{
+  if(chart&&state.data)refreshDisplayViews();
+  if(enrichChart)enrichChart.resize();
+});
 $(function(){const g=new URLSearchParams(location.search).get("gene");if(g){$("gene").value=g;search()}});
 </script></body></html>
