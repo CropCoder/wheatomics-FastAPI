@@ -260,8 +260,12 @@ record 22681907（concept 22680410，CC BY 4.0，2026-09-09 发布），每物�
 - **✅ G0 命名门禁已完成（2026-11-12 00:12）**：4 份 `name_plan.json` 已落盘，4/4 `[OK] 命名可直接开跑`
   （`ploidy` MM/CC/UU/NN、`group`=Other Triticeae、分类 other_triticeae、JBrowse `group-mm/cc/uu/nn`；
   CC/NN 分区收尾时新建）。本地副本 `docs/plans/aegilops4_2026-11/name_plans/`，明细见 `G0_NAME_PLAN_REPORT.md`。
-- 下一步：**部署阶段 0 代码**（生产 repo 仍是旧版：分类关键词/SUB/overrides 未生效）→ **G3 流水线**
-  （`add_wheat_genome.sh`，4 个顺序约 2–4 h，建议夜间；生产写操作）。
+- **✅ 阶段 0 代码已部署生产（2026-11-12 00:16，e06cb8c；overrides 补 display_name/subgenomes 于 01:20 部署 c8dfca5）**：
+  `blast.py` 关键词、`SUB` CC/NN、4 条 overrides、SPA web_blast 判定、静态页 CC/NN 全部生效；API 已重启。
+- **🔄 G3 流水线进行中**（2026-11-12 00:19 起，顺序 MM→NN→CC→UU）：
+  - MM `[SUCCESS]` 00:19–00:51（32 min）：BLAST 库 17 seqs、Genefunc 51,203 行、JBrowse 17 refseqs+all_gene、registry 行已建。
+  - NN `[SUCCESS]` 00:51–01:17；CC 01:17 起（Step 7.1）；UU 待跑。
+- 下一步：全部 `[SUCCESS]` 后 → 重启 API（刷新 BLAST 库清单缓存）→ **G4 收尾**（`finish_aegilops4_all.sh`）→ 再重启 API → **G5 验收**（`accept_aegilops4_onboarding.py` 逐条核对）。
 
 **闸门 G0**：0.1–0.6 全部验收通过；代码 commit 到本地 → **github + gitee 双推** → 生产 `git fetch origin && git merge --ff-only` → `sudo systemctl restart wheatomics-api` → `/api/blast/databases` 分类计数正确、`/api/genomes/stats` 无异常。
 
