@@ -90,7 +90,7 @@ VARIANTHUB_DATASETS: dict[str, dict] = {
         "filename": "PRJNA381058_exome_whole_eff.vcf.gz",
         "source": "Exome capture (recombination study)",
         "reference": "Chinese_Spring1.0",
-        "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC617499/",
+        "url": "https://academic.oup.com/g3journal/article/12/2/jkab390/6423995",
     },
     "Exome_PRJEB30905": {
         "label": "Exome_PRJEB30905",
@@ -104,21 +104,21 @@ VARIANTHUB_DATASETS: dict[str, dict] = {
         "filename": "1kEC_genotype_eff.vcf.gz",
         "source": "1kEC（KSU wheatgenomics）",
         "reference": "Chinese_Spring1.0",
-        "url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA517692",
+        "url": "https://www.nature.com/articles/s41588-019-0382-2",
     },
     "Canadian_wheat_lines": {
         "label": "Canadian wheat lines",
         "filename": "161010_Chinese_Spring_v1.novoalign.raw.whole.eff.vcf.gz",
         "source": "Canadian wheat germplasm, novoalign raw variants",
         "reference": "Chinese_Spring1.0",
-        "url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA517692",
+        "url": "https://www.nature.com/articles/s41588-019-0382-2",
     },
     "1000_wheat_exomes_imputed": {
         "label": "1000 wheat exomes after imputation and filtering",
         "filename": "all.GP08_mm75_het3_publication01142019_eff.vcf.gz",
         "source": "1kEC, imputed and filtered",
         "reference": "Chinese_Spring1.0",
-        "url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA517692",
+        "url": "https://www.nature.com/articles/s41588-019-0382-2",
     },
     "NewExomeCapute": {
         "label": "NewExomeCapute",
