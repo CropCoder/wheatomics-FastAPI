@@ -30,6 +30,8 @@
     table.tl-table tbody tr:nth-child(even) { background:#fafcfb; }
     table.tl-table td.num { text-align:right; font-variant-numeric:tabular-nums; }
     table.tl-table td.na { color:#a26a1f; font-style:italic; }
+    table.tl-table .tl-delta { display:block; font-variant-numeric:tabular-nums; }
+    table.tl-table .tl-pct { display:block; font-size:10.5px; color:#7b8e83; font-weight:500; }
     .tl-gene-head { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 12px; margin-bottom:4px; }
     .tl-gene-head h3 { margin:0; font-size:19px; color:#1f3d2b; }
     .tl-badge { display:inline-block; border-radius:6px; padding:2px 8px; font-size:11.5px; font-weight:700; background:#e5f0e9; color:#2f6b4f; }
@@ -332,7 +334,7 @@
       table.push('</tr><tr><th></th>');
       gene.stages.forEach(function () {
         treatments.forEach(function (treatment) { table.push('<th>' + esc(treatment.label || treatment.id) + '</th>'); });
-        contrasts.forEach(function (contrast) { table.push('<th>Δ ' + esc(contrast.label || contrast.id) + '</th>'); });
+        contrasts.forEach(function (contrast) { table.push('<th>Δ log2 (' + esc(contrast.label || contrast.id) + ')</th>'); });
       });
       table.push('</tr></thead><tbody>');
       roles.forEach(function (role) {
@@ -346,13 +348,22 @@
           });
           contrasts.forEach(function (contrast) {
             var delta = metric.contrasts[contrast.id];
-            table.push('<td class="num">' + (delta === null || delta === undefined ? 'n.a.' :
-              (delta > 0 ? '+' : '') + num(delta, 2)) + '</td>');
+            if (delta === null || delta === undefined) {
+              table.push('<td class="num na">n.a.</td>');
+            } else {
+              var pct = (Math.pow(2, delta) - 1) * 100;
+              table.push('<td class="num"><span class="tl-delta">' + (delta > 0 ? '+' : '') + num(delta, 2) +
+                '</span><span class="tl-pct">' + (pct > 0 ? '+' : '') + pct.toFixed(1) + '%</span></td>');
+            }
           });
         });
         table.push('</tr>');
       });
       table.push('</tbody></table></div>');
+      if (contrasts.length) {
+        table.push('<p class="tl-help">Δ log2 = log2(HS/CK). The small percentage below is the same change converted to ' +
+          'percent = (2<sup>Δlog2</sup> − 1) × 100%; it is not the log2 value read as a percent.</p>');
+      }
       if (roles.some(function (role) { return role.metric === 'te'; }) &&
           gene.stages.some(function (stage) {
             var metric = stage.metrics.te;

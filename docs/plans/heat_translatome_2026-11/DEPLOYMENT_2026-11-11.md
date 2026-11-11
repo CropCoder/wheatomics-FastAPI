@@ -70,3 +70,17 @@ WheatOmics **Phase 2 + 2.5**（热胁迫籽粒 translatome 模块，manifest/reg
   (`examples[].label`) and the builder output in
   `scripts/heat_translatome/build_data.py`; API restarted so the cached manifest
   is reloaded. Screenshots refreshed.
+
+## Delta display clarification (2026-11-11 evening)
+
+The per-stage contrast column was labelled `Δ HS/CK`, which could be read as a
+percentage. It is a **log2 fold change** — e.g. `-0.13` means log2(HS/CK) =
+-0.13, i.e. a **-8.5%** change, not -13%. The table now:
+
+- labels the column `Δ log2 (HS/CK)`;
+- shows the converted percent below each log2FC value
+  (`percent = (2^Δlog2 − 1) × 100%`);
+- adds a footnote explaining that the percentage is a conversion, not the log2
+  value read as a percent.
+
+No API change; this is a static frontend update (no restart needed).
