@@ -84,3 +84,18 @@ percentage. It is a **log2 fold change** — e.g. `-0.13` means log2(HS/CK) =
   value read as a percent.
 
 No API change; this is a static frontend update (no restart needed).
+
+## Data downloads card removed (2026-11-11 evening)
+
+Product decision: the site should not duplicate the publication's data
+downloads. The `/translatome/` page no longer shows:
+
+- the "Data downloads" card (matrix/DTG/DEG buttons);
+- the per-table "Download full table" links;
+- the gzip download buttons anywhere in the UI.
+
+Instead, "Source & citation" now has a **Full data** line linking to the
+publication's Supplementary Tables S1–S3. The sample metadata / sequencing-run
+table stays, collapsed inside "Source & citation". The REST endpoints
+`/api/translatome/download/{dataset}/{file}` remain for programmatic/agent use
+but are not exposed in the UI; they can be removed later if not needed.

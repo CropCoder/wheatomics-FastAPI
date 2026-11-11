@@ -8,7 +8,7 @@
 
 ## 0. 一句话
 
-新增 `/translatome/` 页面与 `/api/translatome/*` 接口：输入 **02G 或 03G** 基因 ID，返回 5/10/15 DAA × CK/HS 的 RNA-seq FPKM、Ribo-seq FPKM、TE，并可浏览 11,343 个 DTG 与 21,964 个 DEG；每条记录**同时携带 02G 和 03G 两个 ID**，下载表也双 ID。
+新增 `/translatome/` 页面与 `/api/translatome/*` 接口：输入 **02G 或 03G** 基因 ID，返回 5/10/15 DAA × CK/HS 的 RNA-seq FPKM、Ribo-seq FPKM、TE，并可浏览 11,343 个 DTG 与 21,964 个 DEG；每条记录**同时携带 02G 和 03G 两个 ID**（API 导出表同样双 ID）。
 
 ---
 
@@ -122,9 +122,9 @@ curl -sI "$B/download/genes"                            # 6.1 MB, attachment
 - **结果卡**（每基因）：02G/03G 徽章、description/位置、LC 标记、DTG/DEG 徽章（自动标注显著阶段与 cluster）、GeneHub 外链、作者 browser 定位外链；
 - **数据表**：RNA FPKM / Ribo FPKM / TE × 3 阶段 ×（CK/HS/Δlog2）；TE 缺失显示 `n.a.` 并有说明；
 - **图**：Highcharts 双图 —— FPKM 分组柱状（RNA/Ribo × CK/HS × 3 阶段）、TE 折线（CK/HS，缺口不连线；全 NA 时显示说明文字）；
-- **DTG 浏览**：阶段/方向/cluster/基因过滤 + 分页 + 下载；"view" 直接回填查询；
-- **DEG 浏览**：比较/方向/基因过滤 + 分页 + 下载；
-- **下载 & 来源**：3 个 gz 文件、12 文库元数据表、两篇论文链接、SRA、补充表、作者 browser、license、provenance；
+- **DTG 浏览**：阶段/方向/cluster/基因过滤 + 分页；"view" 直接回填查询；
+- **DEG 浏览**：比较/方向/基因过滤 + 分页；
+- **来源与引用**：12 文库元数据表（折叠在 Source & citation 内）、两篇论文链接、SRA、补充表、作者 browser、license、provenance；**页面不再展示整表下载按钮**，完整数据从论文补充表链接获取（`/api/translatome/download/*` 接口保留，供程序化访问）。
 - deep link：`/translatome/?gene=TraesCS1A02G001800` 自动查询（便于 GeneHub/其他页面跳转）。
 
 实测渲染（`scripts/spa_visual_check.sh`）：**390 / 768 / 1024 / 1440 宽度全部 PASS**，无横向溢出、无 JS 错误、无坏图；唯一 warning 是页脚 "Back to top" 触控高度（全站既有，非本页引入）。

@@ -103,20 +103,13 @@
         <div id="result-area"></div>
         <div id="table-panels"></div>
 
-        <div class="tl-grid">
-          <div class="tl-card">
-            <h2 class="tl-section-title">Data downloads</h2>
-            <p class="tl-sub" id="download-sub">Gzipped TSV, one header line, empty values for undefined TE.</p>
-            <div style="display:flex; flex-direction:column; gap:10px;" id="download-links"></div>
-            <details class="tl-details">
-              <summary>Sample metadata &amp; sequencing runs</summary>
-              <div class="tl-table-wrap"><table class="tl-table tl-sample-table" id="sample-table"></table></div>
-            </details>
-          </div>
-          <div class="tl-card">
-            <h2 class="tl-section-title">Source &amp; citation</h2>
-            <div class="tl-refs" id="citation-block"></div>
-          </div>
+        <div class="tl-card">
+          <h2 class="tl-section-title">Source &amp; citation</h2>
+          <div class="tl-refs" id="citation-block"></div>
+          <details class="tl-details">
+            <summary>Sample metadata &amp; sequencing runs</summary>
+            <div class="tl-table-wrap"><table class="tl-table tl-sample-table" id="sample-table"></table></div>
+          </details>
         </div>
       </div>
     </section>
@@ -237,14 +230,6 @@
         });
       });
 
-      // downloads
-      var downloads = Object.keys(META.files || {}).map(function (fileId) {
-        var entry = META.files[fileId];
-        var href = '/api/translatome/download/' + encodeURIComponent(CURRENT_ID) + '/' + encodeURIComponent(fileId);
-        return '<a class="tl-btn secondary" href="' + esc(href) + '">' + esc(entry.label || entry.file) + '</a>';
-      });
-      $('download-links').innerHTML = downloads.join('') || '<div class="tl-empty">No download files declared.</div>';
-
       // samples
       var samples = META.samples || [];
       var sampleRows = ['<thead><tr><th>Library</th><th>Role</th><th>Assay</th><th>Stage</th><th>Treatment</th><th>Reps</th><th>SRA runs</th></tr></thead><tbody>'];
@@ -280,7 +265,7 @@
         (rules.dtg_note ? '<p><b>DTG:</b> ' + esc(rules.dtg_note) + '</p>' : '') +
         (rules.deg_note ? '<p><b>DEG:</b> ' + esc(rules.deg_note) + '</p>' : '') +
         (browserLinks ? '<p><b>Genome browser:</b> ' + browserLinks + '</p>' : '') +
-        (links.supplement ? '<p><b>Source table:</b> ' + link(links.supplement, 'Supplementary Table S1') + '</p>' : '') +
+        (links.supplement ? '<p><b>Full data:</b> download the supplementary tables (S1–S3, xlsx) from the publication: ' + link(links.supplement, 'Supplementary Tables S1–S3') + '</p>' : '') +
         (META.license ? '<p><b>License:</b> ' + esc(META.license.heat_stress || META.license.control || '') + '. ' +
           esc(META.license.note || '') + '</p>' : '') +
         (META.provenance_note ? '<p><b>Provenance:</b> ' + esc(META.provenance_note) + '</p>' : '');
@@ -504,7 +489,7 @@
           '<div class="tl-pager"><button class="tl-btn secondary" type="button" id="prev-' + table.id + '">← Prev</button>' +
           '<span id="page-' + table.id + '">–</span>' +
           '<button class="tl-btn secondary" type="button" id="next-' + table.id + '">Next →</button>' +
-          '<a class="tl-help" href="/api/translatome/download/' + encodeURIComponent(CURRENT_ID) + '/' + encodeURIComponent(table.id) + '">Download full table</a></div></div>';
+          '</div></div>';
         return html;
       });
       var container = $('table-panels');
