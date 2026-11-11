@@ -11,6 +11,7 @@
 | `../../scripts/normalize_diploid.py` | 四件套归一化工具（`fasta/gff3/pep/check` 子命令），支持任意 `[1-7][A-Z]` 染色体与 NCBI assembly_report 映射 | 服务器 `/var/www/data/masw_data/_prep/` |
 | `../../scripts/renumber_gff_ids.py` | gene/mRNA ID 平台风格重编号（每染色体按坐标 100 步；`--check` 可作闸门） | 服务器 `_prep/` |
 | `../../scripts/prepare_aegilops4_dataset.sh` | A2 一键脚本（FASTA/GFF 归一化 → 重编号 → gffread → pep 清洗 → 平台质检，幂等） | 服务器 `_prep/` |
+| `../../scripts/accept_aegilops4_onboarding.py` | G5 逐条验收（90 项：计数/registry/BLAST/JBrowse/getfasta/PS2/Genefunc/实弹 BLAST/前端/映射/回归） | 服务器 `_prep/` |
 | `../../scripts/fetch_aegilops4_data.sh` | 4 个二倍体 Aegilops 数据下载（NCBI + Zenodo，断点续传/md5/互斥锁） | 服务器 `_prep/` |
 
 ## 安装（部署到生产侧脚本目录）
@@ -25,8 +26,10 @@ chmod +x ~/.agents/skills/lab-server/scripts/finish_genome_integration.sh
 
 # 2) 生产服务器（经 lab-server 隧道）
 bash ~/.agents/skills/lab-server/scripts/wheatomics.sh tunnel   # 另开一个终端保持隧道
-scp -P 2222 scripts/finish_genome_integration.sh \
-    scripts/normalize_diploid.py fei@127.0.0.1:/var/www/data/masw_data/_prep/
+scp -P 2222 scripts/finish_genome_integration.sh scripts/normalize_diploid.py \
+    scripts/renumber_gff_ids.py scripts/prepare_aegilops4_dataset.sh \
+    scripts/fetch_aegilops4_data.sh scripts/accept_aegilops4_onboarding.py \
+    fei@127.0.0.1:/var/www/data/masw_data/_prep/
 # 校验两边一致
 md5sum scripts/finish_genome_integration.sh scripts/normalize_diploid.py
 ```

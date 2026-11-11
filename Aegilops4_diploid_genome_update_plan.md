@@ -262,9 +262,16 @@ record 22681907（concept 22680410，CC BY 4.0，2026-09-09 发布），每物�
   CC/NN 分区收尾时新建）。本地副本 `docs/plans/aegilops4_2026-11/name_plans/`，明细见 `G0_NAME_PLAN_REPORT.md`。
 - **✅ 阶段 0 代码已部署生产（2026-11-12 00:16，e06cb8c；overrides 补 display_name/subgenomes 于 01:20 部署 c8dfca5）**：
   `blast.py` 关键词、`SUB` CC/NN、4 条 overrides、SPA web_blast 判定、静态页 CC/NN 全部生效；API 已重启。
-- **🔄 G3 流水线进行中**（2026-11-12 00:19 起，顺序 MM→NN→CC→UU）：
-  - MM `[SUCCESS]` 00:19–00:51（32 min）：BLAST 库 17 seqs、Genefunc 51,203 行、JBrowse 17 refseqs+all_gene、registry 行已建。
-  - NN `[SUCCESS]` 00:51–01:17；CC 01:17 起（Step 7.1）；UU 待跑。
+- **✅ G3 流水线完成（2026-11-12 02:13）**：4/4 `[SUCCESS]`（MM 00:19–00:51、NN 00:51–01:17、CC 01:17–01:47、UU 01:47–02:13，共约 1h54m）。
+  BLAST 库（每基因组核酸 9 + 蛋白 1）、Genefunc 表、JBrowse（all_gene/DNA）、registry 行、EggNOG 注释全部生成。
+- **✅ G4 收尾完成（02:23）**：4/4 rc=0、各 28 OK / 0 FAIL；JBrowse V2 卡片（hero 213→217、named 206→210、groups 22→24，
+  CC/NN 新建分区）、`.fai`、聚合别名、registry 元数据、BLAST↔JBrowse 映射全部就绪。
+- **✅ G5 验收完成（90/90 PASS）**：`scripts/accept_aegilops4_onboarding.py` 逐条核对（全局计数/前端/映射 23 项 +
+  每基因组 16 项×4 + 回归 3 项），报告见 `docs/plans/aegilops4_2026-11/G3_G4_G5_REPORT.md`。
+- **✅ 阶段 0 代码已部署生产**（HEAD `8ed123b`，API 已重启）。
+
+> 收尾：阶段 0 代码已部署（分类关键词/SUB/overrides/SPA/静态页/收尾脚本），4 个基因组已上线并逐条验收通过。
+> 遗留（非阻塞）：cite.html 引用块可选；`~/.agents` 技能目录安装受沙箱限制（脚本已版本化在仓库，服务器 `_prep/` 已最新）。
 - 下一步：全部 `[SUCCESS]` 后 → 重启 API（刷新 BLAST 库清单缓存）→ **G4 收尾**（`finish_aegilops4_all.sh`）→ 再重启 API → **G5 验收**（`accept_aegilops4_onboarding.py` 逐条核对）。
 
 **闸门 G0**：0.1–0.6 全部验收通过；代码 commit 到本地 → **github + gitee 双推** → 生产 `git fetch origin && git merge --ff-only` → `sudo systemctl restart wheatomics-api` → `/api/blast/databases` 分类计数正确、`/api/genomes/stats` 无异常。

@@ -24,7 +24,11 @@
 | 数据根目录 | `/var/www/data/masw_data`（116T，2026-11-11 剩 ~30T） |
 | 流水线脚本 | `/var/www/data/masw_data/add_wheat_genome.sh`（**md5 `70fb9ff21ed11417399f16fb489b1ad3`**，2026-11 版，1034 行，含命名门禁） |
 | 收尾脚本 | 仓库 `scripts/finish_genome_integration.sh`（v2，1400 行，**md5 `d8162ac0d61a3e503cfb81646c05ddc2`**）→ 安装到 `~/.agents/skills/lab-server/scripts/` 与服务器 `/var/www/data/masw_data/_prep/`（`md5sum` 对齐两边） |
-| 归一化脚本 | 仓库 `scripts/normalize_diploid.py`（v2 新增，1671 行，**md5 `727a0dffff05d9c6c576b242b3e242ea`**）→ 服务器 `_prep/normalize_diploid.py` |
+| 归一化脚本 | 仓库 `scripts/normalize_diploid.py`（`fasta/gff3/pep/check`；**md5 `e2a13d8b64f6fb65ccd0be222e53e3ea`**）→ 服务器 `_prep/normalize_diploid.py` |
+| 重编号脚本 | 仓库 `scripts/renumber_gff_ids.py`（每染色体 100 步平台 ID；**md5 `90b5d84e2fad765d70d7a723eabde00d`**）→ 服务器 `_prep/` |
+| A2 一键脚本 | 仓库 `scripts/prepare_aegilops4_dataset.sh`（**md5 `04a905cc2a85828c3bdfc7f499d0f743`**）→ 服务器 `_prep/` |
+| 数据下载脚本 | 仓库 `scripts/fetch_aegilops4_data.sh`（**md5 `7c0985d181ea430be3fff9330e859a72`**）→ 服务器 `_prep/` |
+| 批量/验收脚本 | `scripts/pipeline_aegilops4_all.sh`、`scripts/finish_aegilops4_all.sh`、`scripts/accept_aegilops4_onboarding.py`（**md5 `b59a527f7c400edb0cd42442325ff23b`**，G5 90 项逐条核对）→ 服务器 `_prep/` |
 | 质检脚本 | `/var/www/html/Script/check_genome_files.py`（md5 `d774445172714d0d6b9127d4a21cc2a0`） |
 | conda | `/home/fei/mambaforge/bin`（**跑流水线必须显式加 PATH**） |
 | MySQL DDL 配置 | `/etc/wheatomics/db_ddl.env`（640 root:www-data；`fei` 需在 `www-data` 组） |
@@ -444,6 +448,22 @@ curl -s http://127.0.0.1:8000/api/jbrowse/coverage
 | 19 | **下载大批量数据时被限速/中断**：NCBI 国际链路单连接 ~150 KB/s；`pkill -f 脚本名` 只杀 bash、**curl 子进程会继续写文件**，续传会与残留 curl 并发写 → 文件损坏（gzip trailing garbage、md5 不符） | ① 并行下载（`fetch_aegilops4_data.sh --only <PLOIDY>` 每物种一进程，或单文件 6 路 Range 分段）；② 停任务用 `pkill -9 -f "<文件名/URL>"` 连 curl 一起杀，确认后再续传；③ 下载后必须 `md5sum` 对来源基准 + `gzip -t` 双校验 |
 
 ---
+
+### 11.x 2026-11-12 四基因组上线补充经验（Aegilops MM/CC/UU/NN）
+
+- **API 缓存**：`/api/blast/databases` 等磁盘缓存 1h；G3 建库后、G4 收尾前必须 `sudo systemctl restart wheatomics-api`
+  （worker 冷启动约 2–3 分钟，期间 curl 000 属正常）；G4 完成后再重启一次刷新 alias/PrimerServer2 缓存。
+- **registry rebuild 会从平台事实自动登记数据集**：首次跑 `rebuild_genome_registry.py` 可能新增几行 registry
+  （本次 5 行：PI428250 / ThatcherLr9 / Chinese Spring 03G / Durum_Wheat_cv._Svevo / E.sibiricus_GaomuNo.1），
+  `/api/genomes/stats` total 因此 316→325；验收按「316 + 4 + 自动登记」口径核对，勿当成错误。
+- **`chromosome_count` 需强制覆盖**：rebuild 用 `.fai` 序列数填 chromosome_count（含 scaffold，如 17/24/250/21），
+  overrides 默认跳过已有值；在 overrides 里加 `"_hard": ["chromosome_count"]` 强制为 7，并补 `display_name`/`subgenomes`。
+- **V2 新分区标题**：`section-title` 会被放进 `asm-formula`（应为纯倍性代码）；新分区建议 `--section-title "CC"`，
+  描述放 `--section-desc`（如 `Aegilops markgrafii (C genome)`）。
+- **docroot 页面回写**：G4 直接改 `/var/www/html/jbrowse.html`；收尾后必须拷回 `app/static/docpages/jbrowse.html`
+  并提交，否则下次 `deploy_doc_pages.sh` 会覆盖新卡片。
+- **验收工具**：`accept_aegilops4_onboarding.py` 覆盖 90 项（全局计数/前端/映射、每基因组 16 项×4、回归 3 项），
+  可作后续新基因组 G5 模板；报告中 90/90 PASS。
 
 ## 12. v1→v2 修复记录（2026-11-11）
 

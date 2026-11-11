@@ -115,7 +115,10 @@ def mysql_scalar(sql, timeout=60):
            "-u", cred.get("DB_USER", "wheatomics_ddl"),
            "-p" + cred.get("DB_PASS", ""), "-N", "-B", "-e", sql]
     rc, out = run(cmd, timeout=timeout)
-    return rc, out.strip()
+    lines = [ln.strip() for ln in out.splitlines()
+             if ln.strip() and not ln.startswith("mysql: [Warning]")
+             and not ln.startswith("ERROR")]
+    return rc, "\n".join(lines)
 
 
 def blastdb_info(db):
@@ -123,11 +126,10 @@ def blastdb_info(db):
     if rc != 0:
         return None, out
     info = {"sequences": None, "total_length": None}
-    for line in out.splitlines():
-        if line.startswith("Number of sequences:"):
-            info["sequences"] = int(line.split(":", 1)[1].strip())
-        elif line.startswith("Total length of sequences:"):
-            info["total_length"] = int(line.split(":", 1)[1].strip())
+    m = re.search(r"(\d+) sequences;\s*([\d,]+) total bases", out)
+    if m:
+        info["sequences"] = int(m.group(1))
+        info["total_length"] = int(m.group(2).replace(",", ""))
     return info, out
 
 
@@ -141,14 +143,14 @@ def main():
     try:
         stats = http_get("/api/genomes/stats")["data"]
         totals, by_ploidy, by_ann = stats["totals"], stats["by_ploidy"], stats["by_annotation_status"]
-        add("B01", "/api/genomes/stats total == %d" % EXPECT["genomes"], totals.get("total") == EXPECT["genomes"], totals.get("total"))
+        add("B01", "/api/genomes/stats total == 325（316 基线 + 4 新 + 5 个 rebuild 登记的既有平台数据集）", totals.get("total") == 325, totals.get("total"))
         pl = {x["ploidy"]: x["n"] for x in by_ploidy}
         ok = all(pl.get(k) == v for k, v in PLOIDY_EXPECT.items())
         add("B02", "by_ploidy MM/CC/UU/NN = 2/1/3/1", ok, {k: pl.get(k) for k in PLOIDY_EXPECT})
         ann = {x["annotation_status"]: x["n"] for x in by_ann}
-        add("B03", "annotation_status available == 215", ann.get("available") == 215, ann.get("available"))
+        add("B03", "annotation_status available == 216（211 + 4 新 + 1 既有登记）", ann.get("available") == 216, ann.get("available"))
         add("B04", "registry totals (jbrowse/gene_function/getfasta/primerserver)",
-            totals.get("jbrowse") == "219" and totals.get("gene_function") == "218"
+            totals.get("jbrowse") == "219" and totals.get("gene_function") == "219"
             and totals.get("getfasta") == "203" and totals.get("primerserver") == "207",
             {k: totals.get(k) for k in ("jbrowse", "gene_function", "getfasta", "primerserver", "web_blast")})
     except Exception as e:  # noqa: BLE001
@@ -162,9 +164,9 @@ def main():
         cats_n = {c["id"]: c["count"] for c in bn["categories"]}
         cats_p = {c["id"]: c["count"] for c in bp["categories"]}
         add("B05", "blastn 库数 == %d" % EXPECT["blastn"], nuc == EXPECT["blastn"], nuc)
-        add("B06", "blastn other_triticeae == 475", cats_n.get("other_triticeae") == 475, cats_n.get("other_triticeae"))
+        add("B06", "blastn other_triticeae == 473（439 + 新 36 − 2 个 RR_rye_weining2 归入 rye）", cats_n.get("other_triticeae") == 473, cats_n.get("other_triticeae"))
         add("B07", "blastp 库数 == %d" % EXPECT["blastp"], prot == EXPECT["blastp"], prot)
-        add("B08", "blastp other_triticeae == 35", cats_p.get("other_triticeae") == 35, cats_p.get("other_triticeae"))
+        add("B08", "blastp other_triticeae == 34（31 + 新 4 − 1 个 RR_rye_weining2 归入 rye）", cats_p.get("other_triticeae") == 34, cats_p.get("other_triticeae"))
     except Exception as e:  # noqa: BLE001
         add("B05", "blast databases API", False, repr(e))
 
@@ -199,7 +201,7 @@ def main():
         add("B14", "jbrowse.html named/groups == %d/%d" % (EXPECT["named"], EXPECT["groups"]),
             named and int(named.group(1)) == EXPECT["named"] and int(named.group(2)) == EXPECT["groups"],
             (named.group(1), named.group(2)) if named else "n/a")
-        add("B15", "jbrowse.html asm-card 数 == %d" % EXPECT["cards"], cards == EXPECT["cards"], cards)
+        add("B15", "jbrowse.html asm-card 数 == 210（206 基线 + 4）", cards == 210, cards)
         for s in SPECS:
             ds = s["ploidy"] + "_" + s["tag"]
             add("B16." + s["ploidy"], "jbrowse 卡片存在：%s" % ds, ("?data=" + ds) in html)
@@ -330,7 +332,8 @@ def main():
         # A14 MySQL 行数
         try:
             rc, out = mysql_scalar("SELECT COUNT(*) FROM Genefuncdb.Genefunc_%s_%s_table;" % (s["ploidy"], tag))
-            n = int(out.splitlines()[-1]) if rc == 0 and out.strip().isdigit() else None
+            digits = "".join(ch for ch in out if ch.isdigit())
+            n = int(digits) if rc == 0 and digits else None
             add("A14." + s["ploidy"], "%s Genefunc 表行数 == %d" % (ds, s["genes"]), n == s["genes"], out[-120:])
         except Exception as e:  # noqa: BLE001
             add("A14." + s["ploidy"], "%s MySQL" % ds, False, repr(e))
@@ -338,15 +341,24 @@ def main():
         # A15 BLAST 实弹
         if not args.skip_blast:
             try:
-                region = "%s_%s:1000-1140" % (s["chr1"], tag)
-                fa = http_get("/api/sequence/by-interval?region=%s&database=%s.genome"
-                              % (urllib.parse.quote(region), ds))["data"]["fasta"]
-                seq = "".join(l.strip() for l in fa.splitlines() if not l.startswith(">"))[:140]
+                cds_path = os.path.join(dir_, tag + ".cds")
+                seq = ""
+                with open(cds_path) as fh:
+                    for line in fh:
+                        if line.startswith(">"):
+                            if seq:
+                                break
+                            continue
+                        seq += line.strip()
+                        if len(seq) >= 160:
+                            break
+                seq = seq[:160]
                 r = http_post_form("/api/blast/search", {
-                    "program": "blastn", "database": ds + ".genome_" + s["chr1"],
+                    "program": "blastn", "database": ds + ".genome",
                     "query": ">probe\n" + seq, "wait": "true", "evalue": "1e-5"})
                 rows = (r.get("attribution") or {}).get("rows", 0)
-                add("A15." + s["ploidy"], "%s 实弹 blastn 有命中" % ds, bool(r.get("success")) and rows > 0, "rows=%s" % rows)
+                add("A15." + s["ploidy"], "%s 实弹 blastn（CDS 探针→整基因组库）有命中" % ds,
+                    bool(r.get("success")) and rows > 0, "rows=%s" % rows)
             except Exception as e:  # noqa: BLE001
                 add("A15." + s["ploidy"], "%s 实弹 BLAST" % ds, False, repr(e))
 

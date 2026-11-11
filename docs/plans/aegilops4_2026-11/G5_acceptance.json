@@ -1,0 +1,547 @@
+{
+  "total": 90,
+  "pass": 90,
+  "fail": 0,
+  "results": [
+    {
+      "rule": "B01",
+      "desc": "/api/genomes/stats total == 325（316 基线 + 4 新 + 5 个 rebuild 登记的既有平台数据集）",
+      "ok": true,
+      "detail": "325"
+    },
+    {
+      "rule": "B02",
+      "desc": "by_ploidy MM/CC/UU/NN = 2/1/3/1",
+      "ok": true,
+      "detail": "{'MM': 2, 'CC': 1, 'UU': 3, 'NN': 1}"
+    },
+    {
+      "rule": "B03",
+      "desc": "annotation_status available == 216（211 + 4 新 + 1 既有登记）",
+      "ok": true,
+      "detail": "216"
+    },
+    {
+      "rule": "B04",
+      "desc": "registry totals (jbrowse/gene_function/getfasta/primerserver)",
+      "ok": true,
+      "detail": "{'jbrowse': '219', 'gene_function': '219', 'getfasta': '203', 'primerserver': '207', 'web_blast': '207'}"
+    },
+    {
+      "rule": "B05",
+      "desc": "blastn 库数 == 2960",
+      "ok": true,
+      "detail": "2960"
+    },
+    {
+      "rule": "B06",
+      "desc": "blastn other_triticeae == 473（439 + 新 36 − 2 个 RR_rye_weining2 归入 rye）",
+      "ok": true,
+      "detail": "473"
+    },
+    {
+      "rule": "B07",
+      "desc": "blastp 库数 == 197",
+      "ok": true,
+      "detail": "197"
+    },
+    {
+      "rule": "B08",
+      "desc": "blastp other_triticeae == 34（31 + 新 4 − 1 个 RR_rye_weining2 归入 rye）",
+      "ok": true,
+      "detail": "34"
+    },
+    {
+      "rule": "B09",
+      "desc": "jbrowse datasets == 223",
+      "ok": true,
+      "detail": "223"
+    },
+    {
+      "rule": "B10",
+      "desc": "Genefunc_registry rows == 220",
+      "ok": true,
+      "detail": "220"
+    },
+    {
+      "rule": "B11",
+      "desc": "Genefunc_registry 4 张新表",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "B12",
+      "desc": "Genefuncdb total_tables == 228",
+      "ok": true,
+      "detail": "228"
+    },
+    {
+      "rule": "B13",
+      "desc": "jbrowse.html hero == 217",
+      "ok": true,
+      "detail": "217"
+    },
+    {
+      "rule": "B14",
+      "desc": "jbrowse.html named/groups == 210/24",
+      "ok": true,
+      "detail": "('210', '24')"
+    },
+    {
+      "rule": "B15",
+      "desc": "jbrowse.html asm-card 数 == 210（206 基线 + 4）",
+      "ok": true,
+      "detail": "210"
+    },
+    {
+      "rule": "B16.MM",
+      "desc": "jbrowse 卡片存在：MM_Aegilops_comosa_IPK_AE783",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "B16.CC",
+      "desc": "jbrowse 卡片存在：CC_Aegilops_markgrafii_EKC105_RL5723",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "B16.UU",
+      "desc": "jbrowse 卡片存在：UU_Aegilops_umbellulata_IPK_AE740",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "B16.NN",
+      "desc": "jbrowse 卡片存在：NN_Aegilops_uniaristata_IPK_AE680",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "B17.interval",
+      "desc": "interval diploid 数组含 CC/NN",
+      "ok": true,
+      "detail": "['AA', 'DD', 'SS', 'MM', 'CC', 'NN', 'TT', 'UU', 'VV', 'DDNN']"
+    },
+    {
+      "rule": "B17.PfamSearch",
+      "desc": "PfamSearch diploid 数组含 CC/NN",
+      "ok": true,
+      "detail": "['AA', 'DD', 'SS', 'MM', 'CC', 'NN', 'TT', 'UU', 'VV', 'DDNN']"
+    },
+    {
+      "rule": "B17.caps",
+      "desc": "caps diploid 数组含 CC/NN",
+      "ok": true,
+      "detail": "['AA', 'DD', 'SS', 'MM', 'CC', 'NN', 'TT', 'UU', 'VV', 'DDNN', 'MMUU']"
+    },
+    {
+      "rule": "B18",
+      "desc": "build_blast_jbrowse_map.py --check rc=0",
+      "ok": true,
+      "detail": "CHECK OK: /var/www/FastAPI_backend_Port8000/app/services/data/blast_jbrowse_map.json matches a fresh build (201 bases, 200 matched, 99.5%)"
+    },
+    {
+      "rule": "A01.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 genome_registry 字段齐全正确",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "rule": "A02.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 核酸库(+9)/蛋白库(+1)存在",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "rule": "A03.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 分类 other_triticeae",
+      "ok": true,
+      "detail": "genome_in_other=True"
+    },
+    {
+      "rule": "A04.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 整基因组库 17 seqs / 4407741597 bp",
+      "ok": true,
+      "detail": "{'sequences': 17, 'total_length': 4407741597}"
+    },
+    {
+      "rule": "A05.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 染色体库 Chr1M（1 seq / 长度一致）",
+      "ok": true,
+      "detail": "({'sequences': 1, 'total_length': 572610027}, 572610027)"
+    },
+    {
+      "rule": "A06.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 JBrowse refSeqs == 17",
+      "ok": true,
+      "detail": "17"
+    },
+    {
+      "rule": "A07.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 JBrowse all_gene 轨道存在",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A08.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 all_gene/Chr1M trackData.json 存在",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A09.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 trackList API 200",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A10.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 all_genomes 染色体命中 >= 7",
+      "ok": true,
+      "detail": "7"
+    },
+    {
+      "rule": "A11.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 by-interval 返回 FASTA",
+      "ok": true,
+      "detail": ">Chr1M_Aegilops_comosa_IPK_AE783:1000-1080 Aegilops_comosa_IPK_AE783 MM Chr1M CC"
+    },
+    {
+      "rule": "A12.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 PrimerServer2 genome/gene 库在列",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A13.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 PrimerServer2 sequences == 17",
+      "ok": true,
+      "detail": "17"
+    },
+    {
+      "rule": "A14.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 Genefunc 表行数 == 51203",
+      "ok": true,
+      "detail": "51203"
+    },
+    {
+      "rule": "A15.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 实弹 blastn（CDS 探针→整基因组库）有命中",
+      "ok": true,
+      "detail": "rows=66"
+    },
+    {
+      "rule": "A16.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 BLAST 结果可跳 JBrowse",
+      "ok": true,
+      "detail": "None"
+    },
+    {
+      "rule": "A01.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 genome_registry 字段齐全正确",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "rule": "A02.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 核酸库(+9)/蛋白库(+1)存在",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "rule": "A03.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 分类 other_triticeae",
+      "ok": true,
+      "detail": "genome_in_other=True"
+    },
+    {
+      "rule": "A04.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 整基因组库 24 seqs / 3577170360 bp",
+      "ok": true,
+      "detail": "{'sequences': 24, 'total_length': 3577170360}"
+    },
+    {
+      "rule": "A05.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 染色体库 Chr1C（1 seq / 长度一致）",
+      "ok": true,
+      "detail": "({'sequences': 1, 'total_length': 474569321}, 474569321)"
+    },
+    {
+      "rule": "A06.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 JBrowse refSeqs == 24",
+      "ok": true,
+      "detail": "24"
+    },
+    {
+      "rule": "A07.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 JBrowse all_gene 轨道存在",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A08.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 all_gene/Chr1C trackData.json 存在",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A09.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 trackList API 200",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A10.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 all_genomes 染色体命中 >= 7",
+      "ok": true,
+      "detail": "7"
+    },
+    {
+      "rule": "A11.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 by-interval 返回 FASTA",
+      "ok": true,
+      "detail": ">Chr1C_Aegilops_markgrafii_EKC105_RL5723:1000-1080 Aegilops_markgrafii_EKC105_RL"
+    },
+    {
+      "rule": "A12.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 PrimerServer2 genome/gene 库在列",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A13.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 PrimerServer2 sequences == 24",
+      "ok": true,
+      "detail": "24"
+    },
+    {
+      "rule": "A14.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 Genefunc 表行数 == 47246",
+      "ok": true,
+      "detail": "47246"
+    },
+    {
+      "rule": "A15.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 实弹 blastn（CDS 探针→整基因组库）有命中",
+      "ok": true,
+      "detail": "rows=5"
+    },
+    {
+      "rule": "A16.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 BLAST 结果可跳 JBrowse",
+      "ok": true,
+      "detail": "None"
+    },
+    {
+      "rule": "A01.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 genome_registry 字段齐全正确",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "rule": "A02.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 核酸库(+9)/蛋白库(+1)存在",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "rule": "A03.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 分类 other_triticeae",
+      "ok": true,
+      "detail": "genome_in_other=True"
+    },
+    {
+      "rule": "A04.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 整基因组库 250 seqs / 4268089219 bp",
+      "ok": true,
+      "detail": "{'sequences': 250, 'total_length': 4268089219}"
+    },
+    {
+      "rule": "A05.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 染色体库 Chr1U（1 seq / 长度一致）",
+      "ok": true,
+      "detail": "({'sequences': 1, 'total_length': 510898750}, 510898750)"
+    },
+    {
+      "rule": "A06.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 JBrowse refSeqs == 250",
+      "ok": true,
+      "detail": "250"
+    },
+    {
+      "rule": "A07.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 JBrowse all_gene 轨道存在",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A08.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 all_gene/Chr1U trackData.json 存在",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A09.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 trackList API 200",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A10.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 all_genomes 染色体命中 >= 7",
+      "ok": true,
+      "detail": "7"
+    },
+    {
+      "rule": "A11.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 by-interval 返回 FASTA",
+      "ok": true,
+      "detail": ">Chr1U_Aegilops_umbellulata_IPK_AE740:1000-1080 Aegilops_umbellulata_IPK_AE740 U"
+    },
+    {
+      "rule": "A12.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 PrimerServer2 genome/gene 库在列",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A13.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 PrimerServer2 sequences == 250",
+      "ok": true,
+      "detail": "250"
+    },
+    {
+      "rule": "A14.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 Genefunc 表行数 == 49677",
+      "ok": true,
+      "detail": "49677"
+    },
+    {
+      "rule": "A15.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 实弹 blastn（CDS 探针→整基因组库）有命中",
+      "ok": true,
+      "detail": "rows=6"
+    },
+    {
+      "rule": "A16.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 BLAST 结果可跳 JBrowse",
+      "ok": true,
+      "detail": "None"
+    },
+    {
+      "rule": "A01.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 genome_registry 字段齐全正确",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "rule": "A02.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 核酸库(+9)/蛋白库(+1)存在",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "rule": "A03.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 分类 other_triticeae",
+      "ok": true,
+      "detail": "genome_in_other=True"
+    },
+    {
+      "rule": "A04.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 整基因组库 21 seqs / 4475943907 bp",
+      "ok": true,
+      "detail": "{'sequences': 21, 'total_length': 4475943907}"
+    },
+    {
+      "rule": "A05.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 染色体库 Chr1N（1 seq / 长度一致）",
+      "ok": true,
+      "detail": "({'sequences': 1, 'total_length': 509639608}, 509639608)"
+    },
+    {
+      "rule": "A06.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 JBrowse refSeqs == 21",
+      "ok": true,
+      "detail": "21"
+    },
+    {
+      "rule": "A07.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 JBrowse all_gene 轨道存在",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A08.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 all_gene/Chr1N trackData.json 存在",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A09.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 trackList API 200",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A10.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 all_genomes 染色体命中 >= 7",
+      "ok": true,
+      "detail": "7"
+    },
+    {
+      "rule": "A11.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 by-interval 返回 FASTA",
+      "ok": true,
+      "detail": ">Chr1N_Aegilops_uniaristata_IPK_AE680:1000-1080 Aegilops_uniaristata_IPK_AE680 N"
+    },
+    {
+      "rule": "A12.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 PrimerServer2 genome/gene 库在列",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "rule": "A13.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 PrimerServer2 sequences == 21",
+      "ok": true,
+      "detail": "21"
+    },
+    {
+      "rule": "A14.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 Genefunc 表行数 == 50416",
+      "ok": true,
+      "detail": "50416"
+    },
+    {
+      "rule": "A15.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 实弹 blastn（CDS 探针→整基因组库）有命中",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "rule": "A16.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 BLAST 结果可跳 JBrowse",
+      "ok": true,
+      "detail": "None"
+    },
+    {
+      "rule": "C01",
+      "desc": "旧基因组 AK58 registry 可查",
+      "ok": true,
+      "detail": "1"
+    },
+    {
+      "rule": "C02",
+      "desc": "旧序列 all_genomes by-interval 正常",
+      "ok": true,
+      "detail": ">Chr1A_AK58:1000-1080 AK58 AABBDD Chr1A TGGAAAACATGGCAAAAACA"
+    },
+    {
+      "rule": "C03",
+      "desc": "旧 BLAST 库 AABBDD_AK58.genome 仍在",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}
