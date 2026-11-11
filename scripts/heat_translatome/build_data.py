@@ -307,16 +307,6 @@ def build_manifest(counts: dict[str, int]) -> dict[str, Any]:
         "roles": ROLES,
         "contrasts": CONTRASTS,
         "samples": SAMPLES,
-        "replicates": "RNA n=3; Ribo n=2 (CK and HS alike). Values are condition means; "
-                      "no per-replicate values or SD in the source table.",
-        "rules": {
-            "te_rule": "TE = mean Ribo-seq FPKM / mean RNA-seq FPKM. TE is treated as missing (null) "
-                       "when RNA-seq FPKM < 0.2; Ribo FPKM = 0 with RNA FPKM >= 0.2 gives TE = 0.",
-            "deg_note": "The source DEG table (Table S2) reports a signed log2 fold change (HS vs CK); "
-                        "negative values mean lower after heat stress.",
-            "dtg_note": "DTGs follow the publication: RiboDiff FDR < 0.05 and |log2FC| > 1; "
-                        "cluster = co-translation cluster 1-8 (Table S3).",
-        },
         "units": {"rna": "FPKM", "ribo": "FPKM", "te": "ratio (Ribo FPKM / RNA FPKM)"},
         "files": {
             "matrix": {"file": "genes.tsv.gz", "label": f"RNA / Ribo / TE matrix ({counts['genes']:,} genes)"},
@@ -327,7 +317,7 @@ def build_manifest(counts: dict[str, int]) -> dict[str, Any]:
         "counts": counts,
         "sources": [
             {
-                "role": "heat-stress RNA-seq/Ribo-seq + Table S1/S2/S3",
+                "role": "RNA-seq and Ribo-seq of heat-treated grains",
                 "citation": "Chen Y, et al. Translational regulation plasticity shapes wheat grain "
                             "adaptation to heat stress. Genome Biol. 2025;26(1):382.",
                 "doi": "10.1186/s13059-025-03848-4",
@@ -336,7 +326,7 @@ def build_manifest(counts: dict[str, int]) -> dict[str, Any]:
                 "bioproject": "PRJNA1135409",
             },
             {
-                "role": "control RNA-seq/Ribo-seq libraries",
+                "role": "RNA-seq and Ribo-seq of developing grains under normal growth conditions",
                 "citation": "Guo Y, et al. The translational landscape of bread wheat during grain "
                             "development. Plant Cell. 2023;35(6):1848-1867.",
                 "doi": "10.1093/plcell/koad075",

@@ -99,3 +99,16 @@ publication's Supplementary Tables S1–S3. The sample metadata / sequencing-run
 table stays, collapsed inside "Source & citation". The REST endpoints
 `/api/translatome/download/{dataset}/{file}` remain for programmatic/agent use
 but are not exposed in the UI; they can be removed later if not needed.
+
+## Citation block cleanup (2026-11-11 evening)
+
+- Source titles clarified:
+  - `RNA-seq and Ribo-seq of heat-treated grains`
+  - `RNA-seq and Ribo-seq of developing grains under normal growth conditions`
+- Removed the whole TE definition / Replicates / DTG / DEG rules block
+  (some statements were imprecise; readers should follow the paper's Methods;
+  the short TE ≥ 0.2 hint under the query box remains).
+- Removed the redundant `Source table: Supplementary Table S1` line
+  (the `Full data` line already links the publication's S1–S3).
+- `manifest.json` drops `rules` / `replicates`; builder updated accordingly.
+  Manifest change requires an API restart to reload the cached manifest.

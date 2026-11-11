@@ -87,7 +87,7 @@
 | 方法/路径 | 参数 | 返回 |
 |---|---|---|
 | `GET /datasets` | — | 数据集清单（id/title/species/tissue/stages/assays/counts/status） |
-| `GET /meta` | `dataset`(可选) | 单数据集 manifest（样本、单位、TE 规则、来源/license/citation、可选表、计数） |
+| `GET /meta` | `dataset`(可选) | 单数据集 manifest（样本、单位、来源/license/citation、可选表、计数；TE/重复/DTG/DEG 规则字段已移除，请参考论文 Methods） |
 | `GET /query` | `gene_ids`（必填，最多 100 个；02G/03G 均可）· `dataset`(可选) | `genes_found`、`genes_not_found`、`results[]`：双 ID、位置、`stages[].metrics[]`（每个 role 的各处理值 + contrast Δlog2）、`table_hits` |
 | `GET /search` | `q`、`limit`、`dataset` | 命中双 ID + 描述（精确优先，其次前缀，再次描述） |
 | `GET /genes/{gene}` | 路径参数（02G/03G）· `dataset` | 单基因完整 payload；未找到 404 |

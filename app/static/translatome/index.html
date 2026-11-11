@@ -205,9 +205,7 @@
       } else {
         $('asset-warning').innerHTML = '';
       }
-      $('query-hint').textContent = META.rules && META.rules.te_rule
-        ? 'TE is reported only when RNA-seq FPKM ≥ 0.2 (otherwise n.a.).'
-        : '';
+      $('query-hint').textContent = 'TE is reported only when RNA-seq FPKM ≥ 0.2 (otherwise n.a.).';
 
       var counts = META.counts || {};
       var stats = [];
@@ -255,15 +253,10 @@
           (source.bioproject ? ' · BioProject: ' + link('https://www.ncbi.nlm.nih.gov/bioproject/' + source.bioproject, source.bioproject) : '') +
           '</div>';
       }).join('');
-      var rules = META.rules || {};
       var links = META.links || {};
       var browserLinks = Object.keys(links).filter(function (key) { return key.indexOf('authors_browser') === 0; })
         .map(function (key) { return link(links[key], key.replace('authors_browser_', '') + ' browser'); }).join(' · ');
       $('citation-block').innerHTML = sources +
-        (rules.te_rule ? '<p><b>TE definition:</b> ' + esc(rules.te_rule) + '</p>' : '') +
-        (META.replicates ? '<p><b>Replicates:</b> ' + esc(META.replicates) + '</p>' : '') +
-        (rules.dtg_note ? '<p><b>DTG:</b> ' + esc(rules.dtg_note) + '</p>' : '') +
-        (rules.deg_note ? '<p><b>DEG:</b> ' + esc(rules.deg_note) + '</p>' : '') +
         (browserLinks ? '<p><b>Genome browser:</b> ' + browserLinks + '</p>' : '') +
         (links.supplement ? '<p><b>Full data:</b> download the supplementary tables (S1–S3, xlsx) from the publication: ' + link(links.supplement, 'Supplementary Tables S1–S3') + '</p>' : '') +
         (META.license ? '<p><b>License:</b> ' + esc(META.license.heat_stress || META.license.control || '') + '. ' +
