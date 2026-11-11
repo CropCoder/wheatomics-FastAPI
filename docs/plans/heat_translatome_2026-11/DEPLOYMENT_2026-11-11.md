@@ -59,3 +59,14 @@ WheatOmics **Phase 2 + 2.5**（热胁迫籽粒 translatome 模块，manifest/reg
 - **授权**：GB 2025 为 CC BY-NC-ND 4.0、PlCell 非 OA；页面已标注引用/license，但正式对外传播建议取得通讯作者书面同意（模板见 `PLAN.md` 附录 B）。
 - 数据集状态 `prototype`；确认后可在 `registry.json` 改为 `public` 并更新页面。
 - 后续新数据集：按 `PHASE2_EXTENSIBILITY.md` §6 加文件夹 + manifest + registry 一行，`sync_assets.sh` 上传资产即可（不改代码）。
+
+## Post-deploy copy fix (2026-11-11 evening)
+
+- Example chips on `/translatome/` no longer say "TE-rich" (TE = translation
+  efficiency; the wording could be misread as transposable element). The chips
+  now show plain gene IDs (02G/03G): `TraesCS1A02G001800`, `TraesCS1A03G0004000`,
+  `TraesCS1A02G000300`, `TraesCS5A02G391700`.
+- Changed `app/services/data/translatome/chen2025_cs_grain_heat/manifest.json`
+  (`examples[].label`) and the builder output in
+  `scripts/heat_translatome/build_data.py`; API restarted so the cached manifest
+  is reloaded. Screenshots refreshed.

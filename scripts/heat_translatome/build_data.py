@@ -357,10 +357,10 @@ def build_manifest(counts: dict[str, int]) -> dict[str, Any]:
                            "Chen et al. 2025 (Genome Biology); the only transformations here are a "
                            "03G->02G gene-ID cross-reference and row/column renaming for web display.",
         "examples": [
-            {"label": "TraesCS1A02G001800 (TE-rich, 02G)", "gene": "TraesCS1A02G001800"},
-            {"label": "TraesCS1A03G0004000 (TE-rich, 03G)", "gene": "TraesCS1A03G0004000"},
-            {"label": "TraesCS1A02G000300 (02G)", "gene": "TraesCS1A02G000300"},
-            {"label": "TraesCS5A02G391700 (02G)", "gene": "TraesCS5A02G391700"},
+            {"label": "TraesCS1A02G001800", "gene": "TraesCS1A02G001800"},
+            {"label": "TraesCS1A03G0004000", "gene": "TraesCS1A03G0004000"},
+            {"label": "TraesCS1A02G000300", "gene": "TraesCS1A02G000300"},
+            {"label": "TraesCS5A02G391700", "gene": "TraesCS5A02G391700"},
         ],
         "version": "v1",
         "generated": "2026-11-11",
