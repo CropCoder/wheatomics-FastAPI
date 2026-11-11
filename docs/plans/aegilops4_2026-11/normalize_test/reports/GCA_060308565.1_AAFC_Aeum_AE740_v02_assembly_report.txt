@@ -1,0 +1,278 @@
+# Assembly name:  AAFC_Aeum_AE740_v02
+# Organism name:  Aegilops umbellulata (monocots)
+# Isolate:  IPK-AE740
+# Taxid:          4491
+# BioSample:      SAMN41492411
+# BioProject:     PRJNA1114735
+# Submitter:      4DWheat: Diversity, Discovery, Design and Delivery
+# Date:           2026-08-21
+# Assembly type:  haploid
+# Release type:   major
+# Assembly level: Chromosome
+# Genome representation: full
+# WGS project:    JBDZUH01
+# Assembly method: HiFiasm v. 0.15.4-r347
+# Expected final version: No
+# Genome coverage: 28.1x
+# Sequencing technology: PacBio RSII
+# GenBank assembly accession: GCA_060308565.1
+#
+## Assembly-Unit names:
+## Primary Assembly
+#
+# Ordered by chromosome/plasmid; the chromosomes/plasmids are followed by
+# unlocalized scaffolds.
+# Unplaced scaffolds are listed at the end.
+# RefSeq is equal or derived from GenBank object.
+#
+# Sequence-Name	Sequence-Role	Assigned-Molecule	Assigned-Molecule-Location/Type	GenBank-Accn	Relationship	RefSeq-Accn	Assembly-Unit	Sequence-Length	UCSC-style-name
+1U	assembled-molecule	1	Chromosome	CM191168.1	<>	na	Primary Assembly	510898750	na
+2U	assembled-molecule	2	Chromosome	CM191169.1	<>	na	Primary Assembly	638833908	na
+3U	assembled-molecule	3	Chromosome	CM191170.1	<>	na	Primary Assembly	568912578	na
+4U	assembled-molecule	4	Chromosome	CM191171.1	<>	na	Primary Assembly	665737202	na
+5U	assembled-molecule	5	Chromosome	CM191172.1	<>	na	Primary Assembly	634959311	na
+6U	assembled-molecule	6	Chromosome	CM191173.1	<>	na	Primary Assembly	550867374	na
+7U	assembled-molecule	7	Chromosome	CM191174.1	<>	na	Primary Assembly	665309140	na
+Super_scaffold_10_2	unplaced-scaffold	na	na	JBDZUH010000008.1	<>	na	Primary Assembly	608	na
+Super_scaffold_16_2	unplaced-scaffold	na	na	JBDZUH010000009.1	<>	na	Primary Assembly	737	na
+Super_scaffold_18_2	unplaced-scaffold	na	na	JBDZUH010000010.1	<>	na	Primary Assembly	1073	na
+Super_scaffold_18_4	unplaced-scaffold	na	na	JBDZUH010000011.1	<>	na	Primary Assembly	542	na
+Super_scaffold_19_2	unplaced-scaffold	na	na	JBDZUH010000012.1	<>	na	Primary Assembly	1102	na
+Super_scaffold_20_2	unplaced-scaffold	na	na	JBDZUH010000013.1	<>	na	Primary Assembly	598	na
+Super_scaffold_20_3	unplaced-scaffold	na	na	JBDZUH010000014.1	<>	na	Primary Assembly	264107	na
+Super_scaffold_20_4	unplaced-scaffold	na	na	JBDZUH010000015.1	<>	na	Primary Assembly	9567630	na
+Super_scaffold_25_2	unplaced-scaffold	na	na	JBDZUH010000016.1	<>	na	Primary Assembly	661078	na
+Super_scaffold_28_2	unplaced-scaffold	na	na	JBDZUH010000017.1	<>	na	Primary Assembly	1091	na
+Super_scaffold_2_2	unplaced-scaffold	na	na	JBDZUH010000018.1	<>	na	Primary Assembly	647	na
+Super_scaffold_30_2	unplaced-scaffold	na	na	JBDZUH010000019.1	<>	na	Primary Assembly	744	na
+Super_scaffold_33_1	unplaced-scaffold	na	na	JBDZUH010000020.1	<>	na	Primary Assembly	2000	na
+Super_scaffold_33_3	unplaced-scaffold	na	na	JBDZUH010000021.1	<>	na	Primary Assembly	863	na
+Super_scaffold_39_2	unplaced-scaffold	na	na	JBDZUH010000022.1	<>	na	Primary Assembly	1016	na
+Super_scaffold_3_2	unplaced-scaffold	na	na	JBDZUH010000023.1	<>	na	Primary Assembly	1069	na
+Super_scaffold_47_2	unplaced-scaffold	na	na	JBDZUH010000024.1	<>	na	Primary Assembly	540	na
+Super_scaffold_4_2	unplaced-scaffold	na	na	JBDZUH010000025.1	<>	na	Primary Assembly	741	na
+Super_scaffold_52_2	unplaced-scaffold	na	na	JBDZUH010000026.1	<>	na	Primary Assembly	262	na
+Super_scaffold_53_2	unplaced-scaffold	na	na	JBDZUH010000027.1	<>	na	Primary Assembly	227	na
+Super_scaffold_57_2	unplaced-scaffold	na	na	JBDZUH010000028.1	<>	na	Primary Assembly	715000	na
+Super_scaffold_58_2	unplaced-scaffold	na	na	JBDZUH010000029.1	<>	na	Primary Assembly	14000	na
+Super_scaffold_5_2	unplaced-scaffold	na	na	JBDZUH010000030.1	<>	na	Primary Assembly	709	na
+Super_scaffold_64_2	unplaced-scaffold	na	na	JBDZUH010000031.1	<>	na	Primary Assembly	2355	na
+Super_scaffold_65_1	unplaced-scaffold	na	na	JBDZUH010000032.1	<>	na	Primary Assembly	298611	na
+Super_scaffold_88_1	unplaced-scaffold	na	na	JBDZUH010000033.1	<>	na	Primary Assembly	740000	na
+Super_scaffold_88_2	unplaced-scaffold	na	na	JBDZUH010000034.1	<>	na	Primary Assembly	311000	na
+Super_scaffold_88_3	unplaced-scaffold	na	na	JBDZUH010000035.1	<>	na	Primary Assembly	322000	na
+ptg000078l_2	unplaced-scaffold	na	na	JBDZUH010000036.1	<>	na	Primary Assembly	19599	na
+ptg000154l_2	unplaced-scaffold	na	na	JBDZUH010000037.1	<>	na	Primary Assembly	42000	na
+ptg000155l	unplaced-scaffold	na	na	JBDZUH010000038.1	<>	na	Primary Assembly	78111	na
+ptg000164l	unplaced-scaffold	na	na	JBDZUH010000039.1	<>	na	Primary Assembly	183367	na
+ptg000185l	unplaced-scaffold	na	na	JBDZUH010000040.1	<>	na	Primary Assembly	23749	na
+ptg000208l_1	unplaced-scaffold	na	na	JBDZUH010000041.1	<>	na	Primary Assembly	3000	na
+ptg000248l_2	unplaced-scaffold	na	na	JBDZUH010000042.1	<>	na	Primary Assembly	92000	na
+ptg000248l_3	unplaced-scaffold	na	na	JBDZUH010000043.1	<>	na	Primary Assembly	1015324	na
+ptg000483l	unplaced-scaffold	na	na	JBDZUH010000044.1	<>	na	Primary Assembly	73999	na
+ptg000570l	unplaced-scaffold	na	na	JBDZUH010000045.1	<>	na	Primary Assembly	72191	na
+ptg000574l	unplaced-scaffold	na	na	JBDZUH010000046.1	<>	na	Primary Assembly	127494	na
+ptg000586l_2	unplaced-scaffold	na	na	JBDZUH010000047.1	<>	na	Primary Assembly	370129	na
+ptg000628l	unplaced-scaffold	na	na	JBDZUH010000048.1	<>	na	Primary Assembly	947677	na
+ptg000654l	unplaced-scaffold	na	na	JBDZUH010000049.1	<>	na	Primary Assembly	220682	na
+ptg000660l	unplaced-scaffold	na	na	JBDZUH010000050.1	<>	na	Primary Assembly	260546	na
+ptg000722l	unplaced-scaffold	na	na	JBDZUH010000051.1	<>	na	Primary Assembly	130207	na
+ptg000727l	unplaced-scaffold	na	na	JBDZUH010000052.1	<>	na	Primary Assembly	170355	na
+ptg000784l	unplaced-scaffold	na	na	JBDZUH010000053.1	<>	na	Primary Assembly	112679	na
+ptg000817l	unplaced-scaffold	na	na	JBDZUH010000054.1	<>	na	Primary Assembly	102077	na
+ptg000854l	unplaced-scaffold	na	na	JBDZUH010000055.1	<>	na	Primary Assembly	154779	na
+ptg000862l	unplaced-scaffold	na	na	JBDZUH010000056.1	<>	na	Primary Assembly	89454	na
+ptg000871l	unplaced-scaffold	na	na	JBDZUH010000057.1	<>	na	Primary Assembly	195453	na
+ptg000881l	unplaced-scaffold	na	na	JBDZUH010000058.1	<>	na	Primary Assembly	41992	na
+ptg000884l	unplaced-scaffold	na	na	JBDZUH010000059.1	<>	na	Primary Assembly	89583	na
+ptg000888l	unplaced-scaffold	na	na	JBDZUH010000060.1	<>	na	Primary Assembly	197871	na
+ptg000891l	unplaced-scaffold	na	na	JBDZUH010000061.1	<>	na	Primary Assembly	179734	na
+ptg000895l	unplaced-scaffold	na	na	JBDZUH010000062.1	<>	na	Primary Assembly	78636	na
+ptg000896l	unplaced-scaffold	na	na	JBDZUH010000063.1	<>	na	Primary Assembly	126070	na
+ptg000897l	unplaced-scaffold	na	na	JBDZUH010000064.1	<>	na	Primary Assembly	34626	na
+ptg000898l	unplaced-scaffold	na	na	JBDZUH010000065.1	<>	na	Primary Assembly	37061	na
+ptg000901l	unplaced-scaffold	na	na	JBDZUH010000066.1	<>	na	Primary Assembly	250685	na
+ptg000902l	unplaced-scaffold	na	na	JBDZUH010000067.1	<>	na	Primary Assembly	113986	na
+ptg000911l	unplaced-scaffold	na	na	JBDZUH010000068.1	<>	na	Primary Assembly	145700	na
+ptg000920c	unplaced-scaffold	na	na	JBDZUH010000069.1	<>	na	Primary Assembly	61068	na
+ptg000924l	unplaced-scaffold	na	na	JBDZUH010000070.1	<>	na	Primary Assembly	74094	na
+ptg000925l	unplaced-scaffold	na	na	JBDZUH010000071.1	<>	na	Primary Assembly	216447	na
+ptg000929l	unplaced-scaffold	na	na	JBDZUH010000072.1	<>	na	Primary Assembly	247834	na
+ptg000930l	unplaced-scaffold	na	na	JBDZUH010000073.1	<>	na	Primary Assembly	34281	na
+ptg000933l	unplaced-scaffold	na	na	JBDZUH010000074.1	<>	na	Primary Assembly	135786	na
+ptg000935l	unplaced-scaffold	na	na	JBDZUH010000075.1	<>	na	Primary Assembly	29459	na
+ptg000941l	unplaced-scaffold	na	na	JBDZUH010000076.1	<>	na	Primary Assembly	40865	na
+ptg000946l	unplaced-scaffold	na	na	JBDZUH010000077.1	<>	na	Primary Assembly	331086	na
+ptg000951l	unplaced-scaffold	na	na	JBDZUH010000078.1	<>	na	Primary Assembly	72030	na
+ptg000952l	unplaced-scaffold	na	na	JBDZUH010000079.1	<>	na	Primary Assembly	693123	na
+ptg000961l	unplaced-scaffold	na	na	JBDZUH010000080.1	<>	na	Primary Assembly	331678	na
+ptg000963l	unplaced-scaffold	na	na	JBDZUH010000081.1	<>	na	Primary Assembly	158021	na
+ptg000965l	unplaced-scaffold	na	na	JBDZUH010000082.1	<>	na	Primary Assembly	79004	na
+ptg000966l	unplaced-scaffold	na	na	JBDZUH010000083.1	<>	na	Primary Assembly	177037	na
+ptg000968l	unplaced-scaffold	na	na	JBDZUH010000084.1	<>	na	Primary Assembly	170035	na
+ptg000969l	unplaced-scaffold	na	na	JBDZUH010000085.1	<>	na	Primary Assembly	187031	na
+ptg000970l_1	unplaced-scaffold	na	na	JBDZUH010000086.1	<>	na	Primary Assembly	12000	na
+ptg000981l	unplaced-scaffold	na	na	JBDZUH010000087.1	<>	na	Primary Assembly	31550	na
+ptg000982l	unplaced-scaffold	na	na	JBDZUH010000088.1	<>	na	Primary Assembly	194809	na
+ptg000983l	unplaced-scaffold	na	na	JBDZUH010000089.1	<>	na	Primary Assembly	42402	na
+ptg000987l	unplaced-scaffold	na	na	JBDZUH010000090.1	<>	na	Primary Assembly	69502	na
+ptg000993l	unplaced-scaffold	na	na	JBDZUH010000091.1	<>	na	Primary Assembly	53785	na
+ptg001001l	unplaced-scaffold	na	na	JBDZUH010000092.1	<>	na	Primary Assembly	30074	na
+ptg001010l	unplaced-scaffold	na	na	JBDZUH010000093.1	<>	na	Primary Assembly	50600	na
+ptg001012l	unplaced-scaffold	na	na	JBDZUH010000094.1	<>	na	Primary Assembly	326755	na
+ptg001013l	unplaced-scaffold	na	na	JBDZUH010000095.1	<>	na	Primary Assembly	60452	na
+ptg001015l	unplaced-scaffold	na	na	JBDZUH010000096.1	<>	na	Primary Assembly	86615	na
+ptg001016l	unplaced-scaffold	na	na	JBDZUH010000097.1	<>	na	Primary Assembly	192625	na
+ptg001017l	unplaced-scaffold	na	na	JBDZUH010000098.1	<>	na	Primary Assembly	106850	na
+ptg001019l	unplaced-scaffold	na	na	JBDZUH010000099.1	<>	na	Primary Assembly	162102	na
+ptg001021c	unplaced-scaffold	na	na	JBDZUH010000100.1	<>	na	Primary Assembly	68697	na
+ptg001022l	unplaced-scaffold	na	na	JBDZUH010000101.1	<>	na	Primary Assembly	346600	na
+ptg001025l	unplaced-scaffold	na	na	JBDZUH010000102.1	<>	na	Primary Assembly	40945	na
+ptg001026l	unplaced-scaffold	na	na	JBDZUH010000103.1	<>	na	Primary Assembly	160642	na
+ptg001029l	unplaced-scaffold	na	na	JBDZUH010000104.1	<>	na	Primary Assembly	52378	na
+ptg001034l	unplaced-scaffold	na	na	JBDZUH010000105.1	<>	na	Primary Assembly	76864	na
+ptg001038l	unplaced-scaffold	na	na	JBDZUH010000106.1	<>	na	Primary Assembly	30633	na
+ptg001039l	unplaced-scaffold	na	na	JBDZUH010000107.1	<>	na	Primary Assembly	28670	na
+ptg001045l	unplaced-scaffold	na	na	JBDZUH010000108.1	<>	na	Primary Assembly	39996	na
+ptg001047l	unplaced-scaffold	na	na	JBDZUH010000109.1	<>	na	Primary Assembly	141044	na
+ptg001049l	unplaced-scaffold	na	na	JBDZUH010000110.1	<>	na	Primary Assembly	88346	na
+ptg001051l	unplaced-scaffold	na	na	JBDZUH010000111.1	<>	na	Primary Assembly	39795	na
+ptg001053l	unplaced-scaffold	na	na	JBDZUH010000112.1	<>	na	Primary Assembly	133950	na
+ptg001054l	unplaced-scaffold	na	na	JBDZUH010000113.1	<>	na	Primary Assembly	246840	na
+ptg001058l	unplaced-scaffold	na	na	JBDZUH010000114.1	<>	na	Primary Assembly	69494	na
+ptg001063l	unplaced-scaffold	na	na	JBDZUH010000115.1	<>	na	Primary Assembly	35754	na
+ptg001065l	unplaced-scaffold	na	na	JBDZUH010000116.1	<>	na	Primary Assembly	90809	na
+ptg001066l	unplaced-scaffold	na	na	JBDZUH010000117.1	<>	na	Primary Assembly	135059	na
+ptg001069l	unplaced-scaffold	na	na	JBDZUH010000118.1	<>	na	Primary Assembly	130255	na
+ptg001075l	unplaced-scaffold	na	na	JBDZUH010000119.1	<>	na	Primary Assembly	148324	na
+ptg001081l	unplaced-scaffold	na	na	JBDZUH010000120.1	<>	na	Primary Assembly	107410	na
+ptg001082l	unplaced-scaffold	na	na	JBDZUH010000121.1	<>	na	Primary Assembly	109540	na
+ptg001084l	unplaced-scaffold	na	na	JBDZUH010000122.1	<>	na	Primary Assembly	82977	na
+ptg001087l	unplaced-scaffold	na	na	JBDZUH010000123.1	<>	na	Primary Assembly	66460	na
+ptg001089l	unplaced-scaffold	na	na	JBDZUH010000124.1	<>	na	Primary Assembly	48293	na
+ptg001090l	unplaced-scaffold	na	na	JBDZUH010000125.1	<>	na	Primary Assembly	91860	na
+ptg001096l	unplaced-scaffold	na	na	JBDZUH010000126.1	<>	na	Primary Assembly	25663	na
+ptg001098l	unplaced-scaffold	na	na	JBDZUH010000127.1	<>	na	Primary Assembly	84776	na
+ptg001099l	unplaced-scaffold	na	na	JBDZUH010000128.1	<>	na	Primary Assembly	76512	na
+ptg001102l	unplaced-scaffold	na	na	JBDZUH010000129.1	<>	na	Primary Assembly	42976	na
+ptg001107l	unplaced-scaffold	na	na	JBDZUH010000130.1	<>	na	Primary Assembly	175313	na
+ptg001108l	unplaced-scaffold	na	na	JBDZUH010000131.1	<>	na	Primary Assembly	43001	na
+ptg001109l	unplaced-scaffold	na	na	JBDZUH010000132.1	<>	na	Primary Assembly	111049	na
+ptg001111l	unplaced-scaffold	na	na	JBDZUH010000133.1	<>	na	Primary Assembly	24469	na
+ptg001114l	unplaced-scaffold	na	na	JBDZUH010000134.1	<>	na	Primary Assembly	165607	na
+ptg001119l	unplaced-scaffold	na	na	JBDZUH010000135.1	<>	na	Primary Assembly	61957	na
+ptg001120l	unplaced-scaffold	na	na	JBDZUH010000136.1	<>	na	Primary Assembly	23561	na
+ptg001125l	unplaced-scaffold	na	na	JBDZUH010000137.1	<>	na	Primary Assembly	47478	na
+ptg001126l	unplaced-scaffold	na	na	JBDZUH010000138.1	<>	na	Primary Assembly	51635	na
+ptg001127l	unplaced-scaffold	na	na	JBDZUH010000139.1	<>	na	Primary Assembly	56974	na
+ptg001138l	unplaced-scaffold	na	na	JBDZUH010000140.1	<>	na	Primary Assembly	72593	na
+ptg001140l	unplaced-scaffold	na	na	JBDZUH010000141.1	<>	na	Primary Assembly	52641	na
+ptg001145l	unplaced-scaffold	na	na	JBDZUH010000142.1	<>	na	Primary Assembly	165102	na
+ptg001147l	unplaced-scaffold	na	na	JBDZUH010000143.1	<>	na	Primary Assembly	60632	na
+ptg001148l	unplaced-scaffold	na	na	JBDZUH010000144.1	<>	na	Primary Assembly	30802	na
+ptg001150l	unplaced-scaffold	na	na	JBDZUH010000145.1	<>	na	Primary Assembly	48108	na
+ptg001151l	unplaced-scaffold	na	na	JBDZUH010000146.1	<>	na	Primary Assembly	137218	na
+ptg001152l	unplaced-scaffold	na	na	JBDZUH010000147.1	<>	na	Primary Assembly	113349	na
+ptg001159l	unplaced-scaffold	na	na	JBDZUH010000148.1	<>	na	Primary Assembly	42610	na
+ptg001166l	unplaced-scaffold	na	na	JBDZUH010000149.1	<>	na	Primary Assembly	41026	na
+ptg001167l	unplaced-scaffold	na	na	JBDZUH010000150.1	<>	na	Primary Assembly	185221	na
+ptg001168l	unplaced-scaffold	na	na	JBDZUH010000151.1	<>	na	Primary Assembly	151489	na
+ptg001169l	unplaced-scaffold	na	na	JBDZUH010000152.1	<>	na	Primary Assembly	129903	na
+ptg001171l	unplaced-scaffold	na	na	JBDZUH010000153.1	<>	na	Primary Assembly	40943	na
+ptg001179l	unplaced-scaffold	na	na	JBDZUH010000154.1	<>	na	Primary Assembly	72596	na
+ptg001181l	unplaced-scaffold	na	na	JBDZUH010000155.1	<>	na	Primary Assembly	31754	na
+ptg001188l	unplaced-scaffold	na	na	JBDZUH010000156.1	<>	na	Primary Assembly	56052	na
+ptg001189l	unplaced-scaffold	na	na	JBDZUH010000157.1	<>	na	Primary Assembly	30337	na
+ptg001192l	unplaced-scaffold	na	na	JBDZUH010000158.1	<>	na	Primary Assembly	39145	na
+ptg001193l	unplaced-scaffold	na	na	JBDZUH010000159.1	<>	na	Primary Assembly	47727	na
+ptg001194l	unplaced-scaffold	na	na	JBDZUH010000160.1	<>	na	Primary Assembly	30312	na
+ptg001195l	unplaced-scaffold	na	na	JBDZUH010000161.1	<>	na	Primary Assembly	51798	na
+ptg001208l	unplaced-scaffold	na	na	JBDZUH010000162.1	<>	na	Primary Assembly	173677	na
+ptg001219l	unplaced-scaffold	na	na	JBDZUH010000163.1	<>	na	Primary Assembly	18260	na
+ptg001220l	unplaced-scaffold	na	na	JBDZUH010000164.1	<>	na	Primary Assembly	32123	na
+ptg001223l	unplaced-scaffold	na	na	JBDZUH010000165.1	<>	na	Primary Assembly	32181	na
+ptg001224l	unplaced-scaffold	na	na	JBDZUH010000166.1	<>	na	Primary Assembly	55782	na
+ptg001225l	unplaced-scaffold	na	na	JBDZUH010000167.1	<>	na	Primary Assembly	75615	na
+ptg001230l	unplaced-scaffold	na	na	JBDZUH010000168.1	<>	na	Primary Assembly	78412	na
+ptg001234l	unplaced-scaffold	na	na	JBDZUH010000169.1	<>	na	Primary Assembly	34775	na
+ptg001235l	unplaced-scaffold	na	na	JBDZUH010000170.1	<>	na	Primary Assembly	42820	na
+ptg001242l	unplaced-scaffold	na	na	JBDZUH010000171.1	<>	na	Primary Assembly	42671	na
+ptg001259l	unplaced-scaffold	na	na	JBDZUH010000172.1	<>	na	Primary Assembly	28386	na
+ptg001261l	unplaced-scaffold	na	na	JBDZUH010000173.1	<>	na	Primary Assembly	34987	na
+ptg001267l	unplaced-scaffold	na	na	JBDZUH010000174.1	<>	na	Primary Assembly	28361	na
+ptg001268l	unplaced-scaffold	na	na	JBDZUH010000175.1	<>	na	Primary Assembly	29910	na
+ptg001270l	unplaced-scaffold	na	na	JBDZUH010000176.1	<>	na	Primary Assembly	3483	na
+ptg001280l	unplaced-scaffold	na	na	JBDZUH010000177.1	<>	na	Primary Assembly	37663	na
+ptg001285l	unplaced-scaffold	na	na	JBDZUH010000178.1	<>	na	Primary Assembly	75745	na
+ptg001292l	unplaced-scaffold	na	na	JBDZUH010000179.1	<>	na	Primary Assembly	24509	na
+ptg001309l	unplaced-scaffold	na	na	JBDZUH010000180.1	<>	na	Primary Assembly	27623	na
+ptg001311l	unplaced-scaffold	na	na	JBDZUH010000181.1	<>	na	Primary Assembly	33670	na
+ptg001315l	unplaced-scaffold	na	na	JBDZUH010000182.1	<>	na	Primary Assembly	92774	na
+ptg001316l	unplaced-scaffold	na	na	JBDZUH010000183.1	<>	na	Primary Assembly	45459	na
+ptg001320l	unplaced-scaffold	na	na	JBDZUH010000184.1	<>	na	Primary Assembly	105051	na
+ptg001326l	unplaced-scaffold	na	na	JBDZUH010000185.1	<>	na	Primary Assembly	55293	na
+ptg001337l	unplaced-scaffold	na	na	JBDZUH010000186.1	<>	na	Primary Assembly	26273	na
+ptg001349l	unplaced-scaffold	na	na	JBDZUH010000187.1	<>	na	Primary Assembly	58859	na
+ptg001355l	unplaced-scaffold	na	na	JBDZUH010000188.1	<>	na	Primary Assembly	110289	na
+ptg001361l	unplaced-scaffold	na	na	JBDZUH010000189.1	<>	na	Primary Assembly	33637	na
+ptg001368l	unplaced-scaffold	na	na	JBDZUH010000190.1	<>	na	Primary Assembly	32354	na
+ptg001371l	unplaced-scaffold	na	na	JBDZUH010000191.1	<>	na	Primary Assembly	72048	na
+ptg001373l	unplaced-scaffold	na	na	JBDZUH010000192.1	<>	na	Primary Assembly	135521	na
+ptg001375l	unplaced-scaffold	na	na	JBDZUH010000193.1	<>	na	Primary Assembly	30470	na
+ptg001383l	unplaced-scaffold	na	na	JBDZUH010000194.1	<>	na	Primary Assembly	35153	na
+ptg001384l	unplaced-scaffold	na	na	JBDZUH010000195.1	<>	na	Primary Assembly	35749	na
+ptg001385l	unplaced-scaffold	na	na	JBDZUH010000196.1	<>	na	Primary Assembly	31939	na
+ptg001387l	unplaced-scaffold	na	na	JBDZUH010000197.1	<>	na	Primary Assembly	77763	na
+ptg001391l	unplaced-scaffold	na	na	JBDZUH010000198.1	<>	na	Primary Assembly	39972	na
+ptg001398l	unplaced-scaffold	na	na	JBDZUH010000199.1	<>	na	Primary Assembly	42104	na
+ptg001399l	unplaced-scaffold	na	na	JBDZUH010000200.1	<>	na	Primary Assembly	72927	na
+ptg001402l	unplaced-scaffold	na	na	JBDZUH010000201.1	<>	na	Primary Assembly	40004	na
+ptg001409l	unplaced-scaffold	na	na	JBDZUH010000202.1	<>	na	Primary Assembly	48439	na
+ptg001412l	unplaced-scaffold	na	na	JBDZUH010000203.1	<>	na	Primary Assembly	29456	na
+ptg001413l	unplaced-scaffold	na	na	JBDZUH010000204.1	<>	na	Primary Assembly	50693	na
+ptg001414l	unplaced-scaffold	na	na	JBDZUH010000205.1	<>	na	Primary Assembly	72033	na
+ptg001418l	unplaced-scaffold	na	na	JBDZUH010000206.1	<>	na	Primary Assembly	38393	na
+ptg001423l	unplaced-scaffold	na	na	JBDZUH010000207.1	<>	na	Primary Assembly	51707	na
+ptg001425l	unplaced-scaffold	na	na	JBDZUH010000208.1	<>	na	Primary Assembly	33940	na
+ptg001426l	unplaced-scaffold	na	na	JBDZUH010000209.1	<>	na	Primary Assembly	36936	na
+ptg001427l	unplaced-scaffold	na	na	JBDZUH010000210.1	<>	na	Primary Assembly	52386	na
+ptg001431l	unplaced-scaffold	na	na	JBDZUH010000211.1	<>	na	Primary Assembly	36848	na
+ptg001437l	unplaced-scaffold	na	na	JBDZUH010000212.1	<>	na	Primary Assembly	31103	na
+ptg001449l	unplaced-scaffold	na	na	JBDZUH010000213.1	<>	na	Primary Assembly	25770	na
+ptg001454l	unplaced-scaffold	na	na	JBDZUH010000214.1	<>	na	Primary Assembly	111408	na
+ptg001456l	unplaced-scaffold	na	na	JBDZUH010000215.1	<>	na	Primary Assembly	38450	na
+ptg001467l	unplaced-scaffold	na	na	JBDZUH010000216.1	<>	na	Primary Assembly	176991	na
+ptg001478l	unplaced-scaffold	na	na	JBDZUH010000217.1	<>	na	Primary Assembly	36968	na
+ptg001487l	unplaced-scaffold	na	na	JBDZUH010000218.1	<>	na	Primary Assembly	121329	na
+ptg001496l	unplaced-scaffold	na	na	JBDZUH010000219.1	<>	na	Primary Assembly	27019	na
+ptg001507l	unplaced-scaffold	na	na	JBDZUH010000220.1	<>	na	Primary Assembly	34630	na
+ptg001514l	unplaced-scaffold	na	na	JBDZUH010000221.1	<>	na	Primary Assembly	26308	na
+ptg001519l	unplaced-scaffold	na	na	JBDZUH010000222.1	<>	na	Primary Assembly	32368	na
+ptg001526l	unplaced-scaffold	na	na	JBDZUH010000223.1	<>	na	Primary Assembly	39729	na
+ptg001533l	unplaced-scaffold	na	na	JBDZUH010000224.1	<>	na	Primary Assembly	43114	na
+ptg001535l	unplaced-scaffold	na	na	JBDZUH010000225.1	<>	na	Primary Assembly	44988	na
+ptg001542l	unplaced-scaffold	na	na	JBDZUH010000226.1	<>	na	Primary Assembly	38619	na
+ptg001546l	unplaced-scaffold	na	na	JBDZUH010000227.1	<>	na	Primary Assembly	49757	na
+ptg001551l	unplaced-scaffold	na	na	JBDZUH010000228.1	<>	na	Primary Assembly	27009	na
+ptg001555l	unplaced-scaffold	na	na	JBDZUH010000229.1	<>	na	Primary Assembly	17238	na
+ptg001565l	unplaced-scaffold	na	na	JBDZUH010000230.1	<>	na	Primary Assembly	42780	na
+ptg001569l	unplaced-scaffold	na	na	JBDZUH010000231.1	<>	na	Primary Assembly	34884	na
+ptg001583l	unplaced-scaffold	na	na	JBDZUH010000232.1	<>	na	Primary Assembly	25332	na
+ptg001584l	unplaced-scaffold	na	na	JBDZUH010000233.1	<>	na	Primary Assembly	47122	na
+ptg001586l	unplaced-scaffold	na	na	JBDZUH010000234.1	<>	na	Primary Assembly	22749	na
+ptg001587l	unplaced-scaffold	na	na	JBDZUH010000235.1	<>	na	Primary Assembly	20688	na
+ptg001592l	unplaced-scaffold	na	na	JBDZUH010000236.1	<>	na	Primary Assembly	43181	na
+ptg001594l	unplaced-scaffold	na	na	JBDZUH010000237.1	<>	na	Primary Assembly	40248	na
+ptg001600l	unplaced-scaffold	na	na	JBDZUH010000238.1	<>	na	Primary Assembly	35379	na
+ptg001603l	unplaced-scaffold	na	na	JBDZUH010000239.1	<>	na	Primary Assembly	37288	na
+ptg001607l	unplaced-scaffold	na	na	JBDZUH010000240.1	<>	na	Primary Assembly	39947	na
+ptg001612l	unplaced-scaffold	na	na	JBDZUH010000241.1	<>	na	Primary Assembly	38149	na
+ptg001614l	unplaced-scaffold	na	na	JBDZUH010000242.1	<>	na	Primary Assembly	28829	na
+ptg001617l	unplaced-scaffold	na	na	JBDZUH010000243.1	<>	na	Primary Assembly	46310	na
+ptg001618l	unplaced-scaffold	na	na	JBDZUH010000244.1	<>	na	Primary Assembly	43784	na
+ptg001619l	unplaced-scaffold	na	na	JBDZUH010000245.1	<>	na	Primary Assembly	17649	na
+ptg001622l	unplaced-scaffold	na	na	JBDZUH010000246.1	<>	na	Primary Assembly	36318	na
+ptg001623l	unplaced-scaffold	na	na	JBDZUH010000247.1	<>	na	Primary Assembly	25672	na
+ptg001624l	unplaced-scaffold	na	na	JBDZUH010000248.1	<>	na	Primary Assembly	36554	na
+ptg001625l	unplaced-scaffold	na	na	JBDZUH010000249.1	<>	na	Primary Assembly	25656	na
+ptg001626l	unplaced-scaffold	na	na	JBDZUH010000250.1	<>	na	Primary Assembly	40386	na

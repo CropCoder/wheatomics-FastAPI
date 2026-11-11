@@ -1,0 +1,14 @@
+{
+  "mode": "dry-run",
+  "assembly_report": "docs/plans/aegilops4_2026-11/normalize_test/reports/GCA_060308565.1_AAFC_Aeum_AE740_v02_assembly_report.txt",
+  "report_rows": 250,
+  "assembled_molecule": 7,
+  "unplaced_or_other": 243,
+  "roles": {
+    "assembled-molecule": 7,
+    "unplaced-scaffold": 243
+  },
+  "total_length": 4268089219,
+  "mapping_rows": 250,
+  "mapping_tsv": "docs/plans/aegilops4_2026-11/normalize_test/out/umbellulata.fa_mapping.tsv"
+}

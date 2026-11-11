@@ -1,0 +1,51 @@
+# Assembly name:  ASM5281576v1
+# Organism name:  Aegilops uniaristata (monocots)
+# Isolate:  IPK-AE680
+# Taxid:          4492
+# BioSample:      SAMN43422673
+# BioProject:     PRJNA1154594
+# Submitter:      4DWheat Canada
+# Date:           2025-09-24
+# Assembly type:  haploid
+# Release type:   major
+# Assembly level: Chromosome
+# Genome representation: full
+# WGS project:    JBHEGF01
+# Assembly method: HiFiasm v. 0.15.4-r347
+# Expected final version: no
+# Genome coverage: 35.8x
+# Sequencing technology: PacBio RSII
+# RefSeq category: Reference Genome
+# GenBank assembly accession: GCA_052815765.1
+#
+## Assembly-Units:
+## GenBank Unit Accession	RefSeq Unit Accession	Assembly-Unit name
+## GCA_052815795.1		Primary Assembly
+#
+# Ordered by chromosome/plasmid; the chromosomes/plasmids are followed by
+# unlocalized scaffolds.
+# Unplaced scaffolds are listed at the end.
+# RefSeq is equal or derived from GenBank object.
+#
+# Sequence-Name	Sequence-Role	Assigned-Molecule	Assigned-Molecule-Location/Type	GenBank-Accn	Relationship	RefSeq-Accn	Assembly-Unit	Sequence-Length	UCSC-style-name
+1N	assembled-molecule	1	Chromosome	CM127992.1	<>	na	Primary Assembly	509639608	na
+2N	assembled-molecule	2	Chromosome	CM127993.1	<>	na	Primary Assembly	671258786	na
+3N	assembled-molecule	3	Chromosome	CM127994.1	<>	na	Primary Assembly	685520911	na
+4N	assembled-molecule	4	Chromosome	CM127995.1	<>	na	Primary Assembly	650123156	na
+5N	assembled-molecule	5	Chromosome	CM127996.1	<>	na	Primary Assembly	652967279	na
+6N	assembled-molecule	6	Chromosome	CM127997.1	<>	na	Primary Assembly	627388662	na
+7N	assembled-molecule	7	Chromosome	CM127998.1	<>	na	Primary Assembly	669663981	na
+Super-Scaffold_100184	unplaced-scaffold	na	na	JBHEGF010000008.1	<>	na	Primary Assembly	479508	na
+Super-Scaffold_100228	unplaced-scaffold	na	na	JBHEGF010000009.1	<>	na	Primary Assembly	313124	na
+Super-Scaffold_100233	unplaced-scaffold	na	na	JBHEGF010000010.1	<>	na	Primary Assembly	512116	na
+Super-Scaffold_100465_1	unplaced-scaffold	na	na	JBHEGF010000011.1	<>	na	Primary Assembly	4000	na
+Super-Scaffold_144_2	unplaced-scaffold	na	na	JBHEGF010000012.1	<>	na	Primary Assembly	3686000	na
+Super-Scaffold_1_2	unplaced-scaffold	na	na	JBHEGF010000013.1	<>	na	Primary Assembly	614	na
+Super-Scaffold_205	unplaced-scaffold	na	na	JBHEGF010000014.1	<>	na	Primary Assembly	759877	na
+Super-Scaffold_237_2	unplaced-scaffold	na	na	JBHEGF010000015.1	<>	na	Primary Assembly	18918	na
+Super-Scaffold_2458_2	unplaced-scaffold	na	na	JBHEGF010000016.1	<>	na	Primary Assembly	1476367	na
+Super-Scaffold_255_2	unplaced-scaffold	na	na	JBHEGF010000017.1	<>	na	Primary Assembly	128565	na
+Super-Scaffold_262	unplaced-scaffold	na	na	JBHEGF010000018.1	<>	na	Primary Assembly	529397	na
+Super-Scaffold_4894_2	unplaced-scaffold	na	na	JBHEGF010000019.1	<>	na	Primary Assembly	130000	na
+Super-Scaffold_4894_3	unplaced-scaffold	na	na	JBHEGF010000020.1	<>	na	Primary Assembly	793728	na
+Super-Scaffold_57	unplaced-scaffold	na	na	JBHEGF010000021.1	<>	na	Primary Assembly	549310	na

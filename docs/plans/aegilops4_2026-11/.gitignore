@@ -1,0 +1,9 @@
+# 论文 PDF、补充材料与 Zenodo 探针文件（~130 MB）不入 git；正文见 PAPER_DATA.md
+*.pdf
+zenodo_probe/
+# 归一化实测产物（20 MB，可由 PHASE0_NORMALIZE.md §2 的命令重跑）
+normalize_test/out/
+normalize_test/step1/
+normalize_test/reid/
+normalize_test/step1/
+normalize_test/reid/

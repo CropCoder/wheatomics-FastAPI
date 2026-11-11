@@ -99,6 +99,17 @@ For adding/updating individual genes without redeploying, use the permissioned w
 (`POST /api/genes/known/write`, `PATCH .../{clone_id}`, `POST .../bulk`; API keys in DB with
 scopes + audit log) — see docs/known_genes/WRITE_API.md.
 
+**New-genome onboarding (v2, 2026-11)**: the canonical workflow lives in
+[docs/workflow/wheatomics-new-genome-sop.md](docs/workflow/wheatomics-new-genome-sop.md) — five gates
+(G0 name check → G1 normalization → G2 QC → G3 `add_wheat_genome.sh` pipeline → G4 finish → G5 acceptance).
+The reusable scripts are versioned here: `scripts/normalize_diploid.py` (FASTA/GFF3/CDS/PEP normalization:
+NCBI `assembly_report` GenBank-accession→`Chr*` mapping, any `[1-7][A-Z]` karyotype, cross-species duplicate
+mRNA-ID prefixing, `.pN`→`.digit`, pep `.`/`*` cleanup) and `scripts/finish_genome_integration.sh`
+(JBrowse V2 `.asm-card`/`asm-group` insertion + hero/status counts, wheatBLAST SPA detection, GI/registry
+upserts, aggregate aliases, BLAST↔JBrowse map rebuild). Install to `~/.agents/skills/lab-server/scripts/`
+and `/var/www/data/masw_data/_prep/` per docs/workflow/README.md. Legacy v1 pitfalls (A/B/R-only
+normalizer, old-page HTML greps, missing CC/NN in `SUB`/static-page arrays) are documented in SOP §11–§12.
+
 **No tests or dependency file**: The repo has no `tests/` directory, no `requirements.txt`, and no `pyproject.toml`. Dependencies must be inferred from imports.
 
 ## Git workflow (for this contributor)

@@ -1,0 +1,1208 @@
+BMC Plant Biology
+
+
+RESEARCH | Article in Press
+
+Chromosome-level reference genome assemblies and
+annotation of four diploid Aegilops
+Bijendra Khadka · Tara Edwards · Madeleine Lévesque-Lemay · Jennifer Ens ·
+Harmeet S. Chawla · Chunfang Zheng · Frank M. You · Curtis J. Pozniak · Sylvie Cloutier
+
+Received: 6 November 2025 / Accepted: 22 September 2026
+© Crown 2026
+
+Abstract
+Background Aegilops species represent an important reservoir of genetic diversity for agronomic and end-use
+quality traits as well as resistance to biotic and abiotic stresses for wheat improvement. However, the limited
+availability of high-quality reference genomes has impeded the effective use of these wild relatives in breeding
+programs.
+Results Here, we present chromosome-level reference genome assemblies of four diploid Aegilops species: Ae.
+comosa, Ae. markgrafii, Ae. umbellulata and Ae. uniaristata. Using a hybrid strategy combining Pacific Biosci-
+ence (PacBio) HiFi sequencing, BioNano optical mapping and Hi-C scaffolding, we generated contiguous assem-
+blies ranging from 3.58 to 4.48 Gb characterized by BUSCO completeness score ranging from 97.9 to 98.4%.
+RNASeq and IsoSeq data from multiple tissues were integrated to facilitate gene annotation. The annotation
+yielded a total of 47,246 to 51,203 protein-coding genes across the four species, while also characterizing the
+repeat element composition of these diploid Aegilops. Collinearity analyses identified conserved colinear blocks
+and revealed multiple intra- and inter-chromosomal rearrangements. Orthogroups shared among the Aegilops and
+Triticum species were used to perform a phylogenetic analysis that clarified evolutionary relationships among the
+genomes of this Aegilops/Triticum complex, where the diploid genomes of these four species clustered as a sister
+monophyletic clade within the D-lineage.
+Conclusions This study produced the reference-quality genome assemblies of four diploid Aegilops species,
+completing the set of high-quality assemblies now available for all 11 diploid Aegilops species and establishing
+foundational genomic resources for comparative genomics, gene discovery, and the acceleration of wheat breed-
+ing strategies. Additionally, these genomic resources offer a critical framework for extending genomic character-
+ization of tetraploid and hexaploid Aegilops species.
+
+Keywords Aegilops · Pseudochromosome assembly · Annotation · Comparative genomics · Phylogenetic
+relationship
+
+
+
+
+This Article in Press is shared early to give you faster access to new research. It is citable and carries a permanent DOI.
+The final edited version will replace it automatically.
+
+
+
+
+          BMC Plant Biology                                                          https://doi.org/10.1186/s12870-026-10046-2
+Article in Press                                                  https://doi.org/10.1186/s12870-026-10046-2
+
+Background
+
+The genus Aegilops harbors a plethora of valuable genes that can increase wheat genetic diversity and contrib-
+ute to its improvement [1–3]. Aegilops species played a pivotal role in shaping the evolution of common wheat
+Triticum aestivum (2n = 6x = 42, ABD genome). Notably, the D and B subgenomes originated from the diploid
+Ae. tauschii [4, 5] species and a species closely related to Ae. speltoides, respectively [6–9]. The Aegilops genus
+is comprised of 23 species, including two with subspecies, classified into five sections, of which 11 are diploid
+(2n = 2x = 14), 10 are tetraploid (2n= 4x = 28), and four are hexaploid (2n= 6x = 42) [10]. The diploid Aegilops
+species contain the S, Sb, Sl, Ss, Ssh, U, C, D, M, N, and T genomes that contributed to the creation and evolution
+of the tetraploid and hexaploid species through natural hybridization [11, 12]. Ae. tauschii (D) and Ae. speltoides
+(S) are considered to belong to the primary gene pool of T. aestivum, while the remaining belongs to its tertiary
+gene pool [13]. Genes governing agronomic traits, biotic and abiotic stresses have been transferred from Aegilops
+species to common wheat [2, 14]. Thus far, these species have only modestly contributed to broadening wheat’s
+genetic diversity. Genomics resources, such as high-quality reference genome assemblies and annotation, are
+expected to spur the utilization of these genetic resources for wheat improvement.
+   To date, genome assemblies have been released for nine diploid Aegilops species: Ae. tauschii [15, 16], Ae.
+speltoides [17–19], Ae. longissima [17–19], Ae. comosa [20], Ae. bicornis [18], Ae. searsii [18], Ae. sharonensis
+[18, 21], Ae. umbellulata [22, 23] and Ae. mutica [24]. Fragmented/partial assemblies of Ae. mutica [18] and Ae.
+comosa [25] were also released. These reference genomes were used to clone rust resistance genes Lr47 from Ae.
+speltoides [26], Lr9 from Ae. umbellulata [27] and Sr62 from Ae. sharonensis [21]. Comparative genomic analy-
+ses of these assemblies led to detection of genes related to agronomic and pathogen-resistance traits, structural
+variants, and elucidation of the evolution and phylogenetic relationship among Triticum and Aegilops species
+[17–19].
+   Long-read DNA sequencing technologies and better assembly algorithms and pipelines have resulted in genome
+assemblies with chromosome-scale contiguity [28–31]. Genome assemblies constructed using Pacific Biosciences
+circular consensus sequencing (CCS), also known as high-fidelity (HiFi) reads, are advantageous across many
+metrics [32–35]. For instance, ~ 20X HiFi coverage can produce highly contiguous and complete genome assem-
+blies, while coverage of ~ 4-5X suffices to capture most gene sequences [35]. Several plant genome assemblies,
+including Ae. tauschii [15], einkorn (T. monococcum) [36], maize (Zea mays) [37], and barley (Hordeum vulgare)
+[35], have achieved chromosome-scale pseudomolecules by combining HiFi reads with long-range scaffolding
+optical maps (e.g., Bionano Genomics). Optical maps order and orient contigs, and identify chimeric contigs and
+large structural variations to improve the quality and contiguity of assemblies [38–40]. High-throughput chromo-
+some conformation capture (Hi-C), a method originally developed to capture long-range chromatin interactions,
+has been broadly applied to obtain chromosome-level reference genome assemblies [19, 20, 22, 41].
+   Transcriptome datasets obtained from RNA sequencing (RNASeq) data serve as quantitative and qualita-
+tive expression evidence for gene annotation. Long-read isoform sequencing (IsoSeq) captures full-length gene
+sequences with high accuracy, thus overcoming some of the limitations of RNASeq. Integrating RNASeq and
+IsoSeq significantly improves genome annotation [36, 42].
+   The production of high-quality genomic assemblies and annotations of Aegilops species remains a significant
+endeavor, primarily owing to the large size, and high repeat content (> 80%) of their genomes. Here, chromo-
+some-level reference genome assemblies of Ae. comosa, Ae. markgrafii, Ae. umbellulata and Ae. uniaristata were
+generated through the integrated use of PacBio HiFi reads, Bionano optical maps and Hi-C scaffolding. Repeat
+elements were identified and structural and functional annotation of protein-coding genes were performed. With
+the first assemblies of Ae. markgrafii and Ae. uniaristata, this work completes the availability of high-quality
+genome assemblies of all diploid Aegilops species. This comprehensive resource is being capitalized upon to
+understand the relationships amongst Aegilops and Triticum genomes and subgenomes and to isolate novel alleles
+for wheat improvement.
+
+
+                                                                                                   BMC Plant Biology
+https://doi.org/10.1186/s12870-026-10046-2                                                         Article in Press
+
+Methods
+
+Plant material and DNA preparation
+
+The plant material consisted of four diploid Aegilops species, namely Ae. comosa accession IPK-AE783, Ae.
+markgrafii accession EKC105_RL5723, Ae. umbellulata accession IPK-AE740, and Ae. uniaristata accession
+IPK-AE680. Seeds of Ae. umbellulata, Ae. comosa, and Ae. uniaristata were obtained from the Leibniz Insti-
+tute of Plant Genetics and Crop Plant Research (IPK), Gatersleben, Germany, while Ae. markgrafii seeds were
+sourced from Dr. Eric Kerber (AAFC, Canada). The EKC_RL line of Ae. markgrafii was originally sourced from
+Plant Gene Resources of Canada (PGRC) and that it corresponds to accession CN 34579 (formerly PGR 6682).
+One plant of each accession was selfed with the heads bagged for a minimum of three generations to increase
+homozygosity prior to whole genome sequencing. For each accession, 5 to 68 seedlings were grown in a growth
+cabinet under a 16-h photoperiod with 24 °C daytime and 18 °C nighttime temperatures. Prior to sampling, plants
+were kept in the dark for 2–3 days. For each genotype, leaf tissue from plants at the 3–5 leaf stage were sampled,
+frozen immediately in liquid nitrogen and stored in liquid nitrogen until DNA extraction. Seedlings were allowed
+to regrow for subsequent samplings. High-molecular-weight genomic DNA (HMW gDNA) was extracted from
+~ 15 g leaf tissue using a modified nuclei extraction protocol (Additional file 3: Sect. 1).
+
+HiFi Library construction and genome sequencing
+
+Approximately 90 µg of HMW gDNA at ~ 100–200 ng/µl per sample was sent to the Centre d’expertise et de
+services Génome Québec (Montréal, QC, Canada) for library construction and sequencing. DNA quality control,
+SMRT library preparation procedures and sequencing on a PacBio Sequel II instrument are described (Additional
+file 3: Sect. 2).
+
+Bionano optical mapping
+
+A total of 200 seeds, harvested from the 5–68 plants sampled from each of the sequenced species, were sent
+to the CNRGV Plant Genomic Center (Institut National de Recherche pour l’agriculture, l’alimentation et
+l’environnement (INRAE), Auzeville, France) for high-molecular weight genomic DNA isolation, library prepa-
+ration and optical mapping on the Saphyr™ system (Bionano Genomics, San Diego, USA).
+
+Hi-C library construction and sequencing
+
+ Hi-C libraries were prepared following the protocol described in Padmarasu et al. [43] as detailed in Additional
+file 3: Sect. 3. The cross-linked chromatin DNA was digested using DpnII. The multi-step process included
+biotinylation, blunt-end repair, extraction, purification, quantitation, shearing, size distribution estimation, end
+repair, A-tailing, adapter ligation, purification and PCR amplification. The PCR products were then purified, size-
+selected, quantified prior to quality control, which was performed using the KAPA Illumina library quantification
+kit. The Hi-C libraries were individually indexed and pooled 3–4 per lane for high-throughput sequencing on
+Illumina NovaSeq 6000 S4 platform to generate 150-bp paired-end (PE150) reads.
+
+Genome size estimation
+
+The genome size of the species was estimated by flow cytometry (Additional file 3: Sect. 4). Genome sizes were
+measured on three different days for accuracy. The flow cytometer List Mode Data (LMD) files were processed
+on R Studio using the flowPloidy package [44] to estimate the genome sizes.
+
+
+
+BMC Plant Biology
+Article in Press                                                    https://doi.org/10.1186/s12870-026-10046-2
+
+Genome assembly
+
+ The raw data generated from the PacBio Sequel II instrument were processed using SMRT Link Analysis
+v11.0.0.146107 pipeline. HiFi reads were generated from the raw subreads during the CCS steps using the param-
+eters ccs --min-passes 3 --hifi-kinetics --num-threads 24. The CCS bam files were indexed and converted into
+fastq using bam2fastq (SmrtLinkv11.0, with default settings) and assembled using hifiasm v0.15.4-r347 with
+parameter -l0 [45]. The generated contigs were scaffolded with the Bionano genome maps using the hybridScaf-
+fold.pl script of the Bionano Solve pipeline v3.7 with default config file (hybridScaffold_DLE1_config.xml).
+Paired-end Hi-C reads were utilized to orient, order and anchor the assembled contigs into pseudochromosome-
+level assemblies using YaHS [46]. The contact matrix were visualized and manual curation was performed using
+juicertools and Juicebox [47]. Assembly statistics were calculated using custom Perl scripts and the BioKit tool
+[48]. Completeness of the Aegilops genome assemblies was evaluated using the Benchmarking Universal Single-
+Copy Orthologs (BUSCO) [49] genome mode with MetaEuk v5.34c21f2 [50] and hmmsearch v3.1 [51] against
+the Embryophyta odb10 database.
+
+Sample collection and RNA preparation
+
+For each species, a total of 45 plants were grown in 72-cell root trainers in a growth chamber using a 16-h pho-
+toperiod with 24 °C daytime and 18 °C nighttime temperatures. Details regarding the seed source are provided
+(Additional file 1: Table S1).
+   Three biological replicates of the following ten tissue samples were collected from each species: root before
+vernalization (RBV), root after vernalization (RAV), crown+leaves before vernalization (CLBV), crown+leaves
+after vernalization (CLAV), head at anthesis and two days after anthesis (H), stem+flag leaf at anthesis and
+two days after anthesis (SF), developing seeds at 4–9 (DS4-9), 10–15 (DS10-15), 16–21 (DS16-21) and 22–27
+(DS22-17) days after anthesis (DAA) (Additional file 1: Fig. S1 and Table S2). Sampling is described (Additional
+file 3: Sect. 5). The term “tissue” is being used for all samples although some represent multiple tissue types
+(e.g., developing seeds = endosperm+pericarp+embryo). In total, RNA was extracted from 360 tissue samples
+representing 4 species × 10 tissues × 3 replicates × 3 samples/replicate (Additional file 1: Table S3).
+   RNA extraction procedures are detailed in Additional file 3: Sect. 6. Briefly, total RNA from the 216 non-seed
+samples was extracted with the Qiagen RNeasy Plant Mini Kit (Toronto, ON, Canada). For the 144 developing
+seed samples, RNA was extracted following the protocol described in White et al. [52] with modifications as
+detailed in Additional file 3: Sect. 6. Quality control and quantification were carried out (Additional file 3: Sect.
+7). The final 120 RNA samples were created by combining an equimolar amount of RNA from three high quality
+RNA subsamples of each replicate. The total RNA samples were then diluted to 50 ng/µl for the RBV, CLBV,
+RAV, CLAV, H, SF tissues or 40 ng/µl for the developing seed tissues (DS4-9, DS10-15, DS16-21, DS22-27).
+
+RNASeq
+
+ One hundred and twenty samples of total RNA were sent to the Centre d’expertise et de services Génome Québec
+(Montreal, QC, Canada) for mRNA sequencing library construction and RNASeq. Prior to library construction,
+the service provider confirmed the quality of total RNA using a LabChip GXII (Perkin Elmer, Waltham, MA,
+USA). The concentration of all samples provided exceeded their quality (RIN > 6.5) and quantity (500 ng at 30
+ng/µl) standards. Protocols are detailed in Additional file 3: Sect. 8. The libraries were randomized and sequenced
+on three NovaSeq 6000 S4 lanes using the 150-bp paired-end (PE150) mode (Illumina, San Diego, CA, USA).
+Adaptors were removed using Trim Galore v0.6.7 (https://github.com/FelixKrueger/TrimGalore) and quality
+checks were performed using FastQC v0.11.9 (https://github.com/s-andrews/FastQC) and MultiQC v1.12 [53].
+The clean reads were mapped to their respective assemblies using STAR v2.7.10a [54], sorted according to their
+coordinates, and indexed using SAMtools v1.9 [55] for visualization by IGV v2.11.6 [56].
+
+                                                                                                     BMC Plant Biology
+https://doi.org/10.1186/s12870-026-10046-2                                                                            Article in Press
+
+IsoSeq
+
+For IsoSeq, equimolar amounts of total RNA from all 30 samples (10 tissues × 3 replicates) from each species were
+combined to create RNA pools totalling 2,400 ng at 100 ng/µl. These pools were sent to the Centre d’expertise et
+de services Génome Québec for library construction and sequencing. From each RNA pool, one standard and one
+long insert size libraries were constructed (Additional file 3: Sect. 9). Each library was sequenced on a PacBio
+Sequel II instrument using SMRT Cell 8 M and 24-h movies with a 2-h pre-extension time. The subreads were
+converted to CCSs using the ccs algorithm of PacBio SMRT Link Software v12.0.0 (Pacific Bioscience, Menlo
+Park, CA, USA) with parameters: ccs --min-passes 3 --num-threads 24. The CCS bam files were pre-processed
+and combined using the IsoSeq3 pipeline (lima v2.4.0, refine v3.4.0, cluster v3.4.0; ​h​t​t​p​s​:​/​/​g​i​t​h​u​b​.​c​o​m​/​P​a​c​i​f​i​c​
+B​i​o​s​c​i​e​n​c​e​s​/​I​s​o​S​e​q​​​​) to generate high-quality full-length non-chimeric (HQ-FLNC) transcripts with accuracy ≥
+99% and ≥ 2 FLNC read support. To generate gene model predictions, the HQ-FLNC transcript sequences were
+mapped to their respective assemblies using minimap2 [57] with the following parameters: -ax splice -t 30 -uf
+--secondary = no -C5. The non-redundant gene models were obtained from the HQ-FLNC primary alignments
+and assembled genomes using the Transcriptome Annotation by Modular Algorithms (TAMA) program suite’s
+collapse tool (https://github.com/GenomeRIK/tama.git) [58]. Transcript models with 5’-degraded ends and ​i​s​o​f​o​
+r​m​s with < 2 full-length CCS read support were filtered out using the script tama_remove_fragment_models.py.
+
+Genome annotation
+
+Genome annotation is an intricate process that begins with the characterization and precise determination of the
+physical positions of genomic features within DNA sequences, including repeat elements, protein-coding and
+non-coding genes. The subsequent functional annotation assigns biological descriptions to the identified struc-
+tural features. A detailed workflow describing the computational tools and parameters is depicted in Additional
+file 1: Fig. S2 and described in more detail below.
+
+Repeat sequence annotation and insertion time analysis
+
+Annotation of repeat sequences was performed using a de novo repeat library created using the Extensive De novo
+Transposable Elements annotator (EDTA v2.2.1) pipeline [59] (parameters: --overwrite 1 --sensitive 1 --anno 1
+--evaluate 1–cds --curatedlib). The TREP database [60] was used as a curated library to maintain consistent
+naming and classification of TEs. EDTA integrates a number of best-performing structure and homology-based
+detection programs, including LTRharvest [61], LTR_FINDER [62], LTR_retriever [63], Generic Repeat Finder
+(GRF) [64], TIR-Learner [65], HelitronScanner [66], AnnoSINE [67], RepeatModeler [68] and RepeatMasker
+[69], to annotate the predominant transposable element (TE) classes found in plant genomes. To exclude genic
+regions from the TE masking, the gene models predicted from the IsoSeq long reads using the TAMA collapse
+tool [58] were provided as BED files, and published gene coding sequences (CDS) of Ae. umbellulata TA1851
+and Ae. comosa were provided as FASTA files. The output of EDTA comprised the TE counts and their relative
+genomic proportions. The centromere positions of the pseudochromosomes were determined by analyzing the
+density distribution of Class-I long terminal repeat (LTR) Ty3/Gypsy family Cereba and Quinta elements, identi-
+fied through BLAST searches against the TE annotation results [70]. The 5′ and 3′ long-terminal repeats (LTRs)
+of intact LTR retrotransposons, identified with LTR_retriever v2.9.9 [63] within EDTA, were utilized to estimate
+insertion time (T) using the formula, T = Ks/2r, where K is the divergence between the two LTRs and r is the rate
+of nucleotide substitutions per site per year. A substitution rate of 1.3 × 10− 8 was applied [71, 72] .
+
+
+
+
+BMC Plant Biology
+Article in Press                                                 https://doi.org/10.1186/s12870-026-10046-2
+
+Annotation of protein-coding genes
+
+ Structural gene annotation was carried out using a strategy combining ab initio gene prediction, transcriptomic
+evidence and homology-based prediction. Bedtools v2.30 [73] was used to softmask the genomes with TEs iden-
+tified using EDTA in preparation for annotating protein-coding genes. For ab initio gene prediction, AUGUSTUS
+v3.3.2 [74] using BRAKER v3.0.3 [75, 76] was employed with the guiding hints generated from spliced-aligned
+RNASeq reads and a dataset of annotated proteins constructed as described in Additional file 3: Sect. 10. Pre-
+dicted protein sequences from the IsoSeq TAMA collapse non-redundant set of transcripts were obtained using
+the GeneMarkS-T algorithm [77] with default parameters. TSEBRA v1.0.3 [78] was utilized to merge and select
+gene predictions from BRAKER with RNASeq data and protein modes, and GeneMarkS-T into a non-redundant
+gene sets.
+     For transcriptome evidence, an improved hybrid reference-based assembly pipeline from StringTie2 v2.1.7
+[79] was employed using IsoSeq and RNASeq data (Additional file 3: Sect. 11). For homology-based gene
+predictions, annotated HC and LC predicted proteins form Ae. tauschii [16], Ae. speltoides, Ae. longissima and
+Ae. sharonensis [17, 18, 21] were downloaded to create a non-redundant protein database using CD-HIT v4.7
+(parameter: -c 95) [80]. This database was subsequently mapped against the genome assemblies using Miniprot
+v0.6 [81]. Only the top-ranked predictions without frameshift or in-frame stop codons were retained. The predic-
+tions from TSEBRA, transcriptomic evidence and homology-based approaches were integrated using EVidenc-
+eModeler (EVM) [82] to obtain the consensus gene model sets representing the protein-coding genes. Confidence
+classifications of predicted gene models were carried out similarly to previously described protocols [17, 83]
+(Additional file 1: Table S4 and Additional file 3: Sect. 12). BUSCO against the embryophyta_odb10 database
+was employed in protein mode to assess the completeness of the gene annotations. The functional annotation of
+HC and LC predicted protein sequences was performed using the Automatic Assignment of Human-Readable
+Descriptions (AHRD) pipeline [84] which uses BLASTp to assign function and the Gene Ontology (GO) data-
+base to assign GO terms [85]. AHRD assigns a three-character sequence quality code for each protein where each
+character is denoted as “*” when the corresponding criteria are fulfilled or ‘-’ when they are not.
+
+Whole genome comparison, genome synteny and gene duplication analyses
+
+Minimap2 was utilized to align the pseudochromosome assemblies of diploid Aegilops with previously published
+Aegilops reference genomes. The alignment results were visualized as dot plots created using D-GENIES [86].
+Collinear blocks (regions containing > 5 collinear genes) between pseudochromosomes of genome assemblies
+were identified using MCScanX [87] using an all-vs-all BLAST alignment (with default settings) of the protein-
+coding sequences. The DupGen_finder-unique.pl module of the DupGen_finder [88], with default parameters,
+was utilized to identify various gene duplication modes with Hordeum vulgare as a reference outgroup species.
+
+Orthogroups identification and phylogenetic analysis
+
+Orthofinder v2.5.5 [89] was employed to identify the shared orthogroups among Aegilops and Triticum using
+Hordeum vulgare as an outgroup. The HC proteins of 17 diploid Aegilops accessions representing ten species,
+T. monococcum TA299 and TA10622, T. urartu G1812, T. turgidum ssp. dicoccoides Zavitan v1.0, T. timophee-
+vii PI94760, T. aestivum Chinese Spring (CS) RefSeq v2.1 [90] and Hordeum vulgare MorexV3 [35] were
+used. For the polyploid Triticum genomes, the HC proteins from their diploid subgenomes (A, B or D) were
+extracted, retaining only the largest protein coding isoforms. Phylogenetic analysis was carried out using the
+protein sequences from single-copy orthogroups obtained using Orthofinder, i.e. groups comprising exactly one
+protein sequence for each diploid genome (species) or diploid subgenome in the case of polyploid species. Each
+single-copy orthogroup was aligned using MAFFT v7.5.20 with default parameters [91]. Gblocks v0.91b [92]
+was utilized to trim ambiguous regions within each alignment using parameters -t = p -b5 = h. The alignments
+
+                                                                                                BMC Plant Biology
+https://doi.org/10.1186/s12870-026-10046-2                                                      Article in Press
+
+obtained were concatenated to produce a supermatrix to generate a maximum-likelihood (ML) phylogenetic tree
+using IQ-TREE 2 [93]. Shimodaira-Hasegawa-like approximate likelihood ratio test (SH-aLRT) [94] and Ultra-
+fast Bootstrap Approximation (UFB) [95], each using 10,000 bootstrap replicates, were implemented to evaluate
+node reliability and assess branch support. The best-fit model based on Bayesian Information Criterion (BIC)
+was identified using ModelFinder [96]. Visualization of the retained phylogenetic tree was carried out using
+EvolView [97].
+
+
+Results
+
+Genome sequencing, assembly and size estimation
+
+A hybrid approach, integrating PacBio HiFi sequencing, Bionano optical mapping and Hi-C data was imple-
+mented to produce chromosome-level reference assemblies of Ae. comosa, Ae. markgrafii, Ae. uniaristata, and
+Ae. umbellulata. Between 143 and 195 Gb HiFi reads with an average CCS length of 13,988 − 15,769 bp resulted
+in an estimated genome coverage of 28.1-35.8X (Additional file 1: Table S5). Hybrid scaffolding with the Bion-
+ano optical map resulted in scaffolds with improved contiguity. Finally, chromosomal-level scaffolds were con-
+structed by orienting and ordering hybrid scaffolds using 43 to 91X paired-end Hi-C data generated for each
+Aegilops species (Additional file 1: Table S5). For instance, Hi-C scaffolding, as depicted in Fig. 1A contact
+matrix, assigned ~ 99% of the Ae. markgrafii genome of accession EKC105_RL5723 to seven pseudomolecules.
+The chromosome-level genome assemblies produced herein ranged in size from 3.58 to 4.48 Gb (Table 1), which
+is comparable to the previously published diploid Aegilops species (4.02–6.7 Gb) [16–19, 21]. Methods and
+assembly statistics have been summarized for all available diploid Aegilops reference genomes (Additional file
+1: Table S6).
+   The Ae. comosa IPK-AE783 assembly of 4.41 Gb with contig N90 and N50 of 50.61 and 172.45 Mb, respec-
+tively, compared advantageously with the recently published assembly of Ae. comosa PI551049 which had an
+contig N50 of 23.59 Mb [20]. Similarly, our assembly of Ae. umbellulata IPK-AE740 had contig N90 values
+(12.05 M) that exceeded the recently reported Ae. umbellulata TA1851 (5.18 Mb) [22] and PI 554,389 (8.79 Mb)
+[23]. Overall, the contig N50 and N90 values of diploid Aegilops assemblies produced herein using PacBio HiFi
+and Bionano optical map exceed the contiguity of Aegilops assemblies published to date (Fig. 1B and Additional
+file 1: Table S6). The seven pseudomolecules of the four Aegilops assemblies incorporated 96.4 to 99.9% of the
+scaffolds, with the remaining being assigned to a “Chromosome Unknown” (ChrUn) that represents the concat-
+enated unmapped scaffolds not assigned to pseudomolecules (Table 1 and Additional file 1: Table S7). The com-
+pleteness of the genome assemblies, evaluated using Benchmarking Universal Single-Copy Orthologs (BUSCO)
+[49, 98] in genome mode indicated 97.8 to 98.3% completeness of 1,614 single-copy embryophyte genes (Fig. 1C
+and Additional file 2: Table S8). The nuclear DNA content of each species estimated by flow cytometry ranged
+from 4.3 to 5.4 Gb (Table 1), which is consistent with previous estimates of 4.4-6.0 Gb for Aegilops diploid
+genomes [18, 99].
+
+Annotation and analysis of transposable elements
+
+Approximately 3.1–3.9 Gb of repeat elements, representing 86.3–88.2% of the assemblies, were annotated. Class-
+I long terminal repeat (LTR) retrotransposons were the most abundant, with Ty1/Copia and Ty3/Gypsy super-
+families representing the largest fractions, accounting for ~ 17.4–23.3% and 39.5–47.1%, respectively (Table 2),
+similar to the other Aegilops species annotated to date (Fig. 2A). Ty3/Gypsy were enriched in the centromeric
+regions, and their density was inversely correlated with the gene density, while Ty1/Copia tended to be more
+uniformly distributed along chromosomes (Fig. 2B, shown for the representative assembly of Ae. markgrafii
+EKC105_RL5723; the other three species are presented in Additional file 1: Fig.S3).
+
+BMC Plant Biology
+Article in Press                                                        https://doi.org/10.1186/s12870-026-10046-2
+
+
+
+
+Fig. 1 Genome assembly and statistics of four Aegilops diploid species. A A Hi-C contact heatmap for Ae. markgrafii
+EKC105_RL5723 post-integration of Hi-C data and pre-manual correction illustrating pairwise interaction between loci
+within and between chromosomes. Black squares represent individual chromosomes and the interaction intensity is repre-
+sented by light to dark red color, indicating low (light) to high (dark) interaction frequency. B Comparison of the assembly
+quality statistics contigs N50 and N90 of the four diploid Aegilops genome assemblies produced herein and those previously
+published. The labelled genomes include the published sequences of Ae. comosa (PI 551049a) Ae. speltoides (AEG-9674-1b,
+TS01c, Y2032d), Ae. longissima (TL05e, AEG-6782-2f), Ae. searsii TE01g, Ae. sharonensis (TH02h, AS1644i), Ae. bicor-
+nis TB01j, Ae. umbellulata (TA1851k, PI 554389l), Ae. tauschii AL8/78m, Ae. mutica TR04n, and Ae. mutica 2,130,012o.
+Additional assembly statistics are provided in Additional file 1: Table S6. C BUSCO completeness assessment of the four
+Aegilops diploid genome assemblies based on embryophyta_odb10 dataset
+
+
+   Long interspersed nuclear elements (LINEs) accounted for a mere 0.3–0.4%, consistent with the assemblies of
+the Aegilops from the Sitopsis Sects [17, 18]. Short interspersed nuclear elements (SINEs), first reported in Ae.
+umbellulata [100] and often detected within protein-coding regions, represented 1.1–1.3% of the genome of the
+four Aegilops assemblies [101]. CACTA transposons covered 7.5–11.2% of the assemblies, comparable to the
+previously published Aegilops assemblies (5.1–17.1%). The consistency was also true for other Class II DNA
+transposons such as Mutator, Tc1/Mariner and Helitrons [16–19]. Both SINEs and CACTA families showed an
+enrichment in distal chromosomal regions and their distribution pattern directly corelated with gene densities
+(Fig. 2B and Additional file 1: Fig. S3). The Ty3/Gypsy elements Cereba and Quinta are enriched in centromeric
+regions but absent from the rest of the genome [70, 102], and analysis of their density distribution along the chro-
+mosomes identified the centromeric regions in the assemblies (Fig. 2B and Additional file 1: Fig. S3). The 45 S
+rDNA content in the four assemblies was low (0.00-0.04%), and no 45 S rDNA was annotated in Ae. umbellulata.
+
+                                                                                                           BMC Plant Biology
+https://doi.org/10.1186/s12870-026-10046-2                                                                              Article in Press
+
+Table 1 Genome assembly statistics of four diploid Aegilops genomes
+                                       Ae. comosa                Ae. markgrafii             Ae. umbellulata             Ae. uniaristata
+Accession no.                          IPK-AE783                 EKC105_RL5723              IPK-AE740                   IPK-AE680
+Genome size (Gb)                       5.3 ± 0.01                4.3 ± 0.01                 5.1 ± 0.01                  5.4 ± 0.03
+Assembly size (Gb)                     4.41                      3.58                       4.40                        4.48
+No. of pseudochromosomes               7                         7                          7                           7
+Pseudochromosome size (Gb)             4.41 (99.90%)             3.57 (99.72%)              4.24 (96.40%)               4.46 (99.70%)
+No. unplaced scaffolds                 10                        17                         244                         14
+Unplaced scaffold size (Gb)            0.004 (0.10%)             0.013 (0.28%)              0.160 (3.60%)               0.013 (0.30%)
+Coverage (PacBio HiFi)                 30.4x                     35.4x                      28.1x                       35.8×
+Coverage (Hi-C)                        55.7x                     91x                        43.5x                       72.5×
+Assembly method                        Hifiasm,                  Hifiasm                    Hifiasm                     Hifiasm
+Scaffolding method                     Bionanoa, Hi-Cb           Bionanoa, Hi-Cb            Bionanoa, Hi-Cb             Bionanoa, Hi-Cb
+BUSCO (%)                              98.4                      98.1                       98.0                        97.9
+The values in parentheses for Pseudochromosome size (Gb) corresponds to percentage of assemblies assigned to seven pseudomolecules
+The values in parentheses for Unplaced scaffold size (Gb) corresponds to percentage of assemblies assigned to chromosome unknown
+a
+    Bionano scaffolding tool hybridScaffold.pl
+b
+    Chromosome-scale scaffolds with Hi-C data using YaHS tool
+
+
+
+Table 2 Repeat element content by class in four diploid Aegilops assemblies
+Order/Superfamily (code)                       Ae. comosa               Ae. markgrafii            Ae. umbellulata          Ae. uniaristata
+Class I Retrotransposons
+  Long terminal repeat (LTR)
+     Ty3/Gypsy (RLG)                           42.9 (1889.17)           45.2 (1613.77)            47.1 (1990.00)           39.5 (1766.36)
+   Ty1/Copia (RLC)                             23.3 (1026.49)           19.0 (676.58)             17.4 (733.97)            20.9 (932.43)
+   Unclassified LTR-RT (RLX)                   4.3 (188.48)             6.7 (238.38)              5.0 (213.6)              8.2 (367.40)
+  Non-LTR
+   Unknown                                     0                        0                         0.01 (0.61)              0
+   LINE (RIX)                                  0.3 (14.12)              0.3 (11.83)               0.4 (16.41)              0.4 (15.95)
+   SINE (RSX)                                  1.1 (49.73)              1.3 (45.22)               1.2 (51.39)              1.2 (51.85)
+Class II DNA transposons
+  Subclass I
+   CACTA (DTC)                                 9.3 (408.89)             7.5 (267.83)              9.9 (419.09)             11.2 (500.22)
+  Mutator (DTM)                                0.8 (34.99)              1.0 (34.62)               1.0 (40.92)              0.8 (35.92)
+  PIF-Harbinger (DTH)                          1.1 (46.86)              1.2 (42.46)               1.1 (45.64)              1.1 (47.00)
+   Tc1-Mariner (DTT)                           1.8 (77.28)              1.2 (42.05)               1.2 (50.29)              1.2 (55.56)
+  hAT (DTA)                                    0.2 (9.02)               0.3 (9.97)                0.2 (9.34)               0.2 (10.03)
+  Subclass 2
+   Helitrons (DHH)                             2.1 (91.28)              1.8 (63.96)               1.8 (74.00)              2.5 (113.09)
+rDNA
+  45 S                                         0.02 (1.05)              0.04 (1.47)               0.00                     0.01 (0.27)
+Unclassified repeats (XXX)                     1 (42.68)                0.9 (31.72)               1 (41.62)                0.8 (35.04)
+Total                                          88.2 (3881.01)           86.3 (3079.81)            87. 2 (3687.30)          87.9 (3931.90)
+Values are given as percentage of the total assembly, with the corresponding sequence content in megabases (Mb) shown in parentheses
+
+
+These values reflect the well-documented collapse of megabase-scale rDNA arrays during contig assembly rather
+than true copy number. In Ae. umbellulata, 45 S rDNA loci have been physically mapped to the short arms of
+chromosomes 1U and 5U [103], and the independently assembled accession TA1851 recovered telomeric repeats
+at all pseudomolecules termini except these two arms, an absence attributed to the presence of rDNA arrays at
+these positions [22].
+   To elucidate the evolutionary dynamics of LTR retrotransposons, the insertion time distribution of intact Ty3/
+Gypsy and Ty1/Copia family LTRs in four diploid Aegilops was analyzed (Fig. 3). In total, 25,948 to 41,939
+
+
+BMC Plant Biology
+Article in Press                                                       https://doi.org/10.1186/s12870-026-10046-2
+
+
+
+
+Fig. 2 Transposable element (TE) and gene distribution analyses. A TE composition in Aegilops diploid genome assem-
+blies. The proportions of class-1 long-terminal repeat retrotransposons (LTR-RTs) Ty3/Gypsy (light red), Ty1/Copia (light
+blue) and unclassified LTR-RTs (light yellow), which form a predominant group of TEs in diploid Aegilops genomes, are
+depicted. The published genomes of Ae. comosa (PI 551049a) Ae. speltoides (AEG-9674-1b, TS01c, Y2032d), Ae. longis-
+sima (TL05e, AEG-6782-2f), Ae. searsii TE01g, Ae. sharonensis (TH02h, AS1644i), Ae. bicornis TB01j, Ae. umbellulata
+(TA1851k, PI 554389l), Ae. tauschii AL8/78m, and Ae. mutica 2,130,012o are labelled. Additional datasets on distribution of
+TEs subfamilies are shown in Table 3. B Density distribution of transposable elements (TEs) and protein coding genes from
+Ae. markgrafii EKC105_RL5723 across the seven chromosomes calculated using sliding 250Kb windows. Ty3/Gypsy and
+Ty1/Copia TEs are represented by stack plots. Centromeric regions, identified using Cereba and Quinta TEs, are indicated
+by black squares and the density distribution of CACTA and SINE repeats, and high-and low-confidence genes are depicted
+by heatmaps with color indicates ranging from blue (low) to red (high)
+
+
+Ty1/Copia and 29,733 to 41,939 Ty3/Gypsy elements were identified and analyzed. Both Ae. comosa (M) and
+Ae. markgrafii (C) exhibited distinct patterns of insertion times with higher proportion of recent LTR insertions
+compared to Ae. uniaristata (N) and Ae. umbellulata (U) which showed a predominance of ancient LTR insertion
+activities. For instance, in Ae. comosa, a bimodal distribution was observed for Ty3/Gypsy, with a broader peak at
+~ 1 million years ago (Ma) and a more recent sharp peak at ~ < 0.5 Ma, while the Ty1/Copia elements underwent
+a recent burst of insertions ~ 0.5 Ma. A similar pattern was observed in Ae. markgrafii, albeit with a sharper peak
+for both Ty3/Gypsy and Ty1/Copia at ~ 0.5 Ma, suggesting more recent and synchronous bursts of activity of
+these elements in that genome. In contrast, a more unimodal distribution with a broader spread was observed for
+the insertion times of both Ty3/Gypsy and Ty1/Copia in Ae. uniaristata and Ae. umbellulata. In all four Aegilops
+genomes, Ty3/Gypsy showed an early burst occurring at ~ 1 Ma compared to Ty1/Copia elements ~ 0.5 Ma.
+
+Integration of RNASeq and IsoSeq data to improve gene annotation
+
+The combined power of RNASeq and IsoSeq data was harnessed for gene prediction accuracy. RNASeq of ten
+tissues and three biological replicates from each species generated ~ 50 million high-quality reads per tissue
+sample, totaling 441–459 Gb per species (Additional file 1: Table S9) that served as guiding hints and transcrip-
+tome databases for gene prediction. The N50 of the standard and long IsoSeq libraries was ~ 2 and ~ 3–4 Kb,
+respectively (Additional file 1: Table S10), with the longest transcripts being 17–33 Kb, a testament of the RNA
+integrity. Combined, these libraries provided adequate coverage, as evidenced from the read length distribution
+
+
+                                                                                                          BMC Plant Biology
+https://doi.org/10.1186/s12870-026-10046-2                                                                  Article in Press
+
+
+
+
+Fig. 3 Distribution of intact LTR insertion times of Ty1/Copia and Ty3/Gypsy among four diploid Aegilops species. The
+x-axis represents insertion time in million years (MY), and y-axis shows the total (count) of occurrence of insertions of Ty3/
+Gypsy (red), Ty1/Copia (blue) and Unknown (grey) elements
+
+
+(Additional file 1: Fig. S4). A total of 79.5 Gb, including 32.15 Gb from the standard and 47.35 Gb from the long
+libraries were generated (Additional file 1: Table S6). Merging, clustering and collapsing with the isoseq3 pipe-
+line yielded between 299,518 and 392,849 high-quality full-length non-chimeric (HQ-FLNC) transcripts from
+which TAMA collapse identified 28,667 to 31,836 gene models depending on the species.
+
+Gene annotation
+
+Using a hybrid structural annotation workflow that combined ab initio, transcriptome- and homology-based pre-
+diction methods, 47,246 to 51,203 protein-coding genes were annotated for the four diploid Aegilops species,
+including 34,133 to 37,623 high-confidence (HC) and 13,113 to 14,600 low-confidence (LC) genes (Table 3, and
+Additional file 1: Table S11). Between 97.8 and 99.9% of the annotated genes were located on the seven structural
+chromosomes (Additional file 1: Table S12) and were preferentially distributed at their distal ends (Fig. 2B and
+Additional file 1: Fig. S3). Approximately 66 to 68% of the HC genes were multi-exonic, averaging 4.1 to 4.3
+exons per genes, with mean length (2,646- 2,804 bp) similar to previously reported [17–20, 22, 23]. However,
+the average intron lengths of 459–469 bp were notably shorter than previously reported for the Sitopsis sec-
+tion assemblies which ranged from 481 to 860 bp [17–19]. The numbers of HC genes per chromosomes for Ae.
+umbellulata and Ae. comosa were similar across accessions (Additional file 1: Table S13 and Additional file 2:
+Table S14). BUSCO scores of the annotated protein-coding genes of the four assemblies, based on a set of 1,614
+single-copy ortholog genes from the Embryophyta lineage (embryophyta_odb10), ranged from 96.6 to 97.2% for
+the four diploid Aegilops assemblies reported herein (Additional file 2: Table S15).
+
+
+
+BMC Plant Biology
+Article in Press                                                         https://doi.org/10.1186/s12870-026-10046-2
+
+Table 3 Protein-coding gene annotation from four diploid Aegilops species assemblies
+                                    Ae. comosa          Ae. markgrafii              Ae. umbellulata     Ae. uniaristata
+Total protein-coding genes          51,203              47,246             49,677                       50,416
+  High-confidence (HC) genes        37,622              34,133             35,799                       35,816
+  Low-confidence (LC) genes         13,581              13,113             13,878                       14,600
+Gene features of HC genes
+  No. single-exon genes             12,426              11,122             11,329                       11,375
+  No. multi-exon genes              25,195              23,011             24,470                       24,441
+  Mean exons per genes              4.1                 4.3                4.2                          4.2
+  Mean exon length (bp)             291                 284                285                          287
+  Mean intron length (bp)           459                 469                463                          468
+  Mean CDS length (bp)              1,204               1,233              1,211                        1,207
+  Mean gene length(bp)              2,646               2,804              2,713                        2,709
+BUSCO (%)                           97.2                96.6               96.9                         96.6
+
+
+   Using the RNASeq and IsoSeq data, expression support was found for 77 to 82% of the gene models (HC
+and LC) (Additional file 1: Table S11). Functional annotation using Automatic Assignment of Human Readable
+Descriptions (AHRD) [84] assigned human-readable gene name descriptions to 88.8–90.6% (42,388 − 46,400)
+of the gene models, of which 71.6–73.3% (34,631 − 37,248) were annotated with the highest-quality score, and
+9.4–11.2% (4,805-5,630) were annotated as “unknown proteins” (Additional file 1: Table S16).
+
+Orthology and multi-gene phylogenetic analyses revealed close relationship of M, C, N and U genomes
+within the D-lineage
+
+The orthology analysis using Orthofinder [89] revealed both shared and unique orthogroups across species by
+comparing annotated proteins from our and the previously published diploid Aegilops and polyploid Triticum
+genome annotations (Additional file 1: Table S17). Of the 1,692,184 proteins from 17 Aegilops genomes, nine
+Triticum subgenomes and the H. vulgare genome, 1,554,113 (91.8%) clustered into 96,381 orthogroups, of which
+8,349 were considered core because they included at least one or more proteins from each of the 27 genomes or
+subgenomes analyzed (Fig. 4A). Of this core set, 2,706 orthogroups contained exactly one orthologous copy in
+each genome or subgenome.
+   To determine the relationships among Aegilops and Triticum species, a maximum-likelihood (ML) phylo-
+genetic tree was generated with best-fit JTT + F+I+R6 model using a concatenated matrix of these 2,706 core
+single-copy orthogroups, using H. vulgare as an outgroup. Three major clades, corresponding to the A, B and D
+lineages were observed (Fig. 4B). All Aegilops species belonged to the D-lineage, except Ae. speltoides which
+clustered with the B-lineage. The remaining four species of the Sitopsis section, namely Ae. searsii, Ae. bicornis,
+Ae. longissima and Ae. sharonensis clustered within the D-lineage clade. This clade also includes the recently
+published genomes of Ae. comosa PI 551,049 [20] and Ae. umbellulata TA1851 [22].
+
+Comparative analysis of chromosome-level assemblies of the M, C, N and U genomes
+
+Gene duplication analyses identified and categorized duplicated gene pairs within the four diploid Aegilops
+genomes. Of the ~ 47–51 K genes, dispersed duplicates (DSD) was the predominant mode of duplication, rang-
+ing from 47 to 64%. This was followed by transposed duplicate (TRD) at 10.45–12.73%, tandem duplicate (TD)
+at 7.77–8.25%, proximal duplicate (PD) at 5.33–8.85%, and whole genome duplicate (WGD) at 2.93–3.93%
+(Fig. 5A). The macro- and micro-collinearity of genes among the four diploid Aegilops genomes and the Ae.
+tauschii genome revealed a generally conserved synteny across chromosomes, but also revealed many inter-
+and intra-chromosomal rearrangements between genomes (Fig. 5B). These include previously reported [22, 23]
+prominent non-reciprocal translocations in chromosome 4U and 6U of Ae. umbellulata, and chromosome 4 C
+
+
+                                                                                                      BMC Plant Biology
+https://doi.org/10.1186/s12870-026-10046-2                                                               Article in Press
+
+
+
+
+Fig. 4 Orthology and phylogenetic analyses. A UpSet plot illustrating the unique, shared and core orthogroups common to
+the 27 genomes or subgenomes analyzed, and highlighting the unique and shared orthogroups among four diploid Aegil-
+ops species assembled and annotated herein. The UpSet plot was generated using UpSetR v1.4.0. Horizontal bars indicate
+the total number of orthogroups per genome, vertical bars indicate the number of orthogroups in each intersection. B A
+maximum-likelihood (ML) phylogenetic tree with best-fit JTT + F+I+R6 model based on 2,706 core single-copy ortholo-
+gous proteins present in 17 Aegilops accessions representing ten diploid Aegilops species and six Triticum accessions rep-
+resenting five species. The tetraploid T. turgidum ssp. dicoccoides and T. timopheevii, and the hexaploid T. aestivum were
+subdivided into their respective subgenomes (A, B, D and G). Barley (H. vulgare) was used as an outgroup. The red/blue
+colored numbers (%) at each nodes represent significant statistical support values as SH-aLRT (red) and UFB (blue) obtained
+using 10,000 replicates. Genomes/subgenomes are shown in parentheses and the four newly sequenced diploid Aegilops are
+marked with red stars
+
+
+of Ae. markgrafii (Additional file 1: Fig. S5A). The acrocentric chromosome 4 C of Ae. markgrafii is smaller
+(455 Mb) than chromosome 4 of other genomes (553-664 Mb) (Additional file 1: Fig. S5B). This size reduction
+is attributed to deletions and a translocation to the long arm of chromosome 2 C [104]. In submetacentric chro-
+mosome 2 C of Ae. markgrafii, an intrachromosomal translocation and an intercalary translocation involving a
+collinear block homologous to the long arm of chromosome 4D was identified (Additional file 1: Fig. S6A). In
+acrocentric chromosome 6 C, a parcentric inverted translocation is present at the distal end (Additional file 1: Fig.
+S6B). These observations are consistent with previous findings obtained from FISH mapping and comparative
+sequence analyses, which have elucidated the macrostructure of Ae. markgrafii chromosomes [104, 105]. Also,
+chromosome 1 N of Ae. uniaristata, which is mostly collinear to chromosome 1 of the D, M, C, and U genomes,
+contains an intrachromosomal translocation at the distal end (Additional file 1: Fig. S6C). Interestingly, an inter-
+chromosomal translocation event between 1Nv and 3D, recently identified using the tetraploid Ae. ventricosa
+(DN) RM271 N-genome [106], was also confirmed in our collinearity analysis. However, this inverted transloca-
+tion on chromosome 1 N of Ae. uniaristata IPK-AE680 is paracentric and located near the distal end (Additional
+file 1: Fig. S6D). Chromosome-by-chromosome sequence comparisons between Ae. umbellulata IPK-AE740 and
+TA1851 [22] revealed a ~ 30-Mb inversion in chromosome 1U (Fig. 5C upper panel).
+
+
+
+
+BMC Plant Biology
+Article in Press                                                       https://doi.org/10.1186/s12870-026-10046-2
+
+
+
+
+Fig. 5 Gene duplication and comparative genomic analysis. A Distribution of duplicated genes including dispersed dupli-
+cates (DSD), proximal duplicates (PD), tandem duplicates (TD), transposed duplicates (TRD) and whole genome duplicates
+(WGD) across four diploid Aegilops genome assemblies. The y-axis indicates the number of duplicated gene pairs assigned
+to each mode B Gene synteny across Ae. comosa, Ae. markgrafii, Ae. uniaristata and Ae. umbellulata with the published Ae.
+tauschii assembly annotation [16]. Ribbons are colored accordingly to chromosome of origin, and ribbons linking homolo-
+gous chromosome indicate conserved collinearity, whereas ribbons that cross or terminate on different chromosomes depicts
+the intra- and inter-chromosomal rearrangements. Grey lines in the background represent collinear blocks identified between
+adjacent genomes and represent the conserved syntenic backbone. C Dot plots depicting whole-genome alignments between
+individual chromosomes. The top panel shows the alignment between Ae. umbellulata IPK-AE740 (this study) on the y-axis,
+and Ae. umbellulata TA1851 [22] on the x-axis. The axes are given in megabases (Mb) of pseudochromosome coordinates,
+with individual labelled and delaminated along each axis. The bottom panel shows Ae. comosa IPK-AE783 (this study) on
+the y-axis and Ae. comosa PI 551,049 [20] on the x-axis. Individual chromosomes are labelled
+
+
+Discussion
+
+The potential of Aegilops species for wheat improvement has attracted scientific community for more than a
+century [10, 12, 107]. Despite their rich genetic diversity, Aegilops species remain largely underutilized. The
+development of robust genomic resources and improved molecular tools are expected to assist in unlocking their
+full potential [108]. The generation of high-quality, chromosome-level reference genome assemblies and compre-
+hensive annotation of our study expands our understanding of the genomic resources of four additional diploid
+Aegilops species: Ae. comosa, Ae. markgrafii, Ae. umbellulata and Ae. uniaristata. The completion of all 11
+diploid Aegilops genomes constitutes a milestone towards the study of the remaining polyploid genomes within
+
+
+                                                                                                          BMC Plant Biology
+https://doi.org/10.1186/s12870-026-10046-2                                                         Article in Press
+
+this genus. High contiguity and completeness of the assemblies were achieved through a hybrid sequencing and
+scaffolding approach that integrated PacBio HiFi sequencing, Bionano optical mapping and Hi-C. The assembly
+sizes, ranging from 3.58 to 4.48 Gb, align well with the reported sizes for other diploid Aegilops genomes [15,
+17–19, 22, 23], T. urartu (4.86 Gb) [109], and Hordeum vulgare (4.2 Gb) [35], although they are consistently
+smaller than the flow cytometry estimates, a typical phenomenon in large grass genomes [18, 110]. Highly repeti-
+tive and duplicated chromosomal DNA sequences may account for the possible flow cytometry overestimations
+[18, 111, 112]. Moreover, both inter- and intra-specific variability in genome sizes have been reported for Aegil-
+ops species [99], and genome size differences of up to 15% were reported [113].
+   Transposable elements (TEs) make up more than 80% of Triticum and Aegilops species genomes [18, 70, 114–
+116]. Although the total proportion of TE content was relatively stable across the four diploid Aegilops species
+(86.3–88.2%), the observed differential distribution of Ty3/Gypsy and Ty1/Copia elements, and the enrichment
+of SINE and CACTA elements in distal chromosomal regions are consistent with patterns seen in other monocot
+genomes [15, 109, 117–119]. The higher Ty3/Gypsy:Ty1/Copia ratio in wheat [120] and Aegilops [17–20, 22]
+reflects the differential accumulation of TE families across these genomes. Differences observed in TEs across
+assemblies could be biological, but could also result from differences in annotation protocols. For example,
+2.45% CACTA were annotated in Ae. umbellulata TA1851 using the EDTA pipeline without the TREP database
+[22], but with the latter, we annotated 9.91% CACTA in Ae. umbellulata IPK-AE740. Consequently, the use of
+TREP database has methodological consequences that extend beyond repeat quantification and propagates into
+gene prediction. Repeat elements such as CACTA often carry transposase-coding domains and captured host
+gene fragments, and incomplete annotation of this superfamily leaves coding-like sequence unmasked, and are
+readily predicted as protein-coding genes by ab initio methods. The integration of a curated Triticeae repeat
+library therefore increase the fraction of the assemblies to be soft-masked prior to gene annotation and reduced
+the likelihood of TE-derived gene overprediction. Resolving rDNA arrays in Aegilops will require ultra-long
+ONT reads or targeted assembly strategies, as demonstrated for bread wheat [121], and these regions remain
+recognized gap in current Triticeae references.
+   The recent bursts of Ty1/Copia and Ty3/Gypsy LTR TEs in Ae. comosa and Ae. markgrafii illustrate the dynamic
+structural evolution of these genomes [70, 122], as potentially driven by environmental pressures [123] or specia-
+tion events [124]. In contrast, the broad peaks of these LTR TEs in Ae. uniaristata and Ae. umbellulata indicate
+a more gradual insertion accumulation process in these species [70]. These differences in transpositional activity
+of TE families could be species-specific to a large extent [125].
+   The integration of high-accuracy long-read IsoSeq and deep sequence coverage RNASeq data proved crucial
+for robust gene prediction and annotation quality as exemplified by the comprehensive summary of gene annota-
+tion methods and results for diploid Aegilops (Additional file 1: Table S18) and the distribution of the annotated
+protein-coding HC genes on scaffolds (Additional file 2: Table S14). IsoSeq produced high-quality full-length
+cDNA sequences that accurately map intron-exon structures and flanking untranslated regions without the need
+for assembly [126], as demonstrated in several plant genomes [127–129]. Several recent studies have demon-
+strated the combined use of IsoSeq and RNASeq to improve the accuracy of gene annotation and gain compre-
+hensive insights into the extent and the diversity of isoforms [130–133]. Functional annotation using AHRD [84]
+provided qualitative descriptions of the final annotated set of protein-coding genes, as previously reported for
+diploid Aegilops [17], barley [134], and lablab [135]. The high BUSCO completeness metrics demonstrate com-
+parable or superior gene completeness compared to published diploid Aegilops assembly annotations, uphold-
+ing the importance of combining evidence-based (IsoSeq + RNASeq) and ab initio methods to achieve quality
+annotations.
+   Unravelling the phylogeny and genome composition of polyploid Triticeae species remains challenging due
+to the abundance of repeat DNA sequences, frequent hybridizations and complex evolutionary histories [136].
+Advanced genomic approaches can overcome these challenges. Here orthology and phylogenetic analyses were
+used to depict the evolutionary relationships among Aegilops and Triticum species. With the exception of Ae.
+speltoides within the B-lineage, the clustering of Aegilops species within the D-lineage is in agreement with their
+
+BMC Plant Biology
+Article in Press                                                    https://doi.org/10.1186/s12870-026-10046-2
+
+shared morphological traits [137]. This clear separation of Ae. speltoides from the other Sitopsis species aligns
+with earlier studies [138–140] and with recent findings from transcriptome-based and whole-genome molecu-
+lar phylogenies [17, 18, 141, 142]. The tree topology revealed that the four newly sequenced diploid Aegilops
+reported herein, i.e., Ae. comosa, Ae. markgrafii, Ae. umbellulata and Ae. uniaristata, alongside published Ae.
+comosa [20] and Ae. umbellulata [22, 23] genomes, formed a sister monophyletic clade within the strongly-
+supported D-lineage clade. This corroborated previous findings indicating close relationships between the C and
+U genomes, as well as between the M and N genomes [1, 141–143].
+   Comparative genomic analysis, including gene duplication and synteny, provides insights into the structural
+evolution and gene content dynamics of the genomes [144, 145]. Gene duplication, a driver of neo-functionaliza-
+tion, provides raw genetic material crucial for both adaptation and crop improvement [88, 146, 147]. Duplicated
+gene pairs within the four diploid Aegilops species were identified and categorized as follows: whole genome
+duplicate (WGD), tandem duplicate (TD), proximal duplicate (PD), transposed duplicate (TRD) and dispersed
+duplicate (DSD) [88]. The predominance of DSD suggests that these duplication events were more common over
+the course of evolution, and contributed significantly to gene duplication and genome evolution [148]. The pre-
+dominance of DSD genes has also been reported in the Ae. tauschii genome [149].
+   Synteny analysis, comparing gene orders across genomes, identifies structural variants resulting from the evo-
+lution of taxonomic groups [150]. Chromosomal rearrangements disrupt the collinearity, and thus can hinder
+introgressions of wild alleles through interspecific hybridization [151, 152]. The multiple intra- and inter-chro-
+mosomal rearrangements detected herein underscore the dynamic evolution of the Aegilops genomes, hinting at
+their potential role(s) in impeding the efficient transfer of genetic diversity from these Aegilops wild relatives to
+wheat (Triticum species) [153]. Both chromosome rearrangements and introgressions are significant in the evo-
+lution of the C, M, N, and U genomes [154]. By applying fluorescent in situ hybridization (FISH) with bulked
+oligos, Li et al. [105] confirmed rearrangements in chromosomes 2, 4, 6 and 7 of these four genomes.
+   Chromosome-by-chromosome DNA sequence analyses of Ae. umbellulata and Ae. comosa assemblies
+revealed intra-specific structural rearrangements, such as an inversion in chromosome 1U between IPK-AE740
+and TA1851 [22] and in chromosomes 3 M (distal end) and 4 M (center) between IPK-AE783 and PI 551,049
+[20]. These intra-specific structural rearrangements could represent actual, yet unconfirmed structural variants
+or could result from assembly artefacts, as the accessions compared were assembled using different sequencing
+platforms and bioinformatics pipelines, and raw data from the published assemblies were unavailable for uni-
+form reprocessing. Orthogonal validation, for example by cytogenetic mapping by oligo-FISH painting [105],
+would be required to confirm the observed structural variations. Additionally, differences in naming conven-
+tions of chromosome 4U and 6U complicate direct comparisons across studies. For instance, Abrouk et al. [22]
+assigned chromosome numbers of Ae. umbellulata TA1851 based on homology with the D genome of Ae. taus-
+chii AL8/78 [15, 16], whereas Singh et al. [23] followed the D subgenome of CS RefSeq v2.1 [90] and centro-
+meric homoeology evidence [155, 156]. Although the D genome of Ae. tauschii and the D subgenome of bread
+wheat are equivalent in origin, differences in reference genomes and assembly annotation strategies can lead to
+discrepancies in chromosome assignments. In our study, assembly and chromosome naming was based on Hi-C
+contact synteny with Ae. tauschii AL8/78 [15, 16], a close relative of Ae. umbellulata, to ensure consistency. This
+approach provides a more robust framework for interpreting structural variation and evolutionary relationships
+among Aegilops species.
+
+
+Conclusions
+
+The high-quality reference genome assemblies of Ae. comosa, Ae. markgrafii, Ae. umbellulata, and Ae. unia-
+ristata, generated using a hybrid approach combining PacBio HiFi sequencing, Bionano optical mapping and
+chromosome-level scaffolding using Hi-C data, have expanded our understanding of the genomes of Aegilops
+species. These reference assemblies display improved contiguity and completeness over previous Aegilops
+
+                                                                                                     BMC Plant Biology
+https://doi.org/10.1186/s12870-026-10046-2                                                                                                                 Article in Press
+
+assemblies. Utilizing high-accuracy long-read sequencing technology and integrating of RNASeq and IsoSeq
+data from distinct tissue samples contributed to the reliability of the repeat and protein-coding gene annotation.
+Consequently, these Aegilops reference genome assemblies and annotations offer a robust framework to enhance
+our understanding of genome complexity and diversity through comparative genomics, to exploit these gene
+pools by facilitating genomic-assisted wheat improvement through new breeding strategies.
+
+Supplementary Information The online version contains supplementary material available at https://doi.org/10.1186/
+s12870-026-10046-2.
+
+Acknowledgements We are grateful to Genome Canada, Agriculture and Agri-Food Canada and the other 11 co-funders of
+the 4D Wheat: Diversity, Domestication, Discovery and Delivery project. Administrative support from Raelene Regier and
+Genome Prairie was invaluable to the success of the project. Technical assistance from Tracey James and Dr. Sara Martin for
+the flow cytometry work is acknowledged. We are grateful to Dr. Eric Kerber (AAFC) and IPK for providing the germplasm.
+Many thanks to the AAFC greenhouse staff for their diligence in producing healthy germplasm.
+
+Clinical trial number Not applicable.
+
+Code availability All the software utilized in this study are publicly available as cited in the Materials and Method section.
+The custom codes and scripts used are available at GitLab ​(​"​h​t​t​p​s​:​/​/​g​i​t​l​a​b​.​c​o​m​/​b​i​j​e​n​r​o​/​c​h​r​o​m​o​s​o​m​e​-​l​e​v​e​l​-​r​e​f​e​r​e​n​c​e​-​g​e​n​o​m​
+e​-​a​s​s​e​m​b​l​i​e​s​-​a​n​d​-​a​n​n​o​t​a​t​i​o​n​-​o​f​-​f​o​u​r​-​d​i​p​l​o​i​d​-​a​e​g​i​l​o​p​s​​​​"​)​.​​
+
+Authors' contributions SC and CJP jointly spearheaded the project conceptualization, methodology design, project admin-
+istration, and funding acquisition. TE, ML-L, JE and SC performed the experiments, collected the data, and contributed to
+the library construction for genome and transcriptome sequencing. CZ did data acquisition and management. BK, FY, and
+HSC worked on producing genome assembly. BK carried out genome annotation and comparative genomic analysis. BK and
+SC analyzed and interpreted the data, and wrote the manuscript. SC, BK , TE, ML-L, FY, CZ, JE, HSC, and CJP reviewed
+and revised the manuscript. All authors read and approved the final manuscript.
+
+Funding This work was conducted through the 4D Wheat Project awarded to SC and CJP and supported by Genome Can-
+ada, Genome Prairie, Western Grains Research Foundation, Illumina (Canada), Saskatchewan Wheat Development Com-
+mission, Alberta Grains (formerly Alberta Wheat Development Commission), Manitoba Wheat and Barley Development
+Commission, Viterra, Saskatchewan Ministry of Agriculture, Ontario Ministry of Economic Development, Job Creation and
+Trade (OMEDJCT), Agriculture and Agri-Food Canada (AAFC) Partnership and Canadian Agricultural Partnership.
+
+Data availability The genome assemblies and all raw sequencing data generated in this study including PacBio HiFi, Hi-C,
+IsoSeq and RNASeq have been deposited in the NCBI Assembly and Sequence Read Archive (SRA) database. Data for
+Ae. comosa IPK-AE783, Ae. markgrafii EKC105_RL5723, Ae. umbellulata IPK-AE740, and Ae. uniaristata IPK-AE680
+are held under Bioproject accessions PRJNA1506336, PRJNA1174795, PRJNA1114735, PRJNA1154594, respectively.
+Bionano optical map data and the gene and repeat annotation datasets are available on Zenodo: ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​5​2​8​1​/​z​e​n​
+o​d​o​.​2​2​6​8​1​9​0​7​​​.​​
+
+Declarations
+Ethics approval and consent to participate Not applicable.
+
+Consent for publication Not applicable.
+
+Competing interests The authors declare no competing interests.
+
+Open Access This article is licensed under a Creative Commons Attribution 4.0 International License, which permits use,
+sharing, adaptation, distribution and reproduction in any medium or format, as long as you give appropriate credit to the
+original author(s) and the source, provide a link to the Creative Commons licence, and indicate if changes were made. The
+images or other third party material in this article are included in the article’s Creative Commons licence, unless indicated
+otherwise in a credit line to the material. If material is not included in the article’s Creative Commons licence and your
+intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission directly
+from the copyright holder. To view a copy of this licence, visit http://creativecommons.org/licenses/by/4.0/.
+
+
+
+BMC Plant Biology
+Article in Press                                                       https://doi.org/10.1186/s12870-026-10046-2
+
+References
+  1.     Adhikari L, Raupp J, Wu S, Koo D-H, Friebe B, Poland J. Genomic characterization and gene bank curation of
+  Aegilops: the wild relatives of wheat. Front Plant Sci 2023, 14.
+  2.     Kishii M. An update of recent use of Aegilops species in wheat breeding. Front Plant Sci 2019, 10.
+  3.     Schneider A, Molnár I, Molnár-Láng M. Utilisation of Aegilops (goatgrass) species to widen the genetic diversity
+  of cultivated wheat. Euphytica. 2008;163(1):1–19.
+  4.     Wang J, Luo M-C, Chen Z, You FM, Wei Y, Zheng Y, Dvorak J. Aegilops tauschii single nucleotide polymorphisms
+  shed light on the origins of wheat D-genome genetic diversity and pinpoint the geographic origin of hexaploid wheat. New
+  Phytol. 2013;198(3):925–37.
+  5.     Kihara H. Discovery of the DD-analyser, one of the ancestors of Triticum vulgare. Agric Hort. 1944;19:13–4.
+  6.     Kilian B, Özkan H, Deusch O, Effgen S, Brandolini A, Kohl J, Martin W, Salamini F. Independent wheat B and G
+  genome origins in outcrossing Aegilops progenitor haplotypes. Mol Biol Evol. 2006;24(1):217–27.
+  7.     Petersen G, Seberg O, Yde M, Berthelsen K. Phylogenetic relationships of Triticum and Aegilops and evidence for
+  the origin of the A, B, and D genomes of common wheat (Triticum aestivum). Mol Phylogenet Evol. 2006;39(1):70–82.
+  8.     Marcussen T, Sandve SR, Heier L, Spannagl M, Pfeifer M, The International Wheat Genome Sequencing Consor-
+  tium, Jakobsen KS, Wulff BBH, Steuernagel B, Mayer KFX, et al. Ancient hybridizations among the ancestral genomes
+  of bread wheat. Science. 2014;345(6194):1250092.
+  9.     Zhang W, Zhang M, Zhu X, Cao Y, Sun Q, Ma G, Chao S, Yan C, Xu SS, Cai X. Molecular cytogenetic and genomic
+  analyses reveal new insights into the origin of the wheat B genome. Theor Appl Genet. 2018;131(2):365–75.
+  10. Van Slageren M. Wild wheats: a monograph of Aegilops L. and Amblyopyrum (Jaub. Eig (Poaceae): Agricultural
+  University Wageningen; 1994. Spach.
+  11. Badaeva ED, Amosova AV, Samatadze TE, Zoshchuk SA, Shostak NG, Chikida NN, Zelenin AV, Raupp WJ, Friebe
+  B, Gill BS. Genome differentiation in Aegilops. 4. Evolution of the U-genome cluster. Plant Syst Evol. 2004;246(1):45–76.
+  12. Lilienfeld FAH, Kihara. Genome-analysis in Triticum and Aegilops. X Cytologia. 1951;16(2):101–23.
+  13. Feuillet C, Langridge P, Waugh R. Cereal breeding takes a walk on the wild side. Trends Genet. 2008;24(1):24–32.
+  14. McCallum BD, Hiebert CW, Cloutier S, Bakkeren G, Rosa SB, Humphreys DG, Marais GF, McCartney CA, Pan-
+  war V, Rampitsch C, et al. A review of wheat leaf rust research and the development of resistant cultivars in Canada. Can
+  J Plant Pathol. 2016;38(1):1–18.
+  15. Luo M-C, Gu YQ, Puiu D, Wang H, Twardziok SO, Deal KR, Huo N, Zhu T, Wang L, Wang Y, et al. Genome
+  sequence of the progenitor of the wheat D genome Aegilops tauschii. Nature. 2017;551(7681):498–502.
+  16. Wang L, Zhu T, Rodriguez JC, Deal KR, Dubcovsky J, McGuire PE, Lux T, Spannagl M, Mayer KFX, Baldrich
+  P et al. Aegilops tauschii genome assembly Aet v5.0 features greater sequence contiguity and improved annotation. G3
+  Genes|Genomes|Genetics. 2021;11(12).
+  17. Avni R, Lux T, Minz-Dub A, Millet E, Sela H, Distelfeld A, Deek J, Yu G, Steuernagel B, Pozniak C, et al. Genome
+  sequences of three Aegilops species of the section Sitopsis reveal phylogenetic relationships and provide resources for
+  wheat improvement. Plant J. 2022;110(1):179–92.
+  18. Li L-F, Zhang Z-B, Wang Z-H, Li N, Sha Y, Wang X-F, Ding N, Li Y, Zhao J, Wu Y, et al. Genome sequences of
+  five Sitopsis species of Aegilops and the origin of polyploid wheat B subgenome. Mol Plant. 2022;15(3):488–503.
+  19. Yang Y, Cui L, Lu Z, Li G, Yang Z, Zhao G, Kong C, Li D, Chen Y, Xie Z, et al. Genome sequencing of Sitopsis
+  species provides insights into their contribution to the B subgenome of bread wheat. Plant Commun. 2023;4(4):100567.
+  20. Li H, Rehman S, Song R, Qiao L, Hao X, Zhang J, Li K, Hou L, Hu W, Wang L, et al. Chromosome-scale assembly
+  and annotation of the wild wheat relative Aegilops comosa. Sci Data. 2024;11(1):1454.
+  21. Yu G, Matny O, Champouret N, Steuernagel B, Moscou MJ, Hernández-Pinzón I, Green P, Hayta S, Smedley M,
+  Harwood W, et al. Aegilops sharonensis genome-assisted identification of stem rust resistance gene Sr62. Nat Commun.
+  2022;13(1):1607.
+  22. Abrouk M, Wang Y, Cavalet-Giorsa E, Troukhan M, Kravchuk M, Krattinger SG. Chromosome-scale assembly of
+  the wild wheat relative Aegilops umbellulata. Sci Data. 2023;10(1):739.
+  23. Singh J, Gudi S, Maughan PJ, Liu Z, Kolmer J, Wang M, Chen XR, Matthew, Lasserre-Zuber P, Rimbert H, Sehgal
+  S et al. Genomes of Aegilops umbellulata provide new insights into unique structural variations and genetic diversity in
+  the U-genome for wheat improvement. bioRxiv 2024:2024.2001.2013.575480.
+  24. Grewal S, Yang C-y, Krasheninnikova K, Collins J, Wood JMD, Ashling S, Scholefield D, Kaithakottil GG,
+  Swarbreck D, Yao E, et al. Chromosome-level haplotype-resolved genome assembly of bread wheat’s wild relative Aegil-
+  ops mutica. Sci Data. 2025;12(1):438.
+  25. Said M, Holušová K, Farkas A, Ivanizs L, Gaál E, Cápal P, Abrouk M, Martis-Thiele M, Kalapos B, Bartoš J et al.
+  Assembly of Aegilops comosa chromosomes [Dataset]. Dryad 2020.
+  26. Li H, Hua L, Zhao S, Hao M, Song R, Pang S, Liu Y, Chen H, Zhang W, Shen T, et al. Cloning of the wheat leaf
+  rust resistance gene Lr47 introgressed from Aegilops speltoides. Nat Commun. 2023;14(1):6072.
+
+
+
+                                                                                                          BMC Plant Biology
+https://doi.org/10.1186/s12870-026-10046-2                                                                Article in Press
+
+  27. Wang Y, Abrouk M, Gourdoupis S, Koo D-H, Karafiátová M, Molnár I, Holušová K, Doležel J, Athiyannan
+  N, Cavalet-Giorsa E, et al. An unusual tandem kinase fusion protein confers leaf rust resistance in wheat. Nat Genet.
+  2023;55(6):914–20.
+  28. Jung H, Winefield C, Bombarely A, Prentis P, Waterhouse P. Tools and strategies for long-read sequencing and de
+  novo assembly of plant genomes. Trends Plant Sci. 2019;24(8):700–24.
+  29. Sedlazeck FJ, Lee H, Darby CA, Schatz MC. Piercing the dark matter: bioinformatics of long-range sequencing and
+  mapping. Nat Rev Genet. 2018;19(6):329–46.
+  30. Jiao W-B, Schneeberger K. The impact of third generation genomic technologies on plant genome assembly. Curr
+  Opin Plant Biol. 2017;36:64–70.
+  31. Walkowiak S, Gao L, Monat C, Haberer G, Kassa MT, Brinton J, Ramirez-Gonzalez RH, Kolodziej MC, Delorean E,
+  Thambugala D, et al. Multiple wheat genomes reveal global variation in modern breeding. Nature. 2020;588(7837):277–83.
+  32. Hotaling S, Wilcox ER, Heckenhauer J, Stewart RJ, Frandsen PB. Highly accurate long reads are crucial for real-
+  izing the potential of biodiversity genomics. BMC Genomics. 2023;24(1):117.
+  33. Marks RA, Hotaling S, Frandsen PB, VanBuren R. Representation and participation across 20 years of plant genome
+  sequencing. Nat Plants. 2021;7(12):1571–8.
+  34. Sharma P, Masouleh AK, Topp B, Furtado A, Henry RJ. De novo chromosome level assembly of a plant genome
+  from long read sequence data. Plant J. 2022;109(3):727–36.
+  35. Mascher M, Wicker T, Jenkins J, Plott C, Lux T, Koh CS, Ens J, Gundlach H, Boston LB, Tulpová Z, et al. Long-
+  read sequence assembly: a technical evaluation in barley. Plant Cell. 2021;33(6):1888–906.
+  36. Ahmed HI, Heuberger M, Schoen A, Koo D-H, Quiroz-Chavez J, Adhikari L, Raupp J, Cauet S, Rodde N, Cravero
+  C, et al. Einkorn genomics sheds light on history of the oldest domesticated wheat. Nature. 2023;620(7975):830–8.
+  37. Jiao Y, Peluso P, Shi J, Liang T, Stitzer MC, Wang B, Campbell MS, Stein JC, Wei X, Chin C-S, et al. Improved
+  maize reference genome with single-molecule technologies. Nature. 2017;546(7659):524–7.
+  38. Jarvis DE, Ho YS, Lightfoot DJ, Schmöckel SM, Li B, Borm TJA, Ohyanagi H, Mineta K, Michell CT, Saber N, et
+  al. The genome of Chenopodium quinoa. Nature. 2017;542(7641):307–12.
+  39. Zimin AV, Puiu D, Luo M-C, Zhu T, Koren S, Marçais G, Yorke JA, Dvořák J, Salzberg SL. Hybrid assembly of
+  the large and highly repetitive genome of Aegilops tauschii, a progenitor of bread wheat, with the MaSuRCA mega-reads
+  algorithm. Genome Res. 2017;27(5):787–92.
+  40. You FM, Xiao J, Li P, Yao Z, Jia G, He L, Zhu T, Luo M-C, Wang X, Deyholos MK, et al. Chromosome-scale
+  pseudomolecules refined by optical, physical and genetic maps in flax. Plant J. 2018;95(2):371–84.
+  41. Belton J-M, McCord RP, Gibcus JH, Naumova N, Zhan Y, Dekker J. Hi–C: A comprehensive technique to capture
+  the conformation of genomes. Methods. 2012;58(3):268–76.
+  42. Vuruputoor VS, Monyak D, Fetter KC, Webster C, Bhattarai A, Shrestha B, Zaman S, Bennett J, McEvoy SL,
+  Caballero M, et al. Welcome to the big leaves: Best practices for improving genome annotation in non-model plant
+  genomes. Appl Plant Sci. 2023;11(4):e11533.
+  43. Padmarasu S, Himmelbach A, Mascher M, Stein N. In situ Hi-C for plants: An improved method to detect long-
+  range chromatin interactions. Plant Long Non-Coding RNAs: Methods Protocols 2019:441–72.
+  44. Smith TW, Kron P, Martin SL. flowPloidy: An R package for genome size and ploidy assessment of flow cytometry
+  data. Appl Plant Sci. 2018;6(7):e01164.
+  45. Cheng H, Concepcion GT, Feng X, Zhang H, Li H. Haplotype-resolved de novo assembly using phased assembly
+  graphs with hifiasm. Nat Methods. 2021;18(2):170–5.
+  46. Zhou C, McCarthy SA, Durbin R. YaHS: yet another Hi-C scaffolding tool. Bioinformatics 2023, 39(1).
+  47. Durand NC, Robinson JT, Shamim MS, Machol I, Mesirov JP, Lander ES, Aiden EL. Juicebox provides a visualiza-
+  tion system for Hi-C contact maps with unlimited zoom. Cell Syst. 2016;3(1):99–101.
+  48. Steenwyk JL, Buida TJ III, Gonçalves C, Goltz DC, Morales G, Mead ME, LaBella AL, Chavez CM, Schmitz JE,
+  Hadjifrangiskou M et al. BioKIT: a versatile toolkit for processing and analyzing diverse types of sequence data. Genetics
+  2022, 221(3).
+  49. Simão FA, Waterhouse RM, Ioannidis P, Kriventseva EV, Zdobnov EM. BUSCO: assessing genome assembly and
+  annotation completeness with single-copy orthologs. Bioinformatics. 2015;31(19):3210–2.
+  50. Levy Karin E, Mirdita M, Söding J. MetaEuk—sensitive, high-throughput gene discovery, and annotation for large-
+  scale eukaryotic metagenomics. Microbiome. 2020;8(1):48.
+  51. Johnson LS, Eddy SR, Portugaly E. Hidden Markov model speed heuristic and iterative HMM search procedure.
+  BMC Bioinformatics. 2010;11(1):431.
+  52. White EJ, Venter M, Hiten NF, Burger JT. Modified cetyltrimethylammonium bromide method improves robust-
+  ness and versatility: the benchmark for plant RNA extraction. Biotechnol J. 2008;3(11):1424–8.
+  53. Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples
+  in a single report. Bioinformatics. 2016;32(19):3047–8.
+  54. Dobin A, Davis CA, Schlesinger F, Drenkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR. STAR: ultra-
+  fast universal RNA-seq aligner. Bioinformatics. 2013;29(1):15–21.
+
+
+BMC Plant Biology
+Article in Press                                                    https://doi.org/10.1186/s12870-026-10046-2
+
+  55. Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, Subgroup GPDP. The
+  sequence alignment/map format and SAMtools. Bioinformatics. 2009;25(16):2078–9.
+  56. Thorvaldsdóttir H, Robinson JT, Mesirov JP. Integrative Genomics Viewer (IGV): high-performance genomics data
+  visualization and exploration. Brief Bioinform. 2012;14(2):178–92.
+  57. Li H. Minimap2: pairwise alignment for nucleotide sequences. Bioinformatics. 2018;34(18):3094–100.
+  58. Kuo RI, Cheng Y, Zhang R, Brown JWS, Smith J, Archibald AL, Burt DW. Illuminating the dark side of the human
+  transcriptome with long read transcript sequencing. BMC Genomics. 2020;21(1):751.
+  59. Ou S, Su W, Liao Y, Chougule K, Agda JRA, Hellinga AJ, Lugo CSB, Elliott TA, Ware D, Peterson T, et al. Bench-
+  marking transposable element annotation methods for creation of a streamlined, comprehensive pipeline. Genome Biol.
+  2019;20(1):275.
+  60. Wicker T, Matthews DE, Keller B. TREP: a database for Triticeae repetitive elements. Trends Plant Sci.
+  2002;7(12):561–2.
+  61. Ellinghaus D, Kurtz S, Willhoeft U. LTRharvest, an efficient and flexible software for de novo detection of LTR
+  retrotransposons. BMC Bioinformatics. 2008;9(1):18.
+  62. Ou S, Jiang N. LTR_FINDER_parallel: parallelization of LTR_FINDER enabling rapid identification of long ter-
+  minal repeat retrotransposons. Mob DNA. 2019;10:48.
+  63. Ou S, Jiang N. LTR_retriever: A highly accurate and sensitive program for identification of long terminal repeat
+  retrotransposons. Plant Physiol. 2018;176(2):1410–22.
+  64. Shi J, Liang C. Generic Repeat Finder: A high-sensitivity tool for genome-wide de novo repeat detection. Plant
+  Physiol. 2019;180(4):1803–15.
+  65. Su W, Gu X, Peterson T. TIR-Learner, a new ensemble method for TIR transposable element annotation, provides
+  evidence for abundant new transposable elements in the maize genome. Mol Plant. 2019;12(3):447–60.
+  66. Xiong W, He L, Lai J, Dooner HK, Du C. HelitronScanner uncovers a large overlooked cache of Helitron transpo-
+  sons in many plant genomes. Proc Natl Acad Sci U S A. 2014;111(28):10263–8.
+  67. Li Y, Jiang N, Sun Y. AnnoSINE: a short interspersed nuclear elements annotation tool for plant genomes. Plant
+  Physiol. 2021;188(2):955–70.
+  68. Flynn JM, Hubley R, Goubert C, Rosen J, Clark AG, Feschotte C, Smit AF. RepeatModeler2 for automated genomic
+  discovery of transposable element families. Proc Natl Acad Sci U S A. 2020;117(17):9451–7.
+  69. Tarailo-Graovac M, Chen N. Using RepeatMasker to identify repetitive elements in genomic sequences. Curr Pro-
+  toc Bioinformatics 2009, Chap. 4:4.10.11–14.10.14.
+  70. Wicker T, Gundlach H, Spannagl M, Uauy C, Borrill P, Ramírez-González RH, De Oliveira R, Mayer KFX, Paux
+  E, Choulet F, et al. Impact of transposable elements on genome structure and evolution in bread wheat. Genome Biol.
+  2018;19(1):103.
+  71. Wicker T, Stritt C, Sotiropoulos AG, Poretti M, Pozniak C, Walkowiak S, Gundlach H, Stein N. Transposable ele-
+  ment populations shed light on the evolutionary history of wheat and the complex co-evolution of autonomous and non-
+  autonomous retrotransposons. Adv Genet. 2022;3(1):2100022.
+  72. Ma J, Bennetzen JL. Rapid recent growth and divergence of rice nuclear genomes. Proc Natl Acad Sci.
+  2004;101(34):12404–10.
+  73. Quinlan AR. BEDTools: The swiss-army tool for genome feature analysis. Curr Protocols Bioinf.
+  2014;47(1):111211–34.
+  74. Stanke M, Schöffmann O, Morgenstern B, Waack S. Gene prediction in eukaryotes with a generalized hidden Mar-
+  kov model that uses hints from external sources. BMC Bioinformatics. 2006;7(1):62.
+  75. Brůna T, Hoff KJ, Lomsadze A, Stanke M, Borodovsky M. BRAKER2: automatic eukaryotic genome annotation
+  with GeneMark-EP + and AUGUSTUS supported by a protein database. NAR Genom Bioinform. 2021;3(1):lqaa108.
+  76. Hoff KJ, Lange S, Lomsadze A, Borodovsky M, Stanke M. BRAKER1: Unsupervised RNA-Seq-based genome
+  annotation with GeneMark-ET and AUGUSTUS. Bioinformatics. 2016;32(5):767–9.
+  77. Tang S, Lomsadze A, Borodovsky M. Identification of protein coding regions in RNA transcripts. Nucleic Acids
+  Res. 2015;43(12):e78.
+  78. Gabriel L, Hoff KJ, Brůna T, Borodovsky M, Stanke M. TSEBRA: transcript selector for BRAKER. BMC Bioin-
+  formatics. 2021;22(1):566.
+  79. Shumate A, Wong B, Pertea G, Pertea M. Improved transcriptome assembly using a hybrid of long and short reads
+  with StringTie. PLoS Comput Biol. 2022;18(6):e1009730.
+  80. Fu L, Niu B, Zhu Z, Wu S, Li W. CD-HIT: accelerated for clustering the next-generation sequencing data. Bioin-
+  formatics. 2012;28(23):3150–2.
+  81. Li H. Protein-to-genome alignment with miniprot. Bioinformatics 2023, 39(1).
+  82. Haas BJ, Salzberg SL, Zhu W, Pertea M, Allen JE, Orvis J, White O, Buell CR, Wortman JR. Automated eukary-
+  otic gene structure annotation using EVidenceModeler and the Program to Assemble Spliced Alignments. Genome Biol.
+  2008;9(1):R7.
+
+
+
+                                                                                                      BMC Plant Biology
+https://doi.org/10.1186/s12870-026-10046-2                                                             Article in Press
+
+  83. Sakkour A, Mascher M, Himmelbach A, Haberer G, Lux T, Spannagl M, Stein N, Kawamoto S, Sato K. Chromo-
+  some-scale assembly of barley cv. ‘Haruna Nijo’ as a resource for barley genetics. DNA Res 2022, 29(1).
+  84. Sato S, Tabata S, Hirakawa H, Asamizu E, Shirasawa K, Isobe S, Kaneko T, Nakamura Y, Shibata D, Aoki K, et al.
+  The tomato genome sequence provides insights into fleshy fruit evolution. Nature. 2012;485(7400):635–41.
+  85. Huntley RP, Sawford T, Mutowo-Meullenet P, Shypitsyna A, Bonilla C, Martin MJ, O’Donovan C. The GOA data-
+  base: Gene Ontology annotation updates for 2015. Nucleic Acids Res. 2014;43(D1):D1057–63.
+  86. Cabanettes F, Klopp C. D-GENIES: dot plot large genomes in an interactive, efficient and simple way. PeerJ.
+  2018;6:e4958.
+  87. Wang Y, Tang H, DeBarry JD, Tan X, Li J, Wang X, Lee T-h, Jin H, Marler B, Guo H, et al. MCScanX: a toolkit for
+  detection and evolutionary analysis of gene synteny and collinearity. Nucleic Acids Res. 2012;40(7):e49–49.
+  88. Qiao X, Li Q, Yin H, Qi K, Li L, Wang R, Zhang S, Paterson AH. Gene duplication and evolution in recurring
+  polyploidization–diploidization cycles in plants. Genome Biol. 2019;20(1):38.
+  89. Emms DM, Kelly S. OrthoFinder: phylogenetic orthology inference for comparative genomics. Genome Biol.
+  2019;20(1):238.
+  90. Zhu T, Wang L, Rimbert H, Rodriguez JC, Deal KR, De Oliveira R, Choulet F, Keeble-Gagnère G, Tibbits J,
+  Rogers J, et al. Optical maps refine the bread wheat Triticum aestivum cv. Chinese Spring genome assembly. Plant J.
+  2021;107(1):303–14.
+  91. Katoh K, Standley DM. MAFFT multiple sequence alignment software Version 7: improvements in performance
+  and usability. Mol Biol Evol. 2013;30(4):772–80.
+  92. Castresana J. Selection of conserved blocks from multiple alignments for their use in phylogenetic analysis. Mol
+  Biol Evol. 2000;17(4):540–52.
+  93. Minh BQ, Schmidt HA, Chernomor O, Schrempf D, Woodhams MD, von Haeseler A, Lanfear R. IQ-TREE 2: New
+  models and efficient methods for phylogenetic inference in the genomic era. Mol Biol Evol. 2020;37(5):1530–4.
+  94. Guindon S, Dufayard J-F, Lefort V, Anisimova M, Hordijk W, Gascuel O. New algorithms and methods to estimate
+  maximum-likelihood phylogenies: assessing the performance of PhyML 3.0. Syst Biol. 2010;59(3):307–21.
+  95. Hoang DT, Chernomor O, von Haeseler A, Minh BQ, Vinh LS. UFBoot2: Improving the ultrafast bootstrap approx-
+  imation. Mol Biol Evol. 2017;35(2):518–22.
+  96. Kalyaanamoorthy S, Minh BQ, Wong TKF, von Haeseler A, Jermiin LS. ModelFinder: fast model selection for
+  accurate phylogenetic estimates. Nat Methods. 2017;14(6):587–9.
+  97. Subramanian B, Gao S, Lercher MJ, Hu S, Chen W-H. Evolview v3: a webserver for visualization, annotation, and
+  management of phylogenetic trees. Nucleic Acids Res. 2019;47(W1):W270–5.
+  98. Waterhouse RM, Seppey M, Simão FA, Manni M, Ioannidis P, Klioutchnikov G, Kriventseva EV, Zdobnov EM.
+  BUSCO applications from quality assessments to gene prediction and phylogenomics. Mol Biol Evol. 2017;35(3):543–8.
+  99. Eilam T, Anikster Y, Millet E, Manisterski J, Sagi-Assif O, Feldman M. Genome size and genome evolution in
+  diploid Triticeae species. Genome. 2007;50(11):1029–37.
+  100. Yasui Y, Nasuda S, Matsuoka Y, Kawahara T. The Au family, a novel short interspersed element (SINE) from Aegil-
+  ops umbellulata. Theor Appl Genet. 2001;102(4):463–70.
+  101. Keidar D, Doron C, Kashkush K. Genome-wide analysis of a recently active retrotransposon, Au SINE, in wheat:
+  content, distribution within subgenomes and chromosomes, and gene associations. Plant Cell Rep. 2018;37(2):193–208.
+  102. Li B, Choulet F, Heng Y, Hao W, Paux E, Liu Z, Yue W, Jin W, Feuillet C, Zhang X. Wheat centromeric retrotrans-
+  posons: the new ones take a major role in centromeric structure. Plant J. 2013;73(6):952–65.
+  103. Castilho A, Heslop-Harrison JS. Physical mapping of 5S and 18S–25S rDNA and repetitive DNA sequences in
+  Aegilops umbellulata. Genome. 1995;38(1):91–6.
+  104. Danilova TV, Akhunova AR, Akhunov ED, Friebe B, Gill BS. Major structural genomic alterations can be associ-
+  ated with hybrid speciation in Aegilops markgrafii (Triticeae). Plant J. 2017;92(2):317–30.
+  105. Li G, Zhang T, Yu Z, Wang H, Yang E, Yang Z. An efficient Oligo-FISH painting system for revealing chromosome
+  rearrangements and polyploidization in Triticeae. Plant J. 2021;105(4):978–93.
+  106. Liu Z, Yang F, Wan H, Deng C, Hu W, Fan X, Wang J, Yang M, Feng J, Wang Q, et al. Genome architecture of the
+  allotetraploid wild grass Aegilops ventricosa reveals its evolutionary history and contributions to wheat improvement.
+  Plant Commun. 2025;6(1):101131.
+  107. Kilian B, Mammen K, Millet E, Sharma R, Graner A, Salamini F, Hammer K, Ozkan H. Aegilops L In; 2011: 1–76.
+  108. Molnár I, Vrána J, Burešová V, Cápal P, Farkas A, Darkó É, Cseh A, Kubaláková M, Molnár-Láng M, Doležel J.
+  Dissecting the U, M, S and C genomes of wild relatives of bread wheat (Aegilops spp.) into chromosomes and exploring
+  their synteny with wheat. Plant J. 2016;88(3):452–67.
+  109. Ling H-Q, Ma B, Shi X, Liu H, Dong L, Sun H, Cao Y, Gao Q, Zheng S, Li Y, et al. Genome sequence of the pro-
+  genitor of wheat A subgenome Triticum urartu. Nature. 2018;557(7705):424–8.
+  110. Chávez Montes RA, Haber A, Pardo J, Powell RF, Divisetty UK, Silva AT, Hernández-Hernández T, Silveira V,
+  Tang H, Lyons E et al. A comparative genomics examination of desiccation tolerance and sensitivity in two sister grass
+  species. Proc Natl Acad Sci U S A 2022, 119(5).
+
+
+BMC Plant Biology
+Article in Press                                                        https://doi.org/10.1186/s12870-026-10046-2
+
+  111. Al-Qurainy F, Gaafar A-RZ, Khan S, Nadeem M, Alshameri AM, Tarroum M, Alansi S, Almarri NB, Alfarraj NS.
+  Estimation of genome size in the endemic species Reseda pentagyna and the locally rare species reseda lutea using com-
+  parative analyses of flow cytometry and K-mer approaches. Plants. 2021;10(7):1362.
+  112. Zhou S-S, Yan X-M, Zhang K-F, Liu H, Xu J, Nie S, Jia K-H, Jiao S-Q, Zhao W, Zhao Y-J, et al. A comprehensive
+  annotation dataset of intact LTR retrotransposons of 300 plant genomes. Sci Data. 2021;8(1):174.
+  113. Cullis CA. Mechanisms and control of rapid genomic changes in Flax. Ann Botany. 2005;95(1):201–6.
+  114. Ani Akpinar B, Yuce M, Lucas S, Vrána J, Burešová V, Doležel J, Budak H. Molecular organization and compara-
+  tive analysis of chromosome 5B of the wild wheat ancestor Triticum dicoccoides. Sci Rep. 2015;5(1):10763.
+  115. Choulet F, Alberti A, Theil S, Glover N, Barbe V, Daron J, Pingault L, Sourdille P, Couloux A, Paux E, et al. Struc-
+  tural and functional partitioning of bread wheat chromosome 3B. Science. 2014;345(6194):1249721.
+  116. Papon N, Lasserre-Zuber P, Rimbert H, De Oliveira R, Paux E, Choulet F. All families of transposable ele-
+  ments were active in the recent wheat genome evolution and polyploidy had no impact on their activity. Plant Genome.
+  2023;16:e20347.
+  117. Neumann P, Navrátilová A, Koblížková A, Kejnovský E, Hřibová E, Hobza R, Widmer A, Doležel J, Macas J. Plant
+  centromeric retrotransposons: a structural and cytogenetic perspective. Mob DNA. 2011;2(1):4.
+  118. Daron J, Glover N, Pingault L, Theil S, Jamilloux V, Paux E, Barbe V, Mangenot S, Alberti A, Wincker P, et al. Orga-
+  nization and evolution of transposable elements along the bread wheat chromosome 3B. Genome Biol. 2014;15(12):546.
+  119. Presting GG, Malysheva L, Fuchs J, Schubert I. A TY3/GYPSY retrotransposon-like sequence localizes to the cen-
+  tromeric regions of cereal chromosomes. Plant J. 1998;16(6):721–8.
+  120. Middleton CP, Stein N, Keller B, Kilian B, Wicker T. Comparative analysis of genome composition in Triticeae
+  reveals strong variation in transposable element dynamics and nucleotide diversity. Plant J. 2013;73(2):347–56.
+  121. Liu S, Li K, Dai X, Qin G, Lu D, Gao Z, Li X, Song B, Bian J, Ren D, et al. A telomere-to-telomere genome
+  assembly coupled with multi-omic data provides insights into the evolution of hexaploid bread wheat. Nat Genet.
+  2025;57(4):1008–20.
+  122. Grover CE, Wendel JF. Recent insights into mechanisms of genome size change in plants. J Bot. 2010;2010(1):382732.
+  123. Papolu PK, Ramakrishnan M, Mullasseri S, Kalendar R, Wei Q, Zou LH, Ahmad Z, Vinod KK, Yang P, Zhou M.
+  Retrotransposons: How the continuous evolutionary front shapes plant genomes for response to heat stress. Front Plant
+  Sci 2022, Volume 13–2022.
+  124. Belyayev A. Bursts of transposable elements as an evolutionary driving force. J Evol Biol. 2014;27(12):2573–84.
+  125. Senerchia N, Wicker T, Felber F, Parisod C. Evolutionary dynamics of retrotransposons assessed by high-through-
+  put sequencing in wild relatives of wheat. Genome Biol Evol. 2013;5(5):1010–20.
+  126. Rhoads A, Au KF. PacBio sequencing and its applications. Genom Proteom Bioinform. 2015;13(5):278–89.
+  127. Zhang Z, Guo J, Cai X, Li Y, Xi X, Lin R, Liang J, Wang X, Wu J. Improved reference genome annotation of Bras-
+  sica rapa by Pacific Biosciences RNA sequencing. Front Plant Sci 2022, 13.
+  128. Zhou H, Sheng Y, Qiu K, Ren F, Shi P, Xie Q, Guo J, Pan H, Zhang J. Improved annotation of the Peach (Prunus
+  persica) genome and identification of tissue- or development stage-specific alternative splicing through the integration of
+  Iso-Seq and RNA-Seq data. Horticulturae. 2023;9(2):175.
+  129. Fernandez-Pozo N, Metz T, Chandler JO, Gramzow L, Mérai Z, Maumus F, Mittelsten Scheid O, Theißen G,
+  Schranz ME, Leubner-Metzger G, et al. Aethionema arabicum genome annotation using PacBio full-length transcripts
+  provides a valuable resource for seed dormancy and Brassicaceae evolution research. Plant J. 2021;106(1):275–93.
+  130. Liao X, Zhang L, Tian H, Yang B, Wang E, Zhu B. Transcript annotation of Chinese sturgeon (Acipenser sinensis)
+  using Iso-seq and RNA-seq data. Sci Data. 2023;10(1):105.
+  131. Wang K, Wang D, Zheng X, Qin A, Zhou J, Guo B, Chen Y, Wen X, Ye W, Zhou Y. Multi-strategic RNA-seq analy-
+  sis reveals a high-resolution transcriptional landscape in cotton. Nat Commun. 2019;10(1):4714.
+  132. Grewal S, Yang C-y, Scholefield D, Ashling S, Ghosh S, Swarbreck D, Collins J, Yao E, Sen TZ, Wilson M, et al.
+  Chromosome-scale genome assembly of bread wheat’s wild relative Triticum timopheevii. Sci Data. 2024;11(1):420.
+  133. Sun S, Che N, Chen L, Hao Y, Xu Y, Chen Q, Ge W, Qin S, Zhang W, Dong C, et al. Analysis wheat wild rela-
+  tives Thinopyrum intermedium and Roegneria kamoji genomes reveal different polyploid evolution paths. Nat Commun.
+  2025;16(1):7693.
+  134. Jayakodi M, Padmarasu S, Haberer G, Bonthala VS, Gundlach H, Monat C, Lux T, Kamal N, Lang D, Himmelbach
+  A, et al. The barley pan-genome reveals the hidden legacy of mutation breeding. Nature. 2020;588(7837):284–9.
+  135. Njaci I, Waweru B, Kamal N, Muktar MS, Fisher D, Gundlach H, Muli C, Muthui L, Maranga M, Kiambi D, et al.
+  Chromosome-level genome assembly and population genomic resource to accelerate orphan crop lablab breeding. Nat
+  Commun. 2023;14(1):1915.
+  136. Feldman M, Levy A. Origin and evolution of wheat and related Triticeae species. In; 2015: 21–76.
+  137. Olivera PD, Steffenson BJ. Aegilops sharonensis: Origin, genetics, diversity, and potential for wheat improvement.
+  Botany. 2009;87(8):740–56.
+  138. Mason-Gamer RJ, Kellogg EA. Chloroplast DNA analysis of the monogenomic Triticeae: phylogenetic implica-
+  tions and genome-specific markers. Methods genome Anal plants 1996:301–25.
+
+
+                                                                                                            BMC Plant Biology
+https://doi.org/10.1186/s12870-026-10046-2                                                                 Article in Press
+
+    139. Sallares R, Brown TA. Phylogenetic analysis of complete 5′ external transcribed spacers of the 18S ribosomal RNA
+    genes of diploid Aegilops and related species (Triticeae, Poaceae). Genet Resour Crop Evol. 2004;51(7):701–12.
+    140. Goryunova SV, Chikida NN, Kochieva EZ. Molecular analysis of the phylogenetic relationships among the diploid
+    Aegilops species of the section Sitopsis. Russian J Genet. 2008;44(1):115–8.
+    141. Glémin S, Scornavacca C, Dainat J, Burgarella C, Viader V, Ardisson M, Sarah G, Santoni S, David J, Ranwez V.
+    Pervasive hybridizations in the history of wheat relatives. Sci Adv. 2019;5(5):eaav9188.
+    142. Tanaka S, Yoshida K, Sato K, Takumi S. Diploid genome differentiation conferred by RNA sequencing-based
+    survey of genome-wide polymorphisms throughout homoeologous loci in Triticum and Aegilops. BMC Genomics.
+    2020;21(1):246.
+    143. Wang S, Li X, Wang K, Wang X, Li S, Zhang Y, Guo G, Zeller FJ, Hsam SLK, Yan Y. Phylogenetic analysis of C,
+    M, N, and U genomes and their relationships with Triticum and other related genomes as revealed by LMW-GS genes at
+    Glu-3 loci. Genome. 2011;54(4):273–84.
+    144. Caicedo AL, Purugganan MD. Comparative plant genomics. Frontiers and prospects. Plant Physiol.
+    2005;138(2):545–7.
+    145. Sorrells ME, La Rota M, Bermudez-Kandianis CE, Greene RA, Kantety R, Munkvold JD, Miftahudin, Mah-
+    moud A, Ma X, Gustafson PJ, et al. Comparative DNA sequence analysis of wheat and rice genomes. Genome Res.
+    2003;13(8):1818–27.
+    146. Panchy N, Lehti-Shiu M, Shiu S-H. Evolution of gene duplication in plants. Plant Physiol. 2016;171(4):2294–316.
+    147. Wang X, Yan X, Hu Y, Qin L, Wang D, Jia J, Jiao Y. A recent burst of gene duplications in Triticeae. Plant Commun.
+    2022;3(2):100268.
+    148. Chen H, Zhang Y, Feng S. Whole-genome and dispersed duplication, including transposed duplication, jointly
+    advance the evolution of TLP genes in seven representative Poaceae lineages. BMC Genomics. 2023;24(1):290.
+    149. Zhao G, Zou C, Li K, Wang K, Li T, Gao L, Zhang X, Wang H, Yang Z, Liu X, et al. The Aegilops tauschii genome
+    reveals multiple impacts of transposons. Nat Plants. 2017;3(12):946–55.
+    150. Tang H, Bowers JE, Wang X, Ming R, Alam M, Paterson AH. Synteny and collinearity in plant genomes. Science.
+    2008;320(5875):486–8.
+    151. Friebe B, Jiang J, Raupp WJ, McIntosh RA, Gill BS. Characterization of wheat-alien translocations conferring
+    resistance to diseases and pests: current status. Euphytica. 1996;91(1):59–87.
+    152. Salina E, Muterko A, Kiseleva A, Liu Z, Korol A. Dissection of structural reorganization of wheat 5B chromosome
+    associated with interspecies recombination suppression. Front Plant Sci 2022, Volume 13–2022.
+    153. Shi P, Sun H, Liu G, Zhang X, Zhou J, Song R, Xiao J, Yuan C, Sun L, Wang Z, et al. Chromosome painting reveals
+    inter-chromosomal rearrangements and evolution of subgenome D of wheat. Plant J. 2022;112(1):55–67.
+    154. Parisod C, Badaeva ED. Chromosome restructuring among hybridizing wild wheats. New Phytol.
+    2020;226(5):1263–73.
+    155. Yang Y-C, Tuleen N, Hart G. Isolation and identification of Triticum aestivum L. em. Thell. cv Chinese Spring-T.
+    peregrinum Hackel disomic chromosome addition lines. Theor Appl Genet. 1996;92(5):591–8.
+    156. Zhang H, Jia J, Gale MD, Devos KM. Relationships between the chromosomes of Aegilops umbellulata and wheat.
+    Theor Appl Genet. 1998;96(1):69–75.
+
+Publisher’s note    Springer Nature remains neutral with regard to jurisdictional claims in published maps and institutional
+affiliations.
+
+
+
+Authors and Affiliations
+
+Bijendra Khadka1,2 · Tara Edwards1 · Madeleine Lévesque-Lemay1 · Jennifer Ens2 ·
+Harmeet S. Chawla2,3 · Chunfang Zheng1 · Frank M. You1 · Curtis J. Pozniak2 ·
+Sylvie Cloutier1
+
+     Bijendra Khadka
+     bijendra.khadka@agr.gc.ca
+     Sylvie Cloutier
+     sylviej.cloutier@agr.gc.ca
+1
+     Ottawa Research and Development Centre, Agriculture and Agri-Food Canada, 960 Carling Avenue, Ottawa,
+     ON K1A 0C6, Canada
+
+
+BMC Plant Biology
+Article in Press                                                    https://doi.org/10.1186/s12870-026-10046-2
+2
+    Crop Developmental Centre, Department of Plant Sciences, University of Saskatchewan, Saskatoon, SK
+    S7N 5A8, Canada
+3
+    Department of Plant Science, University of Manitoba, Winnipeg, MB R3T 2N2, Canada
+
+
+
+
+                                                                                                    BMC Plant Biology
+

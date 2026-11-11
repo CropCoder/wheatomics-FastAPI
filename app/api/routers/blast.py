@@ -384,6 +384,12 @@ DB_CLASSIFICATION = [
             "ae.",  # matches ae.speltoides, ae.longissima, etc. (NOT Ae_tauschii which uses underscore)
             "aegilops_mutica", "aegilops_umbellulata", "aegilops_comosa",
             "aegilops_geniculata", "aegilops_ventricosa",
+            # 4DWheat 二倍体 Aegilops（2026-11）：Ae. markgrafii / Ae. uniaristata
+            # 的新库名（CC_Aegilops_markgrafii_…、NN_Aegilops_uniaristata_…）不命中
+            # 任何既有分类，补物种专名关键词（无下划线缩写形式一并覆盖）。
+            "aegilops_markgrafii", "aegilops_uniaristata",
+            "markgrafii", "uniaristata",
+            "aemarkgrafii", "aeuniaristata", "aeumbellulata",
             "aecomosa", "dasypyrum_", "roegneria_", "leymus_",
             "rm271",
         ],

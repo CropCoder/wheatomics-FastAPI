@@ -1,0 +1,6 @@
+# NCBI *_assembly_report.txt md5（实测下载 vs NCBI 目录 md5checksums.txt vs PAPER_DATA.md §4.1）
+# 列：GCA登录号<TAB>物种<TAB>实测md5<TAB>NCBI官方md5<TAB>PAPER_DATA记录md5<TAB>结论
+GCA_052815735.2	Ae. comosa	0dec99d5610b511856625b83e23f6b6d	0dec99d5610b511856625b83e23f6b6d	0dec99d5610b511856625b83e23f6b6d	一致
+GCA_052815875.1	Ae. markgrafii	4e31f0cad2191e46e670e94fc0e8deb9	4e31f0cad2191e46e670e94fc0e8deb9	4e31f0cad2191e46e670e94fc0e8deb5	PAPER_DATA 末位笔误（deb5→deb9），以 NCBI 实测为准
+GCA_060308565.1	Ae. umbellulata	f005dec95b7e253ab9beb8e9033f135a	f005dec95b7e253ab9beb8e9033f135a	f005dec95b7e253ab9beb8e9033f135a	一致
+GCA_052815765.1	Ae. uniaristata	0abc640548aa96a5de13c50075b21a0a	0abc640548aa96a5de13c50075b21a0a	0abc640548aa96a5de13c50075b21a0a	一致

@@ -1,0 +1,14 @@
+{
+  "mode": "dry-run",
+  "assembly_report": "docs/plans/aegilops4_2026-11/normalize_test/reports/GCA_052815875.1_ASM5281587v1_assembly_report.txt",
+  "report_rows": 24,
+  "assembled_molecule": 7,
+  "unplaced_or_other": 17,
+  "roles": {
+    "assembled-molecule": 7,
+    "unplaced-scaffold": 17
+  },
+  "total_length": 3577170360,
+  "mapping_rows": 24,
+  "mapping_tsv": "docs/plans/aegilops4_2026-11/normalize_test/out/markgrafii.fa_mapping.tsv"
+}

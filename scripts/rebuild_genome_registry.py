@@ -474,8 +474,28 @@ def main() -> int:
         r["usage"]["getfasta"]["api"] = "/api/sequence/by-interval (database=all_genomes)"
 
     # --- Web BLAST 前端 ---
+    # 2026-11: 生产 /blast/blast.html 已重写为 wheatBLAST SPA（BLAST 2.0），
+    # 页面不再手写 <optgroup>/value="<db>_chromosomes"，库清单完全由
+    # /api/blast/databases 动态渲染 —— 对 SPA 页面旧的关键词匹配永远命中 0，
+    # web_blast_group 会恒为 0。SPA 模式下只要有核酸 BLAST 库
+    # （blast_genome_db 非空）即视为可在 Web BLAST 使用；旧页面（含 <optgroup>）
+    # 保留原判定作为 fallback。
     html = src["blast_html"]
+    _html_low = html.lower()
+    spa_mode = (
+        "wheatblast spa" in _html_low
+        or "blast-db-cats" in _html_low
+        or ("<optgroup" not in _html_low and "api/blast/databases" in _html_low)
+    )
+    if spa_mode:
+        print("blast html: wheatBLAST SPA detected -> web_blast_group = 1 when blast_genome_db exists")
     for key, r in list(records.items()):
+        if spa_mode:
+            if r["blast_genome_db"]:
+                r["web_blast_group"] = 1
+                r["usage"].setdefault("web_blast", {})["databank"] = r["blast_genome_db"]
+                r["usage"]["web_blast"]["frontend"] = "/blast/blast.html (wheatBLAST SPA)"
+            continue
         names = []
         if r["blast_genome_db"]:
             names.append(r["blast_genome_db"])
@@ -584,7 +604,8 @@ def main() -> int:
             "Yangmai33": "YM33",
         }
         SUB = {"AABBDD": "A,B,D", "AABBRR": "A,B,R", "AABB": "A,B", "AA": "A", "DD": "D",
-               "HH": "H", "SS": "S", "TT": "T", "MM": "M", "AAGG": "A,G", "DDNN": "D,N",
+               "HH": "H", "SS": "S", "TT": "T", "MM": "M", "CC": "C", "NN": "N",
+               "AAGG": "A,G", "DDNN": "D,N",
                "STSTYYHH": "St,Y,H", "STSTVVJJ": "St,V,J", "NSNSXMXM": "Ns,Ns,Xm,Xm",
                "UU": "U", "VV": "V", "EE": "E", "RR": "R", "ATATGG": "At,G"}
         def _num(v):
@@ -865,6 +886,74 @@ def main() -> int:
         "assembly_accession": "Tpo.Acc-1",
         "cultivar_or_line": "Tpo.Acc-1",
         "notes": "材料登录号 Tpo.Acc-1；2026-10-23 完成 dataset_id 迁移；2026-10-24 按平台规则给染色体/未定位序列加材料后缀：Chr01_Tpo.Acc-1…Chr70_Tpo.Acc-1、ChrUn_ctg*_Tpo.Acc-1；FASTA/BLAST/基因表/BED/getsequence 已同步；JBrowse 仍保留旧 Chr01–Chr70（用户指示不改）；基因功能表/02G 已建",
+    }
+
+    # --- 4DWheat 二倍体 Aegilops（BMC Plant Biology 2026，2026-11 接入）---
+    # 数据集名 = ${PLOIDY}_Aegilops_<species>_<accession>；分类 other_triticeae。
+    # 组装来自 NCBI GCA（FASTA 源），注释来自 Zenodo 22681907（HC+LC gene models + EDTA TE）。
+    overrides["MM_Aegilops_comosa_IPK_AE783"] = {
+        "ploidy": "MM", "species": "Aegilops comosa",
+        "cultivar_or_line": "IPK-AE783",
+        "assembly_accession": "GCA_052815735.2",
+        "assembly_level": "Chromosome", "chromosome_count": 7,
+        "genome_size": 4407741597, "gene_count": 51203, "te_content": 0.882,
+        "doi": "10.1186/s12870-026-10046-2",
+        "paper_title": "Chromosome-level reference genome assemblies and annotation of four diploid Aegilops",
+        "journal": "BMC Plant Biology", "publication_year": 2026,
+        "annotation_status": "available",
+        "annotation_source": "Zenodo 22681907 (4DWheat, HC+LC gene models + EDTA TE)",
+        "annotation_doi": "10.5281/zenodo.22681907",
+        "source_url": "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/052/815/735/GCA_052815735.2_ASM5281573v2/",
+        "source_md5": "38b8436f9c4eb360a066a1c79f1a122a",
+        "notes": "4DWheat GCA_052815735.2（17 seqs = 7 chr + 10 unplaced），51,203 基因（HC 37,622 / LC 13,581），BUSCO protein 97.2%；PacBio HiFi + Bionano + Hi-C 组装，注释 Zenodo 22681907",
+    }
+    overrides["CC_Aegilops_markgrafii_EKC105_RL5723"] = {
+        "ploidy": "CC", "species": "Aegilops markgrafii",
+        "cultivar_or_line": "EKC105_RL5723",
+        "assembly_accession": "GCA_052815875.1",
+        "assembly_level": "Chromosome", "chromosome_count": 7,
+        "genome_size": 3577170360, "gene_count": 47246, "te_content": 0.863,
+        "doi": "10.1186/s12870-026-10046-2",
+        "paper_title": "Chromosome-level reference genome assemblies and annotation of four diploid Aegilops",
+        "journal": "BMC Plant Biology", "publication_year": 2026,
+        "annotation_status": "available",
+        "annotation_source": "Zenodo 22681907 (4DWheat, HC+LC gene models + EDTA TE)",
+        "annotation_doi": "10.5281/zenodo.22681907",
+        "source_url": "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/052/815/875/GCA_052815875.1_ASM5281587v1/",
+        "source_md5": "2a55e0ca2d74109c63c84dcb6d6a077a",
+        "notes": "4DWheat GCA_052815875.1（24 seqs = 7 chr + 17 unplaced），47,246 基因（HC 34,133 / LC 13,113），BUSCO protein 96.6%；PacBio HiFi + Bionano + Hi-C 组装，注释 Zenodo 22681907",
+    }
+    overrides["UU_Aegilops_umbellulata_IPK_AE740"] = {
+        "ploidy": "UU", "species": "Aegilops umbellulata",
+        "cultivar_or_line": "IPK-AE740",
+        "assembly_accession": "GCA_060308565.1",
+        "assembly_level": "Chromosome", "chromosome_count": 7,
+        "genome_size": 4268089219, "gene_count": 49677, "te_content": 0.872,
+        "doi": "10.1186/s12870-026-10046-2",
+        "paper_title": "Chromosome-level reference genome assemblies and annotation of four diploid Aegilops",
+        "journal": "BMC Plant Biology", "publication_year": 2026,
+        "annotation_status": "available",
+        "annotation_source": "Zenodo 22681907 (4DWheat, HC+LC gene models + EDTA TE)",
+        "annotation_doi": "10.5281/zenodo.22681907",
+        "source_url": "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/060/308/565/GCA_060308565.1_AAFC_Aeum_AE740_v02/",
+        "source_md5": "1766c56e9ed9f2d6bcf292925a6628bb",
+        "notes": "4DWheat GCA_060308565.1（250 seqs = 7 chr + 243 unplaced），49,677 基因（HC 35,799 / LC 13,878），BUSCO protein 96.9%；PacBio HiFi + Bionano + Hi-C 组装，注释 Zenodo 22681907",
+    }
+    overrides["NN_Aegilops_uniaristata_IPK_AE680"] = {
+        "ploidy": "NN", "species": "Aegilops uniaristata",
+        "cultivar_or_line": "IPK-AE680",
+        "assembly_accession": "GCA_052815765.1",
+        "assembly_level": "Chromosome", "chromosome_count": 7,
+        "genome_size": 4475943907, "gene_count": 50416, "te_content": 0.879,
+        "doi": "10.1186/s12870-026-10046-2",
+        "paper_title": "Chromosome-level reference genome assemblies and annotation of four diploid Aegilops",
+        "journal": "BMC Plant Biology", "publication_year": 2026,
+        "annotation_status": "available",
+        "annotation_source": "Zenodo 22681907 (4DWheat, HC+LC gene models + EDTA TE)",
+        "annotation_doi": "10.5281/zenodo.22681907",
+        "source_url": "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/052/815/765/GCA_052815765.1_ASM5281576v1/",
+        "source_md5": "b9b855678d7beba1cdd58f7ed89123eb",
+        "notes": "4DWheat GCA_052815765.1（21 seqs = 7 chr + 14 unplaced），50,416 基因（HC 35,816 / LC 14,600），BUSCO protein 96.6%；PacBio HiFi + Bionano + Hi-C 组装，注释 Zenodo 22681907",
     }
 
     for key, ov in overrides.items():

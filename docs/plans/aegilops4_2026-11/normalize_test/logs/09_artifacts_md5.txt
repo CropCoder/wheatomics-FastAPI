@@ -1,0 +1,17 @@
+71722fb8092343d8bd68f011f981930a  1428  comosa.fa_mapping.tsv
+93c2574d9a5bbfd429a423fd18eec07d  2033  comosa.gff3.excerpt.txt
+d520cc501d5ae996e6face11fd60ad2b  4713411  comosa.gff3.gz
+b3ae138d34cc00f2674db31958193279  948  comosa.gff3.seqid_mapping.tsv
+f1f0896fa3f6212fee6b3caa8fac11e5  620102  comosa.idmap.tsv.gz
+11575206fff2b989bb405f1c37d0acf9  1702  markgrafii.fa_mapping.tsv
+ab822efc6552180eabdf3567469de9a8  4464548  markgrafii.gff3.gz
+95ff5d9902c739fc215b40a06cf043bf  700  markgrafii.gff3.seqid_mapping.tsv
+eba12b523ba3258f3aca726bd8153d6e  574616  markgrafii.idmap.tsv.gz
+f9cc5f11763cd1ce0e980c0cb43d1eff  18727  umbellulata.fa_mapping.tsv
+e71259d7165751607e48eb757d60e39c  4660974  umbellulata.gff3.gz
+a60b634234f71a2da8322c304a586553  9650  umbellulata.gff3.seqid_mapping.tsv
+570694f8d114fde95e7d6d976bcd88ed  604253  umbellulata.idmap.tsv.gz
+bcbb1872da6986eff2b7f1c24f76e116  1739  uniaristata.fa_mapping.tsv
+042128b6eae084a2f0ddc5a04cda85f9  4620690  uniaristata.gff3.gz
+f87e8830ef2690eee39b7852404eb06c  892  uniaristata.gff3.seqid_mapping.tsv
+098f000f7c0d3da92c4a264ebcf452fc  614026  uniaristata.idmap.tsv.gz

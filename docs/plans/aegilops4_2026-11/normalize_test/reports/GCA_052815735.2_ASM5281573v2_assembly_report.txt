@@ -1,0 +1,45 @@
+# Assembly name:  ASM5281573v2
+# Organism name:  Aegilops comosa (monocots)
+# Isolate:  IPK-AE783
+# Taxid:          4485
+# BioSample:      SAMN43422618
+# BioProject:     PRJNA1506336
+# Submitter:      4DWheat
+# Date:           2026-09-13
+# Assembly type:  haploid
+# Release type:   major
+# Assembly level: Chromosome
+# Genome representation: full
+# WGS project:    JBHEGE02
+# Assembly method: HiFiasm v. 0.15.4-r347
+# Expected final version: Yes
+# Genome coverage: 30.4x
+# Sequencing technology: PacBio RSII
+# GenBank assembly accession: GCA_052815735.2
+#
+## Assembly-Unit names:
+## Primary Assembly
+#
+# Ordered by chromosome/plasmid; the chromosomes/plasmids are followed by
+# unlocalized scaffolds.
+# Unplaced scaffolds are listed at the end.
+# RefSeq is equal or derived from GenBank object.
+#
+# Sequence-Name	Sequence-Role	Assigned-Molecule	Assigned-Molecule-Location/Type	GenBank-Accn	Relationship	RefSeq-Accn	Assembly-Unit	Sequence-Length	UCSC-style-name
+1M	assembled-molecule	1	Chromosome	CM127985.1	<>	na	Primary Assembly	572610027	na
+2M	assembled-molecule	2	Chromosome	CM127986.2	<>	na	Primary Assembly	655009904	na
+3M	assembled-molecule	3	Chromosome	CM127987.2	<>	na	Primary Assembly	678435315	na
+4M	assembled-molecule	4	Chromosome	CM127988.1	<>	na	Primary Assembly	576805239	na
+5M	assembled-molecule	5	Chromosome	CM127989.1	<>	na	Primary Assembly	637736480	na
+6M	assembled-molecule	6	Chromosome	CM127990.1	<>	na	Primary Assembly	593682812	na
+7M	assembled-molecule	7	Chromosome	CM127991.1	<>	na	Primary Assembly	690825584	na
+Super-Scaffold_100133_4M	unplaced-scaffold	na	na	JBHEGE020000008.1	<>	na	Primary Assembly	273239	na
+Super-Scaffold_100148_5M	unplaced-scaffold	na	na	JBHEGE020000009.1	<>	na	Primary Assembly	174184	na
+Super-Scaffold_100175_6M	unplaced-scaffold	na	na	JBHEGE020000010.1	<>	na	Primary Assembly	136568	na
+Super-Scaffold_100178_6M	unplaced-scaffold	na	na	JBHEGE020000011.1	<>	na	Primary Assembly	356014	na
+Super-Scaffold_100180_1M	unplaced-scaffold	na	na	JBHEGE020000012.1	<>	na	Primary Assembly	139965	na
+Super-Scaffold_100184_5M	unplaced-scaffold	na	na	JBHEGE020000013.1	<>	na	Primary Assembly	281921	na
+Super-Scaffold_166_2_7M	unplaced-scaffold	na	na	JBHEGE020000014.1	<>	na	Primary Assembly	430	na
+Super-Scaffold_1707_5M	unplaced-scaffold	na	na	JBHEGE020000015.1	<>	na	Primary Assembly	1034556	na
+Super-Scaffold_639_2_7M	unplaced-scaffold	na	na	JBHEGE020000016.1	<>	na	Primary Assembly	834	na
+Super-Scaffold_846_5M	unplaced-scaffold	na	na	JBHEGE020000017.1	<>	na	Primary Assembly	238525	na
