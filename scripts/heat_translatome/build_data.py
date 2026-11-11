@@ -293,9 +293,8 @@ def build_manifest(counts: dict[str, int]) -> dict[str, Any]:
         "title": "Heat-stress developing grain translatome (5/10/15 DAA, CK vs 42 °C 1 h)",
         "short_title": "Grain heat-stress translatome",
         "description": (
-            "RNA-seq, Ribo-seq and translation efficiency (TE) of developing wheat grains "
-            "(cv. Chinese Spring) at 5, 10 and 15 DAA, control vs 1-h 42 °C heat stress. "
-            "Every record carries both the platform 02G ID and the source 03G ID."
+            "RNA-seq (transcriptome) and Ribo-seq (translatome) of developing wheat grains "
+            "(cv. Chinese Spring) at 5, 10 and 15 DAA, control vs. 1-h 42 °C heat stress."
         ),
         "species": "Triticum aestivum",
         "cultivar": "Chinese Spring",

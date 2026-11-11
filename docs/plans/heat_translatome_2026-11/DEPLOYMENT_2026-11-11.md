@@ -122,3 +122,14 @@ but are not exposed in the UI; they can be removed later if not needed.
 > and row/column renaming for web display.
 
 Builder updated accordingly; manifest change requires an API restart.
+
+## Hero description clarified (2026-11-11 evening)
+
+The page intro now reads:
+
+> RNA-seq (transcriptome) and Ribo-seq (translatome) of developing wheat grains
+> (cv. Chinese Spring) at 5, 10 and 15 DAA, control vs. 1-h 42 °C heat stress.
+
+Rationale: readers may not know Ribo-seq is the translatome, and TE is not a raw
+data layer but a derived metric of the RNA-seq/Ribo-seq pair. The platform
+02G / source 03G IDs remain visible as per-record badges and in the query help.
