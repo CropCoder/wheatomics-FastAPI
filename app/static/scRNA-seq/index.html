@@ -87,12 +87,6 @@ a.csv:hover{background:#16453e}
   <div id="batchtable" class="scroll"></div>
 </section>
 
-<section id="summarysec" hidden>
-  <h2>Summary</h2>
-  <div class="chips" id="chips"></div>
-  <p class="muted" id="samplesline"></p>
-</section>
-
 <section id="exprsec" hidden>
   <h2>Expression by dataset and cell type</h2>
   <div class="picker">
@@ -117,6 +111,12 @@ a.csv:hover{background:#16453e}
   </div>
   <h3 style="font-size:16px;margin:18px 0 8px">Expression level per cell population</h3>
   <div id="exprtable" class="scroll"></div>
+</section>
+
+<section id="summarysec" hidden>
+  <h2>Summary</h2>
+  <div class="chips" id="chips"></div>
+  <p class="muted" id="samplesline"></p>
 </section>
 
 <section id="modulesec" hidden>
@@ -226,25 +226,35 @@ async function singleSearch(gene){
     state.data=d;
     state.meta={};
     (d.samples||[]).forEach(s=>{state.meta[s.sample]={display:s.display,type:s.type}});
-    renderSummary(d);
     renderDisplayPicker(d);
     refreshDisplayViews();
     text($("status"),`Loaded ${d.gene}.`);
   }catch(e){text($("status"),"Error: "+e.message)}
 }
 
-function renderSummary(d){
-  const s=d.summary||{};
+// Chips describe the selected dataset only, so switching Dataset above
+// updates the numbers together with the plot.
+function renderSummary(display){
+  const d=state.data;
+  const disp=(d.displays||[]).find(x=>x.display===display)||{};
+  const entries=disp.entries||[];
+  const bySample=d.expression_by_sample||{};
+  const withExpr=entries.map(e=>e.sample).filter(s=>bySample[s]);
+  const celltypes=new Set();
+  withExpr.forEach(s=>(bySample[s]||[]).forEach(e=>celltypes.add(e.celltype)));
+  const modules=(d.modules||[]).filter(m=>m.display===display);
+  const hubs=(d.hub_genes||[]).filter(h=>h.display===display);
+  const hubsIn=[...new Set(hubs.map(h=>h.celltype_label||h.celltype_key))];
   const chips=[
-    `<span class="chip">Datasets with expression: <b>${(s.displays_with_expression||[]).length}</b></span>`,
-    `<span class="chip">Cell types: <b>${s.n_celltypes||0}</b></span>`,
-    `<span class="chip">Modules: <b>${s.n_modules||0}</b></span>`,
-    s.is_hub?`<span class="chip hub">Hub gene in <b>${(s.hub_celltypes||[]).join(", ")}</b></span>`
-            :`<span class="chip">Not a hub gene in these datasets</span>`
+    `<span class="chip">Samples: <b>${entries.length}</b>`+
+      (withExpr.length&&withExpr.length!==entries.length?` (${withExpr.length} with expression)`:"")+`</span>`,
+    `<span class="chip">Cell types: <b>${celltypes.size}</b></span>`,
+    `<span class="chip">Modules: <b>${modules.length}</b></span>`,
+    hubsIn.length?`<span class="chip hub">Hub gene in <b>${hubsIn.join(", ")}</b></span>`
+                 :`<span class="chip">Not a hub gene in this dataset</span>`
   ];
   $("chips").innerHTML=chips.join("");
-  const ds=(d.displays||[]).map(x=>x.display);
-  text($("samplesline"),"Datasets: "+(ds.length?ds.join(" · "):"—"));
+  text($("samplesline"),"Samples: "+(entries.length?entries.map(e=>e.sample).join(" · "):"—"));
   $("summarysec").hidden=false;
 }
 
@@ -282,6 +292,7 @@ function refreshDisplayViews(){
   const display=$("display").value;
   renderDisplayMeta(display);
   renderExpression(display);
+  renderSummary(display);
   renderModules(state.data,display);
   renderHubs(state.data,display);
 }
