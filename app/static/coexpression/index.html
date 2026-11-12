@@ -56,9 +56,9 @@ var _hmt = _hmt || [];
         <div>
           <p class="news-kicker">WheatOmics 2.0 · Analysis tool</p>
           <h1 class="news-title">Co-<em>expression</em></h1>
-          <p class="news-lead">Find genes co-expressed with your query genes in the Wheat grain and biotic-stress co-expression databases, filtered by PCC or Mutual Rank and exportable as TSV.</p>
+          <p class="news-lead">Find genes co-expressed with your query genes in the wheat co-expression databases, filtered by PCC or Mutual Rank and exportable as TSV.</p>
           <div class="news-stats">
-            <span class="news-stat"><strong>2</strong> co-expression databases</span>
+            <span class="news-stat"><strong id="db-count">2</strong> co-expression databases</span>
             <span class="news-stat">PCC / MR filters</span>
             <span class="news-stat">TSV export</span>
           </div>
@@ -275,6 +275,7 @@ function loadDatabases() {
   $.getJSON('/api/coexpression/databases')
     .done(function(resp) {
       allDbs = (resp.success && resp.data) ? resp.data : [];
+      $('#db-count').text(allDbs.length);
       if (allDbs.length === 0) {
         $sel.html('<option value="">(no databases available)</option>');
         return;
