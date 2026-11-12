@@ -108,6 +108,59 @@ ALL FINISH SUCCESS 2026-11-12 02:23:12
 - 技能目录 `~/.agents/skills/lab-server/` 安装（当前沙箱不可写；文档与脚本已版本化在仓库，服务器 `_prep/` 已是最新）；
 - Web BLAST 全局库计数 `web_blast: 200→207` 属 SPA/registry 判定的既有修正，非遗漏。
 
+## 7. 回访补充（2026-11-12 上午）
+
+### 7.1 cite.html 引用块（已上线）
+
+- 文件：`/var/www/html/cite.html`（docroot，非 repo 管理；备份 `cite.html.bak-20261112_091853`）；
+- 末尾追加 4 个基因组的引用块（与现有 Aegilops 条目同格式）：
+  Khadka, B., Edwards, T., Lévesque-Lemay, M., Ens, J., Chawla, H.S., Zheng, C., You, F.M., Pozniak, C.J., Cloutier, S. (2026)
+  *Chromosome-level reference genome assemblies and annotation of four diploid Aegilops*. BMC Plant Biology.
+  doi:10.1186/s12870-026-10046-2
+- 外网校验：`curl https://wheatomics.sdau.edu.cn/cite.html` 命中该 DOI 与作者行（副本存 `server_pages/cite.html`）。
+
+### 7.2 news 页面条目（已上线）
+
+- 数据源：`/var/www/html/V2.0/news.json`（`help/news.html` 运行时 fetch；备份 `news.json.bak-20261112_091853`）；
+- 头部新增 2026-11-12 条目：四基因组（MM/CC/UU/NN）上线，含染色体数/大小/基因数、平台 ID 示例、
+  JBrowse/BLAST/GetSequence/PrimerServer2/CAPS/基因功能入口说明；
+- 外网校验：news.json 35 条、首条 2026-11-12；`/help/news.html` 200（副本存 `server_pages/news.json`）。
+
+### 7.3 PrimerServer2 是否更新：是（含实弹设计）
+
+- 数据库列表：4 个基因组的 `.genome` 与 `.add_Description.cds` 均在 `genome`/`gene` 分组；
+- 序列清单：`/api/PrimerServer2/databases/<DS>.genome/sequences` 返回 17/24/250/21 条（与 fasta 一致）；
+- **设计作业实弹**（comosa，`POST /api/PrimerServer2/jobs`，区域 `Chr1M_Aegilops_comosa_IPK_AE783 100000 300`）：
+  作业进度到 100%，`status=done`，返回结果 HTML 含 `Site 1: Chr1M_Aegilops_comosa_IPK_AE783-100000-300`。
+
+### 7.4 CAPS / dCAPS / KASP 是否更新：是（含实弹设计）
+
+- CAPS 页面取库来自 PrimerServer2 → 4 个基因组自动可选；静态页 diploid 组已含 CC/NN；
+- **CAPS/dCAPS 实弹**（comosa，坐标模式 `Chr1M_Aegilops_comosa_IPK_AE783:100000-101000`，pos 100500，A→G）：
+  返回 `total_designs=1`（BfaI，`enzyme_count=124`），引物/酶切位点完整；
+- **KASP 实弹**：同一区域内换位点（offset 1500/2500/3500）均返回 `total_designs=20`；
+  offset 500 位点为 0（位点序列限制，非功能问题）。
+
+### 7.5 rebuild 自动登记的 5 行：是"别名/孤儿行"，建议隐藏
+
+| dataset_id | 对应既有规范条目（有完整数据） | 自身数据 |
+|---|---|---|
+| `PI428250` | `Triticum_urartu_PI428250`（JBrowse + `Genefunc_AA_Triticum_urartu_PI428250_table` + BLAST `AA_Triticum_urartu_PI428250.*`） | 无 JBrowse/BLAST/基因表 |
+| `Durum_Wheat_cv._Svevo` | `AABB_Durum_Wheat_Svevo` / `Svevo_V2`（JBrowse + 基因表 `Genefunc_AABB_Durum_Wheat_Svevo_table`） | 无 JBrowse/BLAST/基因表 |
+| `Chinese Spring 03G` | `CS_IWGSC03G`（基因表 `Genefunc_CS_IWGSC03G_table`）；`IWGSC03G` 行 | 无 JBrowse/BLAST |
+| `E.sibiricus_GaomuNo.1` | `Elymus_sibiricus_cultivar_Gaomu`（JBrowse）；`SSHH_Elymus_sibiricus_Gaomu`（BLAST） | 无 JBrowse/BLAST |
+| `Triticum_aestivum_ThatcherLr9` | JBrowse 目录 `ThatcherLr9` 只有原始 fasta（无 `seq/refSeqs.json`），平台上无可用数据集 | 无任何平台功能入口 |
+
+- 这 5 行由 `rebuild_genome_registry.py` 从"平台事实 + 策展元数据"派生，`web_blast_group=0`、`jbrowse_dataset=None`、
+  `gene_table=None`，属于历史命名/别名，不应作为独立基因组出现在 `/api/genomes`（这也是 total 316→325 的来源）；
+- **建议**：把这 5 行 `visible=0`（不删除、保留溯源；rebuild 会保留 visible，后续不会自动改回），
+  目录口径即回到 320；命令：
+  ```sql
+  UPDATE wheatomics_db.genome_registry SET visible=0
+  WHERE dataset_id IN ('PI428250','Durum_Wheat_cv._Svevo','Triticum_aestivum_ThatcherLr9','Chinese Spring 03G','E.sibiricus_GaomuNo.1');
+  ```
+  （用 `wheatomics_user` 执行；执行后 `/api/genomes/stats` total=320、annotation available=215。）
+
 ## 附录：G5 逐条核对结果（90/90 PASS）
 
 
