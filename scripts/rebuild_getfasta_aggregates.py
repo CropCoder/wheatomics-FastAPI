@@ -32,6 +32,12 @@ CHROM_LEVELS = {"Chromosome", "Complete Genome", "draft chromosome level", "Chro
 #: BLAST database; never merge them into all_genes.
 SEPARATE_CDS_DBS = {"PacBioFullLengthcDNA"}
 
+#: BLAST 别名库最多 200 个成员（blastdbcmd 只读前 200 个；超出的成员
+#: `-entry_batch` 会 "Skipped"）。all_genes/all_gene 已接近上限：再排除
+#: 2 个非基因组注释/冗余转录本库，保证 4 个新基因组与既有 196 个成员都在前 200。
+EXTRA_EXCLUDE_CDS = {"Tae_TF.cds", "fangenome_final.cds"}
+ALIAS_MEMBER_LIMIT = 200
+
 INVALID_DB_MEMBERS = {
     # 2026-10-26: Foma.pep 已从 blastdb 删除（mdb_env_open 损坏）；保留此条目
     # 仅用于防止旧备份恢复后又被合并进 all_proteins。
@@ -129,8 +135,13 @@ def enumerate_dbs(blastdb: pathlib.Path):
                 prot.add(b)
     genomes = {b for b in nuc if b.endswith((".genome", ".scaffold"))}
     split = {b for b in nuc if re.search(r"\.(genome|scaffold)_Chr", b)}
-    cds = {b for b in nuc - genomes - split if not b.startswith("all_") and not re.match(r"all\d+_genomes$", b)}
-    pep = {b for b in prot if not b.startswith("all_") and not re.match(r"all\d+_genomes$", b)}
+    cds = {b for b in nuc - genomes - split
+           if not b.startswith("all_") and not re.match(r"all\d+_genomes$", b)
+           and not any(b.startswith(p) for p in SEPARATE_CDS_DBS)
+           and b not in EXTRA_EXCLUDE_CDS}
+    pep = {b for b in prot if not b.startswith("all_") and not re.match(r"all\d+_genomes$", b)
+           and not any(b.startswith(p) for p in SEPARATE_CDS_DBS)
+           and b not in EXTRA_EXCLUDE_CDS}
     return genomes, cds, pep
 
 

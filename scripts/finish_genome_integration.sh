@@ -22,7 +22,9 @@
 #   3) PrimerServer2 .fai     samtools faidx（genome / add_Description.cds）
 #   4) Genefunc_registry 行   Genefuncdb.Genefunc_registry（upsert）
 #   5) 聚合库 alias           all_genomes.nal / all_gene.nal / all_protein.pal
+#                            + all_genes.nal / all_proteins.pal（GetSequence by-gene 用）
 #                            + all_genomes_type.txt
+#   5b) GetSequence 文档示例   /var/www/html/doc/getsequence_search.txt（新增/更新本基因组行）
 #   6) jbrowse_meta 导入       scripts/import_jbrowse_meta.py --dataset
 #   7) genome_registry 重建    scripts/rebuild_genome_registry.py
 #   8) 元数据写回              genome_registry 的 DOI/标题/期刊/年份/物种等
@@ -34,7 +36,8 @@
 # 不做（需人工，脚本会打印提示）：
 #   - getfasta 分类：要改 app/api/routers/blast.py 的 DB_CLASSIFICATION
 #     → 本地 commit + push(github+gitee) → 服务器 git pull → 重启 API
-#   - cite.html 引文（可选）
+#   - cite.html 引文（可选；本次上线已手工补充）
+#   - GetSequence 支持基因组面板由 Genefunc_registry 动态渲染（本脚本已写 registry + 示例字段）
 #
 # 路径均可被 WHEATOMICS_* 环境变量覆盖（默认=生产路径；本地 fake docroot 测试用）：
 #   WHEATOMICS_REPO         仓库根              (默认 /var/www/FastAPI_backend_Port8000)
@@ -1000,6 +1003,7 @@ step_fai() {
 # ---------------------------------------------------------------- 4) Genefunc_registry
 step_genefunc_registry() {
   log "--- 4) Genefunc_registry 行 ---"
+  local LABEL="${LABEL:-$DS}"
   # display_order：同 Polyploidy 分组末尾 +1（失败时退回 500）
   local ORD="${PLAN_ORD:-500}"
   if [ -z "${PLAN_ORD:-}" ] && [ -r "$DDL_ENV" ]; then
@@ -1032,7 +1036,7 @@ sql=f"""INSERT INTO Genefuncdb.Genefunc_registry
 VALUES
  ({q(table)}, {q(tag)}, {q(group)}, {q(ploidy)}, 'Yes', {q(doi)}, {q(title)}, '',
   {q(jb)}, {q(cds)}, 1, {ordv},
-  {q(esc)}, {q(cds)}, {q(pep)}, {q(ds)})
+  {q(esc)}, {q(cds)}, {q(pep)}, {q(label)})
 ON DUPLICATE KEY UPDATE
   Accession=VALUES(Accession), `Group`=VALUES(`Group`), Polyploidy=VALUES(Polyploidy),
   chromosome_level=VALUES(chromosome_level), Doi=VALUES(Doi), title=VALUES(title),
@@ -1043,7 +1047,7 @@ ON DUPLICATE KEY UPDATE
 print(sql)
 PY
 )"
-  if [ "$DRY" = 1 ]; then log "  [DRY] 将执行 upsert：table_name=Genefunc_${DS}_table, display_name=${DS}, group=${GROUP}, display_order=${ORD}"; return 0; fi
+  if [ "$DRY" = 1 ]; then log "  [DRY] 将执行 upsert：table_name=Genefunc_${DS}_table, display_name=${LABEL}, group=${GROUP}, display_order=${ORD}"; return 0; fi
   local DDL_USER DDL_PASS DDL_HOST
   DDL_USER="$(grep -E '^DB_USER=' "$DDL_ENV" | cut -d= -f2-)"
   DDL_PASS="$(grep -E '^DB_PASS=' "$DDL_ENV" | cut -d= -f2-)"
@@ -1070,8 +1074,10 @@ import os,re,pathlib
 b=pathlib.Path(os.environ["BLASTDB"]); ds=os.environ["DS"]; ploidy=os.environ["PLOIDY"]
 dry=os.environ.get("DRY")=="1"
 targets=[("all_genomes.nal", f"{ds}.genome"),
-         ("all_gene.nal",    f"{ds}.add_Description.cds"),
-         ("all_protein.pal", f"{ds}.add_Description.pep")]
+         ("all_gene.nal",     f"{ds}.add_Description.cds"),
+         ("all_protein.pal",  f"{ds}.add_Description.pep"),
+         ("all_genes.nal",    f"{ds}.add_Description.cds"),
+         ("all_proteins.pal", f"{ds}.add_Description.pep")]
 for fn,member in targets:
     p=b/fn
     if not p.exists(): print(f"  [WARN] 缺少 {fn}"); continue
@@ -1081,9 +1087,15 @@ for fn,member in targets:
     m=re.search(r"^(DBLIST[ \t]+)(.*)$", t, re.M)
     if not m: print(f"  [ERR] {fn} 里找不到 DBLIST 行"); continue
     if dry: print(f"  [DRY] {fn} DBLIST += {member}"); continue
-    t=t[:m.end(2)]+((" " if m.group(2) else "")+member)+t[m.end(2):]
+    # 前插：BLAST 别名库最多读取前 200 个成员（blastdbcmd -entry_batch 会
+    # "Skipped" 第 201 个及之后），前插保证新基因组立即可查，并提示超限。
+    t=t[:m.start(2)]+member+((" " if m.group(2) else ""))+t[m.end(2):]
     tmp=p.with_suffix(p.suffix+".tmp"); tmp.write_text(t,encoding="utf-8"); tmp.replace(p)
-    print(f"  [OK] {fn} DBLIST += {member}")
+    n_members=len(t[m.start(2):t.index("\n", m.start(2))].split())
+    msg=f"  [OK] {fn} DBLIST += {member}（成员 {n_members}）"
+    if n_members > 200:
+        msg += f" [WARN] 超过 BLAST 别名 200 成员上限，尾部成员 -entry_batch 不可达"
+    print(msg)
 # all_genomes_type.txt
 p=b/"all_genomes_type.txt"
 if p.exists():
@@ -1101,6 +1113,27 @@ PY
   RC_ALIAS=$?
   [ "${RC_ALIAS:-1}" -eq 0 ] && CHANGED=$((CHANGED+1))
   [ "${RC_ALIAS:-1}" -ne 0 ] && fail "alias 追加失败"
+}
+
+# ---------------------------------------------------------------- 5b) GetSequence 文档示例
+step_getsequence_doc() {
+  log "--- 5b) GetSequence 文档示例（getsequence_search.txt）---"
+  local DOC="${WHEATOMICS_GETSEQUENCE_DOC:-/var/www/html/doc/getsequence_search.txt}"
+  local UPD="${REPO}/scripts/update_getsequence_search.py"
+  if [ ! -f "$DOC" ]; then warn "缺少 ${DOC}，跳过 GetSequence 文档更新"; return 0; fi
+  if [ ! -f "$UPD" ]; then warn "缺少 ${UPD}，跳过 GetSequence 文档更新"; return 0; fi
+  local EXTRA=""
+  [ "$DRY" = 1 ] && EXTRA="--dry-run"
+  local OUT RC
+  OUT="$(python3 "$UPD" --doc "$DOC" --name "$DS" --region "$EXAMPLE_SPECIES_CHR" \
+          --gene "$FIRST_CDS" --composition "$PLOIDY" --library all_genomes $EXTRA 2>&1)"
+  RC=$?
+  if [ "$RC" -ne 0 ]; then
+    fail "GetSequence 文档更新失败：$(printf '%s' "$OUT" | tail -2)"
+  else
+    log "  [OK] getsequence_search.txt 已更新（${DS}）"
+    CHANGED=$((CHANGED+1))
+  fi
 }
 
 # ---------------------------------------------------------------- 6-8) 元数据
@@ -1261,6 +1294,28 @@ else:
   [ -s "${BLASTDB}/${DS}.genome.fai" ] && log "  [OK] genome .fai" || fail "缺 genome .fai"
   [ -s "${BLASTDB}/${DS}.add_Description.cds.fai" ] && log "  [OK] cds .fai" || fail "缺 cds .fai"
 
+  # GetSequence 聚合库成员（页面 by-gene 默认查 all_genes/all_proteins）
+  for pair in \
+      "all_genomes.nal:${DS}.genome" \
+      "all_gene.nal:${DS}.add_Description.cds" \
+      "all_genes.nal:${DS}.add_Description.cds" \
+      "all_protein.pal:${DS}.add_Description.pep" \
+      "all_proteins.pal:${DS}.add_Description.pep"; do
+    local AGG="${pair%%:*}" MEMBER="${pair#*:}"
+    if [ -f "${BLASTDB}/${AGG}" ] && grep -qF -- "$MEMBER" "${BLASTDB}/${AGG}"; then
+      log "  [OK] ${AGG} 含 ${MEMBER}"
+    else
+      warn "${AGG} 未含 ${MEMBER}（GetSequence 可能查不到该基因组/CDS/PEP）"
+    fi
+  done
+  if curl -s --max-time 20 \
+      "${API}/api/sequence/by-gene?gene_id=${FIRST_CDS}&gene_db=all_genes&protein_db=all_proteins" \
+      | grep -q 'gene_sequence": ">'; then
+    log "  [OK] /api/sequence/by-gene（all_genes/all_proteins）可取 ${FIRST_CDS}"
+  else
+    warn "/api/sequence/by-gene 未返回 ${FIRST_CDS}（检查聚合库 / 重启 API 后再验）"
+  fi
+
   if [ -x "${BLASTX}/blastdbcmd" ]; then
     local n_std n_cds n_pep n_alias
     n_std=$("${BLASTX}/blastdbcmd" -db "${BLASTDB}/${DS}.genome" -info 2>/dev/null | awk -F';' '/sequences/{gsub(/[^0-9]/,"",$1); print $1}')
@@ -1379,6 +1434,7 @@ step_blast_html
 step_fai
 step_genefunc_registry
 step_aliases
+step_getsequence_doc
 run_registry_tools
 step_jbrowse_map
 verify

@@ -369,6 +369,46 @@ def main():
         except Exception as e:  # noqa: BLE001
             add("A16." + s["ploidy"], "%s BLAST↔JBrowse API" % ds, False, repr(e))
 
+        # A17 GetSequence by-gene（蛋白侧，all_proteins）
+        try:
+            gids = s.get("example_cds")
+            if not gids:
+                # 从 Genefunc_registry 取该数据集的 example_cds（页面芯片同一来源）
+                reg = http_get("/api/genes/functions/registry")["data"]["records"]
+                row = next((r for r in reg if r.get("table_name") == "Genefunc_%s_%s_table" % (s["ploidy"], tag)), None)
+                gids = (row or {}).get("example_cds")
+            bg = http_get("/api/sequence/by-gene?gene_id=%s&protein_db=all_proteins"
+                          % urllib.parse.quote(gids or ""), timeout=60)
+            prot = (bg.get("data") or bg or {}).get("protein_sequence") or ""
+            add("A17." + s["ploidy"], "%s GetSequence by-gene 蛋白可取（%s）" % (ds, gids), len(prot) > 0,
+                "protein_len=%d" % len(prot))
+        except Exception as e:  # noqa: BLE001
+            add("A17." + s["ploidy"], "%s GetSequence by-gene 蛋白" % ds, False, repr(e))
+
+        # A18 GetSequence batch（CDS 聚合库 all_genes）
+        try:
+            gids = s.get("example_cds")
+            if not gids:
+                reg = http_get("/api/genes/functions/registry")["data"]["records"]
+                row = next((r for r in reg if r.get("table_name") == "Genefunc_%s_%s_table" % (s["ploidy"], tag)), None)
+                gids = (row or {}).get("example_cds")
+            bt = http_get("/api/sequence/batch?database=all_genes&ID=%s" % urllib.parse.quote(gids or ""), timeout=90)
+            okn = (bt.get("data") or {}).get("succeeded", 0)
+            add("A18." + s["ploidy"], "%s GetSequence batch 可取 CDS（all_genes）" % ds, okn == 1, "succeeded=%s" % okn)
+        except Exception as e:  # noqa: BLE001
+            add("A18." + s["ploidy"], "%s GetSequence batch CDS" % ds, False, repr(e))
+
+        # A19 GetSequence 文档示例行（getsequence_search.txt）
+        try:
+            doc = os.path.join(DOCROOT, "doc", "getsequence_search.txt")
+            lines = [ln.rstrip("\n") for ln in open(doc, encoding="utf-8", errors="replace")]
+            want = ds + "\t"
+            hit = [ln for ln in lines if ln.startswith(want)]
+            add("A19." + s["ploidy"], "%s getsequence_search.txt 有本基因组行" % ds, bool(hit),
+                (hit[0].split("\t")[1] if hit else "missing"))
+        except Exception as e:  # noqa: BLE001
+            add("A19." + s["ploidy"], "%s getsequence_search.txt" % ds, False, repr(e))
+
     # ---------- C 回归 ----------
     try:
         r = http_get("/api/genomes?q=AK58")
