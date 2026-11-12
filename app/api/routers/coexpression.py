@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 import pymysql
 from fastapi import APIRouter, HTTPException, Query
 
@@ -13,6 +15,10 @@ from app.db.mysql import mysql_cursor
 from app.schemas.network import BioprojectMeta, CoexpressionPair
 
 coexpression_router = APIRouter(tags=["Coexpression"])
+
+# Every coexpression table stores bare gene IDs, so a transcript-level input
+# ("TraesCS3A02G077900.1") is reduced to the gene ID before the lookup.
+_TRANSCRIPT_SUFFIX = re.compile(r"\.\d+$")
 
 @coexpression_router.get("/coexpression/databases")
 def list_coexpression_databases() -> dict:
@@ -87,6 +93,7 @@ def query_coexpression(
 
     database = ensure_allowed_table(database, COEXPRESSION_TABLES, "coexpression table")
     genes = [ensure_gene_like(gene.strip()) for gene in gene_ids.split(",") if gene.strip()]
+    genes = [_TRANSCRIPT_SUFFIX.sub("", gene) for gene in genes]
     if not genes:
         raise ValidationFailure("No valid gene IDs provided")
     if len(genes) > 200:
