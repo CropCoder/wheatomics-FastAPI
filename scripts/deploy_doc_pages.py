@@ -9,7 +9,9 @@ ProxyPass prefix, so the repo copies are published by this script (copy +
 timestamped backup), the same pattern as scripts/deploy_blast2_preview.py.
 No Apache reload or service restart is needed.
 
-Source of truth: app/static/docpages/
+Source of truth: app/static/docpages/ (the coexpression entry points at
+app/static/coexpression/index.html instead, since that SPA keeps its own
+directory).
 
 Run on the production web node:
 
@@ -47,6 +49,13 @@ PAGES = {
     "genehub_index": ("genehub_index.html", DOCROOT / "GeneHub" / "index.html", "GeneHub search page"),
     "genehub_result": ("geneDetail.py", CGI_BIN / "geneDetail.py", "GeneHub result CGI"),
     "genehub_gene": ("gene.html", DOCROOT / "GeneHub" / "gene.html", "GeneHub gene page SPA"),
+    # The coexpression SPA lives in its own static directory (it is also served
+    # by FastAPI under /coexpression, but the public URL is the docroot copy).
+    "coexpression": (
+        REPO / "app" / "static" / "coexpression" / "index.html",
+        DOCROOT / "coexpression" / "index.html",
+        "Co-expression SPA",
+    ),
 }
 
 
@@ -117,7 +126,10 @@ def main() -> int:
     ok = True
     for key in keys:
         src_name, dest, desc = PAGES[key]
-        ok &= publish(key, SRC_DIR / src_name, dest, desc, check=args.check, dry_run=args.dry_run)
+        src = Path(src_name)
+        if not src.is_absolute():
+            src = SRC_DIR / src_name
+        ok &= publish(key, src, dest, desc, check=args.check, dry_run=args.dry_run)
 
     if args.check:
         print("\n[check] all pages match the repo" if ok else "\n[check] differences found")
