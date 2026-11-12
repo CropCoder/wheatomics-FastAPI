@@ -1,5 +1,16 @@
 # WheatOmics 新基因组上线 SOP（v2，2026-11-11 更新）
 
+> **⚡ 一页操作清单（推荐先看/打印勾选）**：[new-genome-quick-checklist.md](new-genome-quick-checklist.md) —— G0→G5 可勾选步骤 + 命令 + 常见坑速查，标注 🤖自动 / 🛠脚本 / ✍人工 / ⚙️运维。
+>
+> **TL;DR 一条链**：
+> ```
+> G0 命名门禁（--check-name --write-plan） → A2 归一化（prepare_aegilops4_dataset.sh）
+> → G3 流水线（add_wheat_genome.sh） → 重启 API
+> → G4 收尾（finish_genome_integration.sh） → 回写 jbrowse.html 源 + 重启 API
+> → G5 验收（accept_aegilops4_onboarding.py，102 项）
+> ```
+> 只有 **新 ploidy / 新类群 / 新材料** 才动代码：`rebuild_genome_registry.py` 的 `SUB`+overrides、`blast.py` 分类关键词（如需）、静态页 `groups` 数组——改完 push + 生产 pull + 重启 API。
+
 > 配套实现报告（2026-11-11）：`docs/plans/aegilops4_2026-11/PHASE0_CORE.md`（代码修复）、`PHASE0_NORMALIZE.md`（归一化脚本实测）、`PHASE0_FINISH.md`（收尾脚本适配实测）、主计划 `Aegilops4_diploid_genome_update_plan.md`。
 
 > **触点全景**：一个基因组要更新的所有地方（数据/索引、BLAST 聚合、MySQL、JBrowse、GetSequence、前端/文档、运维缓存）见 [new-genome-update-checkpoints.md](new-genome-update-checkpoints.md)。
