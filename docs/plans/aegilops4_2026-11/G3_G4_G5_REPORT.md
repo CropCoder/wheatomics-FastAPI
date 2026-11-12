@@ -10,7 +10,7 @@
 | 阶段 0 | 代码部署（分类关键词 / SUB CC·NN / overrides / SPA / 静态页 / 收尾脚本） | ✅ 生产 HEAD `8ed123b`，API 重启 |
 | G3 | `add_wheat_genome.sh` × 4（BLAST 库 / Genefunc 表 / JBrowse / registry / EggNOG…） | ✅ **4/4 `[SUCCESS]`**，00:19–02:13（约 1h54m） |
 | G4 | `finish_genome_integration.sh` × 4（卡片 / 计数 / fai / 聚合别名 / registry / 元数据 / 映射表 / API 断言） | ✅ **4/4 rc=0，各 28 OK / 0 FAIL**，02:21–02:23 |
-| G5 | `accept_aegilops4_onboarding.py` 逐条验收（90 项） | ✅ **90 PASS / 0 FAIL** |
+| G5 | `accept_aegilops4_onboarding.py` 逐条验收（102 项，含 GetSequence） | ✅ **102 PASS / 0 FAIL** |
 
 ## 1. 4 个基因组最终状态
 
@@ -80,10 +80,10 @@ ALL FINISH SUCCESS 2026-11-12 02:23:12
 ```bash
 # 在生产机执行
 /usr/bin/python3 /var/www/data/masw_data/_prep/accept_aegilops4_onboarding.py
-# TOTAL 90 checks | PASS 90 | FAIL 0
+# TOTAL 102 checks | PASS 102 | FAIL 0
 ```
 
-覆盖：全局计数（B01–B18）、每基因组 16 项（A01–A16 ×4）、回归（C01–C03）。
+覆盖：全局计数（B01–B18）、每基因组 19 项（A01–A19 ×4，含 GetSequence）、回归（C01–C03）。
 
 ## 4. 验收中发现并修复的问题（一一核对过程）
 
@@ -161,7 +161,43 @@ ALL FINISH SUCCESS 2026-11-12 02:23:12
   ```
   （用 `wheatomics_user` 执行；执行后 `/api/genomes/stats` total=320、annotation available=215。）
 
-## 附录：G5 逐条核对结果（90/90 PASS）
+## 8. GetSequence 同步复核（2026-11-12 上午第二轮）
+
+### 8.1 发现的问题（GetSequence 之前**未完全同步**）
+
+| # | 问题 | 影响 |
+|---|---|---|
+| 1 | 页面 by-gene/batch 实际查 `all_genes` / `all_proteins`（复数别名），而收尾脚本只维护旧的 `all_gene` / `all_protein`（单数） | 新基因组的蛋白/转录本序列查不到 |
+| 2 | `all_genes.nal` 重建后成员 205 个，超过 BLAST 别名 **200 成员上限**，索引 200 之后的成员（含新 UU）`-entry_batch` 返回 `Skipped` | 尾部基因组 GetSequence 批量查询失效 |
+| 3 | `/var/www/html/doc/getsequence_search.txt`（页面链接的示例表）没有 4 个新基因组行 | 文档示例缺少 |
+| 4 | `Genefunc_registry.display_name` 写成数据集技术名 | 支持基因组面板显示 `MM_Aegilops_comosa_IPK_AE783` 而不是 `Ae.comosa IPK-AE783 (M)` |
+
+### 8.2 修复
+
+- `scripts/rebuild_getfasta_aggregates.py`：`SEPARATE_CDS_DBS` 改为前缀匹配（排除 PacBioFullLengthcDNA.*），额外排除 `Tae_TF.cds`、`fangenome_final.cds`，把 `all_genes`/`all_gene` 压回 **200 成员**；
+- `scripts/finish_genome_integration.sh`：
+  - step 5 聚合别名改为同时维护 `all_genomes.nal / all_gene.nal / all_protein.pal / all_genes.nal / all_proteins.pal`，新增成员**前插**并在 >200 时告警；
+  - 新增 step 5b：自动向 `getsequence_search.txt` 增/改本基因组行（`update_getsequence_search.py`）；
+  - step 4 `display_name` 改用 `--label`（友好名）；
+  - verify 增加 5 个聚合别名成员断言 + `/api/sequence/by-gene` 实测；
+- 生产已执行 `rebuild_getfasta_aggregates.py --apply`（`all_genes` 200 / `all_proteins` 196 成员），并给 4 个基因组补了文档行、更新了 Genefunc 显示名。
+
+### 8.3 复核结果（102/102 PASS）
+
+| 检查 | 结果 |
+|---|---|
+| by-gene（`protein_db=all_proteins`）4 个示例基因 | ✅ protein_len 259 / 305 / 353 / 170 |
+| batch（`database=all_genes`）4 个示例 CDS | ✅ succeeded=1；既有 AK58 也 =1 |
+| 4 个 CDS 在 `all_genes.nal` 的位置 | ✅ 79 / 171 / 173 / 197（均 < 200） |
+| `all_genes` / `all_gene` / `all_proteins` / `all_protein` 成员数 | ✅ 200 / 200 / 196 / 196 |
+| `getsequence_search.txt` 新行（外网） | ✅ 4 行 |
+| 支持基因组面板（registry `display_name`/example 字段） | ✅ 友好名 + 示例区间/基因齐全 |
+| `/getfasta/` 页面 | ✅ 200 |
+| by-interval（all_genomes，4 个基因组） | ✅ |
+
+> 平台既有现象（非本次引入）：`blastdbcmd -entry` 不支持**核酸别名库**（报 "DB contains no accession info"），对所有基因组一致；GetSequence 单基因 CDS 请走 `/api/sequence/batch`（已验证可用）。
+
+## 附录：G5 逐条核对结果（102/102 PASS）
 
 
 ### B 组 — 全局计数/前端/映射
@@ -212,6 +248,9 @@ ALL FINISH SUCCESS 2026-11-12 02:23:12
 | A14.MM | MM_Aegilops_comosa_IPK_AE783 Genefunc 表行数 == 51203 | ✅ PASS | 51203 |
 | A15.MM | MM_Aegilops_comosa_IPK_AE783 实弹 blastn（CDS 探针→整基因组库）有命中 | ✅ PASS | rows=66 |
 | A16.MM | MM_Aegilops_comosa_IPK_AE783 BLAST 结果可跳 JBrowse | ✅ PASS | None |
+| A17.MM | MM_Aegilops_comosa_IPK_AE783 GetSequence by-gene 蛋白可取（AeCom.AE783.r1.1MG000100.1） | ✅ PASS | protein_len=259 |
+| A18.MM | MM_Aegilops_comosa_IPK_AE783 GetSequence batch 可取 CDS（all_genes） | ✅ PASS | succeeded=1 |
+| A19.MM | MM_Aegilops_comosa_IPK_AE783 getsequence_search.txt 有本基因组行 | ✅ PASS | Chr1M_Aegilops_comosa_IPK_AE783:200-500 |
 | A01.CC | CC_Aegilops_markgrafii_EKC105_RL5723 genome_registry 字段齐全正确 | ✅ PASS | ok |
 | A02.CC | CC_Aegilops_markgrafii_EKC105_RL5723 核酸库(+9)/蛋白库(+1)存在 | ✅ PASS | ok |
 | A03.CC | CC_Aegilops_markgrafii_EKC105_RL5723 分类 other_triticeae | ✅ PASS | genome_in_other=True |
@@ -228,6 +267,9 @@ ALL FINISH SUCCESS 2026-11-12 02:23:12
 | A14.CC | CC_Aegilops_markgrafii_EKC105_RL5723 Genefunc 表行数 == 47246 | ✅ PASS | 47246 |
 | A15.CC | CC_Aegilops_markgrafii_EKC105_RL5723 实弹 blastn（CDS 探针→整基因组库）有命中 | ✅ PASS | rows=5 |
 | A16.CC | CC_Aegilops_markgrafii_EKC105_RL5723 BLAST 结果可跳 JBrowse | ✅ PASS | None |
+| A17.CC | CC_Aegilops_markgrafii_EKC105_RL5723 GetSequence by-gene 蛋白可取（AeMar.EKC105.r1.1CG000100.1） | ✅ PASS | protein_len=305 |
+| A18.CC | CC_Aegilops_markgrafii_EKC105_RL5723 GetSequence batch 可取 CDS（all_genes） | ✅ PASS | succeeded=1 |
+| A19.CC | CC_Aegilops_markgrafii_EKC105_RL5723 getsequence_search.txt 有本基因组行 | ✅ PASS | Chr1C_Aegilops_markgrafii_EKC105_RL5723:200-500 |
 | A01.UU | UU_Aegilops_umbellulata_IPK_AE740 genome_registry 字段齐全正确 | ✅ PASS | ok |
 | A02.UU | UU_Aegilops_umbellulata_IPK_AE740 核酸库(+9)/蛋白库(+1)存在 | ✅ PASS | ok |
 | A03.UU | UU_Aegilops_umbellulata_IPK_AE740 分类 other_triticeae | ✅ PASS | genome_in_other=True |
@@ -244,6 +286,9 @@ ALL FINISH SUCCESS 2026-11-12 02:23:12
 | A14.UU | UU_Aegilops_umbellulata_IPK_AE740 Genefunc 表行数 == 49677 | ✅ PASS | 49677 |
 | A15.UU | UU_Aegilops_umbellulata_IPK_AE740 实弹 blastn（CDS 探针→整基因组库）有命中 | ✅ PASS | rows=6 |
 | A16.UU | UU_Aegilops_umbellulata_IPK_AE740 BLAST 结果可跳 JBrowse | ✅ PASS | None |
+| A17.UU | UU_Aegilops_umbellulata_IPK_AE740 GetSequence by-gene 蛋白可取（AeUmb.AE740.r1.UnG093600.1） | ✅ PASS | protein_len=238 |
+| A18.UU | UU_Aegilops_umbellulata_IPK_AE740 GetSequence batch 可取 CDS（all_genes） | ✅ PASS | succeeded=1 |
+| A19.UU | UU_Aegilops_umbellulata_IPK_AE740 getsequence_search.txt 有本基因组行 | ✅ PASS | Chr1U_Aegilops_umbellulata_IPK_AE740:200-500 |
 | A01.NN | NN_Aegilops_uniaristata_IPK_AE680 genome_registry 字段齐全正确 | ✅ PASS | ok |
 | A02.NN | NN_Aegilops_uniaristata_IPK_AE680 核酸库(+9)/蛋白库(+1)存在 | ✅ PASS | ok |
 | A03.NN | NN_Aegilops_uniaristata_IPK_AE680 分类 other_triticeae | ✅ PASS | genome_in_other=True |
@@ -260,6 +305,9 @@ ALL FINISH SUCCESS 2026-11-12 02:23:12
 | A14.NN | NN_Aegilops_uniaristata_IPK_AE680 Genefunc 表行数 == 50416 | ✅ PASS | 50416 |
 | A15.NN | NN_Aegilops_uniaristata_IPK_AE680 实弹 blastn（CDS 探针→整基因组库）有命中 | ✅ PASS | rows=2 |
 | A16.NN | NN_Aegilops_uniaristata_IPK_AE680 BLAST 结果可跳 JBrowse | ✅ PASS | None |
+| A17.NN | NN_Aegilops_uniaristata_IPK_AE680 GetSequence by-gene 蛋白可取（AeUna.AE680.r1.1NG000100.1） | ✅ PASS | protein_len=170 |
+| A18.NN | NN_Aegilops_uniaristata_IPK_AE680 GetSequence batch 可取 CDS（all_genes） | ✅ PASS | succeeded=1 |
+| A19.NN | NN_Aegilops_uniaristata_IPK_AE680 getsequence_search.txt 有本基因组行 | ✅ PASS | Chr1N_Aegilops_uniaristata_IPK_AE680:200-500 |
 
 ### C 组 — 回归
 

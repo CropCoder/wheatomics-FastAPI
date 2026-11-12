@@ -1,6 +1,6 @@
 {
-  "total": 90,
-  "pass": 90,
+  "total": 102,
+  "pass": 102,
   "fail": 0,
   "results": [
     {
@@ -238,6 +238,24 @@
       "detail": "None"
     },
     {
+      "rule": "A17.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 GetSequence by-gene 蛋白可取（AeCom.AE783.r1.1MG000100.1）",
+      "ok": true,
+      "detail": "protein_len=259"
+    },
+    {
+      "rule": "A18.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 GetSequence batch 可取 CDS（all_genes）",
+      "ok": true,
+      "detail": "succeeded=1"
+    },
+    {
+      "rule": "A19.MM",
+      "desc": "MM_Aegilops_comosa_IPK_AE783 getsequence_search.txt 有本基因组行",
+      "ok": true,
+      "detail": "Chr1M_Aegilops_comosa_IPK_AE783:200-500"
+    },
+    {
       "rule": "A01.CC",
       "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 genome_registry 字段齐全正确",
       "ok": true,
@@ -332,6 +350,24 @@
       "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 BLAST 结果可跳 JBrowse",
       "ok": true,
       "detail": "None"
+    },
+    {
+      "rule": "A17.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 GetSequence by-gene 蛋白可取（AeMar.EKC105.r1.1CG000100.1）",
+      "ok": true,
+      "detail": "protein_len=305"
+    },
+    {
+      "rule": "A18.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 GetSequence batch 可取 CDS（all_genes）",
+      "ok": true,
+      "detail": "succeeded=1"
+    },
+    {
+      "rule": "A19.CC",
+      "desc": "CC_Aegilops_markgrafii_EKC105_RL5723 getsequence_search.txt 有本基因组行",
+      "ok": true,
+      "detail": "Chr1C_Aegilops_markgrafii_EKC105_RL5723:200-500"
     },
     {
       "rule": "A01.UU",
@@ -430,6 +466,24 @@
       "detail": "None"
     },
     {
+      "rule": "A17.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 GetSequence by-gene 蛋白可取（AeUmb.AE740.r1.UnG093600.1）",
+      "ok": true,
+      "detail": "protein_len=238"
+    },
+    {
+      "rule": "A18.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 GetSequence batch 可取 CDS（all_genes）",
+      "ok": true,
+      "detail": "succeeded=1"
+    },
+    {
+      "rule": "A19.UU",
+      "desc": "UU_Aegilops_umbellulata_IPK_AE740 getsequence_search.txt 有本基因组行",
+      "ok": true,
+      "detail": "Chr1U_Aegilops_umbellulata_IPK_AE740:200-500"
+    },
+    {
       "rule": "A01.NN",
       "desc": "NN_Aegilops_uniaristata_IPK_AE680 genome_registry 字段齐全正确",
       "ok": true,
@@ -524,6 +578,24 @@
       "desc": "NN_Aegilops_uniaristata_IPK_AE680 BLAST 结果可跳 JBrowse",
       "ok": true,
       "detail": "None"
+    },
+    {
+      "rule": "A17.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 GetSequence by-gene 蛋白可取（AeUna.AE680.r1.1NG000100.1）",
+      "ok": true,
+      "detail": "protein_len=170"
+    },
+    {
+      "rule": "A18.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 GetSequence batch 可取 CDS（all_genes）",
+      "ok": true,
+      "detail": "succeeded=1"
+    },
+    {
+      "rule": "A19.NN",
+      "desc": "NN_Aegilops_uniaristata_IPK_AE680 getsequence_search.txt 有本基因组行",
+      "ok": true,
+      "detail": "Chr1N_Aegilops_uniaristata_IPK_AE680:200-500"
     },
     {
       "rule": "C01",

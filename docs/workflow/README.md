@@ -11,6 +11,8 @@
 | `../../scripts/normalize_diploid.py` | 四件套归一化工具（`fasta/gff3/pep/check` 子命令），支持任意 `[1-7][A-Z]` 染色体与 NCBI assembly_report 映射 | 服务器 `/var/www/data/masw_data/_prep/` |
 | `../../scripts/renumber_gff_ids.py` | gene/mRNA ID 平台风格重编号（每染色体按坐标 100 步；`--check` 可作闸门） | 服务器 `_prep/` |
 | `../../scripts/prepare_aegilops4_dataset.sh` | A2 一键脚本（FASTA/GFF 归一化 → 重编号 → gffread → pep 清洗 → 平台质检，幂等） | 服务器 `_prep/` |
+| `../../scripts/rebuild_getfasta_aggregates.py` | GetSequence 聚合 BLAST 别名重建（all_genomes/all_genes/all_proteins；含 200 成员上限处理） | 服务器 `_prep/`（或生产 repo） |
+| `../../scripts/update_getsequence_search.py` | 向 `getsequence_search.txt` 增/改本基因组示例行（页面链接文档） | 服务器 `_prep/`（或生产 repo） |
 | `../../scripts/accept_aegilops4_onboarding.py` | G5 逐条验收（90 项：计数/registry/BLAST/JBrowse/getfasta/PS2/Genefunc/实弹 BLAST/前端/映射/回归） | 服务器 `_prep/` |
 | `../../scripts/fetch_aegilops4_data.sh` | 4 个二倍体 Aegilops 数据下载（NCBI + Zenodo，断点续传/md5/互斥锁） | 服务器 `_prep/` |
 

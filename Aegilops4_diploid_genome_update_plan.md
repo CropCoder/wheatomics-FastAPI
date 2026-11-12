@@ -270,6 +270,8 @@ record 22681907（concept 22680410，CC BY 4.0，2026-09-09 发布），每物�
   每基因组 16 项×4 + 回归 3 项），报告见 `docs/plans/aegilops4_2026-11/G3_G4_G5_REPORT.md`。
 - **✅ 阶段 0 代码已部署生产**（HEAD `8ed123b`，API 已重启）。
 
+> 回访二（2026-11-12 上午）：GetSequence 复核发现并修复聚合别名（all_genes/all_proteins 未更新 + 200 成员上限）、
+> 文档示例行、Genefunc 显示名；G5 扩到 102 项全部 PASS。详见 G3_G4_G5_REPORT §7–§8。
 > 回访（2026-11-12 上午）：cite.html 引用块 + news 条目已上线；PrimerServer2 设计作业实弹通过（comosa）；
 > CAPS/dCAPS/KASP 实弹通过；rebuild 自动登记的 5 行为别名/孤儿行，建议 `visible=0` 隐藏（详见 G3_G4_G5_REPORT §7）。
 > 收尾：阶段 0 代码已部署（分类关键词/SUB/overrides/SPA/静态页/收尾脚本），4 个基因组已上线并逐条验收通过。

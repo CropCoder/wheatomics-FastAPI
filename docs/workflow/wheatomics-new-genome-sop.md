@@ -23,12 +23,13 @@
 |---|---|
 | 数据根目录 | `/var/www/data/masw_data`（116T，2026-11-11 剩 ~30T） |
 | 流水线脚本 | `/var/www/data/masw_data/add_wheat_genome.sh`（**md5 `70fb9ff21ed11417399f16fb489b1ad3`**，2026-11 版，1034 行，含命名门禁） |
-| 收尾脚本 | 仓库 `scripts/finish_genome_integration.sh`（v2，1400 行，**md5 `d8162ac0d61a3e503cfb81646c05ddc2`**）→ 安装到 `~/.agents/skills/lab-server/scripts/` 与服务器 `/var/www/data/masw_data/_prep/`（`md5sum` 对齐两边） |
+| 收尾脚本 | 仓库 `scripts/finish_genome_integration.sh`（v2，含 GetSequence 同步 step 5b；**md5 `2bfcb1e2c59fcd447c4eb503f4410009`**）→ 安装到 `~/.agents/skills/lab-server/scripts/` 与服务器 `/var/www/data/masw_data/_prep/`（`md5sum` 对齐两边） |
 | 归一化脚本 | 仓库 `scripts/normalize_diploid.py`（`fasta/gff3/pep/check`；**md5 `e2a13d8b64f6fb65ccd0be222e53e3ea`**）→ 服务器 `_prep/normalize_diploid.py` |
 | 重编号脚本 | 仓库 `scripts/renumber_gff_ids.py`（每染色体 100 步平台 ID；**md5 `90b5d84e2fad765d70d7a723eabde00d`**）→ 服务器 `_prep/` |
 | A2 一键脚本 | 仓库 `scripts/prepare_aegilops4_dataset.sh`（**md5 `04a905cc2a85828c3bdfc7f499d0f743`**）→ 服务器 `_prep/` |
 | 数据下载脚本 | 仓库 `scripts/fetch_aegilops4_data.sh`（**md5 `7c0985d181ea430be3fff9330e859a72`**）→ 服务器 `_prep/` |
-| 批量/验收脚本 | `scripts/pipeline_aegilops4_all.sh`、`scripts/finish_aegilops4_all.sh`、`scripts/accept_aegilops4_onboarding.py`（**md5 `b59a527f7c400edb0cd42442325ff23b`**，G5 90 项逐条核对）→ 服务器 `_prep/` |
+| 批量/验收脚本 | `scripts/pipeline_aegilops4_all.sh`、`scripts/finish_aegilops4_all.sh`、`scripts/accept_aegilops4_onboarding.py`（G5 逐条核对，含 GetSequence）→ 服务器 `_prep/` |
+| GetSequence 聚合/文档 | `scripts/rebuild_getfasta_aggregates.py`（重建 all_genomes/all_genes/all_proteins 等别名 + 文档 Library 列）、`scripts/update_getsequence_search.py`（向 `getsequence_search.txt` 增/改本基因组示例行）→ 服务器 `_prep/` 或直接从生产 repo 运行 |
 | 质检脚本 | `/var/www/html/Script/check_genome_files.py`（md5 `d774445172714d0d6b9127d4a21cc2a0`） |
 | conda | `/home/fei/mambaforge/bin`（**跑流水线必须显式加 PATH**） |
 | MySQL DDL 配置 | `/etc/wheatomics/db_ddl.env`（640 root:www-data；`fei` 需在 `www-data` 组） |
@@ -464,6 +465,38 @@ curl -s http://127.0.0.1:8000/api/jbrowse/coverage
   并提交，否则下次 `deploy_doc_pages.sh` 会覆盖新卡片。
 - **验收工具**：`accept_aegilops4_onboarding.py` 覆盖 90 项（全局计数/前端/映射、每基因组 16 项×4、回归 3 项），
   可作后续新基因组 G5 模板；报告中 90/90 PASS。
+
+### 11.y GetSequence（/getfasta/）必查项（2026-11-12 补充）
+
+页面的三块数据来源不同，缺一不可：
+
+1. **支持基因组面板/示例**：运行时读 `/api/genes/functions/registry`（Genefunc_registry）。
+   必须确保本基因组行存在且 `example_species_chr_id` / `example_cds_id` / `example_protein_id`
+   指向**染色体上的真实基因**（不要用 ChrUn 基因作示例更直观）；`display_name` 用友好名
+   （如 `Ae.comosa IPK-AE783 (M)`），否则面板显示技术名。收尾脚本 step 4 已按 `--label` 写入。
+2. **聚合 BLAST 别名**：页面下拉只有 `all_genomes / all_genes / all_proteins / all_other_genomes`。
+   收尾脚本只维护了旧的 `all_gene.nal / all_protein.pal`，**页面 by-gene/batch 实际查
+   `all_genes / all_proteins`（复数）** —— 必须同时维护。收尾脚本 step 5 已改为同时写 5 个别名。
+   - **BLAST 别名 200 成员上限**：`blastdbcmd -entry_batch` 只读前 200 个成员，第 201 个起
+     返回 `Skipped`。all_genes 已到 200：新增成员用**前插**（收尾脚本已实现），并运行
+     `scripts/rebuild_getfasta_aggregates.py --apply` 重建（脚本会排除 PacBioFullLengthcDNA、
+     Tae_TF、fangenome 等非基因组注释库，把成员压回 ≤200）。再加基因组前需再清理成员。
+   - `blastdbcmd -entry` 对**核酸别名库**不支持（报 "DB contains no accession info"），
+     这是平台既有现象（所有基因组一致）；CDS 单基因查询请用 `/api/sequence/batch`。
+3. **文档示例表**：`/var/www/html/doc/getsequence_search.txt`（页面链接；188 行，4 列）。
+   每个新基因组需加一行：`<DS>\t<Chr1X_DS:200-500>\t<example_cds>\tall_genomes`；
+   用 `scripts/update_getsequence_search.py --doc ... --name DS --region ... --gene ... --composition PLOIDY --library all_genomes`
+   （收尾脚本 step 5b 自动完成）。
+
+验收（G5）：
+```bash
+curl -s "http://127.0.0.1:8000/api/sequence/by-gene?gene_id=<example_cds>&protein_db=all_proteins" | grep -q protein_sequence
+curl -s "http://127.0.0.1:8000/api/sequence/batch?database=all_genes&ID=<example_cds>" | grep -q '"succeeded":1'
+curl -s "http://127.0.0.1:8000/api/genes/functions/registry" | grep -q "Genefunc_<DS>_table"
+curl -s "http://127.0.0.1:8000/api/sequence/by-interval?region=<Chr1X_DS:200-500>&database=all_genomes" | grep -q ">"
+curl -s https://<host>/doc/getsequence_search.txt | grep -q "<DS>"
+```
+注意：by-gene 返回的是**裸对象**（`gene_sequence`/`protein_sequence` 在顶层，不在 `data` 里）。
 
 ## 12. v1→v2 修复记录（2026-11-11）
 
