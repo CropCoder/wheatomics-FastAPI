@@ -6,6 +6,7 @@
 
 | 文件 | 作用 | 生产安装位置 |
 |---|---|---|
+| `new-genome-update-checkpoints.md` | **触点总表**：新基因组上线需要更新的全部地方（A 数据/索引、B MySQL、C JBrowse、D GetSequence、E BLAST/PS2/CAPS、F 前端/文档、G 运维缓存）+ 顺序清单 + 本次实战核对 | 参考（无需安装） |
 | `wheatomics-new-genome-sop.md` | **SOP v2**：五阶段 G0–G5、归一化规则、收尾/验收清单、已知坑、案例 | `~/.agents/skills/lab-server/references/wheatomics-new-genome-sop.md`（旧版备份 `.bak-<日期>`） |
 | `../../scripts/finish_genome_integration.sh` | 收尾脚本 v2：识别 JBrowse V2.0 / wheatBLAST SPA、二倍体 GROUP、卡片/计数同步、API 断言 | `~/.agents/skills/lab-server/scripts/` 与服务器 `/var/www/data/masw_data/_prep/` |
 | `../../scripts/normalize_diploid.py` | 四件套归一化工具（`fasta/gff3/pep/check` 子命令），支持任意 `[1-7][A-Z]` 染色体与 NCBI assembly_report 映射 | 服务器 `/var/www/data/masw_data/_prep/` |

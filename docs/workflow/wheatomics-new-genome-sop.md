@@ -2,6 +2,8 @@
 
 > 配套实现报告（2026-11-11）：`docs/plans/aegilops4_2026-11/PHASE0_CORE.md`（代码修复）、`PHASE0_NORMALIZE.md`（归一化脚本实测）、`PHASE0_FINISH.md`（收尾脚本适配实测）、主计划 `Aegilops4_diploid_genome_update_plan.md`。
 
+> **触点全景**：一个基因组要更新的所有地方（数据/索引、BLAST 聚合、MySQL、JBrowse、GetSequence、前端/文档、运维缓存）见 [new-genome-update-checkpoints.md](new-genome-update-checkpoints.md)。
+>
 > 目标：把一个新基因组完整接入 wheatomics.sdau.edu.cn —— **BLAST（核酸整基因组/染色体拆分/CDS/蛋白）→ MySQL Genefunc → 中国春 02G 同源映射 → JBrowse → getfasta → Web BLAST → PrimerServer2 → 前端卡片/分类 → genome_registry**。
 >
 > 本版相对 v1（2026-10-23）的变更（每次更新请改这里）：
