@@ -13,6 +13,7 @@ COEXPRESSION_TABLES = {
     "CO_BioticStress_2026": "Wheat biotic stress (filter-extracted)",
     "CO_Abiotic_Filter_MR900": "Wheat abiotic stress (filter-extracted, MR ≤ 900, PCC ≥ 0.2)",
     "CO_CS_Filter_MR900": "Wheat Chinese Spring (filter-extracted, MR ≤ 900, PCC ≥ 0.2)",
+    "CO_Fielder_Filter_MR900": "Wheat Fielder (filter-extracted, MR ≤ 900, PCC ≥ 0.2)",
     "CO_AK58_Filter_MR900": "Wheat AK58 (filter-extracted, MR ≤ 900, PCC ≥ 0.2)",
     "CO_JM22_Filter_MR900": "Wheat Jimai 22 (filter-extracted, MR ≤ 900, PCC ≥ 0.2)",
     "CO_Genetic_Filter_MR900": "Wheat genetic population (filter-extracted, MR ≤ 900, PCC ≥ 0.2)",
