@@ -18,7 +18,8 @@
   - 输出 `--report` JSON 和 `--dup-map` TSV。
 - `scripts/build_blast_aggregate_base.py`
   - 从 alias 成员或指定成员流式抽取 FASTA,合并、去重 ID、`makeblastdb`。
-  - 重复 ID:第一个成员保留原 ID,其他成员加 `__dup__` 前缀。
+  - 重复 ID:第一个成员保留原 ID,其他成员加短前缀(如 `m0001_`);BLAST
+  local seqid 上限 50 字符,超长时截断并写 `<base>.idmap.tsv` 映射。
   - 默认 dry-run;`--apply` 只在 staging 写文件,不碰生产 alias。
 - `scripts/update_blast_alias.py`
   - 原子改写 alias,自动备份并用 `blastdbcmd -info` 验证。

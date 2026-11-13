@@ -109,15 +109,25 @@ def iter_fasta(member: str):
     proc.wait()
 
 
-def member_prefix(member: str) -> str:
-    # Keep it short and BLAST/parse_seqids friendly.
-    base = member
-    for suffix in (".add_Description.cds", ".add_Description.pep",
-                   ".cds", ".pep", ".genome", ".scaffold"):
-        if base.endswith(suffix):
-            base = base[: -len(suffix)]
-            break
-    return base.replace("|", "_")
+def short_member_prefix(index: int) -> str:
+    # BLAST local IDs are limited to 50 characters; a full member name in the
+    # prefix overflows.  Keep a short deterministic namespace and write the
+    # mapping to <base>.idmap.tsv for traceability.
+    return f"m{index:04d}_"
+
+
+def fit_prefixed_id(prefix: str, ident: str, seen: set[str]) -> str:
+    max_len = 50
+    suffix = prefix
+    keep = max(1, max_len - len(suffix))
+    candidate = suffix + ident[-keep:]
+    n = 1
+    while candidate in seen:
+        tail = f"_{n}"
+        keep = max(1, max_len - len(suffix) - len(tail))
+        candidate = suffix + ident[-keep:] + tail
+        n += 1
+    return candidate
 
 
 def main() -> int:
@@ -173,10 +183,13 @@ def main() -> int:
     seen_ids: set[str] = set()
     duplicate_prefixes = 0
     records = 0
+    id_map_path = staging / (args.out_base + ".idmap.tsv")
+    id_map = open(id_map_path, "w", encoding="utf-8")
+    id_map.write("#new_id\told_id\tmember\n")
     tmp_fasta = fasta_path.with_suffix(".fa.tmp")
     with open(tmp_fasta, "w", encoding="utf-8") as out:
-        for member in members:
-            prefix = member_prefix(member)
+        for member_idx, member in enumerate(members, 1):
+            prefix = short_member_prefix(member_idx)
             per_member_seen: set[str] = set()
             for header, seq_lines in iter_fasta(member):
                 if not header.startswith(">"):
@@ -185,6 +198,9 @@ def main() -> int:
                 if not parts:
                     continue
                 ident = parts[0]
+                if len(ident) > 50:
+                    print(f"ERROR: original sequence id longer than 50 chars: {ident}", file=sys.stderr)
+                    return 2
                 # If this ID is known to be duplicated and this member is not
                 # the canonical owner, rename it.  Also protect against a
                 # duplicate inside the same member, and (when no preflight map
@@ -194,12 +210,9 @@ def main() -> int:
                 else:
                     must_prefix = ident in seen_ids or ident in per_member_seen
                 if must_prefix:
-                    n = 1
-                    new_id = f"{prefix}__dup__{ident}"
-                    while new_id in seen_ids:
-                        n += 1
-                        new_id = f"{prefix}__dup{n}__{ident}"
-                    ident = new_id
+                    old_id = ident
+                    ident = fit_prefixed_id(prefix, old_id, seen_ids)
+                    id_map.write(f"{ident}\t{old_id}\t{member}\n")
                     duplicate_prefixes += 1
                 seq = "".join(seq_lines)
                 if not seq:
@@ -212,8 +225,17 @@ def main() -> int:
                 seen_ids.add(ident)
                 per_member_seen.add(parts[0])
                 records += 1
+    id_map.close()
     tmp_fasta.replace(fasta_path)
     print(f"wrote {fasta_path} records={records} prefixed_duplicates={duplicate_prefixes}")
+    print(f"id_map={id_map_path}")
+
+    # Remove stale index files from a previous failed build; keep the FASTA.
+    for suffix in (".ndb", ".nhr", ".nin", ".nog", ".nos", ".not", ".nsq", ".ntf", ".nto",
+                   ".pdb", ".phr", ".pin", ".pog", ".pos", ".pot", ".psq", ".ptf", ".pto"):
+        stale = Path(str(db_path) + suffix)
+        if stale.exists():
+            stale.unlink()
 
     # Build only after the FASTA is complete.
     cmd = [
