@@ -180,29 +180,47 @@ def retrieve_regions_for_amplicons(
     db: Path,
     samtools: str = "samtools",
     blastdbcmd: str = "blastdbcmd",
-) -> Tuple[Dict[str, Dict[str, str]], Dict[str, List[Tuple[str, str, str]]]]:
-    """Retrieve target sequences for amplicon ends and build lookup maps."""
-    retrieve_region_data: Dict[str, List[Tuple[str, str, str]]] = {}
+    allow_partial: bool = False,
+) -> Tuple[Dict[str, Dict[str, str]], Dict[str, List[Tuple[str, str, str, int, int, int, int]]]]:
+    """Retrieve target sequences for amplicon ends and build lookup maps.
+
+    With ``allow_partial`` (legacy compatibility), a primer that BLAST aligns
+    only partially is represented by its aligned query span and the matching
+    target span, so a terminal unaligned/mismatched base can still be reported.
+    The mapping carries each primer's qstart/qend so specificity_check can trim
+    the query consistently.
+    """
+    retrieve_region_data: Dict[str, List[Tuple[str, str, str, int, int, int, int]]] = {}
     unique_regions: set = set()
 
     for p in pairs:
         left_len = len(query_seqs[p.plus_query])
         right_len = len(query_seqs[p.minus_query])
 
-        # End-filling coordinates from Perl code
-        select_ts = p.plus_ts - p.plus_qs + 1
-        select_te = p.plus_te + left_len - p.plus_qe
-        select_next_ts = p.minus_ts - right_len + p.minus_qe
-        select_next_te = p.minus_te + p.minus_qs - 1
+        if allow_partial:
+            # Use the actual BLAST-aligned spans.  A terminal mismatch is often
+            # left out of the HSP (qend < primer length), so the legacy full
+            # primer-length extension would fetch a region of the wrong size.
+            left_region = normalize_region(f"{p.target}:{p.plus_ts}-{p.plus_te}")
+            right_region = normalize_region(f"{p.target}:{p.minus_te}-{p.minus_ts}")
+        else:
+            # End-filling coordinates from Perl code
+            select_ts = p.plus_ts - p.plus_qs + 1
+            select_te = p.plus_te + left_len - p.plus_qe
+            select_next_ts = p.minus_ts - right_len + p.minus_qe
+            select_next_te = p.minus_te + p.minus_qs - 1
 
-        if select_ts < 0 or select_next_ts < 0:
-            continue
+            if select_ts < 0 or select_next_ts < 0:
+                continue
 
-        left_region = normalize_region(f"{p.target}:{select_ts}-{select_te}")
-        right_region = normalize_region(f"{p.target}:{select_next_ts}-{select_next_te}")
+            left_region = normalize_region(f"{p.target}:{select_ts}-{select_te}")
+            right_region = normalize_region(f"{p.target}:{select_next_ts}-{select_next_te}")
 
         key = (p.db_name, p.plus_query)
-        retrieve_region_data.setdefault(key, []).append((left_region, right_region, p.minus_query))
+        retrieve_region_data.setdefault(key, []).append(
+            (left_region, right_region, p.minus_query,
+             p.plus_qs, p.plus_qe, p.minus_qs, p.minus_qe)
+        )
         unique_regions.add((str(db), left_region))
         unique_regions.add((str(db), right_region))
 
@@ -262,7 +280,7 @@ def specificity_check(
     query_seqs: Dict[str, str],
     amplicons_by_db: Dict[str, List[AmpliconPair]],
     target_seqs: Dict[str, Dict[str, str]],
-    retrieve_map: Dict[str, List[Tuple[str, str, str]]],
+    retrieve_map: Dict[str, List[Tuple[str, str, str, int, int, int, int]]],
     params: "SpecificityParams",
     outputdir: Path,
     detail: bool = False,
@@ -310,8 +328,10 @@ def specificity_check(
                     key_prefix = f"{db_name}|{group.group_key}"
                     for j, seq in enumerate(seqs):
                         qname = f"{group.group_key}.Primer{j}"
+                        raw_seq = seq
                         regions = retrieve_map.get(f"{db_name}|{qname}", [])
-                        for left_region, right_region, next_qname in regions:
+                        for (left_region, right_region, next_qname,
+                             plus_qs, plus_qe, minus_qs, minus_qe) in regions:
                             if hit_num >= params.max_report_amplicon:
                                 capped = True
                                 break
@@ -323,6 +343,13 @@ def specificity_check(
                             next_target_seq = reverse_complement(next_target_seq_raw)
 
                             next_seq = query_seqs[next_qname]
+                            # Legacy compatibility: compare the aligned query
+                            # span rather than the full primer when BLAST left
+                            # an unaligned 3' terminal base out of the HSP.
+                            raw_next_seq = next_seq
+                            if not params.filter_with_3end_validation:
+                                seq = raw_seq[plus_qs - 1:plus_qe]
+                                next_seq = raw_next_seq[minus_qs - 1:minus_qe]
                             if len(seq) != len(target_seq) or len(next_seq) != len(next_target_seq):
                                 continue
 
@@ -502,7 +529,11 @@ def run(
     for db_path in databases:
         db_name = Path(db_path).name
         db_pairs = [p for p in all_pairs if p.db_name == db_name]
-        seqs, mapping = retrieve_regions_for_amplicons(db_pairs, query_seqs, Path(db_path), samtools=samtools, blastdbcmd=blastdbcmd)
+        seqs, mapping = retrieve_regions_for_amplicons(
+            db_pairs, query_seqs, Path(db_path), samtools=samtools,
+            blastdbcmd=blastdbcmd,
+            allow_partial=not params.filter_with_3end_validation,
+        )
         target_seqs.update(seqs)
         for key, regions in mapping.items():
             retrieve_map[key] = regions
