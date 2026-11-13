@@ -1,7 +1,7 @@
 """Mount with: from app.api.routers.regulatory_tf_atlas import router as tf_atlas_router
 app.include_router(tf_atlas_router)
 """
-import csv, io, sqlite3
+import csv, io, re, sqlite3
 from functools import lru_cache
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query
@@ -61,10 +61,13 @@ def conn():
     c=sqlite3.connect(DB.resolve().as_uri()+"?mode=ro",uri=True)
     c.row_factory=sqlite3.Row
     return c
+# Only a trailing ".1"/".2" transcript suffix is stripped: other assemblies
+# use dots inside the gene ID (e.g. barley HORVU.MOREX.r3.2HG0112340).
+_TRANSCRIPT_SUFFIX=re.compile(r"\.\d+$")
 def valid_gene(g):
     if len(g)>120 or not all(c.isalnum() or c in "._-" for c in g):
         raise HTTPException(400,"Invalid gene ID")
-    return g.split(".")[0]
+    return _TRANSCRIPT_SUFFIX.sub("",g)
 def gene_lookup(c,g):
     row=c.execute("SELECT * FROM genes WHERE gene_id=? LIMIT 1",(g,)).fetchone()
     return dict(row) if row else None
@@ -78,30 +81,33 @@ def _like_prefix(gene_id):
     escaped=gene_id.replace("\\","\\\\").replace("%","\\%").replace("_","\\_")
     return escaped+".%"
 
-def tf_domains(gene_id):
+def tf_domains(gene_id,genome=None):
     """Pfam domain hits and iTAK classification for one gene.
 
     iTAK writes transcript-level IDs (``TraesCS2A02G116100.1``) while the atlas
     works with the bare gene ID, so the lookup returns the bare ID plus every
-    suffixed transcript it has. MySQL is optional: if the database is missing
-    or the account cannot read it, the section reports ``unavailable`` instead
-    of breaking the whole profile request.
+    suffixed transcript it has. ``genome`` limits the search to one assembly.
+    MySQL is optional: if the database is missing or the account cannot read
+    it, the section reports ``unavailable`` instead of breaking the whole
+    profile request.
     """
     like=_like_prefix(gene_id)
+    scope=" AND genome=%s" if genome else ""
+    params=(gene_id,like)+((genome,) if genome else ())
     try:
         with mysql_cursor(settings.DB_TF) as cur:
             cur.execute(
-                "SELECT source,gene_id,pfam,query_start,query_end,hit_start,hit_end,"
+                "SELECT source,genome,gene_id,pfam,query_start,query_end,hit_start,hit_end,"
                 "align_query_end,align_hit_end,score,evalue,description,"
                 "protein_length FROM tf_alignment "
-                "WHERE gene_id=%s OR gene_id LIKE %s "
+                "WHERE (gene_id=%s OR gene_id LIKE %s)"+scope+" "
                 "ORDER BY gene_id,query_start IS NULL,query_start,score DESC",
-                (gene_id,like))
+                params)
             items=[dict(r) for r in cur.fetchall()]
-            cur.execute("SELECT source,gene_id,family,tf_type,hierarchy "
+            cur.execute("SELECT source,genome,gene_id,family,tf_type,hierarchy "
                         "FROM tf_classification "
-                        "WHERE gene_id=%s OR gene_id LIKE %s ORDER BY gene_id",
-                        (gene_id,like))
+                        "WHERE (gene_id=%s OR gene_id LIKE %s)"+scope+" ORDER BY gene_id",
+                        params)
             classes=[dict(r) for r in cur.fetchall()]
     except Exception as exc:
         return {"status":"unavailable","message":str(exc)[:200],"items":[],
@@ -110,6 +116,17 @@ def tf_domains(gene_id):
     return {"status":"ok" if (items or classes) else "not_found","items":items,
             "classifications":classes,"protein_length":length,
             "citation":ITAK_CITATION}
+
+def tf_genome_list():
+    """Genome catalogue written by scripts/import_tf_alignment.py."""
+    try:
+        with mysql_cursor(settings.DB_TF) as cur:
+            cur.execute("SELECT genome,label,genes,example_gene FROM tf_genomes "
+                        "WHERE genes > 0 ORDER BY genes DESC, genome")
+            items=[dict(r) for r in cur.fetchall()]
+    except Exception as exc:
+        return {"status":"unavailable","message":str(exc)[:200],"items":[]}
+    return {"status":"ok","items":items}
 # The motif metadata layout never changes between releases, so resolve it once
 # per database file instead of running two PRAGMA/schema queries per request.
 _META_CACHE={}
@@ -249,24 +266,36 @@ def search(q:str=Query(...,min_length=2,max_length=100),limit:int=Query(20,ge=1,
            if q in g.lower() or q in x["tf_family"].lower()]
     return {"items":items[:limit],"total_matches":len(items),"source":CITATION}
 
+@router.get("/genomes")
+def genomes():
+    """Genomes available in the iTAK tables, for the page's selector."""
+    return tf_genome_list()
+
 @router.get("/gene/{gene_id}")
-def profile(gene_id:str,region:str="upstream",motif_limit:int=Query(100,ge=1,le=500)):
+def profile(gene_id:str,region:str="upstream",motif_limit:int=Query(100,ge=1,le=500),
+            genome:str=Query(None)):
     g=valid_gene(gene_id)
     if region not in REGION_KINDS:
         raise HTTPException(400,"Invalid region")
     c=conn()
     try:
         gene=gene_lookup(c,g)
-        if not gene:raise HTTPException(404,"Gene not present in regulatory.sqlite genes")
-        motifs,truncated=get_motifs(c,gene,region,motif_limit)
-        regions=[dict(r) for r in c.execute(
-            "SELECT * FROM regions WHERE gene_id=? ORDER BY start0",(g,))]
+        if gene:
+            motifs,truncated=get_motifs(c,gene,region,motif_limit)
+            regions=[dict(r) for r in c.execute(
+                "SELECT * FROM regions WHERE gene_id=? ORDER BY start0",(g,))]
+        else:
+            # Motifs, expression and variants only exist for the Chinese
+            # Spring assembly; other genomes are served from the iTAK tables.
+            if not genome:
+                raise HTTPException(404,"Gene not present in regulatory.sqlite genes")
+            motifs,truncated,regions=[],False,[]
     finally:
         c.close()
     tf=tf_info(g)
     expression=table(EXPR).get(g) if tf["is_candidate_tf"] else None
-    return {"gene":gene,"tf":tf,"classification":classification(g),
-            "domains":tf_domains(g),
+    return {"gene":gene or {"gene_id":g},"tf":tf,"classification":classification(g),
+            "domains":tf_domains(g,genome),
             "expression":expression,"regions":regions,"region":region,
             "motifs":motifs,"motifs_truncated":truncated,"citation":CITATION}
 

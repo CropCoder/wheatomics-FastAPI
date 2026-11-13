@@ -50,11 +50,14 @@ table.wide{min-width:940px}
 
   <section class="news-body">
     <div class="container tool-shell">
-<section><label for="gene">Gene ID</label>
+<section>
+<div><label for="genome"><strong>Genome</strong></label><br>
+<select id="genome" style="min-width:340px"></select></div>
+<div style="margin-top:10px"><label for="gene"><strong>Gene ID</strong></label><br>
 <input id="gene" value="TraesCS2A02G305400" size="28" placeholder="e.g. TraesCS2A02G305400">
 <button id="search">Analyze gene</button>
-<button id="clear" type="button" class="secondary">Clear</button>
-<p class="muted" id="status">Search any IWGSC RefSeq v1.1 (02G) gene, e.g. TraesCS2A02G305400.</p></section>
+<button id="clear" type="button" class="secondary">Clear</button></div>
+<p class="muted" id="status">Pick a genome, then search one of its genes.</p></section>
 <section id="domainsec" hidden><h2>Pfam domains &amp; iTAK classification</h2>
 <p class="muted" id="domstatus"></p>
 <div id="domclass" class="scroll"></div>
@@ -298,7 +301,7 @@ return {"Gene name":dash(c.gene_name),
 }
 function renderGeneMeta(p){
 const g=(p&&p.gene)||{},c=(p&&p.classification)||{};
-if(!g.gene_id){text($("genemeta"),"");return}
+if(!g.gene_id||g.chrom==null){text($("genemeta"),"");return}
 const meta=[`${g.chrom}:${g.start0+1}-${g.end0}`,`strand ${g.strand}`];
 if(c.transcript_length)meta.push(`transcript ${c.transcript_length} bp`);
 if(c.gc_content)meta.push(`GC ${c.gc_content}%`);
@@ -341,19 +344,62 @@ renderMotifTable(d.motifs);
 text($("motifstatus"),`${d.motifs.length} motif hits in ${regionLabel(motifRegion)}${d.motifs_truncated?" (truncated, showing the first 500)":""}.`);
 }catch(e){text($("motifstatus"),"Error: "+e.message)}
 }
+async function loadGenomes(){
+const sel=$("genome");
+try{
+const d=await api("/api/regulatory/atlas/genomes");
+const items=d.items||[];
+sel.replaceChildren();
+items.forEach(g=>{
+const o=document.createElement("option");
+o.value=g.genome;
+o.textContent=(g.label||g.genome)+" · "+Number(g.genes||0).toLocaleString()+" genes";
+o.dataset.example=g.example_gene||"";
+sel.appendChild(o);});
+const opts=[...sel.options];
+// Prefer the 02G Chinese Spring assembly: motifs, expression and variants
+// are only available for it.
+const preferred=opts.find(o=>/Chinese_Spring1\.1|Chinese_Spring_1\.1|CS1\.1/i.test(o.value))
+ ||opts.find(o=>/Chinese_Spring/i.test(o.value))||opts[0];
+if(preferred){sel.value=preferred.value;onGenomeChange();search();}
+}catch(e){
+text($("status"),"Genome list unavailable: "+e.message);
+}
+}
+function onGenomeChange(){
+const o=$("genome").selectedOptions[0];
+if(o&&o.dataset.example){
+$("gene").value=o.dataset.example;
+$("gene").placeholder="e.g. "+o.dataset.example;
+}
+text($("status"),o&&o.dataset.example
+ ?("Search a gene from "+o.textContent+", e.g. "+o.dataset.example)
+ :"Pick a genome, then search one of its genes.");
+}
+
 async function search(){
 const g=$("gene").value.trim();if(!g)return;
+const genome=$("genome").value;
 text($("status"),"Loading...");for(const id of ["domainsec","exprsec","motifsec","variantsec"])$(id).hidden=true;
-try{const d=await api("/api/regulatory/atlas/gene/"+encodeURIComponent(g)+"?region="+encodeURIComponent(motifRegion)+"&motif_limit=500");
+try{
+let url="/api/regulatory/atlas/gene/"+encodeURIComponent(g)
+ +"?region="+encodeURIComponent(motifRegion)+"&motif_limit=500";
+if(genome)url+="&genome="+encodeURIComponent(genome);
+const d=await api(url);
 currentGene=d.gene.gene_id;
 lastExpression=d.expression||null;
 $("expr").replaceChildren();
 $("show-expr").textContent="Show expression across 26 tissues";
 $("show-expr").hidden=!lastExpression;
 renderDomains(d.domains,d);
+// Motifs, expression and variants exist for the Chinese Spring assembly
+// only; other genomes are served from the iTAK tables alone.
+const hasAssembly=!!d.gene.chrom;
+if(hasAssembly){
 renderMotifTable(d.motifs);
 $("motifsec").hidden=false;$("variantsec").hidden=false;
 text($("motifstatus"),`${d.motifs.length} motif hits in ${regionLabel(motifRegion)}${d.motifs_truncated?" (truncated, showing the first 500)":""}.`);
+}
 text($("status"),`Loaded ${currentGene}.`);
 }catch(e){text($("status"),"Error: "+e.message)}
 }
@@ -380,9 +426,13 @@ $("gene").value="";
 for(const id of ["domainsec","exprsec","motifsec","variantsec"])$(id).hidden=true;
 for(const id of ["genemeta","expr","motifs","motifstatus","varianttable","arch","domtable","domclass","domstatus"])$(id).replaceChildren();
 text($("vstatus"),"");
-text($("status"),"Search any IWGSC RefSeq v1.1 (02G) gene, e.g. TraesCS2A02G305400.");
+const opt=$("genome").selectedOptions[0];
+text($("status"),opt&&opt.dataset.example
+ ?("Search a gene from "+opt.textContent+", e.g. "+opt.dataset.example)
+ :"Pick a genome, then search one of its genes.");
 $("gene").focus()}
 $("search").addEventListener("click",search);$("clear").addEventListener("click",clearAll);$("variants").addEventListener("click",variants);
+$("genome").addEventListener("change",()=>{onGenomeChange();search()});
 $("show-expr").addEventListener("click",toggleExpr);
 $("download-motifs").addEventListener("click",downloadMotifs);
 $("download-variants").addEventListener("click",downloadVariants);
@@ -390,5 +440,5 @@ $("gene").addEventListener("keydown",e=>{if(e.key==="Enter")search()});
 bindRegions("motif-regions",r=>{motifRegion=r},loadMotifs);
 bindRegions("variant-regions",r=>{variantRegion=r},variants);
 markActive("motif-regions",motifRegion);markActive("variant-regions",variantRegion);
-loadDatasets();search();
+loadDatasets();loadGenomes();
 </script></body></html>

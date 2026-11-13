@@ -65,11 +65,13 @@ DEFAULT_ROOT = "/var/www/html/TF/data"
 
 ALIGN_TABLE = "tf_alignment"
 CLASS_TABLE = "tf_classification"
+GENOME_TABLE = "tf_genomes"
 
 ALIGN_DDL = f"""
 CREATE TABLE IF NOT EXISTS `{ALIGN_TABLE}` (
   `id`              bigint unsigned NOT NULL AUTO_INCREMENT,
   `source`          varchar(64)  NOT NULL,
+  `genome`          varchar(80)  NOT NULL DEFAULT '',
   `gene_id`         varchar(120) NOT NULL,
   `pfam`            varchar(80)  NOT NULL DEFAULT '',
   `query_start`     int DEFAULT NULL,
@@ -84,32 +86,45 @@ CREATE TABLE IF NOT EXISTS `{ALIGN_TABLE}` (
   `protein_length`  int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_gene` (`gene_id`),
-  KEY `idx_source` (`source`)
+  KEY `idx_source` (`source`),
+  KEY `idx_genome` (`genome`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 """
 
 CLASS_DDL = f"""
 CREATE TABLE IF NOT EXISTS `{CLASS_TABLE}` (
   `source`    varchar(64)  NOT NULL,
+  `genome`    varchar(80)  NOT NULL DEFAULT '',
   `gene_id`   varchar(120) NOT NULL,
   `family`    varchar(120) DEFAULT NULL,
   `tf_type`   varchar(20)  DEFAULT NULL,
   `hierarchy` varchar(200) DEFAULT NULL,
   PRIMARY KEY (`source`,`gene_id`),
-  KEY `idx_gene` (`gene_id`)
+  KEY `idx_gene` (`gene_id`),
+  KEY `idx_genome` (`genome`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+"""
+
+GENOME_DDL = f"""
+CREATE TABLE IF NOT EXISTS `{GENOME_TABLE}` (
+  `genome`       varchar(80)  NOT NULL,
+  `label`        varchar(120) DEFAULT NULL,
+  `genes`        int DEFAULT NULL,
+  `example_gene` varchar(120) DEFAULT NULL,
+  PRIMARY KEY (`genome`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 """
 
 ALIGN_INSERT = (
-    f"INSERT INTO `{ALIGN_TABLE}` (`source`,`gene_id`,`pfam`,`query_start`,"
-    "`query_end`,`hit_start`,`hit_end`,`align_query_end`,`align_hit_end`,"
-    "`score`,`evalue`,`description`,`protein_length`) "
-    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+    f"INSERT INTO `{ALIGN_TABLE}` (`source`,`genome`,`gene_id`,`pfam`,"
+    "`query_start`,`query_end`,`hit_start`,`hit_end`,`align_query_end`,"
+    "`align_hit_end`,`score`,`evalue`,`description`,`protein_length`) "
+    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
 )
 
 CLASS_INSERT = (
-    f"INSERT INTO `{CLASS_TABLE}` (`source`,`gene_id`,`family`,`tf_type`,`hierarchy`) "
-    "VALUES (%s,%s,%s,%s,%s)"
+    f"INSERT INTO `{CLASS_TABLE}` (`source`,`genome`,`gene_id`,`family`,"
+    "`tf_type`,`hierarchy`) VALUES (%s,%s,%s,%s,%s,%s)"
 )
 
 
@@ -191,6 +206,16 @@ def discover(root: Path) -> list[Path]:
             if p.is_dir() and (p / "tf_alignment.txt").is_file()]
 
 
+def genome_of(folder: Path) -> str:
+    """Genome key from the job folder: ``itak_AABBDD_Abo_output`` -> ``AABBDD_Abo``."""
+    name = folder.name
+    if name.startswith("itak_"):
+        name = name[5:]
+    if name.endswith("_output"):
+        name = name[:-7]
+    return name or folder.name
+
+
 def table_columns(cur, table: str) -> set[str]:
     cur.execute(f"SHOW COLUMNS FROM `{table}`")
     return {row[0] for row in cur.fetchall()}
@@ -205,6 +230,8 @@ def main() -> int:
                          "--root that contains tf_alignment.txt")
     ap.add_argument("--db", default=DB_NAME)
     ap.add_argument("--batch", type=int, default=BATCH)
+    ap.add_argument("--genome", help="genome key for every folder in this run "
+                                     "(default: derived from the folder name)")
     ap.add_argument("--recreate", action="store_true",
                     help="drop both tables and rebuild them before importing")
     ap.add_argument("--dry-run", action="store_true")
@@ -242,9 +269,11 @@ def main() -> int:
             if args.recreate:
                 cur.execute(f"DROP TABLE IF EXISTS `{ALIGN_TABLE}`")
                 cur.execute(f"DROP TABLE IF EXISTS `{CLASS_TABLE}`")
-                print(f"{ALIGN_TABLE} and {CLASS_TABLE} dropped")
+                cur.execute(f"DROP TABLE IF EXISTS `{GENOME_TABLE}`")
+                print(f"{ALIGN_TABLE}, {CLASS_TABLE} and {GENOME_TABLE} dropped")
             cur.execute(ALIGN_DDL)
             cur.execute(CLASS_DDL)
+            cur.execute(GENOME_DDL)
         except pymysql.err.OperationalError as exc:
             code = exc.args[0] if exc.args else None
             conn.close()
@@ -256,15 +285,18 @@ def main() -> int:
 
         for table in (ALIGN_TABLE, CLASS_TABLE):
             cols = table_columns(cur, table)
-            if "source" not in cols:
+            missing_cols = [c for c in ("source", "genome") if c not in cols]
+            if missing_cols:
                 conn.close()
-                sys.exit(f"`{table}` exists with the old schema (no `source` column).\n"
-                         f"Re-run with --recreate to rebuild both tables.")
+                sys.exit(f"`{table}` exists with the old schema "
+                         f"(missing {', '.join(missing_cols)}).\n"
+                         f"Re-run with --recreate to rebuild the tables.")
 
     total_align = total_class = 0
     summary = []
     for folder in folders:
         source = folder.name
+        genome = args.genome or genome_of(folder)
         if not args.dry_run:
             cur.execute(f"DELETE FROM `{ALIGN_TABLE}` WHERE source=%s", (source,))
             cur.execute(f"DELETE FROM `{CLASS_TABLE}` WHERE source=%s", (source,))
@@ -275,7 +307,7 @@ def main() -> int:
             n_align += 1
             if args.dry_run:
                 continue
-            batch.append((source, *row))
+            batch.append((source, genome, *row))
             if len(batch) >= args.batch:
                 cur.executemany(ALIGN_INSERT, batch)
                 batch.clear()
@@ -293,7 +325,7 @@ def main() -> int:
                 n_class += 1
                 if args.dry_run:
                     continue
-                batch.append((source, *row))
+                batch.append((source, genome, *row))
                 if len(batch) >= args.batch:
                     cur.executemany(CLASS_INSERT, batch)
                     batch.clear()
@@ -302,11 +334,11 @@ def main() -> int:
 
         if not args.dry_run:
             conn.commit()
-        summary.append((source, n_align, n_class))
+        summary.append((source, genome, n_align, n_class))
         total_align += n_align
         total_class += n_class
-        print(f"  {source}: {n_align:,} alignment rows, {n_class:,} classifications",
-              flush=True)
+        print(f"  {source} [{genome}]: {n_align:,} alignment rows, "
+              f"{n_class:,} classifications", flush=True)
 
     if args.dry_run:
         print(f"\ndry run: would import {total_align:,} alignment rows and "
@@ -318,11 +350,29 @@ def main() -> int:
     counts = {row[0]: row[1] for row in cur.fetchall()}
     ok = True
     print("\nMySQL check:")
-    for source, n_align, _ in summary:
+    for source, genome, n_align, _ in summary:
         got = counts.get(source, 0)
         state = "MATCH" if got == n_align else "MISMATCH"
         ok &= got == n_align
-        print(f"  {source}: {got:,} rows ({state})")
+        print(f"  {source} [{genome}]: {got:,} rows ({state})")
+
+    # Refresh the genome catalogue the page's dropdown reads. Existing labels
+    # are preserved; stale genomes (no rows left) are removed.
+    cur.execute(
+        f"INSERT INTO `{GENOME_TABLE}` (genome,label,genes,example_gene) "
+        f"SELECT genome, genome, COUNT(DISTINCT gene_id), MIN(gene_id) "
+        f"FROM `{ALIGN_TABLE}` WHERE genome <> '' GROUP BY genome "
+        "ON DUPLICATE KEY UPDATE genes=VALUES(genes), example_gene=VALUES(example_gene)"
+    )
+    cur.execute(
+        f"DELETE FROM `{GENOME_TABLE}` WHERE genome NOT IN "
+        f"(SELECT genome FROM `{ALIGN_TABLE}`)"
+    )
+    conn.commit()
+    cur.execute(f"SELECT COUNT(*), COALESCE(SUM(genes),0) FROM `{GENOME_TABLE}`")
+    n_genomes, n_genes = cur.fetchone()
+    print(f"genomes in {GENOME_TABLE}: {n_genomes:,} ({n_genes:,} distinct genes)")
+
     cur.execute(f"SELECT COUNT(*) FROM `{ALIGN_TABLE}`")
     print(f"total alignment rows: {cur.fetchone()[0]:,}")
     conn.close()
