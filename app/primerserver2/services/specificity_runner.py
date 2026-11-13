@@ -78,6 +78,11 @@ def parse_primer_input(input_path: Path) -> Tuple[List[PrimerGroup], List[Query]
             else:
                 rank = 0
                 seqs = parts[1:]
+            # BLAST and retrieved templates are uppercase; keeping the user's
+            # original case here makes the 3'-terminal comparison in
+            # specificity_check case-sensitive and silently rejects perfectly
+            # matching primers. Normalise once at the parser boundary.
+            seqs = [seq.upper() for seq in seqs]
 
             key = f"{site_id}.{rank}"
             group = seen_keys.get(key)
