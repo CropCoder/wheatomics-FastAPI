@@ -334,15 +334,6 @@ def specificity_check(
                             end1 = "No" if seq[-1] == target_seq[-1] else "Yes"
                             end2 = "No" if next_seq[-1] == next_target_seq[-1] else "Yes"
 
-                            # A mismatched 3'-terminal base blocks extension
-                            # outright: Taq has no 3'->5' proofreading and the
-                            # polymerase needs a paired terminus to start. That
-                            # makes it a hard reject, not something to put behind
-                            # a threshold — end3_mismatch_threshold counts the
-                            # whole last five bases and cannot express it.
-                            if end1 == "Yes" or end2 == "Yes":
-                                continue
-
                             end3_window = min(5, len(seq), len(next_seq))
                             diff1 = sum(
                                 a != b for a, b in zip(seq[-end3_window:], target_seq[-end3_window:])
@@ -350,8 +341,17 @@ def specificity_check(
                             diff2 = sum(
                                 a != b for a, b in zip(next_seq[-end3_window:], next_target_seq[-end3_window:])
                             )
-                            if diff1 > params.end3_mismatch_threshold or diff2 > params.end3_mismatch_threshold:
-                                continue
+                            # The legacy interface defaulted this filter to
+                            # No and still listed BLAST-paired amplicons with a
+                            # terminal mismatch. Keep that compatibility when
+                            # the caller explicitly disables 3'-end validation;
+                            # only the strict mode hard-rejects the terminal
+                            # base and applies the last-5-bp threshold.
+                            if params.filter_with_3end_validation:
+                                if end1 == "Yes" or end2 == "Yes":
+                                    continue
+                                if diff1 > params.end3_mismatch_threshold or diff2 > params.end3_mismatch_threshold:
+                                    continue
 
                             hit_num += 1
                             target_id, left_coords = left_region.split(":")
@@ -413,6 +413,7 @@ class SpecificityParams:
     blast_identity: float = 60.0
     blast_max_hsps: int = 500
     num_cpu: int = 1
+    filter_with_3end_validation: bool = False
     end3_mismatch_threshold: int = 3
     report_last_5bp_in_3end: bool = True
     debug: bool = False

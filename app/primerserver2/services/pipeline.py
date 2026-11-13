@@ -264,6 +264,7 @@ class PipelineRunner:
             blast_identity=request.blastIdentity,
             blast_max_hsps=request.blastMaxHsps,
             num_cpu=self.config.use_cpu,
+            filter_with_3end_validation=request.filterWith3EndValidation,
             end3_mismatch_threshold=request.end3MismatchThreshold,
         )
 

@@ -101,6 +101,12 @@ class SpecificityParams(BaseModel):
         description="Maximum mismatches allowed in the last 5 bp of the 3' end. "
                     "5 is the window size, so passing 5 turns the check off.",
     )
+    filterWith3EndValidation: bool = Field(
+        default=False,
+        alias="filter_with_3end_validation",
+        description="Enable strict 3'-end validation (legacy default: off). When off, "
+                    "BLAST-paired amplicons with a terminal mismatch are still listed.",
+    )
     maxReportAmplicon: int = Field(
         default=50,
         alias="max_report_amplicon",
