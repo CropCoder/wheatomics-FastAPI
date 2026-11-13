@@ -191,9 +191,23 @@ def main() -> int:
     ap.add_argument("--legacy-html", default="/var/www/html/getfasta/index.html.bak-20261023_160218",
                     help="含旧下拉框（逐基因组选项）的 HTML 备份，用于发现自定义命名的组装库")
     ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--force-legacy-alias", action="store_true",
+                    help="Explicitly rebuild the old per-genome alias (dangerous after base+delta switch)")
     args = ap.parse_args()
 
     bd = pathlib.Path(args.blastdb)
+    # After the base+delta migration, rebuilding the historical 200-member
+    # aliases would silently undo the merged base and bring back the member
+    # limit.  Make the operator opt in explicitly.
+    base_markers = [bd / "all_genes_base.nhr", bd / "all_genes_base.nsq",
+                    bd / "all_genes_base.nal", bd / "all_proteins_base.psq",
+                    bd / "all_proteins_base.phr", bd / "all_proteins_base.pal"]
+    if any(p.exists() for p in base_markers) and not args.force_legacy_alias:
+        print("[ERROR] base+delta BLAST aggregates are present; refusing to rebuild "
+              "legacy per-genome aliases. Use --force-legacy-alias only for an "
+              "intentional rollback, or update the base+delta aliases with "
+              "scripts/update_blast_alias.py.", file=sys.stderr)
+        return 2
     reg = fetch_registry(args.api)
     print(f"registry rows: {len(reg)}")
     db_level = {}
