@@ -169,6 +169,7 @@ const ID_TITLES={
 "IWGSC RefSeq v1.1 TF_family":'"IWGSC RefSeq v1.1 TF_family" factor family classification based on the genome annotation of IWGSC RefSeq v1.1.',
 "Cloned":'Cloned in the monoclonal yeast transcription factor library: "Ren K., Wang Y., Cui Y., et al. (2026). Construction and validation of a monoclonal yeast transcription factor library for high-throughput interaction screening in wheat. Journal of Integrative Agriculture, 25(10), 4378–4382. doi:10.1016/j.jia.2026.07.037."'};
 const SVGNS="http://www.w3.org/2000/svg";
+const CS_GENOME=/Chinese_Spring1\.1/i;
 const DOM_COLORS=["#3f7f5f","#4f86a8","#b0793f","#7a5ea8","#3f8f8f","#a8534f","#6b8e23","#8a6d3b"];
 function svgEl(tag,attrs){const e=document.createElementNS(SVGNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e}
 function domColor(name){let h=0;for(const ch of String(name||""))h=(h*31+ch.charCodeAt(0))>>>0;return DOM_COLORS[h%DOM_COLORS.length]}
@@ -254,7 +255,10 @@ const items=d.items||[];
 const classes=d.classifications||[];
 if(classes.length){
 const classMulti=new Set(classes.map(c=>c.source)).size>1;
-const gene=classificationCells(profile);
+// Gene-level annotation (name, PlantTFDB, reference, IWGSC family, cloned)
+// only exists for the Chinese Spring 02G assembly.
+const genome=(d.items&&d.items[0]&&d.items[0].genome)||$("genome").value;
+const gene=CS_GENOME.test(genome)?classificationCells(profile):{};
 const cols=["Transcript"];
 if(classMulti)cols.push("Source");
 cols.push("TF family (iTAK)","Type","Hierarchy",...Object.keys(gene));
@@ -353,7 +357,7 @@ sel.replaceChildren();
 items.forEach(g=>{
 const o=document.createElement("option");
 o.value=g.genome;
-o.textContent=(g.label||g.genome)+" · "+Number(g.genes||0).toLocaleString()+" genes";
+o.textContent=(g.label||g.genome);
 o.dataset.example=g.example_gene||"";
 sel.appendChild(o);});
 const opts=[...sel.options];
