@@ -218,6 +218,17 @@
       return '<span class="gene-badge">' + esc(id) + '</span>';
     }).join(''));
 
+    // phase_separation is an object ({any_psp, any_prd, transcripts}); render a
+    // summary instead of letting dash() stringify it as "[object Object]".
+    var ps = data.phase_separation;
+    var psText = '—';
+    if (ps) {
+      var psFlags = [];
+      if (ps.any_psp) psFlags.push('PSP predicted');
+      if (ps.any_prd) psFlags.push('prion-like domain');
+      psText = psFlags.length ? psFlags.join(' / ') : 'No PSP / prion-like domain predicted';
+    }
+
     var kv = [
       ['Genome', dash(data.genome)],
       ['Chromosome', dash(data.chromosome)],
@@ -226,7 +237,7 @@
       ['Protein length', data.protein_length != null ? (data.protein_length + ' aa') : '—'],
       ['Molecular weight', data.molecular_weight != null ? (data.molecular_weight + ' Da') : '—'],
       ['Isoelectric point', dash(data.isoelectric_point)],
-      ['Phase separation', dash(data.phase_separation)],
+      ['Phase separation', psText],
       ['Annotation', dash(data.genome)]
     ];
     $('#gene-kv').html(kv.map(function (row) {
