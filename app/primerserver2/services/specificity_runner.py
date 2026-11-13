@@ -352,6 +352,8 @@ def specificity_check(
                                 next_seq = raw_next_seq[minus_qs - 1:minus_qe]
                             if len(seq) != len(target_seq) or len(next_seq) != len(next_target_seq):
                                 continue
+                            left_partial = len(seq) < len(raw_seq)
+                            right_partial = len(next_seq) < len(raw_next_seq)
 
                             tm_1 = nn_tm(seq, complement(target_seq), params.primer_conc, params.Na, params.K, params.Tris, params.Mg, params.dNTPs, ion_corr=True)
                             tm_2 = nn_tm(next_seq, complement(next_target_seq), params.primer_conc, params.Na, params.K, params.Tris, params.Mg, params.dNTPs, ion_corr=True)
@@ -396,11 +398,19 @@ def specificity_check(
                             aln.write(f"Template Region: {tstart}-{next_end}\n")
                             aln.write(f"Primer Left: {qname} ({seq})\n")
                             aln.write(f"Primer Right: {next_qname} ({next_seq})\n")
+                            if left_partial:
+                                aln.write(f"Primer Left full: {raw_seq} "
+                                          f"(aligned {len(seq)}/{len(raw_seq)}; terminal base not in BLAST HSP)\n")
+                            if right_partial:
+                                aln.write(f"Primer Right full: {raw_next_seq} "
+                                          f"(aligned {len(next_seq)}/{len(raw_next_seq)}; terminal base not in BLAST HSP)\n")
                             aln.write(f"Product Size: {next_end - tstart + 1} bp\n")
                             aln.write(f"Melting Temperature for Left Primer (°C): {tm_1}\n")
                             aln.write(f"Melting Temperature for Right Primer (°C): {tm_2}\n")
-                            aln.write(f"Differ in the 3' End for Left Primer?: {end1}\n")
-                            aln.write(f"Differ in the 3' End for Right Primer?: {end2}\n\n")
+                            left_end_note = f" (aligned {len(seq)}/{len(raw_seq)})" if left_partial else ""
+                            right_end_note = f" (aligned {len(next_seq)}/{len(raw_next_seq)})" if right_partial else ""
+                            aln.write(f"Differ in the 3' End for Left Primer?: {end1}{left_end_note}\n")
+                            aln.write(f"Differ in the 3' End for Right Primer?: {end2}{right_end_note}\n\n")
 
                             _draw_alignment(aln, seq, target_seq, tstart, 1, "Primer Left")
                             _draw_alignment(aln, next_seq, next_target_seq, next_end, -1, "Primer Right")
