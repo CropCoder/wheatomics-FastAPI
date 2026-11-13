@@ -104,6 +104,12 @@ class GeneDetailResponse(BaseModel):
     molecular_weight: str | None = None
     isoelectric_point: str | None = None
     functions: list[str] = Field(default_factory=list)
+    #: Structured functional annotation (IWGSC v2.1 GeneHub table, 2026-11):
+    #: Pfam domains, InterPro signatures and GO terms. None on the legacy table,
+    #: where ``functions`` carries the same information as free text.
+    pfam: str | None = None
+    interpro: str | None = None
+    go_terms: str | None = None
     jbrowse_links: dict[str, str] = Field(default_factory=dict)
     external_links: dict[str, str] = Field(default_factory=dict)
     #: wheatPSP phase-separation summary, populated by gene.py from wheat_psp_db

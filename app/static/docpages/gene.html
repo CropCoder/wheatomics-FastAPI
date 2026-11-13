@@ -235,9 +235,17 @@
 
     var ann = [
       ['Gene IDs (v1 / v2 / v3)', ids.length ? ids.join(' · ') : '—'],
-      ['Description', dash(data.description)],
-      ['Functional annotation', (data.functions && data.functions.length) ? data.functions.join('; ') : '—']
+      ['Description', dash(data.description)]
     ];
+    // The 2026-11 GeneHub table carries Pfam / InterPro / GO as separate
+    // fields; show them as their own rows. The legacy table only had a flat
+    // `functions` list, kept as the fallback row.
+    if (data.pfam) ann.push(['Pfam', dash(data.pfam)]);
+    if (data.interpro) ann.push(['InterPro', dash(data.interpro)]);
+    if (data.go_terms) ann.push(['GO', dash(data.go_terms)]);
+    if (!data.pfam && !data.interpro && !data.go_terms) {
+      ann.push(['Functional annotation', (data.functions && data.functions.length) ? data.functions.join('; ') : '—']);
+    }
     $('#gene-annotation').html(ann.map(function (row) {
       return '<tr><th>' + esc(row[0]) + '</th><td>' + esc(row[1]) + '</td></tr>';
     }).join(''));

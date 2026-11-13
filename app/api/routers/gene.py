@@ -1131,6 +1131,50 @@ def get_known_gene(gene_id: str) -> dict:
 
 
 
+#: GeneHub functional-annotation columns across table-schema generations.
+#: 2026-11 refresh (IWGSC v2.1 annotations) stores ``PAFM`` (Pfam domains),
+#: ``InterPro`` and ``GO1``; the legacy table used ``Function`` / ``Function2``
+#: / ``Function3``. Read both so the page keeps working across a table swap.
+_GENE_ANNOTATION_COLUMNS = ("PAFM", "InterPro", "GO1", "Function", "Function2", "Function3")
+
+#: Text values that mean "no annotation" (the table stores text, not NULL).
+_GENE_ANNOTATION_NULL = {"", "-", ".", "null", "none", "na", "n/a", "unknown"}
+
+
+def _gene_page_text(row: dict, *columns: str) -> str | None:
+    """First non-placeholder value among *columns* (schema-generation safe)."""
+    for column in columns:
+        value = normalize_text(row.get(column))
+        if value and value.strip().lower() not in _GENE_ANNOTATION_NULL:
+            return value
+    return None
+
+
+def _gene_page_annotations(
+    row: dict,
+) -> tuple[list[str], str | None, str | None, str | None]:
+    """Return ``(functions, pfam, interpro, go)`` from either GenePage schema.
+
+    ``functions`` stays the flat list the legacy page renders; the three
+    structured values let the current GeneHub page show them as separate rows.
+    """
+    pfam = _gene_page_text(row, "PAFM")
+    interpro = _gene_page_text(row, "InterPro")
+    go_terms = _gene_page_text(row, "GO1")
+    functions = [value for value in (pfam, interpro, go_terms) if value]
+    if not functions:  # legacy schema
+        functions = [
+            value
+            for value in (
+                _gene_page_text(row, "Function"),
+                _gene_page_text(row, "Function2"),
+                _gene_page_text(row, "Function3"),
+            )
+            if value
+        ]
+    return functions, pfam, interpro, go_terms
+
+
 def _gene_external_links(row: dict, gene_v2: str) -> dict[str, str]:
     """External resource links for a GeneHub record (same resources as legacy page)."""
     gene_v2_clean = re.sub(r"\.\d+$", "", gene_v2 or "")
@@ -1234,11 +1278,12 @@ def get_gene_detail(gene_id: str) -> dict:
     start = int(row.get("Start", row.get("Start1", 0)) or 0)
     end = int(row.get("End", row.get("End1", 0)) or 0)
     loc = f"{chromosome}:{max(start - 200, 1)}..{end + 200}" if chromosome and start and end else ""
+    functions, pfam, interpro, go_terms = _gene_page_annotations(row)
 
     detail = GeneDetailResponse(
         query_gene=gene_id,
         gene_ids=[value for value in [row.get("GeneIDv2"), row.get("GeneIDv1"), row.get("GeneIDv3")] if value],
-        description=normalize_text(row.get("Description")) or normalize_text(row.get("description")) or None,
+        description=_gene_page_text(row, "Description1", "Description", "description"),
         genome=genome or None,
         chromosome=chromosome or None,
         start=start or None,
@@ -1247,15 +1292,10 @@ def get_gene_detail(gene_id: str) -> dict:
         protein_length=str(row.get("Protein_length", row.get("ProteinLength", "")) or "") or None,
         molecular_weight=str(row.get("MolecularWeight", row.get("Molecular_Weight", "")) or "") or None,
         isoelectric_point=str(row.get("IsoelectricPoint", row.get("Isoelectric_points", "")) or "") or None,
-        functions=[
-            item
-            for item in [
-                normalize_text(row.get("Function")),
-                normalize_text(row.get("Function2")),
-                normalize_text(row.get("Function3")),
-            ]
-            if item
-        ],
+        functions=functions,
+        pfam=pfam,
+        interpro=interpro,
+        go_terms=go_terms,
         jbrowse_links={
             "structure_center": f"http://wheatomics.sdau.edu.cn/jbrowse-1.12.3-release/?data=Chinese_Spring1.0&loc={loc}&tracks=IWGSCv1.1_HC_LC&tracklist=0&nav=0&overview=0&fullviewlink=0"
             if loc
