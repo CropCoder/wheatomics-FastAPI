@@ -3,26 +3,26 @@
 
 ``coexpressiondb.CO_BioticStress_2026`` was imported with transcript-level gene
 IDs (``TraesCS1A02G001800.1``) while every other coexpression table — and the
-web app's gene input — uses the bare gene ID. Lookups therefore matched
-nothing. This rewrites ``gene1``/``gene2`` in place.
+web app's gene input — uses the bare gene ID, so lookups matched nothing.
 
-The table has ~77M rows, so the rewrite runs in primary-key batches with one
-commit per batch: no long table lock, bounded undo log and binlog growth.
+The table has ~77M rows. Updating indexed columns row by row is slow, so this
+script:
+
+1. records the existing secondary indexes and drops them;
+2. rewrites ``gene1``/``gene2`` in primary-key batches (one commit per batch);
+3. rebuilds the indexes from their recorded definitions.
 
 Run on the server:
 
     DB_USER=root DB_PASSWORD='...' python3 scripts/strip_coexpression_suffix.py --dry-run
     DB_USER=root DB_PASSWORD='...' python3 scripts/strip_coexpression_suffix.py
 
-    # continue after an interruption (batches are idempotent)
+    # continue after an interruption (batches are idempotent; indexes are only
+    # dropped again if they are still present)
     DB_USER=root DB_PASSWORD='...' python3 scripts/strip_coexpression_suffix.py --start 45000000
 
-Run it inside ``tmux``/``screen`` (or with nohup): a full pass can take tens of
-minutes. Check ``df -h`` first — the update writes roughly one row-image per
-changed row to the binlog.
-
-Optional afterwards (reclaims space, rebuilds indexes; needs free disk and
-takes a while): ``OPTIMIZE TABLE coexpressiondb.CO_BioticStress_2026;``
+Run it inside ``tmux``/``screen`` (or with nohup). Check ``df -h`` first — the
+update writes roughly one row-image per changed row to the binlog.
 """
 
 from __future__ import annotations
@@ -45,6 +45,7 @@ DB_NAME = os.environ.get("DB_COEXPRESSION", "coexpressiondb")
 TABLE = "CO_BioticStress_2026"
 BATCH = 20000
 
+
 def update_sql(table: str) -> str:
     # "%%" because these statements are executed with parameters (pymysql
     # unescapes them to a single % before sending).
@@ -57,12 +58,29 @@ def update_sql(table: str) -> str:
     )
 
 
+def index_defs(cur, table: str) -> dict[str, list[str]]:
+    """Secondary index name -> column list, in index order."""
+    cur.execute(
+        "SELECT index_name, column_name FROM information_schema.statistics "
+        "WHERE table_schema = DATABASE() AND table_name = %s "
+        "  AND index_name <> 'PRIMARY' "
+        "ORDER BY index_name, seq_in_index",
+        (table,),
+    )
+    out: dict[str, list[str]] = {}
+    for name, column in cur.fetchall():
+        out.setdefault(name, []).append(column)
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--db", default=DB_NAME)
     ap.add_argument("--table", default=TABLE)
     ap.add_argument("--batch", type=int, default=BATCH)
     ap.add_argument("--start", type=int, help="first id to process (resume point)")
+    ap.add_argument("--keep-index", action="store_true",
+                    help="keep the secondary indexes (much slower)")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--password", help="MySQL password (or export DB_PASSWORD)")
     args = ap.parse_args()
@@ -93,6 +111,16 @@ def main() -> int:
     if args.dry_run:
         print("dry run: nothing written")
         return 0
+    if pending == 0:
+        print("nothing to do")
+        return 0
+
+    defs = index_defs(cur, args.table)
+    if defs and not args.keep_index:
+        cur.execute(f"ALTER TABLE `{args.table}` " + ", ".join(
+            f"DROP INDEX `{name}`" for name in defs))
+        conn.commit()
+        print(f"dropped {len(defs)} index(es): {', '.join(defs)}")
 
     changed_total = 0
     t0 = time.time()
@@ -103,11 +131,21 @@ def main() -> int:
         changed = cur.rowcount
         conn.commit()
         changed_total += max(changed, 0)
-        elapsed = time.time() - t0
-        rate = changed_total / elapsed if elapsed else 0
-        print(f"  id {cursor_id:,}..{batch_end - 1:,}  changed {changed:,}  "
-              f"total {changed_total:,}  {rate:,.0f} rows/s", flush=True)
+        if changed:
+            elapsed = time.time() - t0
+            rate = changed_total / elapsed if elapsed else 0
+            print(f"  id {cursor_id:,}..{batch_end - 1:,}  changed {changed:,}  "
+                  f"total {changed_total:,}  {rate:,.0f} rows/s", flush=True)
         cursor_id = batch_end
+
+    if defs and not args.keep_index:
+        print("rebuilding indexes ...", flush=True)
+        t1 = time.time()
+        cur.execute(f"ALTER TABLE `{args.table}` " + ", ".join(
+            f"ADD INDEX `{name}` ({', '.join(f'`{c}`' for c in cols)})"
+            for name, cols in defs.items()))
+        conn.commit()
+        print(f"  indexes rebuilt in {time.time() - t1:.0f}s")
 
     cur.execute(
         f"SELECT COUNT(*) FROM `{args.table}` "
