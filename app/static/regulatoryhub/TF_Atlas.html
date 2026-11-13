@@ -360,7 +360,10 @@ o.value=g.genome;
 o.textContent=(g.label||g.genome);
 o.dataset.example=g.example_gene||"";
 sel.appendChild(o);});
-const opts=[...sel.options];
+const opts=[...sel.options].sort(function(a,b){
+return a.textContent.localeCompare(b.textContent,undefined,{sensitivity:"base"});
+});
+sel.replaceChildren(...opts);
 // Prefer the 02G Chinese Spring assembly: motifs, expression and variants
 // are only available for it.
 const preferred=opts.find(o=>/Chinese_Spring1\.1|Chinese_Spring_1\.1|CS1\.1/i.test(o.value))
