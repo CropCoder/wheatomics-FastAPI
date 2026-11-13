@@ -27,6 +27,7 @@ import uuid
 from typing import Optional, List
 
 from fastapi import APIRouter, Form, Header, HTTPException, Query, Request
+from fastapi.responses import FileResponse
 
 from app.core.config import settings
 from app.db.mysql import mysql_cursor
@@ -99,6 +100,7 @@ LEGACY_ALIAS_DBS = frozenset({
 #: aggregate and exposed as its own entry in All-in-one / Combined databases.
 SEPARATE_AGGREGATE_DBS = frozenset({
     "PacBioFullLengthcDNA",
+    "PacBioFullLengthcDNA.Triticum_aestivum",
     "PacBioFullLengthcDNA.Triticum_monococcum",
     "PacBioFullLengthcDNA.Hordeum",
 })
@@ -341,6 +343,8 @@ DB_CLASSIFICATION = [
             "wild_emmer", "durum", "langdon",
             "triticum_timopheevii", "triticum_turgidum",
             "kronos", "chili", "mahmoudi", "pi192051", "pi94760",
+            # carthlicum / dika wheat (CWI 22960, 2026)
+            "carthlicum", "dika",
         ],
     },
     {

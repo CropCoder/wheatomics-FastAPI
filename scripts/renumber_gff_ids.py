@@ -45,7 +45,7 @@ from collections import defaultdict, OrderedDict
 __version__ = "1.0.0"
 
 RE_CHR = re.compile(r"^Chr(\d+[A-Za-z])$")
-RE_MRNA_TYPES = ("mRNA", "transcript")
+RE_MRNA_TYPES = ("mRNA", "transcript", "lncRNA", "pseudogenic_transcript", "ncRNA")
 RE_DIGIT_END = re.compile(r"\.\d+$")
 
 
@@ -127,7 +127,7 @@ def collect_records(path):
         rid = get_attr(attrs, "ID")
         if not rid:
             continue
-        if ftype == "gene":
+        if ftype in ("gene", "pseudogene"):
             genes[rid] = {
                 "seqid": parts[0],
                 "start": _to_int(parts[3]),
@@ -175,7 +175,7 @@ def iter_data_lines(path):
 _iter_data_lines = iter_data_lines  # noqa: F811  (alias for明确语义)
 
 
-def build_id_map(genes, mrnas, id_prefix, digits, step, unplaced_token):
+def build_id_map(genes, mrnas, id_prefix, digits, step, unplaced_token, chr_suffix=""):
     """按染色体分组、坐标排序，生成 old ID -> new ID 映射。"""
     children = defaultdict(list)
     for mid, meta in mrnas.items():
@@ -215,7 +215,7 @@ def build_id_map(genes, mrnas, id_prefix, digits, step, unplaced_token):
                 % (seqid, len(gids), digits, step))
         for i, gid in enumerate(gids):
             num = (i + 1) * step
-            assign(gid, "%s%sG%0*d" % (id_prefix, token, digits, num))
+            assign(gid, "%s%s%sG%0*d" % (id_prefix, token, chr_suffix, digits, num))
         stats["per_seq"][seqid] = {
             "token": token, "genes": len(gids),
             "first_id": id_map[gids[0]] if gids else None,
@@ -231,7 +231,7 @@ def build_id_map(genes, mrnas, id_prefix, digits, step, unplaced_token):
                 % (len(unplaced), digits, step))
         for i, (seqid, _start, _end, _order, gid) in enumerate(unplaced):
             num = (i + 1) * step
-            assign(gid, "%s%sG%0*d" % (id_prefix, unplaced_token, digits, num))
+            assign(gid, "%s%s%sG%0*d" % (id_prefix, unplaced_token, chr_suffix, digits, num))
             stats["per_seq"].setdefault(seqid, {
                 "token": unplaced_token, "genes": 0, "first_id": None, "last_id": None})
             ps = stats["per_seq"][seqid]
@@ -297,7 +297,7 @@ def rewrite_file(src, dst, id_map, original_id_attr, keep_original):
                     new_items.append((key, value))
 
             # 原始 ID 留痕（仅 gene/mRNA 行，且确有改名时）
-            if keep_original and old_id and old_id in id_map and ftype in ("gene",) + RE_MRNA_TYPES:
+            if keep_original and old_id and old_id in id_map and ftype in ("gene", "pseudogene") + RE_MRNA_TYPES:
                 if not any(k == original_id_attr for k, _ in new_items):
                     new_items.append((original_id_attr, old_id))
 
@@ -307,21 +307,21 @@ def rewrite_file(src, dst, id_map, original_id_attr, keep_original):
 
 
 # ---------------------------------------------------------------- 校验模式
-def check_file(path, id_prefix, digits, step, unplaced_token):
+def check_file(path, id_prefix, digits, step, unplaced_token, chr_suffix=""):
     errors, warns = [], []
     genes = OrderedDict()  # seqid -> [(num, gid, start)]
     mrna_count = 0
     gene_ids, mrna_ids = set(), set()
     bad_gene_pattern, bad_mrna = [], []
-    gene_pat = re.compile(r"^%s(?:%s|%s)G\d{%d}$"
+    gene_pat = re.compile(r"^%s(?:%s|%s)%sG\d{%d}$"
                           % (re.escape(id_prefix),
                              re.escape(unplaced_token),
-                             r"\d+[A-Za-z]", digits))
+                             r"\d+[A-Za-z]", re.escape(chr_suffix), digits))
     for parts in iter_data_lines(path):
         ftype = parts[2]
         attrs = parse_attrs(parts[8])
         rid = get_attr(attrs, "ID")
-        if ftype == "gene":
+        if ftype in ("gene", "pseudogene"):
             if not rid:
                 errors.append("gene 行缺 ID")
                 continue
@@ -425,6 +425,8 @@ def build_parser():
     p.add_argument("--digits", type=int, default=6, help="序号位数（默认 6）")
     p.add_argument("--step", type=int, default=100, help="序号步长（默认 100）")
     p.add_argument("--unplaced-token", default="Un", help="未定位序列代号（默认 Un）")
+    p.add_argument("--chr-suffix", default="",
+                   help="染色体代号与 G 之间的固定后缀（如 01 → ...1A01G000100）")
     p.add_argument("--original-id-attr", default="original_id",
                    help="保留原 ID 的属性名（默认 original_id）")
     p.add_argument("--no-original-id-attr", action="store_true", help="不写 original_id 属性")
@@ -440,7 +442,8 @@ def main(argv=None):
     if args.digits < 3 or args.step < 1:
         die("--digits 至少 3，--step 至少 1")
     if args.check:
-        ok = check_file(args.gff3, args.id_prefix, args.digits, args.step, args.unplaced_token)
+        ok = check_file(args.gff3, args.id_prefix, args.digits, args.step, args.unplaced_token,
+                        args.chr_suffix)
         return 0 if ok else 1
     if not args.out:
         die("重编号模式需要 --out（或用 --check 只校验）")
@@ -449,7 +452,8 @@ def main(argv=None):
     log("[collect] gene=%d mRNA=%d 其它特征=%s"
         % (len(genes), len(mrnas), dict(n_other)))
     id_map, children, stats = build_id_map(genes, mrnas, args.id_prefix,
-                                           args.digits, args.step, args.unplaced_token)
+                                           args.digits, args.step, args.unplaced_token,
+                                           args.chr_suffix)
     log("[assign] 染色体基因 %d / 未定位基因 %d；缺父 mRNA %d"
         % (stats["chr_genes"], stats["unplaced_genes"], stats["missing_parent"]))
     for seqid in sorted(stats["per_seq"]):
@@ -473,7 +477,8 @@ def main(argv=None):
         % (args.out, res["lines"], res["mapped_ids"], res["unresolved_ids"]))
 
     # 写后自检
-    ok = check_file(args.out, args.id_prefix, args.digits, args.step, args.unplaced_token)
+    ok = check_file(args.out, args.id_prefix, args.digits, args.step, args.unplaced_token,
+                    args.chr_suffix)
     if not ok:
         die("重编号后自检失败", 2)
     log("[SUCCESS] 重编号完成并通过校验")

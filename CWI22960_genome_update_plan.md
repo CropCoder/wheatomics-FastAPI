@@ -383,3 +383,38 @@ set -a; . ./.env; set +a
 - Zenodo：`https://zenodo.org/api/records/21902085`（btr_analysis v1.0，单文件 11,040 B）
 - 平台：`/api/genomes`（316；AABB 22）、`/api/genomes/NU00021`、`/api/blast/databases`（nuc 2,922 + prot 193；NU00021 17 库；0 命中 22960）、`/api/jbrowse/datasets`（219）、`/api/genes/known/search?searchid=BTR1`（0）
 - repo：`app/api/routers/blast.py`（`DB_CLASSIFICATION` / `_category_for` / `_registry_category`）、`app/static/docpages/jbrowse.html`（`group-aabb`，213/206/22/22 计数）、`scripts/deploy_doc_pages.py`、`scripts/rebuild_genome_registry.py`（overrides / preserve_fields）、`scripts/rebuild_getfasta_aggregates.py`、`~/.agents/skills/lab-server/scripts/finish_genome_integration.sh`（无 --genome-only）
+
+---
+
+## 进展记录：自行补注释（2026-11-09，Ma）
+
+> 作者未提供 GFF，改由平台侧用 **EGAPx 1.0.1** 自行注释；证据使用 NU00021（同亚种 carthlicum）的 RNA-seq + IsoSeq（GSA CRA029005）。
+
+**输入（均已校验）**
+- 基因组：`GCA_977050835.1` → `CWI22960.fa`（10,722 seqs / 10,881,024,180 bp；`Chr1A..Chr7B` + `ChrUn_scaffold_*`；md5 `4458e202c46347798298a5624f71c47b`）
+- RNA-seq：NU00021 Leaf/Root/Stem（CRR2096842/43/44，6 个 fastq，md5 与 GSA 一致）
+- IsoSeq：NU00021 FLNC BAM（CRR2096857，md5 `3e5cf3df2313f7c7f8ff4a43bee655cd`）+ FLNC fastq（md5 `8dade19e3a63324376d93b80f023b1a1`）
+- 工作区：`/data/masw_data/CWI22960_20261108/`（`STATUS.md`、`scripts/`、`logs/`）
+
+**已交付：JBrowse 用 RNA-seq bigWig（CPM，binSize 50，染色体名与平台一致）**
+- `bw/CWI22960_RNAseq_Leaf_CPM.bw`（CRR2096842）
+- `bw/CWI22960_RNAseq_Root_CPM.bw`（CRR2096843）
+- `bw/CWI22960_RNAseq_Stem_CPM.bw`（CRR2096844）
+- `bw/CWI22960_RNAseq_All_CPM.bw`（三组织合并）
+- 来源：EGAPx 内部 STAR 比对 → `samtools reheader` 去 `lcl|` 前缀 → CSI 索引 → deeptools bamCoverage；BAM 保留在 `align/bams/`
+- 本地副本：仓库 `cwi22960_release/`（md5 与 Ma 一致）
+
+**进行中：EGAPx 注释**
+- 2026-11-09 00:44 启动（Nextflow 24.10.4 + singularity SIF）
+- 当前进度：>217 tasks 完成、0 失败；卡在长读 IsoSeq minimap2（14 分块中 11 完成、3 运行），之后 rnaseq_collapse → gnomon 基因预测 → 最终 GFF3
+- 预计 2–3 天出注释产物；随后执行 `scripts/finalize_annotation.sh`（去 `lcl|` 前缀、mRNA ID 归一化 `.数字`、gffread 生成 CDS/PEP、统计）
+- 平台接入仍按本计划 §4 Phase A/B 执行；注释层直接从 EGAPx 产物导入（不再依赖作者 GFF）
+
+## ✅ 注释完成（2026-11-10 23:02，EGAPx 1.0.1）
+
+- 流程跑通：Nextflow "Execution complete -- Goodbye"，340 tasks COMPLETED（早期 24 个 FAILED 均为修复前手工 kill 的 chainer 任务，重试后全部成功，不影响产物）
+- 关键修复：`support/gnomon/2/hmm_parameters/4565.params` 在支持数据下载时被截断（staged 6,523,240 B vs 完整 6,983,203 B），导致 gnomon chainer_wnode 空转（CPU 0、无输出）。用完整文件替换后 chainer 立即满负荷运行
+- 统计：基因 113,393（protein_coding 79,049 / pseudogene 28,652 / ncRNA 5,692）；mRNA 94,509；外显子 652,934；CDS 467,141
+- BUSCO（poales_odb10, protein mode）：C 99.1% [S 9.6%, D 89.5%]，F 0.0%，M 0.9%（duplication 高符合 AABB 同源基因预期）
+- 平台规范化产物（`cwi22960_release/annotation/`）：`CWI22960_EGAPx.platform.gff3`（基因 `CWI22960_XXXXXX`、转录本 `CWI22960_XXXXXX.k`）、`CWI22960_EGAPx.cds.fna`、`CWI22960_EGAPx.pep.faa`、`README_ANNOTATION.md`
+- JBrowse bigWig（此前已交付）：`cwi22960_release/CWI22960_RNAseq_{Leaf,Root,Stem,All}_CPM.bw`
