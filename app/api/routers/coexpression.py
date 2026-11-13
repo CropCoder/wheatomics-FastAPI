@@ -7,6 +7,7 @@ import re
 import pymysql
 from fastapi import APIRouter, HTTPException, Query
 
+from app.api.routers.go_kegg import EnrichmentError, enrich_go, enrich_kegg
 from app.core.config import settings
 from app.core.exceptions import ResourceNotFound, ValidationFailure
 from app.core.response import ok
@@ -177,6 +178,70 @@ def query_coexpression(
         "gene_present": gene_present,
         "pairs": [pair.model_dump() for pair in pairs],
     })
+
+
+_ANNOT_TABLES = {"go": "gene_go", "kegg": "gene_kegg"}
+
+
+@coexpression_router.get("/coexpression/enrich")
+def enrich_coexpressed(
+    genes: str = Query(..., description="Co-expressed gene IDs, comma separated"),
+    database: str = Query("go"),
+    padj_threshold: float = Query(0.05, gt=0, le=1),
+) -> dict:
+    """GO/KEGG enrichment for the partners of a coexpression query.
+
+    Coexpression tables store bare 02G gene IDs; the annotation tables
+    (wheat_function.gene_go / gene_kegg) may store the same ID or its ".1"
+    transcript form, so both are probed. ``annotated`` reports how many input
+    genes carry an annotation in the chosen database.
+    """
+    if database not in _ANNOT_TABLES:
+        raise ValidationFailure(f"Unsupported database: {database}")
+
+    gene_list: list[str] = []
+    seen: set[str] = set()
+    for raw in genes.split(","):
+        raw = raw.strip()
+        if not raw:
+            continue
+        gene = _TRANSCRIPT_SUFFIX.sub("", ensure_gene_like(raw))
+        if gene not in seen:
+            seen.add(gene)
+            gene_list.append(gene)
+    if not gene_list:
+        raise ValidationFailure("No valid gene IDs provided")
+
+    table = _ANNOT_TABLES[database]
+    candidates = [form for gene in gene_list for form in (gene, gene + ".1")]
+    found: set[str] = set()
+    with mysql_cursor(settings.DB_WHEAT_FUNCTION) as cur:
+        for start in range(0, len(candidates), 500):
+            chunk = candidates[start:start + 500]
+            placeholders = ",".join(["%s"] * len(chunk))
+            cur.execute(
+                f"SELECT DISTINCT gene_id FROM `{table}` "
+                f"WHERE gene_id IN ({placeholders})", chunk)
+            found.update(row["gene_id"] for row in cur.fetchall())
+
+    annotated = sum(1 for gene in gene_list
+                    if gene in found or gene + ".1" in found)
+    payload = {"database": database, "submitted": len(gene_list),
+               "annotated": annotated, "N": 0, "n": 0, "results": []}
+    if not found:
+        return ok(payload)
+    if len(found) > 2000:
+        raise ValidationFailure(
+            f"{len(found)} annotated genes is above the 2000-gene enrichment "
+            "limit; raise the PCC threshold to narrow the gene set")
+    try:
+        result = (enrich_go if database == "go" else enrich_kegg)(
+            sorted(found), padj_threshold)
+    except EnrichmentError as exc:
+        raise ValidationFailure(str(exc))
+    payload.update({"N": result["N"], "n": result["n"],
+                    "results": result["results"]})
+    return ok(payload)
 
 
 # ---------------------------------------------------------------------------

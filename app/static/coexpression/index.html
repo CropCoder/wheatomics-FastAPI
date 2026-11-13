@@ -7,6 +7,7 @@
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 <link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
 <script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<script src="/js/echarts.min.js"></script>
 
 
 <script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
@@ -133,6 +134,22 @@ var _hmt = _hmt || [];
         <tbody id="results-tbody"></tbody>
       </table>
     </div>
+    <div class="mt-2" id="enrich-buttons" style="display:none;">
+      <button class="btn btn-sm btn-primary" onclick="runCoexpEnrichment('go')">GO enrichment of partners</button>
+      <button class="btn btn-sm btn-primary ml-1" onclick="runCoexpEnrichment('kegg')">KEGG enrichment of partners</button>
+      <span class="muted" style="font-size:12px;margin-left:8px;">Runs on the co-expressed partners of your query genes.</span>
+    </div>
+  </div>
+
+  <div id="enrich-card" class="results-card">
+    <h6 class="card-title" id="enrich-title">GO / KEGG enrichment</h6>
+    <div class="results-summary" id="enrich-summary"></div>
+    <div id="enrich-actions" style="display:none;margin-bottom:8px;">
+      <button class="btn btn-sm btn-outline-secondary" onclick="downloadEnrichCsv()">Download table (CSV)</button>
+      <span class="muted" style="font-size:12px;margin-left:8px;">Bubble size = number of genes in the list</span>
+    </div>
+    <div id="enrich-charts"></div>
+    <div id="enrich-table" style="max-height:520px;overflow:auto;"></div>
   </div>
 
   <div class="query-card" id="references-card">
@@ -448,9 +465,251 @@ function renderResults(data, queryGenes, db, fv) {
     });
   }
 
+  // Partners for GO/KEGG enrichment: every co-expressed gene except the
+  // query gene itself, ordered by |PCC| so a 2000-gene cap keeps the best.
+  var scores = {};
+  expanded.forEach(function(r) {
+    if (r.partner === r.query) return;
+    var v = Math.abs(r.pcc) || 0;
+    if (!(r.partner in scores) || v > scores[r.partner]) scores[r.partner] = v;
+  });
+  currentPartners = Object.keys(scores).map(function(g) {
+    return { gene: g, score: scores[g] };
+  }).sort(function(a, b) { return b.score - a.score; });
+  clearEnrichment();
+  $('#enrich-buttons').toggle(currentPartners.length > 0);
+
   $('#results-card').show();
   $('#export-btn').show();
   $('html, body').animate({ scrollTop: $('#results-card').offset().top - 20 }, 300);
+}
+
+/* ---------- GO / KEGG enrichment of co-expressed partners ---------- */
+var ENRICH_ONTOLOGY = [
+  ['Biological Process', 'biological', '#2196F3'],
+  ['Molecular Function', 'molecular', '#4CAF50'],
+  ['Cellular Component', 'cellular', '#FF9800']
+];
+var enrichCharts = [];
+var enrichData = null;
+var currentPartners = [];
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function clearEnrichCharts() {
+  enrichCharts.forEach(function(c) { try { c.dispose(); } catch (e) {} });
+  enrichCharts = [];
+  $('#enrich-charts').empty();
+}
+
+function clearEnrichment() {
+  clearEnrichCharts();
+  enrichData = null;
+  $('#enrich-card').hide();
+  $('#enrich-title').text('GO / KEGG enrichment');
+  $('#enrich-summary').text('');
+  $('#enrich-table').empty();
+  $('#enrich-actions').hide();
+}
+
+function runCoexpEnrichment(db) {
+  if (!currentPartners.length) return;
+  var limit = 2000;
+  var truncated = currentPartners.length > limit;
+  var genes = currentPartners.slice(0, limit).map(function(p) { return p.gene; });
+  var label = db === 'go' ? 'GO' : 'KEGG';
+  clearEnrichCharts();
+  enrichData = null;
+  $('#enrich-card').show();
+  $('#enrich-title').text(label + ' enrichment of co-expressed partners');
+  $('#enrich-summary').text('Running ' + label + ' enrichment on ' + genes.length +
+    ' partner genes' +
+    (truncated ? ' (top ' + limit + ' of ' + currentPartners.length + ' by |PCC|)' : '') + '…');
+  $('#enrich-table').empty();
+  $('#enrich-actions').hide();
+  $('html, body').animate({ scrollTop: $('#enrich-card').offset().top - 20 }, 300);
+
+  $.getJSON('/api/coexpression/enrich', { genes: genes.join(','), database: db })
+    .done(function(resp) {
+      if (!resp.success) { $('#enrich-summary').text('Enrichment failed'); return; }
+      renderEnrichment(resp.data, db, truncated, currentPartners.length);
+    })
+    .fail(function(xhr) {
+      var msg = xhr.responseJSON && xhr.responseJSON.detail
+        ? xhr.responseJSON.detail : 'Request failed (' + xhr.status + ')';
+      $('#enrich-summary').text('Error: ' + msg);
+    });
+}
+
+function renderEnrichment(d, db, truncated, totalPartners) {
+  enrichData = d;
+  var label = db === 'go' ? 'GO' : 'KEGG';
+  var parts = [
+    d.submitted + ' partner genes',
+    d.annotated + ' with ' + label + ' annotation',
+    (d.results || []).length + ' significant terms at p.adjust ≤ 0.05'
+  ];
+  if (truncated) parts.push('using the top 2000 of ' + totalPartners + ' partners by |PCC|');
+  $('#enrich-summary').text(parts.join(' · '));
+  if (!(d.results || []).length) {
+    $('#enrich-table').html('<div class="text-muted" style="padding:12px;">No significantly ' +
+      'enriched terms. Try the other database or a lower PCC threshold.</div>');
+    return;
+  }
+  $('#enrich-actions').show();
+  renderEnrichCharts(d, db);
+
+  var cols = db === 'go'
+    ? ['GO ID', 'Term', 'Ontology', 'Genes', 'BG', 'Ratio', 'p-value', 'p.adjust']
+    : ['Pathway ID', 'Name', 'Genes', 'BG', 'Ratio', 'p-value', 'p.adjust'];
+  var html = '<table class="table table-bordered table-hover table-sm"><thead><tr>';
+  cols.forEach(function(c) { html += '<th>' + c + '</th>'; });
+  html += '</tr></thead><tbody>';
+  d.results.forEach(function(r) {
+    html += '<tr>';
+    if (db === 'go') {
+      html += '<td><a target="_blank" rel="noopener" href="https://amigo.geneontology.org/amigo/term/' +
+        encodeURIComponent(r.id || '') + '">' + escapeHtml(r.id || '') + '</a></td>';
+      html += '<td>' + escapeHtml(r.term || '') + '</td>';
+      html += '<td>' + escapeHtml(r.ontology || '') + '</td>';
+    } else {
+      html += '<td><a target="_blank" rel="noopener" href="https://www.kegg.jp/pathway/' +
+        encodeURIComponent(String(r.id || '').replace(/^(path:|ko:|map:)/, '')) + '">' +
+        escapeHtml(r.id || '') + '</a></td>';
+      html += '<td>' + escapeHtml(r.name || '') + '</td>';
+    }
+    html += '<td>' + (r.k == null ? '—' : r.k) + '</td>';
+    html += '<td>' + (r.K == null ? '—' : r.K) + '</td>';
+    html += '<td>' + (r.ratio == null ? '—' : Number(r.ratio).toFixed(2)) + '</td>';
+    html += '<td>' + (r.pvalue == null ? '—' : Number(r.pvalue).toExponential(2)) + '</td>';
+    html += '<td>' + (r.padj == null ? '—' : Number(r.padj).toExponential(2)) + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  $('#enrich-table').html(html);
+}
+
+function renderEnrichCharts(d, db) {
+  clearEnrichCharts();
+  var res = d.results || [];
+  if (!res.length) return;
+  var host = document.getElementById('enrich-charts');
+  var maxK = 1;
+  res.forEach(function(r) { maxK = Math.max(maxK, Number(r.k) || 1); });
+  if (db === 'kegg') {
+    bubbleBlock(host, 'KEGG Pathways', res, '#E91E63', 30, maxK);
+    return;
+  }
+  var buckets = { biological: [], molecular: [], cellular: [], other: [] };
+  res.forEach(function(r) {
+    var o = String(r.ontology || '').toLowerCase();
+    var key = o.indexOf('biological') >= 0 ? 'biological'
+            : o.indexOf('molecular') >= 0 ? 'molecular'
+            : o.indexOf('cellular') >= 0 ? 'cellular' : 'other';
+    buckets[key].push(r);
+  });
+  ENRICH_ONTOLOGY.forEach(function(x) {
+    if (buckets[x[1]].length) bubbleBlock(host, x[0], buckets[x[1]], x[2], 20, maxK);
+  });
+  if (buckets.other.length) bubbleBlock(host, 'Other', buckets.other, '#78909C', 20, maxK);
+}
+
+function bubbleBlock(host, label, items, color, maxN, scale) {
+  var top = items.slice().sort(function(a, b) {
+    return (a.padj || 1) - (b.padj || 1);
+  }).slice(0, maxN);
+  var box = document.createElement('div');
+  var head = document.createElement('div');
+  head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:12px;margin:16px 0 4px;';
+  var h = document.createElement('h6');
+  h.style.margin = '0';
+  h.textContent = label + ' (' + top.length + ' terms)';
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn btn-sm btn-outline-secondary';
+  btn.textContent = 'Download PNG';
+  btn.dataset.chart = String(enrichCharts.length);
+  btn.dataset.label = label.replace(/\s+/g, '_');
+  btn.onclick = function() { downloadEnrichPng(btn.dataset.chart, btn.dataset.label); };
+  head.appendChild(h);
+  head.appendChild(btn);
+  var plot = document.createElement('div');
+  box.appendChild(head);
+  box.appendChild(plot);
+  host.appendChild(box);
+
+  plot.style.height = Math.max(320, top.length * 30 + 70) + 'px';
+  var inst = echarts.init(plot);
+  enrichCharts.push(inst);
+  inst.setOption({
+    animation: false,
+    grid: { left: 12, right: 40, top: 14, bottom: 46, containLabel: true },
+    tooltip: { trigger: 'item', confine: true, formatter: function(p) {
+      var r = top[p.dataIndex];
+      return '<b>' + escapeHtml(r.id || '') + '</b><br>' + escapeHtml(r.term || r.name || '') +
+        '<br>Genes: ' + (r.k || 0) + ' / ' + (r.K || 0) +
+        '<br>Ratio: ' + (r.ratio == null ? '—' : Number(r.ratio).toFixed(2)) +
+        '<br>p.adjust: ' + (r.padj == null ? '—' : Number(r.padj).toExponential(2));
+    } },
+    xAxis: { type: 'value', name: '-log10(p.adjust)', nameLocation: 'middle', nameGap: 30,
+      axisLabel: { fontSize: 11, color: '#3c5a50' },
+      splitLine: { lineStyle: { color: '#eef3f1' } } },
+    yAxis: { type: 'category', data: top.map(function(r) { return r.term || r.name || r.id || ''; }),
+      inverse: true,
+      axisLabel: { fontSize: 11, color: '#3c5a50', width: 260, overflow: 'truncate' } },
+    series: [{ type: 'scatter',
+      data: top.map(function(r, i) {
+        return {
+          value: [-Math.log10(Math.max(Number(r.padj) || 1e-300, 1e-300)), i],
+          symbolSize: Math.max(10, Math.sqrt((Number(r.k) || 1) / scale) * 46)
+        };
+      }),
+      itemStyle: { color: color, opacity: 0.72, borderColor: 'rgba(0,0,0,0.25)', borderWidth: 1 } }]
+  }, true);
+}
+
+function downloadEnrichCsv() {
+  if (!enrichData) return;
+  var d = enrichData;
+  var go = d.database === 'go';
+  var head = go
+    ? ['GO_ID', 'Term', 'Ontology', 'Genes_in_list', 'Genes_in_BG', 'Enrichment_Ratio', 'pvalue', 'padj']
+    : ['Pathway_ID', 'Pathway_Name', 'Genes_in_list', 'Genes_in_BG', 'Enrichment_Ratio', 'pvalue', 'padj'];
+  var rows = [head];
+  (d.results || []).forEach(function(r) {
+    rows.push(go
+      ? [r.id, r.term || '', r.ontology || '', r.k, r.K, r.ratio, r.pvalue, r.padj]
+      : [r.id, r.name || '', r.k, r.K, r.ratio, r.pvalue, r.padj]);
+  });
+  var csv = rows.map(function(row) {
+    return row.map(function(v) {
+      var s = v == null ? '' : String(v);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(',');
+  }).join('\n');
+  var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (go ? 'GO' : 'KEGG') + '_coexpressed_partners_enrichment.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
+}
+
+function downloadEnrichPng(index, label) {
+  var inst = enrichCharts[Number(index)];
+  if (!inst) return;
+  var a = document.createElement('a');
+  a.href = inst.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
+  a.download = ((label || 'enrichment') + '_coexpressed_partners')
+    .replace(/[^\w.-]+/g, '_') + '.png';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 function exportTSV() {
