@@ -115,7 +115,7 @@ def main() -> int:
         if not args.members:
             ap.error("--members is required for set mode")
         seen = set()
-        members = [m for m in members if not (m in seen or seen.add(m))]
+        members = [m for m in args.members if not (m in seen or seen.add(m))]
 
     if len(members) > ALIAS_LIMIT:
         print(f"ERROR: {len(members)} members exceeds BLAST alias limit {ALIAS_LIMIT}",
