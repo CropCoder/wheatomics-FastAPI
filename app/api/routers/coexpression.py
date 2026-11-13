@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import re
+from typing import List
 
 import pymysql
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
 
 from app.api.routers.go_kegg import EnrichmentError, enrich_go, enrich_kegg
 from app.core.config import settings
@@ -183,26 +185,34 @@ def query_coexpression(
 _ANNOT_TABLES = {"go": "gene_go", "kegg": "gene_kegg"}
 
 
-@coexpression_router.get("/coexpression/enrich")
-def enrich_coexpressed(
-    genes: str = Query(..., description="Co-expressed gene IDs, comma separated"),
-    database: str = Query("go"),
-    padj_threshold: float = Query(0.05, gt=0, le=1),
-) -> dict:
+class EnrichmentInput(BaseModel):
+    genes: List[str]
+    database: str = "go"
+    padj_threshold: float = 0.05
+
+
+@coexpression_router.post("/coexpression/enrich")
+def enrich_coexpressed(req: EnrichmentInput) -> dict:
     """GO/KEGG enrichment for the partners of a coexpression query.
+
+    Posted as JSON because a query with a thousand partner genes would
+    overflow the URL length limit Apache allows.
 
     Coexpression tables store bare 02G gene IDs; the annotation tables
     (wheat_function.gene_go / gene_kegg) may store the same ID or its ".1"
     transcript form, so both are probed. ``annotated`` reports how many input
     genes carry an annotation in the chosen database.
     """
+    database = req.database
     if database not in _ANNOT_TABLES:
         raise ValidationFailure(f"Unsupported database: {database}")
+    if not 0 < req.padj_threshold <= 1:
+        raise ValidationFailure("padj_threshold must be in (0, 1]")
 
     gene_list: list[str] = []
     seen: set[str] = set()
-    for raw in genes.split(","):
-        raw = raw.strip()
+    for raw in req.genes:
+        raw = (raw or "").strip()
         if not raw:
             continue
         gene = _TRANSCRIPT_SUFFIX.sub("", ensure_gene_like(raw))
@@ -236,7 +246,7 @@ def enrich_coexpressed(
             "limit; raise the PCC threshold to narrow the gene set")
     try:
         result = (enrich_go if database == "go" else enrich_kegg)(
-            sorted(found), padj_threshold)
+            sorted(found), req.padj_threshold)
     except EnrichmentError as exc:
         raise ValidationFailure(str(exc))
     payload.update({"N": result["N"], "n": result["n"],

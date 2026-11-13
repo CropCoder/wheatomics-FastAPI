@@ -532,7 +532,12 @@ function runCoexpEnrichment(db) {
   $('#enrich-actions').hide();
   $('html, body').animate({ scrollTop: $('#enrich-card').offset().top - 20 }, 300);
 
-  $.getJSON('/api/coexpression/enrich', { genes: genes.join(','), database: db })
+  $.ajax({
+    url: '/api/coexpression/enrich',
+    type: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({ genes: genes, database: db })
+  })
     .done(function(resp) {
       if (!resp.success) { $('#enrich-summary').text('Enrichment failed'); return; }
       renderEnrichment(resp.data, db, truncated, currentPartners.length);
