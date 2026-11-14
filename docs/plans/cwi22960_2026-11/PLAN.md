@@ -38,7 +38,18 @@ GENOME_MD5=4458e202c46347798298a5624f71c47b
 | 2026-11-13 23:15 | **节点密码被拒**（USM userauth failed，4 个实例 IP 均试）→ 等用户更新 `WHEATOMICS_NODE_ENV` 中 NODE_PASS | ⏳ 阻塞 |
 | 2026-11-13 23:18 | 本地准备：v3 GFF 组成拆解（146,648 转录本 = 102,975 protein-coding + 28,622 pseudogene-mRNA + 10,188 lncRNA + 4,863 transcript）；生成 protein-coding-only 平台候选 GFF3（80,158 基因 / 102,975 mRNA / 580,440 exon / 520,785 CDS） | ✅ |
 | 2026-11-13 23:19 | 平台套装：`cwi22960_release/platform_bundle/`（gff3/cds/pep + provenance + MD5SUMS）；基因组 fa 在 Ma 上 gzip 中 | ✅/⏳ |
-| 待办 | 凭据恢复后：查 NU00021 等 AABB 先例（D2 ID 风格 + D8 GFF 范围）→ P1 传输 → P2 G0 → … | ⏳ |
+| 2026-11-14 00:05 | **登录问题定位**：节点 USM 门禁接受 publickey 后拒绝 exec（误导性 "check password"）→ 强制 `PubkeyAuthentication=no -o PreferredAuthentications=password` 即通；密码本身无需修改 | ✅ |
+| 2026-11-14 00:20 | 服务器现状核查、AABB 先例调研（NU00021=TrcarPEA1A01G000020.1，Group=Tetraploid）；备份 `_backup_20261114_cwi22960` | ✅ |
+| 2026-11-14 00:21 | 代码改动已提交并双推（github+gitee `c408097`）：blast.py 加 carthlicum/dika 关键词、registry override、renumber_gff_ids 加 --chr-suffix + 非编码转录本类型；生产已 pull + API 重启；`_prep/renumber_gff_ids.py` 已同步 | ✅ |
+| 2026-11-14 00:22 | ID 方案落地：`TrcarCWI22960.r1.<chr>01G<6位>.k`，step=10（对齐 NU00021 先例；Chr2B 10,195 基因，step=100 会溢出 6 位）；GFF 保留全部转录本（pseudogene mRNA→pseudogenic_transcript、lncRNA/transcript 保留；BED/Gene 表=102,975 mRNA） | ✅ |
+| 2026-11-14 00:25 | **G0 通过**：`finish_genome_integration.sh ... --check-name --write-plan --confirm` → `[OK] 命名可直接开跑`；name_plan.json 已生成 | ✅ |
+| 2026-11-14 00:27 | 数据上传：fa.gz 分 4 片并行（3.39 GB）+ 注释已传完并 md5 校验（gff3/cds/pep）；预计 ~01:30 完成 | ⏳ |
+| 2026-11-14 00:28 | 已挂自动 watcher：分片合并+md5校验 → 解压 faidx → G2 质检 → 自动启动 G3 流水线（日志 `pipeline_Carthlicum_CWI22960.log`） | ✅ |
+| 2026-11-14 01:46 | **G3 流水线 [SUCCESS]**（~1h02m）：BLAST 库/基因表/JBrowse/02G 全部产出 | ✅ |
+| 2026-11-14 10:03 | **G4 收尾**：卡片/registry/别名/示例行/映射全部完成（0 FAIL） | ✅ |
+| 2026-11-14 10:06 | **4 个 RNA-seq bigWig 轨道**加入 JBrowse 并通过 Range 校验 | ✅ |
+| 2026-11-14 10:12 | **事故修复**：G4 旧版 step_aliases 覆盖 base+delta 聚合库 → 恢复 + 用 update_blast_alias 正确追加；getfasta 203→204 | ✅ |
+| 2026-11-14 10:15 | **G5 公网验收全过**（详见 DEPLOY_LOG.md） | ✅ |
 
 ## 1. 触点总表（一个基因组要动的地方，逐项打勾）
 
