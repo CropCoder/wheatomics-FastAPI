@@ -36,9 +36,10 @@
 |---|---|
 | 数据根目录 | `/var/www/data/masw_data`（116T，2026-11-11 剩 ~30T） |
 | 流水线脚本 | `/var/www/data/masw_data/add_wheat_genome.sh`（**md5 `70fb9ff21ed11417399f16fb489b1ad3`**，2026-11 版，1034 行，含命名门禁） |
-| 收尾脚本 | 仓库 `scripts/finish_genome_integration.sh`（v2，含 GetSequence 同步 step 5b；**md5 `2bfcb1e2c59fcd447c4eb503f4410009`**）→ 安装到 `~/.agents/skills/lab-server/scripts/` 与服务器 `/var/www/data/masw_data/_prep/`（`md5sum` 对齐两边） |
+| 聚合库 alias 工具 | 仓库 `scripts/update_blast_alias.py`（switch/append/set；base+delta 感知、成员校验、flock、超限前插、写后校验回滚；**md5 `3ba89cf4bc25045ed65e6574fdaace21`**）→ 服务器 `_prep/update_blast_alias.py`；单测 `scripts/tests/test_update_blast_alias.py` |
+| 收尾脚本 | 仓库 `scripts/finish_genome_integration.sh`（v2，含 GetSequence 同步 step 5b；**md5 `7bc41f844c01b2eb3b5cd562cd0e1ecf`**（2026-11-15，base+delta 别名兼容版））→ 安装到 `~/.agents/skills/lab-server/scripts/` 与服务器 `/var/www/data/masw_data/_prep/`（`md5sum` 对齐两边） |
 | 归一化脚本 | 仓库 `scripts/normalize_diploid.py`（`fasta/gff3/pep/check`；**md5 `e2a13d8b64f6fb65ccd0be222e53e3ea`**）→ 服务器 `_prep/normalize_diploid.py` |
-| 重编号脚本 | 仓库 `scripts/renumber_gff_ids.py`（每染色体 100 步平台 ID；**md5 `90b5d84e2fad765d70d7a723eabde00d`**）→ 服务器 `_prep/` |
+| 重编号脚本 | 仓库 `scripts/renumber_gff_ids.py`（每染色体 100 步平台 ID + `--chr-suffix`/非编码转录本；**md5 `4bca648d6471fcf4df84b2a833366e88`**）→ 服务器 `_prep/` |
 | A2 一键脚本 | 仓库 `scripts/prepare_aegilops4_dataset.sh`（**md5 `04a905cc2a85828c3bdfc7f499d0f743`**）→ 服务器 `_prep/` |
 | 数据下载脚本 | 仓库 `scripts/fetch_aegilops4_data.sh`（**md5 `7c0985d181ea430be3fff9330e859a72`**）→ 服务器 `_prep/` |
 | 批量/验收脚本 | `scripts/pipeline_aegilops4_all.sh`、`scripts/finish_aegilops4_all.sh`、`scripts/accept_aegilops4_onboarding.py`（G5 逐条核对，含 GetSequence）→ 服务器 `_prep/` |

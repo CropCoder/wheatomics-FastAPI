@@ -47,3 +47,36 @@
 ## 待办（可选）
 - cite.html 增加论文引用块（DOI 10.1038/s42003-026-11303-8）
 - 把本次经验回写 `docs/workflow/wheatomics-new-genome-sop.md`（base+delta 章节 + 别名事故）
+
+---
+
+# 2026-11-15 追加：base + delta 聚合库工具升级（本次事故的根因修复）
+
+## 改动
+1. **`scripts/update_blast_alias.py` 重写为 base+delta 唯一维护入口**：
+   - 识别并保留 `*_base` 成员；append 时自动维持 base 在首位；
+   - 新成员校验（物理库文件 + `blastdbcmd -info`），坏库默认拒绝（`--skip-invalid` 可跳过）；
+   - `flock` 互斥（同一时刻仅一个 alias 更新），原子写 + 备份 + 写后校验失败自动回滚；
+   - `--allow-overlimit`：超过 BLAST 200 成员上限时允许写入，并自动把新成员**前插**（可读窗口内）；
+   - 新选项：`--keep-deltas`、`--position append|prepend`、`--member-file`、`--check-entry`、`--lock-timeout`；
+   - 环境变量 `WHEATOMICS_BLASTDB`/`WHEATOMICS_BLASTDBCMD` 便于测试。
+2. **`scripts/finish_genome_integration.sh` step 5 改为调用该工具**（不再手写 DBLIST），
+   并修复：只有 all_genomes 别名确实包含新基因组后才写 `all_genomes_type.txt`（防止孤儿行）。
+3. 新增单测 `scripts/tests/test_update_blast_alias.py`（16 项，覆盖 append/switch/set、去重、
+   超限、非法成员、dry-run、备份、check-entry）。
+4. 文档：`docs/workflow/blast-aggregate-base-delta.md` 增补“工具保证与选项”；
+   SOP §0 更新脚本 md5 并新增 alias 工具条目。
+
+## 验证（生产服务器实测）
+- 单测 16/16 OK；
+- 真实别名 dry-run：`all_genes.nal` 识别 `base+delta (base=all_genes_base, deltas=1)`；
+  `all_genomes.nal` 204 成员 > 200 时打印 “prepending deltas” 警告；
+- 非法成员：工具拒绝（exit 4），别名文件零改动；
+- 真实 `--apply` 安全重写（append 已存在成员 → 去重内容不变）：`ALIAS_OK`，
+  `--check-entry TrcarCWI22960.r1.1A01G000110.1` 命中，md5 不变；
+- `step_aliases` 隔离测试：真实 DS 全 SKIP 不改文件；虚构 DS 在 dry-run/非 dry-run 下
+  均不改别名，且 `all_genomes_type.txt` 无孤儿行（测试残留已清理）。
+- 最终别名成员：all_genomes=204；all_gene/all_genes=2（base+新 delta）；
+  all_protein/all_proteins=2。
+- 部署：commit `9506f88` + `d6ffca8`，已双推；生产已 pull；`_prep/finish_genome_integration.sh`、
+  `_prep/update_blast_alias.py` 已按 repo 同步（md5 一致）。
