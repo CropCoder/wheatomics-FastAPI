@@ -1123,10 +1123,13 @@ step_aliases() {
     fi
   done
   # all_genomes_type.txt（getfasta 页面 4 列：库名 -> 倍性）
+  # 只有 all_genomes 别名确实包含该基因组时才追加，避免别名更新失败留下孤儿行
   local types="${BLASTDB}/all_genomes_type.txt"
   if [ -f "$types" ]; then
     if grep -qE "^${DS}\.genome[[:space:]]" "$types"; then
       log "  [SKIP] all_genomes_type.txt 已含该基因组"
+    elif ! alias_has_member "all_genomes.nal" "${DS}.genome"; then
+      warn "all_genomes.nal 未包含 ${DS}.genome，跳过 all_genomes_type.txt"
     elif [ "$DRY" = 1 ]; then
       log "  [DRY] all_genomes_type.txt += ${DS}.genome<tab>${PLOIDY}"
     else
