@@ -83,23 +83,53 @@ python3 scripts/update_blast_alias.py \
 
 alias 文件位于 BLASTDB 根目录;切换是原子 rename,不需要重启 API 或 BLAST daemon。
 
-### 4. 新基因组增量追加
+### 4. 新基因组增量追加(2026-11-15 起由 finish 脚本自动完成)
 
-现有 `finish_genome_integration.sh` 仍会为新基因组生成独立的 per-genome DB。
-在 base 切换后,把它作为 delta 追加:
+`finish_genome_integration.sh` 的 step 5 已改为调用 `update_blast_alias.py`，
+不再手写 DBLIST(旧逻辑会覆盖 base+delta 头部)。它按以下映射逐个追加,并保持
+单复数别名一致:
+
+```
+all_genomes.nal   += <DS>.genome
+all_gene.nal      += <DS>.add_Description.cds
+all_genes.nal     += <DS>.add_Description.cds
+all_protein.pal   += <DS>.add_Description.pep
+all_proteins.pal  += <DS>.add_Description.pep
+```
+
+手工等价命令:
 
 ```bash
+# base+delta 别名:自动保留 base,追加 delta
 python3 scripts/update_blast_alias.py \
   --alias all_genes.nal --mode append \
   --members AABBDD_NewGenome.add_Description.cds --apply
 
+# all_genomes 已超过 200 成员上限:允许超限,新成员会被前插(可读窗口内),
+# 尾部超限成员 blastdbcmd -entry_batch 不可读(平台已知限制)
 python3 scripts/update_blast_alias.py \
-  --alias all_proteins.pal --mode append \
-  --members AABBDD_NewGenome.add_Description.pep --apply
+  --alias all_genomes.nal --mode append \
+  --members AABB_NewGenome.genome --allow-overlimit --apply
 ```
 
-同时保持 `all_gene.nal` 与 `all_genes.nal`、`all_protein.pal` 与
-`all_proteins.pal` 成员一致。
+### 4.1 `update_blast_alias.py` 的保证与选项(2026-11-15)
+
+该脚本现在是 alias 维护的唯一入口(switch / append / set),关键行为:
+
+- **base+delta 感知**:读取并保留 `*_base` 成员,追加时输出 layout;
+- **成员校验**:新成员必须存在物理库文件且 `blastdbcmd -info` 可读,
+  默认拒绝坏库(`--skip-invalid` 可跳过,全部无效时视为 no-op);
+- **flock 互斥**:同一时刻只允许一个 alias 更新(防止并行会话互相覆盖);
+- **原子写 + 回滚**:先备份,写临时文件后 rename,写后 `blastdbcmd -info`
+  校验失败自动还原备份;
+- **200 成员上限**:超过时报错退出(exit 2);`--allow-overlimit` 时允许,
+  且新成员自动前插;
+- **其他**:`--keep-deltas`(switch 保留 delta)、`--position append|prepend`、
+  `--member-file`(成员清单文件)、`--check-entry`(写后抽查序列 ID)、
+  `--lock-timeout`;`--apply` 才写,默认 dry-run。
+
+环境变量 `WHEATOMICS_BLASTDB` / `WHEATOMICS_BLASTDBCMD` 可覆盖路径(测试用)。
+单测:`python3 scripts/tests/test_update_blast_alias.py`(16 项)。
 
 ### 5. Compaction
 

@@ -1068,51 +1068,74 @@ PY
 # ---------------------------------------------------------------- 5) 聚合库 alias
 step_aliases() {
   log "--- 5) 聚合库 alias（all_genomes / all_gene / all_protein / type 表）---"
-  ALIASES="1" DS="$DS" PLOIDY="$PLOIDY" BLASTDB="$BLASTDB" DRY="$DRY" \
-  python3 - <<'PY'
-import os,re,pathlib
-b=pathlib.Path(os.environ["BLASTDB"]); ds=os.environ["DS"]; ploidy=os.environ["PLOIDY"]
-dry=os.environ.get("DRY")=="1"
-targets=[("all_genomes.nal", f"{ds}.genome"),
-         ("all_gene.nal",     f"{ds}.add_Description.cds"),
-         ("all_protein.pal",  f"{ds}.add_Description.pep"),
-         ("all_genes.nal",    f"{ds}.add_Description.cds"),
-         ("all_proteins.pal", f"{ds}.add_Description.pep")]
-for fn,member in targets:
-    p=b/fn
-    if not p.exists(): print(f"  [WARN] 缺少 {fn}"); continue
-    t=p.read_text(encoding="utf-8",errors="replace")
-    if member in t.split():
-        print(f"  [SKIP] {fn} 已含 {member}"); continue
-    m=re.search(r"^(DBLIST[ \t]+)(.*)$", t, re.M)
-    if not m: print(f"  [ERR] {fn} 里找不到 DBLIST 行"); continue
-    if dry: print(f"  [DRY] {fn} DBLIST += {member}"); continue
-    # 前插：BLAST 别名库最多读取前 200 个成员（blastdbcmd -entry_batch 会
-    # "Skipped" 第 201 个及之后），前插保证新基因组立即可查，并提示超限。
-    t=t[:m.start(2)]+member+((" " if m.group(2) else ""))+t[m.end(2):]
-    tmp=p.with_suffix(p.suffix+".tmp"); tmp.write_text(t,encoding="utf-8"); tmp.replace(p)
-    n_members=len(t[m.start(2):t.index("\n", m.start(2))].split())
-    msg=f"  [OK] {fn} DBLIST += {member}（成员 {n_members}）"
-    if n_members > 200:
-        msg += f" [WARN] 超过 BLAST 别名 200 成员上限，尾部成员 -entry_batch 不可达"
-    print(msg)
-# all_genomes_type.txt
-p=b/"all_genomes_type.txt"
-if p.exists():
-    t=p.read_text(encoding="utf-8",errors="replace")
-    if f"{ds}.genome\t" in t or f"{ds}.genome " in t:
-        print("  [SKIP] all_genomes_type.txt 已含该基因组")
-    elif dry:
-        print(f"  [DRY] all_genomes_type.txt += {ds}.genome\\t{ploidy}")
-    else:
-        if not t.endswith("\n"): t+="\n"
-        t+=f"{ds}.genome\t{ploidy}\n"
-        p.write_text(t,encoding="utf-8")
-        print(f"  [OK] all_genomes_type.txt += {ds}.genome<tab>{ploidy}")
-PY
-  RC_ALIAS=$?
-  [ "${RC_ALIAS:-1}" -eq 0 ] && CHANGED=$((CHANGED+1))
-  [ "${RC_ALIAS:-1}" -ne 0 ] && fail "alias 追加失败"
+  # base + delta 架构（2026-11-13 起）：all_gene(s)/all_protein(s) 的 DBLIST 为
+  # <base> + 各新基因组 delta；all_genomes 仍是 per-genome 列表（已接近/超过
+  # BLAST 的 200 成员读取上限）。统一交给 scripts/update_blast_alias.py：
+  # 它校验新成员数据库、加 flock、原子写、写后 blastdbcmd 校验失败自动回滚，
+  # 并在成员数超过 200 时把新成员前插（保证新基因组处于可读窗口内）。
+  local UPD="${REPO}/scripts/update_blast_alias.py"
+  if [ ! -f "$UPD" ]; then
+    fail "缺少 $UPD（请先 git pull 生产 repo）"
+    return 0
+  fi
+  local alias_has_member
+  alias_has_member() {  # $1 alias 文件名, $2 成员名
+    awk -v m="$2" '/^DBLIST/{for(i=2;i<=NF;i++) if($i==m){found=1}} END{exit(found?0:1)}' "$BLASTDB/$1" 2>/dev/null
+  }
+  local pairs=(
+    "all_genomes.nal:${DS}.genome"
+    "all_gene.nal:${DS}.add_Description.cds"
+    "all_genes.nal:${DS}.add_Description.cds"
+    "all_protein.pal:${DS}.add_Description.pep"
+    "all_proteins.pal:${DS}.add_Description.pep"
+  )
+  local pair fn member layout n_members extra out
+  for pair in "${pairs[@]}"; do
+    fn="${pair%%:*}"; member="${pair#*:}"
+    if [ ! -f "${BLASTDB}/${fn}" ]; then
+      warn "缺少 ${BLASTDB}/${fn}，跳过"
+      continue
+    fi
+    if alias_has_member "$fn" "$member"; then
+      log "  [SKIP] ${fn} 已含 ${member}"
+      CHANGED=$((CHANGED+1))
+      continue
+    fi
+    layout="legacy"
+    grep -qE '^DBLIST[[:space:]]+.*_base([[:space:]]|$)' "${BLASTDB}/${fn}" && layout="base+delta"
+    if [ "$DRY" = 1 ]; then
+      log "  [DRY] ${fn} += ${member}（${layout}）"
+      continue
+    fi
+    extra=()
+    n_members="$(awk '/^DBLIST/{print NF-1; exit}' "${BLASTDB}/${fn}" 2>/dev/null)"
+    # 旧式 per-genome 列表接近/超过 200：允许超限，工具会把新成员前插
+    if [ "${n_members:-0}" -ge 200 ]; then
+      extra+=(--allow-overlimit)
+    fi
+    if "$ZJW_PY" "$UPD" --alias "$fn" --blastdb "$BLASTDB" --mode append \
+         --members "$member" --apply "${extra[@]}" >"/tmp/alias_${fn}.log" 2>&1; then
+      out="$(awk '/^DBLIST/{print NF-1; exit}' "${BLASTDB}/${fn}" 2>/dev/null)"
+      log "  [OK] ${fn} += ${member}（${layout}，成员 ${out}）"
+      CHANGED=$((CHANGED+1))
+    else
+      fail "聚合库 ${fn} 更新失败：$(tail -2 "/tmp/alias_${fn}.log" 2>/dev/null | tr '\n' ' ')"
+    fi
+  done
+  # all_genomes_type.txt（getfasta 页面 4 列：库名 -> 倍性）
+  local types="${BLASTDB}/all_genomes_type.txt"
+  if [ -f "$types" ]; then
+    if grep -qE "^${DS}\.genome[[:space:]]" "$types"; then
+      log "  [SKIP] all_genomes_type.txt 已含该基因组"
+    elif [ "$DRY" = 1 ]; then
+      log "  [DRY] all_genomes_type.txt += ${DS}.genome<tab>${PLOIDY}"
+    else
+      [ -n "$(tail -c1 "$types")" ] && echo >> "$types"
+      printf '%s\t%s\n' "${DS}.genome" "$PLOIDY" >> "$types"
+      log "  [OK] all_genomes_type.txt += ${DS}.genome<tab>${PLOIDY}"
+      CHANGED=$((CHANGED+1))
+    fi
+  fi
 }
 
 # ---------------------------------------------------------------- 5b) GetSequence 文档示例

@@ -313,6 +313,10 @@ python3 -c "import json;print(len(json.load(open('/var/www/html/jbrowse-1.12.3-r
 
 > 前提：G3 已 `[SUCCESS]`，`name_plan.json` 存在。**先 `--dry-run`，再正式跑。**
 > v2 适配：JBrowse V2.0（`.asm-card`/`asm-group` + hero/status/组计数）、wheatBLAST SPA（跳过 HTML、改 API 断言）、二倍体 `GROUP` 推导。
+> **聚合库别名（2026-11-15 更新）**：step 5 已改为调用 `scripts/update_blast_alias.py`
+> （base+delta 架构；校验成员、flock、原子写、写后校验回滚；all_genomes 超过 200
+> 成员时 `--allow-overlimit` 前插）。详见 `docs/workflow/blast-aggregate-base-delta.md`。
+
 > 新增选项：`--section-title/--section-desc/--search-extra`（V2 新建分区与卡片搜索词）、`--require-section`（分区缺失时 BLOCK；默认只 WARN 并在收尾时新建）。
 > 测试/非常规路径：所有路径可用 `WHEATOMICS_*` 环境变量覆盖（`WHEATOMICS_JBROWSE_HTML` / `WHEATOMICS_BLAST_HTML` / `WHEATOMICS_BLASTDB` / `WHEATOMICS_REPO` / `WHEATOMICS_DDL_ENV` / `WHEATOMICS_API` 等，默认值即生产路径），便于在 fake docroot 上演练。
 
