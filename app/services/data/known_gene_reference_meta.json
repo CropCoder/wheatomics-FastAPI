@@ -21989,6 +21989,30 @@
    "verified": true,
    "year_delta": 0,
    "doi": "10.1186/s13059-026-04343-0"
+  },
+  "10.1111/tpj.71199": {
+   "title": "The genome of tetraploid Hordeum brevisubulatum underpins its evolution and saline-alkali adaptation",
+   "authors": [
+    "Xinying Liu",
+    "Xiangxiang Wang",
+    "Wenjing Xu",
+    "Fengjin Zhu",
+    "Huiling Guo",
+    "Gege Dou",
+    "Huiyi Xie",
+    "Song Chen",
+    "Qingjie Guan",
+    "Su Chen",
+    "Xiangdong Fu",
+    "Xingguo Lan"
+   ],
+   "journal": "The Plant Journal",
+   "year": 2026,
+   "source": "crossref",
+   "title_similarity": 1.0,
+   "verified": true,
+   "year_delta": 0,
+   "doi": "10.1111/tpj.71199"
   }
  },
  "title": {
@@ -22013,14 +22037,38 @@
    "verified": true,
    "year_delta": 0,
    "doi": "10.1186/s13059-026-04343-0"
+  },
+  "the genome of tetraploid hordeum brevisubulatum underpins its evolution and saline alkali adaptation": {
+   "title": "The genome of tetraploid Hordeum brevisubulatum underpins its evolution and saline-alkali adaptation",
+   "authors": [
+    "Xinying Liu",
+    "Xiangxiang Wang",
+    "Wenjing Xu",
+    "Fengjin Zhu",
+    "Huiling Guo",
+    "Gege Dou",
+    "Huiyi Xie",
+    "Song Chen",
+    "Qingjie Guan",
+    "Su Chen",
+    "Xiangdong Fu",
+    "Xingguo Lan"
+   ],
+   "journal": "The Plant Journal",
+   "year": 2026,
+   "source": "crossref",
+   "title_similarity": 1.0,
+   "verified": true,
+   "year_delta": 0,
+   "doi": "10.1111/tpj.71199"
   }
  },
  "stats": {
-  "refs": 1728,
-  "unique_doi": 964,
+  "refs": 1729,
+  "unique_doi": 965,
   "no_doi": 0,
-  "doi_with_meta": 964,
-  "doi_verified": 964,
+  "doi_with_meta": 965,
+  "doi_verified": 965,
   "title_with_meta": 0,
   "mismatched": 0
  }
