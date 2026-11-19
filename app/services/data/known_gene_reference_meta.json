@@ -21967,15 +21967,60 @@
    "verified": true,
    "year_delta": 0,
    "doi": "10.1111/pbi.70704"
+  },
+  "10.1186/s13059-026-04343-0": {
+   "title": "Integrating hyperspectral phenomics and genome-wide association analysis reveals a ribosome assembly factor regulating wheat grain protein content under drought stress",
+   "authors": [
+    "Chunyan Gao",
+    "Peimin Zhao",
+    "Jianming Yu",
+    "Shuqi Fan",
+    "Xiaonan Zhang",
+    "Jingquan Tang",
+    "Wanneng Yang",
+    "Hui Feng",
+    "Jie Gao",
+    "Qiang Li"
+   ],
+   "journal": "Genome Biology",
+   "year": 2026,
+   "source": "crossref",
+   "title_similarity": 1.0,
+   "verified": true,
+   "year_delta": 0,
+   "doi": "10.1186/s13059-026-04343-0"
   }
  },
- "title": {},
+ "title": {
+  "integrating hyperspectral phenomics and genome wide association analysis reveals a ribosome assembly factor regulating wheat grain protein content under drought stress": {
+   "title": "Integrating hyperspectral phenomics and genome-wide association analysis reveals a ribosome assembly factor regulating wheat grain protein content under drought stress",
+   "authors": [
+    "Chunyan Gao",
+    "Peimin Zhao",
+    "Jianming Yu",
+    "Shuqi Fan",
+    "Xiaonan Zhang",
+    "Jingquan Tang",
+    "Wanneng Yang",
+    "Hui Feng",
+    "Jie Gao",
+    "Qiang Li"
+   ],
+   "journal": "Genome Biology",
+   "year": 2026,
+   "source": "crossref",
+   "title_similarity": 1.0,
+   "verified": true,
+   "year_delta": 0,
+   "doi": "10.1186/s13059-026-04343-0"
+  }
+ },
  "stats": {
-  "refs": 1727,
-  "unique_doi": 963,
+  "refs": 1728,
+  "unique_doi": 964,
   "no_doi": 0,
-  "doi_with_meta": 963,
-  "doi_verified": 963,
+  "doi_with_meta": 964,
+  "doi_verified": 964,
   "title_with_meta": 0,
   "mismatched": 0
  }
