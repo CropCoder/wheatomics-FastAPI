@@ -22013,6 +22013,33 @@
    "verified": true,
    "year_delta": 0,
    "doi": "10.1111/tpj.71199"
+  },
+  "10.1111/jipb.70433": {
+   "title": "Unlocking yield potential: TaDL-B.4-driven grain weight improvement in post-Green Revolution wheat",
+   "authors": [
+    "Dongxue Zhang",
+    "Jie Liu",
+    "Dejie Du",
+    "Sen Li",
+    "Ziyan Wu",
+    "Huanhuan Zhao",
+    "Jiazheng Yu",
+    "Yunjie Liu",
+    "Jing Liu",
+    "Jiewen Xing",
+    "Zhangkui Wang",
+    "Qixin Sun",
+    "Pan Zhu",
+    "Zhongfu Ni",
+    "Rongqi Liang"
+   ],
+   "journal": "Journal of Integrative Plant Biology",
+   "year": 2026,
+   "source": "crossref",
+   "title_similarity": 1.0,
+   "verified": true,
+   "year_delta": 0,
+   "doi": "10.1111/jipb.70433"
   }
  },
  "title": {
@@ -22061,14 +22088,41 @@
    "verified": true,
    "year_delta": 0,
    "doi": "10.1111/tpj.71199"
+  },
+  "unlocking yield potential tadl b 4 driven grain weight improvement in post green revolution wheat": {
+   "title": "Unlocking yield potential: TaDL-B.4-driven grain weight improvement in post-Green Revolution wheat",
+   "authors": [
+    "Dongxue Zhang",
+    "Jie Liu",
+    "Dejie Du",
+    "Sen Li",
+    "Ziyan Wu",
+    "Huanhuan Zhao",
+    "Jiazheng Yu",
+    "Yunjie Liu",
+    "Jing Liu",
+    "Jiewen Xing",
+    "Zhangkui Wang",
+    "Qixin Sun",
+    "Pan Zhu",
+    "Zhongfu Ni",
+    "Rongqi Liang"
+   ],
+   "journal": "Journal of Integrative Plant Biology",
+   "year": 2026,
+   "source": "crossref",
+   "title_similarity": 1.0,
+   "verified": true,
+   "year_delta": 0,
+   "doi": "10.1111/jipb.70433"
   }
  },
  "stats": {
-  "refs": 1729,
-  "unique_doi": 965,
+  "refs": 1731,
+  "unique_doi": 967,
   "no_doi": 0,
-  "doi_with_meta": 965,
-  "doi_verified": 965,
+  "doi_with_meta": 966,
+  "doi_verified": 966,
   "title_with_meta": 0,
   "mismatched": 0
  }
