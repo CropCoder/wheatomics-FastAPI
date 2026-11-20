@@ -14,28 +14,69 @@ objects and routes ``call_tool`` to the corresponding FastAPI handler;
 """
 from __future__ import annotations
 
-#: Module catalog: public REST prefix + doc anchor for every platform module.
-MODULE_CATALOG: list[dict[str, str]] = [
-    {"module": "Known Genes", "rest": "/api/genes/known", "docs": "/agent.html#mcp"},
-    {"module": "GeneHub", "rest": "/api/genes/detail/{gene_id}", "docs": "/agent.html#mcp"},
-    {"module": "PfamSearch", "rest": "/api/genes/functions/pfam", "docs": "/agent.html#mcp"},
-    {"module": "IntervalTool", "rest": "/api/genes/functions/interval", "docs": "/agent.html#mcp"},
-    {"module": "Sequences", "rest": "/api/sequence", "docs": "/agent.html#mcp"},
-    {"module": "BLAST", "rest": "/api/blast", "docs": "/agent.html#mcp"},
-    {"module": "Expression", "rest": "/api/expression", "docs": "/agent.html#mcp"},
-    {"module": "Translatome", "rest": "/api/translatome", "docs": "/agent.html#mcp"},
-    {"module": "Co-expression", "rest": "/api/coexpression", "docs": "/agent.html#mcp"},
-    {"module": "WheatPPI", "rest": "/api/ppi", "docs": "/agent.html#mcp"},
-    {"module": "Comparative", "rest": "/api/comparative", "docs": "/agent.html#mcp"},
-    {"module": "GO/KEGG Enrichment", "rest": "/api/go · /api/kegg", "docs": "/agent.html#mcp"},
-    {"module": "eQTL Atlas", "rest": "/api/eqtl", "docs": "/agent.html#mcp"},
-    {"module": "Triticeae Papers", "rest": "/api/papers", "docs": "/agent.html#mcp"},
-    {"module": "Genomes", "rest": "/api/genomes", "docs": "/agent.html#mcp"},
-    {"module": "JBrowse", "rest": "/api/jbrowse", "docs": "/agent.html#mcp"},
-    {"module": "CAPS/dCAPS", "rest": "/api/caps", "docs": "/agent.html#mcp"},
-    {"module": "VariantHub", "rest": "/api/VariantHub", "docs": "/agent.html#mcp"},
-    {"module": "OrthoFinder", "rest": "/api/orthofinder", "docs": "/agent.html#mcp"},
-    {"module": "PrimerServer2", "rest": "/api/PrimerServer2", "docs": "/agent.html#mcp"},
+#: Module catalog: public REST prefix, documentation anchor and the MCP tools
+#: that cover the module. An empty ``mcp_tools`` list means the module is
+#: exposed through the REST API only (no MCP tool yet) — the authoritative
+#: coverage map consumed by ``wheatomics://docs/modules`` and the agent guide.
+#: ``_validate_module_catalog()`` below fails at import time if a tool is
+#: missing from this table or listed twice.
+MODULE_CATALOG: list[dict] = [
+    # ---- modules with MCP tools ---------------------------------------------
+    {"module": "Known Genes", "rest": "/api/genes/known", "docs": "/agent.html#mcp",
+     "mcp_tools": ["search_known_genes", "get_known_gene"]},
+    {"module": "GeneHub", "rest": "/api/genes/detail/{gene_id}", "docs": "/agent.html#mcp",
+     "mcp_tools": ["get_gene_detail", "resolve_gene_id"]},
+    {"module": "PfamSearch", "rest": "/api/genes/functions/pfam", "docs": "/agent.html#mcp",
+     "mcp_tools": ["search_pfam"]},
+    {"module": "IntervalTool", "rest": "/api/genes/functions/interval", "docs": "/agent.html#mcp",
+     "mcp_tools": ["genes_in_interval"]},
+    {"module": "Sequences", "rest": "/api/sequence", "docs": "/agent.html#mcp",
+     "mcp_tools": ["get_sequence_by_gene", "get_sequence_by_interval", "batch_sequence"]},
+    {"module": "CAPS/dCAPS", "rest": "/api/caps", "docs": "/agent.html#mcp",
+     "mcp_tools": ["design_caps_primers"]},
+    {"module": "BLAST", "rest": "/api/blast", "docs": "/agent.html#mcp",
+     "mcp_tools": ["submit_blast", "get_blast_status", "list_blast_databases"]},
+    {"module": "Expression", "rest": "/api/expression", "docs": "/agent.html#mcp",
+     "mcp_tools": ["list_expression_projects", "query_expression"]},
+    {"module": "Translatome", "rest": "/api/translatome", "docs": "/agent.html#mcp",
+     "mcp_tools": ["list_translatome_datasets", "query_translatome", "list_translatome_dtgs"]},
+    {"module": "Co-expression", "rest": "/api/coexpression", "docs": "/agent.html#mcp",
+     "mcp_tools": ["query_coexpression"]},
+    {"module": "WheatPPI", "rest": "/api/ppi", "docs": "/agent.html#mcp",
+     "mcp_tools": ["query_ppi"]},
+    {"module": "Comparative", "rest": "/api/comparative", "docs": "/agent.html#mcp",
+     "mcp_tools": ["find_homologs", "search_synteny", "convert_gene_ids"]},
+    {"module": "eQTL Atlas", "rest": "/api/eqtl", "docs": "/agent.html#mcp",
+     "mcp_tools": ["search_eqtl"]},
+    {"module": "GO/KEGG Enrichment", "rest": "/api/go · /api/kegg", "docs": "/agent.html#mcp",
+     "mcp_tools": ["go_enrichment", "kegg_enrichment"]},
+    {"module": "Triticeae Papers", "rest": "/api/papers", "docs": "/agent.html#mcp",
+     "mcp_tools": ["search_papers", "get_paper"]},
+    {"module": "Genomes", "rest": "/api/genomes", "docs": "/agent.html#mcp",
+     "mcp_tools": ["list_genomes", "get_genome"]},
+    {"module": "JBrowse", "rest": "/api/jbrowse", "docs": "/agent.html#mcp",
+     "mcp_tools": ["list_jbrowse_datasets"]},
+    # ---- REST-only modules (no MCP tool yet) --------------------------------
+    {"module": "VariantHub", "rest": "/api/VariantHub", "docs": "/agent.html#api",
+     "mcp_tools": []},
+    {"module": "OrthoFinder", "rest": "/api/orthofinder", "docs": "/agent.html#api",
+     "mcp_tools": []},
+    {"module": "scRNA", "rest": "/api/scrna", "docs": "/agent.html#api",
+     "mcp_tools": []},
+    {"module": "scRNA-seq atlas", "rest": "/api/scRNA-seq", "docs": "/agent.html#api",
+     "mcp_tools": []},
+    {"module": "PrimerServer2", "rest": "/api/PrimerServer2", "docs": "/agent.html#api",
+     "mcp_tools": []},
+    {"module": "PTM", "rest": "/api/ptm", "docs": "/agent.html#api",
+     "mcp_tools": []},
+    {"module": "wheatPSP", "rest": "/api/wheatpsp", "docs": "/agent.html#api",
+     "mcp_tools": []},
+    {"module": "Regulatory TF atlas", "rest": "/api/regulatory", "docs": "/agent.html#api",
+     "mcp_tools": []},
+    {"module": "SyntenyView", "rest": "/api/syntenyview", "docs": "/agent.html#api",
+     "mcp_tools": []},
+    {"module": "Track browser", "rest": "/api/track", "docs": "/agent.html#api",
+     "mcp_tools": []},
 ]
 
 #: The copy-ready prompt shown on /agent.html#howto (keep the two in sync).
@@ -512,7 +553,7 @@ RESOURCE_SPECS: list[dict] = [
     {
         "uri": "wheatomics://docs/modules",
         "name": "WheatOmics module & MCP tool catalog",
-        "description": "JSON catalog: every platform module, its REST prefix, and the MCP tools that cover it.",
+        "description": "JSON catalog: every platform module, its REST prefix and doc anchor, the MCP tools that cover it (empty list = REST-only module), and the REST-only module list.",
         "mimeType": "application/json",
     },
     {
@@ -522,3 +563,29 @@ RESOURCE_SPECS: list[dict] = [
         "mimeType": "text/markdown",
     },
 ]
+
+
+# ---------------------------------------------------------------------------
+# Module <-> tool coverage guard (fails at import time, not in production).
+# ---------------------------------------------------------------------------
+
+def _validate_module_catalog() -> None:
+    """Every MCP tool must be attributed to exactly one module in the catalog."""
+    tool_names = {spec["name"] for spec in TOOL_SPECS}
+    attributed = [tool for module in MODULE_CATALOG for tool in module["mcp_tools"]]
+    duplicated = sorted({name for name in attributed if attributed.count(name) > 1})
+    if duplicated:
+        raise RuntimeError(f"MODULE_CATALOG lists tools twice: {duplicated}")
+    unknown = sorted(set(attributed) - tool_names)
+    if unknown:
+        raise RuntimeError(f"MODULE_CATALOG references unknown tools: {unknown}")
+    unattributed = sorted(tool_names - set(attributed))
+    if unattributed:
+        raise RuntimeError(f"MCP tools missing from MODULE_CATALOG: {unattributed}")
+
+
+_validate_module_catalog()
+
+#: Modules that have at least one MCP tool (rest are REST-only for now).
+MCP_COVERED_MODULES: list[str] = [m["module"] for m in MODULE_CATALOG if m["mcp_tools"]]
+REST_ONLY_MODULES: list[str] = [m["module"] for m in MODULE_CATALOG if not m["mcp_tools"]]

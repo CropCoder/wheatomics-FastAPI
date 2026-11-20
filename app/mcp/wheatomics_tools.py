@@ -55,7 +55,9 @@ from app.api.routers.translatome import list_dtgs, list_translatome_datasets, qu
 from app.api.routers.triticeae import get_paper, search_papers
 from app.mcp.tool_specs import (
     AGENT_PROMPT,
+    MCP_COVERED_MODULES,
     MODULE_CATALOG,
+    REST_ONLY_MODULES,
     RESOURCE_SPECS,
     TOOL_GROUPS,
     TOOL_SPECS,
@@ -345,6 +347,8 @@ def _modules_resource() -> str:
             "mcp_sse": "https://wheatomics.sdau.edu.cn/api/mcp/sse",
         },
         "modules": MODULE_CATALOG,
+        "mcp_covered_modules": MCP_COVERED_MODULES,
+        "rest_only_modules": REST_ONLY_MODULES,
         "tool_groups": [
             {
                 "group": group["name"],
@@ -382,6 +386,21 @@ def _agent_guide_resource() -> str:
             lines.append(f"- `{tool['name']}` — {tool['description']}")
         lines.append("")
     lines += [
+        "## Modules that are REST-only (no MCP tool yet)",
+        "",
+        "These modules are exposed through the REST API only; call the listed prefix "
+        "(see the OpenAPI schema) instead of expecting an MCP tool:",
+        "",
+    ]
+    for module in MODULE_CATALOG:
+        if module["mcp_tools"]:
+            continue
+        lines.append(f"- {module['module']} — `{module['rest']}`")
+    lines += [
+        "",
+        "The `wheatomics://docs/modules` resource carries the same coverage map: each "
+        "module lists its `mcp_tools` (empty = REST-only).",
+        "",
         "## Mandatory verification rule",
         "",
         "Whenever an answer involves a specific gene ID, pathway ID (GO/KEGG) or cited reference "

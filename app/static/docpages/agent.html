@@ -260,7 +260,7 @@ Requirements:
           <header class="agent-section-head">
             <p class="agent-kicker">B · Model Context Protocol</p>
             <h2 id="mcp-title">AI agents: built-in MCP server</h2>
-            <p class="agent-intro">WheatOmics runs an MCP (Model Context Protocol) server over stateless Streamable HTTP at <code>/api/mcp</code> — the recommended transport, safe behind the multi-worker production deployment — so an MCP-capable AI client can connect remotely, discover the tools below and call them as native tools. The legacy SSE transport at <code>/api/mcp/sse</code> + <code>/api/mcp/messages</code> remains for single-worker or local-development clients only. The server exposes 31 tools spanning genes and annotation, sequences, expression, networks, comparative genomics, enrichment, literature, reference genomes, JBrowse and BLAST, plus two documentation resources and a copy-ready prompt; the REST API described <a href="#api">in the next section</a> covers anything else.</p>
+            <p class="agent-intro">WheatOmics runs an MCP (Model Context Protocol) server over stateless Streamable HTTP at <code>/api/mcp</code> — the recommended transport, safe behind the multi-worker production deployment — so an MCP-capable AI client can connect remotely, discover the tools below and call them as native tools. The legacy SSE transport at <code>/api/mcp/sse</code> + <code>/api/mcp/messages</code> remains for single-worker or local-development clients only. The server exposes 31 tools spanning genes and annotation, sequences, expression, networks, comparative genomics, enrichment, literature, reference genomes, JBrowse and BLAST, plus two documentation resources and a copy-ready prompt. <strong>Not every platform module has an MCP tool yet:</strong> VariantHub, OrthoFinder, scRNA, the scRNA-seq atlas, PrimerServer2, PTM, wheatPSP, the Regulatory TF atlas, SyntenyView and the Track browser are currently <strong>REST-only</strong> — call their <code>/api/*</code> endpoints directly (see <a href="#api">Main API modules</a>); the <code>wheatomics://docs/modules</code> resource records the same coverage (<code>mcp_tools: []</code> = REST-only).</p>
           </header>
 
           <div class="agent-grid">
@@ -568,7 +568,7 @@ Requirements:
                       <tr>
                         <td>Resource</td>
                         <td><code>wheatomics://docs/modules</code><br><span class="agent-small">application/json</span></td>
-                        <td>JSON module and tool catalog: every platform module, its REST prefix, the MCP tools that cover it, and the total tool count.</td>
+                        <td>JSON module and tool catalog: every platform module, its REST prefix and doc anchor, the MCP tools that cover it (<code>mcp_tools: []</code> = REST-only), the REST-only module list, and the total tool count.</td>
                       </tr>
                       <tr>
                         <td>Resource</td>
@@ -643,9 +643,14 @@ Requirements:
                       <tr><td>Expression</td><td><code>/api/expression</code></td><td>eQTL Atlas</td><td><code>/api/eqtl</code></td></tr>
                       <tr><td>OrthoFinder</td><td><code>/api/orthofinder</code></td><td>CAPS / dCAPS</td><td><code>/api/caps</code></td></tr>
                       <tr><td>JBrowse</td><td><code>/api/jbrowse</code></td><td>PrimerServer2</td><td><code>/api/PrimerServer2</code></td></tr>
+                      <tr><td>scRNA</td><td><code>/api/scrna</code></td><td>scRNA-seq atlas</td><td><code>/api/scRNA-seq</code></td></tr>
+                      <tr><td>PTM</td><td><code>/api/ptm</code></td><td>wheatPSP</td><td><code>/api/wheatpsp</code></td></tr>
+                      <tr><td>Regulatory TF atlas</td><td><code>/api/regulatory</code></td><td>SyntenyView</td><td><code>/api/syntenyview</code></td></tr>
+                      <tr><td>Track browser</td><td><code>/api/track</code></td><td>ID conversion</td><td><code>/api/id-conversion</code></td></tr>
                     </tbody>
                   </table>
                 </div>
+                <p class="agent-small">MCP coverage: 17 of these modules have dedicated MCP tools (see the tool tables in <a href="#mcp">the MCP section</a>). The rest — VariantHub, OrthoFinder, scRNA, the scRNA-seq atlas, PrimerServer2, PTM, wheatPSP, the Regulatory TF atlas, SyntenyView and the Track browser — are <strong>REST-only</strong> for now; this is recorded per module in <code>wheatomics://docs/modules</code> (<code>mcp_tools</code> empty).</p>
               </div>
             </article>
 
@@ -691,7 +696,7 @@ Requirements:
           </div>
         </section>
 
-        <p class="agent-note">Cite WheatOmics through the <a href="/#citation">platform citation on the homepage</a>. This page was last updated on 2026-10-29 and describes the 31-tool MCP server, its resources and prompt, the REST API and the copy-ready agent prompt as deployed at that time.</p>
+        <p class="agent-note">Cite WheatOmics through the <a href="/#citation">platform citation on the homepage</a>. This page was last updated on 2026-11-20 and describes the 31-tool MCP server, its resources and prompt, the REST API (including the modules that are still REST-only) and the copy-ready agent prompt as deployed at that time.</p>
       </div>
     </section>
   </main>
