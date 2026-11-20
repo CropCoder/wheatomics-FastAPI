@@ -157,10 +157,14 @@ def query_ppi(
                     token = token.strip()
                     if token.isdigit():
                         nameids.append(int(token))
-        if nameids:
-            id_ph = ",".join(["%s"] * len(nameids))
+        # Two requested genes can share an edge, so dedupe before sizing the
+        # placeholder list (mismatched lengths raise pymysql "not enough
+        # arguments for format string").
+        unique_ids = sorted(set(nameids))
+        if unique_ids:
+            id_ph = ",".join(["%s"] * len(unique_ids))
             sql = f"SELECT * FROM `PPI_result` WHERE Nameid IN ({id_ph}) AND Score >= %s"
-            params: tuple = tuple(sorted(set(nameids))) + (min_score,)
+            params: tuple = tuple(unique_ids) + (min_score,)
         else:
             sql = "SELECT * FROM `PPI_result` WHERE 1=0"
             params = ()
