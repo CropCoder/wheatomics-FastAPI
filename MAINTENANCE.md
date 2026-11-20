@@ -1261,8 +1261,12 @@ python3 scripts/known_genes_v2055/migrate_known_genes_v2055.py --phase verify --
 ```bash
 cd /var/www/FastAPI_backend_Port8000
 set -a; . ./.env; set +a
+# 重建要 DROP/TRUNCATE 索引表，必须用 DDL 账号（应用账号 wheatomics_user 无权限）
+export WHEATOMICS_DDL_USER=root
+export WHEATOMICS_DDL_PASS='***'      # 或 --password-file /etc/wheatomics/db_ddl.env
 /home/fei/mambaforge/envs/zjw/bin/python3 scripts/build_ppi_gene_index.py --rebuild
-# 冒烟测试：脚本会打印扫描行数/成员数/基因数；API 端 5 分钟内自动发现新索引
+# 脚本会打印扫描行数/成员数/基因数；API 端 5 分钟内自动发现新索引
+# 线上实测：3,076,998 行 -> 25.6M 成员 -> 53,413 基因，扫描 39s + 排序 39s + 装载 15s
 ```
 
 ### 3) eQTL 索引（`eqtl.wheat.Geneid`，778k 行，原本无索引）
