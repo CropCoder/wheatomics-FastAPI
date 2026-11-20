@@ -245,6 +245,31 @@ async def _verify_session(session, label: str) -> int:
         read = await session.read_resource("wheatomics://docs/modules")
         if read.contents and len(read.contents[0].text) > 100:
             _ok("resources/read wheatomics://docs/modules")
+            # The module catalog is the authoritative MCP coverage map: every
+            # advertised tool must be attributed to exactly one module and the
+            # REST-only modules must be listed explicitly (agents rely on it to
+            # know when they have to fall back to /api/*).
+            try:
+                catalog = json.loads(read.contents[0].text)
+            except ValueError:
+                catalog = {}
+            modules = catalog.get("modules") or []
+            covered = catalog.get("mcp_covered_modules") or []
+            rest_only = catalog.get("rest_only_modules") or []
+            attributed = [tool for module in modules for tool in (module.get("mcp_tools") or [])]
+            if (modules
+                    and set(attributed) == set(names)
+                    and len(attributed) == len(set(attributed))
+                    and len(covered) + len(rest_only) == len(modules)):
+                _ok("module coverage map",
+                    f"{len(covered)} MCP-covered / {len(rest_only)} REST-only modules")
+            else:
+                _fail(
+                    "module coverage map",
+                    f"{len(modules)} modules, {len(covered)} covered, {len(rest_only)} REST-only, "
+                    f"tools attributed={len(attributed)}/{len(names)}",
+                )
+                failures += 1
         else:
             _fail("resources/read", "empty")
             failures += 1
