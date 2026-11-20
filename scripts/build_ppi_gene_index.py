@@ -26,7 +26,10 @@ Run on the production web node (writes to MySQL; needs the app .env):
     /home/fei/mambaforge/envs/zjw/bin/python3 scripts/build_ppi_gene_index.py
 
 Options: ``--rebuild`` (drop/recreate + refill), ``--dry-run`` (scan only),
-``--limit N`` (smoke test), ``--batch-size``, ``--work-dir``.
+``--limit N`` (smoke test), ``--batch-size``, ``--work-dir``, and
+``--user/--password/--password-file`` for a DDL account (the default app user
+cannot DROP/TRUNCATE; use e.g. the root credentials from
+``/etc/wheatomics/db_ddl.env``).
 
 Rebuild it whenever ``PPI_result`` is re-imported (new PPI upload); the API
 falls back to the slow REGEXP scan while the table is missing.
@@ -35,6 +38,7 @@ falls back to the slow REGEXP scan while the table is missing.
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -56,12 +60,45 @@ CREATE TABLE IF NOT EXISTS `{TABLE}` (
 _TRANSCRIPT = re.compile(r"\.\d+$")
 
 
-def _connect():
+def _load_settings():
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from app.core.config import settings  # noqa: PLC0415 - deferred for --help
-    from app.db.mysql import mysql_connection  # noqa: PLC0415
 
-    return settings, mysql_connection(settings.DB_PPI)
+    return settings
+
+
+def _password_from_file(path: str) -> str | None:
+    try:
+        for line in Path(path).read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            if key.strip() in ("DB_PASS", "DB_PASSWORD", "WHEATOMICS_DDL_PASS"):
+                return value.strip().strip("'\"")
+    except OSError:
+        return None
+    return None
+
+
+def _connect(settings, args):
+    """Open the DB with explicit DDL credentials when given (TABLE writes/DROP)."""
+    import pymysql  # noqa: PLC0415
+
+    password = args.password or os.environ.get("WHEATOMICS_DDL_PASS") or settings.DB_PASSWORD
+    if not password and args.password_file:
+        password = _password_from_file(args.password_file) or ""
+    user = args.user or os.environ.get("WHEATOMICS_DDL_USER") or settings.DB_USER
+    return pymysql.connect(
+        host=args.host or settings.DB_HOST,
+        port=args.port or settings.DB_PORT,
+        user=user,
+        password=password,
+        database=settings.DB_PPI,
+        charset="utf8mb4",
+        autocommit=True,
+        cursorclass=pymysql.cursors.DictCursor,
+    )
 
 
 def _split_ids(value: str) -> list[str]:
@@ -73,14 +110,14 @@ def _split_ids(value: str) -> list[str]:
     return ids
 
 
-def dump_membership(settings, work_dir: Path, batch_size: int, limit: int | None) -> Path:
+def dump_membership(settings, args, work_dir: Path, batch_size: int, limit: int | None) -> Path:
     """Stream PPI_result -> TSV of (gene, nameid) pairs, deduped per row."""
     raw = work_dir / "ppi_membership.tsv"
     rows = 0
     memberships = 0
     cursor_value = 0
     started = time.time()
-    with _connect()[1] as conn:
+    with _connect(settings, args) as conn:
         with conn.cursor() as cur:
             while True:
                 cur.execute(
@@ -151,9 +188,9 @@ def aggregate(sorted_path: Path) -> dict[str, list[int]]:
     return grouped
 
 
-def load_index(grouped: dict[str, list[int]], settings) -> None:
+def load_index(grouped: dict[str, list[int]], settings, args) -> None:
     started = time.time()
-    with _connect()[1] as conn:
+    with _connect(settings, args) as conn:
         with conn.cursor() as cur:
             cur.execute(_CREATE_SQL)
             cur.execute(f"TRUNCATE TABLE `{TABLE}`")
@@ -182,14 +219,22 @@ def main() -> int:
                         help="drop and recreate the index table (default: replace contents)")
     parser.add_argument("--dry-run", action="store_true",
                         help="scan and report only, do not write MySQL")
+    parser.add_argument("--host", help="DB host (default: app settings)")
+    parser.add_argument("--port", type=int, help="DB port (default: app settings)")
+    parser.add_argument("--user", help="DB user with write/DDL rights "
+                                       "(default: WHEATOMICS_DDL_USER or app user)")
+    parser.add_argument("--password", help="DB password for --user "
+                                           "(default: WHEATOMICS_DDL_PASS or app password)")
+    parser.add_argument("--password-file",
+                        help="read DB_PASS / WHEATOMICS_DDL_PASS from this file")
     args = parser.parse_args()
 
-    settings, _ = _connect()
+    settings = _load_settings()
     work_dir = args.work_dir or Path(tempfile.mkdtemp(prefix="ppi_index_"))
     work_dir.mkdir(parents=True, exist_ok=True)
     print(f"work dir: {work_dir}")
 
-    raw = dump_membership(settings, work_dir, args.batch_size, args.limit)
+    raw = dump_membership(settings, args, work_dir, args.batch_size, args.limit)
     if args.dry_run:
         print("dry-run: nothing written to MySQL")
         return 0
@@ -200,10 +245,10 @@ def main() -> int:
           f"(avg {ids_total / max(1, len(grouped)):.1f} edges/gene)")
 
     if args.rebuild:
-        with _connect()[1] as conn:
+        with _connect(settings, args) as conn:
             with conn.cursor() as cur:
                 cur.execute(f"DROP TABLE IF EXISTS `{TABLE}`")
-    load_index(grouped, settings)
+    load_index(grouped, settings, args)
     print("done; the API picks the index up within 5 minutes (availability cache)")
     return 0
 
