@@ -26,6 +26,7 @@ from app.core.config import settings
 from app.core.exceptions import ResourceNotFound, ValidationFailure
 from app.core.response import ok
 from app.db.mysql import mysql_connection
+from app.services.gene_id_versions import empty_hint, id_versions, variants
 
 router = APIRouter(prefix="/eqtl", tags=["eQTL Atlas"])
 
@@ -93,11 +94,17 @@ def manhattan_image(project: str, gene: str) -> FileResponse:
         raise ValidationFailure(f"Unknown project: {project!r}")
     if not GENE_PATTERN.match(gene):
         raise ValidationFailure(f"Invalid gene ID: {gene!r}")
-    filename = f"{project}_{gene}.FarmCPU.GWAS.png"
-    path = settings.EQTL_IMAGE_DIR / filename
-    if not path.is_file():
-        raise ResourceNotFound(f"No FarmCPU Manhattan plot for {gene} in {project}")
-    return FileResponse(path, media_type="image/png")
+    # Images are named with the IWGSC v3 (03G) gene ID; accept a 01G/02G input
+    # by resolving the same gene's other annotation versions.
+    candidates = variants(gene, prefer=("v3", "v2", "v1"))
+    for candidate in candidates:
+        path = settings.EQTL_IMAGE_DIR / f"{project}_{candidate}.FarmCPU.GWAS.png"
+        if path.is_file():
+            return FileResponse(path, media_type="image/png")
+    raise ResourceNotFound(
+        f"No FarmCPU Manhattan plot for {gene} in {project} "
+        f"(tried annotation versions: {', '.join(candidates)})"
+    )
 
 
 @router.get("/search")
@@ -135,11 +142,19 @@ def search_eqtl(
             "TraesCS1A03G0001700 (IWGSC RefSeq v2.1 / 03G) format."
         )
 
+    # The eqtl.wheat table stores IWGSC v3 (03G) IDs; readers may paste the v1
+    # (01G) or v2 (02G) spelling of the same gene, which used to return an
+    # empty payload with no explanation. Look up every available version.
+    info = id_versions(gene)
+    lookup_ids = variants(gene, prefer=("v3", "v2", "v1"))
+    placeholders = ",".join(["%s"] * len(lookup_ids))
+    resolved_gene = info.get("v3") or info.get("v2") or info.get("v1") or gene
+
     with mysql_connection(settings.DB_EQTL) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT * FROM wheat WHERE Geneid LIKE %s",
-            (f"%{gene}%",),
+            f"SELECT * FROM wheat WHERE Geneid IN ({placeholders})",
+            tuple(lookup_ids),
         )
         rows = cursor.fetchall()
         columns = [d[0] for d in cursor.description] if cursor.description else []
@@ -149,11 +164,27 @@ def search_eqtl(
     for row in rows:
         row["Project_url"] = PROJECT_INFO.get(row.get("Project", ""), {}).get("url", "")
 
+    hint = None
+    if not rows:
+        hint = empty_hint(
+            "the eQTL Atlas",
+            gene,
+            "IWGSC RefSeq v3 (03G)",
+            extra="Use the resolved 03G ID above; if it is also absent the gene "
+                  "simply has no eQTL record in the five FarmCPU panels.",
+        )
+
     return ok(
         {
             "gene": gene,
+            "resolved_gene": resolved_gene,
+            "id_versions": {
+                key: info[key] for key in ("v1", "v2", "v3") if info.get(key)
+            },
             "columns": columns,
             "rows": jsonable_encoder(rows),
-            "projects": _projects_for(gene),
+            # Manhattan plots are stored per 03G ID, so the resolved ID is used.
+            "projects": _projects_for(resolved_gene),
+            "hint": hint,
         }
     )

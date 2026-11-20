@@ -90,6 +90,8 @@ assembly version gets no link instead of wrong coordinates. Rebuild it after add
 rebuilding BLAST/JBrowse data; never hand-edit the JSON or guess chromosome names
 (`Chr1A_AK58` / `Chr1A` / `chr1A` all appear; the map + `/api/blast/database/{db}/jbrowse` resolve them).
 
+**Cross-version gene IDs & query performance**: eQTL (`eqtl.wheat`) and the scRNA/scRNA-seq atlases store IWGSC v3 (03G) IDs, WheatPPI stores v2 (02G). `app/services/gene_id_versions.py` maps 01G/02G/03G via `Genehub_DB.GenePageIWGSCv1_table`; those endpoints try every version and return `resolved_gene`/`id_versions`/`hint` on empty results (never a silent empty). `PPI_result` is ~2.8M rows of `#`-joined ID lists with no usable secondary index — `/api/ppi/query` reads the normalised `wheatPPIdb.ppi_result_gene_index` built by `scripts/build_ppi_gene_index.py` (slow REGEXP fallback while missing), so **rebuild that index whenever `PPI_result` is re-imported**; `scripts/ensure_db_indexes.py` (DDL account) adds the `eqtl.wheat(Geneid)` index and the index table. See MAINTENANCE.md §十四.
+
 **KnownGene data updates**: the curated known-gene list lives in `cloned_gene_db.cloned_gene_tbl`
 and is refreshed from the curation spreadsheet (1420 rows as of v2061, derived from v2060 on 2026-10-28) with
 `scripts/known_genes_v2055/` (extract -> JSONL -> prepare -> DDL -> single-transaction swap -> verify).

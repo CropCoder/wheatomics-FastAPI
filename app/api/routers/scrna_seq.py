@@ -28,6 +28,7 @@ from app.core.config import settings
 from app.core.exceptions import ValidationFailure
 from app.core.response import ok
 from app.db.mysql import mysql_cursor
+from app.services.gene_id_versions import empty_hint, id_versions, id_versions_many, variants
 
 router = APIRouter(prefix="/scRNA-seq", tags=["scRNA-seq atlas"])
 
@@ -235,7 +236,13 @@ def list_displays() -> dict:
 @router.get("/gene/{gene_id}")
 def gene_profile(gene_id: str) -> dict:
     """Expression by sample/cell type, co-expression modules and hub status."""
-    g = _gene_id(gene_id)
+    query_gene = _gene_id(gene_id)
+    # The scrna_data tables store IWGSC v3 (03G) IDs; accept v1/v2 input by
+    # resolving and querying every available version.
+    info = id_versions(query_gene)
+    lookup_ids = variants(query_gene, prefer=("v3", "v2", "v1"))
+    g = info.get("v3") or info.get("v2") or info.get("v1") or info["base"] or query_gene
+    ph = ",".join(["%s"] * len(lookup_ids))
     mapping = class_map()
 
     with mysql_cursor(settings.DB_SCRNA_DATA) as cur:
@@ -245,23 +252,23 @@ def gene_profile(gene_id: str) -> dict:
         cur.execute(
             "SELECT sample, celltype, n_cells, n_expr_cells, pct_expr, "
             "       mean_normalized, avg_log1p "
-            "FROM scrna_dotplot_expression WHERE gene_id = %s "
+            "FROM scrna_dotplot_expression WHERE gene_id IN (" + ph + ") "
             "ORDER BY sample, celltype",
-            (g,),
+            tuple(lookup_ids),
         )
         expression_rows = cur.fetchall()
 
         cur.execute(
             "SELECT sample, celltype_key, module_name, attributes "
-            "FROM scrna_gene_modules WHERE gene_id = %s",
-            (g,),
+            f"FROM scrna_gene_modules WHERE gene_id IN ({ph})",
+            tuple(lookup_ids),
         )
         module_rows = cur.fetchall()
 
         cur.execute(
             "SELECT sample, celltype_key, module_name, attributes "
-            "FROM scrna_hub_genes WHERE gene_id = %s",
-            (g,),
+            f"FROM scrna_hub_genes WHERE gene_id IN ({ph})",
+            tuple(lookup_ids),
         )
         hub_rows = cur.fetchall()
 
@@ -347,9 +354,17 @@ def gene_profile(gene_id: str) -> dict:
     expr_samples = set(expression_by_sample)
     displays_with_expression = sorted({disp_of[s] for s in expr_samples if s in disp_of})
 
+    found = bool(expression_rows or modules or hubs)
     return ok({
         "gene": g,
-        "found": bool(expression_rows or modules or hubs),
+        "query_gene": query_gene,
+        "resolved_gene": g,
+        "id_versions": {
+            key: info[key] for key in ("v1", "v2", "v3") if info.get(key)
+        },
+        "hint": None if found else empty_hint(
+            "the scRNA-seq atlas", query_gene, "IWGSC RefSeq v3 (03G)"),
+        "found": found,
         "samples": samples,
         "displays": displays,
         "expression_by_sample": expression_by_sample,
@@ -674,28 +689,37 @@ def genes_batch(genes: str) -> dict:
     """Summarise up to 50 genes: datasets, cell types, modules and hub status."""
     ids = _parse_genes(genes)
     mapping = class_map()
-    ph = ",".join(["%s"] * len(ids))
+    info_map = id_versions_many(ids)
+    forms_of = {g: variants(g, prefer=("v3", "v2", "v1")) for g in ids}
+    lookup_ids: list[str] = []
+    form_to_input: dict[str, str] = {}
+    for g in ids:
+        for form in forms_of[g]:
+            if form not in lookup_ids:
+                lookup_ids.append(form)
+            form_to_input.setdefault(form, g)
+    ph = ",".join(["%s"] * len(lookup_ids))
 
     with mysql_cursor(settings.DB_SCRNA_DATA) as cur:
         cur.execute(
             f"SELECT gene_id, sample FROM scrna_dotplot_expression "
-            f"WHERE gene_id IN ({ph}) GROUP BY gene_id, sample", ids)
+            f"WHERE gene_id IN ({ph}) GROUP BY gene_id, sample", lookup_ids)
         expr_pairs = cur.fetchall()
 
         cur.execute(
             f"SELECT gene_id, COUNT(DISTINCT celltype) AS nct "
             f"FROM scrna_dotplot_expression WHERE gene_id IN ({ph}) "
-            f"GROUP BY gene_id", ids)
+            f"GROUP BY gene_id", lookup_ids)
         expr_counts = {r["gene_id"]: r["nct"] for r in cur.fetchall()}
 
         cur.execute(
             f"SELECT gene_id, COUNT(*) AS n FROM scrna_gene_modules "
-            f"WHERE gene_id IN ({ph}) GROUP BY gene_id", ids)
+            f"WHERE gene_id IN ({ph}) GROUP BY gene_id", lookup_ids)
         module_counts = {r["gene_id"]: r["n"] for r in cur.fetchall()}
 
         cur.execute(
             f"SELECT gene_id, sample, celltype_key FROM scrna_hub_genes "
-            f"WHERE gene_id IN ({ph})", ids)
+            f"WHERE gene_id IN ({ph})", lookup_ids)
         hub_rows = cur.fetchall()
         labels = _celltype_labels(cur)
 
@@ -716,21 +740,49 @@ def genes_batch(genes: str) -> dict:
 
     out = []
     for g in ids:
-        sams = sorted(samples_of.get(g, []))
+        # Aggregate across every annotation-version spelling that exists.
+        forms = forms_of[g]
+        sams: list[str] = []
+        hub_labels: list[str] = []
+        module_total = 0
+        celltype_total = 0
+        hub_total = 0
+        resolved = None
+        for form in forms:
+            if form in samples_of or form in module_counts or form in hubs_of:
+                resolved = resolved or form
+            for s in sorted(samples_of.get(form, [])):
+                if s not in sams:
+                    sams.append(s)
+            module_total += module_counts.get(form, 0)
+            celltype_total = max(celltype_total, expr_counts.get(form, 0))
+            hub_total += hub_count.get(form, 0)
+            for label in hubs_of.get(form, []):
+                if label not in hub_labels:
+                    hub_labels.append(label)
         displays: list[str] = []
         for s in sams:
             display, _ = _label(s, mapping["by_sample"])
             if display not in displays:
                 displays.append(display)
-        hub_labels = sorted(hubs_of.get(g, []))
+        hub_labels = sorted(hub_labels)
         out.append({
             "gene": g,
-            "found": bool(sams or module_counts.get(g) or hub_labels),
+            "resolved_gene": resolved,
+            "found": bool(sams or module_total or hub_labels),
             "n_samples": len(sams),
             "displays": displays,
-            "n_celltypes": expr_counts.get(g, 0),
-            "n_modules": module_counts.get(g, 0),
-            "n_hubs": hub_count.get(g, 0),
+            "n_celltypes": celltype_total,
+            "n_modules": module_total,
+            "n_hubs": hub_total,
             "hub_celltypes": hub_labels,
         })
-    return ok({"total": len(out), "limit": BATCH_LIMIT, "genes": out})
+    return ok({
+        "total": len(out),
+        "limit": BATCH_LIMIT,
+        "genes": out,
+        "id_versions": {
+            gene: {key: info[key] for key in ("v1", "v2", "v3") if info.get(key)}
+            for gene, info in info_map.items()
+        },
+    })

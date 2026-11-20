@@ -22,6 +22,7 @@ from fastapi.responses import StreamingResponse
 from app.core.config import settings
 from app.core.exceptions import ResourceNotFound, ValidationFailure
 from app.core.response import ok
+from app.services.gene_id_versions import id_versions_many, variants
 
 router = APIRouter(prefix="/scrna", tags=["scRNA"])
 
@@ -268,17 +269,31 @@ def api_dotplot(
     if not gene_list:
         raise ValidationFailure("No gene submitted.")
 
+    # The dotplot matrices store IWGSC v3 (03G) IDs; accept the v1/v2 spelling
+    # of the same gene by resolving and trying every available version.
+    info_map = id_versions_many(gene_list)
+    forms_of: dict[str, list[str]] = {}
+    lookup_genes: list[str] = []
+    for gene in gene_list:
+        forms = variants(gene, prefer=("v3", "v2", "v1"))
+        forms_of[gene] = forms
+        for form in forms:
+            if form not in lookup_genes:
+                lookup_genes.append(form)
+
     base_dir = settings.SCRNNA_DATA_DIR / genome
     config = SCRNNA_GENOMES[genome]
     dataset_dirs = _dataset_dirs(base_dir, genome)
 
     datasets = []
     has_any_result = False
+    matched_genes: set[str] = set()
     for folder, dir_path in dataset_dirs.items():
         meta = config.get("datasets", {}).get(folder, {})
-        dot = _read_dotplot(dir_path, gene_list)
+        dot = _read_dotplot(dir_path, lookup_genes)
         if dot["rows"]:
             has_any_result = True
+            matched_genes.update(dot.get("found_genes") or [])
         datasets.append({
             "folder": folder,
             "label": meta.get("label", f"Organization: {folder}"),
@@ -286,11 +301,43 @@ def api_dotplot(
             **dot,
         })
 
+    # requested input -> the spelling that actually exists in the matrices
+    id_mapping = {
+        gene: next((form for form in forms_of[gene] if form in matched_genes), None)
+        for gene in gene_list
+    }
+
+    hint = None
+    if not has_any_result:
+        details = []
+        for gene in gene_list:
+            info = info_map[gene]
+            mapped = ", ".join(
+                f"{key.upper()}={info[key]}"
+                for key in ("v1", "v2", "v3")
+                if info.get(key)
+            ) or "no cross-version mapping found"
+            details.append(f"{gene}: {mapped}")
+        hint = (
+            "No single-cell dot-plot data for the requested gene(s) in genome "
+            f"'{genome}'. This atlas stores IWGSC RefSeq v3 (03G) gene IDs; the "
+            "lookup tried every available version. Versions for the requested "
+            "genes — " + "; ".join(details) + ". If the 03G ID is also missing, "
+            "the gene is absent from the imported datasets rather than "
+            "mis-versioned."
+        )
+
     return ok({
         "genome": genome,
         "genes": gene_list,
+        "resolved_genes": id_mapping,
+        "id_versions": {
+            gene: {key: info[key] for key in ("v1", "v2", "v3") if info.get(key)}
+            for gene, info in info_map.items()
+        },
         "has_any_result": has_any_result,
         "datasets": datasets,
+        "hint": hint,
     })
 
 

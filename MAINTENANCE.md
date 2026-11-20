@@ -1235,3 +1235,43 @@ python3 scripts/known_genes_v2055/migrate_known_genes_v2055.py --phase verify --
 - **上线顺序**：先 root DDL → 再 `git pull + restart` → 再建 key；完整说明/curl/错误码/密钥轮换见
   `docs/known_genes/WRITE_API.md`。
 - **不要**把 raw key 写进代码/前端/URL/日志；泄露立即 `known_gene_api_key.py revoke --id` 并重建。
+
+---
+
+## 十四、查询性能与跨版本基因 ID（eQTL / scRNA / PPI）
+
+审稿人常用 02G/01G（v2/v1）基因号测试；但不同模块存的是不同注释版本：**eQTL Atlas（`eqtl.wheat`）和 scRNA / scRNA-seq 图集存 IWGSC v3（03G）**，**WheatPPI 存 IWGSC v2（02G）**（`PPI_result` 带转录本后缀）。以前直接查会静默返回空，看起来像"数据库没数据"。
+
+### 1) 自动版本兼容（已内置，无需运维）
+
+`app/services/gene_id_versions.py` 通过 `Genehub_DB.GenePageIWGSCv1_table` 把 v1/v2/v3 三元组映射起来（覆盖 LC 与 CSU/chrUn 基因），以下接口在查询前自动展开所有版本：
+
+- `GET /api/eqtl/search?gene=...`：按全部版本查 `eqtl.wheat`，响应带 `resolved_gene`（03G）、`id_versions`、空结果时的 `hint`；`/api/eqtl/image/...` 也会自动换版本找图。
+- `GET /api/scrna/dotplot?...`、`GET /api/scRNA-seq/gene/{gene_id}`、`GET /api/scRNA-seq/genes`：同样展开，响应带 `resolved_genes`/`id_versions`/`hint`。
+- `GET /api/ppi/query`：把输入转成 02G（`PPI_result` 再加 `.1`）查询，空结果时 `hint` 说明已尝试的 ID。
+
+判断原则：**先映射到模块存储的版本再查**；查不到时 hint 会明确说明"已尝试所有版本，基因确实不在该数据集"，避免被误读成数据缺失。
+
+### 2) PPI 索引（`PPI_result` 3M 行，必须建）
+
+`PPI_result` 的 `WheatID1/WheatID2` 是 `#` 连接的多值列表（2.8M 行 / 1.4GB，无可用索引），`REGEXP` 全表扫描在冷缓存下可达分钟级。`/api/ppi/query` 优先读聚合索引表 `wheatPPIdb.ppi_result_gene_index`（`gene` 主键 → `nameids` 列表），索引不存在时回退到慢查询。
+
+**`PPI_result` 重新导入后必须重建索引**（约 10–15 分钟，写临时 TSV + 外部排序）：
+
+```bash
+cd /var/www/FastAPI_backend_Port8000
+set -a; . ./.env; set +a
+/home/fei/mambaforge/envs/zjw/bin/python3 scripts/build_ppi_gene_index.py --rebuild
+# 冒烟测试：脚本会打印扫描行数/成员数/基因数；API 端 5 分钟内自动发现新索引
+```
+
+### 3) eQTL 索引（`eqtl.wheat.Geneid`，778k 行，原本无索引）
+
+```bash
+# 需要 DDL 账号（root 或 db_ddl.env 里的账号）
+export WHEATOMICS_DDL_USER=root WHEATOMICS_DDL_PASS='***'
+python3 scripts/ensure_db_indexes.py            # 幂等：补 eqtl 索引 + 建 PPI 索引表
+python3 scripts/ensure_db_indexes.py --dry-run  # 只看缺什么
+```
+
+**约定**：新增/重建 PPI 数据（`PPI_result`）后重建 PPI 索引；换 eQTL 数据表后确认 `Geneid` 仍有索引。

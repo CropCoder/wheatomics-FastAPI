@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import time
 
 from fastapi import APIRouter, Query
 
@@ -12,9 +13,34 @@ from app.core.response import ok
 from app.core.security import PPI_TABLES, ensure_allowed_table, ensure_gene_like
 from app.db.mysql import mysql_cursor
 from app.schemas.network import PPIInteraction
+from app.services.gene_id_versions import id_versions_many, variants
 from app.services.legacy_parsers import normalize_text
 
 ppi_router = APIRouter(tags=["Search Wheat Protein-Protein Interactions"])
+
+#: The REGEXP scan over the ~3M-row PPI_result table takes seconds; a normalised
+#: gene -> edge-index lookup makes it milliseconds. scripts/build_ppi_gene_index.py
+#: builds ``wheatPPIdb.ppi_result_gene_index``; until it exists the endpoint
+#: falls back to the (slow but correct) scan.
+_PPI_INDEX_CACHE: dict[str, float | bool] = {"checked": 0.0, "available": False}
+
+
+
+def _ppi_gene_index_available() -> bool:
+    """Whether the normalised PPI gene index exists and has rows (cached 5 min)."""
+    now = time.monotonic()
+    if now - float(_PPI_INDEX_CACHE["checked"]) < 300:
+        return bool(_PPI_INDEX_CACHE["available"])
+    available = False
+    try:
+        with mysql_cursor(settings.DB_PPI) as cursor:
+            cursor.execute("SELECT 1 FROM ppi_result_gene_index LIMIT 1")
+            available = cursor.fetchone() is not None
+    except Exception:  # noqa: BLE001 - fresh deployment before the build script
+        available = False
+    _PPI_INDEX_CACHE["checked"] = now
+    _PPI_INDEX_CACHE["available"] = available
+    return available
 
 
 @ppi_router.get("/ppi/query")
@@ -57,6 +83,21 @@ def query_ppi(
         raise ValidationFailure(f"Too many gene IDs ({len(genes)}); maximum is 200 per query")
     interactions: list[PPIInteraction] = []
 
+    # Cross-version compatibility: these tables store IWGSC v2 (02G) IDs
+    # (PPI_result keeps the transcript suffix). Resolve the caller's 01G/03G ID
+    # to its other spellings so any annotation version works.
+    info_map = id_versions_many(genes)
+    base_forms: list[str] = []
+    for gene in genes:
+        for form in variants(gene, prefer=("v2", "v1", "v3")):
+            base = re.sub(r"\.\d+$", "", form)
+            if base and base not in base_forms:
+                base_forms.append(base)
+    version_map = {
+        gene: {key: info[key] for key in ("v1", "v2", "v3") if info.get(key)}
+        for gene, info in info_map.items()
+    }
+
     # Batched: one query for all genes (previously N queries, one per gene).
     # REGEXP can't use an index, so we still scan once per table, but now it's
     # one scan matching any of the requested genes via alternation, not N scans.
@@ -64,15 +105,14 @@ def query_ppi(
     # anchor each gene with (^|#)...(#|$) instead of ^...$ to match one ID inside
     # the multi-value field without matching an unrelated prefix.
     if table == "PPI_poppin":
-        # PoppIn wheat IDs carry no transcript suffix; accept either form.
-        poppin_genes = [re.sub(r"\.\d+$", "", gene) for gene in genes]
-        poppin_patterns = [f"^{re.escape(gene)}$" for gene in poppin_genes]
-        poppin_combined = "|".join(poppin_patterns)
+        # PoppIn wheat IDs carry no transcript suffix and its ID columns are
+        # indexed, so an IN lookup on every annotation version is fast.
+        placeholders = ",".join(["%s"] * len(base_forms))
         with mysql_cursor(settings.DB_PPI) as cursor:
             cursor.execute(
-                "SELECT * FROM `PPI_poppin` "
-                "WHERE WheatID1 REGEXP %s OR WheatID2 REGEXP %s",
-                (poppin_combined, poppin_combined),
+                f"SELECT * FROM `PPI_poppin` WHERE WheatID1 IN ({placeholders}) "
+                f"OR WheatID2 IN ({placeholders})",
+                tuple(base_forms) * 2,
             )
             for row in cursor.fetchall():
                 interactions.append(
@@ -87,20 +127,60 @@ def query_ppi(
                         rice_pair=normalize_text(str(row.get("Rice_pair") or "")) or None,
                     )
                 )
-        return ok({"interactions": [i.model_dump(exclude_none=True) for i in interactions]})
+        hint = None
+        if not interactions:
+            hint = (
+                "No PoppIn interaction for the requested gene(s). The network "
+                "stores IWGSC v2 (02G) gene IDs; looked up: "
+                + ", ".join(base_forms)
+                + ". An empty result means none of the transferred rice "
+                "interactions involve these genes."
+            )
+        return ok({
+            "interactions": [i.model_dump(exclude_none=True) for i in interactions],
+            "id_versions": version_map,
+            "hint": hint,
+        })
 
-    patterns = [f"(^|#){re.escape(g)}(#|$)" for g in genes]
-    # MySQL REGEXP supports alternation; join into one pattern so a single scan
-    # matches any requested gene in either WheatID column.
-    combined = "|".join(patterns)
-    with mysql_cursor(settings.DB_PPI) as cursor:
-        cursor.execute(
-            f"""
-            SELECT * FROM `{table}`
-            WHERE (WheatID1 REGEXP %s OR WheatID2 REGEXP %s) AND Score >= %s
-            """,
-            (combined, combined, min_score),
+    # Choose the index-backed lookup when the normalised gene index exists;
+    # otherwise fall back to the REGEXP scan over the ~3M-row table.
+    placeholders = ",".join(["%s"] * len(base_forms))
+    if _ppi_gene_index_available():
+        with mysql_cursor(settings.DB_PPI) as cursor:
+            cursor.execute(
+                f"SELECT nameids FROM ppi_result_gene_index WHERE gene IN ({placeholders})",
+                tuple(base_forms),
+            )
+            nameids: list[int] = []
+            for row in cursor.fetchall():
+                for token in str(row.get("nameids") or "").split(","):
+                    token = token.strip()
+                    if token.isdigit():
+                        nameids.append(int(token))
+        if nameids:
+            id_ph = ",".join(["%s"] * len(nameids))
+            sql = f"SELECT * FROM `PPI_result` WHERE Nameid IN ({id_ph}) AND Score >= %s"
+            params: tuple = tuple(sorted(set(nameids))) + (min_score,)
+        else:
+            sql = "SELECT * FROM `PPI_result` WHERE 1=0"
+            params = ()
+    else:
+        patterns = []
+        for gene in genes:
+            for form in variants(gene, prefer=("v2", "v1", "v3")):
+                base = re.sub(r"\.\d+$", "", form)
+                pattern = f"(^|#){re.escape(base)}(\\.\\d+)?(#|$)"
+                if pattern not in patterns:
+                    patterns.append(pattern)
+        combined = "|".join(patterns)
+        sql = (
+            "SELECT * FROM `PPI_result` "
+            "WHERE (WheatID1 REGEXP %s OR WheatID2 REGEXP %s) AND Score >= %s"
         )
+        params = (combined, combined, min_score)
+
+    with mysql_cursor(settings.DB_PPI) as cursor:
+        cursor.execute(sql, params)
         # Discover actual column names from cursor.description (positional, like CGI)
         col_map = {}
         extras = {}
@@ -140,4 +220,17 @@ def query_ppi(
                 )
             )
 
-    return ok({"interactions": [i.model_dump(exclude_none=True) for i in interactions]})
+    hint = None
+    if not interactions:
+        hint = (
+            "No CF-MS interaction above the requested score for the requested "
+            "gene(s). WheatPPI stores IWGSC v2 (02G) IDs; looked up: "
+            + ", ".join(base_forms)
+            + ". Lower min_score to include weaker interactions, or check the "
+            "gene's annotation versions with /api/genes/detail."
+        )
+    return ok({
+        "interactions": [i.model_dump(exclude_none=True) for i in interactions],
+        "id_versions": version_map,
+        "hint": hint,
+    })
