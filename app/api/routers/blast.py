@@ -328,7 +328,7 @@ DB_CLASSIFICATION = [
             "nc4", "mzm", "kf11", "hd6172", "cm42", "bj8",
             "amn", "abo", "zm16", "zm22", "zm366",
             "multiovary", "z8425b", "ym33",
-            "jin50", "jm44", "sumai3", "nc99bgtag11",
+            "jin50", "jm44", "sumai3", "nc99bgtag11", "keumkang",
             "triticum_aestivum_alchemy",
             # scaffold-assembly cultivars whose registry row has no ploidy/species
             "paragon", "robigus", "weebill", "cadenza", "claire",
