@@ -52,12 +52,16 @@ def _get_pool(database: str):
         pool = _pools.get(database)
         if pool is not None:
             return pool
+        # Pool sizing is env-tunable: every gunicorn worker keeps its own pool
+        # per database, so 8 workers * 14 DBs * maxcached connections can
+        # saturate MySQL max_connections (default 151) and surface as
+        # "1040 Too many connections". Keep idle caches small by default.
         pool = PooledDB(
             creator=pymysql,
-            mincached=2,
-            maxcached=8,
+            mincached=int(os.environ.get("DB_POOL_MIN_CACHED", "0")),
+            maxcached=int(os.environ.get("DB_POOL_MAX_CACHED", "2")),
             maxshared=0,
-            maxconnections=64,
+            maxconnections=int(os.environ.get("DB_POOL_MAX_CONNECTIONS", "16")),
             host=settings.DB_HOST,
             port=settings.DB_PORT,
             user=settings.DB_USER,
