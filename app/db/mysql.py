@@ -14,6 +14,7 @@ pooling) — useful for local dev without the dependency.
 
 from __future__ import annotations
 
+import os
 import threading
 from contextlib import contextmanager
 from typing import Iterator
