@@ -2223,7 +2223,13 @@ function dbLabel(db) {
   // Same label as the JBrowse gateway card (genome_registry.display_name),
   // so "Zavitan v1.0 (2017)" in BLAST opens the "Zavitan v1.0 (2017)" browser.
   var meta = dbMeta(db);
-  if (meta.display_name) return meta.display_name;
+  if (meta.display_name) {
+    // Per-chromosome split DBs share their assembly label: keep the chromosome
+    // visible so the rows in a search result stay distinguishable.
+    return (meta.kind === 'chromosome' && meta.chromosome)
+      ? meta.display_name + ' · Chr' + meta.chromosome
+      : meta.display_name;
+  }
   var m = /^all_Allohexaploidchr(\d+[A-Za-z]+)$/.exec(db);
   if (m) return 'Allohexaploid Chr' + m[1] + ' genome';
   m = /^all_Allotetraploidchr(\d+[A-Za-z]+)$/.exec(db);
@@ -2232,9 +2238,13 @@ function dbLabel(db) {
 }
 
 function shortAssemblyName(db) {
-  return db.replace(/\.genome_[Cc]hr[0-9A-Za-z]+$/, '')
-           .replace(/[Cc]hr[0-9][0-9A-Za-z]*$/, '')
-           .replace(/[._]$/, '') || db;
+  var base = db.replace(/\.genome_[Cc]hr[0-9A-Za-z]+$/, '')
+               .replace(/[Cc]hr[0-9][0-9A-Za-z]*$/, '')
+               .replace(/[._]$/, '') || db;
+  // Per-chromosome split DBs belong to the same assembly: use its label too,
+  // so "AABB_Wild_emmer.genome_Chr1A" reads "Zavitan v1.0 (2017)".
+  var meta = dbMeta(db);
+  return meta.display_name || base;
 }
 
 function chromosomeSortKey(ch) {
@@ -2379,6 +2389,17 @@ function applyDbSearch() {
     var hit = db.toLowerCase().indexOf(q) >= 0 ||
               dbLabel(db).toLowerCase().indexOf(q) >= 0;
     return hit && dbPassesFilters(db);
+  });
+  // Whole-assembly databases first, per-chromosome splits last: a search for
+  // "Zavitan" should show the four assemblies before their 60 chr databases.
+  var KIND_RANK = { aggregate: 0, genome: 1, cds: 2, protein: 3, chromosome: 4, other: 5 };
+  matches.sort(function (a, b) {
+    var ka = dbMeta(a).kind || 'other', kb = dbMeta(b).kind || 'other';
+    var ra = KIND_RANK[ka] === undefined ? 9 : KIND_RANK[ka];
+    var rb = KIND_RANK[kb] === undefined ? 9 : KIND_RANK[kb];
+    // Plain code-unit order keeps the BLAST db names' natural sequence
+    // (v1 -> v2 -> near-complete -> pangenome); ICU collation would not.
+    return ra - rb || (a < b ? -1 : a > b ? 1 : 0);
   });
   var shown = matches.slice(0, 400);
   resultsBox.innerHTML = shown.map(function (db) { return dbCheckbox(db); }).join('') +
