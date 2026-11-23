@@ -59,3 +59,9 @@ UPDATE wheatomics_db.genome_registry SET
   chromosome_count = 14,
   assembly_level   = 'Chromosome'
 WHERE dataset_id = 'Zavitan';
+
+-- 同一口径：v2 的 15 行 .fai = 14 条染色体 + ChrUn。
+UPDATE wheatomics_db.genome_registry SET
+  chromosome_count = 14,
+  assembly_level   = 'Chromosome'
+WHERE dataset_id = 'Wild_emmerV2';

@@ -883,6 +883,8 @@ def main() -> int:
     }
     overrides["Wild_emmerV2"] = {
         "display_name": "Zavitan v2.0 (2019)",
+        # 15 .fai rows = 14 chromosomes + ChrUn.
+        "_hard": ["chromosome_count"], "chromosome_count": 14,
         "species": "Triticum turgidum L. ssp. dicoccoides (Korn. ex Asch. & Graebn.) Thell.",
         "cultivar_or_line": "Zavitan",
         "common_name": "Wild emmer wheat", "sample_type": "Wild emmer wheat",
