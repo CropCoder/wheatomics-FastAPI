@@ -19,6 +19,7 @@ from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routers import comparative, expression, gene, genehub, pfam, interval, coexpression, ppi, sequence, blast_extra, triticeae, blast, orthofinder, track, go_kegg, varianthub, syntenyview, jbrowse, caps, eqtl, scrna, wheatpsp, genome, ptm, scrna_seq, translatome
+from app.api.routers import cgi_compat
 from app.api.routers.gene_write import router as gene_write
 from app.api.routers.regulatory import router as regulatory_router
 from app.api.routers.regulatory_integration import router as regulatory_integration_router
@@ -307,6 +308,9 @@ app.include_router(regulatory_integration_router, prefix=settings.API_PREFIX)
 app.include_router(regulatory_tf_atlas_router)
 
 
+# Legacy CGI compatibility (old /cgi-bin/get_fasta_bedtools.py URL)
+app.include_router(cgi_compat.router)
+
 # PrimerServer2 (original PCR primer design) - mounted under /api/PrimerServer2
 PS2_PREFIX = f"{settings.API_PREFIX}/PrimerServer2"
 app.include_router(ps2_config.router, prefix=PS2_PREFIX)
@@ -487,7 +491,6 @@ async def gitee_webhook(request: Request, background_tasks: BackgroundTasks):
     background_tasks.add_task(run_git_pull)
 
     return {"status": "success", "message": "Webhook 已接收，代码拉取任务已在后台启动"}
-
 
 
 
