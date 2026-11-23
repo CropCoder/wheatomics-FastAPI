@@ -54,7 +54,7 @@ def _resolve_database(name: str) -> str:
     if _check_db_exists(root / name):
         return name
 
-    pattern = str(root / ("*." + glob.escape(name)))
+    pattern = str(root / ("*" + glob.escape(name)))
     candidates = []
     for path in glob.glob(pattern):
         if _check_db_exists(Path(path)):
