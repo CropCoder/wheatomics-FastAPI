@@ -224,7 +224,7 @@ function renderList(kind, q){
       d.rows.forEach(function(r, i){
         var gid = h(r.cs_gene_id || "");
         var link = '<a href="#/gene/'+encodeURIComponent(r.cs_gene_id||'')+'">'+gid+'</a>';
-        var hub = r.cs_gene_id ? '<a href="/cgi-bin/geneDetail.py?search='+encodeURIComponent(r.cs_gene_id)+'" target="_blank" title="Open this gene in GeneHub (Chinese Spring reference)">GeneHub&raquo;</a>' : '';
+        var hub = r.cs_gene_id ? '<a href="/GeneHub/gene.html?gene='+encodeURIComponent(r.cs_gene_id)+'" target="_blank" title="Open this gene in GeneHub (Chinese Spring reference)">GeneHub&raquo;</a>' : '';
         var g3 = h(r.cs_03g_id || '');
         if(kind==="prd"){
           html += '<tr><td>'+(d.per_page*(d.page-1)+i+1)+'</td><td>'+link+'</td><td>'+g3+'</td><td>'+num(r.plaac_llr)+'</td><td>'+hub+'</td></tr>';
@@ -263,7 +263,7 @@ function renderGene(csGeneId){
     var g3keys = Object.keys(g3map);
     var g3line = g3keys.length ? 'CS 03G: <strong>'+h(g3keys.join(', '))+'</strong> &middot; ' : '';
     html += '<p class="text-muted">'+g3line+d.transcripts.length.toLocaleString()+' transcript(s) with phase-separation prediction. '+
-      '<a href="/cgi-bin/geneDetail.py?search='+encodeURIComponent(d.cs_gene_id||'')+'" target="_blank">View in GeneHub &raquo;</a></p>';
+      '<a href="/GeneHub/gene.html?gene='+encodeURIComponent(d.cs_gene_id||'')+'" target="_blank">View in GeneHub &raquo;</a></p>';
     html += '<div class="result-table"><table class="table table-bordered table-hover table-sm"><thead><tr>';
     html += '<th>#</th><th>seq_id</th><th>gene_id</th><th>PSP score</th><th>Predicted PSP</th><th>MolPhase</th><th>PrD</th><th>PLAAC LLR</th><th>PAPA prop</th><th></th>';
     html += '</tr></thead><tbody>';
@@ -352,7 +352,7 @@ function renderProtein(seqId){
     var html = '<a href="#/home" class="text-decoration-none small text-primary">&larr; Home</a> ';
     html += '<h4 class="card-title">Protein: '+h(p.seq_id||"")+'</h4>';
     html += '<p class="text-muted">'+
-      (p.cs_gene_id ? '<a href="/cgi-bin/geneDetail.py?search='+encodeURIComponent(p.cs_gene_id)+'" target="_blank">View in GeneHub &raquo;</a> | ' : '')+
+      (p.cs_gene_id ? '<a href="/GeneHub/gene.html?gene='+encodeURIComponent(p.cs_gene_id)+'" target="_blank">View in GeneHub &raquo;</a> | ' : '')+
       '<a href="#" onclick="downloadProteinFasta(\''+h(p.cs_gene_id||p.seq_id||'')+'\');return false;">Download FASTA</a> | '+
       '<a href="#" onclick="downloadProteinPrediction();return false;">Download prediction CSV</a>'+
       '</p>';
