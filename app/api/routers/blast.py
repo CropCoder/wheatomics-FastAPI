@@ -308,7 +308,16 @@ def _assembly_level_map() -> dict[str, dict]:
 
 def _db_meta(name: str, level_map: dict[str, dict]) -> dict:
     base, kind, chromosome = _db_base_kind_chromosome(name)
-    info = level_map.get(base) or level_map.get(name) or {}
+    # Merge the base-name entry with the full-name one instead of taking the
+    # first hit: a scaffold DB (`AABB_Chili.scaffold`) has a base entry in the
+    # levels override file (assembly level only) *and* a full-name registry
+    # entry that carries display_name. The full name wins where it has a value,
+    # the base fills the rest; `level_map[base] or level_map[name]` used to drop
+    # the label in that case.
+    info = dict(level_map.get(base) or {})
+    for _k, _v in (level_map.get(name) or {}).items():
+        if _v not in (None, ""):
+            info[_k] = _v
     if kind == "aggregate":
         info = {}
     level = info.get("assembly_level")
