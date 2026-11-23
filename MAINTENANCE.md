@@ -950,6 +950,28 @@ curl -s http://127.0.0.1:8000/api/jbrowse/coverage   # 覆盖率与缺口（ok=t
 相关接口：`GET /api/blast/database/{db}/jbrowse?tokens=…`、
 `GET /api/jbrowse/datasets/{dataset}/refseqs`、`GET /api/jbrowse/coverage`。
 
+### BLAST 选择器显示名 = JBrowse 卡片标题（2026-11-23）
+
+BLAST 列表**不再直接显示磁盘库名**：`/api/blast/databases` 的
+`database_meta[db].display_name` 取自 `genome_registry.display_name`，
+`app/static/blast2/index.html` 的 `dbLabel()` 优先用它（缺失时回退库名）。
+JBrowse 网关页 `app/static/docpages/jbrowse.html` 是静态页，卡片标题手写，
+**必须与 registry 的 display_name 用同一串**——这是“同一个基因组在两处叫同一个名”的唯一约定。
+
+- 只改**显示名**：BLAST 索引名、`.fai/.bed`、getfasta 聚合成员、`blast_jbrowse_map.json`、
+  JBrowse `data=` 目录**都不动**；原始库名仍在悬停提示和已选 chip 的 `title` 里，
+  JBrowse 卡片的 `data-search` 也保留目录名，两边可以互查。
+- 搜索框同时匹配显示名和原始库名（所以搜 “Zavitan” 能出全部 4 套）；结果按
+  combined → genome → CDS → protein → 逐染色体 排序。
+- 改名步骤：`UPDATE genome_registry SET display_name=…` → 同步
+  `scripts/rebuild_genome_registry.py` 的 overrides（否则下次全量重建会改回去）→
+  改 JBrowse 卡片标题与 `data-search` → 重新发布两个页面（见下）。
+- 发布：`scripts/deploy_blast2_preview.py`（`/blast/blast.html`）与
+  `scripts/deploy_doc_pages.py --only jbrowse`（`/jbrowse.html`），都需要在服务器上跑，
+  不会随 `git pull` 自动生效；两者都支持 `--check` 比对。
+
+四套 Zavitan 的现行命名见 `scripts/sql/zavitan_unified_names_20261123.sql`。
+
 ---
 
 ## 十一、BLAST 数据库体检 / 清理
