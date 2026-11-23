@@ -109,3 +109,44 @@ GET https://wheatomics.sdau.edu.cn/GeneHub/gene.html?gene=TraesCS5A02G391700
 - 已归档并删除：`/var/www/html/primerserver2` 旧 Flask 应用
 - 仍保留：`/var/www/html/snprimer`（约 7.1T 旧结果/流水线，待决定）
 - 本文件只做盘点与替换验证，未改动服务端 CGI 目录。
+
+## 2026-11-24 实施进展（已完成）
+
+### 1. get_fasta_bedtools.py → FastAPI 兼容层
+
+- 新增 `GET /cgi-bin/get_fasta_bedtools.py`（`app/api/routers/cgi_compat.py`），
+  保持旧参数 `ID` + `database` 和 `<div id="seq">` 输出结构。
+- 兼容旧库名：`JM47.genome_Chr6B` 会自动解析到当前库
+  `AABBDD_JM47.genome_Chr6B`；当前库名直接使用。
+- Apache `000-default-ssl.conf` 在 `ScriptAlias /cgi-bin/` 前加入
+  `ProxyPass /cgi-bin/get_fasta_bedtools.py http://127.0.0.1:8000/...`。
+- 旧 CGI 已移动到
+  `/var/www/data/masw_data/backup_cgi_20261124/get_fasta_bedtools.py`
+  （sha256 在同目录），URL 仍可用，但已由 FastAPI 处理。
+- 回归：
+  - 当前库名 `AABBDD_JM47.genome_Chr6B`：FASTA 与旧 CGI 逐字符一致。
+  - 旧库名 `JM47.genome_Chr6B`：现在也能返回同一序列（旧 CGI 会报 BLAST 错误）。
+  - `/cgi-bin/geneDetail.py` 仍为 302，其他 CGI 未受影响。
+
+### 2. Triticeae 同源 → /api/homologs/triticeae
+
+- 新增 `GET /api/homologs/triticeae?gene_id=...&max_targets=...`，
+  查询 `Comparative_Genomics_db.Triticeae_table`。
+- 物种顺序/上限与旧 CGI 完全一致：T. aestivum 3×、Wild emmer 2×、
+  Durum wheat 2×、T. urartu / Ae. tauschii / H. vulgare 各 1×。
+- `/homologtools/` 已重写为独立页面：水稻/拟南芥入口指向新
+  `/HomologFinder/`，Triticeae 表单直接调用新 API，支持 CSV 下载。
+  页面源码保存在 `app/static/docpages/homologtools.html`，线上旧文件备份在
+  `/var/www/data/masw_data/backup_homologtools_20261124/`。
+- 浏览器回归：`TraesCS5A02G020900` 返回 10 条，目标/物种/顺序与旧 CGI 一致。
+- `triticeae_gene_search.py` 暂保留给外部旧直链，当前页面已不再调用；
+  监控一段时间后可归档删除。
+
+### 3. 仍未处理
+
+- `geneDetail.py`（302 兼容层）、`geneDetail_get_sequence.py`、
+  `gene_expression.py`、`co-expression.py`、`get_wheatPPI.py`、
+  `gene_search*.py`、`symap.py` 等仍有少量流量，需逐项迁移。
+- `all_genomes` / `all_gene` 聚合库别名仍然损坏（引用缺失 volume），
+  会影响序列服务；需要单独修复/重建。
+- `/var/www/html/snprimer`（7.1T 旧结果）待决定。

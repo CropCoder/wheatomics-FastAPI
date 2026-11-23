@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HomologFinder | WheatOmics 2.0</title>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/css/style.css" type="text/css" />
+<link rel="stylesheet" href="/css/bootstrap-4.5.3-dist/css/bootstrap.css">
+<script src="/js/jquery/1.9.1/jquery.min.js"></script>
+<script src="/css/bootstrap-4.5.3-dist/js/bootstrap.js"></script>
+<style>
+  .homolog-wrap { max-width: 1180px; margin: 0 auto; padding: 24px 16px 40px; }
+  .homolog-card { border: 1px solid #dfe9e2; border-radius: 12px; background: #fff; padding: 20px 22px; margin-bottom: 18px; }
+  .homolog-card h5 { color: #07583d; font-weight: 700; margin-bottom: 10px; }
+  .homolog-muted { color: #66766e; font-size: 13px; }
+  .homolog-form .form-control { max-width: 320px; display: inline-block; vertical-align: middle; margin-right: 8px; }
+  .homolog-form select.form-control { max-width: 130px; }
+  .homolog-table-wrap { overflow-x: auto; margin-top: 14px; }
+  .homolog-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .homolog-table th, .homolog-table td { border: 1px solid #dfe9e2; padding: 6px 8px; vertical-align: top; }
+  .homolog-table thead th { background: #f3faf5; color: #1d5c40; white-space: nowrap; }
+  .homolog-table tbody tr:nth-child(even) { background: #fbfdfb; }
+  .homolog-status { margin-top: 10px; font-size: 13px; color: #52665c; }
+  .homolog-error { color: #9b3c2f; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+</style>
+</head>
+<body>
+<div id="header"></div>
+
+<main class="homolog-wrap">
+  <h3 style="color:#033f2d;font-weight:800;">HomologFinder</h3>
+  <p class="homolog-muted">Find homologs of wheat genes in rice, Arabidopsis and Triticeae species.</p>
+
+  <div class="homolog-card">
+    <h5>Wheat vs rice / Arabidopsis</h5>
+    <p class="homolog-muted" style="margin-bottom:12px;">The rice/Arabidopsis search has moved to the new HomologFinder page, which supports batch input and CSV/TSV export.</p>
+    <a class="btn btn-primary" href="/HomologFinder/">Open HomologFinder</a>
+  </div>
+
+  <div class="homolog-card">
+    <h5>Triticeae homologs</h5>
+    <p class="homolog-muted" style="margin-bottom:12px;">Search <span class="mono">Comparative_Genomics_db.Triticeae_table</span> for Triticum aestivum, wild emmer, durum wheat, T. urartu, Ae. tauschii and H. vulgare homologs.</p>
+    <form class="homolog-form" onsubmit="return queryTriticeae(event)">
+      <input id="tri-gene" class="form-control" type="text" placeholder="Wheat gene ID, e.g. TraesCS5A02G020900" autocomplete="off" required>
+      <select id="tri-max" class="form-control" title="Maximum targets per species">
+        <option value="1" selected>1 per species</option>
+        <option value="3">3 per species</option>
+        <option value="5">5 per species</option>
+      </select>
+      <button id="tri-submit" class="btn btn-primary" type="submit">Search homologs</button>
+    </form>
+    <div id="tri-status" class="homolog-status"></div>
+    <div id="tri-results"></div>
+  </div>
+</main>
+
+<div id="footer"></div>
+
+<script>
+$(function(){
+  $("#header").load("/header.html");
+  $("#footer").load("/footer.html");
+});
+
+var LAST_TRITICEAE = [];
+
+function esc(s) {
+  return $('<div>').text(s == null ? '' : String(s)).html();
+}
+
+function geneCell(target) {
+  var t = String(target || '');
+  if (/^TraesCS/i.test(t)) {
+    return '<a href="/GeneHub/gene.html?gene=' + encodeURIComponent(t) + '" target="_blank" rel="noopener">' + esc(t) + '</a>';
+  }
+  return esc(t);
+}
+
+function renderTriticeae(data) {
+  LAST_TRITICEAE = data.hits || [];
+  var box = $('#tri-results');
+  if (!LAST_TRITICEAE.length) {
+    box.html('<div class="homolog-status">No homologs found for this gene.</div>');
+    return;
+  }
+  var rows = LAST_TRITICEAE.map(function(h) {
+    return '<tr>' +
+      '<td class="mono">' + esc(h.query_gene) + '</td>' +
+      '<td class="mono">' + geneCell(h.target_gene) + '</td>' +
+      '<td>' + esc(h.species) + '</td>' +
+      '<td>' + esc(h.qcovs) + '</td>' +
+      '<td>' + esc(h.length) + '</td>' +
+      '<td>' + esc(h.identity) + '</td>' +
+      '<td>' + esc(h.positive) + '</td>' +
+      '<td class="mono">' + esc(h.evalue) + '</td>' +
+      '<td>' + esc(h.score) + '</td>' +
+      '</tr>';
+  }).join('');
+  box.html(
+    '<div class="homolog-status">' + esc(data.query_gene) + ' — ' + LAST_TRITICEAE.length + ' hit(s).</div>' +
+    '<div style="margin-top:8px;"><button class="btn btn-sm btn-outline-secondary" onclick="downloadTriticeae()">Download CSV</button></div>' +
+    '<div class="homolog-table-wrap"><table class="homolog-table">' +
+    '<thead><tr><th>Query</th><th>Target</th><th>Species</th><th>Qcovs (%)</th><th>Length</th><th>Identity (%)</th><th>Positive (%)</th><th>E-value</th><th>Score</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody></table></div>'
+  );
+}
+
+function queryTriticeae(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  var gene = $('#tri-gene').val().trim();
+  var max = $('#tri-max').val() || '1';
+  if (!gene) {
+    $('#tri-status').addClass('homolog-error').text('Please enter a wheat gene ID.');
+    return false;
+  }
+  $('#tri-status').removeClass('homolog-error').text('Querying ' + gene + ' ...');
+  $('#tri-results').empty();
+  $('#tri-submit').prop('disabled', true);
+  $.getJSON('/api/homologs/triticeae', {gene_id: gene, max_targets: max})
+    .done(function(resp) {
+      if (!resp || !resp.success) {
+        $('#tri-status').addClass('homolog-error').text('Query failed: ' + ((resp && resp.message) || 'unknown error'));
+        return;
+      }
+      $('#tri-status').text('');
+      renderTriticeae(resp.data || {});
+    })
+    .fail(function(xhr) {
+      var msg = 'Query failed';
+      try {
+        var j = JSON.parse(xhr.responseText);
+        if (j.detail) msg = typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail);
+      } catch (err) {}
+      $('#tri-status').addClass('homolog-error').text(msg);
+    })
+    .always(function() {
+      $('#tri-submit').prop('disabled', false);
+    });
+  return false;
+}
+
+function downloadTriticeae() {
+  if (!LAST_TRITICEAE.length) return;
+  var lines = ['query_gene,target_gene,species,qcovs,length,identity,positive,evalue,score'];
+  LAST_TRITICEAE.forEach(function(h) {
+    lines.push([h.query_gene, h.target_gene, h.species, h.qcovs, h.length, h.identity, h.positive, h.evalue, h.score]
+      .map(function(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(','));
+  });
+  var blob = new Blob([lines.join('\n') + '\n'], {type: 'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'triticeae_homologs.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>
