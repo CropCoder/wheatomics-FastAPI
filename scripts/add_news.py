@@ -85,7 +85,10 @@ def main(argv: list[str] | None = None) -> int:
             with os.fdopen(fd, "w", encoding="utf-8") as fh:
                 json.dump(entries, fh, ensure_ascii=False, indent=2)
                 fh.write("\n")
+            # mkstemp creates 0600 -> Apache (www-data) must be able to read the file
+            os.chmod(tmp, 0o644)
             os.replace(tmp, path)
+            os.chmod(path, 0o644)
         finally:
             if os.path.exists(tmp):
                 os.unlink(tmp)
