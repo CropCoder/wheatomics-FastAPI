@@ -33,3 +33,26 @@ JBrowse 网关页显示手写卡片标题、`genome_registry` 与 `Genefunc_regi
   `Wild_emmer` / `Wild_emmerV2` / `AABB_Wild_emmer_Zavitan` / `Zavitan`。
 
 约定与维护步骤见 `MAINTENANCE.md` §十“BLAST 选择器显示名 = JBrowse 卡片标题”。
+
+## 后续（同日）：其余 scaffold 级组装
+
+第一轮只处理了四套 Zavitan，BLAST 里还有 13 个 genome 库在显示磁盘库名，分两类处理：
+
+1. **确有独立组装的 5 个**（Paragon / Robigus / Weebill / Chili / Mahmoudi）：
+   `genome_registry` 里没有 `blast_genome_db` 链接，补上后自动显示 registry 的
+   display_name（Paragon、Robigus、Weebill 还补了 scaffolds 的 CDS/PEP；Chili /
+   Mahmoudi 补了 AABB 倍性与物种）。见
+   `scripts/sql/scaffold_blast_links_20261123.sql`。
+2. **四套野生近缘 WGS contig 组装的 8 个重复构建**：`Other_TGAC_WGS_*` /
+   `Other_TSL_WGS_*` 是 2026-09 重建版（有 `.fai`，getfasta 在用），同名的
+   `TGAC_WGS_*` / `TSL_WGS_*` 是 2024 年的两份旧索引，序列条数与总长完全相同。
+   旧索引列入 `SUPERSEDED_WGS_BUILDS` 不再出现在选择器（与 `DUPLICATE_ALIAS_DBS`
+   同一规则）；保留的 4 个没有 registry 行、也不在 JBrowse，标签放在
+   `BLAST_ONLY_LABELS`，不塞进 genome 目录。
+
+另外把 `chromosome_count` 的语义统一成“染色体数”：四套 Zavitan 都是 14
+（此前的 114 / 818 / 15 是 `.fai` 行数，含 unplaced / ChrUn）。
+
+![BLAST 里的 WGS 标签](screenshots/blast-wgs-scaffold-labels.png)
+
+![四倍体列表（Chili / Mahmoudi / 四套 Zavitan）](screenshots/blast-tetraploid-list-2.png)
