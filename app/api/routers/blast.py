@@ -113,6 +113,20 @@ BROKEN_DB_BASES = frozenset({"Foma.pep"})
 #: build is offered.
 DUPLICATE_ALIAS_DBS = frozenset({"CS21_S1_S2_S3_All_NLR"})
 
+#: Superseded WGS contig builds. Four wild-relative genomes (T. monococcum,
+#: Ae. speltoides, durum 'Strongfield', Ae. sharonensis) were indexed three
+#: times: the 2026-09 ``Other_*`` rebuild plus two 2024 builds, all with the
+#: same sequence count and total bases. Only the ``Other_*`` build carries a
+#: ``.fai`` (getfasta / PrimerServer) and is kept; the other two per genome are
+#: duplicate indexes of the same assembly, so they are not offered as separate
+#: BLAST targets (same policy as DUPLICATE_ALIAS_DBS).
+SUPERSEDED_WGS_BUILDS = frozenset({
+    "TGAC_WGS_monococcum.scaffold_v1", "TGAC_WGS_monococcum_v1",
+    "TGAC_WGS_speltoides.scaffold_v1", "TGAC_WGS_speltoides_v1",
+    "TGAC_WGS_strongfield.scaffold_v1", "TGAC_WGS_strongfield_v1",
+    "TSL_WGS_sharonensis.scaffold_v1", "TSL_WGS_sharonensis_v1",
+})
+
 #: Legacy singular aggregate aliases. `all_gene` / `all_protein` are duplicates
 #: of the maintained `all_genes` / `all_proteins` (identical counts, total
 #: length and DBLIST members, rebuilt 2026-10-24), so only the plural aliases
@@ -123,7 +137,19 @@ LEGACY_AGGREGATE_ALIASES = frozenset({"all_gene", "all_protein"})
 HIDDEN_BLAST_DBS = (
     SEQUENCE_ONLY_DBS | LEGACY_ALIAS_DBS | BROKEN_DB_BASES
     | DUPLICATE_ALIAS_DBS | LEGACY_AGGREGATE_ALIASES | HIDDEN_AGGREGATE_ALIASES
+    | SUPERSEDED_WGS_BUILDS
 )
+
+#: BLAST-only databases that have no genome_registry row: 2013-era WGS contig
+#: assemblies of wild relatives. They are not in JBrowse and have no annotation,
+#: so they must not be pushed into the genome catalogue; their picker label
+#: lives here. Anything with a registry row uses display_name instead.
+BLAST_ONLY_LABELS = {
+    "Other_TGAC_WGS_monococcum.scaffold_v1": "T. monococcum (TGAC WGS)",
+    "Other_TGAC_WGS_speltoides.scaffold_v1": "Ae. speltoides (TGAC WGS)",
+    "Other_TGAC_WGS_strongfield.scaffold_v1": "Durum wheat Strongfield (TGAC WGS)",
+    "Other_TSL_WGS_sharonensis.scaffold_v1": "Ae. sharonensis (TSL WGS)",
+}
 
 # === BLAST 数据库元数据（类型 / 组装） ===
 #: Per-chromosome split databases: `<assembly>.genome_Chr1A`, `<assembly>.genome_chr1H`, ...
@@ -299,6 +325,9 @@ def _db_meta(name: str, level_map: dict[str, dict]) -> dict:
         # Same label as the JBrowse gateway card and /api/genomes display_name,
         # so a genome is called the same thing in BLAST and in the browser.
         meta["display_name"] = info["display_name"]
+    elif name in BLAST_ONLY_LABELS:
+        # BLAST-only WGS contig assembly with no registry row.
+        meta["display_name"] = BLAST_ONLY_LABELS[name]
     if kind == "genome" and info.get("chromosome_count"):
         meta["chromosome_count"] = info["chromosome_count"]
     if kind == "chromosome" and name.startswith(("all_Allohexaploidchr", "all_Allotetraploidchr")):

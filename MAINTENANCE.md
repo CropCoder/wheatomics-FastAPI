@@ -963,6 +963,10 @@ JBrowse 网关页 `app/static/docpages/jbrowse.html` 是静态页，卡片标题
   JBrowse 卡片的 `data-search` 也保留目录名，两边可以互查。
 - 搜索框同时匹配显示名和原始库名（所以搜 “Zavitan” 能出全部 4 套）；结果按
   combined → genome → CDS → protein → 逐染色体 排序。
+- 例外：2013 年前后的 WGS contig 组装（`Other_TGAC_WGS_*` / `Other_TSL_WGS_*`）
+  没有 registry 行、也不在 JBrowse，标签放在 `app/api/routers/blast.py` 的
+  `BLAST_ONLY_LABELS`；它们 2024 年的重复构建（`TGAC_WGS_*` / `TSL_WGS_*`，
+  序列条数与总长完全相同）已列入 `SUPERSEDED_WGS_BUILDS`，不再出现在选择器里。
 - 改名步骤：`UPDATE genome_registry SET display_name=…` → 同步
   `scripts/rebuild_genome_registry.py` 的 overrides（否则下次全量重建会改回去）→
   改 JBrowse 卡片标题与 `data-search` → 重新发布两个页面（见下）。

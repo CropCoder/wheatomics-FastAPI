@@ -607,7 +607,8 @@ def main() -> int:
                "HH": "H", "SS": "S", "TT": "T", "MM": "M", "CC": "C", "NN": "N",
                "AAGG": "A,G", "DDNN": "D,N",
                "STSTYYHH": "St,Y,H", "STSTVVJJ": "St,V,J", "NSNSXMXM": "Ns,Ns,Xm,Xm",
-               "UU": "U", "VV": "V", "EE": "E", "RR": "R", "ATATGG": "At,G"}
+               "UU": "U", "VV": "V", "EE": "E", "RR": "R", "ATATGG": "At,G",
+               "HHHH": "H,H", "HHHHHH": "H,H,H"}
         def _num(v):
             if v is None:
                 return None
@@ -860,6 +861,9 @@ def main() -> int:
     # 只改显示名/文献元数据；BLAST 库名（AABB_Wild_emmer*）与 JBrowse 目录名保持不动。
     overrides["AABB_Wild_emmer_Zavitan"] = {
         "display_name": "Zavitan near-complete (2026)",
+        # 114 .fai rows = 14 chromosomes + 100 unplaced sequences; the registry
+        # column means chromosome count (/api/genomes), so force 14.
+        "_hard": ["chromosome_count"], "chromosome_count": 14,
         "cultivar_or_line": "Zavitan",
         "common_name": "Wild emmer wheat", "sample_type": "Wild emmer wheat",
         "doi": "10.1038/s41588-026-02808-3",
@@ -889,6 +893,8 @@ def main() -> int:
     }
     overrides["Zavitan"] = {
         "display_name": "Zavitan pangenome (2026)",
+        # 818 .fai rows = 14 chromosomes + 804 unplaced scaffolds.
+        "_hard": ["chromosome_count"], "chromosome_count": 14,
         "notes": "四倍体泛基因组 2026 的 Zavitan 参考组装（818 seqs / 10.51 Gb）；DOI 10.1038/s41588-026-02678-9",
     }
     overrides["AABB_Durum_Wheat_Svevo"] = {
