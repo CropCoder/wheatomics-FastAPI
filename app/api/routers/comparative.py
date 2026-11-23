@@ -119,7 +119,7 @@ def triticeae_homologs(
         1,
         ge=1,
         le=100,
-        description="Per-species cap: Triticum aestivum gets 3x, Durum wheat / Wild emmer 2x, "
+        description="Per-species cap: Triticum aestivum gets 3x, Wild emmer / Durum wheat 2x, "
                     "Triticum urartu / Aegilops tauschii / Hordeum vulgare 1x",
     ),
 ) -> dict:
@@ -136,10 +136,12 @@ def triticeae_homologs(
         GET /api/homologs/triticeae?gene_id=TraesCS5A02G020900&max_targets=1
     """
     gene_id = ensure_gene_like(gene_id)
+    # Species order and caps mirror the legacy CGI exactly:
+    # T. aestivum 3x, Wild emmer 2x, Durum wheat 2x, then 1x each.
     caps = [
         ("Triticum aestivum", max_targets * 3),
-        ("Durum wheat", max_targets * 2),
         ("Wild emmer", max_targets * 2),
+        ("Durum wheat", max_targets * 2),
         ("Triticum urartu", max_targets),
         ("Aegilops tauschii", max_targets),
         ("Hordeum vulgare", max_targets),
