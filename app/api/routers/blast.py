@@ -238,7 +238,8 @@ def _assembly_level_map() -> dict[str, dict]:
         with mysql_cursor(settings.DB_LITERATURE) as cursor:
             cursor.execute(
                 "SELECT dataset_id, blast_genome_db, blast_cds_db, blast_pep_db, "
-                "assembly_level, chromosome_count, species, common_name, ploidy "
+                "assembly_level, chromosome_count, species, common_name, ploidy, "
+                "display_name "
                 "FROM genome_registry"
             )
             rows = cursor.fetchall()
@@ -253,6 +254,10 @@ def _assembly_level_map() -> dict[str, dict]:
             "chromosome_count": row.get("chromosome_count"),
             "dataset_id": row.get("dataset_id"),
             "category": _registry_category(row),
+            # Human-readable assembly label (JBrowse card title / genome registry
+            # display_name). Only a label: the BLAST database names on disk are
+            # never derived from it, so a rename here cannot break a lookup.
+            "display_name": (row.get("display_name") or "").strip() or None,
         }
         for key in (row.get("blast_genome_db"), row.get("blast_cds_db"),
                     row.get("blast_pep_db"), row.get("dataset_id")):
@@ -270,6 +275,7 @@ def _assembly_level_map() -> dict[str, dict]:
             "chromosome_count": (override or {}).get("chromosome_count"),
             "dataset_id": (out.get(base) or {}).get("dataset_id"),
             "category": (out.get(base) or {}).get("category"),
+            "display_name": (out.get(base) or {}).get("display_name"),
         }
     return out
 
@@ -289,6 +295,10 @@ def _db_meta(name: str, level_map: dict[str, dict]) -> dict:
         "assembly_level": level,
         "chromosome_level": bool(info.get("chromosome_level")) or level in CHROMOSOME_LEVELS,
     }
+    if info.get("display_name"):
+        # Same label as the JBrowse gateway card and /api/genomes display_name,
+        # so a genome is called the same thing in BLAST and in the browser.
+        meta["display_name"] = info["display_name"]
     if kind == "genome" and info.get("chromosome_count"):
         meta["chromosome_count"] = info["chromosome_count"]
     if kind == "chromosome" and name.startswith(("all_Allohexaploidchr", "all_Allotetraploidchr")):

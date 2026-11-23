@@ -2220,6 +2220,10 @@ var DB_LABELS = {
 };
 function dbLabel(db) {
   if (DB_LABELS[db]) return DB_LABELS[db];
+  // Same label as the JBrowse gateway card (genome_registry.display_name),
+  // so "Zavitan v1.0 (2017)" in BLAST opens the "Zavitan v1.0 (2017)" browser.
+  var meta = dbMeta(db);
+  if (meta.display_name) return meta.display_name;
   var m = /^all_Allohexaploidchr(\d+[A-Za-z]+)$/.exec(db);
   if (m) return 'Allohexaploid Chr' + m[1] + ' genome';
   m = /^all_Allotetraploidchr(\d+[A-Za-z]+)$/.exec(db);
@@ -2372,7 +2376,9 @@ function applyDbSearch() {
   catsBox.hidden = true;
   resultsBox.hidden = false;
   var matches = state.dbNames.filter(function (db) {
-    return db.toLowerCase().indexOf(q) >= 0 && dbPassesFilters(db);
+    var hit = db.toLowerCase().indexOf(q) >= 0 ||
+              dbLabel(db).toLowerCase().indexOf(q) >= 0;
+    return hit && dbPassesFilters(db);
   });
   var shown = matches.slice(0, 400);
   resultsBox.innerHTML = shown.map(function (db) { return dbCheckbox(db); }).join('') +
@@ -2422,7 +2428,11 @@ function updateQuickSelectFeedback() {
 function renderSelected() {
   $('#blast-selected-count').textContent = state.selected.size + ' / ' + DB_LIMIT;
   $('#blast-chips').innerHTML = Array.from(state.selected).map(function (db) {
-    return '<span class="blast-chip">' + esc(db) + '<button type="button" data-remove-db="' + esc(db) + '" aria-label="Remove ' + esc(db) + '">×</button></span>';
+    var meta = dbMeta(db), kind = meta.kind || 'other';
+    var suffix = (kind === 'genome' || kind === 'chromosome') ? '' :
+      ' · ' + (DB_KIND_LABEL[kind] || kind);
+    return '<span class="blast-chip" title="' + esc(db) + '">' + esc(dbLabel(db) + suffix) +
+      '<button type="button" data-remove-db="' + esc(db) + '" aria-label="Remove ' + esc(db) + '">×</button></span>';
   }).join('');
   updateQuickSelectFeedback();
 }
@@ -2662,7 +2672,8 @@ function showResultView(id) {
 
 function renderMeta(ctx) {
   if (!ctx) { $('#result-meta').innerHTML = ''; return; }
-  var dbText = ctx.dbs.length > 3 ? (ctx.dbs.slice(0, 3).join(', ') + ' +' + (ctx.dbs.length - 3)) : (ctx.dbs || []).join(', ');
+  var dbLabels = (ctx.dbs || []).map(function (db) { return dbLabel(db); });
+  var dbText = dbLabels.length > 3 ? (dbLabels.slice(0, 3).join(', ') + ' +' + (dbLabels.length - 3)) : dbLabels.join(', ');
   var expires = ctx.createdAt ? new Date(ctx.createdAt + 7 * 86400000) : null;
   var items = [
     ['Program', ctx.program], ['Databases', dbText],

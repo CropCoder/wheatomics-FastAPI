@@ -852,25 +852,44 @@ def main() -> int:
         "gene_table": "Genefunc_AABB_Carthlicum_CWI22960_table",
         "notes": "CWI 22960 (dika wheat) chromosome-level assembly: 14 chr (10,395,351,798 bp) + 10,708 unplaced scaffolds (485,672,382 bp) = 10,881,024,180 bp; PacBio Revio HiFi 34x + hifiasm + Omni-C/YaHS. EGAPx v3 annotation: 114,659 genes (80,158 protein-coding; 28,337 pseudogene; ncRNA), 102,975 mRNA, BUSCO poales_odb10 C 99.2% [S9.5/D89.7] M0.8%; 90,306 models (87.7%) with IsoSeq support; IDs TrcarCWI22960.r1.<chr>01G<6-digit>",
     }
+    # --- 四套 Zavitan 的统一显示名（BLAST 与 JBrowse 用同一串）---
+    #   v1.0          Avni et al. 2017 Science (10.1126/science.aan0032)
+    #   v2.0          Zhu et al. 2019 G3 光学图谱 (10.1534/g3.118.200902)
+    #   near-complete WEW_NT, Yi et al. 2026 Nat Genet (10.1038/s41588-026-02808-3)
+    #   pangenome     Bian et al. 2026 Nat Genet 四倍体泛基因组 (10.1038/s41588-026-02678-9)
+    # 只改显示名/文献元数据；BLAST 库名（AABB_Wild_emmer*）与 JBrowse 目录名保持不动。
     overrides["AABB_Wild_emmer_Zavitan"] = {
-        "display_name": "Wild Emmer Zavitan (near-complete, 2026)",
+        "display_name": "Zavitan near-complete (2026)",
         "cultivar_or_line": "Zavitan",
         "common_name": "Wild emmer wheat", "sample_type": "Wild emmer wheat",
-        "notes": "2026 near-complete Wild Emmer (WEW_NT) 组装；DOI 10.1038/s41588-026-02808-3",
+        "doi": "10.1038/s41588-026-02808-3",
+        "journal": "Nature Genetics", "publication_year": 2026,
+        "paper_title": "Near-complete assembly of wild emmer wheat unveils centromere reorganization during polyploid evolution",
+        "notes": "2026 near-complete WEW_NT 组装（GWHHHUI00000000.1）；DOI 10.1038/s41588-026-02808-3",
     }
     overrides["Wild_emmer"] = {
-        "display_name": "Wild Emmer Zavitan v1.0",
+        "display_name": "Zavitan v1.0 (2017)",
         "species": "Triticum turgidum L. ssp. dicoccoides (Korn. ex Asch. & Graebn.) Thell.",
         "cultivar_or_line": "Zavitan",
         "common_name": "Wild emmer wheat", "sample_type": "Wild emmer wheat",
-        "notes": "Wild Emmer Zavitan v1.0（Avni et al. 2017, Science 10.1126/science.aan0032）",
+        "doi": "10.1126/science.aan0032",
+        "journal": "Science", "publication_year": 2017,
+        "paper_title": "Wild emmer genome architecture and diversity elucidate wheat evolution and domestication",
+        "notes": "Zavitan v1.0 / WEWSeq v1.0（Avni et al. 2017, Science 10.1126/science.aan0032）",
     }
     overrides["Wild_emmerV2"] = {
-        "display_name": "Wild Emmer Zavitan v2.0",
+        "display_name": "Zavitan v2.0 (2019)",
         "species": "Triticum turgidum L. ssp. dicoccoides (Korn. ex Asch. & Graebn.) Thell.",
         "cultivar_or_line": "Zavitan",
         "common_name": "Wild emmer wheat", "sample_type": "Wild emmer wheat",
-        "notes": "Wild Emmer Zavitan v2.0（G3 2018, 10.1534/g3.118.200902）",
+        "doi": "10.1534/g3.118.200902",
+        "journal": "G3 (Bethesda, Md.)", "publication_year": 2019,
+        "paper_title": "Improved Genome Sequence of Wild Emmer Wheat Zavitan with the Aid of Optical Maps",
+        "notes": "Zavitan v2.0（光学图谱改进版；Zhu et al. 2019, G3 10.1534/g3.118.200902）",
+    }
+    overrides["Zavitan"] = {
+        "display_name": "Zavitan pangenome (2026)",
+        "notes": "四倍体泛基因组 2026 的 Zavitan 参考组装（818 seqs / 10.51 Gb）；DOI 10.1038/s41588-026-02678-9",
     }
     overrides["AABB_Durum_Wheat_Svevo"] = {
         "display_name": "Durum Wheat cv. Svevo (AABB)",
