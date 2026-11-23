@@ -112,6 +112,76 @@ def wheat_rice_arabidopsis_homologs(
     return ok({"query_gene": gene_id, "count": len(hits), "hits": [hit.model_dump() for hit in hits]})
 
 
+@router.get("/homologs/triticeae")
+def triticeae_homologs(
+    gene_id: str = Query(..., description="Wheat gene ID, e.g. TraesCS5A02G020900"),
+    max_targets: int = Query(
+        1,
+        ge=1,
+        le=100,
+        description="Per-species cap: Triticum aestivum gets 3x, Durum wheat / Wild emmer 2x, "
+                    "Triticum urartu / Aegilops tauschii / Hordeum vulgare 1x",
+    ),
+) -> dict:
+    """Query Triticeae homologs of a wheat gene (replacement for the old
+    /cgi-bin/triticeae_gene_search.py).
+
+    The table is `Comparative_Genomics_db.Triticeae_table`. Species caps match
+    the legacy CGI: T. aestivum = 3 * max_targets, Durum wheat / Wild emmer =
+    2 * max_targets, T. urartu / Ae. tauschii / H. vulgare = max_targets.
+    Hits are sorted by e-value within each species, then concatenated in the
+    same species order as the CGI.
+
+    Usage:
+        GET /api/homologs/triticeae?gene_id=TraesCS5A02G020900&max_targets=1
+    """
+    gene_id = ensure_gene_like(gene_id)
+    caps = [
+        ("Triticum aestivum", max_targets * 3),
+        ("Durum wheat", max_targets * 2),
+        ("Wild emmer", max_targets * 2),
+        ("Triticum urartu", max_targets),
+        ("Aegilops tauschii", max_targets),
+        ("Hordeum vulgare", max_targets),
+    ]
+
+    with mysql_cursor(settings.DB_COMPARATIVE) as cursor:
+        cursor.execute(
+            "SELECT Query, Target1, Species, Qcovs, Length1, Identity1, Positive, evalue, score "
+            "FROM Triticeae_table WHERE Query=%s",
+            (gene_id,),
+        )
+        rows = cursor.fetchall() or []
+
+    grouped: dict[str, list[dict]] = {}
+    for row in rows:
+        grouped.setdefault(str(row.get("Species", "")), []).append(row)
+
+    def _evalue(value) -> float:
+        try:
+            return float(str(value).strip())
+        except (TypeError, ValueError):
+            return 0.0
+
+    hits: list[dict] = []
+    for species, cap in caps:
+        selected = sorted(grouped.get(species, []), key=lambda row: _evalue(row.get("evalue")))[:cap]
+        for row in selected:
+            hits.append({
+                "query_gene": str(row.get("Query", "")),
+                "target_gene": str(row.get("Target1", "")),
+                "species": species,
+                "qcovs": float(row.get("Qcovs", 0) or 0),
+                "length": int(row.get("Length1", 0) or 0),
+                "identity": float(row.get("Identity1", 0) or 0),
+                "positive": float(row.get("Positive", 0) or 0),
+                "evalue": _evalue(row.get("evalue")),
+                "score": float(row.get("score", 0) or 0),
+            })
+
+    return ok({"query_gene": gene_id, "count": len(hits), "hits": hits})
+
+
 @router.get("/synteny/search")
 def search_synteny(
     query: str = Query(..., alias="ID"),
