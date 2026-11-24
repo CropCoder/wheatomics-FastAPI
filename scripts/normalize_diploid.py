@@ -225,12 +225,19 @@ class AssemblyReport(object):
 
     # -- 映射 ---------------------------------------------------------------
     def chrom_name(self, row):
-        """按报告行计算规范化 seqid。"""
+        """按报告行计算规范化 seqid。
+
+        注意：NCBI 报告里 assembled-molecule 的 Sequence-Name 有 ``1A`` 也有
+        ``chr1R``（小写前缀，如 lpSecCere.Lo7.IPK.v3）；后者若直接前接 ``Chr``
+        会得到 ``Chrchr1R``，与 GFF/FASTA 全都对不上。这里统一剥掉大小写不敏感的
+        ``chr`` 前缀再加规范前缀。
+        """
         name = row["seq_name"]
         if row["role"] == "assembled-molecule":
             if name.startswith(self.chrom_prefix):
                 return name
-            return self.chrom_prefix + name
+            m = re.match(r"(?i)^chr(.+)$", name)
+            return self.chrom_prefix + (m.group(1) if m else name)
         if name.startswith(self.unplaced_prefix):
             return name
         return self.unplaced_prefix + name
@@ -461,6 +468,10 @@ def cmd_fasta(args):
     mapped_names = set(expected.keys())
     accn_map = report.by_accn
     name_map = report.by_name
+    # 版本号兜底：报告里是 OZ284382.1，头里偶尔只有 OZ284382
+    accn_map_nover = {}
+    for _accn, _row in accn_map.items():
+        accn_map_nover.setdefault(_accn.split(".")[0], _row)
 
     n_in = 0
     n_out_headers = 0
@@ -485,6 +496,11 @@ def cmd_fasta(args):
                     total_len_in += seq_len
                     total_len_out += seq_len
                 name, rest = split_header(line)
+                # ENA 流式导出（browser/api/fasta）的头是
+                # ``ENA|<accession>|<accession.version>``，取最后一段才能和
+                # assembly_report 的 GenBank-Accn 对上（2026-11-24 Lo7_V3 实测）
+                if name.upper().startswith("ENA|") and name.count("|") >= 2:
+                    name = name.rsplit("|", 1)[-1].strip()
                 n_in += 1
                 n_out_headers += 1
                 seen_in.add(name)
@@ -493,6 +509,9 @@ def cmd_fasta(args):
                 if name in accn_map:
                     new_name = report.chrom_name(accn_map[name])
                     src = "genbank-accn"
+                elif name.split(".")[0] in accn_map_nover:
+                    new_name = report.chrom_name(accn_map_nover[name.split(".")[0]])
+                    src = "genbank-accn-nover"
                 elif name in name_map:
                     new_name = report.chrom_name(name_map[name])
                     src = "sequence-name"

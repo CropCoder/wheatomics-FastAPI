@@ -1155,6 +1155,28 @@ def main() -> int:
         "notes": "DOI 待核实（jbrowse 卡片与 Genefunc_registry 均无 DOI；2026-11-24 已清除误填的 urartu DOI）",
     }
 
+    # --- 2026-11-24 新上线：黑麦 Lo7_V3（IPK，Nature Communications 2026）---
+    overrides["RR_rye_Lo7_v3"] = {
+        "display_name": "Rye v3.0 Lo7 (IPK)",
+        "species": "Secale cereale", "ploidy": "RR", "subgenomes": "R",
+        "cultivar_or_line": "Lo7", "common_name": "Rye",
+        "sample_type": "Cultivated rye inbred line",
+        "assembly_accession": "GCA_965641915.1", "assembly_level": "Chromosome",
+        "assembly_version": "lpSecCere.Lo7.IPK.v3",
+        "genome_size": 6702647067,
+        "chromosome_count": 7, "_hard": ["chromosome_count", "genome_size"],
+        "gene_count": 75850,
+        "doi": "10.1038/s41467-026-76753-4",
+        "journal": "Nature Communications", "publication_year": 2026,
+        "paper_title": "Unveiling centromeric retrotransposon dynamics through a high-quality rye genome assembly",
+        "annotation_status": "available",
+        "annotation_source": "IPK e!DAL 10.5447/ipk/2026/5（SECALE.CEREALE.Lo7.pgsb.r2.Feb2025，HC+LC）",
+        "annotation_doi": "10.5447/ipk/2026/5",
+        "source_url": "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/965/641/915/GCA_965641915.1_lpSecCere.Lo7.IPK.v3/",
+        "notes": "Lo7_V3：7 chr + 235 unplaced（6,702,647,067 bp）；75,850 基因 / 84,086 mRNA"
+                 "（Genefunc 表按 mRNA 计）；论文 10.1038/s41467-026-76753-4",
+    }
+
     for key, ov in overrides.items():
         r = rec(key)
         _hard = set(ov.get("_hard") or [])
