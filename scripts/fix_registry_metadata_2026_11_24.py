@@ -75,7 +75,7 @@ FIXES: dict[str, tuple[str | None, dict]] = {
                  "Weining v2.0 = 7 chr + ChrUn（7,748,120,638 bp），Genefunc 表 135,453 个 EVM 模型",
     }),
     # 旧解析只认 div.card-body，V2 卡片被整条丢弃后 DOI 来自关键词回退
-    "AABBDD_Triticum_aestivum_Keumkang": ("10.1038s41586-018-0108-0", {
+    "AABBDD_Triticum_aestivum_Keumkang": (("10.1038s41586-018-0108-0", "10.1038/s41586-018-0108-0"), {
         "doi": "10.1038/s41597-026-08617-x",
         "journal": "Scientific Data",
         "publication_year": 2026,
@@ -83,7 +83,7 @@ FIXES: dict[str, tuple[str | None, dict]] = {
         "citation_source": "jbrowse card + Genefunc_registry（2026-11-24 人工核对）",
         "notes": f"[{TAG}] 原 DOI 为漏斜杠的 T.urartu DOI（关键词回退误写）",
     }),
-    "Triticum_spelta_PI190962": ("10.1038s41586-018-0108-0", {
+    "Triticum_spelta_PI190962": (("10.1038s41586-018-0108-0", "10.1038/s41586-018-0108-0"), {
         "doi": "10.1038/s41586-020-2961-x",
         "journal": "Nature",
         "publication_year": 2020,
@@ -91,7 +91,7 @@ FIXES: dict[str, tuple[str | None, dict]] = {
         "citation_source": "jbrowse card（2026-11-24 人工核对）",
         "notes": f"[{TAG}] 原 DOI 为漏斜杠的 T.urartu DOI（关键词回退误写）",
     }),
-    "Triticum_aestivum_MOV": ("10.1038s41586-018-0108-0", {
+    "Triticum_aestivum_MOV": (("10.1038s41586-018-0108-0", "10.1038/s41586-018-0108-0"), {
         "doi": "10.1073/pnas.2510889122",
         "journal": "Proceedings of the National Academy of Sciences",
         "publication_year": 2025,
@@ -100,7 +100,7 @@ FIXES: dict[str, tuple[str | None, dict]] = {
         "citation_source": "jbrowse card（2026-11-24 人工核对）",
         "notes": f"[{TAG}] 原 DOI 为漏斜杠的 T.urartu DOI（关键词回退误写）",
     }),
-    "Triticum_urartu_PI428250": ("10.1038s41586-018-0108-0", {
+    "Triticum_urartu_PI428250": (("10.1038s41586-018-0108-0", "10.1038/s41586-018-0108-0"), {
         "doi": "10.1038/s41467-026-71539-0",
         "journal": "Nature Communications",
         "publication_year": 2026,
@@ -118,7 +118,7 @@ FIXES: dict[str, tuple[str | None, dict]] = {
         "notes": f"[{TAG}] 原 DOI 为 Sumai 3（cite.html 串块 bug）",
     }),
     # 卡片无 DOI、Genefunc_registry Doi 为空、策展表无此材料：宁可为空
-    "Triticum_aestivum_alchemy": ("10.1038s41586-018-0108-0", {
+    "Triticum_aestivum_alchemy": (("10.1038s41586-018-0108-0", "10.1038/s41586-018-0108-0"), {
         "doi": None,
         "journal": None,
         "publication_year": None,
@@ -160,8 +160,9 @@ def main() -> int:
                 if not row:
                     print(f"[skip] {ds}: 不在 registry")
                     continue
-                if old_doi is not None and (row["doi"] or "") != old_doi:
-                    print(f"[skip] {ds}: 当前 doi={row['doi']!r} 已不是已知错误值 {old_doi!r}")
+                known_bad = old_doi if isinstance(old_doi, (list, tuple, set)) else [old_doi]
+                if old_doi is not None and (row["doi"] or "") not in known_bad:
+                    print(f"[skip] {ds}: 当前 doi={row['doi']!r} 已不是已知错误值 {known_bad!r}")
                     continue
                 sets = ", ".join(f"`{k}`=%s" for k in fields)
                 params = list(fields.values()) + [ds]

@@ -199,6 +199,8 @@ $PY scripts/normalize_diploid.py gff3 \
   --gff3 genes_HC_LC.gff3.gz --assembly-report GCA_xxx_assembly_report.txt \
   --keep-author-ids --out step1.gff3 --mapping step1.seqid_map.tsv
 #    ②-2 重编号：每染色体按坐标从 000100 起、每 100 递增；未定位用 UnG 全局编号
+#         注意：单染色体基因数 >9,999 时（黑麦 Lo7_V3 Chr2R–Chr6R 均 >10k），
+#         6 位序号必须配 --step 10，否则直接报"超出容量"退出
 $PY scripts/renumber_gff_ids.py \
   --gff3 step1.gff3 --out ${MYTAG}.gff3 \
   --id-prefix "AeCom.AE783.r1." --id-map ${MYTAG}.idmap.tsv \
@@ -216,6 +218,15 @@ $PY scripts/normalize_diploid.py pep --pep in.pep --out ${MYTAG}.pep
 # ⑤ 汇总断言
 $PY scripts/normalize_diploid.py check --dir .
 ```
+
+**2026-11 实测补充（黑麦 Lo7_V3）**：
+
+- **ENA 流式下载的头是 `ENA|OZ284382|OZ284382.1`**（不是纯登录号）：脚本已支持解析并回退到无版本号匹配；
+  若用自写脚本，先按 `|` 切最后一段再查 assembly_report。
+- **assembly_report 的 Sequence-Name 可能是小写 `chr1R`**：`chrom_name()` 会先大小写不敏感地剥掉 `chr`
+  再拼 `Chr`，否则得到 `Chrchr1R` 与 GFF/FASTA 全对不上。
+- **`##sequence-region` 指令不会被 gff3 子命令改写**：改写 seqid 后需用同一份映射表同步这 84 行
+  （或用 `--seqid-map` 后再跑一次检查），否则 JBrowse `prepare-refseqs.pl` 会按旧名建 refseq。
 
 **规则要点**（`normalize_diploid.py` 已实现）：
 1. **seqid 映射**：`^[1-7][A-Z]$`（如 `1M`）→ `Chr1M`；assembly_report 的 assembled-molecule → `Chr`+Sequence-Name；其余（unplaced/unlocalized）→ `ChrUn_`+Sequence-Name；已 `Chr` 开头的保持不变。
@@ -406,7 +417,7 @@ bash scripts/finish_genome_integration.sh …（同上，去掉 --dry-run）
 
 - 脚本从「JBrowse / Genefunc_registry / blastdb / all_genomes.nal / synteny / orthofinder」等平台事实重建，**幂等 upsert**；
 - 不在策展表里的新基因组，把手工字段写进 `overrides` 字典（**否则 rebuild 会把它们留空**）：`species/ploidy/subgenomes/cultivar_or_line/assembly_accession/assembly_level/chromosome_count/genome_size/gene_count/te_content/doi/paper_title/journal/publication_year/annotation_status/annotation_source/annotation_doi/notes`；
-- **重点**：`chromosome_count` 必须写 overrides（rebuild 会用 `.genome.fai` 的**序列数**当染色体数，未定位 scaffold 会把 7 条写成几十/几百条）；`assembly_level` 同理；
+- **重点**：`chromosome_count` 必须写 overrides（rebuild 会用 `.genome.fai` 的**序列数**当染色体数，未定位 scaffold 会把 7 条写成几十/几百条；黑麦 Lo7_V3 实测被写成 **242**=7+235，需 `"_hard": ["chromosome_count"]`）；`assembly_level` 同理；
 - 收尾脚本第 8 步会再写回 DOI/标题/材料/基因数/flags，但 `overrides` 是重建时的兜底。
 
 ### 9.3 BLAST↔JBrowse 映射（必做）
@@ -443,6 +454,15 @@ curl -s http://127.0.0.1:8000/api/jbrowse/coverage
 7. **注意**：生产 `/var/www/FastAPI_backend_Port8000` 上手工改文件会被 Gitee webhook 的 `auto_pull.sh`（`git reset --hard FETCH_HEAD`）覆盖 —— 所有改动必须走 repo。
 
 ---
+
+## 11.0 2026-11-25 新增坑（黑麦 Lo7_V3 上线）
+
+- **上线会重跑 rebuild，历史修正会被覆盖**：G3 Step 10 与 G4 第 6-8 步都会调用生产仓的
+  `rebuild_genome_registry.py`。若生产仓版本落后（例如 2026-11-24 的 DOI 解析修复还没推上去），
+  这次重建会把此前修好的 9 行 DOI 重新写错。**上线前先确认 `git -C /var/www/FastAPI_backend_Port8000 log -1`
+  是否已包含最新修复**；收尾后跑 `python3 scripts/verify_genome_doi.py` 复核全库。
+- **`chromosome_count` 被 .fai 序列数污染**：242 = 7 染色体 + 235 unplaced（见 §9.2），overrides 必写 `_hard`。
+- **ENA / 小写 chr / sequence-region / step 容量**：见 §4.3「2026-11 实测补充」。
 
 ## 11. 已知坑（v2 版，都踩过）
 
