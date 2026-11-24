@@ -140,7 +140,7 @@ PLOIDY="$1"; MYTAG="$2"; DOI="$3"; shift 3
 
 LABEL="$MYTAG"; SECTION=""; GROUP=""; TITLE=""; ACCESSION=""; SPECIES=""
 CULTIVAR=""; JOURNAL=""; YEAR=""; SOURCE_URL=""; SOURCE_MD5=""; PAPER_CODE=""
-DRY=0; SKIP_HTML=0; SKIP_REGISTRY=0; RESTART=0; FORCE=0
+DRY=0; SKIP_HTML=0; SKIP_REGISTRY=0; RESTART=0; FORCE=0; SKIP_DOI_CHECK=0
 CHECK_NAME=0; SECTION_EXISTING=""; EXPECT_CAT=""
 WRITE_PLAN=0; CONFIRM=0; SKIP_PLAN_CHECK=0
 SECTION_TITLE=""; SECTION_DESC=""; SEARCH_EXTRA=""; REQUIRE_SECTION=0
@@ -172,6 +172,7 @@ while [ "$#" -gt 0 ]; do
     --dry-run)        DRY=1; shift ;;
     --skip-html)      SKIP_HTML=1; shift ;;
     --skip-registry)  SKIP_REGISTRY=1; shift ;;
+    --skip-doi-check) SKIP_DOI_CHECK=1; shift ;;
     --restart-api)    RESTART=1; shift ;;
     --force)          FORCE=1; shift ;;
     -h|--help)        usage; exit 0 ;;
@@ -189,6 +190,85 @@ log()  { echo "[$(date +%H:%M:%S)] $*"; }
 warn() { echo "[$(date +%H:%M:%S)] [WARN] $*" >&2; }
 fail() { echo "[$(date +%H:%M:%S)] [FAIL] $*" >&2; FAILED=$((FAILED+1)); }
 die()  { echo "[$(date +%H:%M:%S)] [FATAL] $*" >&2; exit 2; }
+
+# ---------------------------------------------------------------- DOI 校验（强制）
+# DOI 是命令行参数，会原样写进 genome_registry / cite.html / JBrowse 卡片；
+# 写错时站点一切正常，只有用户引用时才暴露。2026-11-24 核查就靠这一步抓出
+# 7 条错 DOI（含 rye_weining2 / Elymus Gaomu 被写成 Sumai 3、5 条漏斜杠）。
+verify_doi() {
+  [ -z "$DOI" ] && return 0
+  if [ "${SKIP_DOI_CHECK:-0}" = 1 ]; then
+    warn "跳过 DOI 校验（--skip-doi-check）：请手工确认 $DOI"
+    return 0
+  fi
+  local out rc
+  out="$(DOI="$DOI" SPECIES="$SPECIES" CULTIVAR="$CULTIVAR" GROUP="$GROUP" python3 - <<'PY'
+import json, os, re, sys, urllib.error, urllib.parse, urllib.request
+
+doi = os.environ.get("DOI", "").strip()
+species = os.environ.get("SPECIES", "").strip()
+cultivar = os.environ.get("CULTIVAR", "").strip()
+group = os.environ.get("GROUP", "").strip()
+
+if not re.fullmatch(r"10\.\d{4,9}/[^\s\"'<>]+", doi):
+    print(f"[DOI] 格式错误：{doi!r}（应为 10.xxxx/yyyy）")
+    sys.exit(2)
+url = "https://api.crossref.org/works/" + urllib.parse.quote(doi, safe="/")
+req = urllib.request.Request(url, headers={
+    "User-Agent": "wheatomics-finish-genome/1.0 (mailto:wheatomics@sdau.edu.cn)"})
+try:
+    with urllib.request.urlopen(req, timeout=25) as fh:
+        msg = json.loads(fh.read().decode("utf-8", "replace"))["message"]
+except urllib.error.HTTPError as exc:
+    if exc.code == 404:
+        print(f"[DOI] Crossref 404：{doi} 未注册")
+        sys.exit(2)
+    print(f"[DOI] Crossref 返回 {exc.code}，无法校验（跳过）")
+    sys.exit(0)
+except Exception as exc:  # 网络问题不阻断上线，但要显式提示
+    print(f"[DOI] Crossref 不可达（{exc}），无法校验（跳过）")
+    sys.exit(0)
+
+title = re.sub(r"<[^>]+>", "", (msg.get("title") or [""])[0]).strip()
+journal = (msg.get("container-title") or [""])[0]
+year = None
+for key in ("published-print", "published-online", "published", "issued"):
+    parts = (msg.get(key) or {}).get("date-parts") or [[None]]
+    if parts and parts[0] and parts[0][0]:
+        year = parts[0][0]
+        break
+print(f"[DOI] {doi} → {title[:110]} | {journal} | {year}")
+
+expected = set()
+for src in (species, cultivar, group):
+    for w in re.split(r"[^A-Za-z0-9]+", src.lower()):
+        if len(w) >= 3 and w not in {"genome", "assembly", "sequence", "chromosome", "the"}:
+            expected.add(w)
+# 属名 -> 英文俗名（论文标题通常只写 rye/barley/wheat，不写属名）
+COMMON = {"triticum": "wheat", "hordeum": "barley", "secale": "rye",
+          "triticale": "triticale", "aegilops": "aegilops", "elymus": "elymus",
+          "thinopyrum": "thinopyrum", "leymus": "leymus", "roegneria": "roegneria",
+          "dasypyrum": "dasypyrum", "agropyron": "agropyron"}
+genus = species.split()[0].lower() if species else ""
+if genus in COMMON:
+    expected.add(COMMON[genus])
+blob = (title + " " + journal).lower()
+if expected and not any(w in blob for w in expected):
+    print(f"[DOI] 标题/期刊里没有材料关键词 {sorted(expected)}，请确认这条 DOI 是否对应该材料")
+    sys.exit(1)
+sys.exit(0)
+PY
+)"
+  rc=$?
+  echo "$out"
+  case "$rc" in
+    0) return 0 ;;
+    1) warn "DOI 与材料名对不上：${DOI}（确认无误可加 --skip-doi-check 继续）" ;;
+    *) die "DOI 校验失败：${DOI}" ;;
+  esac
+}
+
+verify_doi   # 强制：DOI 写错只会在用户引用时暴露（函数见上）
 
 [ "$DRY" = 1 ] && log "*** DRY-RUN：只打印计划，不修改任何文件 ***"
 

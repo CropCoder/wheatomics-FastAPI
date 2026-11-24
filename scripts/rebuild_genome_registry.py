@@ -83,7 +83,10 @@ def mysql(db: str):
     )
 
 
-CARD_RE = re.compile(r'<div class="card-body">(.*?)</div>', re.S)
+# JBrowse 页面已升级为 V2（article.asm-card + .asm-name/.asm-doi），旧版是 div.card-body。
+# 只认旧标记会让所有卡片被丢弃，DOI 全部落到 cite.html 关键词回退（错 DOI 的根源）。
+CARD_RE_V2 = re.compile(r'<article class="asm-card"[^>]*>(.*?)</article>', re.S)
+CARD_RE_V1 = re.compile(r'<div class="card-body">(.*?)</div>', re.S)
 SELF_LINK_RE = re.compile(r"\?data=([^\"']+)[\"'][^>]*>(.*?)</a>", re.S)
 LINK_RE = re.compile(r'href="([^"]+)"[^>]*>(.*?)</a>', re.S)
 DOI_RE = re.compile(r"(10\.\d{4,9}/[^\s\"'<>]+)")
@@ -122,7 +125,8 @@ def parse_jbrowse_cards() -> dict:
     except OSError:
         return {}
     cards = {}
-    for block in CARD_RE.findall(html):
+    blocks = CARD_RE_V2.findall(html) or CARD_RE_V1.findall(html)
+    for block in blocks:
         m = SELF_LINK_RE.search(block)
         if not m:
             continue
@@ -132,6 +136,11 @@ def parse_jbrowse_cards() -> dict:
         repo_url = None
         link_label = None
         accession = None
+        # V2 卡片的 <article data-search="…doi:10.xxxx/yyy…"> 是卡片自带的 DOI，
+        # 比链接文本更稳（有的卡片 <a> 里写成 "https:/doi.org/…" 少一个斜杠）。
+        dm = re.search(r'data-search="([^"]*)"', block)
+        if dm:
+            doi = _extract_doi(dm.group(1))
         for href, label in LINK_RE.findall(block):
             if "data=" in href:
                 continue
@@ -164,26 +173,64 @@ def parse_jbrowse_cards() -> dict:
     return cards
 
 
+def _clean_citation_title(citation: str) -> str | None:
+    """从一段引文里抽标题，抽不准就返回 None（宁缺勿错）。
+
+    2026-11-24 前这里用 ``\\((?:19|20)\\d{2}\\)\\s*(.+?)`` 直接抽，遇到
+    "……Nat Genet 53, 564–573 (2021)." 这种年份在后的引文会抽出
+    ". doi:10.1038/…" 之类的垃圾标题，写进了 genome_registry.paper_title。
+    """
+    if not citation:
+        return None
+    cand = ""
+    tm = re.search(r"\((?:19|20)\d{2}\)\s*(.+?)(?:\.\s|\.$|\?|$)", citation)  # 年份在前
+    if tm:
+        cand = tm.group(1).strip()
+    else:  # 年份在后：取第一个长句
+        for seg in re.split(r"\.\s+", citation):
+            seg = seg.strip()
+            if len(seg) > 25:
+                cand = seg
+                break
+    cand = cand.strip(" .,;:")
+    low = cand.lower()
+    if (len(cand) < 25 or len(cand.split()) < 5
+            or "doi:" in low or low.startswith("http") or (cand and cand[0] in ".,;:)")):
+        return None
+    # 作者列表也常出现在同一句里（"Jia J, Zhao G, Li D, …"），不当标题用
+    if " et al" in low or cand.count(",") >= 5:
+        return None
+    return cand[:500]
+
+
 def parse_cite_blocks() -> tuple[dict, list[dict]]:
-    """解析 cite.html：返回 (doi -> 引文, 全部块列表)。"""
+    """解析 cite.html：返回 (doi -> 引文, 全部块列表)。
+
+    按 ``If you use `` 切片、逐片紧跟 ``please cite:``，而不是用
+    ``If you use (.+?) please cite:`` 跨片匹配：页面里有若干条写成
+    ``…sequences,please cite:``（漏了空格），旧正则因此把下一条整段吞进
+    trigger，DOI/标题全部串位。2026-11-24 的 rye_weining2、
+    Elymus_sibiricus_cultivar_Gaomu 被写成 Sumai 3 的 DOI 就是这个原因。
+    """
     try:
         html = open(CITE_HTML, encoding="utf-8", errors="replace").read()
     except OSError:
         return {}, []
-    blocks = re.findall(
-        r"If you use (.+?) please cite:(.*?)(?=<br>\s*<br>|If you use |$)",
-        html, re.S,
-    )
     by_doi = {}
     all_blocks = []
-    for trigger, body in blocks:
-        trigger_s = _strip_tags(trigger)
+    for chunk in re.split(r"(?=If you use )", html):
+        if not chunk.startswith("If you use "):
+            continue
+        m = re.match(r"If you use (.+?)[\s,]*please cite:(.*)", chunk, re.S)
+        if not m:
+            continue
+        trigger_s = _strip_tags(m.group(1))
+        if "If you use" in trigger_s:  # 兜底：绝不接受跨块 trigger
+            continue
+        body = re.split(r"<br>\s*<br>|If you use ", m.group(2))[0]
         citation = _strip_tags(body)[:1500]
         doi = _extract_doi(citation)
-        title = None
-        tm = re.search(r"\((?:19|20)\d{2}\)\s*(.+?)(?:\.\s|\?|$)", citation)
-        if tm:
-            title = tm.group(1).strip()[:500]
+        title = _clean_citation_title(citation)
         all_blocks.append({"trigger": trigger_s, "citation": citation,
                            "doi": doi, "title": title})
         if doi:
@@ -290,7 +337,7 @@ class Matcher:
 
 
 def main() -> int:
-    dry = "--dry-run" in sys.argv
+    dry = "--dry-run" in sys.argv or "--diff" in sys.argv
     src = gather_sources()
     m = Matcher(src["jbrowse_ids"])
     records: dict[str, dict] = {}
@@ -339,8 +386,12 @@ def main() -> int:
     # --- jbrowse.html 卡片 + cite.html 引文/数据源 ---
     cards = src.get("jbrowse_cards", {})
     cite_by_doi = src.get("cite_by_doi", {})
+    # jbrowse.html 卡片里的 ?data= 链接大小写与真实目录名并不总是一致
+    # （如 aabbdd_triticum_aestivum_keumkang vs AABBDD_Triticum_aestivum_Keumkang），
+    # 精确匹配会让卡片整条被丢弃、DOI 随后被关键词回退写错。
+    lower_index = {k.lower(): k for k in records}
     for ds, card in cards.items():
-        r = records.get(ds)
+        r = records.get(ds) or records.get(lower_index.get((ds or "").lower(), ""))
         if not r:
             continue
         if card.get("doi") and not r.get("doi"):
@@ -360,27 +411,48 @@ def main() -> int:
         if card.get("title") and r.get("display_name") in (None, "", ds):
             r["display_name"] = card["title"]
 
-    # 对仍缺 doi/引文的记录，用 cite.html 的 "If you use ..." 描述做关键词回退
+    # 对仍缺 doi/引文的记录，用 cite.html 的 "If you use ..." 描述做关键词回退。
+    # 只用「材料级」关键词：属名/种加词（triticum/aestivum/hordeum/…）在几乎每篇
+    # 引文里都有，拿它当匹配键会把整属记录指到同一篇论文（Keumkang→urartu 即此因）。
+    # 且要求唯一命中：多条 trigger 都命中就放弃，宁可空着也不要写错。
     stop_words = {"genome", "genomes", "transcripts", "transcript", "sequences",
-                  "sequence", "proteins", "protein", "genes", "gene", "please", "cite"}
+                  "sequence", "proteins", "protein", "genes", "gene", "please",
+                  "cite", "cultivar", "accession", "assembly", "chromosome",
+                  "triticum", "aestivum", "turgidum", "durum", "dicoccoides",
+                  "urartu", "monococcum", "spelta", "carthlicum", "polonicum",
+                  "turanicum", "aethiopicum", "ispahanicum", "karamyschevii",
+                  "timopheevii", "zhukovskyi", "macha", "vavilovii", "wheat",
+                  "hordeum", "vulgare", "spontaneum", "bulbosum", "barley",
+                  "secale", "cereale", "rye", "aegilops", "tauschii", "comosa",
+                  "markgrafii", "umbellulata", "uniaristata", "speltoides",
+                  "longissima", "sharonensis", "bicornis", "searsii", "elymus",
+                  "sibiricus", "nutans", "roegneria", "kamoji", "thinopyrum",
+                  "intermedium", "elongatum", "ponticum", "leymus", "chinensis",
+                  "agropyron", "cristatum", "dasypyrum", "villosum", "triticale",
+                  "triticosecale", "einkorn", "goatgrass", "hexaploid",
+                  "tetraploid", "diploid", "bread", "common"}
     for r in records.values():
         if r.get("doi") and r.get("citation_text"):
             continue
-        kws = [w for w in re.split(r"[^A-Za-z0-9]+", r.get("display_name") or r["dataset_id"])
-               if len(w) >= 4 and w.lower() not in stop_words]
+        kws = {w for w in re.split(r"[^A-Za-z0-9]+", r.get("display_name") or r["dataset_id"])
+               if len(w) >= 4 and w.lower() not in stop_words}
         if not kws:
             continue
-        for blk in src.get("cite_blocks", []):
-            trig = (blk.get("trigger") or "").lower()
-            if trig and any(k.lower() in trig for k in kws):
-                if not r.get("doi") and blk.get("doi"):
-                    r["doi"] = blk["doi"]
-                if not r.get("citation_text") and blk.get("citation"):
-                    r["citation_text"] = blk["citation"]
-                    r["citation_source"] = "cite.html (keyword match)"
-                if not r.get("paper_title") and blk.get("title"):
-                    r["paper_title"] = blk["title"]
-                break
+        hits = [blk for blk in src.get("cite_blocks", [])
+                if (blk.get("trigger") or "").lower()
+                and any(k.lower() in (blk.get("trigger") or "").lower() for k in kws)]
+        if len(hits) != 1:  # 0 条 = 无引文；>1 条 = 歧义，都不写
+            if len(hits) > 1 and not r.get("doi"):
+                r["notes"] = (r.get("notes") or "") + f" [引文关键词命中 {len(hits)} 条，DOI 待人工确认]"
+            continue
+        blk = hits[0]
+        if not r.get("doi") and blk.get("doi"):
+            r["doi"] = blk["doi"]
+        if not r.get("citation_text") and blk.get("citation"):
+            r["citation_text"] = blk["citation"]
+            r["citation_source"] = "cite.html (keyword match)"
+        if not r.get("paper_title") and blk.get("title"):
+            r["paper_title"] = blk["title"]
 
     # --- Genefunc_registry ---
     GENEFUNC_KEY_OVERRIDES = {
@@ -688,8 +760,12 @@ def main() -> int:
                 if _m:
                     curated_doi = _m.group(0).rstrip(".,;")
                     if r.get("doi") and r.get("doi") != curated_doi:
-                        r["notes"] = (r.get("notes") or "") + f" [原 DOI: {r['doi']}]"
-                    r["doi"] = curated_doi
+                        # 站点卡片/引文页已经给出的 DOI 与策展表不一致时不要静默覆盖：
+                        # 策展表同一物种常有两行（如 Lo7 的 2017 草稿 vs 2021 参考），
+                        # 覆盖会把正确的 DOI 换成年份/材料对不上的那一行。
+                        r["notes"] = (r.get("notes") or "") + f" [策展表 DOI 冲突: {curated_doi}]"
+                    else:
+                        r["doi"] = curated_doi
             if row.get("NCBI_Assembly_Level"):
                 lv = str(row["NCBI_Assembly_Level"]).strip()
                 if lv.lower() != "none":
@@ -1021,6 +1097,64 @@ def main() -> int:
         "notes": "4DWheat GCA_052815765.1（21 seqs = 7 chr + 14 unplaced），50,416 基因（HC 35,816 / LC 14,600），BUSCO protein 96.6%；PacBio HiFi + Bionano + Hi-C 组装，注释 Zenodo 22681907",
     }
 
+    # --- 2026-11-24 DOI 核查修正 ---
+    # 两条 rye + 4 条小麦/Elymus 记录的 DOI 曾被 cite.html 串块 + 关键词回退写错，
+    # 这里按"站点卡片 / cite.html / Genefunc_registry 三处一致"的值钉死，
+    # 避免下一次重建又被策展表的另一行覆盖回去。核查：scripts/verify_genome_doi.py
+    overrides["rye_Lo7"] = {
+        # 平台数据 = Ensembl rye Lo7（Rye_Lo7_2018_v1p1p1, GCA_902687465.1, 6,735,227,109 bp）
+        # + 2021 注释（SECCE1Rv1G* 57,222 基因）；策展表另有一行 2017 草稿（27,784 HC 基因），
+        # 与本站实际数据不符，不能用来填 DOI/gene_count。
+        "doi": "10.1038/s41588-021-00807-0",
+        "journal": "Nature Genetics", "publication_year": 2021,
+        "paper_title": "Chromosome-scale genome assembly provides insights into rye biology, evolution and agronomic potential",
+        "assembly_accession": "GCA_902687465.1", "assembly_level": "Chromosome",
+        "gene_count": 57222, "cultivar_or_line": "Lo7",
+        "notes": "Ensembl rye Lo7（GCA_902687465.1, 6,735,227,109 bp）；SECCE1Rv1G* 57,222 基因（Genefunc_RR_rye_Lo7_table）",
+    }
+    overrides["rye_weining2"] = {
+        "doi": "10.1186/s13059-025-03792-3",
+        "journal": "Genome Biology", "publication_year": 2025,
+        "paper_title": "High-resolution genome assembly reveals retrotransposon-mediated centromere dynamics in rye",
+        "species": "Secale cereale", "cultivar_or_line": "Weining",
+        "chromosome_count": 7, "_hard": ["chromosome_count"],
+        "gene_count": 135453,
+        "notes": "Weining v2.0：7 chr + ChrUn（7,748,120,638 bp）；Genefunc 表 135,453 个 EVM 模型",
+    }
+    overrides["AABBDD_Triticum_aestivum_Keumkang"] = {
+        "doi": "10.1038/s41597-026-08617-x",
+        "journal": "Scientific Data", "publication_year": 2026,
+        "paper_title": "Chromosome-level genome assembly of the Korean wheat cultivar Keumkang",
+    }
+    overrides["Triticum_spelta_PI190962"] = {
+        "doi": "10.1038/s41586-020-2961-x",
+        "journal": "Nature", "publication_year": 2020,
+        "paper_title": "Multiple wheat genomes reveal global variation in modern breeding",
+    }
+    overrides["Triticum_aestivum_MOV"] = {
+        "doi": "10.1073/pnas.2510889122",
+        "journal": "Proceedings of the National Academy of Sciences", "publication_year": 2025,
+        "paper_title": "WUSCHEL-D1 upregulation enhances grain number by inducing formation of multiovary-producing florets in wheat",
+    }
+    overrides["Triticum_urartu_PI428250"] = {
+        "doi": "10.1038/s41467-026-71539-0",
+        "journal": "Nature Communications", "publication_year": 2026,
+        "paper_title": "LOX-A4 shapes Triticum urartu gene pools and contributions to the A subgenome of polyploid wheat",
+    }
+    overrides["Elymus_sibiricus_cultivar_Gaomu"] = {
+        "doi": "10.1038/s41597-024-03622-4",
+        "journal": "Scientific Data", "publication_year": 2024,
+        "paper_title": "Chromosome-scale assembly of the wild cereal relative Elymus sibiricus",
+    }
+    overrides["Triticum_aestivum_alchemy"] = {
+        # 卡片无 DOI、Genefunc_registry Doi 为空、策展表无此材料：
+        # 原来的 10.1038s41586-018-0108-0 是关键词回退写进去的 urartu DOI，
+        # 宁可为空并留待核实，也不能给用户一个错的引用。
+        "_clear": ["doi"], "journal": None, "publication_year": None,
+        "paper_title": None,
+        "notes": "DOI 待核实（jbrowse 卡片与 Genefunc_registry 均无 DOI；2026-11-24 已清除误填的 urartu DOI）",
+    }
+
     for key, ov in overrides.items():
         r = rec(key)
         _hard = set(ov.get("_hard") or [])
@@ -1066,6 +1200,13 @@ def main() -> int:
             # 注意：visible=0 是"显式隐藏"，不能用 falsy 判断覆盖
             if r.get(f) in (None, "") and old.get(f) not in (None, ""):
                 r[f] = old[f]
+
+    # --- 显式清空（overrides 里 _clear 列出的字段不被上面的"只补空"回填）---
+    for key, ov in overrides.items():
+        if key not in records:
+            continue
+        for f in (ov.get("_clear") or []):
+            records[key][f] = None
 
     # --- 四倍体泛基因组 2026（Nature Genetics）样本元数据 ---
     _tp_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "tetraploid_pangenome_2026.json")
@@ -1157,6 +1298,25 @@ def main() -> int:
             r["annotation_status"] = "available" if r.get("gene_table") else "none"
         r["aliases_json"] = json.dumps(r.pop("aliases"), ensure_ascii=False)
         r["usage_json"] = json.dumps(r.pop("usage"), ensure_ascii=False)
+
+    if "--diff" in sys.argv:
+        # 只读对比：把本次重建会改动哪些字段打出来（上线前 review 用）
+        diff_fields = ("doi", "paper_title", "journal", "publication_year", "species",
+                       "cultivar_or_line", "gene_count", "chromosome_count",
+                       "assembly_level", "assembly_accession", "citation_source", "notes")
+        changed = 0
+        for _r in sorted(records.values(), key=lambda x: x["dataset_id"]):
+            _old = existing.get(_r["dataset_id"])
+            if not _old:
+                continue
+            _delta = {f: (_old.get(f), _r.get(f)) for f in diff_fields
+                      if (_old.get(f) or None) != (_r.get(f) or None)}
+            if _delta:
+                changed += 1
+                print(f"[diff] {_r['dataset_id']}")
+                for _f, (_a, _b) in _delta.items():
+                    print(f"    {_f}: {_a!r} -> {_b!r}")
+        print(f"[diff] {changed} rows would change")
 
     records = list(records.values())
     records.sort(key=lambda x: x["dataset_id"])

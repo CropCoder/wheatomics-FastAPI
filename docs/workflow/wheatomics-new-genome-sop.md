@@ -44,6 +44,8 @@
 | 数据下载脚本 | 仓库 `scripts/fetch_aegilops4_data.sh`（**md5 `7c0985d181ea430be3fff9330e859a72`**）→ 服务器 `_prep/` |
 | 批量/验收脚本 | `scripts/pipeline_aegilops4_all.sh`、`scripts/finish_aegilops4_all.sh`、`scripts/accept_aegilops4_onboarding.py`（G5 逐条核对，含 GetSequence）→ 服务器 `_prep/` |
 | GetSequence 聚合/文档 | `scripts/rebuild_getfasta_aggregates.py`（重建 all_genomes/all_genes/all_proteins 等别名 + 文档 Library 列）、`scripts/update_getsequence_search.py`（向 `getsequence_search.txt` 增/改本基因组示例行）→ 服务器 `_prep/` 或直接从生产 repo 运行 |
+| DOI 核查 | 仓库 `scripts/verify_genome_doi.py`（**md5 `d4bf9eddc3a50f3215a08ceb84e7ddb2`**）→ 服务器 `_prep/`；按 Crossref 校验全库 DOI，`--dataset` 单条、`--strict` 作为门禁 |
+| 注册表重建 | 仓库 `scripts/rebuild_genome_registry.py`（v2 卡片解析 + 引文块切片 + `--diff` 只读对比）→ 服务器 `_prep/` |
 | 质检脚本 | `/var/www/html/Script/check_genome_files.py`（md5 `d774445172714d0d6b9127d4a21cc2a0`） |
 | conda | `/home/fei/mambaforge/bin`（**跑流水线必须显式加 PATH**） |
 | MySQL DDL 配置 | `/etc/wheatomics/db_ddl.env`（640 root:www-data；`fei` 需在 `www-data` 组） |
@@ -71,11 +73,11 @@ G0 命名门禁 ──► G1 输入四件套 ──► G2 质检 ──► G3 �
 
 | 闸门 | 内容 | 通过标准 | 产物 |
 |---|---|---|---|
-| **G0** | `finish_genome_integration.sh <PLOIDY> <MYTAG> <DOI> --check-name` | 材料身份齐、`SUB[PLOIDY]` 有映射、3 个库名分类非 `other`、SPA/V2 页面下无 BLOCK | `<data_dir>/name_plan.json` |
+| **G0** | `finish_genome_integration.sh <PLOIDY> <MYTAG> <DOI> --check-name` | **DOI 能解析且标题与材料对得上**（脚本自动 Crossref 校验，格式错/404 直接 FATAL）、材料身份齐、`SUB[PLOIDY]` 有映射、3 个库名分类非 `other`、SPA/V2 页面下无 BLOCK | `<data_dir>/name_plan.json` |
 | **G1** | 四件套归一化（§5） | `.fa` 头全 `Chr`；`.gff3` 第 1 列全 `Chr`、mRNA ID 全 `.数字`；`.cds/.pep` ID 全 `.数字`、pep 无 `.`/`*`；四文件齐全 | 归一化后的 4 个文件 + `mapping.tsv` + `provenance.txt` |
 | **G2** | `python3 check_genome_files.py <MYTAG>` | **rc=0**「所有文件均通过检查！」 | `.pep.bak`（如有清理） |
 | **G3** | `add_wheat_genome.sh <MYTAG> <data_dir> <PLOIDY>` | 日志末 `[SUCCESS] <MYTAG> 全部完成`；BLAST 库/基因表/JBrowse/registry 行齐全 | `.genome`、BLAST 库、`Genefunc_*_table`、JBrowse 目录 |
-| **G4** | `finish_genome_integration.sh <PLOIDY> <MYTAG> <DOI> [--label …]` | 自动验收全绿（或仅剩已知 WARN） | 卡片、alias、`.fai`、registry 元数据、BLAST↔JBrowse 映射 |
+| **G4** | `finish_genome_integration.sh <PLOIDY> <MYTAG> <DOI> [--label …]` | 自动验收全绿（或仅剩已知 WARN）；`genome_registry.doi` 与卡片/cite.html 一致，`verify_genome_doi.py --dataset <DS>` 为 ok | 卡片、alias、`.fai`、registry 元数据、BLAST↔JBrowse 映射 |
 | **G5** | §10 手工验收 | API/页面/回归全过 | 可上线 |
 
 历史耗时参考：PT（17.9 Gb，215k mRNA）流水线 1h23；二倍体 Aegilops（3.6–4.5 Gb，47–51k mRNA）约 25–45 min/个；4 个顺序跑 2–4 h。
@@ -539,6 +541,50 @@ curl -s https://<host>/doc/getsequence_search.txt | grep -q "<DS>"
 - **4 个二倍体 Aegilops**（2026-11，M/C/U/N；BMC Plant Biology 2026，Zenodo 22681907）：本 SOP v2 的首批用例——NCBI 4 个 GCA 组装 + Zenodo HC/LC 注释 + EDTA TE；归一化用 `normalize_diploid.py`，命名 `MM_Aegilops_comosa_IPK_AE783` 等；详见仓库 `Aegilops4_diploid_genome_update_plan.md` 与 `docs/plans/aegilops4_2026-11/`。
 
 ---
+
+## 14. DOI 核查（2026-11-24 新增，强制）
+
+**为什么加**：`genome_registry.doi` 一直是"谁给什么就写什么"——来自 `finish_genome_integration.sh` 的 `--doi` 参数、
+`Genefuncdb.Genefunc_registry.Doi`、或从 `jbrowse.html` / `cite.html` 抓的字串，**全程没有一处核对 DOI 是否真属于该材料**。
+DOI 写错时站点一切正常，只有用户按页面引用时才暴露。2026-11-24 全库核查（352 条）抓出 7 条错 DOI、5 条漏斜杠：
+
+| 记录 | 错值 | 正确值 | 成因 |
+|---|---|---|---|
+| `rye_weining2` | Sumai 3 的 `10.1002/tpg2.70285` | `10.1186/s13059-025-03792-3` | `cite.html` 里 `…sequences,please cite:` 漏空格，旧正则把下一条整段吞掉 |
+| `Elymus_sibiricus_cultivar_Gaomu` | 同上（Sumai 3） | `10.1038/s41597-024-03622-4` | 同上 |
+| `rye_weining` | DOI 对、`paper_title` 是 Sumai 3 | 已改标题 | 同上 |
+| `AABBDD_Triticum_aestivum_Keumkang` | `10.1038s41586-018-0108-0`（漏斜杠） | `10.1038/s41597-026-08617-x` | JBrowse 升级 V2 后脚本仍找 `div.card-body`，卡片 DOI 全丢，落到关键词回退 |
+| `Triticum_spelta_PI190962` | 同上 | `10.1038/s41586-020-2961-x` | 同上 |
+| `Triticum_aestivum_MOV` | 同上 | `10.1073/pnas.2510889122` | 同上 |
+| `Triticum_urartu_PI428250` | 同上 | `10.1038/s41467-026-71539-0` | 同上 |
+| `Triticum_aestivum_alchemy` | 同上 | 置空待核实 | 卡片/Genefunc/策展表均无 DOI |
+| `rye_Lo7` | 2017 草稿 `10.1111/tpj.13436` | `10.1038/s41588-021-00807-0` | 策展表同一物种两行（2017 草稿 / 2021 参考），匹配到了错的那行，还把 `gene_count` 写成 27,784（实际 57,222） |
+
+**修复与防线**（都已落库/落盘）：
+
+1. `rebuild_genome_registry.py`：JBrowse V2 `article.asm-card` 解析 + 卡片 id 大小写不敏感匹配；`cite.html` 改为按
+   `If you use ` 切片解析（漏空格不会跨块）；关键词回退只认材料级词且要求**唯一命中**；策展表 DOI 与卡片冲突时
+   **不覆盖**、只记 `[策展表 DOI 冲突: …]`；新增 `--diff` 只读对比（上线前 review）。
+2. `finish_genome_integration.sh`：任何模式启动先跑 `verify_doi`（Crossref）：格式错/404 → `[FATAL]` 退出；
+   标题里找不到材料关键词 → `[WARN]` 并要求人工确认（`--skip-doi-check` 可跳过，但要在工单里说明理由）。
+3. `scripts/verify_genome_doi.py`：全库体检，`--dataset` 单条、`--strict` 当门禁用；报告写 Markdown + JSON。
+4. `cite.html` 三处漏斜杠 DOI（`10.1038s41586…`、`10.1038s41588…`、`10.1093gigascience/…`）已在服务器修正，
+   备份 `cite.html.bak-20261124_doi`。
+
+**日常用法**：
+
+```bash
+# 上线前（G0/G4 会自动跑，手工复核时）
+bash _prep/finish_genome_integration.sh AABBDD MYTAG 10.xxxx/yyyy --check-name --cultivar … --species "Triticum aestivum"
+# 单条/全库体检
+python3 scripts/verify_genome_doi.py --dataset AABBDD_MYTAG
+python3 scripts/verify_genome_doi.py --report wheatomics_results/reports/doi_audit.md --json wheatomics_results/json/doi_audit.json
+# 重建注册表前先看会改什么
+python3 _prep/rebuild_genome_registry.py --diff | less
+```
+
+**判定口径**：`error` = 格式错 / Crossref 404 / 标题期刊明显不符或同 DOI 只覆盖别的属；`suspect` = 单一可疑信号
+（年份差 >1、期刊冷门、同 DOI 跨属但标题只覆盖一方）；`info` = 无 DOI 或网络失败无法判定。`--strict` 时 suspect 也算失败。
 
 ## 附录 A：一键核验脚本（按需改占位符）
 
