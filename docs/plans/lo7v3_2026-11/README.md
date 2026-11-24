@@ -45,7 +45,7 @@
 | BLAST genome | `RR_rye_Lo7_v3.genome` | 242 seqs / 6,702,647,067 bp |
 | BLAST 染色体库 | `RR_rye_Lo7_v3.genome_Chr1R…Chr7R` | 7 个 |
 | BLAST CDS / PEP | `RR_rye_Lo7_v3.add_Description.{cds,pep}` | 84,086 / 84,086 |
-| JBrowse | `RR_rye_Lo7_v3`（#group-rr，track `all_gene`） | refSeqs 242 |
+| JBrowse | `RR_rye_Lo7_v3`（#group-rr） | refSeqs 242；4 条轨道：Reference / all_gene / HC_genes / LC_genes |
 | 基因表 | `Genefunc_RR_rye_Lo7_v3_table` | 84,086 行；Description 覆盖 57,549（68%），Domain 84,086 |
 | PrimerServer2 | `RR_rye_Lo7_v3.genome`（242 seqids） | ✓ |
 | getfasta | `all_genomes` 成员，`Chr1R_rye_Lo7_v3` 可查 | ✓ |
@@ -66,6 +66,22 @@
    永久解决需把 `46cce9e` 推到生产（见 §7）。
 6. **`chromosome_count` 被写成 242**：rebuild 用 `.fai` 序列数 → 已在 overrides 加
    `"_hard": ["chromosome_count"]` 并手工改回 7。
+
+## 5b. 2026-11-25 上午补做
+
+- **HC/LC 轨道**：从重编号后的 GFF 按 `confidence=high|low` 切出 43,754 HC（50,710 mRNA）/
+  32,096 LC（33,376 mRNA），用 `flatfile-to-json.pl`（conda `new_env` 的 perl，系统 perl 缺依赖）
+  建 `HC_genes`/`LC_genes` 轨道，并 `import_jbrowse_meta.py --dataset RR_rye_Lo7_v3` 同步 jbrowse_meta；
+  `/api/jbrowse/datasets/RR_rye_Lo7_v3/trackList` 现返回 4 条轨道。
+- **代码已推送**：`46cce9e`、`7988e1e`、`fde6b6a` → gitee + github；生产已 `merge --ff-only` 到 `fde6b6a`。
+- **夜间事故（04:34）**：有人/某任务在生产跑了旧版 rebuild，44 行被重写，
+  `rye_weining2`、`Elymus_sibiricus_cultivar_Gaomu` 被写成 Lo7_V3 的 DOI（`10.1038/s41467-026-76753-4`），
+  `Keumkang`/`spelta`/`MOV`/`urartu` 回到 urartu DOI；`RR_rye_Lo7_v3.chromosome_count` 被写回 242。
+  已全部修回（见 `scripts/fix_registry_metadata_2026_11_24.py` + 直接 SQL），并确认新版脚本的
+  `--diff` 不再改动这些行（只剩 citation_source/notes 之类的措辞差异）。
+- **遗留风险**：新版 rebuild 的 `--diff` 仍会改 `Triticum_timopheevii_PI94760`
+  的 DOI（`10.1038/s41597-024-03260-w` → bioRxiv `10.1101/2024.01.16.575864`），
+  与 Lo7_V3 无关，但下次上线会把它一起写掉 —— 需先核实该材料该用哪条 DOI（可加 override 钉住）。
 
 ## 6. 验收记录
 
