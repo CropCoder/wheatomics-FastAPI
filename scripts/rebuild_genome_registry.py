@@ -1146,6 +1146,19 @@ def main() -> int:
         "journal": "Scientific Data", "publication_year": 2024,
         "paper_title": "Chromosome-scale assembly of the wild cereal relative Elymus sibiricus",
     }
+    # --- 2026-11-25 预印本→正式版：JM44（Nature Plants）、JIN50（Nature Genetics）---
+    overrides["Triticum_aestivum_JM44"] = {
+        "doi": "10.1038/s41477-026-02288-7",
+        "journal": "Nature Plants", "publication_year": 2026,
+        "paper_title": "A high-quality bread wheat genome unravels adaptive evolution of wheat end-use quality",
+        "notes": "2026-11-25：bioRxiv 预印本 10.1101/2025.07.27.667006 已正式发表，改用正式 DOI",
+    }
+    overrides["JIN50"] = {
+        "doi": "10.1038/s41588-026-02596-w",
+        "journal": "Nature Genetics", "publication_year": 2026,
+        "paper_title": "Genomic and genetic dissection of drought tolerance in a resilient wheat germplasm JIN50",
+        "notes": "2026-11-25：Research Square 预印本 10.21203/rs.3.rs-6539185/v1 已正式发表，改用正式 DOI",
+    }
     overrides["Triticum_timopheevii_PI94760"] = {
         # 2026-11-25：钉住已核查的 Scientific Data 论文 DOI，避免整表重建回落到 bioRxiv 预印本
         "doi": "10.1038/s41597-024-03260-w",
