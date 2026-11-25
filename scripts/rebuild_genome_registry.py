@@ -1147,6 +1147,16 @@ def main() -> int:
         "paper_title": "Chromosome-scale assembly of the wild cereal relative Elymus sibiricus",
     }
     # --- 2026-11-25 预印本→正式版：JM44（Nature Plants）、JIN50（Nature Genetics）---
+    # --- 2026-11-25 仍为预印本（检索未见正式版）---
+    for _ds in ("Chili", "Mahmoudi"):
+        overrides.setdefault(_ds, {}).update({
+            "journal": "bioRxiv (preprint)",
+            "notes": "2026-11-25 检索：仅有 bioRxiv 10.64898/2026.05.25.727644（2026-05-28），尚未见正式版",
+        })
+    overrides["Agropyron_cristatum_Z559"] = {
+        "journal": "bioRxiv (preprint)",
+        "notes": "2026-11-25 检索：仅有 bioRxiv 10.1101/2025.06.24.660289（2025-06-26），尚未见正式版",
+    }
     overrides["Triticum_aestivum_JM44"] = {
         "doi": "10.1038/s41477-026-02288-7",
         "journal": "Nature Plants", "publication_year": 2026,
