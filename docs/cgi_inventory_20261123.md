@@ -152,4 +152,6 @@ GET https://wheatomics.sdau.edu.cn/GeneHub/gene.html?gene=TraesCS5A02G391700
   08:30 复查时已恢复正常（`all_genomes` 区间查询、`all_gene` 带 `.1` 后缀查询均成功）。
   成员/卷审计未发现缺失，判断为**重建期间的瞬时不一致**；仍建议给聚合别名加健康检查，
   并采用临时文件+原子 mv 的方式重建，避免重建窗口内查询失败。
-- `/var/www/html/snprimer`（7.1T 旧结果）待决定。
+- `/var/www/html/snprimer` 已于 2026-11-25 按要求整体删除（**无备份**），
+  释放约 7T；`/snprimer/` 现为 404。目录内 2000 个作业结果（559G tar.gz +
+  约 6.5T 中间文件）与旧 Python2 流水线均不再保留。
