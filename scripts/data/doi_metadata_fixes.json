@@ -1,0 +1,781 @@
+{
+ "10TJ18": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "AK58": {
+  "paper_title": "Genome resources for the elite bread wheat cultivar Aikang 58 and mining of elite homeologous haplotypes for accelerating wheat improvement",
+  "journal": "Molecular Plant"
+ },
+ "Ae_tauschii_Aet6": {
+  "paper_title": "Aegilops tauschii genome assembly v6.0 with improved sequence contiguity differentiates assembly errors from genuine differences with the D subgenome of Chinese Spring wheat assembly IWGSC RefSeq v2.1",
+  "journal": "G3: Genes, Genomes, Genetics"
+ },
+ "Aegilop_comosa_PI551049": {
+  "paper_title": "Chromosome-scale assembly and annotation of the wild wheat relative Aegilops comosa",
+  "journal": "Scientific Data"
+ },
+ "Aegilops_geniculata": {
+  "paper_title": "The Evolution and Origin of Allotetraploid Aegilops geniculata Revealed by the Homoeolog‐Resolved Genome Assembly",
+  "journal": "Plant Biotechnology Journal"
+ },
+ "Aegilops_mutica": {
+  "paper_title": "Chromosome-level haplotype-resolved genome assembly of bread wheat’s wild relative Aegilops mutica",
+  "journal": "Scientific Data"
+ },
+ "Aegilops_tauschii_AY17": {
+  "paper_title": "Introgressing the Aegilops tauschii genome into wheat as a basis for cereal improvement",
+  "journal": "Nature Plants"
+ },
+ "Aegilops_tauschii_AY61": {
+  "paper_title": "Introgressing the Aegilops tauschii genome into wheat as a basis for cereal improvement",
+  "journal": "Nature Plants"
+ },
+ "Aegilops_tauschii_TA10171": {
+  "paper_title": "Origin and evolution of the bread wheat D genome",
+  "journal": "Nature"
+ },
+ "Aegilops_tauschii_TA1675": {
+  "paper_title": "Origin and evolution of the bread wheat D genome",
+  "journal": "Nature"
+ },
+ "Aegilops_tauschii_TA2576": {
+  "paper_title": "Origin and evolution of the bread wheat D genome",
+  "journal": "Nature"
+ },
+ "Aegilops_tauschii_XJ02": {
+  "paper_title": "Introgressing the Aegilops tauschii genome into wheat as a basis for cereal improvement",
+  "journal": "Nature Plants"
+ },
+ "Aegilops_umbellulata_TA1851": {
+  "paper_title": "An unusual tandem kinase fusion protein confers leaf rust resistance in wheat",
+  "journal": "Nature Genetics"
+ },
+ "Aizu_6": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "Akashinriki": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "ArinaLrFor": {
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding",
+  "journal": "Nature"
+ },
+ "Attraktion": {
+  "paper_title": "A catalogue of resistance gene homologs and a chromosome‐scale reference sequence support resistance gene mapping in winter wheat",
+  "journal": "Plant Biotechnology Journal"
+ },
+ "Barke_V2": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "Barley": {
+  "journal": "Nature"
+ },
+ "Barley2": {
+  "paper_title": "TRITEX: chromosome-scale sequence assembly of Triticeae genomes with open-source tools",
+  "journal": "Genome Biology"
+ },
+ "Barley3": {
+  "paper_title": "Long-read sequence assembly: a technical evaluation in barley",
+  "journal": "The Plant Cell"
+ },
+ "Bonus": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "Bowman": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "CDC_Landmark": {
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding",
+  "journal": "Nature"
+ },
+ "CDC_Stanley": {
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding",
+  "journal": "Nature"
+ },
+ "CS-CAU": {
+  "paper_title": "Near-complete assembly and comprehensive annotation of the wheat Chinese Spring genome",
+  "journal": "Molecular Plant"
+ },
+ "CS-IAAS_T2T": {
+  "paper_title": "A telomere-to-telomere genome assembly coupled with multi-omic data provides insights into the evolution of hexaploid bread wheat",
+  "journal": "Nature Genetics"
+ },
+ "Chikurin_Ibaraki": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "Chili": {
+  "paper_title": "First chromosome-scale genome assemblies and comprehensive structural characterization of Tunisian durum wheat ( Triticum turgidum subsp. durum ) landraces Chili and Mahmoudi"
+ },
+ "Chinese_Spring2.0": {
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding",
+  "journal": "Nature"
+ },
+ "Chinese_Spring2.1": {
+  "paper_title": "Optical maps refine the bread wheat Triticum aestivum cv. Chinese Spring genome assembly",
+  "journal": "The Plant Journal"
+ },
+ "Chuanmai104": {
+  "paper_title": "Chromosome-level assembly of the synthetic hexaploid wheat-derived cultivar Chuanmai 104",
+  "journal": "Scientific Data"
+ },
+ "Dasypyrum_villosum": {
+  "paper_title": "A chromosome-scale genome assembly of Dasypyrum villosum provides insights into its application as a broad-spectrum disease resistance resource for wheat improvement",
+  "journal": "Molecular Plant"
+ },
+ "Durum_Wheat_Langdon": {
+  "paper_title": "Chromosome-level genome assembly of the Durum wheat cultivar Langdon",
+  "journal": "Scientific Data"
+ },
+ "Elymus_nutans": {
+  "paper_title": "Analysis of allohexaploid wheatgrass genome reveals its Y haplome origin in Triticeae and high-altitude adaptation",
+  "journal": "Nature Communications"
+ },
+ "FT11": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "FT144": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "FT262": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "FT286": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "FT333": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "FT628": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "FT67": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "FT880": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "Fielder": {
+  "journal": "DNA Research"
+ },
+ "Foma": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "Golden_Melon": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "Golden_Promise": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HID055": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HID101": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HID249": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HID357": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HID380": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_10096": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_10350": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_10892": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_1168": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_12184": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_12541": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_13594": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_13663": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_13821": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_13942": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_14061": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_14121": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_14273": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_1702": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_18321": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_19184": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_21256": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_21322": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_21595": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_21599": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_2180": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_2779": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_2830": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_3081": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_3365": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_3474": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_4224": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_495": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_6220": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_7172": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_7385": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_7552": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_8117": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_8148": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_9043": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "HOR_9972": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "Hockett": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "Igri": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "JM22_SASS": {
+  "paper_title": "A high-quality genome assembly delineates the genetic basis of freezing tolerance in the elite wheat cultivar Jimai 22",
+  "journal": "Journal of Genetics and Genomics"
+ },
+ "Jagger": {
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding",
+  "journal": "Nature"
+ },
+ "Julius": {
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding",
+  "journal": "Nature"
+ },
+ "Kariega": {
+  "paper_title": "Long-read genome sequencing of bread wheat facilitates disease resistance gene cloning",
+  "journal": "Nature Genetics"
+ },
+ "Leymus_chinensis": {
+  "paper_title": "High‐Quality Chromosome‐Level Genomes Reveal the Structure and Evolution of the S and Z Self‐Incompatibility Loci in Leymus chinensis",
+  "journal": "Plant Biotechnology Journal"
+ },
+ "LongReach_Lancer": {
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding",
+  "journal": "Nature"
+ },
+ "Mace": {
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding",
+  "journal": "Nature"
+ },
+ "Mahmoudi": {
+  "paper_title": "First chromosome-scale genome assemblies and comprehensive structural characterization of Tunisian durum wheat ( Triticum turgidum subsp. durum ) landraces Chili and Mahmoudi"
+ },
+ "Maximus": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "Morex": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "Multiovary_wheat_MOV": {
+  "paper_title": "WUSCHEL-D1 upregulation enhances grain number by inducing formation of multiovary-producing florets in wheat",
+  "journal": "Proceedings of the National Academy of Sciences"
+ },
+ "NC99BGTAG11": {
+  "paper_title": "Pm37 as a susceptible Sr22 allele confers resistance to wheat powdery mildew and leaf rust"
+ },
+ "Norin61": {
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding",
+  "journal": "Nature"
+ },
+ "OUN333": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "RGT_Planet": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "SY_Mattis": {
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding",
+  "journal": "Nature"
+ },
+ "Thinopyrum_intermedium": {
+  "paper_title": "Analysis wheat wild relatives Thinopyrum intermedium and Roegneria kamoji genomes reveal different polyploid evolution paths",
+  "journal": "Nature Communications"
+ },
+ "Triticum_monococcum_PI306540": {
+  "paper_title": "A near-complete genome sequence of einkorn wheat provides insight into the evolution of wheat A subgenomes",
+  "journal": "Plant Communications"
+ },
+ "Triticum_monococcum_TA10622": {
+  "paper_title": "Einkorn genomics sheds light on history of the oldest domesticated wheat",
+  "journal": "Nature"
+ },
+ "Triticum_monococcum_TA299": {
+  "paper_title": "Einkorn genomics sheds light on history of the oldest domesticated wheat",
+  "journal": "Nature"
+ },
+ "WBDC078": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "WBDC103": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "WBDC133": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "WBDC184": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "WBDC199": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "WBDC207": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "WBDC237": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "WBDC348": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "WBDC349": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "Wild_emmerV2": {
+  "journal": "G3 Genes|Genomes|Genetics"
+ },
+ "Z8425B": {
+  "paper_title": "Genomic analysis of Zhou8425B, a key founder parent, reveals its genetic contributions to elite agronomic traits in wheat breeding",
+  "journal": "Plant Communications"
+ },
+ "ZDM01467": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "ZDM02064": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley",
+  "journal": "Nature"
+ },
+ "ae.sharonensis.AS_1644": {
+  "journal": "The Plant Journal"
+ },
+ "barley_Golden_Promise": {
+  "journal": "G3 Genes|Genomes|Genetics"
+ },
+ "durum_PI192051": {
+  "paper_title": "Genome-assisted identification of wheat leaf rust resistance gene Lr.ace-4A/Lr30",
+  "journal": "Nature Communications"
+ },
+ "qingke": {
+  "journal": "Plant Biotechnology Journal"
+ },
+ "tauschii_Aet5.0": {
+  "paper_title": "Aegilops tauschii genome assembly Aet v5.0 features greater sequence contiguity and improved annotation",
+  "journal": "G3 Genes|Genomes|Genetics"
+ },
+ "y2032": {
+  "paper_title": "Genome sequencing of Sitopsis species provides insights into their contribution to the B subgenome of bread wheat",
+  "journal": "Plant Communications"
+ },
+ "A17_hap1": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "A17_hap2": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "A17_hap3": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "A17_hap4": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "A40_hap1": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "A40_hap2": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "A40_hap3": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "A40_hap4": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "A42_hap1": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "A42_hap2": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "A42_hap3": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "A42_hap4": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "ABC-1": {
+  "paper_title": "The pangenome of hexaploid bread wheat"
+ },
+ "AWCS276_WB1": {
+  "paper_title": "The draft genome of a wild barley genotype reveals its enrichment in genes related to biotic and abiotic stresses compared to cultivated barley"
+ },
+ "Agropyron_cristatum_Z559": {
+  "paper_title": "Agropyron cristatum genome provides a new insight for wheat improvement with wild relatives"
+ },
+ "B1K-04-12_BPGv2": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley"
+ },
+ "B1K-17-07_BPGv2": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley"
+ },
+ "B1K-33-13_BPGv2": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley"
+ },
+ "B1K_04_12_BPGv1": {
+  "paper_title": "The barley pan-genome reveals the hidden legacy of mutation breeding"
+ },
+ "BX-1": {
+  "paper_title": "The pangenome of hexaploid bread wheat"
+ },
+ "C306": {
+  "paper_title": "Decoding the genome of superior chapatti quality Indian wheat variety ‘C 306’ unravelled novel genomic variants for chapatti and nutrition quality related genes"
+ },
+ "CH7": {
+  "paper_title": "The pangenome of hexaploid bread wheat"
+ },
+ "EC_N1": {
+  "paper_title": "High-quality wild barley genome assemblies and annotation with Nanopore long reads and Hi-C sequencing data"
+ },
+ "EC_S1": {
+  "paper_title": "High-quality wild barley genome assemblies and annotation with Nanopore long reads and Hi-C sequencing data"
+ },
+ "F2327_BPGv2": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley"
+ },
+ "FB19_001_1_hap1": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "FB19_001_1_hap2": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "FB19_001_1_hap3": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "FB19_001_1_hap4": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "FB19_011_3_hap1": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "FB19_011_3_hap2": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "FB19_028_3_hap1": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "FB19_028_3_hap2": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "FB19_028_3_hap3": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "FB19_028_3_hap4": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "FB20_005_1_hap1": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "FB20_005_1_hap2": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "FB20_029_7_hap1": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "FB20_029_7_hap2": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "GRA2256_1_hap1": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "GRA2256_1_hap2": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "GRA2256_1_hap3": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "GRA2256_1_hap4": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "H45": {
+  "paper_title": "The pangenome of hexaploid bread wheat"
+ },
+ "HID112XXI_BPGv2": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley"
+ },
+ "HID144_BPGv2": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley"
+ },
+ "HID251_BPGv2": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley"
+ },
+ "HID84_BPGv2": {
+  "paper_title": "Structural variation in the pangenome of wild and domesticated barley"
+ },
+ "Hordeum_brevisubulatum_PI531775": {
+  "paper_title": "Hordeum I genome unlocks adaptive evolution and genetic potential for crop improvement"
+ },
+ "OUH602": {
+  "paper_title": "Chromosome-scale assembly of wild barley accession “OUH602”"
+ },
+ "OpataM85": {
+  "paper_title": "The pangenome of hexaploid bread wheat"
+ },
+ "PI365428_hap1": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "PI365428_hap2": {
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "TGACv1": {
+  "paper_title": "An improved assembly and annotation of the allohexaploid wheat genome identifies complete families of agronomic genes and provides genomic evidence for chromosomal translocations"
+ },
+ "TGACv2": {
+  "paper_title": "Independent assessment and improvement of wheat genome sequence assemblies using Fosill jumping libraries"
+ },
+ "W7984": {
+  "paper_title": "The pangenome of hexaploid bread wheat"
+ },
+ "Aegilops_tauschii_AL8_78": {
+  "paper_title": "Aegilops tauschii draft genome sequence reveals a gene repertoire for wheat adaptation"
+ },
+ "Aegilops_tauschii_V1.1": {
+  "paper_title": "The Aegilops tauschii genome reveals multiple impacts of transposons"
+ },
+ "Aegilops_umbellulata_PI554389": {
+  "paper_title": "Genomes of Aegilops umbellulata provide new insights into unique structural variations and genetic diversity in the U‐genome for wheat improvement",
+  "journal": "Plant Biotechnology Journal"
+ },
+ "Spelta_PI190962_v1.0": {
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "Triticum_aestivum_4.0": {
+  "paper_title": "Chromosome-Scale Assembly of the Bread Wheat Genome Reveals Thousands of Additional Gene Copies"
+ },
+ "Xi-1": {
+  "paper_title": "The pangenome of hexaploid bread wheat"
+ },
+ "Yp-1": {
+  "paper_title": "The pangenome of hexaploid bread wheat"
+ },
+ "CWI86942": {
+  "paper_title": "Origin and evolution of the bread wheat D genome"
+ },
+ "HH_Hordeum_chilense_GRA1000": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_bogdanii_H240": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_intercedens_NGB15676": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HHHH_Hordeum_jubatum_BCC2055": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_euclaston_NGB90233": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_brevisubulatum_PI401390": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HHHH_Hordeum_gussoneanum_BCC2005": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HHHH_Hordeum_murinum_BCC2017": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_flexuosum_BCC2023": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_californicum_BCC2058": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_comosum_NGB18417": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_marinum_H559": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_cordobense_BCC2067": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_stenostachys_NGB90152": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_marinum_BCC2001": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_roshevitzii_BCC2069": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_patagonicum_BCC2065": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HHHH_Hordeum_gussoneanum_BCC2011": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_pusillum_NGB6888": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HHHH_Hordeum_secalinum_BCC2004": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_muticum_NGB90062": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HHHHHH_Hordeum_parodii_BCC2025": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HHHH_Hordeum_murinum_BCC2009": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "HH_Hordeum_pubiflorum_BCC2028": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum"
+ },
+ "H. Hordeum parodii BCC2025": {
+  "paper_title": "Structural and regulatory evolution across the genus Hordeum",
+  "journal": "Nature"
+ },
+ "HHHH_Hordeum_brevisubulatum_GWHKGTW": {
+  "paper_title": "The genome of tetraploid Hordeum brevisubulatum underpins its evolution and saline–alkali adaptation"
+ }
+}

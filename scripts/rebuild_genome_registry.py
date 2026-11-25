@@ -1389,6 +1389,19 @@ def main() -> int:
         r["aliases_json"] = json.dumps(r.pop("aliases"), ensure_ascii=False)
         r["usage_json"] = json.dumps(r.pop("usage"), ensure_ascii=False)
 
+    # diff 模式也应用 DOI 元数据修正：否则会把"已修正但策展表仍旧写法"的标题/期刊误报为待改动
+    try:
+        _fix_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "doi_metadata_fixes.json")
+        with open(_fix_path, encoding="utf-8") as _fh:
+            _dofix = json.load(_fh)
+        for _ds, _fd in _dofix.items():
+            if _ds in records:
+                for _k in ("paper_title", "journal"):
+                    if _fd.get(_k):
+                        records[_ds][_k] = _fd[_k]
+    except Exception:
+        pass
+
     if "--diff" in sys.argv:
         # 只读对比：把本次重建会改动哪些字段打出来（上线前 review 用）
         diff_fields = ("doi", "paper_title", "journal", "publication_year", "species",
@@ -1603,6 +1616,27 @@ def main() -> int:
         print("dedupe merged/removed rows:", removed)
     except Exception as exc:  # noqa: BLE001
         print("dedupe failed:", exc)
+    # --- 2026-11-25 DOI 元数据清洗：按 Crossref/doi.org 的官方标题/期刊修正（DOI 不动）---
+    try:
+        _fix_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "doi_metadata_fixes.json")
+        with open(_fix_path, encoding="utf-8") as _fh:
+            _doi_fixes = json.load(_fh)
+        _applied = 0
+        with mysql("wheatomics_db") as _conn, _conn.cursor() as _cur:
+            for _ds, _fd in _doi_fixes.items():
+                _sets, _vals = [], []
+                for _k in ("paper_title", "journal"):
+                    if _k in _fd and _fd[_k]:
+                        _sets.append(f"`{_k}`=%s"); _vals.append(_fd[_k])
+                if not _sets:
+                    continue
+                _cur.execute(f"UPDATE genome_registry SET {', '.join(_sets)} WHERE dataset_id=%s", _vals + [_ds])
+                _applied += _cur.rowcount
+            _conn.commit()
+        print("applied DOI metadata fixes:", _applied)
+    except Exception as exc:  # noqa: BLE001
+        print("doi metadata fixes skipped:", exc)
+
     print("next: rebuild the BLAST->JBrowse hit-link map after registry changes:")
     print("      /home/fei/mambaforge/envs/zjw/bin/python3 scripts/build_blast_jbrowse_map.py")
     print("      ... --check   # exit 0 ok / 2 stale / 1 match-ratio below threshold")
