@@ -1,10 +1,17 @@
 [
   {
-    "date": "2026-11-24",
-    "title": "24 wild Hordeum genomes and the Korean wheat cultivar Keumkang are now available on WheatOmics.",
-    "summary": "WheatOmics now hosts the complete set of 24 wild Hordeum genomes from the PanHordeum project (17 diploid HH, 6 tetraploid HHHH and 1 hexaploid HHHHHH), including H. chilense GRA1000, H. bogdanii H240, H. intercedens NGB15676, H. marinum H559, H. flexuosum BCC2023 (3.53 Gb; 64,690 protein-coding genes), H. parodii BCC2025 (10.90 Gb; 219,254 genes) and other wild relatives. In addition, the chromosome-scale genome of the Korean winter wheat cultivar Keumkang (14.54 Gb; 255,293 HC+LC gene models; BUSCO 98.81%) has been added. All genomes are available in JBrowse (HH, HHHH, HHHHHH and hexaploid wheat groups), BLAST (whole-genome, per-chromosome, CDS and protein databases), GetSequence, PrimerServer2, CAPS/dCAPS and gene function search.",
+    "date": "2026-11-25",
+    "title": "24 wild Hordeum genomes, a tetraploid H. brevisubulatum with de novo EGAPx annotation, and Korean wheat Keumkang are now on WheatOmics.",
+    "summary": "WheatOmics now hosts the complete PanHordeum set of 24 wild Hordeum genomes (17 diploid HH, 6 tetraploid HHHH, 1 hexaploid HHHHHH), including H. chilense GRA1000, H. bogdanii H240, H. intercedens NGB15676, H. marinum H559, H. flexuosum BCC2023 (7 chromosomes; 64,690 genes), H. parodii BCC2025 (21 haploid chromosomes; 219,254 genes) and other wild relatives. A chromosome-scale tetraploid Hordeum brevisubulatum assembly (GWHKGTW00000000.1; 7.04 Gb, 14 chromosomes) is released with a de novo WheatOmics EGAPx annotation: 382,129 gene loci and 396,332 transcripts. The chromosome-scale genome of Korean winter wheat cultivar Keumkang (14.54 Gb; 255,293 HC+LC gene models) is also available. All genomes are integrated into JBrowse (HH, HHHH, HHHHHH and hexaploid wheat groups), BLAST (whole-genome, per-chromosome, CDS and protein databases), GetSequence, PrimerServer2, CAPS/dCAPS and gene function search.",
     "url": "https://doi.org/10.1038/s41586-026-11332-7",
     "journal": "Nature"
+  },
+  {
+    "date": "2026-11-25",
+    "title": "Rye Lo7_V3 genome assembly (IPK; Nature Communications 2026) is now available on WheatOmics.",
+    "summary": "The near-complete rye (Secale cereale) Lo7_V3 assembly from IPK Gatersleben (GCA_965641915.1; 6.70 Gb; 7 chromosomes with all seven centromeres assembled + 235 unplaced scaffolds; contig N50 128 Mb) has been integrated. Annotation: 75,850 protein-coding genes / 84,086 transcripts (43,754 high-confidence + 32,096 low-confidence) from IPK e!DAL 10.5447/ipk/2026/5, with EggNOG/Pfam functional descriptions and Chinese Spring 02G homologue mapping. The genome is available in JBrowse (RR group), BLAST (whole genome, per-chromosome Chr1R-Chr7R, CDS and protein databases), GetSequence, PrimerServer2, CAPS/dCAPS and gene function search.",
+    "url": "https://doi.org/10.1038/s41467-026-76753-4",
+    "journal": "Nature Communications"
   },
   {
     "date": "2026-11-20",
