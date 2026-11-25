@@ -1146,6 +1146,13 @@ def main() -> int:
         "journal": "Scientific Data", "publication_year": 2024,
         "paper_title": "Chromosome-scale assembly of the wild cereal relative Elymus sibiricus",
     }
+    overrides["Triticum_timopheevii_PI94760"] = {
+        # 2026-11-25：钉住已核查的 Scientific Data 论文 DOI，避免整表重建回落到 bioRxiv 预印本
+        "doi": "10.1038/s41597-024-03260-w",
+        "journal": "Scientific Data", "publication_year": 2024,
+        "paper_title": "Chromosome-scale genome assembly of bread wheat's wild relative Triticum timopheevii",
+        "notes": "2026-11-25 钉住 Scientific Data DOI（策展表另有 bioRxiv 10.1101/2024.01.16.575864，不使用）",
+    }
     overrides["Triticum_aestivum_alchemy"] = {
         # 卡片无 DOI、Genefunc_registry Doi 为空、策展表无此材料：
         # 原来的 10.1038s41586-018-0108-0 是关键词回退写进去的 urartu DOI，
@@ -1154,6 +1161,44 @@ def main() -> int:
         "paper_title": None,
         "notes": "DOI 待核实（jbrowse 卡片与 Genefunc_registry 均无 DOI；2026-11-24 已清除误填的 urartu DOI）",
     }
+
+    # --- 2026-11-25 PanHordeum / Keumkang / 四倍体 brevisubulatum：染色体数按单倍体钉死 ---
+    # rebuild 默认用 .fai 序列条数（含 contig/ChrUn），会把 7/14/21 写成几百上千；
+    # 这里 _hard 固定，避免下一次整表重建又把 chromosome_count 覆盖回序列数。
+    _chr_counts = {
+        "HH_Hordeum_chilense_GRA1000": 7,
+        "HHHH_Hordeum_jubatum_BCC2055": 14,
+        "HH_Hordeum_intercedens_NGB15676": 7,
+        "HH_Hordeum_euclaston_NGB90233": 7,
+        "HH_Hordeum_brevisubulatum_PI401390": 7,
+        "HHHH_Hordeum_gussoneanum_BCC2005": 14,
+        "HH_Hordeum_bogdanii_H240": 7,
+        "HHHH_Hordeum_murinum_BCC2017": 14,
+        "HH_Hordeum_flexuosum_BCC2023": 7,
+        "HH_Hordeum_californicum_BCC2058": 7,
+        "HH_Hordeum_comosum_NGB18417": 7,
+        "HH_Hordeum_marinum_H559": 7,
+        "HH_Hordeum_cordobense_BCC2067": 7,
+        "HH_Hordeum_stenostachys_NGB90152": 7,
+        "HHHH_Hordeum_gussoneanum_BCC2011": 14,
+        "HHHH_Hordeum_secalinum_BCC2004": 14,
+        "HH_Hordeum_marinum_BCC2001": 7,
+        "HH_Hordeum_roshevitzii_BCC2069": 7,
+        "HHHHHH_Hordeum_parodii_BCC2025": 21,
+        "HH_Hordeum_patagonicum_BCC2065": 7,
+        "HH_Hordeum_pusillum_NGB6888": 7,
+        "HH_Hordeum_muticum_NGB90062": 7,
+        "HHHH_Hordeum_murinum_BCC2009": 14,
+        "HH_Hordeum_pubiflorum_BCC2028": 7,
+        "AABBDD_Triticum_aestivum_Keumkang": 21,
+        "HHHH_Hordeum_brevisubulatum_GWHKGTW": 14,
+    }
+    for _ds, _n in _chr_counts.items():
+        _ov = overrides.setdefault(_ds, {})
+        _ov["chromosome_count"] = _n
+        _hard = list(_ov.get("_hard") or [])
+        if "chromosome_count" not in _hard: _hard.append("chromosome_count")
+        _ov["_hard"] = _hard
 
     # --- 2026-11-24 新上线：黑麦 Lo7_V3（IPK，Nature Communications 2026）---
     overrides["RR_rye_Lo7_v3"] = {

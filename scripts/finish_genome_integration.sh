@@ -1259,7 +1259,14 @@ run_registry_tools() {
   ( cd "$REPO" && "$ZJW_PY" scripts/import_jbrowse_meta.py --dataset "$DS" >/tmp/imp_${DS}.log 2>&1 ) \
     && log "  [OK] jbrowse_meta 已导入" \
     || { warn "import_jbrowse_meta 失败：$(tail -2 /tmp/imp_${DS}.log 2>/dev/null)"; fail "jbrowse_meta 导入失败"; }
-  ( cd "$REPO" && "$ZJW_PY" scripts/rebuild_genome_registry.py >/tmp/rgb_${DS}.log 2>&1 ) \
+  # ---- 版本守卫（2026-11-25）：只允许执行与 git HEAD 一致、未改动的 rebuild 脚本 ----
+  # 背景：04:34 有人跑了旧版 rebuild，整表重写把 44 行 DOI/chromosome_count 覆盖回旧值。
+  if ! git -C "$REPO" diff --quiet -- scripts/rebuild_genome_registry.py 2>/dev/null; then
+    warn "rebuild 脚本有未提交修改（疑似旧版/手工副本）：已拒绝执行以防元数据回退"
+    [ "${ALLOW_DIRTY_REBUILD:-0}" = "1" ] || fail "rebuild 脚本不干净，已中止（ALLOW_DIRTY_REBUILD=1 可强制）"
+  fi
+  log "  [INFO] rebuild md5=$(md5sum "$REPO/scripts/rebuild_genome_registry.py" | cut -d' ' -f1) HEAD=$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null)"
+  ( cd "$REPO" && flock -w 900 /tmp/rebuild_genome_registry.lock "$ZJW_PY" scripts/rebuild_genome_registry.py >/tmp/rgb_${DS}.log 2>&1 ) \
     && log "  [OK] genome_registry 已重建" \
     || { warn "rebuild_genome_registry 失败：$(tail -3 /tmp/rgb_${DS}.log 2>/dev/null)"; fail "genome_registry 重建失败"; }
 
