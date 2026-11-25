@@ -496,7 +496,8 @@
   "journal": "Nature Communications"
  },
  "qingke": {
-  "journal": "Plant Biotechnology Journal"
+  "journal": "Plant Biotechnology Journal",
+  "paper_title": "Assembly and analysis of a qingke reference genome demonstrate its close genetic relation to modern cultivated barley"
  },
  "tauschii_Aet5.0": {
   "paper_title": "Aegilops tauschii genome assembly Aet v5.0 features greater sequence contiguity and improved annotation",
