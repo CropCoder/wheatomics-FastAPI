@@ -1305,3 +1305,49 @@ python3 scripts/ensure_db_indexes.py --dry-run  # 只看缺什么
 ```
 
 **约定**：新增/重建 PPI 数据（`PPI_result`）后重建 PPI 索引；换 eQTL 数据表后确认 `Geneid` 仍有索引。
+
+---
+
+## 十五、中国春 03G CDS 数据事故与修复（2026-11-27）
+
+### 现象
+
+用户下载中国春 02G 与 03G 的 CDS 做 BLAST，同一基因只有 **25.9% 一致性**。例：
+`TraesCS6D03G0644700.1`（03G）vs `TraesCS6D02G268200.1`（02G）。
+
+### 根因
+
+平台 "Chinese Spring 2.1" 数据集（03G ID，即 IWGSC v2.1 注释的重新编号；GFF 中
+`previous_id=...02G...`、`mapping=fullPerfectMatch`）的 **CDS FASTA 在导入前就已损坏**：
+
+- 源文件 `/var/www/data/tiantian_data/wheat_genome/cds/Chinese_Spring2.1.cds` 的记录不是剪接 CDS：
+  抽样 129 条中仅 **1.6% 以 ATG 起始、96.1% 含内部终止子**，GC 29%、含 N，长度中位数 1263 bp（更像基因组片段）；
+- 同一注释的 **GFF3 与 PEP 蛋白 FASTA 是正确的**（PEP 与 02G PEP 一致），所以蛋白层分析不受影响；
+- 平台把该 CDS 直接做成 BLAST 库 `AABBDD_Chinese_Spring2.1.add_Description.cds`，并被聚合库
+  `all_genes_base`（GetFasta 默认 `all_genes` / BLAST `all_gene` 的第一个成员）收录，
+  因此**默认下载与聚合 BLAST 都返回错误的 03G CDS**。
+
+### 修复（已执行，2026-11-27 晚）
+
+1. **重建单库 CDS**：`scripts/fix_cs03g_cds.py --apply`
+   - 以 `gff/Chinese_Spring2.1.gff3` 的 CDS 特征 + 平台 CS2.1 基因组逐转录本拼接（按染色体流式处理）；
+   - 翻译后与 03G PEP 比对，失败者回退到其 `Gene02G` 对应转录本的 02G CDS（`cds/Chinese_Spring1.1.cds`）；
+   - 结果：130,365/130,370（100.00%）重建，GFF 直取 125,558、回退 4,807、缺失 5；
+     ATG 起始 130,126（99.8%），内部终止子 7 条；源文件与 BLAST 库均已替换并留时间戳备份。
+2. **重建聚合库**：`scripts/fix_all_genes_base.py --apply`
+   - 在 34 GB 的 `blastdb_migration_20261113/all_genes_base.fa` 中原地替换 130,365 条 03G 记录，
+     重建 `all_genes_base`（33,715,539 条），保持 `all_gene` / `all_genes` 别名不变；
+   - 旧库备份在 `blastdb/_backup_all_genes_base_old_<时间戳>/`，旧聚合 FASTA 备份为
+     `all_genes_base.fa.corrupt_bak_<时间戳>`。
+3. **验证**：`03G` vs `02G` CDS 的 `blastn` = **100.000% / 330 bp**；API 默认
+   `/api/sequence/by-gene?gene_id=<03G>.1` 返回 ATG 起始、无 N 的 330 bp 序列；
+   GetFasta 默认 `all_genes` 同样返回修复后序列。
+
+### 防止复发（导入新注释必查）
+
+- 任何新 CDS FASTA 在入库前跑一遍：`len%3==0`、ATG 起始比例、内部终止子比例、N 含量；
+  对 03G/02G 同版本注释，随机抽 20 个基因与另一版本 CDS 做 BLAST，期望 ~100%（同模型）或至少无内部终止子。
+- 本事故的教训：**PEP 正确不代表 CDS 正确**；CDS 与 PEP 必须互相翻译校验。
+- 若再遇到同类"同基因跨版本一致性极低"，先比较源 FASTA 的翻译结果，再怀疑数据库构建。
+- 修复脚本保留在 `scripts/fix_cs03g_cds.py`（单库）与 `scripts/fix_all_genes_base.py`（聚合库），
+  下次同类事故可按同样流程处理；脚本内的质量门禁（覆盖率 ≥99%、内部终止子 ≤2%）不通过即中止。
