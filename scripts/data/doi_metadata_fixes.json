@@ -778,5 +778,136 @@
  },
  "HHHH_Hordeum_brevisubulatum_GWHKGTW": {
   "paper_title": "The genome of tetraploid Hordeum brevisubulatum underpins its evolution and saline–alkali adaptation"
+ },
+ "AABBDD_arinalrfor_PGSBv2_1": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "AABBDD_Cadenza_scaffold": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "Cadenza (scaffold assembly)": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "AABBDD_Claire_scaffold": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "Claire (scaffold assembly)": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "AABBDD_jagger_PGSBv2_1": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "AABBDD_julius_PGSBv2_1": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "AABBDD_lancer_PGSBv2_1": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "AABBDD_landmark_PGSBv2_1": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "AABBDD_mace_PGSBv2_1": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "AABBDD_mattis_PGSBv2_1": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "AABBDD_norin61_PGSBv2_1": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "AABBDD_stanley_PGSBv2_2": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "AABBDD_spelta_PGSBv2_0": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "Paragon (scaffold assembly)": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "Robigus (scaffold assembly)": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "Weebill (scaffold assembly)": {
+  "doi": "10.1038/s41586-020-2961-x",
+  "journal": "Nature",
+  "paper_title": "Multiple wheat genomes reveal global variation in modern breeding"
+ },
+ "SSHH_Elymus_sibiricus_Gaomu": {
+  "doi": "10.1038/s41597-024-03622-4",
+  "journal": "Scientific Data",
+  "paper_title": "Chromosome-scale assembly of the wild cereal relative Elymus sibiricus"
+ },
+ "AABBDD_CS-IAAS": {
+  "doi": "10.1038/s41588-025-02137-x",
+  "journal": "Nature Genetics",
+  "paper_title": "A telomere-to-telomere genome assembly coupled with multi-omic data provides insights into the evolution of hexaploid bread wheat"
+ },
+ "AABBDD_Chinese_Spring1.1": {
+  "doi": "10.1126/science.aar7191",
+  "journal": "Science",
+  "paper_title": "Shifting the limits in wheat research and breeding using a fully annotated reference genome"
+ },
+ "DD_Aegilops_tauschii_Jia": {
+  "doi": "10.1038/nature12028",
+  "journal": "Nature",
+  "paper_title": "Aegilops tauschii draft genome sequence reveals a gene repertoire for wheat adaptation"
+ },
+ "JKI-5215": {
+  "doi": "10.1038/s41586-025-09270-x",
+  "journal": "Nature",
+  "paper_title": "A haplotype-resolved pangenome of the barley wild relative Hordeum bulbosum"
+ },
+ "AABBDD_Chinese_Spring_Triticum_4.0": {
+  "doi": "10.1101/2020.04.06.028746",
+  "journal": "bioRxiv (preprint)",
+  "notes": "Triticum 4.0（Alonge et al.）；检索仅见 bioRxiv 预印本，未见正式版（2026-11-27）",
+  "paper_title": "Chromosome-scale assembly of the bread wheat genome,                   <i>Triticum aestivum</i>                   , reveals over 5700 new genes"
+ },
+ "CS_T2T_pangenome": {
+  "notes": "DOI 待核实（T2T pangenome 数据集；2026-11-27 检索未见对应论文）"
+ },
+ "Mianyang": {
+  "notes": "DOI 待核实（Mianyang 材料；2026-11-27 检索未见对应基因组论文）"
+ },
+ "oat_OT3098": {
+  "notes": "PepsiCo/GrainGenes OT3098 组装；无期刊 DOI（2026-11-27 检索未见正式论文）"
+ },
+ "tests": {
+  "notes": "疑似测试记录（无数据、无 DOI）；建议确认后删除"
+ },
+ "fangenome_final": {
+  "notes": "疑似占位记录（无数据、无 DOI）；建议确认后删除"
  }
 }

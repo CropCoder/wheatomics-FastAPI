@@ -1396,7 +1396,7 @@ def main() -> int:
             _dofix = json.load(_fh)
         for _ds, _fd in _dofix.items():
             if _ds in records:
-                for _k in ("paper_title", "journal"):
+                for _k in ("doi", "paper_title", "journal", "notes"):
                     if _fd.get(_k):
                         records[_ds][_k] = _fd[_k]
     except Exception:
@@ -1625,7 +1625,7 @@ def main() -> int:
         with mysql("wheatomics_db") as _conn, _conn.cursor() as _cur:
             for _ds, _fd in _doi_fixes.items():
                 _sets, _vals = [], []
-                for _k in ("paper_title", "journal"):
+                for _k in ("doi", "paper_title", "journal", "notes"):
                     if _k in _fd and _fd[_k]:
                         _sets.append(f"`{_k}`=%s"); _vals.append(_fd[_k])
                 if not _sets:
